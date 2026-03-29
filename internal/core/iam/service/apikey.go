@@ -25,7 +25,7 @@ const (
 	apiKeyRawLength = 32          // bytes of random entropy; 64 hex chars after encoding
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // APIKeyService handles creation, validation, revocation, and listing of API keys.
 type APIKeyService interface {
@@ -45,7 +45,7 @@ type APIKeyService interface {
 	ListAPIKeys(ctx context.Context) ([]*domain.APIKey, error)
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// Implementation
 
 type apiKeyService struct {
 	repo    repository.APIKeyRepository
@@ -69,7 +69,7 @@ func NewAPIKeyService(
 	}
 }
 
-// ─── CreateAPIKey ─────────────────────────────────────────────────────────────
+// CreateAPIKey
 
 func (s *apiKeyService) CreateAPIKey(ctx context.Context, req *domain.CreateAPIKeyRequest) (*domain.APIKey, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.apikey.Create")
@@ -97,7 +97,7 @@ func (s *apiKeyService) CreateAPIKey(ctx context.Context, req *domain.CreateAPIK
 	return key, rawToken, nil
 }
 
-// ─── ValidateAPIKey ───────────────────────────────────────────────────────────
+// ValidateAPIKey
 
 func (s *apiKeyService) ValidateAPIKey(ctx context.Context, rawToken string) (*domain.ResolvedSession, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.apikey.Validate")
@@ -137,7 +137,7 @@ func (s *apiKeyService) ValidateAPIKey(ctx context.Context, rawToken string) (*d
 	return resolved, nil
 }
 
-// ─── RevokeAPIKey ─────────────────────────────────────────────────────────────
+// RevokeAPIKey
 
 func (s *apiKeyService) RevokeAPIKey(ctx context.Context, keyID uuid.UUID) error {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.apikey.Revoke")
@@ -155,7 +155,7 @@ func (s *apiKeyService) RevokeAPIKey(ctx context.Context, keyID uuid.UUID) error
 	return nil
 }
 
-// ─── ListAPIKeys ──────────────────────────────────────────────────────────────
+// ListAPIKeys
 
 func (s *apiKeyService) ListAPIKeys(ctx context.Context) ([]*domain.APIKey, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.apikey.List")
@@ -168,7 +168,7 @@ func (s *apiKeyService) ListAPIKeys(ctx context.Context) ([]*domain.APIKey, erro
 	return keys, nil
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 // hashToken returns the SHA-256 hex digest of rawToken.
 func hashToken(rawToken string) string {

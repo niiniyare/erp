@@ -1,10 +1,10 @@
 # User Service ABAC Integration
 
-## 📋 Overview
+##  Overview
 
 This document describes the  ABAC (Attribute-Based Access Control) enhancements made to the existing user service. The integration provides enterprise-grade, context-aware authorization capabilities that complement the existing RBAC system.
 
-## 🎯 Key Features
+##  Key Features
 
 ### **User Service with ABAC Capabilities**
 - **10 New ABAC Endpoints** - Complete attribute and authorization management
@@ -13,7 +13,7 @@ This document describes the  ABAC (Attribute-Based Access Control) enhancements 
 - **Enterprise Compliance** - Multi-framework compliance validation
 - **Performance Optimization** - Sub-10ms attribute retrieval targets
 
-## 🚀 New ABAC Endpoints
+##  New ABAC Endpoints
 
 ### 1. User Attribute Management
 ```
@@ -41,7 +41,7 @@ PUT    /api/v1/users/{user_id}/sessions/{session_id}/context    - Set session co
 GET    /api/v1/users/{id}/context - Get  user context for ABAC
 ```
 
-## 📊 ABAC Capabilities
+##  ABAC Capabilities
 
 ### **Attribute Management**
 - **Multi-Source Integration**: HR systems, LDAP, security databases
@@ -67,7 +67,7 @@ GET    /api/v1/users/{id}/context - Get  user context for ABAC
 - **Sub-10ms Targets**: High-performance attribute retrieval
 - **Cache Management**: Intelligent cache warming and invalidation
 
-## 🏗️ Technical Implementation
+## ️ Technical Implementation
 
 ### **File Structure**
 ```
@@ -94,7 +94,7 @@ internal/api/gen/http/user/
 └── server/           - HTTP server implementation
 ```
 
-## 🔗 Integration Points
+##  Integration Points
 
 ### **ABAC Engine Integration**
 - **Policy Evaluation**: Real-time authorization decisions
@@ -113,7 +113,7 @@ internal/api/gen/http/user/
 - **Financial Controls**: SOX compliance for financial access
 - **Healthcare**: HIPAA compliance for health data
 
-## 📈 Business Benefits
+##  Business Benefits
 
 ### **Security**
 - **Context-Aware Access**: Decisions based on full context, not just roles
@@ -139,7 +139,7 @@ internal/api/gen/http/user/
 - **Consistent Access**: Predictable authorization across all systems
 - **Self-Service**: Users can view and understand their access context
 
-## 🎯 Use Cases
+##  Use Cases
 
 ### **Financial Services**
 - **SOX Compliance**: Segregation of duties enforcement
@@ -159,7 +159,7 @@ internal/api/gen/http/user/
 - **Remote Work Security**: Location and device-based access controls
 - **Developer Access**: Code repository access based on project context
 
-## 🔧 Configuration Examples
+##  Configuration Examples
 
 ### **Attribute Definition**
 ```json
@@ -217,7 +217,7 @@ internal/api/gen/http/user/
 }
 ```
 
-## 🚀 Next Steps
+##  Next Steps
 
 ### **Implementation Phase**
 1. **Handler Implementation** - Implement business logic for all ABAC endpoints

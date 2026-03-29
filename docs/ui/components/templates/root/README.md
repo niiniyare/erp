@@ -4,7 +4,7 @@
 **SCOPE**: Application initialization, global settings, theme configuration, and top-level routing  
 **TARGET AUDIENCE**: Developers setting up new ERP applications and configuring application-wide settings
 
-## 📋 Component Overview
+##  Component Overview
 
 Root serves as the foundation template for ERP applications, providing application-level configuration, theme management, and global context initialization. It acts as the entry point that wraps all other components and manages application-wide state.
 

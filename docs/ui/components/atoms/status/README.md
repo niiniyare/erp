@@ -4,7 +4,7 @@
 **SCOPE**: All status variants, visual indicators, and semantic meanings  
 **TARGET AUDIENCE**: Developers implementing status displays, state indicators, and system feedback
 
-## 📋 Component Overview
+##  Component Overview
 
 The Status component provides clear visual indicators for system states, process status, and operational conditions. It combines semantic colors, icons, and text to communicate status information effectively while maintaining accessibility standards.
 
@@ -13,7 +13,7 @@ The Status component provides clear visual indicators for system states, process
 - **Related Schemas**: `BadgeObject.json`, `IconSchema.json`
 - **Base Interface**: Display element with semantic state meaning
 
-## 🎨 Status Types
+##  Status Types
 
 ### Basic Status
 **Purpose**: Simple state indicators with semantic colors
@@ -334,7 +334,7 @@ templ ProgressStatus(props StatusProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -473,7 +473,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Status Styles
 ```css
@@ -1084,7 +1084,7 @@ templ ConditionalStatus(props StatusProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1271,7 +1271,7 @@ templ AccessibleStatus(props StatusProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1379,7 +1379,7 @@ test.describe('Status Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### System Status Dashboard
 ```go
@@ -1448,7 +1448,7 @@ templ MaintenanceAlert() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Badge](../badge/)** - Status indicators and labels
 - **[Icon](../icon/)** - Visual symbols for status

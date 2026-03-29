@@ -4,7 +4,7 @@
 **SCOPE**: Month picking, fiscal periods, reporting cycles, and monthly data entry  
 **TARGET AUDIENCE**: Developers implementing monthly reports, budgets, planning, and recurring monthly tasks
 
-## 📋 Component Overview
+##  Component Overview
 
 Month Control provides month-only selection functionality with format customization, validation, shortcuts, and UTC support. Essential for monthly reporting, budgeting, and planning interfaces in ERP systems.
 

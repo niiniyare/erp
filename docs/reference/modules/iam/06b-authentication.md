@@ -10,7 +10,7 @@ All user types share one `users` table. No separate identity stores per surface.
 CREATE TABLE users (
   id            uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
   email         text        UNIQUE NOT NULL,
-  user_type     text        NOT NULL,     -- 'platform' | 'tenant' | 'portal' | 'third_party'
+  user_type     text        NOT NULL,     -- 'SYSADMIN'|'INTERNAL'|'PORTAL'|'CUSTOMER'|'API' (see ActorTypeFromUserType)
   tenant_id     uuid        REFERENCES tenants(id) NULL,  -- NULL for platform users
   principal_id  uuid        NULL,         -- portal users: contact_id or employee_id
   entity_id     uuid        NULL,         -- organisational node (see Entity Hierarchy)
@@ -59,7 +59,7 @@ Step 3: Session Construction (the expensive step, runs once)
   PrefService.GetForUser()  → map[string]string (user preferences)
   INSERT sessions: token_hash, permissions JSONB, entity_scope JSONB,
                    configuration JSONB {flags, settings, prefs},
-                   expires_at = NOW() + 24h
+                   expires_at = NOW() + 8h  (default; configurable via tenant setting iam.session_ttl_hours)
 
 Step 4: Response
   Set HttpOnly+Secure+SameSite=Lax cookie: awo_session = plaintext token
@@ -67,7 +67,7 @@ Step 4: Response
   amis reloads /schema/boot → BootService builds app shell → full UI
 ```
 
-The session construction runs five queries at login. After that, every auth, flag, setting, and preference check for the next 24 hours is an in-memory lookup.
+The session construction runs five queries at login. After that, every auth, flag, setting, and preference check for the next 8 hours (default TTL) is an in-memory lookup.
 
 ---
 
@@ -129,9 +129,9 @@ Session validation atomically validates + touches `last_seen_at` in one query. N
 | User suspended | DELETE all user's sessions |
 | Sensitive permission revoked | DELETE all user's sessions |
 | Significant tenant flag changed | DELETE all tenant sessions |
-| Session TTL (24h) | Cleanup job |
+| Session TTL (8h default) | Cleanup job |
 
-For non-urgent role additions, staleness up to 24h is acceptable. For immediate-effect changes (termination, suspension), call `InvalidateByUser()` which deletes sessions, forcing fresh permission computation at next login.
+For non-urgent role additions, staleness up to the session TTL is acceptable. For immediate-effect changes (termination, suspension), call `InvalidateByUser()` which deletes sessions, forcing fresh permission computation at next login.
 
 ---
 

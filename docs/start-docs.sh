@@ -11,12 +11,12 @@ set -e
 DEFAULT_PORT="8081"
 PORT=${DOC_PORT:-${1:-$DEFAULT_PORT}}
 
-echo "🏢 AWO ERP Documentation Server"
+echo " AWO ERP Documentation Server"
 echo "================================"
 echo ""
-echo "📚 Serving MkDocs documentation from: ../site/"
-echo "🗄️ Serving Schema documentation from: ./schema/"
-echo "🌐 Server will start on: http://localhost:$PORT"
+echo " Serving MkDocs documentation from: ../site/"
+echo "️ Serving Schema documentation from: ./schema/"
+echo " Server will start on: http://localhost:$PORT"
 echo ""
 
 # Check if required directories exist
@@ -39,11 +39,11 @@ if [ ! -f "../site/index.html" ]; then
     echo "ℹ️  Note: No index.html found in ../site/, using fallback redirect."
 fi
 
-echo "🚀 Starting server..."
+echo " Starting server..."
 echo ""
 echo "Available endpoints:"
-echo "  📖 Main Documentation: http://localhost:$PORT/"
-echo "  🗄️ Database Schema:     http://localhost:$PORT/schema/"
+echo "   Main Documentation: http://localhost:$PORT/"
+echo "  ️ Database Schema:     http://localhost:$PORT/schema/"
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""

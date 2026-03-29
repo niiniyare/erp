@@ -4,7 +4,7 @@
 **SCOPE**: Content organization, multi-view interfaces, settings panels, and information hierarchy  
 **TARGET AUDIENCE**: Developers implementing tabbed interfaces, content organization, and multi-panel layouts
 
-## 📋 Component Overview
+##  Component Overview
 
 Tabs provides comprehensive tab functionality with support for dynamic tabs, lazy loading, drag and drop, closable tabs, and multiple display modes. Essential for organizing complex content and providing intuitive navigation in ERP systems.
 

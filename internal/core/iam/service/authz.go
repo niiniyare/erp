@@ -19,7 +19,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // AuthzService is the application service for authorization operations.
 // Note: HTTP middleware is NOT part of this interface — see api/middleware.
@@ -48,7 +48,7 @@ type AuthzService interface {
 	InvalidateCache(ctx context.Context) error
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// Config
 
 // AuthzConfig holds the dependencies required to create an AuthzService.
 type AuthzConfig struct {
@@ -59,7 +59,7 @@ type AuthzConfig struct {
 	Tracer  tracing.Service         // optional
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// Implementation
 
 type authzService struct {
 	enforcer *casbin.Enforcer
@@ -103,7 +103,7 @@ func NewAuthzService(cfg AuthzConfig) (AuthzService, error) {
 // Casbin enforcer with AutoSave disabled. Useful for unit tests that do not
 // need a database — writes (AddPolicy, AssignRole) only affect in-memory state.
 // No-op tracer and metrics are wired in so all methods are safe to call without
-// a real observability stack.
+// areal observability stack.
 func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger) (AuthzService, error) {
 	m, err := casbinmodel.NewModelFromString(domain.CasbinModel)
 	if err != nil {
@@ -124,7 +124,7 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	}, nil
 }
 
-// ─── Enforcement ──────────────────────────────────────────────────────────────
+// Enforcement
 
 func (s *authzService) Enforce(ctx context.Context, r domain.Request) (bool, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.Enforce")
@@ -208,7 +208,7 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 	return results, nil
 }
 
-// ─── Role management ──────────────────────────────────────────────────────────
+// Role management
 
 func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, domainName string, opts ...domain.AssignOpt) error {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.AssignRole")
@@ -396,7 +396,7 @@ func (s *authzService) GetAssignments(ctx context.Context, subject, domainName s
 	return assignments, nil
 }
 
-// ─── Policy management ────────────────────────────────────────────────────────
+// Policy management
 
 func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 	if p.Subject == "" || p.Domain == "" || p.Object == "" || p.Action == "" {
@@ -515,7 +515,7 @@ func (s *authzService) GetPolicies(ctx context.Context, domainName string) ([]do
 	return out, nil
 }
 
-// ─── Cache ────────────────────────────────────────────────────────────────────
+// Cache
 
 func (s *authzService) InvalidateCache(ctx context.Context) error {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.InvalidateCache")
@@ -535,7 +535,7 @@ func (s *authzService) InvalidateCache(ctx context.Context) error {
 	return nil
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
+// Internal helpers
 
 // revokeExpiredRoles lazily removes roles whose expiry has passed.
 // Non-fatal: enforce proceeds even if cleanup fails.

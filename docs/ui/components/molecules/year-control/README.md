@@ -4,7 +4,7 @@
 **SCOPE**: Year picking, fiscal years, annual data entry, and long-term business planning  
 **TARGET AUDIENCE**: Developers implementing annual reports, long-term planning, and year-based data management features
 
-## 📋 Component Overview
+##  Component Overview
 
 Year Control provides year-only selection functionality with fiscal year support, format customization, shortcuts, and validation. Essential for annual reporting, budgeting, and long-term planning interfaces in ERP systems.
 

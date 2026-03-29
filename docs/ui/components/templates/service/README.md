@@ -4,7 +4,7 @@
 **SCOPE**: API data fetching, real-time updates, dynamic schema loading, and data orchestration  
 **TARGET AUDIENCE**: Developers implementing data-driven components, API integration, and dynamic content
 
-## 📋 Component Overview
+##  Component Overview
 
 Service provides comprehensive data service functionality with support for API integration, WebSocket connections, polling, schema loading, and data providers. Essential for creating data-driven ERP interfaces with real-time updates and dynamic content.
 

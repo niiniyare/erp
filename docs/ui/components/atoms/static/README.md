@@ -4,7 +4,7 @@
 **SCOPE**: All static display variants, templates, and content formatting features  
 **TARGET AUDIENCE**: Developers implementing read-only displays, content templates, and static information
 
-## 📋 Component Overview
+##  Component Overview
 
 The Static component provides read-only text display and content rendering capabilities for forms and layouts. It supports HTML templates, text formatting, quick editing, copying functionality, and various display modes while maintaining accessibility and responsive design standards.
 
@@ -13,7 +13,7 @@ The Static component provides read-only text display and content rendering capab
 - **Related Schemas**: `FormControlSchema.json`, `SchemaTpl.json`
 - **Base Interface**: Form control element for static content display
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Static component is configured using JSON that conforms to the `StaticExactControlSchema.json`. The JSON configuration renders static content with optional interactive features like copying and quick editing.
 
@@ -614,7 +614,7 @@ The `tpl` property supports variable interpolation using `${variable}` syntax:
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -791,7 +791,7 @@ describe('Static Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Dashboard Information Cards
 ```go
@@ -852,7 +852,7 @@ templ ConfigurationPanel() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Input](../input/)** - Editable input controls
 - **[Form](../../molecules/form/)** - Form containers

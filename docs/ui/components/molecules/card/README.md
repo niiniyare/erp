@@ -4,7 +4,7 @@
 **SCOPE**: All card variants, layouts, media integration, and interactive patterns  
 **TARGET AUDIENCE**: Developers implementing content containers, dashboards, data displays, and information cards
 
-## 📋 Component Overview
+##  Component Overview
 
 The Card component provides a versatile content container with structured sections including header, body, media area, and action buttons. It supports rich content display, multimedia integration, interactive features, and responsive layouts while maintaining accessibility and consistent styling across the application.
 
@@ -13,7 +13,7 @@ The Card component provides a versatile content container with structured sectio
 - **Related Schemas**: `CardBodyField.json`, `ActionSchema.json`, `SchemaTpl.json`
 - **Base Interface**: Container component for structured content display
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Card component is configured using JSON that conforms to the `CardSchema.json`. The JSON configuration renders structured content containers with headers, body content, media, and action buttons.
 
@@ -1325,7 +1325,7 @@ templ CardField(field CardField) {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1448,7 +1448,7 @@ describe('Card Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Employee Profile Card
 ```go
@@ -1510,7 +1510,7 @@ templ ProductCard(product Product) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Avatar](../avatar/)** - User profile images
 - **[Button](../../atoms/button/)** - Action buttons

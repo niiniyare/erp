@@ -4,11 +4,11 @@
 **SCOPE**: Business workflows, process automation, and multi-step operations  
 **TARGET AUDIENCE**: Developers implementing ERP business processes and workflow automation
 
-## 📋 Guide Overview
+##  Guide Overview
 
 This guide demonstrates common ERP workflow patterns using the component library. It covers complete business processes from lead generation to order fulfillment, showing how to implement complex multi-step workflows with proper state management and user experience.
 
-## 🔄 Core Workflow Patterns
+##  Core Workflow Patterns
 
 ### 1. Lead-to-Customer Conversion
 ### 2. Quote-to-Order Process
@@ -17,7 +17,7 @@ This guide demonstrates common ERP workflow patterns using the component library
 ### 5. Inventory Management Process
 ### 6. Employee Onboarding Workflow
 
-## 📊 Lead-to-Customer Conversion Workflow
+##  Lead-to-Customer Conversion Workflow
 
 ### Lead Capture Form
 ```json
@@ -178,7 +178,7 @@ This guide demonstrates common ERP workflow patterns using the component library
 }
 ```
 
-## 💰 Quote-to-Order Process
+##  Quote-to-Order Process
 
 ### Quote Builder Wizard
 ```json
@@ -414,7 +414,7 @@ This guide demonstrates common ERP workflow patterns using the component library
 }
 ```
 
-## 📦 Order Fulfillment Workflow
+##  Order Fulfillment Workflow
 
 ### Order Processing Dashboard
 ```json
@@ -591,7 +591,7 @@ This guide demonstrates common ERP workflow patterns using the component library
 }
 ```
 
-## 💳 Invoice-to-Payment Cycle
+##  Invoice-to-Payment Cycle
 
 ### Invoice Generation Workflow
 ```json

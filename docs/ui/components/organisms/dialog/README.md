@@ -4,7 +4,7 @@
 **SCOPE**: Modal windows, pop-ups, forms, confirmations, and overlay content  
 **TARGET AUDIENCE**: Developers implementing modal dialogs, forms, confirmations, and overlay interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Dialog provides comprehensive modal functionality with support for various sizes, custom content, form integration, confirmation dialogs, and advanced features like dragging and custom actions. Essential for creating focused user interactions in ERP systems.
 

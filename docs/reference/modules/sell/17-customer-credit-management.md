@@ -258,8 +258,8 @@ Customer: ABC Manufacturing Ltd
 
 Risk Rating:
   ✓ Low Risk: All current, minimal 30-day
-  🟡 Medium Risk: Significant 30-60 day aging
-  🔴 High Risk: Any 90+ days overdue
+   Medium Risk: Significant 30-60 day aging
+   High Risk: Any 90+ days overdue
 
 Collection Actions by Age:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

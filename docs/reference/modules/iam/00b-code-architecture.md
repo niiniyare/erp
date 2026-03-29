@@ -4,73 +4,63 @@
 
 ### Repository Layout
 
+> **Note:** The `internal/platform/` facade described in earlier docs **does not exist**. The actual code lives in `internal/core/iam/` (IAM bounded context) and separate sibling bounded contexts. Import from `internal/core/iam` — it re-exports everything callers need.
+
 ```
 internal/
 ├── api/
 │   ├── handlers/
-│   │   ├── auth_handler.go        # POST /auth/login, /logout, /forgot-password
-│   │   ├── user_handler.go        # CRUD /api/v1/users
-│   │   ├── role_handler.go        # CRUD /api/v1/roles
-│   │   ├── flag_handler.go        # GET/PATCH /api/v1/settings/flags
-│   │   ├── settings_handler.go    # GET/PATCH /api/v1/settings/{module}
-│   │   └── schema_handler.go      # GET /schema/boot, /schema/*
+│   │   ├── auth/           # login, logout, MFA, password reset, SSO, API keys
+│   │   ├── audit/          # GET /api/v1/audit-logs
+│   │   ├── schema/         # GET /api/v1/schema/boot (AMIS app shell)
+│   │   ├── tenant/         # CRUD /api/v1/tenants
+│   │   ├── user/           # CRUD /api/v1/users
+│   │   ├── finance/        # /api/v1/finance/*
+│   │   └── routes.go       # Router, Dependencies wiring
 │   └── middleware/
-│       ├── auth.go                # Authenticate — session cookie or Bearer
-│       ├── tenant.go              # ResolveTenant — X-Tenant-ID or subdomain
-│       ├── permission.go          # RequirePermission, RequireFlag
-│       ├── db_pool.go             # SetDBPool
-│       ├── audit.go               # AuditWrap
-│       └── context.go             # ContextSession, ContextTenantID, helpers
+│       ├── session_middleware.go  # Authenticate — session cookie or Bearer eak_ token
+│       ├── whitelist.go           # Public endpoints (no session required)
+│       ├── observability.go       # Logging + tracing + metrics per request
+│       └── cors.go
 │
-└── platform/
-    ├── service.go                 # Facade: Platform struct — single import for all modules
-    ├── iam.go                     # IAM service composition
-    ├── flags.go                   # FlagService — flag catalogue + tenant values
-    ├── settings.go                # SettingService — setting catalogue + tenant values
-    ├── boot.go                    # BootService — builds app shell from MRA+flags+perms
+└── core/
+    ├── iam/                # IAM bounded context facade (import this)
+    │   ├── iam.go          # Re-exports: UserService, SessionService, AuthzService, etc.
+    │   ├── domain/
+    │   │   ├── authz.go    # ActorType, CasbinModel, Policy, RoleAssignment
+    │   │   ├── session.go  # ResolvedSession, Can(), CanDo(), FeatureEnabled()
+    │   │   ├── identity.go # User, AccountStatus, MFASetup
+    │   │   └── apikey.go   # APIKey, CreateAPIKeyRequest
+    │   ├── repository/     # authz, user, session, sso, apikey repos
+    │   └── service/        # authz, user, session, sso, mfa_totp, apikey services
     │
-    ├── domain/
-    │   ├── user.go                # User, UserType, UserCreateParams
-    │   ├── session.go             # ResolvedSession, SessionConfiguration
-    │   ├── role.go                # Role, RoleAssignment, AssignOptions
-    │   ├── permission.go          # Permission, PermissionKey
-    │   ├── policy.go              # Policy, Effect
-    │   ├── module.go              # Module, Resource, Action (MRA domain types)
-    │   ├── flag.go                # FlagDefinition, TenantFlag
-    │   ├── setting.go             # SettingDefinition, TenantSetting, UserPreference
-    │   ├── entity.go              # Entity, EntityScope, EntityType
-    │   └── events.go              # All platform domain events
+    ├── entity/             # Entity hierarchy bounded context (separate from IAM)
+    │   ├── entity.go       # Facade: NewService, NewRepository
+    │   ├── domain/
+    │   ├── repository/
+    │   └── service/
     │
-    └── repo/
-        ├── user_repo.go           # interface + impl (sqlc + cache)
-        ├── session_repo.go
-        ├── role_repo.go
-        ├── module_repo.go         # MRA queries — list enabled, nav data
-        ├── flag_repo.go           # flag definitions + tenant values
-        ├── setting_repo.go        # setting definitions + tenant values
-        ├── entity_repo.go
-        └── casbin_adapter.go      # Casbin ↔ PostgreSQL bridge
-
-internal/core/authz/
-├── authz.go        Service interface — the only file callers need to know
-├── types.go        ActorType, Request, Policy, RoleAssignment, Principal
-├── errors.go       Self-contained *Error type
-├── model.go        Casbin CONF string
-├── adapter.go      pgxAdapter — implements persist.BatchAdapter
-├── service.go      New() constructor, Enforce, EnforceBatch, InvalidateCache
-├── roles.go        AssignRole, RevokeRole, GetRoles, HasRole, revokeExpiredRoles
-├── policies.go     AddPolicy, RemovePolicy, GetPolicies
-└── middleware.go   Fiber handler factory (svc.Middleware)
+    ├── audit/              # Audit log bounded context (separate from IAM)
+    │   ├── interface.go    # Service + Repository interfaces
+    │   ├── model.go        # AuditEvent, CreateAuditEventRequest, analytics types
+    │   ├── service.go      # CreateAuditEvent, GetAuditEvents, analytics
+    │   ├── repository.go   # DB adapter using sqlc
+    │   └── validation.go   # Field-level validation helpers
+    │
+    └── tenant/             # Tenant bounded context
+        └── ...
 
 db/
-├── migration/                     # Sequential migration files
-├── queries/                       # SQL for sqlc
+├── migration/             # Sequential numbered migration files (000001_…)
+├── queries/               # SQL source files for sqlc
+│   ├── sessions.sql
+│   ├── authz.sql
 │   ├── users.sql
-│   ├── modules.sql                # MRA + nav queries
-│   ├── flags.sql
-│   ├── settings.sql
+│   ├── api_keys.sql
+│   ├── audit.sql
+│   ├── boot.sql           # MRA nav queries (ListActiveSystemModules, etc.)
 │   └── ...
-└── sqlc/                          # Generated code (package: db)
+└── sqlc/                  # Generated Go code (package: db) — DO NOT EDIT
 ```
 
 Unit tests live next to every file they test.

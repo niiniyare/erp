@@ -1,10 +1,10 @@
 # Asset Management
 
-## 🏗️ Overview
+## ️ Overview
 
 The Asset Management module provides  tracking and management of fixed assets throughout their lifecycle, from acquisition to disposal. It includes depreciation calculations, maintenance scheduling, location tracking, and compliance with various accounting standards (GAAP, IFRS).
 
-## 🏢 Fixed Asset Management
+##  Fixed Asset Management
 
 ### Asset Master Data
 
@@ -273,7 +273,7 @@ CREATE TRIGGER trigger_update_asset_location
     EXECUTE FUNCTION update_asset_location_on_transfer();
 ```
 
-## 📊 Depreciation Management
+##  Depreciation Management
 
 ### Depreciation Calculation Engine
 
@@ -629,7 +629,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## 🔧 Maintenance Management
+##  Maintenance Management
 
 ### Maintenance Scheduling
 
@@ -918,7 +918,7 @@ class MaintenanceService implements MaintenanceScheduler {
 }
 ```
 
-## 📈 Asset Performance Analytics
+##  Asset Performance Analytics
 
 ### Key Performance Indicators
 

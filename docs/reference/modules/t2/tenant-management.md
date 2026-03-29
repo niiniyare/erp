@@ -1,10 +1,10 @@
 # Multi-Tenant ERP System Documentation
 
-## 🏢 Overview
+##  Overview
 
 The ERP system implements a robust multi-tenant architecture using Row-Level Security (RLS) with PostgreSQL and Go/sqlc for type-safe database operations. Each tenant represents a distinct business entity with complete data isolation while sharing infrastructure for optimal resource utilization.
 
-## 🎯 Architecture Design
+##  Architecture Design
 
 ### Technology Stack Integration
 
@@ -47,7 +47,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## 🏗️ Database Structure
+## ️ Database Structure
 
 ### Core Tenants Table
 
@@ -307,7 +307,7 @@ CREATE INDEX idx_usage_stats_period_range ON tenant_usage_stats(period_start, pe
 -- FOR VALUES FROM ('2024-01-01') TO ('2024-02-01');
 ```
 
-## 🔐 Security Implementation
+##  Security Implementation
 
 ### Row-Level Security Policies
 
@@ -403,7 +403,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-## 🛠️ Go Integration Best Practices
+## ️ Go Integration Best Practices
 
 ### Context Management in Go
 
@@ -477,7 +477,7 @@ func NewDB(databaseURL string) (Store, error) {
 }
 ```
 
-## 📊 Usage Tracking and Limits
+##  Usage Tracking and Limits
 
 ### Smart Limit Checking
 
@@ -629,7 +629,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## 🚀 Tenant Provisioning
+##  Tenant Provisioning
 
 ### Complete Provisioning Workflow
 
@@ -741,7 +741,7 @@ async function provisionTenant(request: TenantProvisioningRequest): Promise<Tena
 }
 ```
 
-## 🔄 Performance Optimization
+##  Performance Optimization
 
 ### Indexing Strategy
 
@@ -797,7 +797,7 @@ CREATE INDEX idx_tenant_health_summary_activity ON tenant_health_summary(last_ac
 -- REFRESH MATERIALIZED VIEW CONCURRENTLY tenant_health_summary;
 ```
 
-## 🛡️ Rate Limiting Implementation
+## ️ Rate Limiting Implementation
 
 ### API Request Tracking
 
@@ -888,7 +888,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 🏥 Health Monitoring & Alerting
+##  Health Monitoring & Alerting
 
 ### Health Check System
 
@@ -1084,7 +1084,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 📊 Analytics & Reporting
+##  Analytics & Reporting
 
 ### Multi-Dimensional Analytics
 
@@ -1285,7 +1285,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 💰 Billing & Subscription Management
+##  Billing & Subscription Management
 
 ### Subscription Plans
 
@@ -1361,7 +1361,7 @@ interface UsageBillingRules {
 }
 ```
 
-## 🔧 Go Integration Patterns
+##  Go Integration Patterns
 
 ### Middleware Stack
 
@@ -1455,7 +1455,7 @@ func (r *BaseRepository) Create(value interface{}) error {
 }
 ```
 
-## 🛠️ Tenant Management API
+## ️ Tenant Management API
 
 ### Core Operations
 
@@ -1492,7 +1492,7 @@ interface TenantManagementAPI {
 }
 ```
 
-## 📈 Scaling Patterns
+##  Scaling Patterns
 
 ### Horizontal Scaling Preparation
 
@@ -1570,7 +1570,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 📋 Recommended sqlc Queries
+##  Recommended sqlc Queries
 
 ```sql
 -- name: GetTenantBySlug :one
@@ -1620,7 +1620,7 @@ WHERE t.deleted_at IS NULL
 ORDER BY t.name;
 ```
 
-## 🔄 Data Migration & Backup
+##  Data Migration & Backup
 
 ### Data Migration
 
@@ -1675,7 +1675,7 @@ backup_configuration:
     sync_frequency: hourly
 ```
 
-## 🔄 Database Schema Evolution
+##  Database Schema Evolution
 
 ### Tenant-Safe Migration Strategy
 
@@ -1820,7 +1820,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 🏗️ Data Archiving System
+## ️ Data Archiving System
 
 ### Automated Data Lifecycle Management
 
@@ -1897,7 +1897,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 🔍 Predictive Analytics
+##  Predictive Analytics
 
 ### Tenant Health Predictions
 
@@ -2078,7 +2078,7 @@ END;
 $ LANGUAGE plpgsql;
 ```
 
-## 🛠️ Go Implementation Extensions
+## ️ Go Implementation Extensions
 
 ### Store Interface Extensions
 
@@ -2341,11 +2341,11 @@ func (j *TenantMaintenanceJob) sendHealthAlert(status TenantHealthStatus) {
 This documentation provides a complete foundation for implementing and maintaining a production-ready multi-tenant ERP system using PostgreSQL Row-Level Security with Go/sqlc integration. The system ensures secure data isolation, scalable resource management, and operational excellence for enterprise multi-tenant applications.
 <!-- # Tenant Management ->
 <!---->
-<!-- ## 🏢 Overview ->
+<!-- ##  Overview ->
 <!---->
 <!-- The ERP system is built on a sophisticated multi-tenant architecture that allows multiple organizations to share the same application infrastructure while maintaining complete data isolation and customization capabilities. Each tenant represents a distinct business entity with its own users, data, and configuration. -->
 <!---->
-<!-- ## 🎯 Multi-Tenancy Strategy ->
+<!-- ##  Multi-Tenancy Strategy ->
 <!---->
 <!-- ### Tenant Isolation Models ->
 <!---->
@@ -2384,7 +2384,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- - **High-volume tables**: Schema separation for performance -->
 <!-- - **Sensitive data**: Complete schema isolation -->
 <!---->
-<!-- ## 🏗️ Tenant Hierarchy & Structure ->
+<!-- ## ️ Tenant Hierarchy & Structure ->
 <!---->
 <!-- ### Organization Hierarchy ->
 <!---->
@@ -2566,7 +2566,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- } -->
 <!-- ``` -->
 <!---->
-<!-- ## 🔐 Tenant Security ->
+<!-- ##  Tenant Security ->
 <!---->
 <!-- ### Data Isolation ->
 <!---->
@@ -2655,7 +2655,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- } -->
 <!-- ``` -->
 <!---->
-<!-- ## 🚀 Tenant Provisioning ->
+<!-- ##  Tenant Provisioning ->
 <!---->
 <!-- ### Automated Tenant Setup ->
 <!---->
@@ -2748,7 +2748,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- } -->
 <!-- ``` -->
 <!---->
-<!-- ## 📊 Tenant Analytics & Monitoring ->
+<!-- ##  Tenant Analytics & Monitoring ->
 <!---->
 <!-- ### Usage Metrics ->
 <!---->
@@ -2807,7 +2807,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- } -->
 <!-- ``` -->
 <!---->
-<!-- ## 💰 Billing & Subscription Management ->
+<!-- ##  Billing & Subscription Management ->
 <!---->
 <!-- ### Subscription Plans ->
 <!---->
@@ -2892,7 +2892,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!-- } -->
 <!-- ``` -->
 <!---->
-<!-- ## 🔄 Tenant Migration & Backup ->
+<!-- ##  Tenant Migration & Backup ->
 <!---->
 <!-- ### Data Migration ->
 <!---->
@@ -2947,7 +2947,7 @@ This documentation provides a complete foundation for implementing and maintaini
 <!--     sync_frequency: hourly -->
 <!-- ``` -->
 <!---->
-<!-- ## 🛠️ Tenant Management API ->
+<!-- ## ️ Tenant Management API ->
 <!---->
 <!-- ### Core Operations ->
 <!---->

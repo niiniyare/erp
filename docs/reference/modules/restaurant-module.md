@@ -1,10 +1,10 @@
 # Restaurant Management
 
-## 🍽️ Overview
+## ️ Overview
 
 The Restaurant Management module transforms the core ERP into a  restaurant operations platform. It provides menu management, kitchen operations, table service, inventory control, staff scheduling, and customer relationship management specifically designed for restaurants, cafes, and food service establishments.
 
-## 🍜 Menu & Recipe Management
+##  Menu & Recipe Management
 
 ### Menu Engineering
 
@@ -309,7 +309,7 @@ CREATE TABLE menu_schedules (
 );
 ```
 
-## 🏪 Restaurant Operations
+##  Restaurant Operations
 
 ### Table Management
 
@@ -598,7 +598,7 @@ CREATE TABLE kitchen_tickets (
 );
 ```
 
-## 📊 Restaurant Analytics & Performance
+##  Restaurant Analytics & Performance
 
 ### Sales Analytics
 

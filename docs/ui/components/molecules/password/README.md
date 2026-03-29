@@ -4,7 +4,7 @@
 **SCOPE**: Password input, strength checking, visibility controls, and security validation  
 **TARGET AUDIENCE**: Developers implementing authentication, user management, and security forms
 
-## 📋 Component Overview
+##  Component Overview
 
 Password Component provides secure password input functionality with visibility toggle, strength indicators, validation rules, and formatting options. Essential for authentication and user account management in ERP systems.
 

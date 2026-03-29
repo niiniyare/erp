@@ -35,14 +35,14 @@ func InitializeApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	store := wire.NewDBStore(pool)
+	store := wire.NewDBStore(pool, logger)
 	cacheService, err := wire.NewCacheService(configConfig)
 	if err != nil {
 		return nil, err
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
 	v := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
-	v2 := wire.NewIdentityService(v, cacheService, service, metricsProvider, configConfig)
+	v2 := wire.NewIdentityService(v, cacheService, service, metricsProvider, configConfig, logger)
 	v3, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
 	if err != nil {
 		return nil, err
@@ -50,9 +50,13 @@ func InitializeApplication() (*Application, error) {
 	v4 := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
 	v5 := wire.NewSessionService(v2, v3, v4, service, metricsProvider, logger, configConfig)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
+	auditRepo := wire.NewAuditRepository(store, logger, service, metricsProvider)
+	auditSvc := wire.NewAuditService(auditRepo, cacheService, logger, service, metricsProvider)
+	apiKeyRepo := wire.NewAPIKeyRepository(store)
+	apiKeySvc := wire.NewAPIKeyService(apiKeyRepo, cacheService, service, metricsProvider)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v6 := wire.NewTenantMiddleware(tenantMiddlewareConfig)
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v2, v5, services, v6)
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v2, v5, services, v6, auditSvc, apiKeySvc, store)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err

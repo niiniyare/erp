@@ -4,7 +4,7 @@
 **SCOPE**: Schema organization, validation, component generation  
 **TARGET AUDIENCE**: Component developers, schema authors
 
-## 🎯 Schema System Architecture
+##  Schema System Architecture
 
 Our schema system transforms **937 JSON schemas** into **type-safe Go components** with automated validation and styling.
 
@@ -20,7 +20,7 @@ JSON Schemas (937 files) → Schema Factory → Go Types → Templ Components �
 - **Utility Schemas**: 61 helper definitions
 - **Success Rate**: 99.7% schema processing
 
-## 📁 Schema Organization
+##  Schema Organization
 
 ### Directory Structure
 ```
@@ -45,7 +45,7 @@ docs/ui/Schema/definitions/
     └── helpers/            # Configuration schemas
 ```
 
-## 🏗️ Component Schema Structure
+## ️ Component Schema Structure
 
 ### Standard Schema Format
 ```json
@@ -140,7 +140,7 @@ err := factory.applyCSSToComponent(&component, props)
 templComponent := factory.templRenderer.RenderComponent(component)
 ```
 
-## 🔍 Schema Discovery
+##  Schema Discovery
 
 ### Finding Schemas
 ```bash
@@ -200,7 +200,7 @@ rules := ValidationRules{
 err := factory.ValidateAgainstSchema("ButtonSchema", props)
 ```
 
-## 🎨 CSS Integration
+##  CSS Integration
 
 ### CSS Property Schemas
 Our system includes **800+ CSS property schemas** for type-safe styling:
@@ -228,7 +228,7 @@ themeProps := map[string]interface{}{
 }
 ```
 
-## 🔧 Creating Custom Schemas
+##  Creating Custom Schemas
 
 ### Schema Development Process
 1. **Define Structure**: Create JSON schema file
@@ -259,7 +259,7 @@ func (r *CustomRenderer) Render(ctx context.Context, props map[string]interface{
 }
 ```
 
-## 📊 Schema Performance
+##  Schema Performance
 
 ### Optimization Strategies
 - **Schema Caching**: Pre-load frequently used schemas
@@ -273,7 +273,7 @@ func (r *CustomRenderer) Render(ctx context.Context, props map[string]interface{
 - **Component Generation**: <10ms per component
 - **Memory Usage**: <100MB for full schema registry
 
-## 🧪 Testing Schemas
+##  Testing Schemas
 
 ### Validation Testing
 ```bash
@@ -301,7 +301,7 @@ func TestSchemaIntegration(t *testing.T) {
 }
 ```
 
-## 🚀 Best Practices
+##  Best Practices
 
 ### Schema Design
 - **Keep schemas focused**: One responsibility per schema
@@ -321,7 +321,7 @@ func TestSchemaIntegration(t *testing.T) {
 - **Monitor performance**: Track rendering metrics
 - **Validate accuracy**: Regular schema audits
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **[Architecture](architecture.md)**: System design principles
 - **[Component Development](../development/creating-components.md)**: Building components

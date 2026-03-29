@@ -2,7 +2,7 @@
 title: 样式
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 样式
 icon:
 order: 18

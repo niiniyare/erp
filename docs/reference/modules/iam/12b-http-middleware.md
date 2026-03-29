@@ -63,7 +63,7 @@ func BuildRouter(app *fiber.App, deps *Deps) {
 ```go
 func RequirePermission(resource, action string) fiber.Handler {
     return func(c *fiber.Ctx) error {
-        if !ContextSession(c).Can(resource, action) {
+        if !ContextSession(c).CanDo(resource, action) {
             return c.Status(403).JSON(response.Err(
                 fmt.Sprintf("permission denied: %s.%s", resource, action)))
         }

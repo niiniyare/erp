@@ -4,7 +4,7 @@
 **SCOPE**: Star ratings, half-star support, custom characters, colors, and text feedback  
 **TARGET AUDIENCE**: Developers implementing review systems, feedback forms, and quality assessment interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Rating Control provides interactive star rating functionality with support for half-stars, custom characters, colors, text feedback, and read-only display modes. Essential for collecting user ratings and feedback in ERP systems.
 
@@ -108,7 +108,7 @@ type RatingControlProps struct {
     "name": "satisfaction",
     "label": "Satisfaction Level",
     "count": 5,
-    "char": "😊",
+    "char": "",
     "allowClear": true,
     "texts": {
         "1": "Very Unsatisfied",
@@ -231,7 +231,7 @@ type RatingControlProps struct {
     "name": "difficulty_level",
     "label": "Task Difficulty",
     "count": 5,
-    "char": "🔥",
+    "char": "",
     "allowClear": true,
     "colors": {
         "1": "#52c41a",

@@ -2,7 +2,7 @@
 
 This guide explains how data flows through our Clean Architecture layers, with detailed sequence diagrams and interaction patterns.
 
-## 🔄 Core Flow Patterns
+##  Core Flow Patterns
 
 ### Overview
 All requests follow a consistent pattern through our layers:
@@ -11,7 +11,7 @@ Client → Handler → Service → Repository → Database
        ← Handler ← Service ← Repository ← Database
 ```
 
-## 📝 Create Operation Flow
+##  Create Operation Flow
 
 ### Sequence Diagram
 ```mermaid
@@ -147,7 +147,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 }
 ```
 
-## 📖 Read Operation Flow
+##  Read Operation Flow
 
 ### Sequence Diagram
 ```mermaid
@@ -222,7 +222,7 @@ func (s *service) UpdateTenant(ctx context.Context, id uuid.UUID, req UpdateTena
 }
 ```
 
-## 🔄 Update Operation Flow
+##  Update Operation Flow
 
 ### Sequence Diagram
 ```mermaid
@@ -274,7 +274,7 @@ func (s *service) UpdateTenant(ctx context.Context, id uuid.UUID, req UpdateTena
 }
 ```
 
-## 🗑️ Delete Operation Flow
+## ️ Delete Operation Flow
 
 ### Soft Delete Pattern
 ```mermaid
@@ -320,7 +320,7 @@ func (r *repository) SoftDelete(ctx context.Context, id uuid.UUID) error {
 }
 ```
 
-## 📋 List/Search Operation Flow
+##  List/Search Operation Flow
 
 ### Paginated List Pattern
 ```mermaid
@@ -393,7 +393,7 @@ func (s *service) ListTenants(ctx context.Context, filter ListFilter) (*Paginate
 }
 ```
 
-## 🔄 Transaction Flow
+##  Transaction Flow
 
 ### Multi-Operation Transaction
 ```mermaid
@@ -448,7 +448,7 @@ func (r *repository) CreateMultiple(ctx context.Context, tenants []*Tenant) erro
 }
 ```
 
-## 🏷️ Tenant Context Flow
+## ️ Tenant Context Flow
 
 ### Multi-Tenant Request Handling
 ```mermaid
@@ -532,7 +532,7 @@ func (r *repository) GetTenantWithUsers(ctx context.Context, id uuid.UUID) (*Ten
 }
 ```
 
-## 🚨 Error Flow Patterns
+##  Error Flow Patterns
 
 ### Error Propagation
 ```
@@ -583,7 +583,7 @@ func (h *TenantHandler) GetTenant(c *gin.Context) {
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [SQLC Integration](./sqlc-integration.md) - Database layer patterns
 - [Observability](./observability.md) - Tracing data flow
 - [Code Examples](./code-examples.md) - Complete implementation examples

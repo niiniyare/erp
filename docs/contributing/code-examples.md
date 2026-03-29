@@ -2,11 +2,11 @@
 
 Practical implementation examples showing how to build features following our Clean Architecture patterns with full observability integration.
 
-## 🎯 Complete Feature Implementation
+##  Complete Feature Implementation
 
 Let's walk through implementing a complete tenant management feature from API to database.
 
-## 📱 API Layer Implementation
+##  API Layer Implementation
 
 ### Goa Handler Example
 ```go
@@ -435,7 +435,7 @@ func (h *TenantGoaHandler) mapHTTPStatusToGoaError(businessErr *errors.BusinessE
 }
 ```
 
-## 🏢 Service Layer Implementation
+##  Service Layer Implementation
 
 ### Service Interface and Implementation
 ```go
@@ -869,7 +869,7 @@ func getDefaultSettings() map[string]interface{} {
 }
 ```
 
-## 🗄️ Repository Layer Implementation
+## ️ Repository Layer Implementation
 
 ### Repository Implementation with SQLC
 ```go
@@ -1224,7 +1224,7 @@ func classifyDBError(err error) string {
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [Best Practices](./01-best-practices.md) - Development guidelines and patterns
 - [Error Handling](./error-handling.md) - Complete error handling strategies
 - [Observability](./observability.md) - Deep dive into observability patterns

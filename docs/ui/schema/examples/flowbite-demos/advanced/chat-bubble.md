@@ -654,7 +654,7 @@ This example can be used to send an image attachment with the user profile outsi
          <span class="text-sm font-normal text-gray-500 dark:text-gray-400">11:46</span>
       </div>
       <div class="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
-        <p class="text-sm font-normal text-gray-900 dark:text-white">I'm working from home today! 😅</p>
+        <p class="text-sm font-normal text-gray-900 dark:text-white">I'm working from home today! </p>
         <div class="group relative my-2.5">
             <div class="absolute w-full h-full bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">
                 <button data-tooltip-target="download-image" class="inline-flex items-center justify-center rounded-full h-10 w-10 bg-white/30 hover:bg-white/50 focus:ring-4 focus:outline-none dark:text-white focus:ring-gray-50">
@@ -712,7 +712,7 @@ Use this example to show an image gallery with the user profile and timestamp ou
          <span class="text-sm font-normal text-gray-500 dark:text-gray-400">11:46</span>
       </div>
       <div class="flex flex-col w-full max-w-[320px] leading-1.5 p-4 border-gray-200 bg-gray-100 rounded-e-xl rounded-es-xl dark:bg-gray-700">
-        <p class="text-sm font-normal text-gray-900 dark:text-white">I'm working from home today! 😅</p>
+        <p class="text-sm font-normal text-gray-900 dark:text-white">I'm working from home today! </p>
         <div class="grid gap-4 grid-cols-2 my-2.5">
             <div class="group relative">
                 <div class="absolute w-full h-full bg-gray-900/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-lg flex items-center justify-center">

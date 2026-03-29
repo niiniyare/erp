@@ -6,13 +6,13 @@
 
 ---
 
-## 🌍 Overview
+##  Overview
 
 The Currency Management module provides  multi-currency support for global business operations. It handles exchange rate management, currency conversion, hedging operations, and compliance with international financial reporting standards.
 
-> **🗄️ Core Database Schema**: For the main financial database schema (accounts, transactions, entries), see [Technical Architecture - Database Schema](../technical-architecture.md#database-schema-architecture). This guide covers currency-specific extensions.
+> **️ Core Database Schema**: For the main financial database schema (accounts, transactions, entries), see [Technical Architecture - Database Schema](../technical-architecture.md#database-schema-architecture). This guide covers currency-specific extensions.
 
-## 💱 Currency Configuration & Master Data
+##  Currency Configuration & Master Data
 
 ### Currency Master Data
 
@@ -393,7 +393,7 @@ class CurrencyService implements CurrencyConversionEngine {
 }
 ```
 
-## 🏛️ Multi-Currency Transaction Processing
+## ️ Multi-Currency Transaction Processing
 
 ### Currency Transaction Management
 
@@ -787,7 +787,7 @@ class CurrencyRevaluationService implements CurrencyRevaluationEngine {
 }
 ```
 
-## 🔒 Currency Risk Management
+##  Currency Risk Management
 
 ### Hedging and Risk Management
 

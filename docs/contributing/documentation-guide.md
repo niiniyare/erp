@@ -144,7 +144,7 @@ nav:
 - Use clear, descriptive titles
 - Group related topics logically
 - Limit nesting to 3-4 levels maximum
-- Use emoji sparingly (🚀 for interactive elements only)
+- Use emoji sparingly ( for interactive elements only)
 
 ### Step 4: Follow Content Guidelines
 
@@ -309,7 +309,7 @@ For interactive examples, you can include:
 <!-- Try it out button -->
 <div style="margin: 1rem 0;">
   <a href="../swagger-ui/" class="md-button md-button--primary">
-    🚀 Try in API Explorer
+     Try in API Explorer
   </a>
 </div>
 

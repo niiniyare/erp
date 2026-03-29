@@ -48,9 +48,9 @@
 
 This guide provides practical guidance for using the AWO ERP Financial Module in day-to-day operations. For detailed business concepts and domain model, see the [Business Domain Guide](../business-domain-guide.md).
 
-> **📚 Business Concepts**: For comprehensive coverage of double-entry bookkeeping, chart of accounts structure, and financial domain concepts, see [Business Domain Guide](../business-domain-guide.md).
+> ** Business Concepts**: For comprehensive coverage of double-entry bookkeeping, chart of accounts structure, and financial domain concepts, see [Business Domain Guide](../business-domain-guide.md).
 
-> **🔧 Technical Implementation**: For API integration and technical specifications, see [Technical Architecture](../technical-architecture.md).
+> ** Technical Implementation**: For API integration and technical specifications, see [Technical Architecture](../technical-architecture.md).
 
 ## Operational Workflows
 

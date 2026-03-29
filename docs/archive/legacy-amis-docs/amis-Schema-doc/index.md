@@ -2,7 +2,7 @@
 title: 介绍
 description: 介绍
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 介绍
 icon:
 order: 8

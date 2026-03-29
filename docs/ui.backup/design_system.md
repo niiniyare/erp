@@ -320,7 +320,7 @@ Rejected → Amended → (returns to Draft)
 ```
 Color: Gray (#6b7280)
 Background: #f3f4f6
-Icon: 📝
+Icon: 
 Badge: "Draft"
 Permissions: Full edit, delete, submit
 UI Treatment:

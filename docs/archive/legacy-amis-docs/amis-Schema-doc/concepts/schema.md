@@ -2,7 +2,7 @@
 title: 配置与组件
 description: 配置与组件
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 配置与组件
 icon:
 order: 9

@@ -11,7 +11,7 @@ source "$SCRIPT_DIR/setup_env.sh"
 BASE_URL="http://localhost:${SERVER_PORT:-8080}"
 CREATED_TENANT_ID=""
 random="$(cat /dev/urandom | tr -dc 'A-Z' | fold -w 6 | head -n 1)"
-echo "🧪 Comprehensive Tenant API Testing"
+echo " Comprehensive Tenant API Testing"
 echo "===================================="
 echo "Base URL: $BASE_URL"
 echo "Server Port: ${SERVER_PORT:-8080}"
@@ -19,7 +19,7 @@ echo "Testing Date: $(date)"
 echo ""
 
 # Test 1: Create a new tenant (bypasses middleware)
-echo "📋 Test 1: Create New Tenant (Public Endpoint)"
+echo " Test 1: Create New Tenant (Public Endpoint)"
 echo "POST $BASE_URL/api/v1/tenants"
 CREATE_RESPONSE=$(curl -s -w "\nHTTP_STATUS:%{http_code}" \
   -X POST \
@@ -60,7 +60,7 @@ echo ""
 echo "---"
 
 # Test 2: Health endpoint with tenant context
-echo "📋 Test 2: Health Check (Requires Tenant Context)"
+echo " Test 2: Health Check (Requires Tenant Context)"
 echo "GET $BASE_URL/api/v1/tenants/health"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
@@ -74,7 +74,7 @@ echo ""
 echo "---"
 
 # Test 3: Get specific tenant by ID
-echo "📋 Test 3: Get Tenant by ID"
+echo " Test 3: Get Tenant by ID"
 echo "GET $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
@@ -88,7 +88,7 @@ echo ""
 echo "---"
 
 # Test 4: List tenants with pagination
-echo "📋 Test 4: List Tenants with Pagination"
+echo " Test 4: List Tenants with Pagination"
 echo "GET $BASE_URL/api/v1/tenants?page=1&page_size=10"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
@@ -102,7 +102,7 @@ echo ""
 echo "---"
 
 # Test 5: Update tenant
-echo "📋 Test 5: Update Tenant"
+echo " Test 5: Update Tenant"
 echo "PUT $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
@@ -129,7 +129,7 @@ echo ""
 echo "---"
 
 # Test 6: Test Usage Analytics
-echo "📋 Test 6: Get Usage Analytics"
+echo " Test 6: Get Usage Analytics"
 echo "GET $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID/analytics?period=current_month"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
@@ -143,7 +143,7 @@ echo ""
 echo "---"
 
 # Test 7: Test Error Scenarios
-echo "📋 Test 7: Error Scenarios"
+echo " Test 7: Error Scenarios"
 echo "Testing endpoints without tenant context (should fail):"
 echo "GET $BASE_URL/api/v1/tenants (no header)"
 curl -s -w "\nStatus: %{http_code}\n" \
@@ -153,14 +153,14 @@ echo ""
 echo "---"
 
 # Test 8: Clean up - Delete the test tenant
-echo "📋 Test 8: Delete Test Tenant (Cleanup)"
+echo " Test 8: Delete Test Tenant (Cleanup)"
 echo "DELETE $BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
 if [ -n "$CREATED_TENANT_ID" ]; then
   curl -s -w "\nStatus: %{http_code}\n" \
     -X DELETE \
     -H "X-Tenant-ID: $CREATED_TENANT_ID" \
     "$BASE_URL/api/v1/tenants/$CREATED_TENANT_ID"
-  echo "🗑️ Test tenant deleted"
+  echo "️ Test tenant deleted"
 else
   echo "❌ Skipping delete test - no tenant ID available"
 fi
@@ -169,7 +169,7 @@ echo "---"
 
 echo "✅ Comprehensive Tenant API tests completed!"
 echo ""
-echo "📊 Test Results Summary:"
+echo " Test Results Summary:"
 echo "- Test 1: Create Tenant (should succeed - 200)"
 echo "- Test 2: Health Check (should succeed with tenant - 200)"
 echo "- Test 3: Get Tenant (should succeed - 200)"
@@ -179,7 +179,7 @@ echo "- Test 6: Usage Analytics (should succeed - 200)"
 echo "- Test 7: Error Scenarios (should fail without tenant - 400)"
 echo "- Test 8: Delete Tenant (should succeed - 200)"
 echo ""
-echo "🔍 Known Issues:"
+echo " Known Issues:"
 echo "- Provision endpoint fails due to DB constraints"
 echo "- Suspend/Reactivate fail due to status check constraints"
 echo "- Configuration update requires active tenant status"
@@ -187,12 +187,12 @@ echo "- List endpoint returns empty due to Row-Level Security (RLS)"
 
 # Additional utility functions
 echo ""
-echo "🛠️ Additional Test Utilities:"
+echo "️ Additional Test Utilities:"
 echo "================================"
 
 # Function to test provisioning (known to fail)
 test_provisioning() {
-  echo "📋 Testing Provisioning (Expected to fail due to DB constraints)"
+  echo " Testing Provisioning (Expected to fail due to DB constraints)"
   if [ -n "$CREATED_TENANT_ID" ]; then
     curl -s -w "\nStatus: %{http_code}\n" \
       -X POST \
@@ -212,7 +212,7 @@ test_provisioning() {
 
 # Function to test suspend (known to fail)
 test_suspend() {
-  echo "📋 Testing Suspend (Expected to fail due to status constraints)"
+  echo " Testing Suspend (Expected to fail due to status constraints)"
   if [ -n "$CREATED_TENANT_ID" ]; then
     curl -s -w "\nStatus: %{http_code}\n" \
       -X POST \
@@ -224,6 +224,6 @@ test_suspend() {
 }
 
 # Uncomment to test known failing endpoints:
-# echo "🚨 Testing Known Issues (will fail):"
+# echo " Testing Known Issues (will fail):"
 # test_provisioning
 # test_suspend

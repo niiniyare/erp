@@ -32,7 +32,7 @@ test::log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
 test::start() {
     local test_name="$1"
     CURRENT_TEST_NAME="$test_name"
-    echo -e "\n${YELLOW}📋 TEST:${NC} $test_name"
+    echo -e "\n${YELLOW} TEST:${NC} $test_name"
 }
 
 # Records a test result.
@@ -171,7 +171,7 @@ cleanup() {
 
 # Prints the final summary of test results.
 test::print_summary() {
-    echo -e "\n${BLUE}📊 Test Summary${NC}"
+    echo -e "\n${BLUE} Test Summary${NC}"
     echo -e "${BLUE}=================${NC}"
     echo "Total tests: $TOTAL_TESTS"
     echo -e "${GREEN}Passed: $PASSED_TESTS${NC}"

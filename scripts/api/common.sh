@@ -7,7 +7,7 @@ check_server_connectivity() {
     local server_url="$1"
     local health_endpoint="${server_url}/health"
     
-    echo "🔍 Checking server connectivity at $server_url..."
+    echo " Checking server connectivity at $server_url..."
     
     # Try to connect to the health endpoint
     if curl -s -f "$health_endpoint" > /dev/null 2>&1; then
@@ -15,7 +15,7 @@ check_server_connectivity() {
         return 0
     else
         echo "❌ Server is not accessible at $server_url"
-        echo "💡 Make sure the server is running with: go run ./cmd/server/"
+        echo " Make sure the server is running with: go run ./cmd/server/"
         return 1
     fi
 }

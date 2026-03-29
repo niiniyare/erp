@@ -34,9 +34,9 @@
 |-------|-------|----------|--------|
 | Domain | 45 | 92% | ✅ |
 | Service | 38 | 88% | ✅ |
-| Repository | 25 | 75% | 🚧 |
-| API | 30 | 80% | 🚧 |
-| Integration | 15 | 65% | 🚧 |
+| Repository | 25 | 75% |  |
+| API | 30 | 80% |  |
+| Integration | 15 | 65% |  |
 
 ### Running All Tests
 ```bash

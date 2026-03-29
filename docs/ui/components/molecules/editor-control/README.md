@@ -4,7 +4,7 @@
 **SCOPE**: Rich text editing, HTML content creation, document editing, and content management  
 **TARGET AUDIENCE**: Developers implementing content creation features, document editing, and rich text input
 
-## 📋 Component Overview
+##  Component Overview
 
 Editor Control provides comprehensive rich text editing functionality with formatting tools, media insertion, collaborative features, and content management. Essential for content creation and document editing in ERP systems.
 

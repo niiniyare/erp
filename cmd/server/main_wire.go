@@ -49,12 +49,12 @@ func startServer(app *Application) error {
 	serverAddr := fmt.Sprintf("%s:%s", "0.0.0.0", app.Config.Server.Port)
 
 	go func() {
-		fmt.Printf("🚀 Server starting on %s\n", serverAddr)
-		fmt.Printf("📱 Environment: %s\n", app.Config.App.Environment)
-		fmt.Printf("🏢 Application: %s v%s\n", app.Config.App.Name, app.Config.App.Version)
-		fmt.Printf("🔧 Debug mode: %v\n", app.Config.App.Debug)
-		fmt.Printf("📊 Health check: http://%s/health\n", serverAddr)
-		fmt.Printf("📚 Documentation: http://%s/docs\n", serverAddr)
+		fmt.Printf(" Server starting on %s\n", serverAddr)
+		fmt.Printf(" Environment: %s\n", app.Config.App.Environment)
+		fmt.Printf(" Application: %s v%s\n", app.Config.App.Name, app.Config.App.Version)
+		fmt.Printf(" Debug mode: %v\n", app.Config.App.Debug)
+		fmt.Printf(" Health check: http://%s/health\n", serverAddr)
+		fmt.Printf(" Documentation: http://%s/docs\n", serverAddr)
 
 		if err := app.App.Listen(serverAddr); err != nil {
 			log.Printf("Server error: %v", err)
@@ -65,13 +65,13 @@ func startServer(app *Application) error {
 	// Wait for interrupt signal or context cancellation
 	select {
 	case sig := <-sigChan:
-		fmt.Printf("\n🛑 Received signal: %v\n", sig)
+		fmt.Printf("\n Received signal: %v\n", sig)
 	case <-ctx.Done():
-		fmt.Println("\n🛑 Server context cancelled")
+		fmt.Println("\n Server context cancelled")
 	}
 
 	// Graceful shutdown
-	fmt.Println("🔄 Initiating graceful shutdown...")
+	fmt.Println(" Initiating graceful shutdown...")
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()

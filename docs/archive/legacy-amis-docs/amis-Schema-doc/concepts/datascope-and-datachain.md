@@ -2,7 +2,7 @@
 title: 数据域与数据链
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 数据域与数据链
 icon:
 order: 10

@@ -1,15 +1,15 @@
 # ERP UI Component System Documentation
 
 <!-- LLM-NAVIGATION-START -->
-## 📋 Quick Navigation for AI Assistants
+##  Quick Navigation for AI Assistants
 
 **DOCUMENTATION MAP:**
-- 🚀 [Getting Started](getting-started.md) - Setup, installation, first component
-- 🏗️ [Fundamentals](fundamentals/) - Architecture, styling, accessibility  
-- 🧩 [Components](components/) - UI component library (basic to advanced)
-- 🔧 [Patterns](patterns/) - Implementation patterns and best practices
-- 📚 [Guides](guides/) - Step-by-step tutorials for complex features
-- 📖 [Reference](reference/) - Complete API docs and examples
+-  [Getting Started](getting-started.md) - Setup, installation, first component
+- ️ [Fundamentals](fundamentals/) - Architecture, styling, accessibility  
+-  [Components](components/) - UI component library (basic to advanced)
+-  [Patterns](patterns/) - Implementation patterns and best practices
+-  [Guides](guides/) - Step-by-step tutorials for complex features
+-  [Reference](reference/) - Complete API docs and examples
 
 **TECH STACK:** `Templ + HTMX + Alpine.js + Flowbite + TailwindCSS`
 **ARCHITECTURE:** Server-side rendered Go templates with progressive enhancement
@@ -53,7 +53,7 @@ This documentation provides a complete UI component system for building ERP appl
 
 ```
 docs/ui/
-├── README.md                    # 👈 YOU ARE HERE
+├── README.md                    #  YOU ARE HERE
 ├── getting-started.md           # Complete setup guide
 ├── fundamentals/
 │   ├── architecture.md          # State management, performance

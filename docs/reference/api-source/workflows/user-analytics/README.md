@@ -2,7 +2,7 @@
 
 The User Analytics & Behavior API provides  user behavior analysis, risk assessment, and personalized insights to enhance security and user experience.
 
-## 📋 Overview
+##  Overview
 
 The User Analytics & Behavior API enables:
 
@@ -13,13 +13,13 @@ The User Analytics & Behavior API enables:
 - **Predictive Analytics**: Future behavior prediction and risk forecasting
 - **Baseline Establishment**: Normal behavior pattern learning
 
-## 🔧 Base URL
+##  Base URL
 
 ```
 http://localhost:8080/api/v1/analytics
 ```
 
-## 📊 Analytics Types
+##  Analytics Types
 
 | Type | Description | Use Case |
 |------|-------------|----------|
@@ -28,7 +28,7 @@ http://localhost:8080/api/v1/analytics
 | `Anomaly Detection` | Unusual behavior identification | Threat detection, compliance monitoring |
 | `Personalized Insights` | User-specific recommendations | Productivity enhancement, security awareness |
 
-## 🎯 Risk Levels
+##  Risk Levels
 
 | Level | Score Range | Description | Actions |
 |-------|-------------|-------------|---------|
@@ -37,7 +37,7 @@ http://localhost:8080/api/v1/analytics
 | `HIGH` | 51-75 | Concerning behavior | Additional verification |
 | `CRITICAL` | 76-100 | High-risk behavior | Immediate action required |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Health Check
 ```bash
@@ -70,7 +70,7 @@ curl -X POST http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-000
   }' | jq .
 ```
 
-## 📚 Documentation Files
+##  Documentation Files
 
 - **curl-examples.md** -  curl command examples
 - **API Reference** - Detailed API specification
@@ -78,7 +78,7 @@ curl -X POST http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-000
 - **Analytics Guide** - Understanding analytics data
 - **Integration Guide** - Integration with security systems
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Testing
 ```bash
@@ -97,7 +97,7 @@ curl -X POST http://localhost:8080/api/v1/analytics/users/00000000-0000-0000-000
 cat curl-examples.md
 ```
 
-## 🔍 Common Use Cases
+##  Common Use Cases
 
 ### Security Monitoring
 ```bash
@@ -141,7 +141,7 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
   jq '.risk_assessment.compliance_indicators'
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Behavior Pattern Response (200 OK)
 ```json
@@ -411,7 +411,7 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
 }
 ```
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Insufficient data** - Need minimum activity for accurate analysis
 2. **Baseline not established** - Requires learning period for patterns
@@ -419,14 +419,14 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
 4. **Data quality issues** - Incomplete or inaccurate behavioral data
 5. **False positives** - Anomaly detection may flag normal behavior
 
-## 📈 Performance Notes
+##  Performance Notes
 
 - Analytics are computed asynchronously for better performance
 - Cached results are refreshed based on data freshness requirements
 - Machine learning models are updated periodically
 - Large datasets may require paginated responses
 
-## 🔒 Security and Privacy
+##  Security and Privacy
 
 - **Data Anonymization**: Personal data is anonymized for analysis
 - **Encryption**: All analytics data is encrypted at rest
@@ -434,14 +434,14 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
 - **Compliance**: GDPR, CCPA, and other privacy regulation compliance
 - **Audit Trail**: All analytics access is logged and audited
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **User Management**: User data source for analytics
 - **Access Request Workflow**: Behavioral data influences approval
 - **Conditional Access**: Risk scores affect access decisions
 - **Entity Management**: Analytics are scoped to entities
 
-## 🎯 Analytics Configuration
+##  Analytics Configuration
 
 ### Data Collection
 - **Login Events**: Track login times, locations, devices
@@ -455,7 +455,7 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
 - **Consent Management**: User consent tracking
 - **Data Minimization**: Collect only necessary data
 
-## 📊 Monitoring and Metrics
+##  Monitoring and Metrics
 
 ### Analytics Quality Metrics
 - **Baseline Confidence**: Accuracy of behavioral baselines
@@ -469,7 +469,7 @@ curl -X GET http://localhost:8080/api/v1/analytics/users/user-id/risk | \
 - **Storage Utilization**: Analytics data storage usage
 - **API Response Times**: Analytics API performance
 
-## 🔄 Advanced Features
+##  Advanced Features
 
 ### Machine Learning Models
 - **Behavioral Clustering**: Group users by behavior patterns

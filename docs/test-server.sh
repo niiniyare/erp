@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Starting AWO ERP Documentation Server Test..."
+echo " Starting AWO ERP Documentation Server Test..."
 
 # Start the server in the background
 cd /data/data/com.termux/files/home/project/erp/docs
@@ -41,8 +41,8 @@ curl -s -o /dev/null -w "Schema CSS: HTTP %{http_code}\n" http://localhost:8082/
 
 echo ""
 echo "✅ Test complete!"
-echo "📖 Documentation available at: http://localhost:8082"
-echo "🗄️ Database schema at: http://localhost:8082/schema/"
+echo " Documentation available at: http://localhost:8082"
+echo "️ Database schema at: http://localhost:8082/schema/"
 
 # Keep server running or stop it
 echo ""

@@ -4,7 +4,7 @@
 **SCOPE**: All text input variants, validation, and interaction patterns  
 **TARGET AUDIENCE**: Developers implementing form controls
 
-## 📋 Component Overview
+##  Component Overview
 
 The Input component is the fundamental text entry element for forms and data collection. It provides type-safe validation, accessibility compliance, and consistent styling across all input types.
 
@@ -13,7 +13,7 @@ The Input component is the fundamental text entry element for forms and data col
 - **Related Schemas**: `InputColorControlSchema.json`, `HiddenControlSchema.json`
 - **Base Interface**: Form control with validation
 
-## 🎨 Input Types
+##  Input Types
 
 ### Text Input (Default)
 **Purpose**: General text entry and string data collection
@@ -113,8 +113,8 @@ templ PasswordInput(props InputProps) {
                     class="input-toggle"
                     @click="showPassword = !showPassword"
                     :aria-label="showPassword ? 'Hide password' : 'Show password'">
-                    <span x-show="!showPassword">👁️</span>
-                    <span x-show="showPassword">🙈</span>
+                    <span x-show="!showPassword">️</span>
+                    <span x-show="showPassword"></span>
                 </button>
             }
         </div>
@@ -227,7 +227,7 @@ templ SearchInput(props InputProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -318,7 +318,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Input Styles
 ```css
@@ -638,7 +638,7 @@ templ ValidatedInput(props InputProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -795,7 +795,7 @@ templ AccessibleInput(props InputProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -883,7 +883,7 @@ test.describe('Input Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Basic Form Input
 ```go
@@ -958,7 +958,7 @@ templ AdvancedInputs() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Form Group](../../molecules/form-group/)**: Input with enhanced layout
 - **[Validation](../../molecules/validation/)**: Advanced validation patterns

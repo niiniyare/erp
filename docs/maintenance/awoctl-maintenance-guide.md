@@ -259,12 +259,12 @@ awoctl new module audit_sample_reporting --with-docs --with-tests
 **Response Templates**:
 ```
 # Quick help template
-👋 Hi! For quick issues, check our FAQ: [link]
+ Hi! For quick issues, check our FAQ: [link]
 For generation problems, try: `awoctl validate project`
 Still stuck? Share your command and error message!
 
 # Escalation template  
-🔧 This looks like a template issue. Tagging @template-stewards
+ This looks like a template issue. Tagging @template-stewards
 Please provide: awoctl version, command used, full error output
 ```
 

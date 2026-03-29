@@ -4,7 +4,7 @@
 **SCOPE**: Signature capture, digital signing, document approval, and identity verification  
 **TARGET AUDIENCE**: Developers implementing digital signatures, document approval workflows, and identity verification features
 
-## 📋 Component Overview
+##  Component Overview
 
 Input Signature provides comprehensive digital signature functionality with drawing pad, image upload, text signatures, and verification features. Essential for document signing and approval workflows in ERP systems.
 

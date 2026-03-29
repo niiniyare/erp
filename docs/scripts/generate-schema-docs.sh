@@ -40,7 +40,7 @@ if [[ ! -f "$DRIVER_FILE" ]]; then
 fi
 
 # Run SchemaSpy
-echo "🚀 Generating database documentation for schema '$DB_SCHEMA'..."
+echo " Generating database documentation for schema '$DB_SCHEMA'..."
 cd "$SCHEMASPY_DIR"
 
 java -jar "$JAR_FILE" \

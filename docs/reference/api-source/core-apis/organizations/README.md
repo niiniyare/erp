@@ -2,7 +2,7 @@
 
 The Organization Management API provides  functionality for managing organizational structures, hierarchies, and entities within the AWO ERP System. This API supports complex organizational relationships, department management, and hierarchical data structures.
 
-## 📋 Overview
+##  Overview
 
 **Base URL**: `/api/v1/organizations`
 
@@ -16,7 +16,7 @@ The Organization Management API provides  functionality for managing organizatio
 - Organization type classification
 - Nested organization relationships
 
-## 🔗 Available Endpoints
+##  Available Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -27,7 +27,7 @@ The Organization Management API provides  functionality for managing organizatio
 | `GET` | `/api/v1/organizations/{id}/hierarchy` | Get organization hierarchy |
 | `PATCH` | `/api/v1/organizations/{id}/archive` | Archive organization |
 
-## 📊 Data Models
+##  Data Models
 
 ### Organization Object
 ```json
@@ -74,7 +74,7 @@ The Organization Management API provides  functionality for managing organizatio
 }
 ```
 
-## 🚀 Quick Examples
+##  Quick Examples
 
 ### Create Organization
 ```bash
@@ -181,7 +181,7 @@ curl -X PATCH http://localhost:8080/api/v1/organizations/550e8400-e29b-41d4-a716
   }'
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Organization Types
 
@@ -216,7 +216,7 @@ curl -X PATCH http://localhost:8080/api/v1/organizations/550e8400-e29b-41d4-a716
 curl -X GET "http://localhost:8080/api/v1/organizations?organization_type=DEPARTMENT&status=ACTIVE&limit=5" | jq .
 ```
 
-## 🏗️ Hierarchical Operations
+## ️ Hierarchical Operations
 
 ### Building Organization Hierarchy
 ```bash
@@ -262,7 +262,7 @@ curl -X GET http://localhost:8080/api/v1/organizations/$CORP_ID/hierarchy?depth=
 curl -X GET http://localhost:8080/api/v1/organizations/$CORP_ID/hierarchy?depth=1 | jq .
 ```
 
-## 🚨 Error Handling
+##  Error Handling
 
 ### Common Error Responses
 
@@ -323,7 +323,7 @@ curl -X GET http://localhost:8080/api/v1/organizations/$CORP_ID/hierarchy?depth=
 - Maximum hierarchy depth: 10 levels
 - Archived organizations cannot have new children
 
-## 🔍 Testing
+##  Testing
 
 ### Basic CRUD Operations Test
 ```bash
@@ -384,7 +384,7 @@ curl -X GET http://localhost:8080/api/v1/organizations/$CORP_ID/hierarchy | jq .
 echo "=== Hierarchy test completed ==="
 ```
 
-## 📊 Performance Considerations
+##  Performance Considerations
 
 ### Caching Strategy
 - Organization data cached for 30 minutes
@@ -401,13 +401,13 @@ echo "=== Hierarchy test completed ==="
 - Minimize deep hierarchy queries
 - Use appropriate filters to reduce result sets
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **[User Management API](../users/README.md)** - Users belong to organizations
 - **[Entity Management API](../entities/README.md)** - Entities are organization-scoped
 - **[Tenant Management API](../tenants/README.md)** - Organizations belong to tenants
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - **[curl Examples](curl-examples.md)** - Complete curl command examples
 - **[Testing Scripts](../../utilities/scripts/test-organizations.sh)** - Automated testing script

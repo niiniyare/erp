@@ -4,7 +4,7 @@
 **SCOPE**: Data tables, column management, sorting, row operations, and data visualization  
 **TARGET AUDIENCE**: Developers implementing data display tables, reporting interfaces, and structured data presentation
 
-## 📋 Component Overview
+##  Component Overview
 
 Table provides comprehensive data table functionality with column configuration, sorting, selection, row operations, and responsive design. Essential for displaying structured data in ERP systems without the full CRUD functionality.
 

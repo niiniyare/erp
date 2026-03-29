@@ -13,7 +13,7 @@ import (
 	"awo.so/internal/core/iam/domain"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // SSORepository defines the persistence port for SSO provider configurations.
 // All methods use current_tenant_id() via the DB session — the caller must
@@ -33,7 +33,7 @@ type SSORepository interface {
 	ListProviders(ctx context.Context) ([]*domain.SSOProvider, error)
 }
 
-// ─── Adapter (implementation) ─────────────────────────────────────────────────
+// Adapter (implementation)
 
 type ssoRepo struct {
 	store db.Store
@@ -129,7 +129,7 @@ func (r *ssoRepo) ListProviders(ctx context.Context) ([]*domain.SSOProvider, err
 	return out, err
 }
 
-// ─── Mapping helpers ──────────────────────────────────────────────────────────
+// Mapping helpers
 
 func rowToSSOProvider(row *db.SsoProvider) (*domain.SSOProvider, error) {
 	extra := make(map[string]string)

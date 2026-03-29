@@ -4,7 +4,7 @@
 **SCOPE**: Option arrays, collections management, filtering, sorting, and bulk operations  
 **TARGET AUDIENCE**: Developers implementing select dropdowns, radio groups, checkbox groups, and multi-choice UI components
 
-## 📋 Component Overview
+##  Component Overview
 
 The Options component represents a collection of selectable items used in choice-based UI components. It provides array management, filtering, sorting, searching, and bulk operations on option collections while maintaining performance with large datasets and supporting dynamic loading patterns.
 
@@ -13,7 +13,7 @@ The Options component represents a collection of selectable items used in choice
 - **Related Schemas**: `Option.json`, `BaseApiObject.json`
 - **Base Interface**: Array of Option items for choice components
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Options component is configured as an array of Option objects that conform to the `Options.json` schema. It provides collection management for all choice-based UI components.
 
@@ -1035,7 +1035,7 @@ templ RadioOptionsRenderer(name string, options Options, depth int) {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1244,7 +1244,7 @@ describe('Options Performance', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Product Category Options
 ```go
@@ -1287,7 +1287,7 @@ func GetLocationOptions(country string) Options {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Option](../option/)** - Individual option items
 - **[Select](../../molecules/select/)** - Dropdown selection with options

@@ -14,7 +14,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Re-export: Domain Types ──────────────────────────────────────────────────
+// Re-export: Domain Types
 
 type (
 	// Identity
@@ -70,7 +70,7 @@ type (
 	Error = domain.Error
 )
 
-// ─── Re-export: Constants ─────────────────────────────────────────────────────
+// Re-export: Constants
 
 // casbinModel exposes the Casbin CONF model string for package-level tests.
 const casbinModel = domain.CasbinModel
@@ -105,7 +105,7 @@ const (
 	LocalsKeyPrincipal = domain.LocalsKeyPrincipal
 )
 
-// ─── Re-export: Errors ────────────────────────────────────────────────────────
+// Re-export: Errors
 
 var (
 	ErrForbidden      = domain.ErrForbidden
@@ -114,7 +114,7 @@ var (
 	ErrPolicyConflict = domain.ErrPolicyConflict
 )
 
-// ─── Re-export: Functions ─────────────────────────────────────────────────────
+// Re-export: Functions
 
 var (
 	// Subject helpers
@@ -140,7 +140,7 @@ var (
 	AllEmploymentStatuses   = domain.AllEmploymentStatuses
 )
 
-// ─── Re-export: Service Interfaces ───────────────────────────────────────────
+// Re-export: Service Interfaces
 
 type (
 	UserService    = iamservice.UserService
@@ -154,7 +154,7 @@ type (
 	Service = iamservice.AuthzService
 )
 
-// ─── Re-export: Repository Interfaces ────────────────────────────────────────
+// Re-export: Repository Interfaces
 
 type (
 	UserRepository    = repository.UserRepository
@@ -164,7 +164,7 @@ type (
 	APIKeyRepository  = repository.APIKeyRepository
 )
 
-// ─── Re-export: AuthzConfig ───────────────────────────────────────────────────
+// Re-export: AuthzConfig
 
 // Config is the constructor config for the AuthzService (Casbin).
 type Config = iamservice.AuthzConfig
@@ -175,7 +175,7 @@ type UserConfig = iamservice.UserConfig
 // SSOConfig is the constructor config for the SSOService.
 type SSOConfig = iamservice.SSOConfig
 
-// ─── Constructors (wire entry points) ────────────────────────────────────────
+// Constructors (wire entry points)
 
 // NewUserRepository constructs a cache-backed Postgres UserRepository.
 func NewUserRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) UserRepository {
@@ -184,13 +184,13 @@ func NewUserRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Se
 
 // NewUserService constructs a UserService with default brute-force config.
 // Cache is handled by the repository — the service receives no cache dependency.
-func NewUserService(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider) UserService {
-	return iamservice.NewUserService(repo, tracer, m)
+func NewUserService(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider, log logger.Logger) UserService {
+	return iamservice.NewUserService(repo, tracer, m, log)
 }
 
 // NewUserServiceWithConfig constructs a UserService with explicit brute-force config.
-func NewUserServiceWithConfig(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider, cfg UserConfig) UserService {
-	return iamservice.NewUserServiceWithConfig(repo, tracer, m, cfg)
+func NewUserServiceWithConfig(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider, cfg UserConfig, log logger.Logger) UserService {
+	return iamservice.NewUserServiceWithConfig(repo, tracer, m, cfg, log)
 }
 
 // New constructs a fully initialised AuthzService backed by PostgreSQL via Casbin.

@@ -14,7 +14,7 @@ The Policy Management API enables business users to create, manage, and test com
 - **Impact Analysis**: Understand policy changes before deployment
 - **A/B Testing**: Safe policy testing and gradual rollouts
 
-## 🔄 **Latest Enhancement: Policy Manager CRUD & Analytics** 
+##  **Latest Enhancement: Policy Manager CRUD & Analytics** 
 **Date**: August 25, 2025
 
 ### ** Policy Service Implementation**

@@ -78,7 +78,7 @@ const (
 // filtering without additional DB round-trips.
 //
 // Application of entity scope in repositories
-// ─────────────────────────────────────────────
+
 //
 //	switch sess.EntityScope.Type {
 //	case domain.EntityScopeAll:
@@ -113,14 +113,14 @@ type EntityScope struct {
 // as JSONB.
 //
 // Why snapshot at login?
-// ───────────────────────
+
 //
 //	Resolving flags and settings once at login and embedding the result in the
 //	session row avoids per-request lookups against the settings / feature-flag
 //	stores.  Handlers simply read sess.Configuration.Flags["hr.payroll_v2"].
 //
 // Staleness trade-off
-// ────────────────────
+
 //
 //	Long-lived sessions may see stale configuration if a flag or setting
 //	changes after login.  Mitigate with short session TTLs for
@@ -166,7 +166,7 @@ func DefaultConfiguration() Configuration {
 // It maps 1:1 to a row in the user_sessions table.
 //
 // Security invariants
-// ────────────────────
+
 //
 //   - TokenHash stores sha256hex(raw_token).  The raw token is returned to the
 //     client exactly once at login and is NEVER persisted anywhere.  The hash
@@ -180,7 +180,7 @@ func DefaultConfiguration() Configuration {
 //     changes to take effect immediately.
 //
 // TenantID vs EntityScope
-// ────────────────────────
+
 //
 //	TenantID is the RLS boundary (Layer 1).  Every DB transaction that uses
 //	this session must execute:
@@ -192,7 +192,7 @@ func DefaultConfiguration() Configuration {
 //	Service methods apply EntityScope filtering in Go before issuing queries.
 //
 // PrincipalID
-// ───────────
+
 //
 //	Non-nil for ActorPortal sessions only.  It identifies the external contact
 //	or party record (e.g. a supplier, customer, or employee on a self-service
@@ -252,7 +252,7 @@ func (s *Session) IsValid() bool {
 //  3. "Is this feature enabled?"            → Configuration.Flags["name"]
 //
 // TenantID vs EntityScope (application layer)
-// ─────────────────────────────────────────────
+
 //
 //	TenantID is the RLS key.  The authn middleware (or a DB middleware it
 //	delegates to) must execute "SET LOCAL app.tenant_id = '<TenantID>'" at
@@ -266,7 +266,7 @@ func (s *Session) IsValid() bool {
 //	scope with an explicit override, but can never bypass RLS.
 //
 // PrincipalID
-// ───────────
+
 //
 //	Mirrors Session.PrincipalID — non-nil for portal users only.
 type ResolvedSession struct {

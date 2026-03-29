@@ -16,13 +16,13 @@ import (
 // AccountStatus is the lifecycle state of a user's login account.
 // It is stored as a typed string so the compiler rejects bare literals in
 // positions that expect an account state.
-//
+// 
 // State transitions
-// ──────────────────
-//
-//	INACTIVE ──► ACTIVE ──► LOCKED      (too many failed login attempts)
-//	         ◄──         ──► SUSPENDED  (manual admin action)
-//	                     ◄── ACTIVE     (admin unlock / password reset)
+
+// 
+// 	INACTIVE ──► ACTIVE ──► LOCKED      (too many failed login attempts)
+// 	         ◄──         ──► SUSPENDED  (manual admin action)
+// 	                     ◄── ACTIVE     (admin unlock / password reset)
 type AccountStatus string
 
 const (
@@ -129,40 +129,40 @@ func AllEmploymentStatuses() []EmploymentStatus {
 // =============================================================================
 
 // User is the aggregate root for a login identity in the IAM bounded context.
-//
+// 
 // Conceptual model
-// ─────────────────
-//
-//	A User is a credential bundle (username + password hash, MFA state,
-//	session settings) that may optionally be linked to a Person and/or an
-//	Employee record:
-//
-//	  User ──(PersonID)──► Person  (the natural person behind the login)
-//	       ──(EmployeeID)─► Employee (the HR record, if this user is staff)
-//
-//	This separation allows non-person system accounts (UserType = "API") and
-//	external portal users (UserType = "PORTAL") to have a User record without
-//	requiring a Person or Employee to exist.
-//
+
+// 
+// 	A User is a credential bundle (username + password hash, MFA state,
+// 	session settings) that may optionally be linked to a Person and/or an
+// 	Employee record:
+// 
+// 	  User ──(PersonID)──► Person  (the natural person behind the login)
+// 	       ──(EmployeeID)─► Employee (the HR record, if this user is staff)
+// 
+// 	This separation allows non-person system accounts (UserType = "API") and
+// 	external portal users (UserType = "PORTAL") to have a User record without
+// 	requiring a Person or Employee to exist.
+// 
 // TenantID vs EntityID
-// ─────────────────────
-//
-//	TenantID is the hard RLS boundary.  Every query against this user's data
-//	must be issued inside a transaction with SET LOCAL awo.tenant_id =
-//	'<TenantID>'.  See actor.go for the full isolation model.
-//
-//	EntityID indicates which entity (branch, department, subsidiary) within
-//	the tenant this user primarily belongs to.  It is the basis for computing
-//	EntityScope at login time; the actual access-breadth decision is made in
-//	the session service by inspecting the user's roles against their entity.
-//
+
+// 
+// 	TenantID is the hard RLS boundary.  Every query against this user's data
+// 	must be issued inside a transaction with SET LOCAL awo.tenant_id =
+// 	'<TenantID>'.  See actor.go for the full isolation model.
+// 
+// 	EntityID indicates which entity (branch, department, subsidiary) within
+// 	the tenant this user primarily belongs to.  It is the basis for computing
+// 	EntityScope at login time; the actual access-breadth decision is made in
+// 	the session service by inspecting the user's roles against their entity.
+// 
 // PrincipalID
-// ───────────
-//
-//	Non-nil for portal users (UserType = "PORTAL" / "CUSTOMER") only.
-//	It identifies the external contact or party record (e.g. a supplier
-//	account, customer profile) that this login credential represents.
-//	Not related to the domain.Principal value object used in Casbin.
+
+// 
+// 	Non-nil for portal users (UserType = "PORTAL" / "CUSTOMER") only.
+// 	It identifies the external contact or party record (e.g. a supplier
+// 	account, customer profile) that this login credential represents.
+// 	Not related to the domain.Principal value object used in Casbin.
 type User struct {
 	ID                    uuid.UUID      `json:"id"`
 	TenantID              uuid.UUID      `json:"tenant_id"`              // RLS key
@@ -190,7 +190,7 @@ type User struct {
 }
 
 // IsLocked reports whether the account is currently in a temporary lockout.
-// A lockout expires automatically when LockoutUntil passes; this method
+// Alockout expires automatically when LockoutUntil passes; this method
 // reflects that without requiring a status column update.
 func (u *User) IsLocked() bool {
 	return u.LockoutUntil != nil && !u.LockoutUntil.IsZero() && u.LockoutUntil.After(time.Now())
@@ -211,16 +211,16 @@ func (u *User) CanAuthenticate() bool {
 
 // Person represents a natural human being associated with a user account or
 // an entity (e.g. a contact on a supplier record).
-//
-// A Person record holds PII (name, national ID, tax ID, date of birth) that
+// 
+// APerson record holds PII (name, national ID, tax ID, date of birth) that
 // is shared across different contexts — the same Person may be linked to an
 // Employee in the HR module and to a user account in the IAM module.
-//
+// 
 // TenantID / EntityID note
-// ─────────────────────────
-//
-//	Same isolation model as User.  TenantID is enforced by RLS; EntityID is
-//	the application-layer scope anchor used to build EntityScope at login.
+
+// 
+// 	Same isolation model as User.  TenantID is enforced by RLS; EntityID is
+// 	the application-layer scope anchor used to build EntityScope at login.
 type Person struct {
 	ID                 uuid.UUID      `json:"id"`
 	TenantID           uuid.UUID      `json:"tenant_id"`   // RLS key
@@ -257,27 +257,27 @@ func (p *Person) GetFullName() string {
 // =============================================================================
 
 // Employee represents an HR employment record linked to a Person.
-//
+// 
 // Relationship to User
-// ─────────────────────
-//
-//	User.EmployeeID → Employee  (a user who is also a member of staff)
-//	Employee.PersonID → Person  (the natural person behind the employment)
-//
+
+// 
+// 	User.EmployeeID → Employee  (a user who is also a member of staff)
+// 	Employee.PersonID → Person  (the natural person behind the employment)
+// 
 // An Employee record can exist without a corresponding User record for staff
 // who do not have system login access (e.g. casual labourers, historical hires).
-//
+// 
 // SecurityLevel
-// ──────────────
-//
-//	A coarse clearance integer (0 = unrestricted, higher = more sensitive).
-//	Used by the ABAC condition evaluator to gate access to high-sensitivity
-//	resources without requiring explicit Casbin policies for every combination.
-//
+
+// 
+// 	A coarse clearance integer (0 = unrestricted, higher = more sensitive).
+// 	Used by the ABAC condition evaluator to gate access to high-sensitivity
+// 	resources without requiring explicit Casbin policies for every combination.
+// 
 // TenantID / EntityID note
-// ─────────────────────────
-//
-//	Same isolation model as User and Person.
+
+// 
+// 	Same isolation model as User and Person.
 type Employee struct {
 	ID               uuid.UUID        `json:"id"`
 	TenantID         uuid.UUID        `json:"tenant_id"` // RLS key
@@ -292,7 +292,7 @@ type Employee struct {
 	SalaryInfo       map[string]any   `json:"salary_info,omitempty"`      // JSONB; not surfaced in public APIs
 	Status           EmploymentStatus `json:"employment_status"`
 	WorkSchedule     map[string]any   `json:"work_schedule,omitempty"`
-	SecurityLevel    int32            `json:"security_level"`              // 0 = default; higher = more sensitive
+	SecurityLevel    int32            `json:"security_level"`              // 0= default; higher = more sensitive
 	AccessAttributes map[string]any   `json:"access_attributes,omitempty"` // ABAC hints forwarded to condition evaluator
 	CreatedAt        time.Time        `json:"created_at"`
 	UpdatedAt        time.Time        `json:"updated_at"`
@@ -313,7 +313,7 @@ func (e *Employee) IsCurrentlyEmployed() bool {
 // UserWithDetails embeds a User with its optionally pre-loaded Person and
 // Employee records.  Used by the session service at login time to build a
 // ResolvedSession, and by the user-detail API endpoint.
-//
+// 
 // Because User is embedded (not a pointer), a zero-value UserWithDetails has a
 // valid User sub-struct.  Person and Employee are pointers because they are
 // optional — not every user has both.
@@ -343,7 +343,7 @@ type UserRole struct {
 // =============================================================================
 
 // CreateUserRequest is the command object for the CreateUser use case.
-//
+// 
 // It contains the minimum information required to mint a new User aggregate.
 // Validation is split between struct tags (for HTTP binding layers) and the
 // explicit Validate() method (for domain rule enforcement that is
@@ -365,12 +365,12 @@ type CreateUserRequest struct {
 }
 
 // Validate enforces domain invariants for user creation.
-//
+// 
 // This method is intentionally minimal — it checks only the rules that live
 // in the domain layer and cannot be expressed as struct tags.  The HTTP
 // handler layer is responsible for running tag-based validation (e.g. via
 // go-playground/validator) before calling this method.
-//
+// 
 // EntityID is checked here explicitly because it is a domain invariant:
 // every user must belong to an entity for EntityScope to be computable at
 // login time.  Without an EntityID the session service cannot determine the
@@ -436,13 +436,13 @@ type ChangePasswordRequest struct {
 }
 
 // CreatePersonRequest is the command object for the CreatePerson use case.
-//
+// 
 // EntityID note
-// ─────────────
-//
-//	The EntityID here anchors the Person to a specific entity within the
-//	tenant for application-layer filtering.  It does NOT affect which tenant
-//	the row belongs to (that is always governed by TenantID via RLS).
+
+// 
+// 	The EntityID here anchors the Person to a specific entity within the
+// 	tenant for application-layer filtering.  It does NOT affect which tenant
+// 	the row belongs to (that is always governed by TenantID via RLS).
 type CreatePersonRequest struct {
 	EntityID           uuid.UUID      `json:"entity_id"   validate:"required"`
 	PersonType         string         `json:"person_type" validate:"required"`
@@ -486,7 +486,7 @@ type MFASetup struct {
 }
 
 // CreateEmployeeRequest is the command object for the CreateEmployee use case.
-//
+// 
 // SecurityLevel defaults to 0 (unrestricted) when not supplied.  Callers
 // should explicitly set a non-zero value for employees in roles that require
 // higher-sensitivity access (e.g. payroll administrators, CFO).
@@ -501,6 +501,6 @@ type CreateEmployeeRequest struct {
 	SalaryInfo       map[string]any   `json:"salary_info,omitempty"`
 	Status           EmploymentStatus `json:"employment_status"`
 	WorkSchedule     map[string]any   `json:"work_schedule,omitempty"`
-	SecurityLevel    int32            `json:"security_level"` // 0 = default; higher = more sensitive
+	SecurityLevel    int32            `json:"security_level"` // 0= default; higher = more sensitive
 	AccessAttributes map[string]any   `json:"access_attributes,omitempty"`
 }

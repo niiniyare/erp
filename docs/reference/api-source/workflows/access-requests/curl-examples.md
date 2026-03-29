@@ -2,7 +2,7 @@
 
 This guide provides  curl commands to test the Access Request Workflow API including conditional access controls and user analytics.
 
-## 🚀 Prerequisites
+##  Prerequisites
 
 1. **Start the Server**
 ```bash
@@ -31,7 +31,7 @@ brew install jq
 choco install jq
 ```
 
-## 📋 API Endpoints Overview
+##  API Endpoints Overview
 
 ### Access Request Workflow
 | Method | Endpoint | Description |
@@ -57,7 +57,7 @@ choco install jq
 | GET | `/api/v1/analytics/users/{id}/insights` | Get personalized insights |
 | POST | `/api/v1/analytics/users/{id}/detect-anomalies` | Detect user anomalies |
 
-## 🔧 Health Check
+##  Health Check
 
 First, verify the server is running:
 
@@ -73,7 +73,7 @@ curl -X GET http://localhost:8080/health | jq .
 # }
 ```
 
-## 🔐 Access Request Workflow Tests
+##  Access Request Workflow Tests
 
 ### 1. Create Access Request
 
@@ -311,7 +311,7 @@ curl -X DELETE http://localhost:8080/api/v1/access-requests/$REQUEST_ID \
 # }
 ```
 
-## 🔒 Conditional Access Tests
+##  Conditional Access Tests
 
 ### 11. Evaluate Conditional Access
 
@@ -479,7 +479,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
   }' | jq .
 ```
 
-## 📊 User Analytics Tests
+##  User Analytics Tests
 
 ### 15. Get User Behavior Analytics
 
@@ -726,7 +726,7 @@ curl -X POST http://localhost:8080/api/v1/access-requests \
 # }
 ```
 
-## 🔄 Complete Test Sequence
+##  Complete Test Sequence
 
 Here's a complete test sequence that exercises all major functionality:
 
@@ -736,7 +736,7 @@ Here's a complete test sequence that exercises all major functionality:
 # Set base URL
 BASE_URL="http://localhost:8080"
 
-echo "🚀 Starting Access Request Workflow API Test Suite..."
+echo " Starting Access Request Workflow API Test Suite..."
 
 # 1. Health check
 echo "1. Health check..."
@@ -826,7 +826,7 @@ curl -s -X POST $BASE_URL/api/v1/analytics/users/00000000-0000-0000-0000-0000000
 echo "✅ Access Request Workflow API test suite completed!"
 ```
 
-## 📝 Notes
+##  Notes
 
 - Replace UUIDs with actual values from your system
 - All endpoints require proper authentication headers
@@ -837,7 +837,7 @@ echo "✅ Access Request Workflow API test suite completed!"
 - Conditional access rules support multiple restriction types
 - Risk assessments are calculated based on behavioral patterns
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 1. **Server not responding**: Check if server is running on port 8080
 2. **Database errors**: Verify database connection and migrations
@@ -846,7 +846,7 @@ echo "✅ Access Request Workflow API test suite completed!"
 5. **Analytics timeouts**: Large datasets may require longer timeouts
 6. **Conditional access evaluation**: Verify rule configuration and context data
 
-## 🛠️ Environment Setup
+## ️ Environment Setup
 
 Before running tests, ensure your environment is set up:
 

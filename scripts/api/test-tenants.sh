@@ -15,11 +15,11 @@ if [ -z "$AUTH_TOKEN" ]; then
   exit 1
 fi
 
-echo "🏢 Testing Tenant API..."
+echo " Testing Tenant API..."
 echo "Base URL: $BASE_URL"
 
 # Test 1: List Tenants
-echo "\n📋 Test 1: List Tenants"
+echo "\n Test 1: List Tenants"
 LIST_RESPONSE=$(curl -s -X GET "$BASE_URL/tenants" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -33,7 +33,7 @@ else
 fi
 
 # Test 2: Create Tenant
-echo "\n📋 Test 2: Create Tenant"
+echo "\n Test 2: Create Tenant"
 CREATE_PAYLOAD='{
   "name": "Test Tenant",
   "slug": "test-tenant-$(date +%s)",
@@ -61,7 +61,7 @@ else
 fi
 
 # Test 3: Get Tenant Details
-echo "\n📋 Test 3: Get Tenant Details"
+echo "\n Test 3: Get Tenant Details"
 GET_RESPONSE=$(curl -s -X GET "$BASE_URL/tenants/$TENANT_ID" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -73,7 +73,7 @@ else
 fi
 
 # Test 4: Update Tenant Settings
-echo "\n📋 Test 4: Update Tenant Settings"
+echo "\n Test 4: Update Tenant Settings"
 UPDATE_PAYLOAD='{
   "settings": {
     "max_users": 200,
@@ -95,7 +95,7 @@ else
 fi
 
 # Test 5: Tenant Isolation Check
-echo "\n📋 Test 5: Tenant Isolation Check"
+echo "\n Test 5: Tenant Isolation Check"
 ISOLATION_RESPONSE=$(curl -s -X GET "$BASE_URL/tenants/$TENANT_ID/users" \
   -H "Authorization: Bearer $AUTH_TOKEN" \
   -H "X-Tenant-ID: $TENANT_ID")
@@ -108,7 +108,7 @@ else
 fi
 
 # Test 6: Delete Tenant (Cleanup)
-echo "\n📋 Test 6: Delete Tenant (Cleanup)"
+echo "\n Test 6: Delete Tenant (Cleanup)"
 DELETE_RESPONSE=$(curl -s -X DELETE "$BASE_URL/tenants/$TENANT_ID" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -119,4 +119,4 @@ else
   echo "Response: $DELETE_RESPONSE"
 fi
 
-echo "\n🎉 Tenant API tests completed!"
+echo "\n Tenant API tests completed!"

@@ -55,6 +55,14 @@ var CoreServiceProviderSet = wire.NewSet(
 	NewSessionRepository,
 	NewSessionService,
 
+	// Audit
+	NewAuditRepository,
+	NewAuditService,
+
+	// API keys
+	NewAPIKeyRepository,
+	NewAPIKeyService,
+
 	// Finance services
 	NewFinanceServices,
 )

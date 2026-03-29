@@ -4,7 +4,7 @@
 **SCOPE**: QR code generation, data encoding, mobile integration, and quick access functionality  
 **TARGET AUDIENCE**: Developers implementing QR code features, mobile integration, and quick access systems
 
-## 📋 Component Overview
+##  Component Overview
 
 QR Code provides comprehensive QR code functionality with generation, customization, scanning integration, and data encoding. Essential for mobile-friendly ERP features and quick access systems.
 

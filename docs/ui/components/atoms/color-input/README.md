@@ -4,7 +4,7 @@
 **SCOPE**: All color input variants, formats, and picker features  
 **TARGET AUDIENCE**: Developers implementing color selection, design tools, and customization interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 The Color Input component provides intuitive color selection and input capabilities for design systems and customization interfaces. It supports multiple color formats, preset palettes, and custom color entry while maintaining accessibility and usability standards.
 
@@ -14,7 +14,7 @@ The Color Input component provides intuitive color selection and input capabilit
  , [ValidationSchema.json](../../../Schema/definitions/) 
 - **Base Interface**: Form control element for color value management
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Color Input component is configured using JSON that conforms to the `InputColorControlSchema.json`. The JSON configuration is then rendered to Templ components with proper type safety and validation.
 
@@ -880,7 +880,7 @@ type GradientStop struct {
 }
 ```
 
-## 🔧 Color Utilities
+##  Color Utilities
 
 ### Color Conversion Functions
 ```go
@@ -1044,7 +1044,7 @@ func NormalizeColor(color string, targetFormat ColorFormat) (string, error) {
 }
 ```
 
-## 🎨 CSS Styles
+##  CSS Styles
 
 ### Basic Color Input Styles
 ```css
@@ -1542,7 +1542,7 @@ func NormalizeColor(color string, targetFormat ColorFormat) (string, error) {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1751,7 +1751,7 @@ describe('Color Input Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Theme Color Selector
 ```go
@@ -1878,7 +1878,7 @@ templ BrandingForm() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Input](../input/)** - Text input controls
 - **[Form](../../molecules/form/)** - Form containers

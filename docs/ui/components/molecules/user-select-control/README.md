@@ -4,7 +4,7 @@
 **SCOPE**: User selection, employee assignment, team member picking, and user management interfaces  
 **TARGET AUDIENCE**: Developers implementing user assignment, team management, and personnel selection features
 
-## 📋 Component Overview
+##  Component Overview
 
 User Select Control provides specialized functionality for selecting users, employees, and team members with support for search, filtering, multi-selection, and integration with user management systems. Optimized for ERP user assignment scenarios.
 

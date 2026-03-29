@@ -4,7 +4,7 @@
 **SCOPE**: Custom pickers, data selection, entity picking, and specialized selection workflows  
 **TARGET AUDIENCE**: Developers implementing custom selection interfaces, entity pickers, and specialized data selection features
 
-## 📋 Component Overview
+##  Component Overview
 
 Picker Control provides a generic, configurable picker interface for selecting custom data types with support for search, filtering, pagination, multi-selection, and custom rendering. Essential for specialized selection scenarios in ERP systems.
 

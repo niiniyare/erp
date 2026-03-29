@@ -2,19 +2,18 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/settings/domain"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // ConfigurationRepository provides data access for configuration management
@@ -125,7 +124,7 @@ func (r *configurationRepository) ResolveConfiguration(ctx context.Context, req 
 		EntityID:   entityID,
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrConfigurationNotFound
 		}
 		return nil, fmt.Errorf("failed to resolve configuration: %w", err)
@@ -316,7 +315,7 @@ func (r *configurationRepository) GetTenantConfiguration(ctx context.Context, mo
 
 	result, err := r.store.GetTenantConfigurations(ctx)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrConfigurationNotFound
 		}
 		return nil, fmt.Errorf("failed to get tenant configurations: %w", err)
@@ -362,7 +361,7 @@ func (r *configurationRepository) GetEntityConfiguration(ctx context.Context, en
 
 	result, err := r.store.GetEntityConfigurations(ctx, entityID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrConfigurationNotFound
 		}
 		return nil, fmt.Errorf("failed to get entity configurations: %w", err)

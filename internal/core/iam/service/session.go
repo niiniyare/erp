@@ -21,7 +21,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // SessionService handles Login / ValidateSession / Logout.
 type SessionService interface {
@@ -52,7 +52,7 @@ type SessionService interface {
 	LoginWithSSO(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error)
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// Implementation
 
 type sessionService struct {
 	identity UserService
@@ -102,7 +102,7 @@ func NewSessionServiceWithConfig(
 // when MFA is enabled, returns (nil, pendingToken, ErrMFARequired).
 // In the MFA case, the caller must call CompleteMFALogin with the pending token
 // and the user's TOTP code.
-//
+// 
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 func (s *sessionService) Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.session.Login")
@@ -376,7 +376,7 @@ func (s *sessionService) LogoutAllForTenant(ctx context.Context, tenantID uuid.U
 	return nil
 }
 
-// ─── Permission computation ───────────────────────────────────────────────────
+// Permission computation
 
 func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User) (map[string]bool, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildPermissions")
@@ -440,7 +440,7 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 	return perms, nil
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+// Helpers
 
 func generateToken() (rawToken, hash string, err error) {
 	b := make([]byte, 32)

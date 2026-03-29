@@ -4,7 +4,7 @@
 **SCOPE**: Component library, styling, customization, schema integration  
 **TARGET AUDIENCE**: Frontend developers, component builders, designers
 
-## 🎨 Flowbite Overview
+##  Flowbite Overview
 
 [Flowbite](https://flowbite.com) is our primary UI component library, built on TailwindCSS, providing consistent design patterns and pre-built components for the ERP system.
 
@@ -15,7 +15,7 @@
 - **Performance**: Optimized CSS and minimal JavaScript
 - **Documentation**: Comprehensive component examples
 
-## 🏗️ Integration Architecture
+## ️ Integration Architecture
 
 ### Schema-Driven Flowbite Components
 ```
@@ -28,7 +28,7 @@ Our system enhances Flowbite by adding:
 - **HTMX Integration**: Server-side interactivity patterns
 - **Multi-Tenant**: Tenant-aware styling and theming
 
-## 📦 Core Component Categories
+##  Core Component Categories
 
 ### 1. Form Components
 Essential interactive elements for data input and user actions.
@@ -152,7 +152,7 @@ type ModalProps struct {
 }
 ```
 
-## 🎨 Theme Customization
+##  Theme Customization
 
 ### Brand Colors Integration
 ```go
@@ -213,7 +213,7 @@ func generateDarkModeClasses(component ComponentType) string {
 }
 ```
 
-## 🔧 Schema Integration Patterns
+##  Schema Integration Patterns
 
 ### Component Factory Integration
 ```go
@@ -308,7 +308,7 @@ func generateFlowbiteButtonCSS(props ButtonProps) string {
 }
 ```
 
-## 🚀 HTMX Integration Patterns
+##  HTMX Integration Patterns
 
 ### Server-Side Form Handling
 ```go
@@ -374,7 +374,7 @@ templ FlowbiteDataTable() {
 }
 ```
 
-## 📱 Responsive Design with Flowbite
+##  Responsive Design with Flowbite
 
 ### Mobile-First Components
 ```go
@@ -460,7 +460,7 @@ templ ResponsiveNavbar(props NavbarProps) {
 }
 ```
 
-## 🧪 Testing Flowbite Components
+##  Testing Flowbite Components
 
 ### Component Testing
 ```go
@@ -498,7 +498,7 @@ npx playwright test tests/flowbite/buttons.spec.ts
 npx playwright test tests/flowbite/responsive.spec.ts
 ```
 
-## 📚 Component Examples
+##  Component Examples
 
 ### Complete Examples Directory
 All Flowbite components have been organized into example collections:
@@ -510,12 +510,12 @@ All Flowbite components have been organized into example collections:
 - **[Advanced Components](../schemas/examples/flowbite-demos/advanced/)**: Modals, dropdowns, datepickers
 
 ### Quick Reference Links
-- 📋 **[Button Examples](../schemas/examples/flowbite-demos/basic/buttons.md)**
-- 📝 **[Form Examples](../schemas/examples/flowbite-demos/forms/complete-forms.md)**
-- 📊 **[Table Examples](../schemas/examples/flowbite-demos/layout/tables.md)**
-- 🧭 **[Navigation Examples](../schemas/examples/flowbite-demos/navigation/navbar.md)**
+-  **[Button Examples](../schemas/examples/flowbite-demos/basic/buttons.md)**
+-  **[Form Examples](../schemas/examples/flowbite-demos/forms/complete-forms.md)**
+-  **[Table Examples](../schemas/examples/flowbite-demos/layout/tables.md)**
+-  **[Navigation Examples](../schemas/examples/flowbite-demos/navigation/navbar.md)**
 
-## 🚀 Performance Optimization
+##  Performance Optimization
 
 ### CSS Optimization
 ```javascript
@@ -558,7 +558,7 @@ templ LazyFlowbiteTable(props TableProps) {
 }
 ```
 
-## 📚 Migration Guide
+##  Migration Guide
 
 ### From Raw Flowbite to Schema-Driven
 ```go
@@ -583,7 +583,7 @@ component, _ := factory.RenderToTempl(ctx, "FlowbiteButtonSchema", props)
 4. **Test component generation**
 5. **Replace raw HTML with schema components**
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **[Styling Approach](../fundamentals/styling-approach.md)**: CSS architecture and methodology
 - **[Component Lifecycle](../fundamentals/component-lifecycle.md)**: Component creation process

@@ -4,7 +4,7 @@
 **SCOPE**: City picking, geographic filtering, location-based data entry, and regional selection  
 **TARGET AUDIENCE**: Developers implementing location-based forms, address management, and geographic data entry
 
-## 📋 Component Overview
+##  Component Overview
 
 Input City Control provides specialized city selection functionality with autocomplete, country/state filtering, and geographic validation. Essential for address forms and location-based data entry in ERP systems.
 

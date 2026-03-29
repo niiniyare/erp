@@ -6,7 +6,7 @@
 **TARGET AUDIENCE**: UX developers implementing the ERP design system
 <!-- LLM-CONTEXT-END -->
 
-## 🎯 Implementation Overview
+##  Implementation Overview
 
 This guide provides a **complete development workflow** for implementing the ERP UI design system using **Templ + HTMX + Alpine.js + Flowbite**, combining the visual styles and page architectures into **production-ready implementations**.
 
@@ -19,7 +19,7 @@ This guide provides a **complete development workflow** for implementing the ERP
 
 ---
 
-## 🚀 Quick Start Implementation
+##  Quick Start Implementation
 
 <!-- LLM-SECTION-QUICKSTART-START -->
 ### **1. Project Setup**
@@ -289,7 +289,7 @@ document.body.addEventListener('htmx:error', function(evt) {
 
 ---
 
-## 🧩 Component Implementation Patterns
+##  Component Implementation Patterns
 
 <!-- LLM-SECTION-COMPONENTS-START -->
 ### **1. Metric Card Component**
@@ -735,7 +735,7 @@ function dataTable() {
 
 ---
 
-## 📱 Page Implementation Examples
+##  Page Implementation Examples
 
 <!-- LLM-SECTION-PAGES-START -->
 ### **1. Dashboard Page Implementation**
@@ -1107,7 +1107,7 @@ function contactsState() {
 
 ---
 
-## 🚀 Performance & Production Optimization
+##  Performance & Production Optimization
 
 <!-- LLM-SECTION-PERFORMANCE-START -->
 ### **1. Lazy Loading Implementation**
@@ -1344,7 +1344,7 @@ function retryFailedRequest(element, retries = 3) {
 
 ---
 
-## 🎯 Quick Implementation Checklist
+##  Quick Implementation Checklist
 
 ### **Essential Components** ✅
 - [ ] **Master Layout** - Three-zone responsive layout

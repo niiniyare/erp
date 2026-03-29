@@ -4,7 +4,7 @@
 **SCOPE**: Image upload, preview, editing, gallery management, and media asset handling  
 **TARGET AUDIENCE**: Developers implementing image upload features, media management, and visual content handling
 
-## 📋 Component Overview
+##  Component Overview
 
 Image Control provides comprehensive image handling functionality with upload, preview, cropping, resizing, and gallery features. Essential for managing visual content and media assets in ERP systems.
 

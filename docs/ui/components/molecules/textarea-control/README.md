@@ -4,7 +4,7 @@
 **SCOPE**: All textarea variants, character limits, auto-sizing, and validation patterns  
 **TARGET AUDIENCE**: Developers implementing text input areas, forms, and content editing interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Textarea Control provides multi-line text input functionality with features like character counting, auto-resizing, validation, and advanced text formatting options. Essential for capturing longer user input in ERP forms.
 

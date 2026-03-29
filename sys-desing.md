@@ -62,7 +62,7 @@ Module
 - **Resource**: A business entity that the service manages (e.g., within the Accounts Payable service, "Invoice" is a resource). Resources are the nouns—the things you create, read, update, and delete.
 
 - **Action**: An operation you can perform on a resource (e.g., "Process Supplier Invoice," "Schedule Payment"). Actions are the verbs—what you actually do with resources.
-  - **🔄 Temporal Activity**: Simple actions that operate within a single service
+  - ** Temporal Activity**: Simple actions that operate within a single service
   - **⚙️ Temporal Workflow**: Complex actions that orchestrate multiple services or require long-running processes with compensation logic
 
 - **Attributes**: Properties that control how an action behaves (e.g., payment terms, approval requirements, validation rules, status transitions). Attributes define the configuration and business rules for each action.
@@ -86,7 +86,7 @@ Modules don't operate in isolation. They share data and trigger actions in other
    - Example: When Procurement creates a Purchase Order, it flows to Inventory Management (to expect goods) and Financial Management (to anticipate payment)
 
 2. **Event-Driven Integration**: Actions in one module trigger automatic actions in other modules
-   - Example: When a Goods Received Note is processed in Inventory 🔄, it automatically triggers invoice matching in Accounts Payable 🔄
+   - Example: When a Goods Received Note is processed in Inventory , it automatically triggers invoice matching in Accounts Payable 
 
 3. **Workflow Orchestration**: Complex business processes that span multiple modules are managed as Temporal workflows
    - Example: Order-to-Cash workflow ⚙️ coordinates CRM, Inventory, Shipping, and Financial Management
@@ -121,7 +121,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Create Account** 🔄 (Temporal Activity)
+1. **Create Account**  (Temporal Activity)
    - Attributes: Account code, account name, account type (asset, liability, equity, revenue, expense), parent account (for hierarchical organization), currency, active/inactive status
    - Process: Validates account code uniqueness, ensures proper hierarchy, assigns default tax treatment
    - Temporal: Simple validation and persistence within General Ledger service
@@ -132,7 +132,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Outcomes: Updates account balances, creates transaction history, affects trial balance
    - Temporal: Workflow ensures atomicity across multiple account updates, supports compensation if posting fails
 
-3. **Generate Trial Balance** 🔄 (Temporal Activity)
+3. **Generate Trial Balance**  (Temporal Activity)
    - Attributes: As-of date, account filter, currency, include zero-balance accounts
    - Process: Aggregates all posted entries up to specified date, calculates running balances, validates balance equality
    - Outcomes: Produces report showing all account balances
@@ -161,7 +161,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Outcomes: Payment queued in payment run, cash flow forecast updated
    - Temporal: Orchestrates cash availability check, bank validation, discount calculation, and payment queue management
 
-3. **Send Customer Invoice** 🔄 (Temporal Activity)
+3. **Send Customer Invoice**  (Temporal Activity)
    - Attributes: Customer identifier, invoice date, payment terms, line items, tax calculations, delivery method, invoice template
    - Process: Generates invoice document, calculates totals and taxes, creates receivable in general ledger, sends via specified channel
    - Outcomes: Customer invoiced, revenue recognized, receivable recorded
@@ -184,7 +184,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Record Asset Acquisition** 🔄 (Temporal Activity)
+1. **Record Asset Acquisition**  (Temporal Activity)
    - Attributes: Asset name, asset category, acquisition date, purchase cost, supplier, expected useful life, depreciation method, salvage value, location
    - Process: Creates asset record, assigns unique asset tag, posts acquisition to asset account, initiates depreciation schedule
 
@@ -194,7 +194,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Outcomes: Asset book value reduced, depreciation expense recorded
    - Temporal: Scheduled monthly/quarterly workflow that processes all assets in batches
 
-3. **Schedule Maintenance** 🔄 (Temporal Activity)
+3. **Schedule Maintenance**  (Temporal Activity)
    - Attributes: Maintenance type, frequency, next due date, estimated cost, service provider
 
 4. **Process Asset Disposal** ⚙️ (Temporal Workflow)
@@ -214,7 +214,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Create PO** 🔄 (Temporal Activity)
+1. **Create PO**  (Temporal Activity)
    - Attributes: Supplier identifier, PO date, delivery date, delivery address, line items, payment terms, currency, priority level
 
 2. **Route for Approval** ⚙️ (Temporal Workflow)
@@ -222,10 +222,10 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Determines required approvers based on PO value, sends notification to first approver, tracks approval status, handles rejections
    - Temporal: Durable approval workflow with timeout handling and escalation logic
 
-3. **Send to Supplier** 🔄 (Temporal Activity)
+3. **Send to Supplier**  (Temporal Activity)
    - Attributes: Transmission method, supplier contact, PO document template, acknowledgment required
 
-4. **Track PO Status** 🔄 (Temporal Activity)
+4. **Track PO Status**  (Temporal Activity)
    - Attributes: Current status, status history, expected vs. actual delivery dates, exceptions
 
 5. **Process GRN (Goods Received Note)** ⚙️ (Temporal Workflow)
@@ -239,10 +239,10 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Check Real-time Levels** 🔄 (Temporal Activity)
+1. **Check Real-time Levels**  (Temporal Activity)
    - Attributes: Item identifier, warehouse/location filter, include reserved quantities, include in-transit quantities
 
-2. **Set Reorder Points** 🔄 (Temporal Activity)
+2. **Set Reorder Points**  (Temporal Activity)
    - Attributes: Item identifier, warehouse, reorder level, reorder quantity, lead time, safety stock level
 
 3. **Perform Cycle Count** ⚙️ (Temporal Workflow)
@@ -250,12 +250,12 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Generates count sheets, assigns to counters, records counted quantities, compares to system quantities, identifies variances, requires investigation for significant discrepancies
    - Temporal: Long-running workflow that coordinates count execution, variance investigation, and adjustment approval
 
-4. **Adjust Stock** 🔄 (Temporal Activity - with Saga)
+4. **Adjust Stock**  (Temporal Activity - with Saga)
    - Attributes: Item identifier, warehouse, adjustment quantity, adjustment reason, reference document, approval required
    - Process: Validates authorization, updates inventory balance, posts value adjustment to general ledger, creates audit trail
    - Temporal: Activity within a Saga pattern to ensure inventory and GL stay in sync
 
-5. **Track Lot/Serial Numbers** 🔄 (Temporal Activity)
+5. **Track Lot/Serial Numbers**  (Temporal Activity)
    - Attributes: Item identifier, lot number or serial number, expiry date, manufacturing date, supplier lot reference, traceability link
 
 ##### Service: Warehouse Management
@@ -264,10 +264,10 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Optimize Putaway** 🔄 (Temporal Activity)
+1. **Optimize Putaway**  (Temporal Activity)
    - Attributes: Item characteristics, bin characteristics, putaway strategy
 
-2. **Generate Pick List** 🔄 (Temporal Activity)
+2. **Generate Pick List**  (Temporal Activity)
    - Attributes: Order references, pick strategy, pick priority, picker assigned, pick path optimization
 
 3. **Plan Shipment** ⚙️ (Temporal Workflow)
@@ -275,7 +275,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Groups orders for efficient shipping, optimizes truck loading, generates shipping documents
    - Temporal: Coordinates order consolidation, route optimization, and carrier integration
 
-4. **Schedule Dock** 🔄 (Temporal Activity)
+4. **Schedule Dock**  (Temporal Activity)
    - Attributes: Dock door identifier, appointment date/time, carrier, shipment type, expected duration
 
 ---
@@ -288,13 +288,13 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Calculate Gross Pay** 🔄 (Temporal Activity)
+1. **Calculate Gross Pay**  (Temporal Activity)
    - Attributes: Pay period, base salary or hourly rate, regular hours, overtime hours, overtime multiplier, shift differentials, bonuses, commissions
 
-2. **Process Deductions** 🔄 (Temporal Activity)
+2. **Process Deductions**  (Temporal Activity)
    - Attributes: Statutory deductions, voluntary deductions, deduction priority order, pre-tax vs. post-tax classification
 
-3. **Generate Payslips** 🔄 (Temporal Activity)
+3. **Generate Payslips**  (Temporal Activity)
    - Attributes: Pay period, employee filter, payslip template, delivery method
 
 4. **File Payroll Taxes** ⚙️ (Temporal Workflow - Scheduled)
@@ -308,10 +308,10 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Record Clock-in/out** 🔄 (Temporal Activity)
+1. **Record Clock-in/out**  (Temporal Activity)
    - Attributes: Employee identifier, timestamp, location, device identifier, clock type
 
-2. **Track Leave** 🔄 (Temporal Activity)
+2. **Track Leave**  (Temporal Activity)
    - Attributes: Leave type, start date, end date, partial days, approval status, leave balance impact
 
 3. **Approve Overtime** ⚙️ (Temporal Workflow)
@@ -319,7 +319,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Validates overtime is authorized by policy, checks budget availability, routes to appropriate approver
    - Temporal: Approval workflow with budget validation
 
-4. **Export to Payroll** 🔄 (Temporal Activity)
+4. **Export to Payroll**  (Temporal Activity)
    - Attributes: Pay period, employee filter, export format, integration method, validation rules
 
 ##### Service: Recruitment
@@ -328,10 +328,10 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Post Vacancy** 🔄 (Temporal Activity)
+1. **Post Vacancy**  (Temporal Activity)
    - Attributes: Job title, department, job description, salary range, posting channels, application deadline
 
-2. **Track Applicants** 🔄 (Temporal Activity)
+2. **Track Applicants**  (Temporal Activity)
    - Attributes: Applicant name, application date, resume attachment, stage in hiring pipeline, rejection reason, source channel
 
 3. **Schedule Interview** ⚙️ (Temporal Workflow)
@@ -339,7 +339,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Checks interviewer availability, sends calendar invitations, prepares interview materials, collects feedback
    - Temporal: Coordinates calendar availability, notifications, and feedback collection
 
-4. **Generate Offer Letter** 🔄 (Temporal Activity)
+4. **Generate Offer Letter**  (Temporal Activity)
    - Attributes: Candidate name, position title, start date, salary, benefits summary, employment terms, approval chain
 
 ---
@@ -352,16 +352,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Qualify Lead** 🔄 (Temporal Activity)
+1. **Qualify Lead**  (Temporal Activity)
    - Attributes: Lead source, contact information, company size, industry, budget authority, need identified, timeline, lead score
 
-2. **Log Customer Interaction** 🔄 (Temporal Activity)
+2. **Log Customer Interaction**  (Temporal Activity)
    - Attributes: Interaction date/time, interaction type, participants, discussion topics, customer sentiment, next steps
 
-3. **Update Sales Stage** 🔄 (Temporal Activity)
+3. **Update Sales Stage**  (Temporal Activity)
    - Attributes: Current stage, new stage, stage entry date, probability of close, expected close date, value adjustment
 
-4. **Forecast Revenue** 🔄 (Temporal Activity)
+4. **Forecast Revenue**  (Temporal Activity)
    - Attributes: Forecast period, opportunity stage filters, probability weighting, sales representative filter, confidence level
 
 ##### Service: Marketing Automation
@@ -370,16 +370,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Create Email Campaign** 🔄 (Temporal Activity)
+1. **Create Email Campaign**  (Temporal Activity)
    - Attributes: Campaign name, objective, target segment, email template, subject line variants, send schedule
 
-2. **Segment Contacts** 🔄 (Temporal Activity)
+2. **Segment Contacts**  (Temporal Activity)
    - Attributes: Segmentation criteria, segment name, dynamic vs. static segment, inclusion/exclusion rules
 
-3. **Track Performance** 🔄 (Temporal Activity)
+3. **Track Performance**  (Temporal Activity)
    - Attributes: Campaign identifier, metrics tracked, revenue attributed, cost per lead, ROI
 
-4. **Identify Cross-sell Opportunities** 🔄 (Temporal Activity)
+4. **Identify Cross-sell Opportunities**  (Temporal Activity)
    - Attributes: Customer purchase history, product affinity analysis, customer lifecycle stage, recommended products
 
 ##### Service: Customer Service
@@ -388,10 +388,10 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Log Customer Issue** 🔄 (Temporal Activity)
+1. **Log Customer Issue**  (Temporal Activity)
    - Attributes: Customer identifier, contact channel, issue category, priority, description, case number
 
-2. **Assign to Agent** 🔄 (Temporal Activity)
+2. **Assign to Agent**  (Temporal Activity)
    - Attributes: Assignment method, agent identifier, agent workload, agent skill set, case priority, SLA deadline
 
 3. **Track Resolution** ⚙️ (Temporal Workflow)
@@ -399,7 +399,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Updates case as work progresses, documents steps, validates resolution with customer, closes case
    - Temporal: Tracks SLA timers and escalates if deadlines are missed
 
-4. **Send Customer Feedback Request** 🔄 (Temporal Activity)
+4. **Send Customer Feedback Request**  (Temporal Activity)
    - Attributes: Trigger event, survey template, delivery timing, delivery channel, response deadline
 
 ---
@@ -412,7 +412,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Create BOM** 🔄 (Temporal Activity)
+1. **Create BOM**  (Temporal Activity)
    - Attributes: Parent item, revision number, effective dates, component line items, component type, substitutions allowed
 
 2. **Schedule Production Order** ⚙️ (Temporal Workflow)
@@ -425,7 +425,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Checks material availability, reserves materials, generates pick lists, handles shortages, issues materials to production
    - Temporal: Coordinates inventory reservation and allocation across multiple warehouses
 
-4. **Track Job Status** 🔄 (Temporal Activity)
+4. **Track Job Status**  (Temporal Activity)
    - Attributes: Production order identifier, current operation, status by operation, quantity completed, quantity rejected, labor/machine hours
 
 ##### Service: Quality Assurance
@@ -434,16 +434,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Define Quality Standard** 🔄 (Temporal Activity)
+1. **Define Quality Standard**  (Temporal Activity)
    - Attributes: Product/process identifier, inspection type, specification parameters, acceptance criteria, test methods
 
-2. **Perform In-process Inspection** 🔄 (Temporal Activity)
+2. **Perform In-process Inspection**  (Temporal Activity)
    - Attributes: Production order reference, operation/work center, inspection time, measurements taken, conformance status
 
-3. **Record Defects** 🔄 (Temporal Activity)
+3. **Record Defects**  (Temporal Activity)
    - Attributes: Defect type, defect cause, severity, location found, quantity affected, disposition, cost impact
 
-4. **Generate Certificate of Analysis** 🔄 (Temporal Activity)
+4. **Generate Certificate of Analysis**  (Temporal Activity)
    - Attributes: Product identifier, lot/batch number, production date, test results summary, compliance statement
 
 ##### Service: Maintenance Management
@@ -452,7 +452,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Log Equipment Issue** 🔄 (Temporal Activity)
+1. **Log Equipment Issue**  (Temporal Activity)
    - Attributes: Equipment identifier, issue date/time, reported by, symptom description, severity, impact on production
 
 2. **Schedule Preventive Maintenance** ⚙️ (Temporal Workflow - Scheduled)
@@ -460,10 +460,10 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Calculates schedule based on last service, creates work order in advance, coordinates with production schedule
    - Temporal: Scheduled workflow that manages preventive maintenance calendar
 
-3. **Assign Technician** 🔄 (Temporal Activity)
+3. **Assign Technician**  (Temporal Activity)
    - Attributes: Work order identifier, technician identifier, technician skill set, certifications required, availability
 
-4. **Track Repair History** 🔄 (Temporal Activity)
+4. **Track Repair History**  (Temporal Activity)
    - Attributes: Equipment identifier, maintenance history, failure patterns, MTBF, total cost of ownership
 
 ---
@@ -483,10 +483,10 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Checks room availability, applies rate rules, confirms rate and terms, creates reservation, sends confirmation, blocks room inventory
    - Temporal: Coordinates availability check, rate calculation, payment authorization, and confirmation with compensation for cancellations
 
-2. **Manage Room Rates and Availability** 🔄 (Temporal Activity)
+2. **Manage Room Rates and Availability**  (Temporal Activity)
    - Attributes: Room type, rate plan, occupancy date, base price, dynamic pricing rules, restrictions, inventory allocation by channel
 
-3. **Assign Rooms** 🔄 (Temporal Activity)
+3. **Assign Rooms**  (Temporal Activity)
    - Attributes: Reservation reference, room number assigned, assignment logic, pre-arrival assignment vs. check-in assignment, upgrade applied
 
 4. **Process Check-ins/outs** ⚙️ (Temporal Workflow)
@@ -494,7 +494,7 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: Verifies guest identity, confirms reservation details, captures payment guarantee, generates room key. At checkout: reconciles charges, processes final payment
    - Temporal: Coordinates reservation lookup, payment processing, room status updates, and housekeeping notification
 
-5. **Schedule Housekeeping** 🔄 (Temporal Activity)
+5. **Schedule Housekeeping**  (Temporal Activity)
    - Attributes: Room number, cleaning type, priority, room status, assigned housekeeper, estimated completion time
 
 ##### Service: Point of Sale (POS) & Table Management - Restaurants
@@ -503,28 +503,28 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Manage Floor Plan** 🔄 (Temporal Activity)
+1. **Manage Floor Plan**  (Temporal Activity)
    - Attributes: Table identifier, table capacity, location, table status, server assigned to section, table combination rules
 
-2. **Take Reservation** 🔄 (Temporal Activity)
+2. **Take Reservation**  (Temporal Activity)
    - Attributes: Guest name, contact info, party size, date and time, special requests, reservation status, no-show policy
 
-3. **Assign Party** 🔄 (Temporal Activity)
+3. **Assign Party**  (Temporal Activity)
    - Attributes: Party size, table assignment, server assigned, special needs, guest preferences, estimated duration
 
-4. **Take Orders** 🔄 (Temporal Activity)
+4. **Take Orders**  (Temporal Activity)
    - Attributes: Table identifier, order items, course sequence, guest seat position, dietary flags, order time
 
-5. **Route to Kitchen/Prep Stations** 🔄 (Temporal Activity)
+5. **Route to Kitchen/Prep Stations**  (Temporal Activity)
    - Attributes: Order identifier, menu item, quantity, preparation instructions, priority, course timing, station
 
-6. **Process Payments** 🔄 (Temporal Activity)
+6. **Process Payments**  (Temporal Activity)
    - Attributes: Table identifier, check total, payment method, tip amount, split payment, receipt preferences
 
-7. **Handle Order Modifications** 🔄 (Temporal Activity)
+7. **Handle Order Modifications**  (Temporal Activity)
    - Attributes: Original order item, modification type, reason, timing, refire instructions, discount applied
 
-8. **Track Table Turn Time** 🔄 (Temporal Activity)
+8. **Track Table Turn Time**  (Temporal Activity)
    - Attributes: Table identifier, party seated time, party departed time, turn time calculated, target turn time
 
 ##### Service: Menu & Recipe Management
@@ -533,16 +533,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Update Menu & Prices** 🔄 (Temporal Activity)
+1. **Update Menu & Prices**  (Temporal Activity)
    - Attributes: Item name, description, category, price by meal period, availability, active/inactive status
 
-2. **Set Seasonal Items** 🔄 (Temporal Activity)
+2. **Set Seasonal Items**  (Temporal Activity)
    - Attributes: Menu item, seasonality pattern, active date range, promotion/markup, featured item flag
 
-3. **Manage Recipes & Ingredients** 🔄 (Temporal Activity)
+3. **Manage Recipes & Ingredients**  (Temporal Activity)
    - Attributes: Menu item, ingredient list, preparation steps, portion size, plate presentation, cook time, yield
 
-4. **Track Item Popularity** 🔄 (Temporal Activity)
+4. **Track Item Popularity**  (Temporal Activity)
    - Attributes: Menu item, sales volume by period, revenue contribution, food cost percentage, customer ratings
 
 ---
@@ -555,16 +555,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Scan Item** 🔄 (Temporal Activity)
+1. **Scan Item**  (Temporal Activity)
    - Attributes: Product identifier, quantity, unit price, discounts applicable, tax category, inventory location
 
-2. **Process Payment** 🔄 (Temporal Activity)
+2. **Process Payment**  (Temporal Activity)
    - Attributes: Payment method, amount tendered, card details, transaction fee, receipt preferences, authorization code
 
-3. **Apply Promotions** 🔄 (Temporal Activity)
+3. **Apply Promotions**  (Temporal Activity)
    - Attributes: Promotion identifier, promotion type, eligibility criteria, stack-ability
 
-4. **Issue Receipt** 🔄 (Temporal Activity)
+4. **Issue Receipt**  (Temporal Activity)
    - Attributes: Transaction number, date/time, store location, itemized list, discounts, tax, total, payment method
 
 5. **Handle Returns** ⚙️ (Temporal Workflow)
@@ -599,16 +599,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Plan Assortment** 🔄 (Temporal Activity)
+1. **Plan Assortment**  (Temporal Activity)
    - Attributes: Category identifier, target breadth and depth, price point distribution, seasonal considerations, space allocation
 
-2. **Set Category-level Pricing** 🔄 (Temporal Activity)
+2. **Set Category-level Pricing**  (Temporal Activity)
    - Attributes: Category identifier, pricing strategy, competitive positioning, margin targets, promotion frequency
 
-3. **Analyze Sales Performance** 🔄 (Temporal Activity)
+3. **Analyze Sales Performance**  (Temporal Activity)
    - Attributes: Category identifier, time period, metrics, comparison periods, top/bottom performers, trend analysis
 
-4. **Manage Supplier Styles** 🔄 (Temporal Activity)
+4. **Manage Supplier Styles**  (Temporal Activity)
    - Attributes: Supplier identifier, product styles offered, lead times, minimum order quantities, quality metrics
 
 ---
@@ -621,18 +621,18 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Monitor Tank Levels** 🔄 (Temporal Activity - Continuous)
+1. **Monitor Tank Levels**  (Temporal Activity - Continuous)
    - Attributes: Tank identifier, fuel grade, current volume, capacity, reorder level, temperature, water detection, variance
    - Process: Continuously monitors tank levels via ATG, tracks dispensing, calculates remaining volume, alerts on variances or low levels
    - Temporal: Continuous activity with alerting on threshold breaches
 
-2. **Set Fuel Prices** 🔄 (Temporal Activity)
+2. **Set Fuel Prices**  (Temporal Activity)
    - Attributes: Fuel grade, retail price per unit, effective date/time, cost basis, margin target, competitive positioning
 
-3. **Control Pump Authorization** 🔄 (Temporal Activity)
+3. **Control Pump Authorization**  (Temporal Activity)
    - Attributes: Pump number, authorization mode, authorized amount, payment method captured, customer identifier
 
-4. **Generate Wet Stock Reports** 🔄 (Temporal Activity)
+4. **Generate Wet Stock Reports**  (Temporal Activity)
    - Attributes: Report date, tank readings, calculated variance, variance tolerance, leak detection status, compliance status
 
 ##### Service: Forecourt Controller
@@ -641,7 +641,7 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Link Pump to POS Sale** 🔄 (Temporal Activity)
+1. **Link Pump to POS Sale**  (Temporal Activity)
    - Attributes: Pump number, fuel grade dispensed, volume, price per unit, total fuel amount, transaction timestamp
 
 2. **Authorize Pre-pay/Post-pay** ⚙️ (Temporal Workflow)
@@ -649,10 +649,10 @@ The general ledger is the master financial record, tracking all debits and credi
    - Process: For pre-pay: captures payment, authorizes pump, releases unused authorization. For post-pay: validates payment method, authorizes pump, captures actual amount
    - Temporal: Workflow handles payment authorization, pump control, and settlement with compensation for cancellations
 
-3. **Process Car Wash Activation** 🔄 (Temporal Activity)
+3. **Process Car Wash Activation**  (Temporal Activity)
    - Attributes: Car wash type, price, activation code, validity period, pump transaction link, usage status
 
-4. **Manage Loyalty Points at Pump** 🔄 (Temporal Activity)
+4. **Manage Loyalty Points at Pump**  (Temporal Activity)
    - Attributes: Customer loyalty identifier, points balance, points earned, points redeemed, redemption value
 
 ##### Service: Convenience Store Retail
@@ -661,16 +661,16 @@ The general ledger is the master financial record, tracking all debits and credi
 
 *Actions:*
 
-1. **Manage Store Inventory** 🔄 (Temporal Activity)
+1. **Manage Store Inventory**  (Temporal Activity)
    - Attributes: Product identifier, category, quantity on hand, reorder point, supplier, shelf location, perishability
 
-2. **Run Promotions** 🔄 (Temporal Activity)
+2. **Run Promotions**  (Temporal Activity)
    - Attributes: Promotion type, eligible products, promotion period, discount amount, coordination with fuel promotions
 
-3. **Track Sales Performance** 🔄 (Temporal Activity)
+3. **Track Sales Performance**  (Temporal Activity)
    - Attributes: Time period, metrics by category, fuel correlation analysis, top selling items, slow movers
 
-4. **Replenish Stock** 🔄 (Temporal Activity)
+4. **Replenish Stock**  (Temporal Activity)
    - Attributes: Supplier identifier, delivery frequency, order lead time, order minimum, product list with quantities
 
 ---

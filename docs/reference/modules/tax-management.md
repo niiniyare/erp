@@ -1,10 +1,10 @@
 # Tax Management
 
-## 💼 Overview
+##  Overview
 
 The Tax Management module provides  tax calculation, compliance, and reporting capabilities for multiple jurisdictions and tax types. It supports various tax regimes including VAT/GST, sales tax, income tax, withholding tax, and custom tax structures with automated calculations and regulatory compliance.
 
-## 🏛️ Tax Configuration & Setup
+## ️ Tax Configuration & Setup
 
 ### Tax Authorities and Jurisdictions
 
@@ -463,7 +463,7 @@ class TaxCalculationService implements TaxCalculationEngine {
 }
 ```
 
-## 📊 Tax Transactions & Records
+##  Tax Transactions & Records
 
 ### Tax Transaction Tracking
 
@@ -605,7 +605,7 @@ CREATE TABLE tax_exemption_certificates (
 );
 ```
 
-## 📋 Tax Returns & Compliance
+##  Tax Returns & Compliance
 
 ### Tax Return Management
 
@@ -947,7 +947,7 @@ class VATReturnService implements TaxReturnGenerator {
 }
 ```
 
-## 🌍 Multi-Jurisdiction Tax Support
+##  Multi-Jurisdiction Tax Support
 
 ### International Tax Features
 

@@ -1,6 +1,6 @@
 package types
 
-// ─── ABAC DOMAIN ENUMS AND CONSTANTS ─────────────────────────────────────────
+// ABAC DOMAIN ENUMS AND CONSTANTS
 
 // PolicyEffect represents the effect of a policy decision
 type PolicyEffect string

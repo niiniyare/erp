@@ -20,7 +20,7 @@ import (
 
 const userCacheTTL = 30 * time.Minute
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // UserRepository defines the persistence port for identity data.
 // Implementations handle both DB and cache — callers never touch cache directly.
@@ -88,7 +88,7 @@ type UserRepository interface {
 	UpdatePasswordAndHistory(ctx context.Context, userID uuid.UUID, newHash string, newHistory []string) error
 }
 
-// ─── Adapter (implementation) ─────────────────────────────────────────────────
+// Adapter (implementation)
 
 type userRepository struct {
 	store   db.Store
@@ -112,7 +112,7 @@ func NewUserRepository(
 	}
 }
 
-// ─── Read operations (cache-aside) ────────────────────────────────────────────
+// Read operations (cache-aside)
 
 func (r *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
 	key := fmt.Sprintf("user:id:%s", id)
@@ -120,16 +120,20 @@ func (r *userRepository) GetUserByID(ctx context.Context, id uuid.UUID) (*domain
 	if err := r.cache.Get(ctx, key, &u); err == nil {
 		return &u, nil
 	}
-	row, err := r.store.GetUserByID(ctx, id)
+	var user *domain.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, e := s.GetUserByID(ctx, id)
+		if e != nil {
+			return e
+		}
+		user, e = fromSQLCUser(row)
+		return e
+	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: get user by id: %w", err)
-	}
-	user, err := fromSQLCUser(row)
-	if err != nil {
-		return nil, err
 	}
 	r.cacheUser(ctx, user)
 	return user, nil
@@ -141,16 +145,20 @@ func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*dom
 	if err := r.cache.Get(ctx, key, &u); err == nil {
 		return &u, nil
 	}
-	row, err := r.store.GetUserByEmail(ctx, email)
+	var user *domain.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, e := s.GetUserByEmail(ctx, email)
+		if e != nil {
+			return e
+		}
+		user, e = fromSQLCUser(row)
+		return e
+	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: get user by email: %w", err)
-	}
-	user, err := fromSQLCUser(row)
-	if err != nil {
-		return nil, err
 	}
 	r.cacheUser(ctx, user)
 	return user, nil
@@ -162,16 +170,20 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 	if err := r.cache.Get(ctx, key, &u); err == nil {
 		return &u, nil
 	}
-	row, err := r.store.GetUserByUsername(ctx, username)
+	var user *domain.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, e := s.GetUserByUsername(ctx, username)
+		if e != nil {
+			return e
+		}
+		user, e = fromSQLCUser(row)
+		return e
+	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: get user by username: %w", err)
-	}
-	user, err := fromSQLCUser(row)
-	if err != nil {
-		return nil, err
 	}
 	r.cacheUser(ctx, user)
 	return user, nil
@@ -180,7 +192,7 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 func (r *userRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*domain.UserWithDetails, error) {
 	row, err := r.store.GetCompleteUserProfile(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: get user with details: %w", err)
@@ -191,7 +203,7 @@ func (r *userRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (
 func (r *userRepository) GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error) {
 	hash, err := r.store.GetUserPasswordByID(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return "", sharedErrors.ErrUserNotFound
 		}
 		return "", fmt.Errorf("iam repo: get user password: %w", err)
@@ -202,20 +214,24 @@ func (r *userRepository) GetUserPassword(ctx context.Context, userID uuid.UUID) 
 	return *hash, nil
 }
 
-// ─── Write operations (invalidate cache) ─────────────────────────────────────
+// Write operations (invalidate cache)
 
 func (r *userRepository) CreateUser(ctx context.Context, req *domain.CreateUserRequest, hashedPassword string) (*domain.User, error) {
 	params, err := toSQLCCreateUserParams(req, hashedPassword)
 	if err != nil {
 		return nil, fmt.Errorf("iam repo: build create user params: %w", err)
 	}
-	row, err := r.store.CreateUser(ctx, params)
+	var user *domain.User
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, e := s.CreateUser(ctx, params)
+		if e != nil {
+			return e
+		}
+		user, e = fromSQLCUser(row)
+		return e
+	})
 	if err != nil {
 		return nil, fmt.Errorf("iam repo: create user: %w", err)
-	}
-	user, err := fromSQLCUser(row)
-	if err != nil {
-		return nil, err
 	}
 	r.invalidateUser(ctx, user.ID, user.Email, user.Username)
 	return user, nil
@@ -225,7 +241,7 @@ func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, req *doma
 	params := db.UpdateUserParams{ID: id}
 	row, err := r.store.UpdateUser(ctx, params)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: update user: %w", err)
@@ -254,7 +270,7 @@ func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, n
 	})
 }
 
-// ─── Brute-force protection ───────────────────────────────────────────────────
+// Brute-force protection
 
 func (r *userRepository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.IncrementFailedAttempts")
@@ -299,7 +315,7 @@ func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) 
 	return nil
 }
 
-// ─── Person / Employee ────────────────────────────────────────────────────────
+// Person / Employee
 
 func (r *userRepository) CreatePerson(ctx context.Context, req *domain.CreatePersonRequest) (*domain.Person, error) {
 	params, err := toSQLCCreatePersonParams(req)
@@ -316,7 +332,7 @@ func (r *userRepository) CreatePerson(ctx context.Context, req *domain.CreatePer
 func (r *userRepository) GetPersonByID(ctx context.Context, id uuid.UUID) (*domain.Person, error) {
 	row, err := r.store.GetPersonByID(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, fmt.Errorf("iam repo: person not found")
 		}
 		return nil, fmt.Errorf("iam repo: get person: %w", err)
@@ -339,7 +355,7 @@ func (r *userRepository) CreateEmployee(ctx context.Context, req *domain.CreateE
 func (r *userRepository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*domain.Employee, error) {
 	row, err := r.store.GetEmployeeByID(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, fmt.Errorf("iam repo: employee not found")
 		}
 		return nil, fmt.Errorf("iam repo: get employee: %w", err)
@@ -347,7 +363,7 @@ func (r *userRepository) GetEmployeeByID(ctx context.Context, id uuid.UUID) (*do
 	return fromSQLCEmployee(row)
 }
 
-// ─── Collections ─────────────────────────────────────────────────────────────
+// Collections
 
 func (r *userRepository) ListUsers(ctx context.Context, req *domain.ListUsersRequest) ([]*domain.User, error) {
 	limit := int32(req.Limit)
@@ -395,7 +411,7 @@ func (r *userRepository) SearchUsers(ctx context.Context, query string, limit, o
 	return out, nil
 }
 
-// ─── Role assignments ─────────────────────────────────────────────────────────
+// Role assignments
 
 func (r *userRepository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
 	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
@@ -415,14 +431,14 @@ func (r *userRepository) RevokeUserRole(ctx context.Context, userID, roleID, ent
 	})
 }
 
-// ─── MFA — DB-backed secret lifecycle ────────────────────────────────────────
+// MFA — DB-backed secret lifecycle
 
 // GetMFASecret returns the encrypted MFA secret and enabled flag from the DB.
 // Requires the GetUserMFASecret SQLC query (generated after `make sqlc`).
 func (r *userRepository) GetMFASecret(ctx context.Context, userID uuid.UUID) (string, bool, error) {
 	row, err := r.store.GetUserMFASecret(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return "", false, sharedErrors.ErrUserNotFound
 		}
 		return "", false, fmt.Errorf("iam repo: get mfa secret: %w", err)
@@ -458,7 +474,7 @@ func (r *userRepository) ClearMFASecret(ctx context.Context, userID uuid.UUID) e
 	return nil
 }
 
-// ─── MFA — cache-backed ephemeral state ──────────────────────────────────────
+// MFA — cache-backed ephemeral state
 
 const (
 	mfaSetupCacheTTL  = 10 * time.Minute
@@ -497,7 +513,7 @@ func (r *userRepository) CheckAndMarkMFAReplay(ctx context.Context, userID uuid.
 	return false, nil
 }
 
-// ─── Password reset tokens ────────────────────────────────────────────────────
+// Password reset tokens
 // NOTE: CreatePasswordResetToken / GetPasswordResetToken / MarkPasswordResetTokenUsed
 // require the SQLC-generated queries from db/queries/password_reset.sql.
 // Run `make sqlc` before using these methods.
@@ -516,7 +532,7 @@ func (r *userRepository) CreatePasswordResetToken(ctx context.Context, userID uu
 func (r *userRepository) GetPasswordResetToken(ctx context.Context, tokenHash string) (*domain.PasswordResetToken, error) {
 	row, err := r.store.GetPasswordResetToken(ctx, tokenHash)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrPasswordResetTokenNotFound
 		}
 		return nil, fmt.Errorf("iam repo: get password reset token: %w", err)
@@ -541,14 +557,11 @@ func (r *userRepository) MarkPasswordResetTokenUsed(ctx context.Context, tokenHa
 	return nil
 }
 
-// ─── Password history ─────────────────────────────────────────────────────────
-// NOTE: GetUserPasswordHistory / UpdatePasswordAndHistory require SQLC queries
-// from db/queries/password_reset.sql. Run `make sqlc`.
-
+// Password history
 func (r *userRepository) GetPasswordHistory(ctx context.Context, userID uuid.UUID) ([]string, error) {
 	raw, err := r.store.GetUserPasswordHistory(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("iam repo: get password history: %w", err)
@@ -579,7 +592,7 @@ func (r *userRepository) UpdatePasswordAndHistory(ctx context.Context, userID uu
 	return nil
 }
 
-// ─── Cache helpers (internal) ─────────────────────────────────────────────────
+// Cache helpers (internal)
 
 func (r *userRepository) cacheUser(ctx context.Context, u *domain.User) {
 	_ = r.cache.Set(ctx, fmt.Sprintf("user:id:%s", u.ID), u, userCacheTTL)
@@ -603,7 +616,7 @@ func (r *userRepository) invalidateUserByID(ctx context.Context, id uuid.UUID) {
 	_ = r.cache.Delete(ctx, fmt.Sprintf("user:id:%s", id))
 }
 
-// ─── SQLC conversion helpers ──────────────────────────────────────────────────
+// SQLC conversion helpers
 
 func fromSQLCUser(sqlcUser *db.User) (*domain.User, error) {
 	var userAttributes, settings map[string]any
@@ -845,6 +858,10 @@ func toSQLCCreateUserParams(req *domain.CreateUserRequest, hashedPassword string
 			return db.CreateUserParams{}, err
 		}
 	}
+	var sessionTimeout *int32
+	if req.SessionTimeoutMinutes > 0 {
+		sessionTimeout = &req.SessionTimeoutMinutes
+	}
 	return db.CreateUserParams{
 		EntityID:              req.EntityID,
 		PersonID:              req.PersonID,
@@ -855,7 +872,7 @@ func toSQLCCreateUserParams(req *domain.CreateUserRequest, hashedPassword string
 		PasswordHash:          &hashedPassword,
 		UserType:              req.UserType,
 		AccountStatus:         &req.AccountStatus,
-		SessionTimeoutMinutes: &req.SessionTimeoutMinutes,
+		SessionTimeoutMinutes: sessionTimeout,
 		MfaEnabled:            &req.MfaEnabled,
 		UserAttributes:        userAttributes,
 		Settings:              settings,

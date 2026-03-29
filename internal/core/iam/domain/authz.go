@@ -7,38 +7,38 @@ import "time"
 // =============================================================================
 // Isolation Model — read this first
 // =============================================================================
-//
+// 
 // Awo ERP enforces tenant isolation at two independent layers.  Every piece of
 // IAM code must be clear about which layer it is operating in.
-//
-//   ┌┐
-//   │  Layer 1 — PostgreSQL Row-Level Security  (TenantID)               │
-//   │                                                                     │
-//   │  Every table has a tenant_id column and an RLS policy of the form:  │
-//   │    USING (tenant_id = current_setting('awo.tenant_id')::uuid)       │
-//   │                                                                     │
-//   │  The service layer sets this GUC at the start of every transaction: │
-//   │    SET LOCAL awo.tenant_id = '<session.TenantID>'                   │
-//   │                                                                     │
-//   │  This is the HARD boundary.  Even a bug in Go code cannot return    │
-//   │  rows from another tenant; the DB will silently filter them out.    │
-//   └┘
-//
-//   ┌┐
-//   │  Layer 2 — Application-layer Entity Scope  (EntityID)              │
-//   │                                                                     │
-//   │  Within a single tenant there are entities (branches, departments,  │
-//   │  subsidiaries …) organised as an ltree hierarchy.  A user's         │
-//   │  EntityScope (see session.go) restricts which entity rows they see: │
-//   │    EntityScopeEntity  → own entity only                             │
-//   │    EntityScopeSubtree → own entity + all descendants                │
-//   │    EntityScopeAll     → all entities in the tenant                  │
-//   │                                                                     │
-//   │  This is an APPLICATION boundary.  Service methods build WHERE      │
-//   │  clauses or ltree path filters based on EntityScope before issuing  │
-//   │  queries.  It is intentionally softer — a manager can be granted    │
-//   │  a temporary cross-entity view without any DB schema change.        │
-//   └┘
+// 
+
+// Layer 1 — PostgreSQL Row-Level Security  (TenantID)
+
+// Every table has a tenant_id column and an RLS policy of the form:
+// USING (tenant_id = current_setting('awo.tenant_id')::uuid)
+
+// The service layer sets this GUC at the start of every transaction:
+// SET LOCAL awo.tenant_id = '<session.TenantID>'
+
+// This is the HARD boundary.  Even a bug in Go code cannot return
+// rows from another tenant; the DB will silently filter them out.
+
+// 
+
+// Layer 2 — Application-layer Entity Scope  (EntityID)
+
+// Within a single tenant there are entities (branches, departments,
+// subsidiaries …) organised as an ltree hierarchy.  A user's
+// EntityScope (see session.go) restricts which entity rows they see:
+// EntityScopeEntity  → own entity only
+// EntityScopeSubtree → own entity + all descendants
+// EntityScopeAll     → all entities in the tenant
+
+// This is an APPLICATION boundary.  Service methods build WHERE
+// clauses or ltree path filters based on EntityScope before issuing
+// queries.  It is intentionally softer — a manager can be granted
+// atemporary cross-entity view without any DB schema change.
+
 
 // =============================================================================
 // Actor Types
@@ -82,17 +82,17 @@ const (
 // ActorTypeFromUserType translates the persisted UserType string stored on the
 // users table (an ALL-CAPS enum: "INTERNAL", "SYSADMIN", "CUSTOMER" …) into
 // the lowercase ActorType used throughout the authorization layer.
-//
+// 
 // This is the SINGLE canonical mapping point.  All other code that needs to
 // reason about actor class must call this function rather than comparing
 // UserType strings directly.
-//
+// 
 // Mapping table:
-//
-//	"SYSADMIN" | "PLATFORM"          → ActorPlatform
-//	"PORTAL"   | "CUSTOMER"          → ActorPortal
-//	"API"      | "SERVICE"           → ActorAPI
-//	everything else (incl. "INTERNAL", "EMPLOYEE") → ActorTenant
+// 
+// 	"SYSADMIN" | "PLATFORM"          → ActorPlatform
+// 	"PORTAL"   | "CUSTOMER"          → ActorPortal
+// 	"API"      | "SERVICE"           → ActorAPI
+// 	everything else (incl. "INTERNAL", "EMPLOYEE") → ActorTenant
 func ActorTypeFromUserType(userType string) ActorType {
 	switch userType {
 	case "SYSADMIN", "PLATFORM":
@@ -109,24 +109,24 @@ func ActorTypeFromUserType(userType string) ActorType {
 // =============================================================================
 // Subject / Domain Helpers
 // =============================================================================
-//
+// 
 // Casbin stores authorization rules as (sub, dom, obj, act, eft) tuples.
 // The Subject and Domain strings below are the canonical formats for each
 // actor class.  Always construct them through these helpers — never build the
 // strings inline — so that a format change only requires editing one place.
-//
+// 
 // Subject format: "<actor-class>:<id>"
-//   PlatformSubject("uuid") → "platform:uuid"
-//   TenantSubject("uuid")   → "tenant:uuid"
-//   PortalSubject("uuid")   → "portal:uuid"
-//   APISubject("client-id") → "api:client-id"
-//
+// PlatformSubject("uuid") → "platform:uuid"
+// TenantSubject("uuid")   → "tenant:uuid"
+// PortalSubject("uuid")   → "portal:uuid"
+// APISubject("client-id") → "api:client-id"
+// 
 // Domain format:
-//   PlatformDomain()          → "_platform_"   (constant, no variable part)
-//   TenantDomain("tenantID")  → "tenantID"      (bare UUID — most common case)
-//   PortalDomain("tenantID")  → "tenantID:portal"
-//   APIDomain("tenantID")     → "tenantID:api"
-//
+// PlatformDomain()          → "_platform_"   (constant, no variable part)
+// TenantDomain("tenantID")  → "tenantID"      (bare UUID — most common case)
+// PortalDomain("tenantID")  → "tenantID:portal"
+// APIDomain("tenantID")     → "tenantID:api"
+// 
 // The ":portal" and ":api" suffixes prevent portal/API policies from
 // accidentally matching internal tenant rules that use the same role names.
 
@@ -158,7 +158,7 @@ func APIDomain(tenantID string) string    { return tenantID + ":api" }
 
 // Principal is the subject-domain pair set in Fiber context by the authn
 // middleware and consumed by the Casbin enforcement middleware.
-//
+// 
 // Principal is a value object: immutable once constructed, with no identity of
 // its own, and fully described by its two fields.  Construct it via
 // ResolvedSession.ToPrincipal() rather than directly.
@@ -173,25 +173,25 @@ type Principal struct {
 }
 
 // LocalsKeyPrincipal is the Fiber Locals key for the authenticated Principal.
-//
+// 
 // Usage in authorization middleware:
-//
-//	p := c.Locals(domain.LocalsKeyPrincipal).(domain.Principal)
+// 
+// 	p := c.Locals(domain.LocalsKeyPrincipal).(domain.Principal)
 const LocalsKeyPrincipal = "authz_principal"
 
 // Request is a single authorization check passed to the Casbin enforcer.
 // It mirrors the (sub, dom, obj, act) tuple of the Casbin request definition.
-//
+// 
 // Object follows a slash-separated resource path convention:
-//
-//	"invoice/123"  — a specific resource instance
-//	"invoice/*"    — all instances of a resource type
-//	"report/gl/*"  — all GL reports (hierarchical wildcard)
-//
+// 
+// 	"invoice/123"  — a specific resource instance
+// 	"invoice/*"    — all instances of a resource type
+// 	"report/gl/*"  — all GL reports (hierarchical wildcard)
+// 
 // Action is a lowercase verb matched with keyMatch (glob), so "*" matches any
 // action:
-//
-//	"read" | "create" | "update" | "delete" | "approve" | "*"
+// 
+// 	"read" | "create" | "update" | "delete" | "approve" | "*"
 type Request struct {
 	Subject string // who   — e.g. "tenant:user_uuid"
 	Domain  string // scope — e.g. tenantID or "_platform_"
@@ -201,7 +201,7 @@ type Request struct {
 
 // Policy is a Casbin p-rule (permission row) used when seeding or inspecting
 // the policy store programmatically.
-//
+// 
 // Effect must be "allow" or "deny".  Due to the deny-override model in
 // CasbinModel, a single matching deny policy cancels all allows for the same
 // (sub, dom, obj, act) combination — use deny rules sparingly and only when
@@ -220,20 +220,20 @@ type Policy struct {
 
 // RoleAssignment is a metadata record that annotates a Casbin g-rule
 // (user-to-role grouping) with audit and lifecycle fields.
-//
+// 
 // The Casbin g-rule is the source of truth for enforcement; this entity exists
 // for audit trails, expiry management, and delegation tracking.
 // It maps to the role_assignments table.
-//
+// 
 // Relationship to TenantID / EntityID
-//
-//	TenantID is denormalised here for fast lookup queries but adds no extra
-//	enforcement boundary — the Casbin Domain already encodes the tenant.
-//
-//	Entity-level role scoping (e.g. "accountant for branch A only") is an
-//	application-layer concern handled by service methods that inspect the
-//	caller's EntityScope before calling AssignRole.  It is NOT enforced by
-//	Casbin policies directly.
+// 
+// 	TenantID is denormalised here for fast lookup queries but adds no extra
+// 	enforcement boundary — the Casbin Domain already encodes the tenant.
+// 
+// 	Entity-level role scoping (e.g. "accountant for branch A only") is an
+// 	application-layer concern handled by service methods that inspect the
+// 	caller's EntityScope before calling AssignRole.  It is NOT enforced by
+// 	Casbin policies directly.
 type RoleAssignment struct {
 	ID          string
 	Subject     string     // Casbin sub — e.g. "tenant:uuid"
@@ -314,33 +314,33 @@ func ApplyAssignOpts(opts []AssignOpt) AssignOpts {
 // CasbinModel is the CONF-format Casbin model used by every enforcer in this
 // bounded context.  It is embedded here so the model definition travels with
 // the domain package and is never silently out of sync with the policy store.
-//
-// # Design decisions
-//
-//  1. Deny-override effect
-//     "some(allow) && !some(deny)" — one explicit deny beats all allows.
-//     Appropriate for an ERP where sensitive resources (payroll, bank accounts)
-//     must be lockable per-role without revoking every individual allow rule.
-//
-//  2. Domain-scoped RBAC  (g = _, _, _)
-//     Roles are tenant-local.  An "accountant" role in tenant A cannot match
-//     a policy in tenant B even if both tenants use the same role name.
-//     This is the second line of defence after PostgreSQL RLS.
-//
-//  3. keyMatch2 on obj
-//     Enables path-parameter wildcards on the resource object field so that
-//     a policy for "invoice/:id" matches a request for "invoice/abc-123".
-//     Resource hierarchies are modelled as slash-separated paths.
-//
-//  4. keyMatch on act  — NOT keyMatch2
-//     Actions are simple verb tokens, not path segments.  keyMatch (glob)
-//     correctly matches the wildcard action "*" against any concrete verb
-//     such as "read" or "delete".
-//
-//     IMPORTANT: keyMatch2 was previously used here by mistake.  keyMatch2
-//     uses ":param" path-segment matching and does NOT treat "*" as a glob
-//     wildcard, so a policy action of "*" would never match "read".  This
-//     would silently deny all actions covered by wildcard policies.
+// 
+// #Design decisions
+// 
+// 1. Deny-override effect
+// "some(allow) && !some(deny)" — one explicit deny beats all allows.
+// Appropriate for an ERP where sensitive resources (payroll, bank accounts)
+// must be lockable per-role without revoking every individual allow rule.
+// 
+// 2. Domain-scoped RBAC  (g = _, _, _)
+// Roles are tenant-local.  An "accountant" role in tenant A cannot match
+// apolicy in tenant B even if both tenants use the same role name.
+// This is the second line of defence after PostgreSQL RLS.
+// 
+// 3. keyMatch2 on obj
+// Enables path-parameter wildcards on the resource object field so that
+// apolicy for "invoice/:id" matches a request for "invoice/abc-123".
+// Resource hierarchies are modelled as slash-separated paths.
+// 
+// 4. keyMatch on act  — NOT keyMatch2
+// Actions are simple verb tokens, not path segments.  keyMatch (glob)
+// correctly matches the wildcard action "*" against any concrete verb
+// such as "read" or "delete".
+// 
+// IMPORTANT: keyMatch2 was previously used here by mistake.  keyMatch2
+// uses ":param" path-segment matching and does NOT treat "*" as a glob
+// wildcard, so a policy action of "*" would never match "read".  This
+// would silently deny all actions covered by wildcard policies.
 const CasbinModel = `
 [request_definition]
 r = sub, dom, obj, act
@@ -361,18 +361,18 @@ m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMa
 // Odl models TODO: Review
 // const CasbinModel = `
 // [request_definition]
-// r = sub, dom, obj, act
-//
+// r= sub, dom, obj, act
+// 
 // [policy_definition]
-// p = sub, dom, obj, act, eft
-//
+// p= sub, dom, obj, act, eft
+// 
 // [role_definition]
-// g = _, _, _
-//
+// g= _, _, _
+// 
 // [policy_effect]
-// e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
-//
+// e= some(where (p.eft == allow)) && !some(where (p.eft == deny))
+// 
 // [matchers]
-// m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch2(r.act, p.act)
+// m= g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch2(r.act, p.act)
 // `
-//
+// 

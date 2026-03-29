@@ -6,7 +6,7 @@
 **TARGET AUDIENCE**: UX developers, frontend engineers, and design implementers
 <!-- LLM-CONTEXT-END -->
 
-## 🎨 Visual Style System Overview
+##  Visual Style System Overview
 
 This guide provides **precise implementation specifications** for the ERP UI design system, translating visual designs into **production-ready CSS/TailwindCSS code** for the **Templ + HTMX + Alpine.js + Flowbite** stack.
 
@@ -18,7 +18,7 @@ This guide provides **precise implementation specifications** for the ERP UI des
 
 ---
 
-## 🎯 Color System
+##  Color System
 
 <!-- LLM-SECTION-COLORS-START -->
 ### **Primary Color Palette**
@@ -104,7 +104,7 @@ module.exports = {
 
 ---
 
-## 📝 Typography System
+##  Typography System
 
 <!-- LLM-SECTION-TYPOGRAPHY-START -->
 ### **Font Hierarchy**
@@ -217,7 +217,7 @@ font-feature-settings: 'tnum'; /* Tabular numbers for data alignment */
 
 ---
 
-## 📏 Spacing System
+##  Spacing System
 
 <!-- LLM-SECTION-SPACING-START -->
 ### **Grid System: 8px Base Unit**
@@ -294,7 +294,7 @@ font-feature-settings: 'tnum'; /* Tabular numbers for data alignment */
 
 ---
 
-## 🖼️ Shadow & Elevation System
+## ️ Shadow & Elevation System
 
 <!-- LLM-SECTION-SHADOWS-START -->
 ### **Shadow Levels**
@@ -352,7 +352,7 @@ font-feature-settings: 'tnum'; /* Tabular numbers for data alignment */
 
 ---
 
-## 🎛️ Component Styling Specifications
+## ️ Component Styling Specifications
 
 <!-- LLM-SECTION-COMPONENTS-START -->
 ### **Metric Cards**
@@ -621,7 +621,7 @@ templ MetricCard(props MetricCardProps) {
 
 ---
 
-## 🔘 Interactive States
+##  Interactive States
 
 <!-- LLM-SECTION-INTERACTIVE-START -->
 ### **Button Styles**
@@ -747,7 +747,7 @@ templ MetricCard(props MetricCardProps) {
 
 ---
 
-## 📱 Responsive Design Patterns
+##  Responsive Design Patterns
 
 <!-- LLM-SECTION-RESPONSIVE-START -->
 ### **Breakpoint System**
@@ -906,7 +906,7 @@ templ MetricCard(props MetricCardProps) {
 
 ---
 
-## 🛠️ Implementation Templates
+## ️ Implementation Templates
 
 <!-- LLM-SECTION-IMPLEMENTATION-START -->
 ### **Templ Component Templates**
@@ -1123,7 +1123,7 @@ Alpine.data('dataTable', () => ({
 
 ---
 
-## 🎯 Quick Reference
+##  Quick Reference
 
 ### **Most Used Classes**
 ```html

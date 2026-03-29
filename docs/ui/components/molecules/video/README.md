@@ -4,7 +4,7 @@
 **SCOPE**: All video player types, frame navigation, live streaming, and media handling patterns  
 **TARGET AUDIENCE**: Developers implementing video content delivery, training systems, and multimedia presentation
 
-## 📋 Component Overview
+##  Component Overview
 
 The Video component provides comprehensive video playback capabilities for applications requiring rich media content delivery. It supports multiple video formats, frame-by-frame navigation, live streaming, configurable aspect ratios, playback speed control, and advanced video features while maintaining accessibility and consistent user experience across different video-related interfaces.
 
@@ -13,7 +13,7 @@ The Video component provides comprehensive video playback capabilities for appli
 - **Related Schemas**: `SchemaUrlPath.json`, `SchemaExpression.json`, `SchemaClassName.json`
 - **Base Interface**: Media player control for video content presentation
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Video component is configured using JSON that conforms to the `VideoSchema.json`. The JSON configuration renders interactive video players with customizable controls, frame navigation, live streaming support, and user-friendly media interfaces.
 

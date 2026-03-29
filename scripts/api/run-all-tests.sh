@@ -39,11 +39,11 @@ log_error() {
 }
 
 log_header() {
-    echo -e "${PURPLE}🚀 $1${NC}"
+    echo -e "${PURPLE} $1${NC}"
 }
 
 log_section() {
-    echo -e "${CYAN}📋 $1${NC}"
+    echo -e "${CYAN} $1${NC}"
 }
 
 # Check if jq is available
@@ -205,20 +205,20 @@ show_test_summary() {
     echo
     log_header "Test Summary"
     echo "----------------------------------------"
-    echo "📊 Test Results Summary:"
+    echo " Test Results Summary:"
     echo "  • Server Status: ✅ Running"
     echo "  • Test Mode: $(if [[ "$PARALLEL_TESTS" == "true" ]]; then echo "Parallel"; else echo "Sequential"; fi)"
     echo "  • Verbose Mode: $(if [[ "$VERBOSE" == "true" ]]; then echo "Enabled"; else echo "Disabled"; fi)"
     echo "  • Cleanup Mode: $(if [[ "$CLEANUP" == "true" ]]; then echo "Enabled"; else echo "Disabled"; fi)"
     echo "  • Base URL: $BASE_URL"
     echo
-    echo "🔍 Available Documentation:"
+    echo " Available Documentation:"
     echo "  • Core APIs: docs/api/core-apis/"
     echo "  • Workflow APIs: docs/api/workflows/"
     echo "  • Test Scripts: docs/api/utilities/scripts/"
     echo "  • Manual Tests: docs/api/testing/manual/"
     echo
-    echo "🚀 Quick Commands:"
+    echo " Quick Commands:"
     echo "  • Test specific category: $0 --category core"
     echo "  • Verbose output: $0 --verbose"
     echo "  • Parallel execution: $0 --parallel"
@@ -332,16 +332,16 @@ fi
 # Show final summary
 show_test_summary
 
-log_success "🎉 All API tests completed successfully!"
+log_success " All API tests completed successfully!"
 echo
-echo "📈 Next Steps:"
+echo " Next Steps:"
 echo "  • Review test results above"
 echo "  • Check server logs for any issues"
 echo "  • Run specific tests if needed: $0 --category <category>"
 echo "  • Use verbose mode for debugging: $0 --verbose"
 echo "  • Consider running performance tests separately"
 echo
-echo "🔗 Resources:"
+echo " Resources:"
 echo "  • API Documentation: docs/api/"
 echo "  • Test Scripts: docs/api/utilities/scripts/"
 echo "  • Manual Testing: docs/api/testing/manual/"

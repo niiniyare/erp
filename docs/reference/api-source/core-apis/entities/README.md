@@ -2,7 +2,7 @@
 
 The Entity Management API provides  CRUD operations for managing business entities in a hierarchical structure.
 
-## 📋 Overview
+##  Overview
 
 Entities represent core business objects like companies, departments, products, customers, suppliers, and more. The API supports:
 
@@ -13,13 +13,13 @@ Entities represent core business objects like companies, departments, products, 
 - **Soft Deletion**: Entities can be deleted and restored
 - **Audit Trail**: Full creation/modification tracking
 
-## 🔧 Base URL
+##  Base URL
 
 ```
 http://localhost:8080/api/v1/entities
 ```
 
-## 📊 Entity Types
+##  Entity Types
 
 | Type | Description | Use Case |
 |------|-------------|----------|
@@ -35,7 +35,7 @@ http://localhost:8080/api/v1/entities
 | `category` | Category entities | Classification |
 | `other` | Other entity types | Custom use cases |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Health Check
 ```bash
@@ -67,13 +67,13 @@ curl -X GET http://localhost:8080/api/v1/entities | jq .
 curl -X GET http://localhost:8080/api/v1/entities/tree | jq .
 ```
 
-## 📚 Documentation Files
+##  Documentation Files
 
 - **[curl-examples.md](curl-examples.md)** -  curl command examples
 - **[API Reference](api-reference.md)** - Detailed API specification
 - **[Schema Reference](schema-reference.md)** - Request/response schemas
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Testing
 ```bash
@@ -90,7 +90,7 @@ curl -X GET http://localhost:8080/api/v1/entities/tree | jq .
 cat curl-examples.md
 ```
 
-## 🔍 Common Use Cases
+##  Common Use Cases
 
 ### Creating Hierarchical Structure
 ```bash
@@ -126,7 +126,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
   }' | jq .
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Success Response (201 Created)
 ```json
@@ -157,21 +157,21 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
 }
 ```
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Duplicate code error** - Entity codes must be unique
 2. **Invalid parent** - Parent entity must exist and be active
 3. **Entity not found** - Check if entity was soft deleted
 4. **Validation errors** - Check required fields and data types
 
-## 📈 Performance Notes
+##  Performance Notes
 
 - Entity hierarchies use closure table pattern for performance
 - Caching is implemented for frequently accessed entities
 - Tree operations are optimized for large hierarchies
 - Soft deletion preserves referential integrity
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **User Management**: Users belong to entities
 - **Access Requests**: Requests are scoped to entities

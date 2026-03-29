@@ -4,7 +4,7 @@
 **SCOPE**: All action types, button behaviors, and user interaction patterns  
 **TARGET AUDIENCE**: Developers implementing user actions, navigation, and interactive behaviors
 
-## 📋 Component Overview
+##  Component Overview
 
 The Action component provides comprehensive button functionality and user interaction capabilities. It supports multiple action types including AJAX requests, navigation, dialogs, forms, and custom behaviors while maintaining accessibility and consistent styling across the application.
 
@@ -13,7 +13,7 @@ The Action component provides comprehensive button functionality and user intera
 - **Related Schemas**: `AjaxActionSchema.json`, `DialogActionSchema.json`, `LinkActionSchema.json`
 - **Base Interface**: Interactive element for user actions and behaviors
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Action component is configured using JSON that conforms to the `ActionSchema.json`. Different action types are supported through conditional schemas based on the `actionType` property.
 
@@ -685,7 +685,7 @@ const (
 )
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -875,7 +875,7 @@ describe('Action Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Dashboard Actions
 ```go
@@ -946,7 +946,7 @@ templ FormActions(formAPI string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Button](../button/)** - Basic button components
 - **[Form](../../molecules/form/)** - Form containers

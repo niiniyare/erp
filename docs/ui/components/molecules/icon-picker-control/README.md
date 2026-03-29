@@ -4,7 +4,7 @@
 **SCOPE**: Icon picking, visual symbols, interface customization, and brand/theme configuration  
 **TARGET AUDIENCE**: Developers implementing customizable interfaces, icon selection, and visual configuration features
 
-## 📋 Component Overview
+##  Component Overview
 
 Icon Picker Control provides a specialized interface for selecting icons from icon libraries with support for search, categories, custom icons, and preview functionality. Essential for customizable ERP interfaces and visual configuration.
 

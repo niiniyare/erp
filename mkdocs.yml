@@ -168,7 +168,7 @@ nav:
       
     - 'API Reference':
       - 'Overview': 'reference/api/index.md'
-      - '🚀 Interactive API Explorer': 'reference/api/swagger-ui.md'
+      - ' Interactive API Explorer': 'reference/api/swagger-ui.md'
       - 'Authentication': 'reference/api/auth/index.md'
       - 'Users Management': 'reference/api/users/index.md'
       - 'Organizations': 'reference/api/organizations/index.md'

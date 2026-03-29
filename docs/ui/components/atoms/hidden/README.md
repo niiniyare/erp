@@ -4,7 +4,7 @@
 **SCOPE**: All hidden field variants, value management, and security patterns  
 **TARGET AUDIENCE**: Developers implementing form state, security tokens, and data persistence
 
-## 📋 Component Overview
+##  Component Overview
 
 The Hidden component provides secure and efficient hidden form fields for maintaining state, security tokens, and data that doesn't require user interaction. It supports value encryption, validation, and integration with form systems while maintaining security best practices.
 
@@ -13,7 +13,7 @@ The Hidden component provides secure and efficient hidden form fields for mainta
 - **Related Schemas**: `FormSchema.json`, `ValidationSchema.json`
 - **Base Interface**: Form control element for non-visible data
 
-## 🎨 Hidden Types
+##  Hidden Types
 
 ### Basic Hidden Field
 **Purpose**: Standard hidden form fields for data persistence
@@ -271,7 +271,7 @@ templ VersionField(props HiddenProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ```go
 type HiddenProps struct {
@@ -378,7 +378,7 @@ const (
 )
 ```
 
-## 🔒 Security Implementation
+##  Security Implementation
 
 ### Encryption Support
 ```go
@@ -491,7 +491,7 @@ func decodeFormState(encoded string) (*FormState, error) {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -631,7 +631,7 @@ describe('Hidden Field Integration', () => {
 });
 ```
 
-## 📱 Development Tools
+##  Development Tools
 
 ### Debug Mode Component
 ```go
@@ -719,7 +719,7 @@ Alpine.store('debug', {
 });
 ```
 
-## 🔧 Utilities
+##  Utilities
 
 ### Helper Functions
 ```go
@@ -838,7 +838,7 @@ func formatValue(value string, encrypted bool) string {
 }
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Login Form with CSRF
 ```go
@@ -922,7 +922,7 @@ templ EditProfileForm() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Input](../input/)** - Visible form inputs
 - **[Form](../../molecules/form/)** - Form containers

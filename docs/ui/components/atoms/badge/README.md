@@ -4,7 +4,7 @@
 **SCOPE**: All badge variants, styles, and usage patterns  
 **TARGET AUDIENCE**: Developers implementing status indicators, labels, and notifications
 
-## 📋 Component Overview
+##  Component Overview
 
 The Badge component provides visual indicators for status, counts, labels, and notifications. It supports various styles, colors, and positioning options while maintaining consistent design and accessibility standards.
 
@@ -13,7 +13,7 @@ The Badge component provides visual indicators for status, counts, labels, and n
 - **Related Schemas**: `StatusSchema.json`, `TagSchema.json`
 - **Base Interface**: Display element with semantic meaning
 
-## 🎨 Badge Types
+##  Badge Types
 
 ### Basic Badge
 **Purpose**: Simple status indicators and labels
@@ -241,7 +241,7 @@ templ BadgeGroup(props BadgeGroupProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -375,7 +375,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Badge Styles
 ```css
@@ -1032,7 +1032,7 @@ templ TooltipBadge(props BadgeProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1224,7 +1224,7 @@ templ AccessibleBadge(props BadgeProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1325,7 +1325,7 @@ test.describe('Badge Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Notification Badge
 ```go
@@ -1392,7 +1392,7 @@ templ TaskProgress() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Tag](../tag/)**: Categorization and metadata labels
 - **[Status](../status/)**: State indicators with icons

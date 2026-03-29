@@ -92,9 +92,9 @@ graph TB
 - **Real-Time Processing**: Atomic transactions with state machine validation
 - **Advanced Integration**: REST APIs with event-driven architecture
 
-> **📋 Technical Details**: See [Technical Architecture](./technical-architecture.md) for comprehensive implementation details, database schema, and technology stack.
+> ** Technical Details**: See [Technical Architecture](./technical-architecture.md) for comprehensive implementation details, database schema, and technology stack.
 
-> **💼 Business Concepts**: See [Business Domain Guide](./business-domain-guide.md) for accounting principles, chart of accounts structure, and financial workflows.
+> ** Business Concepts**: See [Business Domain Guide](./business-domain-guide.md) for accounting principles, chart of accounts structure, and financial workflows.
 
 ## Documentation Guide
 
@@ -129,7 +129,7 @@ graph TB
 
 **Current Status**: Active development with foundational components complete
 
-> **📊 Detailed Progress**: For comprehensive implementation status, phase tracking, and completion metrics, see [Implementation Tasks](./TASK.md#project-progress-overview).
+> ** Detailed Progress**: For comprehensive implementation status, phase tracking, and completion metrics, see [Implementation Tasks](./TASK.md#project-progress-overview).
 
 See **[ROADMAP.md](./ROADMAP.md)** for strategic development timeline.
 

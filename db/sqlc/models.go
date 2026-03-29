@@ -802,6 +802,22 @@ type Permission struct {
 	CreatedAt         sql.NullTime `json:"created_at"`
 }
 
+// Canonical permission catalogue derived from the MRA action registry. full_key is the dot-notation string used in Casbin policies and ResolvedSession.Permissions maps.
+type PermissionCatalog struct {
+	ID           uuid.UUID `json:"id"`
+	ModuleID     uuid.UUID `json:"module_id"`
+	ResourceID   uuid.UUID `json:"resource_id"`
+	ActionID     uuid.UUID `json:"action_id"`
+	ModuleSlug   string    `json:"module_slug"`
+	ResourceSlug string    `json:"resource_slug"`
+	ActionSlug   string    `json:"action_slug"`
+	// GENERATED: {module_slug}.{resource_slug}.{action_slug}. e.g. finance.transactions.read. Never change slugs after seeding — all policies reference these keys.
+	FullKey     string    `json:"full_key"`
+	Description *string   `json:"description"`
+	IsActive    bool      `json:"is_active"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
 // Stores person entities with ABAC security attributes. Supports multiple person types including employees, customers, vendors, and contractors. Implements soft delete and tenant isolation.
 type Person struct {
 	// UUID primary key for the person record.

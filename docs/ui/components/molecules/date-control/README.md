@@ -4,7 +4,7 @@
 **SCOPE**: All date picker types, formats, validation, and range constraints  
 **TARGET AUDIENCE**: Developers implementing date inputs, scheduling forms, and temporal data collection
 
-## 📋 Component Overview
+##  Component Overview
 
 The Date Control component provides comprehensive date selection and input capabilities for forms. It supports multiple date formats, validation rules, range constraints, shortcuts, and internationalization while maintaining accessibility and consistent user experience across different date-related interfaces.
 
@@ -13,7 +13,7 @@ The Date Control component provides comprehensive date selection and input capab
 - **Related Schemas**: `FormHorizontal.json`, `LabelAlign.json`, `ShortCuts.json`
 - **Base Interface**: Form input control for date selection and validation
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Date Control component is configured using JSON that conforms to the `DateControlSchema.json`. The JSON configuration renders interactive date inputs with validation, formatting, and user-friendly picker interfaces.
 
@@ -1381,7 +1381,7 @@ func getShortcuts(shortcuts interface{}) []DateShortcut {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1517,7 +1517,7 @@ describe('Date Control Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Simple Date Picker
 ```go
@@ -1549,7 +1549,7 @@ templ BirthDateInput(value string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Date Range Control](../date-range-control/)** - Date range selection
 - **[Time Control](../time-control/)** - Time input

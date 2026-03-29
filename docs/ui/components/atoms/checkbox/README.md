@@ -4,7 +4,7 @@
 **SCOPE**: All checkbox variants, validation, and interaction patterns  
 **TARGET AUDIENCE**: Developers implementing form controls and selection interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 The Checkbox component provides intuitive boolean selection for forms, lists, and data tables. It supports individual selections, group selections, and indeterminate states with full accessibility compliance.
 
@@ -13,7 +13,7 @@ The Checkbox component provides intuitive boolean selection for forms, lists, an
 - **Related Schemas**: `IconCheckedSchema.json`, `Options.json`
 - **Base Interface**: Form control with validation
 
-## 🎨 Checkbox Types
+##  Checkbox Types
 
 ### Basic Checkbox
 **Purpose**: Simple boolean selection for forms and agreements
@@ -233,7 +233,7 @@ templ IndeterminateCheckbox(props CheckboxProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -351,7 +351,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Checkbox Styles
 ```css
@@ -755,7 +755,7 @@ templ CheckboxTreeNode(node TreeNode) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -920,7 +920,7 @@ templ AccessibleCheckbox(props CheckboxProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1018,7 +1018,7 @@ test.describe('Checkbox Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Simple Agreement Checkbox
 ```go
@@ -1088,7 +1088,7 @@ templ SelectableTable() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Radio Button](../radio/)**: Single selection from options
 - **[Switch](../switch/)**: Toggle controls for settings

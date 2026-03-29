@@ -4,7 +4,7 @@
 **SCOPE**: Data iteration, dynamic list rendering, and collection display patterns  
 **TARGET AUDIENCE**: Developers implementing dynamic lists, grids, and repeating UI patterns
 
-## 📋 Component Overview
+##  Component Overview
 
 Each provides powerful iteration capabilities for rendering arrays of data into repeating UI components. Essential for displaying dynamic lists, data grids, and any scenario where you need to render multiple instances of the same component structure with different data.
 

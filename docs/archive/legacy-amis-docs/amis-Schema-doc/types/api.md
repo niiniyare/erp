@@ -2,7 +2,7 @@
 title: API
 description:
 type: 0
-group: 🔧 类型
+group:  类型
 menuName: API
 icon:
 order: 20

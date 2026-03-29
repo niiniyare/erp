@@ -4,7 +4,7 @@
 
 The Airline Reservation System module transforms the core ERP into a  airline operations management platform. It provides flight scheduling, passenger booking, crew management, aircraft maintenance, revenue management, and operational control capabilities designed specifically for airlines and aviation companies.
 
-## 🛫 Flight Operations Management
+##  Flight Operations Management
 
 ### Aircraft Fleet Management
 
@@ -323,7 +323,7 @@ CREATE TABLE flight_segments (
 );
 ```
 
-## 🎫 Passenger Reservation System
+##  Passenger Reservation System
 
 ### Booking and Reservation Management
 
@@ -601,7 +601,7 @@ CREATE TABLE baggage (
 );
 ```
 
-## 💰 Revenue Management & Pricing
+##  Revenue Management & Pricing
 
 ### Dynamic Pricing Engine
 

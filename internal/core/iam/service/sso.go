@@ -1,13 +1,13 @@
 package service
 
 // OAuth/OIDC SSO service.
-//
+// 
 // Flow:
-//   1. BeginOAuth  — build the provider's authorization URL; store CSRF state in Redis.
-//   2. ResolveUser — exchange code for tokens; fetch userinfo; JIT-provision user if
-//                    provider.AutoProvision is true; return the User.
-//   3. Caller passes the User to SessionService.LoginWithSSO to build a full session.
-//
+// 1. BeginOAuth  — build the provider's authorization URL; store CSRF state in Redis.
+// 2. ResolveUser — exchange code for tokens; fetch userinfo; JIT-provision user if
+// provider.AutoProvision is true; return the User.
+// 3. Caller passes the User to SessionService.LoginWithSSO to build a full session.
+// 
 // Supported providers: google, microsoft.
 // Implemented using stdlib net/http only — no external OAuth2 library required.
 
@@ -34,7 +34,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// ─── Endpoints (hardcoded per provider) ──────────────────────────────────────
+// Endpoints (hardcoded per provider)
 
 type oauthEndpoints struct {
 	AuthURL  string
@@ -66,7 +66,7 @@ func providerEndpoints(p domain.OAuthProvider, extra map[string]string) oauthEnd
 	}
 }
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // SSOService manages OAuth/OIDC provider configurations and the login exchange flow.
 type SSOService interface {
@@ -89,7 +89,7 @@ type SSOService interface {
 	ResolveUser(ctx context.Context, provider domain.OAuthProvider, code, state string) (*domain.User, error)
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// Config
 
 // SSOConfig holds the constructor config for SSOService.
 type SSOConfig struct {
@@ -105,7 +105,7 @@ type SSOConfig struct {
 	HTTPClient *http.Client
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// Implementation
 
 const ssoStateTTL = 10 * time.Minute
 
@@ -143,7 +143,7 @@ func NewSSOService(
 	}
 }
 
-// ─── Provider management ──────────────────────────────────────────────────────
+// Provider management
 
 func (s *ssoService) UpsertProvider(ctx context.Context, req *domain.CreateSSOProviderRequest) (*domain.SSOProvider, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.sso.UpsertProvider")
@@ -168,7 +168,7 @@ func (s *ssoService) DeactivateProvider(ctx context.Context, provider domain.OAu
 	return s.repo.DeactivateProvider(ctx, provider)
 }
 
-// ─── OAuth flow ───────────────────────────────────────────────────────────────
+// OAuth flow
 
 // ssoState is stored in Redis under `sso:state:{token}` for CSRF validation.
 type ssoState struct {
@@ -318,7 +318,7 @@ func (s *ssoService) ResolveUser(ctx context.Context, provider domain.OAuthProvi
 	return user, nil
 }
 
-// ─── Internal helpers ─────────────────────────────────────────────────────────
+// Internal helpers
 
 // tokenResponse is the OAuth2 token endpoint response.
 type tokenResponse struct {

@@ -4,7 +4,7 @@
 **SCOPE**: Quarter range picking, fiscal periods, multi-quarter analysis, and business cycle planning  
 **TARGET AUDIENCE**: Developers implementing multi-quarter reports, business planning, and quarterly comparison features
 
-## 📋 Component Overview
+##  Component Overview
 
 Quarter Range Control provides quarter range selection with start/end quarter picking, duration limits, fiscal year support, shortcuts, and validation. Essential for multi-quarter reporting and business cycle analysis in ERP systems.
 

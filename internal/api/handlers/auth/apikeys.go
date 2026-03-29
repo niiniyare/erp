@@ -10,7 +10,7 @@ import (
 	"awo.so/internal/core/iam/domain"
 )
 
-// ─── Request / Response types ─────────────────────────────────────────────────
+// Request / Response types
 
 type createAPIKeyRequest struct {
 	Name      string     `json:"name"`
@@ -38,7 +38,7 @@ type apiKeyResponse struct {
 	CreatedAt  time.Time  `json:"created_at"`
 }
 
-// ─── Handlers ─────────────────────────────────────────────────────────────────
+// Handlers
 
 // CreateAPIKeyHandler creates a new API key for the authenticated user's tenant.
 // The plaintext bearer token is returned once in the response body.
@@ -116,7 +116,7 @@ func RevokeAPIKeyHandler(svc iam.APIKeyService) fiber.Handler {
 	}
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// Helpers
 
 func toAPIKeyResponse(k *domain.APIKey) apiKeyResponse {
 	return apiKeyResponse{

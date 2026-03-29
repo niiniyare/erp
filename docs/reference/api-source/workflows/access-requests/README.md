@@ -2,7 +2,7 @@
 
 The Access Request Workflow API provides a  system for managing access requests including role assignments, permission grants, resource access, and privilege elevations with full approval workflows.
 
-## 📋 Overview
+##  Overview
 
 The Access Request Workflow API implements a state machine pattern for managing access requests with:
 
@@ -14,13 +14,13 @@ The Access Request Workflow API implements a state machine pattern for managing 
 - **Auto-Revocation**: Automatic access revocation after expiration
 - **Risk Assessment**: Integration with risk assessment for approval decisions
 
-## 🔧 Base URL
+##  Base URL
 
 ```
 http://localhost:8080/api/v1/access-requests
 ```
 
-## 📊 Request Types
+##  Request Types
 
 | Type | Description | Use Case |
 |------|-------------|----------|
@@ -29,7 +29,7 @@ http://localhost:8080/api/v1/access-requests
 | `RESOURCE_ACCESS` | Access to specific resources | Document access, system access |
 | `ELEVATION` | Privilege elevation | Emergency access, admin tasks |
 
-## 🔄 Approval Status
+##  Approval Status
 
 | Status | Description | Actions Available |
 |--------|-------------|------------------|
@@ -40,7 +40,7 @@ http://localhost:8080/api/v1/access-requests
 | `REVOKED` | Request revoked | None |
 | `EXECUTED` | Access granted | Revoke |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Health Check
 ```bash
@@ -81,7 +81,7 @@ curl -X POST http://localhost:8080/api/v1/access-requests/{id}/process \
 curl -X GET http://localhost:8080/api/v1/access-requests | jq .
 ```
 
-## 📚 Documentation Files
+##  Documentation Files
 
 - **[curl-examples.md](curl-examples.md)** -  curl command examples
 - **[API Reference](api-reference.md)** - Detailed API specification
@@ -89,7 +89,7 @@ curl -X GET http://localhost:8080/api/v1/access-requests | jq .
 - **[Workflow Guide](workflow-guide.md)** - Approval workflow configuration
 - **Integration Guide** - Integration with other systems
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Testing
 ```bash
@@ -106,7 +106,7 @@ curl -X GET http://localhost:8080/api/v1/access-requests | jq .
 cat curl-examples.md
 ```
 
-## 🔍 Common Use Cases
+##  Common Use Cases
 
 ### Role Assignment Request
 ```bash
@@ -162,7 +162,7 @@ curl -X POST http://localhost:8080/api/v1/access-requests/$REQUEST_ID/process \
 curl -X GET http://localhost:8080/api/v1/access-requests/$REQUEST_ID | jq .
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Success Response (201 Created)
 ```json
@@ -220,7 +220,7 @@ curl -X GET http://localhost:8080/api/v1/access-requests/$REQUEST_ID | jq .
 }
 ```
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Missing X-User-ID header** - Required for user context
 2. **Invalid request type** - Must be one of the supported types
@@ -228,14 +228,14 @@ curl -X GET http://localhost:8080/api/v1/access-requests/$REQUEST_ID | jq .
 4. **Request already processed** - Cannot modify processed requests
 5. **Expired requests** - Cannot approve expired requests
 
-## 📈 Performance Notes
+##  Performance Notes
 
 - Workflow state changes are atomic
 - Audit events are logged asynchronously
 - Notifications are sent via background jobs
 - Statistics are cached for performance
 
-## 🔒 Security Features
+##  Security Features
 
 - **ABAC Integration**: Attribute-based access control
 - **Audit Logging**: Complete audit trail
@@ -243,14 +243,14 @@ curl -X GET http://localhost:8080/api/v1/access-requests/$REQUEST_ID | jq .
 - **Auto-Revocation**: Automatic access cleanup
 - **Approval Validation**: Strict approval rule enforcement
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **User Management**: Users create and approve requests
 - **Entity Management**: Requests are scoped to entities
 - **Conditional Access**: Rules may affect request approval
 - **User Analytics**: Behavioral data influences risk assessment
 
-## 🎯 Workflow Configuration
+##  Workflow Configuration
 
 ### Approval Rules
 - **Role-Based**: Approvers based on roles
@@ -264,7 +264,7 @@ curl -X GET http://localhost:8080/api/v1/access-requests/$REQUEST_ID | jq .
 - **Escalation Rules**: Automatic escalation for delays
 - **Reminder System**: Periodic reminders for pending requests
 
-## 📊 Monitoring and Metrics
+##  Monitoring and Metrics
 
 ### Key Metrics
 - Request creation rate

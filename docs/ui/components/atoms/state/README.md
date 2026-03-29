@@ -4,7 +4,7 @@
 **SCOPE**: All state display variants, conditional rendering, and status indicators  
 **TARGET AUDIENCE**: Developers implementing state management, status displays, and conditional content
 
-## 📋 Component Overview
+##  Component Overview
 
 The State component provides flexible state-based content rendering and status visualization capabilities. It supports conditional display of content based on application state, status indicators with custom styling, and dynamic content switching based on data conditions while maintaining accessibility and responsive design standards.
 
@@ -13,7 +13,7 @@ The State component provides flexible state-based content rendering and status v
 - **Related Schemas**: `SchemaCollection.json`, `SchemaExpression.json`
 - **Base Interface**: Display component for state-based content rendering
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The State component is configured using JSON that conforms to the `StateSchema.json`. The JSON configuration renders content conditionally based on state values or expressions.
 
@@ -480,7 +480,7 @@ type StateProps struct {
                             "body": [
                                 {
                                     "type": "tpl",
-                                    "tpl": "<h4>🔄 In Progress: ${current_step.title}</h4>"
+                                    "tpl": "<h4> In Progress: ${current_step.title}</h4>"
                                 },
                                 {
                                     "type": "progress",
@@ -781,7 +781,7 @@ The State component supports a powerful expression system for conditional render
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -992,7 +992,7 @@ describe('State Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### System Status Dashboard
 ```go
@@ -1021,7 +1021,7 @@ templ UserAuthState(user *User) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Status](../status/)** - Status indicators and badges
 - **[Progress](../progress/)** - Progress indicators

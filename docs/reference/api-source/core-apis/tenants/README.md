@@ -4,7 +4,7 @@ The Tenant Management API provides comprehensive functionality for managing mult
 
 **Updated: 2025-09-20** - Based on comprehensive API testing results.
 
-## 📋 Overview
+##  Overview
 
 **Base URL**: `/api/v1/tenants`
 
@@ -19,13 +19,13 @@ The Tenant Management API provides comprehensive functionality for managing mult
 - ⚠️ Limited tenant configuration management
 - ❌ Known issues with provisioning and status transitions
 
-## 🔑 Authentication Requirements
+##  Authentication Requirements
 
 **IMPORTANT**: All endpoints (except tenant creation) require tenant context via:
 - **X-Tenant-ID header** with a valid UUID, OR
 - **Subdomain format** like `tenant.example.com` (minimum 3 parts)
 
-## 🔗 Available Endpoints
+##  Available Endpoints
 
 | Method | Endpoint | Status | Description |
 |--------|----------|--------|-------------|
@@ -41,7 +41,7 @@ The Tenant Management API provides comprehensive functionality for managing mult
 | `POST` | `/api/v1/tenants/{id}/reactivate` | ❌ **Failing** | Reactivate tenant (status constraints) |
 | `PUT` | `/api/v1/tenants/{id}/configuration` | ❌ **Failing** | Update configuration (requires active tenant) |
 
-## 📊 Data Models
+##  Data Models
 
 ### Tenant Object (Updated Schema)
 ```json
@@ -119,7 +119,7 @@ The Tenant Management API provides comprehensive functionality for managing mult
 }
 ```
 
-## 🚀 Quick Examples
+##  Quick Examples
 
 ### Create Tenant (Working)
 ```bash
@@ -258,7 +258,7 @@ curl -X GET "http://localhost:8080/api/v1/tenants/96ab6888-2914-4872-94b8-c25d96
 }
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Pagination Parameters
 
@@ -286,7 +286,7 @@ curl -X GET "http://localhost:8080/api/v1/tenants?page=1&page_size=5" \
   -H "X-Tenant-ID: 96ab6888-2914-4872-94b8-c25d964448cb" | jq .
 ```
 
-## 🚨 Error Handling
+##  Error Handling
 
 ### Common Error Responses
 
@@ -336,7 +336,7 @@ curl -X GET "http://localhost:8080/api/v1/tenants?page=1&page_size=5" \
 - Tenant ID must be valid UUID format
 - Tenant must exist in database
 
-## 🔍 Testing
+##  Testing
 
 ### Automated Test Script
 ```bash
@@ -398,7 +398,7 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID \
   -H "X-Tenant-ID: $TENANT_ID"
 ```
 
-## 📊 Performance Considerations
+##  Performance Considerations
 
 ### Current Performance Metrics
 - **Health Check**: ~50ms response time
@@ -419,20 +419,20 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID \
 - **Database Constraints**: Some management operations fail
 - **Tenant Context Required**: Most operations need tenant authentication
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **[User Management API](../users/README.md)** - Users belong to tenants
 - **[Entity Management API](../entities/README.md)** - Entities are tenant-scoped
 - **[Authentication API](../../workflows/auth/README.md)** - Tenant-aware authentication
 - **[Organization API](../organizations/README.md)** - Organization-tenant relationships
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - **[curl Examples](curl-examples.md)** - Complete curl command examples with real test results
 - **Testing Scripts**: Comprehensive automated testing script (available in the source code)
 - **API Source Design**: Goa service definitions (available in the source code)
 
-## 🎯 Quick Start Guide
+##  Quick Start Guide
 
 1. **Create a tenant** (only public endpoint):
    ```bash
@@ -452,7 +452,7 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID \
    curl -X GET http://localhost:8080/api/v1/tenants/health -H "X-Tenant-ID: $TENANT_ID"
    ```
 
-## 🚨 Critical Implementation Notes
+##  Critical Implementation Notes
 
 ⚠️ **Before using this API in production:**
 

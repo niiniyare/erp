@@ -4,7 +4,7 @@
 **SCOPE**: All UUID variants, generation patterns, and validation features  
 **TARGET AUDIENCE**: Developers implementing unique identifiers, entity management, and data integrity
 
-## 📋 Component Overview
+##  Component Overview
 
 The UUID component provides robust unique identifier generation, validation, and management capabilities. It supports multiple UUID versions, formatting options, and integration patterns while maintaining performance and security standards for enterprise applications.
 
@@ -13,7 +13,7 @@ The UUID component provides robust unique identifier generation, validation, and
 - **Related Schemas**: `HiddenControlSchema.json`, `ValidationSchema.json`
 - **Base Interface**: Form control element for unique identifier management
 
-## 🎨 UUID Types
+##  UUID Types
 
 ### Basic UUID Field
 **Purpose**: Standard UUID input and display with validation
@@ -511,7 +511,7 @@ templ UUIDValidator(props UUIDProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ```go
 type UUIDProps struct {
@@ -748,7 +748,7 @@ templ BulkUUIDGenerator(props UUIDBulkProps) {
 }
 ```
 
-## 🔧 Utilities and Helpers
+##  Utilities and Helpers
 
 ### UUID Validation Functions
 ```go
@@ -876,7 +876,7 @@ window.UUIDUtils = {
 };
 ```
 
-## 🎨 Styling
+##  Styling
 
 ### Base UUID Styles
 ```css
@@ -1120,7 +1120,7 @@ window.UUIDUtils = {
 }
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Entity ID Field
 ```go
@@ -1188,7 +1188,7 @@ templ APIKeyForm() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Hidden](../hidden/)** - Hidden form fields
 - **[Input](../input/)** - Text input fields

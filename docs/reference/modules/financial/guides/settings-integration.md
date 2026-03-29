@@ -270,7 +270,7 @@ withinTolerance, err := settingsIntegration.IsWithinReconciliationTolerance(ctx,
 - Example integration with Transaction service
 -  documentation and usage examples
 
-🚀 **Ready for Use:**
+ **Ready for Use:**
 The Finance module is now fully integrated with the Settings system and ready for production use. All Finance services can leverage centralized configuration management using the constant-based approach.
 
 ---

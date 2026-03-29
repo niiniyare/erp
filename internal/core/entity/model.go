@@ -180,7 +180,7 @@ func (req *CreateEntityRequest) ToSQLCCreateParams() (db.CreateEntityParams, err
 		IsActive:      req.IsActive,
 		Hidden:        req.IsHidden,
 		AccrualMethod: req.AccrualMethod,
-		FyStartMonth:  int32(req.FYStartMonth),
+		FyStartMonth:  int32(max(req.FYStartMonth, 1)),
 		Address:       address,
 		Picture:       &req.Picture,
 		Settings:      settings,

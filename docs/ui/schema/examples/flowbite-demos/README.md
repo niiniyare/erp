@@ -4,9 +4,9 @@
 **SCOPE**: Complete component library with working examples  
 **TARGET AUDIENCE**: Developers implementing Flowbite components
 
-## 📁 Component Categories
+##  Component Categories
 
-### 🧱 [Basic Components](basic/)
+###  [Basic Components](basic/)
 Essential UI elements and foundation components
 - **[Buttons](basic/buttons.md)** - Primary, secondary, and action buttons
 - **[Button Groups](basic/button-group.md)** - Grouped button collections
@@ -20,13 +20,13 @@ Essential UI elements and foundation components
 - **[Indicators](basic/indicators.md)** - Status and notification badges
 - **[Keyboard Keys](basic/kbd.md)** - Keyboard key display
 
-### 📝 [Form Components](forms/)
+###  [Form Components](forms/)
 Interactive form elements and input validation
 - **[Forms](forms/forms.md)** - Complete form layouts and validation
 - **[Date Picker](forms/datepicker.md)** - Date and time selection
 - **[Clipboard](forms/clipboard.md)** - Copy-to-clipboard functionality
 
-### 📊 [Layout Components](layout/)
+###  [Layout Components](layout/)
 Structural components for page organization
 - **[Cards](layout/card.md)** - Content containers and panels
 - **[Tables](layout/tables.md)** - Data tables with sorting and filtering
@@ -42,7 +42,7 @@ Structural components for page organization
 - **[Footer](layout/footer.md)** - Page footer layouts
 - **[Jumbotron](layout/jumbotron.md)** - Hero sections and highlights
 
-### 🧭 [Navigation Components](navigation/)
+###  [Navigation Components](navigation/)
 Site navigation and wayfinding elements
 - **[Navbar](navigation/navbar.md)** - Top navigation bars
 - **[Sidebar](navigation/sidebar.md)** - Side navigation menus
@@ -50,7 +50,7 @@ Site navigation and wayfinding elements
 - **[Bottom Navigation](navigation/bottom-navigation.md)** - Mobile bottom navigation
 - **[Mega Menu](navigation/mega-menu.md)** - Large dropdown menus
 
-### 🚀 [Advanced Components](advanced/)
+###  [Advanced Components](advanced/)
 Complex interactive components
 - **[Modals](advanced/modal.md)** - Dialog boxes and overlays
 - **[Dropdowns](advanced/dropdowns.md)** - Dropdown menus and selects
@@ -64,7 +64,7 @@ Complex interactive components
 - **[Device Mockups](advanced/device-mockups.md)** - Device frame presentations
 - **[Video](advanced/video.md)** - Video player components
 
-### 📈 [Data Tables](datatables/)
+###  [Data Tables](datatables/)
 Advanced data table functionality with DataTables integration
 - **[Getting Started](datatables/Getting-Started.md)** - Setup and basic usage
 - **[API Reference](datatables/API.md)** - Complete API documentation
@@ -73,7 +73,7 @@ Advanced data table functionality with DataTables integration
 - **[Columns](datatables/columns.md)** - Column configuration
 - **[Data Management](datatables/data.md)** - Data loading and manipulation
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Using Flowbite Components in ERP
 ```go
@@ -105,7 +105,7 @@ All Flowbite components are enhanced with:
 - **HTMX Integration**: Server-side interactivity
 - **Multi-Tenant**: Tenant-aware styling
 
-## 📚 Integration Guides
+##  Integration Guides
 
 ### Primary Integration
 - **[Flowbite Integration](../../integration/flowbite.md)** - Complete integration guide
@@ -117,7 +117,7 @@ All Flowbite components are enhanced with:
 - **[Templ Integration](../../fundamentals/templ-integration.md)** - Template development
 - **[Validation Guide](../../guides/validation-guide.md)** - Form validation
 
-## 🎨 Customization
+##  Customization
 
 ### Brand Integration
 All components support:
@@ -132,7 +132,7 @@ All components support:
 - **Performance**: Optimized for large datasets
 - **Accessibility**: WCAG 2.1 AA compliance
 
-## 📱 Responsive Design
+##  Responsive Design
 
 All components are built with:
 - **Mobile-First**: Optimized for mobile devices
@@ -140,7 +140,7 @@ All components are built with:
 - **Touch-Friendly**: Appropriate touch targets
 - **Progressive Enhancement**: Works without JavaScript
 
-## 🧪 Testing
+##  Testing
 
 Component examples include:
 - **Visual Tests**: Playwright visual regression tests

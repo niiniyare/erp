@@ -4,7 +4,7 @@
 **SCOPE**: 27 atomic components with complete specifications  
 **TARGET AUDIENCE**: Developers building composite components
 
-## 🧱 Atoms Overview
+##  Atoms Overview
 
 Atomic components are the fundamental building blocks of our ERP interface. They represent the smallest functional units that maintain their meaning when isolated. Each atom is designed to be composable, accessible, and consistent with our design system.
 
@@ -15,7 +15,7 @@ Atomic components are the fundamental building blocks of our ERP interface. They
 - **Consistent**: Follows design system tokens
 - **Type-safe**: Schema-driven validation
 
-## 📋 Complete Atoms Library
+##  Complete Atoms Library
 
 ### Form Controls (8 components)
 Essential input elements for data collection and user interaction.
@@ -26,10 +26,10 @@ Essential input elements for data collection and user interaction.
 | **[Checkbox](checkbox/)** | Boolean selections | `CheckboxControlSchema.json` | checked, label, value | ✅ |
 | **[Radio](radio/)** | Single choice selections | `RadioControlSchema.json` | name, value, selected | ✅ |
 | **[Switch](switch/)** | Toggle controls | `SwitchControlSchema.json` | checked, size, disabled | ✅ |
-| **[Hidden](hidden/)** | Hidden form values | `HiddenControlSchema.json` | name, value | 🔄 |
-| **[UUID](uuid/)** | Unique identifier inputs | `UUIDControlSchema.json` | format, readonly | 🔄 |
-| **[Color Input](color-input/)** | Color selection | `InputColorControlSchema.json` | value, format, palette | 🔄 |
-| **[Static](static/)** | Read-only displays | `StaticExactControlSchema.json` | value, format | 🔄 |
+| **[Hidden](hidden/)** | Hidden form values | `HiddenControlSchema.json` | name, value |  |
+| **[UUID](uuid/)** | Unique identifier inputs | `UUIDControlSchema.json` | format, readonly |  |
+| **[Color Input](color-input/)** | Color selection | `InputColorControlSchema.json` | value, format, palette |  |
+| **[Static](static/)** | Read-only displays | `StaticExactControlSchema.json` | value, format |  |
 
 ### Action Elements (2 components)  
 Interactive elements that trigger actions and behaviors.
@@ -37,7 +37,7 @@ Interactive elements that trigger actions and behaviors.
 | Component | Purpose | Schema | Props | Status |
 |-----------|---------|--------|-------|--------|
 | **[Button](button/)** | Action triggers | `ButtonGroupSchema.json` | text, variant, onClick | ✅ |
-| **[Action](action/)** | Generic actions | `ActionSchema.json` | type, actionType, payload | 🔄 |
+| **[Action](action/)** | Generic actions | `ActionSchema.json` | type, actionType, payload |  |
 
 ### Display Elements (9 components)
 Visual elements for presenting information and content.
@@ -47,7 +47,7 @@ Visual elements for presenting information and content.
 | **[Badge](badge/)** | Status indicators | `BadgeObject.json` | text, variant, size | ✅ |
 | **[Tag](tag/)** | Categorization labels | `TagSchema.json` | label, color, removable | ✅ |
 | **[Icon](icon/)** | Visual symbols | `IconSchema.json` | name, size, color | ✅ |
-| **[Image](image/)** | Media display | `ImageSchema.json` | src, alt, responsive | 🔄 |
+| **[Image](image/)** | Media display | `ImageSchema.json` | src, alt, responsive |  |
 | **[Link](link/)** | Navigation elements | `LinkSchema.json` | href, target, text | ✅ |
 | **[Status](status/)** | State indicators | `StatusSchema.json` | level, text, icon | ✅ |
 | **[Progress](progress/)** | Progress tracking | `ProgressSchema.json` | value, max, variant | ✅ |
@@ -59,16 +59,16 @@ Supporting elements for layout, configuration, and metadata.
 
 | Component | Purpose | Schema | Props | Status |
 |-----------|---------|--------|-------|--------|
-| **[State](state/)** | Component state | `StateSchema.json` | conditions, values | 🔄 |
-| **[Label Align](label-align/)** | Label positioning | `LabelAlign.json` | alignment, position | 🔄 |
-| **[Option](option/)** | Selection options | `Option.json` | value, label, disabled | 🔄 |
-| **[Options](options/)** | Option collections | `Options.json` | source, labelField | 🔄 |
-| **[Status Source](status-source/)** | Status data source | `StatusSource.json` | api, mapping | 🔄 |
-| **[Icon Checked](icon-checked/)** | Checked state icons | `IconCheckedSchema.json` | icon, checkedIcon | 🔄 |
-| **[Icon Item](icon-item/)** | Icon list items | `IconItemSchema.json` | icon, label, value | 🔄 |
-| **[Field Types](field-types/)** | Field type definitions | Multiple schemas | type, validation | 🔄 |
+| **[State](state/)** | Component state | `StateSchema.json` | conditions, values |  |
+| **[Label Align](label-align/)** | Label positioning | `LabelAlign.json` | alignment, position |  |
+| **[Option](option/)** | Selection options | `Option.json` | value, label, disabled |  |
+| **[Options](options/)** | Option collections | `Options.json` | source, labelField |  |
+| **[Status Source](status-source/)** | Status data source | `StatusSource.json` | api, mapping |  |
+| **[Icon Checked](icon-checked/)** | Checked state icons | `IconCheckedSchema.json` | icon, checkedIcon |  |
+| **[Icon Item](icon-item/)** | Icon list items | `IconItemSchema.json` | icon, label, value |  |
+| **[Field Types](field-types/)** | Field type definitions | Multiple schemas | type, validation |  |
 
-## 🎨 Design System Integration
+##  Design System Integration
 
 ### Common Properties
 All atomic components share these base properties:
@@ -131,7 +131,7 @@ const (
 )
 ```
 
-## 🏗️ Implementation Patterns
+## ️ Implementation Patterns
 
 ### Schema Validation Pattern
 ```go
@@ -203,7 +203,7 @@ func RegisterAtoms(factory *SchemaFactory) {
 }
 ```
 
-## 📱 Responsive Design for Atoms
+##  Responsive Design for Atoms
 
 ### Mobile Adaptations
 ```css
@@ -269,7 +269,7 @@ type AccessibilityProps struct {
 - **Focus indicators**: Clearly visible
 - **Touch targets**: 44px minimum
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Atom Testing Template
 ```go
@@ -341,7 +341,7 @@ test.describe('Atoms Visual Tests', () => {
 });
 ```
 
-## 🚀 Performance Optimization
+##  Performance Optimization
 
 ### Atom-Specific Optimizations
 ```go
@@ -370,7 +370,7 @@ func LoadAtomsAsync() {
 }
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Basic Atom Usage
 ```go
@@ -424,7 +424,7 @@ templ AdvancedExample() {
 }
 ```
 
-## 🔗 Related Documentation
+##  Related Documentation
 
 ### Deep Dive
 - **[Button Component](button/)**: Complete button documentation

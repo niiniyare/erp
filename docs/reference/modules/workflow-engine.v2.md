@@ -25,14 +25,14 @@ The Customer Workflow Engine is a **declarative, visual workflow orchestration p
 
 **Core Capabilities:**
 
-- 🎨 **Visual Workflow Designer** - Drag-and-drop interface for building workflows
-- 🔄 **Durable Execution** - Workflows survive system failures and restarts
-- 👥 **Human-in-the-Loop** - Approval tasks with role-based assignment
-- 🌳 **Entity-Aware Routing** - Leverages organizational hierarchy for approvals
-- 📊 **Real-time Monitoring** - Track workflow progress and step executions
-- 🔌 **Extensible Actions** - Easy integration with internal services and external APIs
-- 📝 **Complete Audit Trail** - Every decision and action is recorded
-- 🔒 **Multi-tenant Isolation** - Row-level security ensures data separation
+-  **Visual Workflow Designer** - Drag-and-drop interface for building workflows
+-  **Durable Execution** - Workflows survive system failures and restarts
+-  **Human-in-the-Loop** - Approval tasks with role-based assignment
+-  **Entity-Aware Routing** - Leverages organizational hierarchy for approvals
+-  **Real-time Monitoring** - Track workflow progress and step executions
+-  **Extensible Actions** - Easy integration with internal services and external APIs
+-  **Complete Audit Trail** - Every decision and action is recorded
+-  **Multi-tenant Isolation** - Row-level security ensures data separation
 
 ### Key Design Principles
 

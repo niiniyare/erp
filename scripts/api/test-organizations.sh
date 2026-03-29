@@ -15,11 +15,11 @@ if [ -z "$AUTH_TOKEN" ]; then
   exit 1
 fi
 
-echo "🏢 Testing Organization API..."
+echo " Testing Organization API..."
 echo "Base URL: $BASE_URL"
 
 # Test 1: List Organizations
-echo "\n📋 Test 1: List Organizations"
+echo "\n Test 1: List Organizations"
 LIST_RESPONSE=$(curl -s -X GET "$BASE_URL/organizations" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -33,7 +33,7 @@ else
 fi
 
 # Test 2: Create Organization
-echo "\n📋 Test 2: Create Organization"
+echo "\n Test 2: Create Organization"
 CREATE_PAYLOAD='{
   "name": "Test Organization",
   "description": "Created by test script",
@@ -60,7 +60,7 @@ else
 fi
 
 # Test 3: Get Organization Details
-echo "\n📋 Test 3: Get Organization Details"
+echo "\n Test 3: Get Organization Details"
 GET_RESPONSE=$(curl -s -X GET "$BASE_URL/organizations/$ORG_ID" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -72,7 +72,7 @@ else
 fi
 
 # Test 4: Update Organization
-echo "\n📋 Test 4: Update Organization"
+echo "\n Test 4: Update Organization"
 UPDATE_PAYLOAD='{
   "name": "Updated Test Organization",
   "description": "Updated by test script"
@@ -91,7 +91,7 @@ else
 fi
 
 # Test 5: Delete Organization
-echo "\n📋 Test 5: Delete Organization"
+echo "\n Test 5: Delete Organization"
 DELETE_RESPONSE=$(curl -s -X DELETE "$BASE_URL/organizations/$ORG_ID" \
   -H "Authorization: Bearer $AUTH_TOKEN")
 
@@ -102,4 +102,4 @@ else
   echo "Response: $DELETE_RESPONSE"
 fi
 
-echo "\n🎉 Organization API tests completed!"
+echo "\n Organization API tests completed!"

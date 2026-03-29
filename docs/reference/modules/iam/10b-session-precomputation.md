@@ -60,7 +60,7 @@ func (s *IAMService) buildSession(ctx context.Context,
 | UserPreferences | ~0.5ms |
 | **Total at login** | **~5–6ms** (all five run concurrently) |
 
-No further DB hits for auth, flags, or settings for the 24-hour session lifetime.
+No further DB hits for auth, flags, or settings for the 8h session lifetime (default; configurable via tenant setting `iam.session_ttl_hours`).
 
 ---
 
@@ -86,9 +86,12 @@ type SessionConfiguration struct {
 }
 
 // All checks are O(1) map lookups — no DB
-func (s *ResolvedSession) Can(resource, action string) bool {
-    v, ok := s.Permissions[resource+"."+action]
-    return ok && v
+func (s *ResolvedSession) Can(permission string) bool {
+    return s.Permissions[permission]
+}
+// CanDo is a convenience wrapper for callers that hold resource and action separately.
+func (s *ResolvedSession) CanDo(resource, action string) bool {
+    return s.Can(resource + "." + action)
 }
 func (s *ResolvedSession) FeatureEnabled(key string) bool {
     if !s.Configuration.Flags[key] { return false }
@@ -130,7 +133,7 @@ func (s *FlagService) Set(ctx context.Context,
 | User suspended/terminated | All user sessions | `InvalidateByUser()` |
 | Sensitive role/permission change | All user sessions | `InvalidateByUser()` |
 | Module/resource flag toggled | All tenant sessions | `InvalidateByTenant()` |
-| Session TTL (24h) | Expired rows | Background cleanup job |
+| Session TTL (8h default) | Expired rows | Background cleanup job |
 
 ---
 
@@ -155,9 +158,9 @@ func TransactionFormSchema(deps *app.Deps) fiber.Handler {
             DecimalPlaces:       session.SettingInt("finance.decimal_places", 2),
 
             // Permissions — from session
-            CanPost:             session.Can("finance.transactions", "post"),
-            CanApprove:          session.Can("finance.transactions", "approve"),
-            CanVoid:             session.Can("finance.transactions", "void"),
+            CanPost:             session.CanDo("finance.transactions", "post"),
+            CanApprove:          session.CanDo("finance.transactions", "approve"),
+            CanVoid:             session.CanDo("finance.transactions", "void"),
 
             // User preferences — from session
             EntryMode:           session.Configuration.Prefs["finance.entry_mode"],

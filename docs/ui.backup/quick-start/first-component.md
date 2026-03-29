@@ -4,7 +4,7 @@
 **PREREQUISITES**: [Installation](installation.md) completed  
 **OUTCOME**: Functional component with schema validation
 
-## 🎯 Goal: Create a Button Component
+##  Goal: Create a Button Component
 
 We'll create a simple button using our schema-driven architecture.
 
@@ -110,14 +110,14 @@ templ renderSchemaButton() {
 }
 ```
 
-## 🎉 Success!
+##  Success!
 
 You've successfully:
 - ✅ Located a component schema
 - ✅ Used the schema factory to generate a component
 - ✅ Created a working button with proper styling
 
-## 🚀 Next Steps
+##  Next Steps
 
 **Option A: Explore More Components**
 ```bash
@@ -134,13 +134,13 @@ find docs/ui/Schema/definitions/components -name "*.json" | head -10
 - Add HTMX attributes for server interactions
 - Include Alpine.js directives for client-side behavior
 
-## 📚 Continue Learning
+##  Continue Learning
 
 ✅ **First Component Complete** → Continue to [Basic Examples](basic-examples.md)
 
 **Quick Start Path**:
 1. ✅ [Installation](installation.md)
 2. ✅ First Component (you are here)
-3. 🎯 [Basic Examples](basic-examples.md)
+3.  [Basic Examples](basic-examples.md)
 
 **Deep Dive**: [Schema System](../fundamentals/schema-system.md) | [Component Development](../development/creating-components.md)

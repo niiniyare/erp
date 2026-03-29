@@ -394,7 +394,7 @@ ALTER TABLE tenants ADD CONSTRAINT valid_currency
 --    - Store all tenant configuration in a single JSONB column.
 --    - ✅ Pros: Extremely flexible, supports arbitrary nesting.
 --    - ❌ Cons: No relational constraints, application logic must enforce validity.
--- 🎯 DECISION:
+--  DECISION:
 -- We chose **Approach #1 (Dedicated Columns)** for core/critical settings
 -- (limits, accounting preferences, localization, security policies, etc.)
 -- because it enforces data integrity and allows direct SQL constraints.

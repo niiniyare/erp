@@ -4,7 +4,7 @@
 **SCOPE**: All tag variants, interactive features, and management patterns  
 **TARGET AUDIENCE**: Developers implementing categorization, labeling, and tagging systems
 
-## 📋 Component Overview
+##  Component Overview
 
 The Tag component provides visual labels for categorization, metadata, and content organization. It supports various styles, interactive features, and management capabilities while maintaining consistency with the overall design system.
 
@@ -13,7 +13,7 @@ The Tag component provides visual labels for categorization, metadata, and conte
 - **Related Schemas**: `BadgeObject.json`, `Options.json`
 - **Base Interface**: Display element with semantic categorization
 
-## 🎨 Tag Types
+##  Tag Types
 
 ### Basic Tag
 **Purpose**: Simple categorization labels
@@ -301,7 +301,7 @@ templ TagGroup(props TagGroupProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -487,7 +487,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Tag Styles
 ```css
@@ -1168,7 +1168,7 @@ templ SortableTagGroup(props TagGroupProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1393,7 +1393,7 @@ templ AccessibleTag(props TagProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1507,7 +1507,7 @@ test.describe('Tag Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Skill Tags
 ```go
@@ -1587,7 +1587,7 @@ templ ProjectStatus() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Badge](../badge/)** - Status indicators and counts
 - **[Button](../button/)** - Interactive action elements

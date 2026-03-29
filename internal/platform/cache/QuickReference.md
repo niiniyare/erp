@@ -217,12 +217,12 @@ const (
 
 ## What You Control?
 
-🎛️ Tenant context (via middleware or manual)
-🎛️ Cache keys and structure
-🎛️ TTL values
-🎛️ Memory vs Redis cache choice
-🎛️ Error handling and fallbacks
-🎛️ Invalidation strategy
+️ Tenant context (via middleware or manual)
+️ Cache keys and structure
+️ TTL values
+️ Memory vs Redis cache choice
+️ Error handling and fallbacks
+️ Invalidation strategy
 
 ## Remember
 

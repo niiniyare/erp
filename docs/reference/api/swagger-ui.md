@@ -19,7 +19,7 @@ The AWO ERP system provides a  REST API with 50+ endpoints across multiple domai
 
 The API is organized into the following major categories:
 
-#### 🔐 **Authentication & Authorization (ABAC)**
+####  **Authentication & Authorization (ABAC)**
 - **Base Path**: `/abac/*`
 - **Endpoints**: 10 endpoints
 - **Features**: 
@@ -42,7 +42,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
   }'
 ```
 
-#### 👥 **User Management**
+####  **User Management**
 - **Base Path**: `/api/v1/users/*`
 - **Endpoints**: 8 endpoints
 - **Features**:
@@ -51,7 +51,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
   - Role and permission assignment
   - Multi-tenant user isolation
 
-#### 🏢 **Organization & Tenant Management** 
+####  **Organization & Tenant Management** 
 - **Base Path**: `/api/v1/organizations/*`, `/api/v1/tenants/*`
 - **Endpoints**: 12 endpoints
 - **Features**:
@@ -60,7 +60,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
   - Multi-tenant data isolation
   - Subscription and billing management
 
-#### 📋 **Access Request Workflows**
+####  **Access Request Workflows**
 - **Base Path**: `/api/v1/access-requests/*`
 - **Endpoints**: 6 endpoints
 - **Features**:
@@ -69,7 +69,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
   - Analytics and reporting
   - Integration with ABAC policies
 
-#### 📊 **User Analytics & Insights**
+####  **User Analytics & Insights**
 - **Base Path**: `/api/v1/analytics/*`
 - **Endpoints**: 8 endpoints
 - **Features**:
@@ -78,7 +78,7 @@ curl -X POST "http://localhost:8080/abac/authorize" \
   - Risk assessment
   - Usage insights and patterns
 
-#### 🚩 **Feature Flag Management**
+####  **Feature Flag Management**
 - **Base Path**: `/api/v1/feature-flags/*`
 - **Endpoints**: 6 endpoints
 - **Features**:

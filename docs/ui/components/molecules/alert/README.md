@@ -4,7 +4,7 @@
 **SCOPE**: All alert types, levels, dismissible alerts, and action integration  
 **TARGET AUDIENCE**: Developers implementing user feedback, status messages, warnings, and notifications
 
-## 📋 Component Overview
+##  Component Overview
 
 The Alert component provides contextual feedback messages to users with various severity levels including info, warning, success, and danger. It supports rich content, custom icons, dismissible functionality, and action buttons while maintaining accessibility and consistent visual design across different alert types.
 
@@ -13,7 +13,7 @@ The Alert component provides contextual feedback messages to users with various 
 - **Related Schemas**: `SchemaCollection.json`, `SchemaIcon.json`, `ActionSchema.json`
 - **Base Interface**: Notification component for user feedback messages
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Alert component is configured using JSON that conforms to the `AlertSchema.json`. The JSON configuration renders contextual feedback messages with appropriate styling and interactive features.
 
@@ -957,7 +957,7 @@ func getAlertClasses(props AlertProps) string {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1086,7 +1086,7 @@ describe('Alert Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Form Validation Alert
 ```go
@@ -1118,7 +1118,7 @@ templ SystemNotification(message string, level string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Button](../../atoms/button/)** - Action buttons in alerts
 - **[Icon](../../atoms/icon/)** - Alert status icons

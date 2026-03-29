@@ -4,7 +4,7 @@
 **SCOPE**: Action grouping, operation bars, toolbar creation, and button collections  
 **TARGET AUDIENCE**: Developers implementing action bars, toolbars, and grouped operations
 
-## 📋 Component Overview
+##  Component Overview
 
 Operation provides a template for grouping related actions and operations into cohesive action bars. Essential for creating consistent operation interfaces, toolbars, and action groupings in ERP systems with proper spacing and layout.
 

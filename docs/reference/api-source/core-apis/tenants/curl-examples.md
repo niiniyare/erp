@@ -3,7 +3,7 @@
 Complete collection of curl commands for testing the Tenant Management API.
 **Updated: 2025-09-20** - Based on comprehensive API testing results.
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### Environment Setup
 ```bash
@@ -21,12 +21,12 @@ sudo apt-get install jq  # Ubuntu/Debian
 brew install jq          # macOS
 ```
 
-### 🔑 Authentication Requirements
+###  Authentication Requirements
 **IMPORTANT**: All endpoints (except tenant creation) require tenant context via:
 - **X-Tenant-ID header** with a valid UUID, OR  
 - **Subdomain format** like `tenant.example.com`
 
-## 🏢 Core Tenant Operations
+##  Core Tenant Operations
 
 ### 1. Create Tenant ✅ WORKING
 
@@ -209,7 +209,7 @@ curl -X GET $API_BASE_URL/api/v1/tenants/$TENANT_ID \
   -H "X-Tenant-ID: $TENANT_ID" | jq .
 ```
 
-## 🔧 Service Health & Analytics
+##  Service Health & Analytics
 
 ### Health Check ✅ WORKING
 
@@ -249,7 +249,7 @@ curl -X GET "$API_BASE_URL/api/v1/tenants/$TENANT_ID/analytics?period=current_mo
 }
 ```
 
-## 🚨 Management Operations (Known Issues)
+##  Management Operations (Known Issues)
 
 ### Provision Tenant ❌ FAILING
 
@@ -308,7 +308,7 @@ curl -X PUT $API_BASE_URL/api/v1/tenants/$TENANT_ID/configuration \
 "[business] <TENANT_NOT_ACTIVE> Cannot update configuration for inactive tenant"
 ```
 
-## 🧪 Test Scenarios
+##  Test Scenarios
 
 ### Complete Working Lifecycle
 ```bash
@@ -390,7 +390,7 @@ curl -X POST $API_BASE_URL/api/v1/tenants \
 echo "=== Error tests completed ==="
 ```
 
-## 🔍 Authentication Methods
+##  Authentication Methods
 
 ### Using X-Tenant-ID Header (Recommended)
 ```bash
@@ -406,7 +406,7 @@ curl -X GET $API_BASE_URL/api/v1/tenants/$TENANT_ID \
 curl -X GET http://testcompany.api.localhost:8080/api/v1/tenants/health
 ```
 
-## 📊 Monitoring and Debugging
+##  Monitoring and Debugging
 
 ### Request/Response Logging
 ```bash
@@ -427,7 +427,7 @@ curl -I -X GET $API_BASE_URL/api/v1/tenants/health \
   -H "X-Tenant-ID: $TENANT_ID"
 ```
 
-## 🛠️ Utility Functions
+## ️ Utility Functions
 
 ### Tenant Cleanup Function
 ```bash
@@ -455,7 +455,7 @@ cleanup_test_tenants() {
 }
 ```
 
-## 🚨 Common Issues and Solutions
+##  Common Issues and Solutions
 
 ### Issue: Tenant Resolution Failed
 ```bash
@@ -491,7 +491,7 @@ curl -X GET $API_BASE_URL/api/v1/tenants \
 # Workaround: Use basic CRUD operations only
 ```
 
-## 📈 Performance Testing
+##  Performance Testing
 
 ### Response Time Testing
 ```bash
@@ -507,7 +507,7 @@ time curl -s -X POST $API_BASE_URL/api/v1/tenants \
   -d '{"name": "Performance Test"}' > /dev/null
 ```
 
-## 📚 API Status Summary
+##  API Status Summary
 
 | Endpoint | Status | Notes |
 |----------|--------|-------|

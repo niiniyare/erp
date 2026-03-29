@@ -2,7 +2,7 @@
 
 The Conditional Access Controls API provides dynamic access control based on contextual factors like time, location, device, network, and risk assessment. It implements a powerful rule engine for real-time access decisions.
 
-## 📋 Overview
+##  Overview
 
 The Conditional Access Controls API enables:
 
@@ -13,13 +13,13 @@ The Conditional Access Controls API enables:
 - **Effect Actions**: Allow, deny, challenge, audit-only responses
 - **Integration Ready**: Seamless integration with existing access controls
 
-## 🔧 Base URL
+##  Base URL
 
 ```
 http://localhost:8080/api/v1/conditional-access
 ```
 
-## 📊 Rule Types
+##  Rule Types
 
 | Type | Description | Use Case |
 |------|-------------|----------|
@@ -30,7 +30,7 @@ http://localhost:8080/api/v1/conditional-access
 | `RISK_BASED` | Risk assessment based control | High-risk user blocking |
 | `COMBINED` | Multiple rule types combined | Complex access scenarios |
 
-## 🎯 Access Effects
+##  Access Effects
 
 | Effect | Description | Actions |
 |--------|-------------|---------|
@@ -39,7 +39,7 @@ http://localhost:8080/api/v1/conditional-access
 | `CHALLENGE` | Require additional verification | MFA, step-up auth |
 | `AUDIT_ONLY` | Allow but audit | Log for compliance |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Health Check
 ```bash
@@ -105,7 +105,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/evaluate \
   }' | jq .
 ```
 
-## 📚 Documentation Files
+##  Documentation Files
 
 - **curl-examples.md** -  curl command examples
 - **API Reference** - Detailed API specification
@@ -113,7 +113,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/evaluate \
 - **Rule Configuration Guide** - Rule setup and management
 - **Integration Guide** - Integration with access control systems
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Testing
 ```bash
@@ -130,7 +130,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/evaluate \
 cat curl-examples.md
 ```
 
-## 🔍 Common Use Cases
+##  Common Use Cases
 
 ### Business Hours Restriction
 ```bash
@@ -241,7 +241,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
   }' | jq .
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Rule Creation Response (201 Created)
 ```json
@@ -346,7 +346,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 }
 ```
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Rule conflicts** - Multiple rules with same priority
 2. **Invalid time zones** - Use IANA timezone names
@@ -354,14 +354,14 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 4. **Rule evaluation errors** - Invalid rule configuration
 5. **Performance issues** - Too many complex rules
 
-## 📈 Performance Notes
+##  Performance Notes
 
 - Rule evaluation is optimized for millisecond response times
 - Rules are cached for faster evaluation
 - Rule priority determines evaluation order
 - Complex rules may impact performance
 
-## 🔒 Security Features
+##  Security Features
 
 - **Context Validation**: All context data is validated
 - **Rule Integrity**: Rules are digitally signed
@@ -369,14 +369,14 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 - **Tamper Detection**: Rule modification detection
 - **Secure Defaults**: Secure-by-default rule behavior
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **Access Request Workflow**: Rules influence approval decisions
 - **User Analytics**: Risk assessment integration
 - **User Management**: User context for evaluation
 - **Entity Management**: Rules are scoped to entities
 
-## 🎯 Rule Configuration Best Practices
+##  Rule Configuration Best Practices
 
 ### Rule Priority
 - **High Priority (1-100)**: Critical security rules
@@ -393,7 +393,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 - Avoid overly complex rules
 - Test rule performance impact
 
-## 📊 Monitoring and Metrics
+##  Monitoring and Metrics
 
 ### Key Metrics
 - Rule evaluation time
@@ -407,7 +407,7 @@ curl -X POST http://localhost:8080/api/v1/conditional-access/rules \
 - Rule configuration errors
 - Unusual access patterns
 
-## 🔄 Rule Management
+##  Rule Management
 
 ### Rule Lifecycle
 1. **Draft**: Rule created but not active

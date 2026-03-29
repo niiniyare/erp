@@ -373,7 +373,7 @@ Here's a complete script you can save and run:
 
 BASE_URL="http://localhost:8080"
 
-echo "🧪 Testing User API Flow..."
+echo " Testing User API Flow..."
 
 # Health check
 echo "1. Health check..."

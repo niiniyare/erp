@@ -4,7 +4,7 @@
 **SCOPE**: Schema-driven components, technology stack, design patterns  
 **TARGET AUDIENCE**: Developers, architects, technical leads
 
-## 🏗️ System Architecture Overview
+## ️ System Architecture Overview
 
 Our ERP UI system implements a **schema-driven, server-first architecture** that combines type safety, performance, and developer productivity.
 
@@ -19,7 +19,7 @@ Our ERP UI system implements a **schema-driven, server-first architecture** that
 | **Go Backend** | Business logic | API, validation, data persistence |
 | **JSON Schemas** | Component definitions | Type-safe component generation |
 
-## 🎯 Architectural Principles
+##  Architectural Principles
 
 ### 1. Schema-Driven Development
 ```
@@ -57,7 +57,7 @@ docs/ui/Schema/definitions/
 └── utility/        # Helper schemas (61 schemas)
 ```
 
-## 🔧 Component Architecture
+##  Component Architecture
 
 ### Schema Factory Pattern
 ```go
@@ -87,7 +87,7 @@ graph LR
     E --> F[HTML Output]
 ```
 
-## 🎨 Styling Architecture
+##  Styling Architecture
 
 ### CSS Runtime System
 - **800+ CSS property schemas** with type safety
@@ -107,7 +107,7 @@ responsiveProps := map[string]interface{}{
 }
 ```
 
-## 🔐 Security Architecture
+##  Security Architecture
 
 ### Multi-Tenant Security
 - **Row-Level Security (RLS)**: Database-level tenant isolation
@@ -120,7 +120,7 @@ responsiveProps := map[string]interface{}{
 - **XSS prevention**: Template auto-escaping
 - **CSRF protection**: Built into HTMX requests
 
-## 📊 Performance Architecture
+##  Performance Architecture
 
 ### Optimization Strategies
 - **Server-side rendering**: Fast initial page loads
@@ -134,7 +134,7 @@ responsiveProps := map[string]interface{}{
 - **CSS generation**: <50ms for full stylesheet
 - **Memory usage**: <200MB typical operation
 
-## 🔄 Data Flow Architecture
+##  Data Flow Architecture
 
 ### Request Lifecycle
 ```
@@ -147,7 +147,7 @@ User Action → HTMX Request → Go Handler → Schema Factory → Component →
 - **HTMX state**: Server synchronization
 - **Form state**: Validation and submission
 
-## 🧪 Testing Architecture
+##  Testing Architecture
 
 ### Testing Pyramid
 ```
@@ -162,7 +162,7 @@ User Action → HTMX Request → Go Handler → Schema Factory → Component →
 3. **Rendering validation**: Template compilation
 4. **Integration validation**: End-to-end workflows
 
-## 🚀 Deployment Architecture
+##  Deployment Architecture
 
 ### Build Pipeline
 ```bash
@@ -177,7 +177,7 @@ make build    # Compile application
 - **Staging**: Full validation with performance monitoring
 - **Production**: Optimized builds with caching
 
-## 📈 Scalability Considerations
+##  Scalability Considerations
 
 ### Horizontal Scaling
 - **Stateless components**: No server-side session state
@@ -189,7 +189,7 @@ make build    # Compile application
 - **CDN integration**: Static asset delivery
 - **Caching layers**: Redis for component metadata
 
-## 🔧 Development Workflow
+##  Development Workflow
 
 ### Component Development
 1. **Schema Definition**: Create/modify JSON schema
@@ -204,7 +204,7 @@ make build    # Compile application
 - **Performance testing**: Component render benchmarks
 - **Security scanning**: Input validation verification
 
-## 📚 Integration Points
+##  Integration Points
 
 ### External Systems
 - **Database**: PostgreSQL with RLS for multi-tenancy

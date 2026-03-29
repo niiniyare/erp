@@ -2,7 +2,7 @@
 
 Complete collection of curl commands for testing the Tenant Management API.
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### Environment Setup
 ```bash
@@ -20,7 +20,7 @@ sudo apt-get install jq  # Ubuntu/Debian
 brew install jq          # macOS
 ```
 
-## 🔧 Service Health Check
+##  Service Health Check
 
 ### Health Status
 ```bash
@@ -35,7 +35,7 @@ curl -X GET $API_BASE_URL/api/v1/tenants/health | jq .
 # }
 ```
 
-## 🏢 Tenant CRUD Operations
+##  Tenant CRUD Operations
 
 ### 1. Create Tenant
 
@@ -168,7 +168,7 @@ curl -X DELETE $API_BASE_URL/api/v1/tenants/00000000-0000-0000-0000-000000000000
 curl -X DELETE $API_BASE_URL/api/v1/tenants/invalid-uuid -v
 ```
 
-## 🧪  Test Scenarios
+##   Test Scenarios
 
 ### Scenario 1: Complete Tenant Lifecycle
 ```bash
@@ -292,7 +292,7 @@ time curl -s -X GET $API_BASE_URL/api/v1/tenants > /dev/null
 echo "=== Performance test completed ==="
 ```
 
-## 📊 Monitoring and Debugging
+##  Monitoring and Debugging
 
 ### Request/Response Logging
 ```bash
@@ -313,7 +313,7 @@ curl -I -X GET $API_BASE_URL/api/v1/tenants
 curl -i -X GET $API_BASE_URL/api/v1/tenants
 ```
 
-## 🔧 Utility Functions
+##  Utility Functions
 
 ### Tenant Cleanup Function
 ```bash
@@ -362,7 +362,7 @@ get_tenant_stats() {
 get_tenant_stats
 ```
 
-## 🚨 Common Issues and Solutions
+##  Common Issues and Solutions
 
 ### Issue: Connection Refused
 ```bash

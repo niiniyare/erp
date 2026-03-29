@@ -1,7 +1,7 @@
 [<-- Back to Index](README.md)
 
 
-## 🎯 API Design Philosophy
+##  API Design Philosophy
 
 ### Business-Centric Naming
 ```
@@ -23,17 +23,17 @@
 
 <!-- toc -->
 
-- [🎯 API Design Philosophy](#-api-design-philosophy)
+- [ API Design Philosophy](#-api-design-philosophy)
   - [Business-Centric Naming](#business-centric-naming)
   - [Core Principles](#core-principles)
-- [📨 Request Anatomy](#-request-anatomy)
+- [ Request Anatomy](#-request-anatomy)
   - [Request Headers (In-Depth)](#request-headers-in-depth)
-- [📥 Request Body Patterns](#-request-body-patterns)
+- [ Request Body Patterns](#-request-body-patterns)
   - [Pattern 1: Simple Resource Creation](#pattern-1-simple-resource-creation)
   - [Pattern 2: Complex Nested Operations](#pattern-2-complex-nested-operations)
   - [Pattern 3: Partial Updates with Field Masks](#pattern-3-partial-updates-with-field-masks)
   - [Pattern 4: Batch Operations](#pattern-4-batch-operations)
-- [📤 Response Anatomy](#-response-anatomy)
+- [ Response Anatomy](#-response-anatomy)
   - [Response Headers (In-Depth)](#response-headers-in-depth)
 - [✅ Success Response Structure](#-success-response-structure)
   - [Pattern 1: Simple Resource Response (201 Created)](#pattern-1-simple-resource-response-201-created)
@@ -47,28 +47,28 @@
   - [Pattern 4: Rate Limit Error (429 Too Many Requests)](#pattern-4-rate-limit-error-429-too-many-requests)
   - [Pattern 5: System Error (500 Internal Server Error)](#pattern-5-system-error-500-internal-server-error)
   - [Pattern 6: Field-Level Validation Errors (400)](#pattern-6-field-level-validation-errors-400)
-- [📊 Advanced Response Patterns](#-advanced-response-patterns)
+- [ Advanced Response Patterns](#-advanced-response-patterns)
   - [Batch Operation Results](#batch-operation-results)
 - [Security & Compliance](#security--compliance)
-  - [🔐 Authentication Flows](#-authentication-flows)
+  - [ Authentication Flows](#-authentication-flows)
     - [1. OAuth 2.0 Token Exchange](#1-oauth-20-token-exchange)
     - [2. API Key Authentication (Server-to-Server)](#2-api-key-authentication-server-to-server)
-  - [🛡️ Permission System (RBAC/ABAC)](#-permission-system-rbacabac)
-  - [🔒 Data Encryption & Privacy](#-data-encryption--privacy)
-  - [🌍 Data Residency & Compliance](#-data-residency--compliance)
+  - [️ Permission System (RBAC/ABAC)](#-permission-system-rbacabac)
+  - [ Data Encryption & Privacy](#-data-encryption--privacy)
+  - [ Data Residency & Compliance](#-data-residency--compliance)
 - [WebSocket & Real-time Updates](#websocket--real-time-updates)
-  - [🔄 WebSocket Connection](#-websocket-connection)
-  - [📡 Server-Sent Events (SSE) Alternative](#-server-sent-events-sse-alternative)
+  - [ WebSocket Connection](#-websocket-connection)
+  - [ Server-Sent Events (SSE) Alternative](#-server-sent-events-sse-alternative)
 - [Webhooks](#webhooks)
-  - [🪝 Webhook Configuration](#-webhook-configuration)
+  - [ Webhook Configuration](#-webhook-configuration)
 - [Advanced Features](#advanced-features)
-  - [🌐 Multi-Currency Support](#-multi-currency-support)
-  - [🌍 Localization (i18n)](#-localization-i18n)
+  - [ Multi-Currency Support](#-multi-currency-support)
+  - [ Localization (i18n)](#-localization-i18n)
 
 <!-- tocstop -->
 
 
-## 📨 Request Anatomy
+##  Request Anatomy
 
 ### Request Headers (In-Depth)
 
@@ -168,7 +168,7 @@ X-CSRF-Token: csrf_7Np2Km9rL4tY8sX                     # CSRF protection
 
 ---
 
-## 📥 Request Body Patterns
+##  Request Body Patterns
 
 ### Pattern 1: Simple Resource Creation
 
@@ -369,7 +369,7 @@ Content-Type: application/json
 
 ---
 
-## 📤 Response Anatomy
+##  Response Anatomy
 
 ### Response Headers (In-Depth)
 
@@ -1434,7 +1434,7 @@ Content-Type: application/json
 
 ---
 
-## 📊 Advanced Response Patterns
+##  Advanced Response Patterns
 
 ### Batch Operation Results
 
@@ -1565,7 +1565,7 @@ This comprehensive API design provides:
 
 ## Security & Compliance
 
-### 🔐 Authentication Flows
+###  Authentication Flows
 
 #### 1. OAuth 2.0 Token Exchange
 
@@ -1816,7 +1816,7 @@ Response: 200 OK
 }
 ```
 
-### 🛡️ Permission System (RBAC/ABAC)
+### ️ Permission System (RBAC/ABAC)
 
 ```typescript
 // ============================================
@@ -1927,7 +1927,7 @@ Response: 200 OK
 }
 ```
 
-### 🔒 Data Encryption & Privacy
+###  Data Encryption & Privacy
 
 ```typescript
 // ============================================
@@ -2073,7 +2073,7 @@ Response: 202 Accepted
 }
 ```
 
-### 🌍 Data Residency & Compliance
+###  Data Residency & Compliance
 
 ```typescript
 // ============================================
@@ -2169,7 +2169,7 @@ Response: 200 OK
 
 ## WebSocket & Real-time Updates
 
-### 🔄 WebSocket Connection
+###  WebSocket Connection
 
 ```typescript
 // ============================================
@@ -2398,7 +2398,7 @@ Server → Client:
 }
 ```
 
-### 📡 Server-Sent Events (SSE) Alternative
+###  Server-Sent Events (SSE) Alternative
 
 ```typescript
 // ============================================
@@ -2456,7 +2456,7 @@ data: {"timestamp":"2024-02-09T11:30:00Z"}
 
 ## Webhooks
 
-### 🪝 Webhook Configuration
+###  Webhook Configuration
 
 ```typescript
 // ============================================
@@ -2722,7 +2722,7 @@ Response: 200 OK
 
 ## Advanced Features
 
-### 🌐 Multi-Currency Support
+###  Multi-Currency Support
 
 ```typescript
 // ============================================
@@ -2833,7 +2833,7 @@ Response: 201 Created
 }
 ```
 
-### 🌍 Localization (i18n)
+###  Localization (i18n)
 
 ```typescript
 // ============================================

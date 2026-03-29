@@ -60,8 +60,8 @@ type EntityRepository interface {
 
 ### Core Functionality
 - ✅ **Feature 1**: Description and current status
-- 🚧 **Feature 2**: In development
-- 📋 **Feature 3**: Planned
+-  **Feature 2**: In development
+-  **Feature 3**: Planned
 
 ### Business Rules
 1. **Rule Name**: Description of key business constraint
@@ -82,8 +82,8 @@ This module implements row-level security (RLS) for tenant isolation:
 | `/api/v1/{module}/entities` | GET | List entities | ✅ |
 | `/api/v1/{module}/entities` | POST | Create entity | ✅ |
 | `/api/v1/{module}/entities/{id}` | GET | Get entity | ✅ |
-| `/api/v1/{module}/entities/{id}` | PUT | Update entity | 🚧 |
-| `/api/v1/{module}/entities/{id}` | DELETE | Delete entity | 📋 |
+| `/api/v1/{module}/entities/{id}` | PUT | Update entity |  |
+| `/api/v1/{module}/entities/{id}` | DELETE | Delete entity |  |
 
 ### Search Capabilities
 - Search by ID: `GET /{id}`
@@ -125,8 +125,8 @@ erDiagram
 - ✅ **Domain Layer** (100%): Entities and business rules
 - ✅ **Repository Layer** (100%): SQLC integration complete
 - ✅ **Service Layer** (100%): Business logic implementation
-- 🚧 **API Layer** (80%): fiber handlers using Goa Generated types in progress
-- 📋 **Integration** (0%): Service wiring pending
+-  **API Layer** (80%): fiber handlers using Goa Generated types in progress
+-  **Integration** (0%): Service wiring pending
 
 ### Code Metrics
 - **Test Coverage**: 85% (Unit: 90%, Integration: 75%)
@@ -208,12 +208,12 @@ REDIS_URL=redis://...
 ## Quick Links
 
 ### Documentation
-- 📋 [Product Requirements](PRD.md)
-- 🏗️ [Technical Architecture](architecture-guide.md)
-- 🧪 [Testing Strategy](testing.md)
-- 🚀 [Deployment Guide](deployment-guide.md)
-- 🔒 [Security & Compliance](security-compliance-guide.md)
-- 🔗 [Integration Guide](integration-guide.md)
+-  [Product Requirements](PRD.md)
+- ️ [Technical Architecture](architecture-guide.md)
+-  [Testing Strategy](testing.md)
+-  [Deployment Guide](deployment-guide.md)
+-  [Security & Compliance](security-compliance-guide.md)
+-  [Integration Guide](integration-guide.md)
 
 ### Development Resources
 - [Contributing Guidelines](../../contributing/01-best-practices.md)

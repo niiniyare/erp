@@ -5,14 +5,14 @@
 
 set -e
 
-echo "🔧 Generating Wire dependency injection code..."
+echo " Generating Wire dependency injection code..."
 
 # Ensure we're in the project root
 cd "$(dirname "$0")/.."
 
 # Install Wire if not present
 if ! command -v wire &>/dev/null; then
-  echo "📦 Installing Wire..."
+  echo " Installing Wire..."
   go install github.com/google/wire/cmd/wire@latest
 fi
 
@@ -32,7 +32,7 @@ cd ../..
 echo "✅ Verifying generated code..."
 go build -o /dev/null ./cmd/server/
 
-echo "🎉 Wire generation completed successfully!"
+echo " Wire generation completed successfully!"
 echo ""
 echo "Generated files:"
 find . -name "wire_gen.go" -type f

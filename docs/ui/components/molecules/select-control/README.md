@@ -4,7 +4,7 @@
 **SCOPE**: All select types, data sources, search functionality, and advanced selection modes  
 **TARGET AUDIENCE**: Developers implementing dropdown selections, multi-select controls, and data-driven options
 
-## 📋 Component Overview
+##  Component Overview
 
 Select Control provides comprehensive dropdown selection functionality with support for static options, API-driven data, search capabilities, multi-selection, and advanced selection modes including table, tree, and associated selections.
 

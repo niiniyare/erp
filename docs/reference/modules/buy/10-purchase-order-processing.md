@@ -518,9 +518,9 @@ Dashboard View - Open Purchase Orders:
 
 Status Categories:
   ⚠ Overdue: Past expected delivery date, no goods received
-  🟡 At Risk: Within 3 days of due date
+   At Risk: Within 3 days of due date
   ✓ On Track: Within schedule
-  🔵 In Production: Manufacturing/processing
+   In Production: Manufacturing/processing
   ⏸ On Hold: Awaiting action (payment, specs, etc.)
 
 Detailed Tracking: PO-2025-00234
@@ -568,7 +568,7 @@ Payment Tracking:
 └──────────────┴────────────┴──────────────┴────────────┘
 
 Risk Alerts:
-  🟢 No risks identified
+   No risks identified
   ✓ On schedule
   ✓ No quality issues reported
   ✓ Supplier communication excellent

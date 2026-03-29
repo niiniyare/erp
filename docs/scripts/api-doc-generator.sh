@@ -5,7 +5,7 @@
 
 set -e
 
-echo "🔧 Generating API Documentation..."
+echo " Generating API Documentation..."
 
 # Configuration
 API_SOURCE_DIR="internal/api"
@@ -13,7 +13,7 @@ DOCS_API_DIR="docs/reference/api"
 OPENAPI_FILE="docs/reference/api/openapi.yaml"
 
 # 1. Generate OpenAPI from Go code
-echo "📋 Extracting API definitions..."
+echo " Extracting API definitions..."
 if command -v swag &> /dev/null; then
     swag init -g cmd/server/main.go -o docs/swagger --parseDependency
     echo "✅ OpenAPI spec generated"
@@ -99,7 +99,7 @@ EOF
 echo "✅ API documentation structure created"
 
 # 5. Update MkDocs navigation automatically
-echo "📚 Updating navigation..."
+echo " Updating navigation..."
 # This would integrate with mkdocs.yml updates
 
-echo "🎉 API documentation generation complete!"
+echo " API documentation generation complete!"

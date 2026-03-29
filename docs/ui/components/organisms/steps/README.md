@@ -4,7 +4,7 @@
 **SCOPE**: Wizards, multi-step forms, process tracking, and workflow visualization  
 **TARGET AUDIENCE**: Developers implementing multi-step processes, onboarding flows, and progress indicators
 
-## 📋 Component Overview
+##  Component Overview
 
 Steps provides comprehensive step indicator functionality with support for different display modes, status indicators, and progress tracking. Essential for guiding users through complex multi-step processes in ERP systems.
 

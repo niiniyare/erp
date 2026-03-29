@@ -2,7 +2,7 @@
 
 The Authentication API provides  authentication and authorization functionality for the AWO ERP System. This API manages user authentication, JWT token generation, token validation, and session management.
 
-## 📋 Overview
+##  Overview
 
 **Base URL**: `/api/v1/auth`
 
@@ -15,7 +15,7 @@ The Authentication API provides  authentication and authorization functionality 
 - Secure logout with token invalidation
 - Multi-factor authentication support (future)
 
-## 🔗 Available Endpoints
+##  Available Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -24,7 +24,7 @@ The Authentication API provides  authentication and authorization functionality 
 | `POST` | `/api/v1/auth/logout` | Logout user and invalidate tokens |
 | `GET` | `/api/v1/auth/validate` | Validate JWT token and get user info |
 
-## 📊 Data Models
+##  Data Models
 
 ### Login Request
 ```json
@@ -81,7 +81,7 @@ The Authentication API provides  authentication and authorization functionality 
 }
 ```
 
-## 🚀 Quick Examples
+##  Quick Examples
 
 ### User Login
 ```bash
@@ -157,7 +157,7 @@ curl -X POST http://localhost:8080/api/v1/auth/logout \
   }'
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Authentication Flow
 
@@ -190,7 +190,7 @@ curl -X GET http://localhost:8080/api/v1/auth/validate \
 | `Content-Type` | Yes | Must be `application/json` for POST requests |
 | `Authorization` | Conditional | Required for protected endpoints |
 
-## 🚨 Error Handling
+##  Error Handling
 
 ### Common Error Responses
 
@@ -247,7 +247,7 @@ curl -X GET http://localhost:8080/api/v1/auth/validate \
 - **access_token**: Valid JWT format, not expired
 - **refresh_token**: Valid JWT format, not expired, not revoked
 
-## 🔒 Security Considerations
+##  Security Considerations
 
 ### Password Requirements
 - Minimum 8 characters
@@ -267,7 +267,7 @@ curl -X GET http://localhost:8080/api/v1/auth/validate \
 - Token validation: 100 per minute per user
 - Password reset: 3 per hour per email
 
-## 🔍 Testing
+##  Testing
 
 ### Basic Authentication Test
 ```bash
@@ -318,7 +318,7 @@ curl -X GET http://localhost:8080/api/v1/auth/validate \
 curl -X GET http://localhost:8080/api/v1/auth/validate | jq .
 ```
 
-## 📊 Performance Considerations
+##  Performance Considerations
 
 ### Response Times
 - Login: < 500ms
@@ -337,13 +337,13 @@ curl -X GET http://localhost:8080/api/v1/auth/validate | jq .
 - Use refresh tokens to minimize login frequency
 - Implement proper token storage in client applications
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **[User Management API](../users/README.md)** - User account management
 - **[Tenant Management API](../tenants/README.md)** - Multi-tenant authentication
 - **[Organization API](../organizations/README.md)** - Organization-scoped permissions
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - **[curl Examples](./curl-examples.md)** - Complete curl command examples
 - **[Testing Scripts](../../utilities/scripts/test-auth.sh)** - Automated testing script

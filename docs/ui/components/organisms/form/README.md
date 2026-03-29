@@ -4,7 +4,7 @@
 **SCOPE**: Data collection, validation, submission workflows, and business process forms  
 **TARGET AUDIENCE**: Developers implementing data entry forms, business processes, and user input interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Form provides comprehensive form functionality with validation, submission handling, layout options, and advanced features like async submission, persistence, and multi-step workflows. Essential for all data collection needs in ERP systems.
 

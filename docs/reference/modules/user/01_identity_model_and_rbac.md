@@ -1,10 +1,10 @@
 # User Management & Permissions
 
-## 👥 Overview
+##  Overview
 
 The ERP system implements a  identity and access management framework based on a sophisticated **Person-Employee-User separation pattern** with advanced **Role-Based Access Control (RBAC)** and **Attribute-Based Access Control (ABAC)**. The system provides enterprise-grade security with tenant isolation, row-level security, and  audit logging while maintaining usability for administrators and end users.
 
-## 🏗️ Identity Management Architecture
+## ️ Identity Management Architecture
 
 ### Person-Employee-User Separation Pattern
 
@@ -139,7 +139,7 @@ CREATE TABLE user_sessions (
 - **Location tracking**: Geographic and network location for access control
 - **Security monitoring**: IP tracking and session analytics
 
-<!-- ## 🔐 RBAC System ->
+<!-- ##  RBAC System ->
 <!---->
 <!-- ### Module-Based Organization ->
 <!---->
@@ -312,7 +312,7 @@ CREATE TABLE user_sessions (
 <!-- - **DELEGATED**: Temporarily delegated by another user -->
 <!-- - **TEMPORARY**: Time-limited assignments with auto-expiration -->
 
-## 🎯 ABAC System
+##  ABAC System
 
 we need to dissect the complexities, implementation challenges, and nuanced interactions that lie beneath the elegant flow diagram. Let's excavate the layers:
 
@@ -538,7 +538,7 @@ managerAccessPolicy := HierarchicalPolicy{
 }
 ```
 
-## 📊  Audit & Compliance
+##   Audit & Compliance
 
 ### Audit Logging
 
@@ -605,7 +605,7 @@ CREATE TABLE access_requests (
 );
 ```
 
-## 🔑 Authentication & Security
+##  Authentication & Security
 
 ### Multi-Factor Authentication
 
@@ -678,7 +678,7 @@ type PasswordRule struct {
 }
 ```
 
-## 👥 User Lifecycle Management
+##  User Lifecycle Management
 
 ### Onboarding Workflow
 
@@ -982,7 +982,7 @@ func (s *OffboardingStep) AddComplianceFlag(flag string) {
 }
 ```
 
-## 📈 User Analytics & Monitoring
+##  User Analytics & Monitoring
 
 ### Advanced User Activity Tracking
 
@@ -1095,7 +1095,7 @@ type UserBehaviorAnalytics struct {
 }
 ```
 
-## 🔧 Advanced Permission Management API
+##  Advanced Permission Management API
 
 ###  User Management Endpoints
 
@@ -1334,7 +1334,7 @@ func SetupUserManagementRoutes(r *mux.Router, handler UserManagementAPI) {
 }
 ```
 
-## 🚀 Performance Optimization Features
+##  Performance Optimization Features
 
 ### Intelligent Caching
 
@@ -1389,7 +1389,7 @@ GROUP BY u.id, u.tenant_id, u.username, u.email, u.user_type,
          e.security_level, p.security_attributes, e.access_attributes, u.user_attributes;
 ```
 
-## 💡 Key System Features
+##  Key System Features
 
 ### Row Level Security (RLS)
 - **Automatic tenant isolation**: All tables enforce tenant-based access

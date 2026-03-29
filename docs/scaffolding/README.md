@@ -2,7 +2,7 @@
 
 The `awoctl` (AWO Control) tool is a sophisticated code scaffolding system for the AWO ERP platform. It generates production-ready code following clean architecture patterns, ERP best practices, and organizational standards.
 
-## 📋 Table of Contents
+##  Table of Contents
 
 - [Overview](#overview)
 - [Installation](#installation)
@@ -13,7 +13,7 @@ The `awoctl` (AWO Control) tool is a sophisticated code scaffolding system for t
 - [Examples](#examples)
 - [Best Practices](#best-practices)
 
-## 🎯 Overview
+##  Overview
 
 `awoctl` generates boilerplate code for:
 
@@ -30,7 +30,7 @@ The `awoctl` (AWO Control) tool is a sophisticated code scaffolding system for t
 - **Template-Driven**: Comprehensive template system with business logic
 - **Clean Architecture**: Enforces domain-driven design and layered architecture
 
-## 🚀 Installation
+##  Installation
 
 ### Method 1: Using Makefile (Recommended)
 
@@ -111,7 +111,7 @@ make scaffold-feature path=finance/budgets
 ./awoctl new feature inventory/adjustments --verbose
 ```
 
-## 📖 Commands
+##  Commands
 
 ### Module Generation
 
@@ -176,7 +176,7 @@ awoctl new feature finance/reconciliation
 awoctl new feature inventory/reports --with-tests
 ```
 
-## 🎨 Templates
+##  Templates
 
 ### Template Categories
 
@@ -218,7 +218,7 @@ awoctl new feature inventory/reports --with-tests
 - **Validation**: Built-in business rules and constraints
 - **Observability**: Metrics, tracing, structured logging
 
-## 🔗 Integration
+##  Integration
 
 ### Makefile Integration
 
@@ -267,7 +267,7 @@ The tool is included in:
 - `make check-tools`: Validates tool availability
 - CI/CD pipelines: For automated scaffolding
 
-## 💡 Examples
+##  Examples
 
 ### Example 1: Customer Management Module
 
@@ -347,7 +347,7 @@ make scaffold-feature path=inventory/transfers
 - **Integrate with workflows**: Include in CI/CD processes
 - **Document customizations**: Maintain team documentation
 
-## 🛠️ Troubleshooting
+## ️ Troubleshooting
 
 ### Common Issues
 
@@ -405,7 +405,7 @@ make scaffold-help
 make help
 ```
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - [Architecture Documentation](../architecture/README.md)
 - [Module Development Guide](../development/modules.md)

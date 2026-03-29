@@ -55,8 +55,8 @@ func NewDatabaseConnection(cfg *config.Config) (*pgxpool.Pool, error) {
 }
 
 // NewDBStore creates a new SQLC database store
-func NewDBStore(pool *pgxpool.Pool) db.Store {
-	return db.NewStore(pool)
+func NewDBStore(pool *pgxpool.Pool, log logger.Logger) db.Store {
+	return db.NewStoreWithLogger(pool, log)
 }
 
 // ============================================================================

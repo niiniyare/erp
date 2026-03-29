@@ -2,14 +2,14 @@
 
 This directory contains  testing resources for the Entity Management API.
 
-## 📁 Files
+##  Files
 
 - **`api-tests.md`** - Detailed curl commands with examples and explanations
 - **`test-entities.sh`** - Automated test script for full API testing
 - **`postman-collection.json`** - Postman collection for GUI testing
 - **`API_TESTING_README.md`** - This file
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Start the Server
 
@@ -46,7 +46,7 @@ See `api-tests.md` for detailed curl commands and examples.
 2. Set the `baseUrl` variable to `http://localhost:8080`
 3. Run the collection or individual requests
 
-## 🔧 API Endpoints
+##  API Endpoints
 
 ### Health Checks
 - `GET /health` - Server health status
@@ -70,7 +70,7 @@ See `api-tests.md` for detailed curl commands and examples.
 - `POST /api/v1/entities/sequence/next` - Get next sequence number
 - `POST /api/v1/entities/sequence/reset` - Reset sequence
 
-## 📊 Entity Types
+##  Entity Types
 
 The API supports the following entity types:
 
@@ -86,7 +86,7 @@ The API supports the following entity types:
 - `category` - Category entities
 - `other` - Other entity types
 
-## 🧪 Testing Scenarios
+##  Testing Scenarios
 
 ### Basic CRUD Testing
 1. Create entities of different types
@@ -119,7 +119,7 @@ The API supports the following entity types:
 3. Test malformed JSON
 4. Test server error responses
 
-## 📋 Sample Test Flow
+##  Sample Test Flow
 
 ```bash
 # 1. Health check
@@ -144,7 +144,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
   -d '{"entity_id": "ENTITY_UUID", "key": "invoice", "fiscal_year": 2024}'
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Success Response (201 Created)
 ```json
@@ -189,7 +189,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
 ]
 ```
 
-## 🔍 Debugging Tips
+##  Debugging Tips
 
 1. **Check server logs** for detailed error messages
 2. **Verify database connection** before running tests
@@ -197,7 +197,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
 4. **Check entity UUIDs** in responses for subsequent requests
 5. **Monitor server metrics** during testing
 
-## 📝 Notes
+##  Notes
 
 - All entity codes must be unique within a tenant
 - Entity names must be unique within a tenant
@@ -206,7 +206,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
 - Sequence numbers are managed per entity/key/fiscal year
 - Entity hierarchies use closure table pattern for performance
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Entity not found** - Check if entity was soft deleted
 2. **Duplicate code error** - Ensure entity codes are unique
@@ -214,7 +214,7 @@ curl -X POST http://localhost:8080/api/v1/entities/sequence/next \
 4. **Sequence errors** - Check entity ID and fiscal year parameters
 5. **Database connection** - Verify environment variables are set
 
-## 🛠️ Troubleshooting
+## ️ Troubleshooting
 
 If tests fail:
 

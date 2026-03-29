@@ -4,7 +4,7 @@
 **SCOPE**: All calendar views, schedule display, event management, and date navigation  
 **TARGET AUDIENCE**: Developers implementing date pickers, schedule management, and event displays
 
-## 📋 Component Overview
+##  Component Overview
 
 The Calendar component provides interactive date selection and schedule visualization capabilities. It supports multiple view modes, event display, schedule management, and responsive design for various date-related interfaces including date pickers, appointment scheduling, and event calendars.
 
@@ -13,7 +13,7 @@ The Calendar component provides interactive date selection and schedule visualiz
 - **Related Schemas**: `SchemaObject.json`, `SchemaExpression.json`
 - **Base Interface**: Date and schedule management component
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Calendar component is configured using JSON that conforms to the `CalendarSchema.json`. The JSON configuration renders interactive calendars with schedule display and date selection capabilities.
 
@@ -1122,7 +1122,7 @@ func getScheduleClickHandler(schedule ScheduleItem, props CalendarProps) string 
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1241,7 +1241,7 @@ describe('Calendar Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Date Picker
 ```go
@@ -1281,7 +1281,7 @@ templ EventCalendar(events []Event) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Date Control](../date-control/)** - Date input components
 - **[Date Range](../date-range/)** - Date range selection

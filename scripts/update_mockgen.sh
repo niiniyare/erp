@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "🔍 Searching for service interfaces with //go:generate mockgen..."
+echo " Searching for service interfaces with //go:generate mockgen..."
 
 grep -rilE 'type\s+[A-Za-z0-9_]*Repository\s+interface' . \
   --exclude-dir=./internal/api/gen \
@@ -10,7 +10,7 @@ grep -rilE 'type\s+[A-Za-z0-9_]*Repository\s+interface' . \
   --include='*.go' |
   while read -r file; do
     if grep -q '//go:generate.*mockgen' "$file"; then
-      echo -e "\n📄 File: $file"
+      echo -e "\n File: $file"
       echo "--------------------------------"
       grep '//go:generate.*mockgen' "$file"
       echo "--------------------------------"

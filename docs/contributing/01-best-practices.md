@@ -3,13 +3,13 @@
 
 *Essential guidelines for building maintainable, scalable features in Awo ERP following Clean Architecture, Temporal workflows, and modular design patterns*
 
-> **📚 Essential Reading:** This guide complements other contributing documentation:
+> ** Essential Reading:** This guide complements other contributing documentation:
 > - `docs/contributing/architecture.md` - System architecture and design principles
 > - `docs/contributing/service.md` - Service implementation patterns
 > - `docs/contributing/goa.md` - API design and handler architecture  
 > - `docs/contributing/database-transactions.md` - Database patterns and tenant isolation
 
-## 🏗️ Architecture Best Practices
+## ️ Architecture Best Practices
 
 ### 1. Dependency Direction Rules
 
@@ -333,7 +333,7 @@ func BadTransactionWorkflow(ctx workflow.Context, input *TransactionInput) error
 }
 ```
 
-## 🔄 Model Conversion Patterns
+##  Model Conversion Patterns
 
 ### 1. **Conversion at Boundaries**
 
@@ -424,7 +424,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 }
 ```
 
-## 🔒 Error Handling Patterns
+##  Error Handling Patterns
 
 ### 1. **Domain Error Types**
 
@@ -531,7 +531,7 @@ func (h *TenantHandler) GetTenant(c *gin.Context) {
 }
 ```
 
-## 🚀 Caching Patterns
+##  Caching Patterns
 
 ### 1. **Cache-Aside Pattern**
 
@@ -650,7 +650,7 @@ const (
 )
 ```
 
-## 🔄 Transaction Patterns
+##  Transaction Patterns
 
 ### 1. **Service-Level Transactions**
 
@@ -735,7 +735,7 @@ func (r *repository) WithTransaction(ctx context.Context, fn func(context.Contex
 }
 ```
 
-## 📊 Observability Best Practices
+##  Observability Best Practices
 
 ### 1. **Structured Logging**
 
@@ -842,7 +842,7 @@ func (s *service) CreateTenant(ctx context.Context, req CreateTenantRequest) (*T
 }
 ```
 
-## 🧪 Testing Patterns
+##  Testing Patterns
 
 ### 1. **Repository Testing with Test Database**
 
@@ -971,7 +971,7 @@ func stringPtr(s string) *string {
 }
 ```
 
-## 🔐 Security Best Practices
+##  Security Best Practices
 
 ### 1. **Input Validation**
 
@@ -1044,7 +1044,7 @@ func (r *repository) GetBySubdomain(ctx context.Context, subdomain string) (*Ten
 }
 ```
 
-## 📈 Performance Best Practices
+##  Performance Best Practices
 
 ### 1. **Database Query Optimization**
 
@@ -1102,7 +1102,7 @@ func (s *service) GetTenant(ctx context.Context, id uuid.UUID) (*Tenant, error) 
 }
 ```
 
-## 🚨 Common Anti-Patterns to Avoid
+##  Common Anti-Patterns to Avoid
 
 ### 1. **Architecture Violations**
 ```go
@@ -1184,7 +1184,7 @@ func (s *service) GetTenantsWithUsers(ctx context.Context) ([]*TenantWithUsers, 
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [Architecture Overview](./architecture.md) - System design principles
 - [Service Implementation](./service.md) - Module development patterns
 - [API Development](./goa.md) - Handler and API patterns

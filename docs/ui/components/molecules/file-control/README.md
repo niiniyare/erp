@@ -4,7 +4,7 @@
 **SCOPE**: All file upload types, drag-and-drop, chunked uploads, and validation patterns  
 **TARGET AUDIENCE**: Developers implementing file management, document attachments, and upload workflows
 
-## 📋 Component Overview
+##  Component Overview
 
 The File Control component provides comprehensive file upload capabilities for forms requiring document attachments and media content uploads. It supports multiple file types, drag-and-drop interfaces, chunked uploads for large files, progress tracking, and advanced validation while maintaining accessibility and consistent user experience across different file upload scenarios.
 
@@ -13,7 +13,7 @@ The File Control component provides comprehensive file upload capabilities for f
 - **Related Schemas**: `FormHorizontal.json`, `LabelAlign.json`, `SchemaApi.json`
 - **Base Interface**: Form input control for file selection and upload management
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The File Control component is configured using JSON that conforms to the `FileControlSchema.json`. The JSON configuration renders interactive file upload interfaces with validation, progress tracking, and user-friendly drag-and-drop capabilities.
 

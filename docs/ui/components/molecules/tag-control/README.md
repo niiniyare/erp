@@ -4,7 +4,7 @@
 **SCOPE**: Tag creation, selection, batch input, dropdown mode, and value management  
 **TARGET AUDIENCE**: Developers implementing tagging systems, multi-select inputs, and categorization interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Tag Control provides interactive tag/chip input functionality with support for creating, selecting, and managing multiple values through tags. Features include dropdown mode, batch input, custom options, and advanced tag management.
 

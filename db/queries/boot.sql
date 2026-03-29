@@ -4,14 +4,9 @@
 -- Modules and resources are SYSTEM-scoped (tenant_id IS NULL) — no tenant
 -- context needed.  Permission and feature-flag filtering is done in Go using
 -- the pre-computed ResolvedSession (no extra DB round-trips).
-
--- name: ListActiveSystemModules :many
--- SELECT *
--- FROM   modules
--- WHERE  scope     = 'SYSTEM'
---   AND  is_active = TRUE
--- ORDER  BY nav_order ASC;
 --
+-- Note: ListActiveSystemModules is defined in modules.sql.
+
 -- name: ListActiveResourcesByModule :many
 SELECT *
 FROM   resources

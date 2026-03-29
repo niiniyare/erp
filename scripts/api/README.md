@@ -14,21 +14,21 @@ This directory contains organized test scripts for the ERP API endpoints and mid
 
 ## Test Categories
 
-### 🏢 Tenant API Tests
+###  Tenant API Tests
 **File:** `test_tenant_api.sh`
 - Tests all tenant CRUD operations
 - Validates native middleware (header/subdomain extraction)
 - Tests public endpoint bypass functionality
 - Covers error scenarios and edge cases
 
-### 🛡️ Middleware Integration Tests
+### ️ Middleware Integration Tests
 **Built into:** `test.sh` (option 4)
 - Tests native HTTP middleware chain
 - Validates tenant context injection
 - Tests public endpoint whitelisting
 - Error handling validation
 
-### 🏥 Health Check Tests  
+###  Health Check Tests  
 **Built into:** `test.sh` (option 5)
 - Tests all service health endpoints
 - System readiness validation

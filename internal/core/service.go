@@ -373,7 +373,7 @@ func (sc *ServiceContainer) logServiceStatus() {
 		services[serviceName] = "ready"
 	}
 
-	sc.logger.Info("🚀 Core Services Ready", logger.Fields{
+	sc.logger.Info(" Core Services Ready", logger.Fields{
 		"total_services": serviceCount,
 		"status":         "operational",
 		"services":       services,

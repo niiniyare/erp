@@ -10,7 +10,7 @@ import (
 	sharedErrors "awo.so/internal/shared/errors"
 )
 
-// ─── Request types ────────────────────────────────────────────────────────────
+// Request types
 
 type forgotPasswordRequest struct {
 	Email string `json:"email"`
@@ -21,14 +21,14 @@ type resetPasswordRequest struct {
 	NewPassword string `json:"new_password"`
 }
 
-// ─── Handlers ─────────────────────────────────────────────────────────────────
+// Handlers
 
 // ForgotPasswordHandler handles POST /auth/forgot-password.
 // Always returns 200 regardless of whether the email exists — this prevents
 // user enumeration attacks. The service generates a token and the caller is
 // responsible for emailing it; here we only log/emit the token for now
 // (notification service integration is a TODO).
-//
+// 
 // NOTE(notification): In production, wire a notification service here to send
 // the reset link by email. Until then the token is silently discarded.
 func ForgotPasswordHandler(userSvc iam.UserService) fiber.Handler {
@@ -91,7 +91,7 @@ func ResetPasswordHandler(userSvc iam.UserService) fiber.Handler {
 	}
 }
 
-// ─── Error mapping ────────────────────────────────────────────────────────────
+// Error mapping
 
 func mapPasswordResetError(c *fiber.Ctx, err error) error {
 	switch {

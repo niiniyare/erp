@@ -3,12 +3,12 @@
 
 *Modern ERP system architecture combining Clean Architecture principles with Temporal workflow orchestration and modular service design*
 
-> **📚 Related Documentation:**  
+> ** Related Documentation:**  
 > - `docs/contributing/service.md` - Service implementation patterns and module development  
 > - `docs/contributing/goa.md` - API design and handler architecture  
 > - `docs/contributing/database-transactions.md` - Database patterns and tenant isolation
 
-## 🏗️ System Architecture
+## ️ System Architecture
 
 Awo ERP follows **Clean Architecture with Temporal-First design**, emphasizing workflow orchestration, multi-tenant isolation, and modular service facades.
 
@@ -68,7 +68,7 @@ Awo ERP follows **Clean Architecture with Temporal-First design**, emphasizing w
          └──────────────────┘  └──────────────────┘  └──────────────────┘
 ```
 
-## 📁 Directory Structure
+##  Directory Structure
 
 The architecture follows strict modular organization with clear separation of concerns:
 
@@ -80,7 +80,7 @@ internal/
 │   │   └── services/                   # Module service designs
 │   ├── gen/                            # Generated Goa code
 │   └── handlers/                       # HTTP request handlers
-│       ├── {module}.go                 # 🔥 Module entry points (main imports)
+│       ├── {module}.go                 #  Module entry points (main imports)
 │       ├── {module}/                   # Module handler implementations
 │       │   ├── service_handler.go      # Core service handler
 │       │   ├── types.go                # Request/response adapters
@@ -89,7 +89,7 @@ internal/
 │
 ├── core/                               # Application Core - Business Logic
 │   ├── {module}/                       # Self-contained domain module
-│   │   ├── service.go                  # 🔥 Module facade (external interface)
+│   │   ├── service.go                  #  Module facade (external interface)
 │   │   ├── domain/                     # Business entities and rules
 │   │   │   ├── entities.go             # Core business entities
 │   │   │   ├── types.go                # Value objects and enums
@@ -122,7 +122,7 @@ internal/
     └── tracing/                        # Distributed tracing
 ```
 
-## 🎯 Layer Responsibilities
+##  Layer Responsibilities
 
 ### 1. **API Layer (`internal/api/`)**
 *External interface for HTTP requests*
@@ -257,7 +257,7 @@ func TransactionApprovalWorkflow(ctx workflow.Context, input *TransactionApprova
 - ✅ External service integrations
 - ❌ No business logic or domain knowledge
 
-## 🔄 Dependency Flow & Module Isolation
+##  Dependency Flow & Module Isolation
 
 ### **Strict Dependency Direction**
 All dependencies must point inward toward the application core:
@@ -291,7 +291,7 @@ func (s *service) CreateAccount(ctx context.Context, req *CreateAccountRequest) 
 }
 ```
 
-## 🏛️ Architecture Benefits
+## ️ Architecture Benefits
 
 ### **1. Workflow-First Design**
 - Complex business processes are explicitly modeled as workflows
@@ -318,7 +318,7 @@ func (s *service) CreateAccount(ctx context.Context, req *CreateAccountRequest) 
 - Structured logging with context
 - Business metrics and operational dashboards
 
-## 🚨 Anti-Patterns to Avoid
+##  Anti-Patterns to Avoid
 
 ### ❌ **Breaking Module Boundaries**
 ```go
@@ -374,7 +374,7 @@ func (r *repo) GetAccount(ctx context.Context, id uuid.UUID) (*Account, error) /
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [Service Implementation Guide](./service.md) - Module development patterns
 - [Goa API Development](./goa.md) - Handler and API design patterns  
 - [Database Transactions](./database-transactions.md) - Tenant isolation and SQLC patterns

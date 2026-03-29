@@ -844,7 +844,7 @@ func (r *configurationRepository) ResolveConfiguration(ctx context.Context, req 
         EntityID:   entityID,
     })
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == db.ErrNoRows {
             return nil, domain.ErrConfigurationNotFound
         }
         return nil, fmt.Errorf("failed to resolve configuration: %w", err)

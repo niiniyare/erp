@@ -338,10 +338,10 @@ Company Policy:
   Target Margin: 35%
   
 Alert Levels:
-  🟢 Margin > 35%: Excellent
-  🟡 Margin 25-35%: Good
-  🟠 Margin 20-25%: Acceptable (warning)
-  🔴 Margin < 20%: Requires approval
+   Margin > 35%: Excellent
+   Margin 25-35%: Good
+   Margin 20-25%: Acceptable (warning)
+   Margin < 20%: Requires approval
 
 Real-time Calculation:
   Sales person enters discount
@@ -360,7 +360,7 @@ Quotation Screen:
 │ Cost: 1,400,000 KES                        │
 │                                            │
 │ Customer Discount: 10%                     │
-│ Additional Discount: 5%  [WARNING! 🟠]     │
+│ Additional Discount: 5%  [WARNING! ]     │
 │                                            │
 │ Net Price: 1,710,000 KES                   │
 │                                            │

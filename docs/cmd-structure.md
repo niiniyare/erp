@@ -2,7 +2,7 @@
 
 This document outlines the new clean architecture for the `/cmd/server/` directory and provides guidelines for adding new code following our established patterns.
 
-## 📁 Current Structure
+##  Current Structure
 
 ```
 cmd/server/
@@ -23,7 +23,7 @@ cmd/server/
     └── migrate.go            # Database migration execution logic
 ```
 
-## 🏗️ Architecture Principles
+## ️ Architecture Principles
 
 ### 1. Single Responsibility Principle
 Each package has one clear purpose:
@@ -51,7 +51,7 @@ Each package has one clear purpose:
 - No circular dependencies between packages
 - Clear separation of concerns
 
-## 📝 Adding New Code
+##  Adding New Code
 
 ### Adding New Infrastructure Components
 
@@ -295,7 +295,7 @@ func ValidateConfiguration(cfg *config.Config) *ValidationResult {
 }
 ```
 
-## 🔧 Development Patterns
+##  Development Patterns
 
 ### 1. Service Bridge Pattern
 When you need to adapt between interfaces, use simple inline bridges instead of complex adapters:
@@ -375,7 +375,7 @@ func InitializeComponent() error {
 }
 ```
 
-## 🚀 Best Practices
+##  Best Practices
 
 ### DO's ✅
 - **Keep packages focused** - One responsibility per package
@@ -393,7 +393,7 @@ func InitializeComponent() error {
 - **Don't create complex adapters** - Use simple bridges when interface adaptation is needed
 - **Don't mix concerns** - Keep infrastructure, services, and application layers separate
 
-## 📊 Package Dependencies
+##  Package Dependencies
 
 ```mermaid
 graph TD
@@ -408,7 +408,7 @@ graph TD
     I[migrations/] --> G
 ```
 
-## 🔄 Adding New Modules Checklist
+##  Adding New Modules Checklist
 
 When adding a new business module (e.g., inventory, HR, CRM):
 
@@ -424,7 +424,7 @@ When adding a new business module (e.g., inventory, HR, CRM):
 - [ ] Add tests for service initialization
 - [ ] Update documentation
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - [Clean Architecture Guidelines](./architecture.md)
 - [Service Development Guide](./services.md)

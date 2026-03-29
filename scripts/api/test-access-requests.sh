@@ -35,7 +35,7 @@ log_error() {
 }
 
 log_test() {
-    echo -e "${BLUE}🧪 Testing: $1${NC}"
+    echo -e "${BLUE} Testing: $1${NC}"
 }
 
 # Check if jq is available
@@ -127,7 +127,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Start testing
-echo -e "${BLUE}🚀 Starting Access Request Workflow API Test Suite...${NC}"
+echo -e "${BLUE} Starting Access Request Workflow API Test Suite...${NC}"
 echo "Base URL: $BASE_URL"
 echo "Verbose: $VERBOSE"
 echo "Cleanup: $CLEANUP"
@@ -331,7 +331,7 @@ else
 fi
 
 echo
-log_success "🎉 Access Request Workflow API test suite completed successfully!"
+log_success " Access Request Workflow API test suite completed successfully!"
 echo
 echo "Summary:"
 echo "- ✅ Health check passed"
@@ -351,6 +351,6 @@ else
 fi
 
 echo
-echo "🔍 For detailed testing guide, see: workflows/access-requests/curl-examples.md"
-echo "🚀 To run with verbose output: $0 --verbose"
-echo "💾 To preserve test data: $0 --no-cleanup"
+echo " For detailed testing guide, see: workflows/access-requests/curl-examples.md"
+echo " To run with verbose output: $0 --verbose"
+echo " To preserve test data: $0 --no-cleanup"

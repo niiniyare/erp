@@ -37,6 +37,6 @@ func NewTenantHandler(
 		metrics:    met,
 		tracer:     trc,
 		validator:  v,
-		encryption: nil, // To be added later
+		encryption: nil,
 	}
 }

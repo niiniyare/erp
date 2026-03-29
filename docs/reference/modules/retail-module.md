@@ -1,10 +1,10 @@
 # Retail Management
 
-## 🛍️ Overview
+## ️ Overview
 
 The Retail Management module transforms the core ERP into a  omnichannel retail platform. It provides multi-channel sales management, customer analytics, inventory synchronization, merchandising, and e-commerce integration designed for retailers operating across physical stores, online platforms, and mobile channels.
 
-## 🏬 Multi-Channel Retail Operations
+##  Multi-Channel Retail Operations
 
 ### Store Management
 
@@ -403,7 +403,7 @@ CREATE TABLE omnichannel_order_items (
 );
 ```
 
-## 🛒 Customer Experience & Analytics
+##  Customer Experience & Analytics
 
 ### Customer Segmentation & Personalization
 
@@ -790,7 +790,7 @@ CREATE TABLE promotional_displays (
 );
 ```
 
-## 📱 E-commerce Integration
+##  E-commerce Integration
 
 ### Multi-Platform Synchronization
 

@@ -3,7 +3,7 @@
 # UI Documentation Restructuring Progress Tracker
 # Validates completion of tasks in RoadMap.md
 
-echo "📊 UI Documentation Restructuring Progress"
+echo " UI Documentation Restructuring Progress"
 echo "==========================================="
 
 # Color codes
@@ -24,7 +24,7 @@ check_task() {
     
     ((TOTAL_TASKS++))
     
-    echo -e "\n${BLUE}🔍 Checking: $task_name${NC}"
+    echo -e "\n${BLUE} Checking: $task_name${NC}"
     echo "   $description"
     
     if eval "$verification_command" >/dev/null 2>&1; then
@@ -46,7 +46,7 @@ check_file_count() {
     
     if [[ -d "$path" ]]; then
         local count=$(find "$path" -type f | wc -l)
-        echo -e "   ${BLUE}📁 $description: $count files${NC}"
+        echo -e "   ${BLUE} $description: $count files${NC}"
         if [[ $count -ge $expected_min && $count -le $expected_max ]]; then
             return 0
         fi
@@ -54,7 +54,7 @@ check_file_count() {
     return 1
 }
 
-echo -e "${BLUE}📋 Phase 1: Foundation Setup${NC}"
+echo -e "${BLUE} Phase 1: Foundation Setup${NC}"
 
 check_task "New Directory Structure" \
     "[[ -d 'quick-start' && -d 'fundamentals' && -d 'development' && -d 'components' && -d 'schemas' && -d 'integration' && -d 'reference' && -d 'tools' ]]" \
@@ -68,7 +68,7 @@ check_task "Documentation Accuracy Validation" \
     "[[ -f 'Schema/check_doc_accuracy.sh' && -x 'Schema/check_doc_accuracy.sh' ]]" \
     "Accuracy validation script exists and is executable"
 
-echo -e "\n${BLUE}📋 Phase 2: Core Documentation${NC}"
+echo -e "\n${BLUE} Phase 2: Core Documentation${NC}"
 
 check_task "Enhanced README.md" \
     "[[ -f 'README.md' && $(wc -c < README.md) -gt 2000 ]]" \
@@ -82,7 +82,7 @@ check_task "Fundamentals Consolidation" \
     "[[ -f 'fundamentals/architecture.md' && -f 'fundamentals/schema-system.md' ]]" \
     "Core fundamentals files exist"
 
-echo -e "\n${BLUE}📋 Phase 3: Flowbite Cleanup${NC}"
+echo -e "\n${BLUE} Phase 3: Flowbite Cleanup${NC}"
 
 # Check if Flowbite has been consolidated
 FLOWBITE_FILES=$(find flowbite/ -name "*.md" 2>/dev/null | wc -l)
@@ -100,7 +100,7 @@ check_task "Flowbite Integration Guide" \
     "[[ -f 'integration/flowbite.md' ]]" \
     "Consolidated Flowbite integration guide exists"
 
-echo -e "\n${BLUE}📋 Phase 4: Developer Experience${NC}"
+echo -e "\n${BLUE} Phase 4: Developer Experience${NC}"
 
 check_task "Development Guides" \
     "[[ -f 'development/creating-components.md' && -f 'development/validation-patterns.md' ]]" \
@@ -114,7 +114,7 @@ check_task "Schema System Documentation" \
     "[[ -f 'schemas/README.md' && -d 'schemas/core' ]]" \
     "Schema system documentation organized"
 
-echo -e "\n${BLUE}📋 Phase 5: Integration Guides${NC}"
+echo -e "\n${BLUE} Phase 5: Integration Guides${NC}"
 
 check_task "Technology Integration" \
     "[[ -f 'integration/htmx.md' || -f 'integration/alpine-js.md' ]]" \
@@ -124,7 +124,7 @@ check_task "Reference Documentation" \
     "[[ -d 'reference/api' || -f 'reference/component-registry.md' ]]" \
     "Reference documentation structure exists"
 
-echo -e "\n${BLUE}📋 Phase 6: Quality Assurance${NC}"
+echo -e "\n${BLUE} Phase 6: Quality Assurance${NC}"
 
 # Check for broken links (basic check)
 check_task "Internal Link Validation" \
@@ -135,7 +135,7 @@ check_task "Schema System Preserved" \
     "check_file_count 'Schema/definitions' 900 950 'Schema definitions'" \
     "All 937+ schemas preserved during restructuring"
 
-echo -e "\n${BLUE}📊 Overall Progress Summary${NC}"
+echo -e "\n${BLUE} Overall Progress Summary${NC}"
 echo "================================"
 
 COMPLETION_PERCENTAGE=$((COMPLETED_TASKS * 100 / TOTAL_TASKS))
@@ -144,38 +144,38 @@ echo -e "Tasks Completed: ${GREEN}$COMPLETED_TASKS${NC} / $TOTAL_TASKS"
 echo -e "Progress: ${GREEN}$COMPLETION_PERCENTAGE%${NC}"
 
 if [[ $COMPLETION_PERCENTAGE -eq 100 ]]; then
-    echo -e "\n${GREEN}🎉 RESTRUCTURING COMPLETE!${NC}"
+    echo -e "\n${GREEN} RESTRUCTURING COMPLETE!${NC}"
     echo "All tasks have been completed successfully."
 elif [[ $COMPLETION_PERCENTAGE -ge 75 ]]; then
-    echo -e "\n${YELLOW}🚀 NEARLY COMPLETE${NC}"
+    echo -e "\n${YELLOW} NEARLY COMPLETE${NC}"
     echo "Most tasks completed, focus on remaining items."
 elif [[ $COMPLETION_PERCENTAGE -ge 50 ]]; then
-    echo -e "\n${BLUE}📈 GOOD PROGRESS${NC}"
+    echo -e "\n${BLUE} GOOD PROGRESS${NC}"
     echo "Halfway through the restructuring process."
 else
-    echo -e "\n${RED}🚧 EARLY STAGE${NC}"
+    echo -e "\n${RED} EARLY STAGE${NC}"
     echo "Just getting started with the restructuring."
 fi
 
-echo -e "\n${BLUE}📝 Next Priority Actions:${NC}"
+echo -e "\n${BLUE} Next Priority Actions:${NC}"
 
 if [[ ! -d "quick-start" ]]; then
-    echo "1. 🏗️  Create new directory structure"
+    echo "1. ️  Create new directory structure"
 fi
 
 if [[ ! -f "quick-start/installation.md" ]]; then
-    echo "2. 📚 Create quick-start content"
+    echo "2.  Create quick-start content"
 fi
 
 if [[ $FLOWBITE_FILES -gt 20 ]]; then
-    echo "3. 🧹 Consolidate Flowbite documentation ($FLOWBITE_FILES files)"
+    echo "3.  Consolidate Flowbite documentation ($FLOWBITE_FILES files)"
 fi
 
 if [[ ! -f "integration/htmx.md" ]]; then
-    echo "4. 🔗 Create integration guides"
+    echo "4.  Create integration guides"
 fi
 
-echo -e "\n${BLUE}🔧 To continue restructuring:${NC}"
+echo -e "\n${BLUE} To continue restructuring:${NC}"
 echo "1. Follow the tasks in RoadMap.md"
 echo "2. Use CONTENT_INVENTORY.md for content mapping"
 echo "3. Run this script to track progress"

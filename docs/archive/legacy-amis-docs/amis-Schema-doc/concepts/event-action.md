@@ -2,7 +2,7 @@
 title: 事件动作
 description: 事件动作
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 事件动作
 icon:
 order: 9

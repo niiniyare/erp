@@ -4,7 +4,7 @@
 **SCOPE**: From schema definition to HTML output  
 **TARGET AUDIENCE**: Component developers, UI engineers
 
-## 🔄 Component Lifecycle Overview
+##  Component Lifecycle Overview
 
 Understanding how components flow through our schema-driven system from definition to rendered HTML.
 
@@ -13,7 +13,7 @@ Understanding how components flow through our schema-driven system from definiti
 1. Schema Definition → 2. Props Validation → 3. Component Creation → 4. Rendering → 5. HTML Output
 ```
 
-## 📋 Stage 1: Schema Definition
+##  Stage 1: Schema Definition
 
 ### Creating Component Schema
 ```json
@@ -109,7 +109,7 @@ func (factory *SchemaFactory) ValidateProps(schemaType string, props map[string]
 - **Pattern Validation**: Regex pattern matching
 - **Custom Validation**: Business-specific rules
 
-## 🏗️ Stage 3: Component Creation
+## ️ Stage 3: Component Creation
 
 ### Component Renderer Implementation
 ```go
@@ -172,7 +172,7 @@ func getBoolProp(props map[string]interface{}, key string, defaultValue bool) bo
 }
 ```
 
-## 🎨 Stage 4: CSS and Styling
+##  Stage 4: CSS and Styling
 
 ### CSS Generation
 ```go
@@ -223,7 +223,7 @@ func generateButtonCSS(props atoms.ButtonProps) string {
 }
 ```
 
-## 🖥️ Stage 5: Templ Rendering
+## ️ Stage 5: Templ Rendering
 
 ### Templ Component Generation
 ```go
@@ -287,7 +287,7 @@ func renderIcon(icon string) string {
 }
 ```
 
-## 🔄 Complete Usage Example
+##  Complete Usage Example
 
 ### End-to-End Component Usage
 ```go
@@ -358,7 +358,7 @@ func (factory *SchemaFactory) RenderToTemplWithMetrics(ctx context.Context, sche
 }
 ```
 
-## 🐛 Error Handling
+##  Error Handling
 
 ### Common Lifecycle Errors
 1. **Schema Not Found**: Invalid schema name
@@ -394,7 +394,7 @@ func (factory *SchemaFactory) renderErrorComponent(schemaType string, err error)
 }
 ```
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **[Schema System](schema-system.md)**: Complete schema documentation
 - **[Creating Components](../development/creating-components.md)**: Development guide

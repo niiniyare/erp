@@ -3,7 +3,7 @@
 # Schema Metadata Generation Script
 # Generates basic metadata files for all schemas in the organized structure
 
-echo "📋 Generating schema metadata files..."
+echo " Generating schema metadata files..."
 
 # Function to determine category and subcategory from path
 get_metadata() {
@@ -162,5 +162,5 @@ EOF
     echo "✅ Generated metadata for $schema_name"
 done
 
-echo "📊 Metadata generation complete!"
+echo " Metadata generation complete!"
 echo "Generated metadata files: $(find . -name "*.meta.json" | wc -l)"

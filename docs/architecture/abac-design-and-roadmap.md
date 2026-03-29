@@ -1,10 +1,10 @@
 # ABAC Implementation Plan & Progress Tracker
 
-## 📋 Project Overview
+##  Project Overview
 
 This document tracks the implementation progress of the Attribute-Based Access Control (ABAC) system for the ERP platform. The ABAC system will provide fine-grained, dynamic access control based on user attributes, resource attributes, environmental context, and organizational policies.
 
-## 🎯 Critical Implementation Requirements
+##  Critical Implementation Requirements
 
 **Mandatory Integration Points:**
 - **Tenant Context Lifecycle**: All ABAC operations MUST follow tenant context management guidelines from `@docs/TENANT_CONTEXT_LIFECYCLE.md`
@@ -16,7 +16,7 @@ This document tracks the implementation progress of the Attribute-Based Access C
 - **Database Integration**: Ensure proper RLS (Row Level Security) enforcement and SQLC integration
 - **Multi-Tenant Isolation**: All ABAC operations must respect tenant boundaries with proper context propagation
 
-## 🎯 Implementation Goals
+##  Implementation Goals
 
 - [x] Implement  ABAC policy engine ✅
 - [x] Create attribute management system ✅
@@ -29,7 +29,7 @@ This document tracks the implementation progress of the Attribute-Based Access C
 - [x] **NEW:** Implement context-aware authorization and session management ✅
 - [x] **NEW:** Add enterprise compliance and risk management features ✅
 
-## 📅 Implementation Timeline
+##  Implementation Timeline
 
 **Total Estimated Duration:** 8-10 weeks  
 **Start Date:** December 2024  
@@ -185,7 +185,7 @@ This document tracks the implementation progress of the Attribute-Based Access C
 - [x] Add policy template system - **Policy template management with parameterization**
 - [x] Implement policy categorization and tagging - **Category and tag support for organization**
 
-#### **🔄 Latest Enhancement: Policy Manager CRUD & Analytics** 
+#### ** Latest Enhancement: Policy Manager CRUD & Analytics** 
 **Date**: August 25, 2025
 
 ** Policy Service Features:**
@@ -476,7 +476,7 @@ This document tracks the implementation progress of the Attribute-Based Access C
 
 ---
 
-## 🔧 Integration with Shared Services
+##  Integration with Shared Services
 
 The ABAC implementation will integrate with the existing shared services infrastructure:
 
@@ -637,7 +637,7 @@ func (e *PolicyEvaluationEngine) recordMetrics(ctx context.Context, req *Evaluat
 }
 ```
 
-## 🏢 Tenant Context Integration
+##  Tenant Context Integration
 
 Based on the tenant lifecycle documentation, ABAC will integrate seamlessly with the existing tenant context management:
 
@@ -860,7 +860,7 @@ func (s *PolicyService) UpdatePolicy(ctx context.Context, policyID uuid.UUID, re
 }
 ```
 
-## 🗄️ SQLC Query Patterns with Tenant Context
+## ️ SQLC Query Patterns with Tenant Context
 
 Following the existing tenant lifecycle patterns, all ABAC SQLC queries will use the `current_tenant_id()` function for automatic tenant filtering:
 
@@ -1022,7 +1022,7 @@ func (r *policyRepository) GetPolicyByID(ctx context.Context, id uuid.UUID) (*Po
     // SQLC query automatically uses current_tenant_id() for tenant filtering
     sqlcPolicy, err := r.store.GetPolicyByID(ctx, id)
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == db.ErrNoRows {
             return nil, errors.ErrPolicyNotFound
         }
         return nil, fmt.Errorf("failed to get policy: %w", err)
@@ -1067,7 +1067,7 @@ func (r *policyRepository) CreatePolicy(ctx context.Context, req *CreatePolicyRe
 
 ---
 
-## 🔧 Technical Architecture
+##  Technical Architecture
 
 ### Core Components
 
@@ -1104,7 +1104,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 
 ---
 
-## 📊 Success Metrics
+##  Success Metrics
 
 ### Performance Targets
 - [ ] Policy evaluation < 10ms (95th percentile)
@@ -1122,7 +1122,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 
 ---
 
-## 🚨 Risk Assessment & Mitigation
+##  Risk Assessment & Mitigation
 
 ### High-Risk Items
 - [ ] **Policy Engine Complexity** - Mitigation: Incremental development, extensive testing
@@ -1138,7 +1138,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 
 ---
 
-## 📝 Notes & Decisions
+##  Notes & Decisions
 
 ### Architecture Decisions
 - **Policy Storage**: PostgreSQL with JSONB for flexibility
@@ -1154,7 +1154,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 
 ---
 
-## 👥 Team & Responsibilities
+##  Team & Responsibilities
 
 | Component | Owner | Status |
 |-----------|-------|--------|
@@ -1172,7 +1172,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 **Next Review:** February 4, 2025  
 **Overall Progress:** ✅ **98% Complete (8 of 9 phases completed)**
 
-## 🎉 **MAJOR MILESTONE: ABAC Handler Implementation Complete**
+##  **MAJOR MILESTONE: ABAC Handler Implementation Complete**
 
 ### **✅ Successfully Completed Phase 8: ABAC Handler Implementation**
 
@@ -1198,7 +1198,7 @@ Request → PEP → PDP ↔ PIP (attributes)
 - **Security**: JWT token handling and tenant context propagation
 - **Performance**: Sub-millisecond handler overhead with direct service integration
 
-### **🚀 Previous Milestone: User Service ABAC Integration**
+### ** Previous Milestone: User Service ABAC Integration**
 
 **Key Achievements:**
 - ✅ **10 New ABAC Endpoints** - user service with  ABAC capabilities
@@ -1215,12 +1215,12 @@ Request → PEP → PDP ↔ PIP (attributes)
 - **Operational Efficiency**: Bulk operations and performance-optimized attribute management
 - **Audit Readiness**:  audit trails with decision explanations
 
-### **🚀 What's Next: Phase 9 - Documentation & Deployment**
+### ** What's Next: Phase 9 - Documentation & Deployment**
 - **Documentation**: API documentation, user guides, developer integration guides
 - **Deployment Tools**: Automation scripts, database migrations, configuration management
 - **Operational Readiness**: Health checks, monitoring setup, disaster recovery procedures
 
-## 🔗 Reference Documents
+##  Reference Documents
 
 - **Tenant Context Management**: `@docs/TENANT_CONTEXT_LIFECYCLE.md` - MUST be followed for all ABAC operations
 - **Shared Infrastructure**: `@internal/shared/` - errors, tracing, logger, metrics components

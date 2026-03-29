@@ -4,7 +4,7 @@
 **SCOPE**: All icon variants, sizes, and usage patterns  
 **TARGET AUDIENCE**: Developers implementing visual symbols, indicators, and decorative elements
 
-## 📋 Component Overview
+##  Component Overview
 
 The Icon component provides a consistent system for displaying visual symbols throughout the ERP interface. It supports multiple icon libraries, various sizes, colors, and interactive states while maintaining accessibility and performance standards.
 
@@ -13,7 +13,7 @@ The Icon component provides a consistent system for displaying visual symbols th
 - **Related Schemas**: `IconCheckedSchema.json`, `IconItemSchema.json`
 - **Base Interface**: Visual element with semantic meaning
 
-## 🎨 Icon Types
+##  Icon Types
 
 ### Basic Icon
 **Purpose**: Simple visual symbols for UI elements
@@ -227,7 +227,7 @@ const (
 )
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -320,7 +320,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Icon Styles
 ```css
@@ -842,7 +842,7 @@ templ IconSet(props IconSetProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1041,7 +1041,7 @@ templ AccessibleIcon(props IconProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1150,7 +1150,7 @@ test.describe('Icon Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Navigation Icons
 ```go
@@ -1257,7 +1257,7 @@ templ UserAvatar() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Button](../button/)** - Action triggers using icons
 - **[Badge](../badge/)** - Status indicators with icons

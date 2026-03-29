@@ -14,6 +14,7 @@ import (
 	db "awo.so/db/sqlc"
 	"awo.so/internal/api/handlers"
 	"awo.so/internal/api/middleware"
+	"awo.so/internal/core/audit"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/iam"
 	"awo.so/internal/core/tenant"
@@ -140,11 +141,11 @@ func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracin
 
 // NewIdentityService constructs the IAM user service with brute-force config from app config.
 // cacheSvc is accepted for wire compatibility but cache is handled by the repository.
-func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config) iam.UserService {
+func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config, log logger.Logger) iam.UserService {
 	return iam.NewUserServiceWithConfig(repo, tracer, m, iam.UserConfig{
 		MaxFailedAttempts: cfg.Auth.MaxFailedAttempts,
 		LockoutDuration:   cfg.Auth.LockoutDuration,
-	})
+	}, log)
 }
 
 // NewAuthzService constructs the Casbin-backed authorization service.
@@ -180,6 +181,34 @@ func NewSessionService(
 }
 
 // ============================================================================
+// AUDIT PROVIDERS
+// ============================================================================
+
+// NewAuditRepository constructs an audit repository.
+func NewAuditRepository(store db.Store, log logger.Logger, tracer tracing.Service, m metrics.MetricsProvider) audit.Repository {
+	return audit.NewRepository(store, log, tracer, m)
+}
+
+// NewAuditService constructs the audit service.
+func NewAuditService(repo audit.Repository, cacheSvc cache.Service, log logger.Logger, tracer tracing.Service, m metrics.MetricsProvider) audit.Service {
+	return audit.NewService(repo, cacheSvc, log, tracer, m)
+}
+
+// ============================================================================
+// API KEY PROVIDERS
+// ============================================================================
+
+// NewAPIKeyRepository constructs the API key repository.
+func NewAPIKeyRepository(store db.Store) iam.APIKeyRepository {
+	return iam.NewAPIKeyRepository(store)
+}
+
+// NewAPIKeyService constructs the API key service.
+func NewAPIKeyService(repo iam.APIKeyRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.APIKeyService {
+	return iam.NewAPIKeyService(repo, cacheSvc, tracer, m)
+}
+
+// ============================================================================
 // HANDLER PROVIDERS
 // ============================================================================
 
@@ -193,6 +222,9 @@ func NewHandlerDependencies(
 	sessionSvc iam.SessionService,
 	financeServices *financeService.Services,
 	tenantMiddleware fiber.Handler,
+	auditSvc audit.Service,
+	apiKeySvc iam.APIKeyService,
+	store db.Store,
 ) *handlers.Dependencies {
 	authCfg := middleware.DefaultAuthConfig(sessionSvc)
 	return &handlers.Dependencies{
@@ -205,6 +237,9 @@ func NewHandlerDependencies(
 		TenantMiddleware: tenantMiddleware,
 		SessionService:   sessionSvc,
 		AuthConfig:       &authCfg,
+		AuditService:     auditSvc,
+		APIKeyService:    apiKeySvc,
+		Store:            store,
 	}
 }
 

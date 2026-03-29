@@ -1,10 +1,10 @@
 # Project Management
 
-## 🎯 Overview
+##  Overview
 
 The Project Management module provides  project planning, execution, and monitoring capabilities. It supports multiple project methodologies (Waterfall, Agile, Hybrid), resource management, time tracking, budget control, and collaboration tools for successful project delivery.
 
-## 📋 Project Structure & Planning
+##  Project Structure & Planning
 
 ### Project Master Data
 
@@ -327,7 +327,7 @@ CREATE TABLE task_assignments (
 );
 ```
 
-## 👨‍💼 Resource Management
+## ‍ Resource Management
 
 ### Team and Resource Planning
 
@@ -800,7 +800,7 @@ class TimeAnalyticsService implements TimeTrackingAnalytics {
 }
 ```
 
-## 💼 Project Financial Management
+##  Project Financial Management
 
 ### Budget Tracking and Cost Control
 

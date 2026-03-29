@@ -28,9 +28,7 @@ func ListAuditEventsHandler(svc audit.Service) fiber.Handler {
 		}
 
 		if !sess.Can("iam.sessions.read") {
-			return sharedErrors.ToHTTPError(c,
-				sharedErrors.NewBusinessError("FORBIDDEN", "insufficient permissions").
-					WithCategory(sharedErrors.CategoryAuthorization))
+			return fiber.NewError(fiber.StatusForbidden, "insufficient permissions")
 		}
 
 		limit := 50
@@ -54,7 +52,11 @@ func ListAuditEventsHandler(svc audit.Service) fiber.Handler {
 
 		events, err := svc.GetAuditEvents(c.Context(), sess.TenantID, filters)
 		if err != nil {
-			return sharedErrors.ToHTTPError(c, err)
+			httpErr := sharedErrors.ToHTTPError(err)
+			if httpErr == nil {
+				return fiber.ErrInternalServerError
+			}
+			return c.Status(httpErr.Status).JSON(httpErr)
 		}
 
 		return c.JSON(fiber.Map{

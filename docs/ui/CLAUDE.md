@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code and other AI assistants when working with the AWO ERP UI documentation and components.
 
-## 📋 Quick Navigation for AI Assistants
+##  Quick Navigation for AI Assistants
 
 ### Essential Files
 - **[README.md](README.md)** - Main documentation entry point
@@ -15,7 +15,7 @@ This file provides guidance to Claude Code and other AI assistants when working 
 - **[schema/definitions/](schema/definitions/)** - JSON schema specifications (900+ schemas)
 - **[guides/](guides/)** - ERP workflow patterns and integration examples
 
-## 🏗️ System Architecture Overview
+## ️ System Architecture Overview
 
 ### Technology Stack
 ```
@@ -33,7 +33,7 @@ Go Templ (Templates) + HTMX (Interactions) + Alpine.js (State) + Flowbite (Styli
 - **[Flowbite](https://flowbite.com)** - Production-ready UI components
 - **[TailwindCSS](https://tailwindcss.com)** - Utility-first CSS framework
 
-## 🧩 Component Architecture
+##  Component Architecture
 
 ### Atomic Design Hierarchy
 ```
@@ -50,7 +50,7 @@ The system uses JSON schemas to define UI components:
 - **Go models** automatically generate UI schemas
 - **Visual Builder** provides drag-and-drop interface creation
 
-## 📝 Writing Code with AWO ERP UI
+##  Writing Code with AWO ERP UI
 
 ### Basic Templ Component Pattern
 ```go
@@ -108,7 +108,7 @@ type ComponentProps struct {
 </div>
 ```
 
-## 🎯 AI Assistant Guidelines
+##  AI Assistant Guidelines
 
 ### When Creating Components
 1. **Check existing components first** - Browse `components/` directory
@@ -130,7 +130,7 @@ type ComponentProps struct {
 - **Real-world workflows** - See `guides/erp-workflow-patterns.md`
 - **Integration patterns** - See `guides/component-integration-guide.md`
 
-## 📚 Common AI Assistant Tasks
+##  Common AI Assistant Tasks
 
 ### 1. Component Creation
 **For new UI components:**
@@ -160,7 +160,7 @@ type ComponentProps struct {
 3. Use server-side rendering for core functionality
 4. Implement progressive enhancement patterns
 
-## 🚨 Important Constraints
+##  Important Constraints
 
 ### Security Requirements
 - **Server-side validation** - Never trust client-side data
@@ -180,7 +180,7 @@ type ComponentProps struct {
 - **Screen reader support** - Proper ARIA labels and structure
 - **Color contrast** - Meet accessibility color requirements
 
-## 🔧 Development Workflow
+##  Development Workflow
 
 ### Essential Commands
 ```bash
@@ -214,7 +214,7 @@ docs/ui/
 └── reference/      # API and design reference
 ```
 
-## 📖 External References
+##  External References
 
 ### Advanced Features
 - **`templ-llms.md`** - Streaming, suspense, optimization patterns

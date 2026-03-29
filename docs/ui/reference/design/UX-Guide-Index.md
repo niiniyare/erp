@@ -6,15 +6,15 @@
 **TARGET AUDIENCE**: UX developers, frontend engineers, and design implementers
 <!-- LLM-CONTEXT-END -->
 
-## 📚 Complete Documentation Suite
+##  Complete Documentation Suite
 
 This directory contains **comprehensive UX developer documentation** for implementing the ERP UI design system using **Templ + HTMX + Alpine.js + Flowbite**.
 
 ---
 
-## 🎯 Quick Navigation
+##  Quick Navigation
 
-### **🎨 [UX Style Guide](./UX-Style-Guide.md)**
+### ** [UX Style Guide](./UX-Style-Guide.md)**
 **Complete visual style system and component specifications**
 
 - **Color System**: Primary palette, status colors, neutral grays with TailwindCSS implementation
@@ -30,7 +30,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-### **🏗️ [Page Architecture Guide](./Page-Architecture-Guide.md)**
+### **️ [Page Architecture Guide](./Page-Architecture-Guide.md)**
 **Layout patterns and information architecture for page structures**
 
 - **Master Layout**: Three-zone architecture (Navigation + Content + Context)
@@ -45,7 +45,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-### **🚀 [UX Implementation Guide](./UX-Implementation-Guide.md)**
+### ** [UX Implementation Guide](./UX-Implementation-Guide.md)**
 **Complete development workflow with production-ready code examples**
 
 - **Quick Start**: Project setup, base templates, CSS/JS configuration
@@ -60,7 +60,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-### **📖 [Design System README](./README.md)**
+### ** [Design System README](./README.md)**
 **Comprehensive design analysis and business context**
 
 - **Design Philosophy**: Information density, workflow optimization, business intelligence
@@ -75,31 +75,31 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-## 🎯 Usage Recommendations
+##  Usage Recommendations
 
-### **For New Developers** 👋
+### **For New Developers** 
 1. Start with **[Design System README](./README.md)** for overall context
 2. Review **[UX Style Guide](./UX-Style-Guide.md)** for visual standards
 3. Follow **[UX Implementation Guide](./UX-Implementation-Guide.md)** for hands-on development
 
-### **For Experienced Developers** 🚀
+### **For Experienced Developers** 
 1. Jump to **[UX Implementation Guide](./UX-Implementation-Guide.md)** for code examples
 2. Reference **[Page Architecture Guide](./Page-Architecture-Guide.md)** for layout patterns
 3. Use **[UX Style Guide](./UX-Style-Guide.md)** as styling reference
 
-### **For Designers** 🎨
+### **For Designers** 
 1. Review **[Design System README](./README.md)** for design philosophy
 2. Study **[Page Architecture Guide](./Page-Architecture-Guide.md)** for layout patterns
 3. Reference **[UX Style Guide](./UX-Style-Guide.md)** for implementation specifications
 
-### **For Product Managers** 📊
+### **For Product Managers** 
 1. Read **[Design System README](./README.md)** for business context
 2. Review **[Page Architecture Guide](./Page-Architecture-Guide.md)** for user experience flows
 3. Check **[UX Implementation Guide](./UX-Implementation-Guide.md)** production checklist
 
 ---
 
-## 🛠️ Technology Stack Integration
+## ️ Technology Stack Integration
 
 ### **Templ Components**
 - Type-safe Go templating
@@ -127,7 +127,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-## 📱 Design Files Reference
+##  Design Files Reference
 
 ### **Screen Compositions**
 - `dashboard-main-overview.webp` - Executive dashboard layout
@@ -152,7 +152,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-## 🎯 Quick Reference Links
+##  Quick Reference Links
 
 ### **Most Common Tasks**
 - **Building a new page** → [Page Architecture Guide](./Page-Architecture-Guide.md)
@@ -174,7 +174,7 @@ This directory contains **comprehensive UX developer documentation** for impleme
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 1. **Clone the design system patterns** from the implementation guide
 2. **Set up your development environment** with the tech stack

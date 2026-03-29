@@ -4,7 +4,7 @@
 **ESTIMATED TIME**: 15 minutes  
 **OUTCOME**: Working development environment with schema-driven components
 
-## 🎯 Quick Setup
+##  Quick Setup
 
 ### Prerequisites
 ```bash
@@ -46,7 +46,7 @@ find docs/ui/Schema/definitions -name "*.json" | wc -l
 go run cmd/test-schema/main.go
 ```
 
-## 🔧 Development Environment
+##  Development Environment
 
 ### Required Tools
 - **Go 1.21+**: Core language
@@ -64,13 +64,13 @@ code --install-extension bradlc.vscode-tailwindcss
 code --install-extension golang.go
 ```
 
-## 🚀 Next Steps
+##  Next Steps
 
 ✅ **Environment Ready** → Continue to [First Component](first-component.md)
 
 **Quick Start Path**:
 1. ✅ Installation (you are here)
-2. 🎯 [Create First Component](first-component.md)
-3. 📚 [Basic Examples](basic-examples.md)
+2.  [Create First Component](first-component.md)
+3.  [Basic Examples](basic-examples.md)
 
 **Troubleshooting**: See [Development Guide](../development/creating-components.md) for detailed setup issues.

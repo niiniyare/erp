@@ -76,7 +76,7 @@ type SchemaRegistry struct {
 }
 
 func main() {
-	fmt.Println("🔍 Starting schema discovery...")
+	fmt.Println(" Starting schema discovery...")
 
 	registry := &SchemaRegistry{
 		Schemas:       []Schema{},
@@ -270,7 +270,7 @@ func generateRegistryJSON(registry *SchemaRegistry) {
 		return
 	}
 
-	fmt.Println("📋 Generated schema_registry.json")
+	fmt.Println(" Generated schema_registry.json")
 }
 
 func generateMarkdownReport(registry *SchemaRegistry) {
@@ -316,7 +316,7 @@ func generateMarkdownReport(registry *SchemaRegistry) {
 		return
 	}
 
-	fmt.Println("📊 Generated SCHEMA_DISCOVERY_REPORT.md")
+	fmt.Println(" Generated SCHEMA_DISCOVERY_REPORT.md")
 }
 
 func generateDependencyGraph(registry *SchemaRegistry) {
@@ -366,17 +366,17 @@ func generateDependencyGraph(registry *SchemaRegistry) {
 		return
 	}
 
-	fmt.Println("🔗 Generated schema_dependencies.dot (use Graphviz to render)")
+	fmt.Println(" Generated schema_dependencies.dot (use Graphviz to render)")
 }
 
 func printSummary(registry *SchemaRegistry) {
-	fmt.Println("\n📊 Discovery Summary:")
+	fmt.Println("\n Discovery Summary:")
 	fmt.Printf("   • Total Schemas: %d\n", registry.TotalSchemas)
 	fmt.Printf("   • Categories: %d\n", len(registry.Categories))
 	fmt.Printf("   • Subcategories: %d\n", len(registry.Subcategories))
 	fmt.Printf("   • With Dependencies: %d\n", len(registry.Dependencies))
 
-	fmt.Println("\n📂 Category Breakdown:")
+	fmt.Println("\n Category Breakdown:")
 	for category, count := range registry.Categories {
 		percentage := float64(count) / float64(registry.TotalSchemas) * 100
 		fmt.Printf("   • %-12s: %3d schemas (%.1f%%)\n", category, count, percentage)

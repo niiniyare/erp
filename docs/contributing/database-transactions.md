@@ -3,7 +3,7 @@
 
 *Guide for managing database transactions with proper tenant isolation using WithTenant pattern, context propagation, and SQLC integration*
 
-> **📚 Related Documentation:**
+> ** Related Documentation:**
 > - `docs/contributing/architecture.md` - System architecture and context patterns
 > - `docs/contributing/sqlc-integration.md` - SQLC query patterns and code generation
 > - `docs/contributing/01-best-practices.md` - Development guidelines and patterns
@@ -452,7 +452,7 @@ func TestAccountRepository_Create(t *testing.T) {
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [SQLC Integration](./sqlc-integration.md) - Type-safe query generation patterns
 - [Architecture Overview](./architecture.md) - Overall system design and context flow
 - [Best Practices](./01-best-practices.md) - Development guidelines and standards

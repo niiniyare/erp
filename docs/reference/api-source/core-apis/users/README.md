@@ -2,7 +2,7 @@
 
 The User Management API provides  user authentication, authorization, and management capabilities following a clean architecture pattern.
 
-## 📋 Overview
+##  Overview
 
 The User Management API handles all user-related operations including:
 
@@ -14,13 +14,13 @@ The User Management API handles all user-related operations including:
 - **Caching**: Redis-based caching for performance optimization
 - **Security**: Password hashing, session management, audit logging
 
-## 🔧 Base URL
+##  Base URL
 
 ```
 http://localhost:8080/api/v1/users
 ```
 
-## 👥 User Types
+##  User Types
 
 | Type | Description | Use Case |
 |------|-------------|----------|
@@ -31,7 +31,7 @@ http://localhost:8080/api/v1/users
 | `SUPPLIER` | Supplier users | Vendor access |
 | `PARTNER` | Partner users | Partnership access |
 
-## 🔐 Account Status
+##  Account Status
 
 | Status | Description | Access |
 |--------|-------------|--------|
@@ -41,7 +41,7 @@ http://localhost:8080/api/v1/users
 | `LOCKED` | Locked account | No access |
 | `PENDING` | Pending activation | Limited access |
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Health Check
 ```bash
@@ -78,11 +78,11 @@ curl -X POST http://localhost:8080/api/v1/users/auth \
 curl -X GET http://localhost:8080/api/v1/users | jq .
 ```
 
-## 📚 Documentation Files
+##  Documentation Files
 
 - **[curl Examples](./curl-examples.md)** -  curl command examples
 
-## 🧪 Testing
+##  Testing
 
 ### Automated Testing
 ```bash
@@ -102,7 +102,7 @@ curl -X GET http://localhost:8080/api/v1/users | jq .
 cat curl-examples.md
 ```
 
-## 🔍 Common Use Cases
+##  Common Use Cases
 
 ### User Registration Flow
 ```bash
@@ -149,7 +149,7 @@ curl -X GET "http://localhost:8080/api/v1/users/search?q=john&limit=10" | jq .
 curl -X GET "http://localhost:8080/api/v1/users?user_type=INTERNAL&account_status=ACTIVE" | jq .
 ```
 
-## 🎯 Expected Responses
+##  Expected Responses
 
 ### Success Response (201 Created)
 ```json
@@ -190,7 +190,7 @@ curl -X GET "http://localhost:8080/api/v1/users?user_type=INTERNAL&account_statu
 }
 ```
 
-## 🚨 Common Issues
+##  Common Issues
 
 1. **Duplicate email/username** - Email and username must be unique
 2. **Invalid credentials** - Check email/username and password
@@ -198,14 +198,14 @@ curl -X GET "http://localhost:8080/api/v1/users?user_type=INTERNAL&account_statu
 4. **Password requirements** - Passwords must meet security criteria
 5. **Entity not found** - User must belong to valid entity
 
-## 📈 Performance Notes
+##  Performance Notes
 
 - User data is cached for 15 minutes
 - Authentication responses are optimized
 - Database queries use indexes for performance
 - Pagination is implemented for large result sets
 
-## 🔒 Security Features
+##  Security Features
 
 - **Password Hashing**: bcrypt with salt
 - **Session Management**: JWT tokens with expiration
@@ -214,7 +214,7 @@ curl -X GET "http://localhost:8080/api/v1/users?user_type=INTERNAL&account_statu
 - **Audit Logging**: All user actions are logged
 - **Rate Limiting**: API rate limiting for security
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **Entity Management**: Users belong to entities
 - **Access Requests**: Users can request access

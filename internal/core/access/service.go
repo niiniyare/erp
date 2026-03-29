@@ -1,6 +1,6 @@
 package access
 
-//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+// go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
 
 import (
 	"context"
@@ -37,7 +37,7 @@ type Service interface {
 	ListUserPermissions(ctx context.Context, userID uuid.UUID, entityID *uuid.UUID) ([]*Permission, error)
 }
 
-// ─── ACCESS REQUEST TYPES ──────────────────────────────────────────────────
+// ACCESS REQUEST TYPES
 
 // Type aliases from request package
 type (
@@ -85,7 +85,7 @@ type ListAccessRequestsResult struct {
 	HasMore  bool             `json:"has_more"`
 }
 
-// ─── APPROVAL WORKFLOW TYPES ───────────────────────────────────────────────
+// APPROVAL WORKFLOW TYPES
 
 // ApprovalWorkflow represents an approval workflow
 type ApprovalWorkflow struct {
@@ -141,7 +141,7 @@ type UpdateApprovalWorkflowRequest struct {
 	Metadata    map[string]any  `json:"metadata,omitempty"`
 }
 
-// ─── CONDITIONAL ACCESS TYPES ──────────────────────────────────────────────
+// CONDITIONAL ACCESS TYPES
 
 // Type aliases from conditional package
 type ConditionalAccessPolicy = conditional.ConditionalAccessPolicy
@@ -268,7 +268,7 @@ type UpdateConditionalAccessPolicyRequest struct {
 	Metadata    map[string]any     `json:"metadata,omitempty"`
 }
 
-// ─── PERMISSION MANAGEMENT TYPES ───────────────────────────────────────────
+// PERMISSION MANAGEMENT TYPES
 
 // Permission represents a permission in the system
 type Permission struct {

@@ -4,11 +4,11 @@
 **SCOPE**: All components organized by atomic design principles  
 **TARGET AUDIENCE**: Developers, designers, component implementers
 
-## 📋 Component System Overview
+##  Component System Overview
 
 Our ERP UI component library is built on **atomic design principles** with **schema-driven architecture**, providing type-safe, accessible, and maintainable UI components for enterprise workflows.
 
-### 🏗️ Architecture Foundation
+### ️ Architecture Foundation
 
 ```
 JSON Schema → Go Types → Templ Components → HTML
@@ -24,7 +24,7 @@ Validation → Type Safety → Server-Side → Optimized
 - **Mobile-first responsive** design
 - **Dark mode support** throughout
 
-## 🧱 Component Categories
+##  Component Categories
 
 ### [Atoms](atoms/) - Foundational Elements
 **27 components** - Basic building blocks that cannot be broken down further
@@ -51,45 +51,45 @@ Validation → Type Safety → Server-Side → Optimized
 
 | Component | Purpose | Schema | Status |
 |-----------|---------|--------|--------|
-| **[Form Controls](molecules/form-controls/)** | Enhanced input components | Multiple schemas | 🔄 |
-| **[Alert](molecules/alert/)** | Notifications and messages | `AlertSchema.json` | 🔄 |
-| **[Card](molecules/card/)** | Content containers | `CardSchema.json` | 🔄 |
-| **[Avatar](molecules/avatar/)** | User representations | `AvatarSchema.json` | 🔄 |
-| **[Search Box](molecules/search-box/)** | Search functionality | `SearchBoxSchema.json` | 🔄 |
-| **[Date Picker](molecules/date-picker/)** | Date selection controls | `DateControlSchema.json` | 🔄 |
-| **[File Upload](molecules/file-upload/)** | File handling components | `FileControlSchema.json` | 🔄 |
-| **[Dropdown](molecules/dropdown/)** | Selection menus | `SelectControlSchema.json` | 🔄 |
-| **[Tooltip](molecules/tooltip/)** | Contextual help | `TooltipWrapperSchema.json` | 🔄 |
-| **[Rating](molecules/rating/)** | Rating and feedback | `RatingControlSchema.json` | 🔄 |
+| **[Form Controls](molecules/form-controls/)** | Enhanced input components | Multiple schemas |  |
+| **[Alert](molecules/alert/)** | Notifications and messages | `AlertSchema.json` |  |
+| **[Card](molecules/card/)** | Content containers | `CardSchema.json` |  |
+| **[Avatar](molecules/avatar/)** | User representations | `AvatarSchema.json` |  |
+| **[Search Box](molecules/search-box/)** | Search functionality | `SearchBoxSchema.json` |  |
+| **[Date Picker](molecules/date-picker/)** | Date selection controls | `DateControlSchema.json` |  |
+| **[File Upload](molecules/file-upload/)** | File handling components | `FileControlSchema.json` |  |
+| **[Dropdown](molecules/dropdown/)** | Selection menus | `SelectControlSchema.json` |  |
+| **[Tooltip](molecules/tooltip/)** | Contextual help | `TooltipWrapperSchema.json` |  |
+| **[Rating](molecules/rating/)** | Rating and feedback | `RatingControlSchema.json` |  |
 
 ### [Organisms](organisms/) - Complex Components
 **53 components** - Complete functional units
 
 | Component | Purpose | Schema | Status |
 |-----------|---------|--------|--------|
-| **[Tables](organisms/tables/)** | Advanced data display | `TableSchema.json`, `TableSchema2.json` | 🔄 |
-| **[Forms](organisms/forms/)** | Complete form layouts | `FormSchema.json` | 🔄 |
-| **[Navigation](organisms/navigation/)** | Site navigation | `NavSchema.json` | 🔄 |
-| **[CRUD](organisms/crud/)** | Data management interfaces | `CRUDSchema.json`, `CRUD2Schema.json` | 🔄 |
-| **[Modals](organisms/modals/)** | Dialog and overlay systems | `DialogSchema.json` | 🔄 |
-| **[Lists](organisms/lists/)** | Data listing components | `ListSchema.json` | 🔄 |
-| **[Tabs](organisms/tabs/)** | Tabbed content organization | `TabsSchema.json` | 🔄 |
-| **[Steps](organisms/steps/)** | Multi-step processes | `StepsSchema.json` | 🔄 |
-| **[Wizard](organisms/wizard/)** | Guided workflows | `WizardSchema.json` | 🔄 |
-| **[Trees](organisms/trees/)** | Hierarchical data | `TreeControlSchema.json` | 🔄 |
+| **[Tables](organisms/tables/)** | Advanced data display | `TableSchema.json`, `TableSchema2.json` |  |
+| **[Forms](organisms/forms/)** | Complete form layouts | `FormSchema.json` |  |
+| **[Navigation](organisms/navigation/)** | Site navigation | `NavSchema.json` |  |
+| **[CRUD](organisms/crud/)** | Data management interfaces | `CRUDSchema.json`, `CRUD2Schema.json` |  |
+| **[Modals](organisms/modals/)** | Dialog and overlay systems | `DialogSchema.json` |  |
+| **[Lists](organisms/lists/)** | Data listing components | `ListSchema.json` |  |
+| **[Tabs](organisms/tabs/)** | Tabbed content organization | `TabsSchema.json` |  |
+| **[Steps](organisms/steps/)** | Multi-step processes | `StepsSchema.json` |  |
+| **[Wizard](organisms/wizard/)** | Guided workflows | `WizardSchema.json` |  |
+| **[Trees](organisms/trees/)** | Hierarchical data | `TreeControlSchema.json` |  |
 
 ### [Templates](templates/) - Layout Systems
 **12 components** - Page-level layouts and structures
 
 | Template | Purpose | Schema | Status |
 |----------|---------|--------|--------|
-| **[Page](templates/page/)** | Base page layouts | `PageSchema.json` | 🔄 |
-| **[Service](templates/service/)** | Data service integration | `ServiceSchema.json` | 🔄 |
-| **[IFrame](templates/iframe/)** | External content embedding | `IFrameSchema.json` | 🔄 |
-| **[Mapping](templates/mapping/)** | Data transformation | `MappingSchema.json` | 🔄 |
-| **[Pagination Wrapper](templates/pagination/)** | Paginated content | `PaginationWrapperSchema.json` | 🔄 |
+| **[Page](templates/page/)** | Base page layouts | `PageSchema.json` |  |
+| **[Service](templates/service/)** | Data service integration | `ServiceSchema.json` |  |
+| **[IFrame](templates/iframe/)** | External content embedding | `IFrameSchema.json` |  |
+| **[Mapping](templates/mapping/)** | Data transformation | `MappingSchema.json` |  |
+| **[Pagination Wrapper](templates/pagination/)** | Paginated content | `PaginationWrapperSchema.json` |  |
 
-## 🎨 Design System Integration
+##  Design System Integration
 
 ### Visual Consistency
 All components follow our **design system** specifications:
@@ -112,7 +112,7 @@ All components follow our **design system** specifications:
 - **Interactive states**: Hover, focus, active, disabled
 - **Responsive design**: Mobile-first approach
 
-## 🏗️ Schema-Driven Development
+## ️ Schema-Driven Development
 
 ### Component Generation Process
 ```go
@@ -145,7 +145,7 @@ Every component validates against its JSON schema:
 - **Pattern matching**: Validate string formats
 - **Custom rules**: Business-specific validations
 
-## 📱 Responsive Design Strategy
+##  Responsive Design Strategy
 
 ### Breakpoint System
 ```css
@@ -183,7 +183,7 @@ type A11yProps struct {
 }
 ```
 
-## 🚀 Performance Optimization
+##  Performance Optimization
 
 ### Component Efficiency
 - **Tree shaking**: Only load used components
@@ -197,7 +197,7 @@ type A11yProps struct {
 - **Time to Interactive**: < 3.5s
 - **Bundle size**: < 100KB CSS, < 300KB JS
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Component Testing Pyramid
 ```
@@ -213,7 +213,7 @@ type A11yProps struct {
 - **Performance tests**: Bundle size and metrics
 - **Integration tests**: Component interactions
 
-## 🔧 Development Workflow
+##  Development Workflow
 
 ### Creating Components
 1. **Design**: Follow design system guidelines
@@ -230,7 +230,7 @@ type A11yProps struct {
 - Write **comprehensive tests**
 - Document **all use cases**
 
-## 📚 Quick Reference
+##  Quick Reference
 
 ### Getting Started
 1. **[Installation](../quick-start/installation.md)**: Set up development environment
@@ -248,7 +248,7 @@ type A11yProps struct {
 - **[Templ Integration](../fundamentals/templ-integration.md)**: Template patterns
 - **[Validation Guide](../guides/validation-guide.md)**: Form validation
 
-## 🎯 Usage Statistics
+##  Usage Statistics
 
 ### Component Usage by Category
 - **Atoms**: 85% adoption (most frequently used)
@@ -267,8 +267,8 @@ type A11yProps struct {
 
 **Legend:**
 - ✅ **Complete**: Fully documented and tested
-- 🔄 **In Progress**: Documentation being created
-- 📋 **Planned**: Scheduled for documentation
+-  **In Progress**: Documentation being created
+-  **Planned**: Scheduled for documentation
 
 **System Status**: 940+ components across 4 categories  
 **Documentation Coverage**: 15% complete, actively expanding  

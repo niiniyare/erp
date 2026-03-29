@@ -4,7 +4,7 @@
 **SCOPE**: TailwindCSS, Flowbite integration, custom themes, responsive design  
 **TARGET AUDIENCE**: Frontend developers, designers, component builders
 
-## 🎨 Styling Architecture Overview
+##  Styling Architecture Overview
 
 Our styling system combines **TailwindCSS utilities** with **Flowbite components** in a **schema-driven architecture** for consistent, maintainable, and scalable design.
 
@@ -14,7 +14,7 @@ Our styling system combines **TailwindCSS utilities** with **Flowbite components
 - **Schema-driven CSS**: Type-safe styling through Go validation
 - **Responsive Design**: Mobile-first, progressive enhancement
 
-## 🏗️ CSS Architecture Layers
+## ️ CSS Architecture Layers
 
 ### 1. Foundation Layer (TailwindCSS)
 ```css
@@ -53,7 +53,7 @@ theme := map[string]interface{}{
 }
 ```
 
-## 📐 Design System Principles
+##  Design System Principles
 
 ### Atomic Design Implementation
 ```
@@ -89,7 +89,7 @@ type DesignTokens struct {
 }
 ```
 
-## 🎨 Flowbite Integration
+##  Flowbite Integration
 
 ### Component Styling Pattern
 ```go
@@ -146,7 +146,7 @@ func (p ButtonProps) GetClasses() string {
 </div>
 ```
 
-## 📱 Responsive Design Strategy
+##  Responsive Design Strategy
 
 ### Mobile-First Approach
 ```go
@@ -195,7 +195,7 @@ gridProps := map[string]interface{}{
 // Generated classes: "grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 md:grid-cols-3 md:gap-8 lg:grid-cols-4 lg:gap-10"
 ```
 
-## 🎨 Custom Theme Implementation
+##  Custom Theme Implementation
 
 ### Theme Configuration
 ```go
@@ -266,7 +266,7 @@ func applyTheme(component *TemplComponent, theme Theme) {
 }
 ```
 
-## 🔧 CSS Validation System
+##  CSS Validation System
 
 ### Schema-Based Validation
 ```go
@@ -325,7 +325,7 @@ func (v *CSSValidator) ValidateStyles(styles css.ExpandedStyles) error {
 }
 ```
 
-## 🏗️ Component Styling Patterns
+## ️ Component Styling Patterns
 
 ### Button Styling Pattern
 ```go
@@ -386,7 +386,7 @@ var InputStyles = map[string][]string{
 }
 ```
 
-## 🌙 Dark Mode Support
+##  Dark Mode Support
 
 ### Dark Mode Implementation
 ```go
@@ -424,13 +424,13 @@ templ ThemeToggle() {
         x-data="{ darkMode: false }"
         @click="darkMode = !darkMode; document.documentElement.classList.toggle('dark')"
         class="p-2 rounded-lg border border-gray-200 dark:border-gray-600">
-        <span x-show="!darkMode">🌙</span>
+        <span x-show="!darkMode"></span>
         <span x-show="darkMode">☀️</span>
     </button>
 }
 ```
 
-## 🚀 Performance Optimization
+##  Performance Optimization
 
 ### CSS Optimization Strategies
 1. **Purge Unused Styles**: TailwindCSS purging in production
@@ -463,7 +463,7 @@ module.exports = {
 }
 ```
 
-## 📏 Design Consistency
+##  Design Consistency
 
 ### Style Guide Enforcement
 ```go
@@ -507,7 +507,7 @@ grep -r "bg-\[#" web/ && echo "❌ Arbitrary color values found"
 echo "✅ Style validation complete"
 ```
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **[Architecture](architecture.md)**: System design principles
 - **[Schema System](schema-system.md)**: Type-safe component generation

@@ -2,7 +2,7 @@
 
 The Tenant Management API provides  functionality for managing multi-tenant configurations in the AWO ERP System. This API enables tenant isolation, configuration, and management across the enterprise.
 
-## 📋 Overview
+##  Overview
 
 **Base URL**: `/api/v1/tenants`
 
@@ -15,7 +15,7 @@ The Tenant Management API provides  functionality for managing multi-tenant conf
 - Health monitoring
 - Tenant status management
 
-## 🔗 Available Endpoints
+##  Available Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -26,7 +26,7 @@ The Tenant Management API provides  functionality for managing multi-tenant conf
 | `DELETE` | `/api/v1/tenants/{id}` | Delete/deactivate tenant |
 | `GET` | `/api/v1/tenants/health` | Get tenant service health status |
 
-## 📊 Data Models
+##  Data Models
 
 ### Tenant Object
 ```json
@@ -60,7 +60,7 @@ The Tenant Management API provides  functionality for managing multi-tenant conf
 }
 ```
 
-## 🚀 Quick Examples
+##  Quick Examples
 
 ### Create Tenant
 ```bash
@@ -143,7 +143,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 }
 ```
 
-## 🔧 Advanced Usage
+##  Advanced Usage
 
 ### Pagination Parameters
 
@@ -164,7 +164,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 curl -X GET "http://localhost:8080/api/v1/tenants?status=ACTIVE&limit=5" | jq .
 ```
 
-## 🚨 Error Handling
+##  Error Handling
 
 ### Common Error Responses
 
@@ -194,7 +194,7 @@ curl -X GET "http://localhost:8080/api/v1/tenants?status=ACTIVE&limit=5" | jq .
 - **name**: Optional, 1-255 characters, unique if provided
 - **status**: Optional, valid status enum
 
-## 🔍 Testing
+##  Testing
 
 ### Health Check Test
 ```bash
@@ -226,7 +226,7 @@ curl -X GET http://localhost:8080/api/v1/tenants
 curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID
 ```
 
-## 📊 Performance Considerations
+##  Performance Considerations
 
 ### Caching Strategy
 - Tenant data is cached for 30 minutes
@@ -242,13 +242,13 @@ curl -X DELETE http://localhost:8080/api/v1/tenants/$TENANT_ID
 - Cache tenant lookups when possible
 - Monitor health endpoint for service status
 
-## 🔗 Related APIs
+##  Related APIs
 
 - **[User Management API](../user/README.md)** - Users belong to tenants
 - **Entity Management API** - Entities are tenant-scoped
 - **[Authentication API](../../api-source/workflows/auth/README.md)** - Tenant-aware authentication
 
-## 📚 Additional Resources
+##  Additional Resources
 
 - **[curl Examples](curl-examples.md)** - Complete curl command examples
 - **Testing Scripts** - Automated testing script

@@ -4,17 +4,17 @@
 **SCOPE**: Complete guide to building enterprise ERP interfaces with JSON-driven architecture  
 **TARGET AUDIENCE**: Go developers, frontend engineers, AI assistants, and system architects
 
-## 🎯 Quick Navigation
+##  Quick Navigation
 
 ### For Developers
-- 🚀 **[Getting Started](getting-started.md)** - Setup, installation, and first component
-- 🏗️ **[Architecture](Schema-Driven-Architecture.md)** - JSON-driven UI system design
-- 🧩 **[Components](components/)** - Atomic design component library (140+ components)
-- 📋 **[Schema Definitions](./schema/definitions/)** - JSON schema specifications (900+ schemas)
-- 📚 **[Guides](guides/)** - ERP workflow patterns and practical implementation
+-  **[Getting Started](getting-started.md)** - Setup, installation, and first component
+- ️ **[Architecture](Schema-Driven-Architecture.md)** - JSON-driven UI system design
+-  **[Components](components/)** - Atomic design component library (140+ components)
+-  **[Schema Definitions](./schema/definitions/)** - JSON schema specifications (900+ schemas)
+-  **[Guides](guides/)** - ERP workflow patterns and practical implementation
 
 
-## 🏗️ System Architecture
+## ️ System Architecture
 
 ### Core Technology Stack
 ```
@@ -41,7 +41,7 @@ The AWO ERP uses a sophisticated **schema-driven architecture** where:
 - **Go models** automatically generate UI schemas via reflection
 - **Visual Builder** provides drag-and-drop interface creation
 
-## 📋 Component Library Structure
+##  Component Library Structure
 
 ### Atomic Design Hierarchy
 ```
@@ -72,7 +72,7 @@ Atoms/          - Basic UI elements
   └── Text       - Typography and content display
 ```
 
-## 🎯 Key Features
+##  Key Features
 
 ### Enterprise-Grade Capabilities
 - ✅ **Multi-tenant architecture** with tenant isolation
@@ -84,14 +84,14 @@ Atoms/          - Basic UI elements
 - ✅ **Performance optimization** with 37.1KB JavaScript bundle
 
 ### Developer Experience
-- 🔥 **Hot reload development** with `templ generate --watch`
-- 🛡️ **Type safety** across Go templates and data structures
-- 📦 **Component composition** following atomic design principles
-- 🧪 **Testing strategies** for template and integration testing
-- 📊 **Schema validation** preventing UI/backend misalignment
-- 🎨 **Visual debugging** with component inspection tools
+-  **Hot reload development** with `templ generate --watch`
+- ️ **Type safety** across Go templates and data structures
+-  **Component composition** following atomic design principles
+-  **Testing strategies** for template and integration testing
+-  **Schema validation** preventing UI/backend misalignment
+-  **Visual debugging** with component inspection tools
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Prerequisites
 ```bash
@@ -129,7 +129,7 @@ go run main.go
 open http://localhost:8080
 ```
 
-## 📚 Documentation Structure
+##  Documentation Structure
 
 ### Essential Reading Order
 1. **[Getting Started](getting-started.md)** - Set up development environment
@@ -143,7 +143,7 @@ open http://localhost:8080
 - **[Design Pattern Reference](Design-Pattern-Reference-Guide.md)** - Complete UI pattern catalog
 - **[Schema Definitions](schema/definitions/)** - Component specification reference
 
-## 🔧 Development Commands
+##  Development Commands
 
 ```bash
 # Component development
@@ -161,7 +161,7 @@ npm run build:css               # Build TailwindCSS
 npm run watch:css               # Watch CSS changes
 ```
 
-## 🏢 Real-World Usage
+##  Real-World Usage
 
 ### ERP Module Examples
 The component system supports complete ERP workflows:
@@ -173,13 +173,13 @@ The component system supports complete ERP workflows:
 - **Manufacturing** - Production planning, quality control, maintenance scheduling
 
 ### Integration Capabilities
-- 🔌 **REST API integration** via HTMX and Go handlers
-- 🔄 **Real-time updates** with WebSocket and Server-Sent Events
-- 📊 **Data visualization** with Chart.js and custom components
-- 📄 **PDF generation** for reports and documents
-- 📧 **Email integration** for notifications and workflows
+-  **REST API integration** via HTMX and Go handlers
+-  **Real-time updates** with WebSocket and Server-Sent Events
+-  **Data visualization** with Chart.js and custom components
+-  **PDF generation** for reports and documents
+-  **Email integration** for notifications and workflows
 
-## 📖 External References
+##  External References
 
 ### Official Documentation
 - [Templ Guide](https://templ.guide) - Official templating language documentation
@@ -193,7 +193,7 @@ The component system supports complete ERP workflows:
 - [HTMX Examples](https://htmx.org/examples/)
 - [Alpine.js Patterns](https://alpinejs.dev/start-here)
 
-## 🤝 Contributing
+##  Contributing
 
 ### Documentation Standards
 - **LLM-Friendly**: Clear section markers and semantic structure

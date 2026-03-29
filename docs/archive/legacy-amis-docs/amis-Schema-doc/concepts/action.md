@@ -2,7 +2,7 @@
 title: 行为
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 行为
 icon:
 order: 12

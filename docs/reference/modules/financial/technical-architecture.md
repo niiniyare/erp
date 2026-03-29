@@ -817,7 +817,7 @@ WHERE batch_id = $3
 
 ### Multi-Tenant Security Model
 
-> **🔒 Security Implementation**: For comprehensive security architecture, RLS implementation details, authentication patterns, and compliance frameworks, see [Operations & Security Guide](./operations-security.md#security-architecture).
+> ** Security Implementation**: For comprehensive security architecture, RLS implementation details, authentication patterns, and compliance frameworks, see [Operations & Security Guide](./operations-security.md#security-architecture).
 
 **Database-Level Security Integration:**
 
@@ -1043,7 +1043,7 @@ func (s *TransactionService) Update(
         Version:            req.Version, // Must match current version
     })
     
-    if errors.Is(err, sql.ErrNoRows) {
+    if errors.Is(err, db.ErrNoRows) {
         return nil, domain.ErrOptimisticLockFailure
     }
     

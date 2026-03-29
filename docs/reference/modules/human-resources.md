@@ -1,10 +1,10 @@
 # Human Resources Management
 
-## 👥 Overview
+##  Overview
 
 The Human Resources Management module provides  employee lifecycle management, from recruitment and onboarding to performance management and offboarding. It includes payroll processing, benefits administration, time tracking, and compliance with labor regulations.
 
-## 👤 Employee Management
+##  Employee Management
 
 ### Employee Master Data
 
@@ -602,7 +602,7 @@ CREATE TABLE leave_request_approvals (
 );
 ```
 
-## 💰 Payroll Management
+##  Payroll Management
 
 ### Payroll Structure
 

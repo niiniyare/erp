@@ -45,7 +45,7 @@ run_test_script() {
 }
 
 run_all_tests() {
-    echo -e "${BLUE}🚀 Running All API Test Suites${NC}"
+    echo -e "${BLUE} Running All API Test Suites${NC}"
     local all_passed=true
     
     run_test_script "test_health_api.sh" "Health Check Tests" || all_passed=false
@@ -60,10 +60,10 @@ run_all_tests() {
     echo ""
     if $all_passed;
     then
-        echo -e "${GREEN}🎉 All test suites passed successfully!${NC}"
+        echo -e "${GREEN} All test suites passed successfully!${NC}"
         exit 0
     else
-        echo -e "${RED}🔥 One or more test suites failed!${NC}"
+        echo -e "${RED} One or more test suites failed!${NC}"
         exit 1
     fi
 }
@@ -71,7 +71,7 @@ run_all_tests() {
 # --- Interactive Menu ---
 
 show_menu() {
-    echo -e "\n${BLUE}🧪 ERP API Test Suite${NC}"
+    echo -e "\n${BLUE} ERP API Test Suite${NC}"
     echo -e "${BLUE}======================${NC}"
     echo -e "\n${YELLOW}Usage:${NC}"
     echo "  ./test.sh [command]"
@@ -127,7 +127,7 @@ main() {
         echo ""
         
         if [[ "$choice" == "exit" || "$choice" == "0" ]]; then
-            echo -e "${GREEN}👋 Goodbye!${NC}"
+            echo -e "${GREEN} Goodbye!${NC}"
             exit 0
         fi
         

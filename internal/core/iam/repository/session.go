@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"net/netip"
@@ -17,7 +16,7 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-//  Port (interface)
+// Port (interface)
 
 // SessionRepository defines the persistence port for sessions.
 // All cache operations are encapsulated here — callers never touch cache.
@@ -46,7 +45,7 @@ type SessionRepository interface {
 	// UpdateLastSeen is fire-and-forget.
 	UpdateLastSeen(ctx context.Context, hash string)
 
-	// ── Login pre-computation ─────────────────────────────────────────────────
+	// Login pre-computation ─────────────────────────────────────────────────
 
 	// LoadLoginConfig fetches the pre-computed login configuration snapshot:
 	// feature flags (ResolveAllFlagsForTenant), tenant settings
@@ -66,7 +65,7 @@ type SessionRepository interface {
 	DeletePendingMFA(ctx context.Context, pendingToken string) error
 }
 
-//  Adapter (implementation)
+// Adapter (implementation)
 
 type sessionRepo struct {
 	store   db.Store
@@ -159,7 +158,7 @@ func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.R
 	// 2. DB fallback
 	row, err := r.store.TouchAndGetSession(ctx, hash)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("session repo: get session: %w", err)
@@ -254,7 +253,7 @@ func (r *sessionRepo) UpdateLastSeen(ctx context.Context, hash string) {
 	}()
 }
 
-// ── Login pre-computation ─────────────────────────────────────────────────────
+// Login pre-computation
 
 func (r *sessionRepo) LoadLoginConfig(ctx context.Context, userID, tenantID uuid.UUID) (domain.Configuration, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "session.repo.LoadLoginConfig")
@@ -324,7 +323,7 @@ func (r *sessionRepo) ResolveEntityScope(ctx context.Context, entityID uuid.UUID
 	return scope, nil
 }
 
-// ── Cache helpers (internal) ──────────────────────────────────────────────────
+// Cache helpers (internal)
 
 func (r *sessionRepo) cacheResolved(ctx context.Context, hash string, resolved *domain.ResolvedSession, ttl time.Duration) {
 	_ = r.cache.Set(ctx, sessionCacheKey(hash), resolved, ttl)
@@ -350,7 +349,7 @@ func derefInt32(p *int32) int32 {
 // keep compiler from complaining about unused derefInt32 if not otherwise used
 var _ = derefInt32
 
-// ── MFA pending login state ───────────────────────────────────────────────────
+// MFA pending login state
 
 const mfaLoginPendingTTL = 5 * time.Minute
 

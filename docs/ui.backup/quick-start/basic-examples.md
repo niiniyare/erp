@@ -4,7 +4,7 @@
 **PREREQUISITES**: [First Component](first-component.md) completed  
 **OUTCOME**: Understanding of schema-driven development patterns
 
-## 🎯 Three Essential Patterns
+##  Three Essential Patterns
 
 ### Example 1: Form with Validation
 
@@ -157,7 +157,7 @@ func createDashboard() {
 }
 ```
 
-## 🔧 Running the Examples
+##  Running the Examples
 
 ### Quick Test Script
 ```bash
@@ -191,7 +191,7 @@ templ DashboardPage(container, card templ.Component) {
 }
 ```
 
-## 🎨 Styling and Customization
+##  Styling and Customization
 
 ### Theme Customization
 ```go
@@ -219,7 +219,7 @@ responsiveProps := map[string]interface{}{
 }
 ```
 
-## 🚀 Next Steps
+##  Next Steps
 
 ### Immediate Actions
 1. **Run all three examples** to understand patterns
@@ -227,10 +227,10 @@ responsiveProps := map[string]interface{}{
 3. **Create your own combination** of components
 
 ### Deep Dive Options
-- 📚 [Component Development Guide](../development/creating-components.md)
-- 🏗️ [Schema System Architecture](../fundamentals/schema-system.md)
-- 🔗 [HTMX Integration Patterns](../integration/htmx.md)
-- 🎨 [Styling and Themes](../fundamentals/styling-approach.md)
+-  [Component Development Guide](../development/creating-components.md)
+- ️ [Schema System Architecture](../fundamentals/schema-system.md)
+-  [HTMX Integration Patterns](../integration/htmx.md)
+-  [Styling and Themes](../fundamentals/styling-approach.md)
 
 ### Advanced Topics
 - **Custom Schema Creation**: [Schema Definitions Guide](../development/schema-definitions.md)

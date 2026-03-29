@@ -11,11 +11,11 @@
 
 # Core Modules Integration Guide: Identity, Access & ABAC
 
-## 📋 Overview
+##  Overview
 
 This document explains how the three core security modules—Identity, Access, and ABAC—work together. The architecture is **ABAC-centric**, meaning the ABAC module is the primary decision-maker, while the Identity and Access modules primarily serve as **attribute providers** (also known as Policy Information Points or PIPs).
 
-## 🏗️ Architecture Overview
+## ️ Architecture Overview
 
 The high-level architecture remains the same, with a clear separation between the API, Core Domain, and Data Access layers.
 
@@ -53,7 +53,7 @@ The high-level architecture remains the same, with a clear separation between th
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🔐 Module Responsibilities
+##  Module Responsibilities
 
 ### Identity Module (`/internal/core/identity/`)
 **Purpose**: Manages user lifecycle and serves as a primary **source of truth for user attributes**.
@@ -80,7 +80,7 @@ The high-level architecture remains the same, with a clear separation between th
 - Making the final `Allow` or `Deny` decision.
 - Caching policies and attributes for performance.
 
-## 🔄 Core Integration Pattern: ABAC-Centric Evaluation
+##  Core Integration Pattern: ABAC-Centric Evaluation
 
 The primary integration flow is not a simple linear chain. Instead, the ABAC service acts as the central orchestrator when a permission check is required.
 
@@ -151,7 +151,7 @@ func (s *service) CollectUserAttributes(ctx context.Context, userID uuid.UUID) (
 - `internal/core/abac/service.go`: Shows the direct dependency and calls to `identityService`.
 - `internal/core/identity/service.go`: Provides the methods (`GetUserByID`, `GetUserRoles`) that supply the attributes.
 
-## 📁 File Structure Guide for New Developers
+##  File Structure Guide for New Developers
 
 ### Essential Files to Understand First
 
@@ -272,7 +272,7 @@ internal/core/abac/
 └── temporal_service.go
 ```
 
-## 🔗 Key Integration Patterns
+##  Key Integration Patterns
 
 ### 1. **ABAC-Centric Security Model**
 The previous "Layered Security Model" is misleading. The actual pattern is a single,  evaluation orchestrated by the ABAC service.
@@ -323,7 +323,7 @@ func (s *identityService) UpdateUserStatus(ctx context.Context, userID uuid.UUID
 ### 3. **Shared Context Propagation**
 This pattern is essential and remains unchanged. The `context.Context` is the vehicle for carrying tenant information, tracing IDs, and other cross-cutting concerns through all service calls.
 
-## 🎯 Development Guidelines
+##  Development Guidelines
 
 ### For New Developers
 

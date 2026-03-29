@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div style="margin-top: 6px;">
                     <a href="/reference/api/swagger-ui/" style="color: #007bff; text-decoration: none; font-size: 12px;">
-                        📄 View API Documentation →
+                         View API Documentation →
                     </a>
                 </div>
             </div>
@@ -112,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 const apiResultsHTML = `
                     <div class="api-search-section">
                         <h3 style="color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin: 16px 0 12px 0;">
-                            🚀 API Endpoints (${apiSuggestions.length})
+                             API Endpoints (${apiSuggestions.length})
                         </h3>
                         ${apiSuggestions.slice(0, 5).map(renderAPIResult).join('')}
                         ${apiSuggestions.length > 5 ? `
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add "All APIs" button as first option
         const allBtn = document.createElement('button');
-        allBtn.textContent = '🚀 All APIs';
+        allBtn.textContent = ' All APIs';
         allBtn.className = 'api-filter-btn';
         allBtn.style.cssText = `
             background: #e3f2fd;

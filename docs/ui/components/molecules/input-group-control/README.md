@@ -4,7 +4,7 @@
 **SCOPE**: Input grouping, combined data entry, structured forms, and related field management  
 **TARGET AUDIENCE**: Developers implementing grouped data entry, structured forms, and related field collections
 
-## 📋 Component Overview
+##  Component Overview
 
 Input Group Control provides functionality for grouping related input fields with shared validation, formatting, and behavior. Essential for structured data entry and related field management in ERP systems.
 

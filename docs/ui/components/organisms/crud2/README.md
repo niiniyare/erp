@@ -4,7 +4,7 @@
 **SCOPE**: Data tables, cards, lists with full CRUD operations, filtering, sorting, and pagination  
 **TARGET AUDIENCE**: Developers implementing data management interfaces, business entity management, and administrative panels
 
-## 📋 Component Overview
+##  Component Overview
 
 CRUD2 provides a modern, flexible interface for managing data entities with support for multiple view modes (table, cards, list), advanced filtering, bulk operations, and real-time updates. Essential for all data management needs in ERP systems.
 

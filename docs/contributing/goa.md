@@ -3,19 +3,19 @@
 
 *A comprehensive guide for implementing GOA-based APIs in ERP using design-first development, feature-specific type organization, and reusable domain models*
 
-> **📚 Essential Reading:** This guide focuses on API layer implementation. For complementary patterns, also review:
+> ** Essential Reading:** This guide focuses on API layer implementation. For complementary patterns, also review:
 > - `docs/contributing/service.md` - Service layer and business logic implementation
 > - `docs/contributing/database-transactions.md` - Database integration with SQLC  
 > - `docs/contributing/general-testing.md` - API testing strategies and patterns
 > - `docs/contributing/error-handling.md` - Error handling and response patterns
 
-## **🏗️ Modern API Architecture Pattern**
+## **️ Modern API Architecture Pattern**
 
 Our ERP system follows a sophisticated multi-layered architecture that promotes modularity, reusability, and maintainability:
 
 ```
 internal/api/
-├── design/                               # 🎨 GOA Design Layer (Design-First)
+├── design/                               #  GOA Design Layer (Design-First)
 │   ├── design.go                         # Main API definition
 │   ├── services/                         # Service definitions by domain
 │   │   └── {domain}/                     # Domain-specific service files
@@ -25,16 +25,16 @@ internal/api/
 │   │       ├── types_{workflow}.go       # Workflow-related types
 │   │       ├── types_{reporting}.go      # Reporting types
 │   │       └── types.go                  # Legacy/backward compatibility types
-│   └── types/                            # 🔄 Reusable Domain Types (Cross-System)
+│   └── types/                            #  Reusable Domain Types (Cross-System)
 │       ├── common.go                     # Universal patterns, pagination, audit
 │       ├── {domain}.go                   # Domain models & enums (e.g., finance.go)
 │       └── abac.go                       # ABAC-specific types
 │
-├── gen/                                  # 🤖 Generated GOA Code
+├── gen/                                  #  Generated GOA Code
 │   ├── {service}/                        # Generated service interfaces
 │   └── http/{service}/                   # Generated HTTP transport
 │
-└── handlers/                             # 🛠️ Handler Implementation Layer
+└── handlers/                             # ️ Handler Implementation Layer
     ├── {domain}.go                       # Domain entry points
     ├── {domain}/                         # Domain handler directories
     │   ├── service_handler.go            # Main service implementation
@@ -45,7 +45,7 @@ internal/api/
     └── common/                           # Shared utilities
 ```
 
-## **📁 Type Organization Architecture**
+## ** Type Organization Architecture**
 
 ### **1. Reusable Domain Types (`/types/`)**
 Common types shared across multiple systems to prevent circular dependencies:
@@ -173,7 +173,7 @@ var _ = Service("finance", func() {
 })
 ```
 
-## **🎯 Type Organization Best Practices**
+## ** Type Organization Best Practices**
 
 ### **1. Domain Types Placement Rules**
 
@@ -219,7 +219,7 @@ import (
 | **Enums** | `{Entity}Type` or `{Entity}Status` | `AccountType`, `TransactionStatus` | `types/{domain}.go` |
 | **Inline Service Payloads** | `Get{Entity}ByIdPayload` | `GetTransactionByIdPayload` | `types_{feature}.go` |
 
-## **🔧 Service Design Patterns**
+## ** Service Design Patterns**
 
 ### **Single Service Architecture**
 All related functionality consolidated into one service for better organization:
@@ -280,7 +280,7 @@ var _ = Service("finance", func() {
 })
 ```
 
-## **📐 Advanced Type Composition**
+## ** Advanced Type Composition**
 
 ### **Reusable Pattern Usage**
 
@@ -326,7 +326,7 @@ var JournalEntry = Type("JournalEntry", func() {
 })
 ```
 
-## **🧪 Testing Patterns**
+## ** Testing Patterns**
 
 ### **Type Validation Testing**
 
@@ -370,7 +370,7 @@ func TestCreateTransactionPayload_Validation(t *testing.T) {
 }
 ```
 
-## **🔄 Development Workflow**
+## ** Development Workflow**
 
 ### **Adding New Features**
 
@@ -438,14 +438,14 @@ make goa 2>&1 | grep -i error
 
 ## **✅ Architecture Benefits**
 
-1. **🎯 Clear Separation of Concerns**: Types organized by feature and reusability
-2. **🔄 Reusability**: Domain types prevent duplication across services  
-3. **🚫 No Circular Dependencies**: Clean import hierarchy with `/types/` at the base
-4. **🧹 Minimal Service Definitions**: Services focus on method definitions, not type declarations
-5. **🔍 Easy Navigation**: Developers can quickly find feature-specific types
-6. **📈 Scalability**: New features can easily reuse existing domain types
-7. **🤝 Cross-System Integration**: Other services can import domain types from `/types/`
-8. **🧪 Testability**: Clear type boundaries make testing straightforward
+1. ** Clear Separation of Concerns**: Types organized by feature and reusability
+2. ** Reusability**: Domain types prevent duplication across services  
+3. ** No Circular Dependencies**: Clean import hierarchy with `/types/` at the base
+4. ** Minimal Service Definitions**: Services focus on method definitions, not type declarations
+5. ** Easy Navigation**: Developers can quickly find feature-specific types
+6. ** Scalability**: New features can easily reuse existing domain types
+7. ** Cross-System Integration**: Other services can import domain types from `/types/`
+8. ** Testability**: Clear type boundaries make testing straightforward
 
 ## **⚠️ Common Pitfalls to Avoid**
 

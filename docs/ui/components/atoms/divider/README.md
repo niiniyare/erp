@@ -4,7 +4,7 @@
 **SCOPE**: All divider variants, orientations, and styling patterns  
 **TARGET AUDIENCE**: Developers implementing content separation, layout structure, and visual hierarchy
 
-## 📋 Component Overview
+##  Component Overview
 
 The Divider component provides visual separation between content sections, creating clear boundaries and improving content organization. It supports various orientations, styles, and decorative elements while maintaining semantic meaning and accessibility standards.
 
@@ -13,7 +13,7 @@ The Divider component provides visual separation between content sections, creat
 - **Related Schemas**: `StatusSchema.json`, `IconSchema.json`
 - **Base Interface**: Structural element for content separation
 
-## 🎨 Divider Types
+##  Divider Types
 
 ### Horizontal Divider
 **Purpose**: Standard horizontal content separation
@@ -176,7 +176,7 @@ templ SpacingDivider(props DividerProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ```go
 type DividerProps struct {
@@ -209,7 +209,7 @@ type DividerProps struct {
 }
 ```
 
-## 🎨 Variants and Styles
+##  Variants and Styles
 
 ### Orientation Styles
 ```css
@@ -433,7 +433,7 @@ func getDividerAttributes(props DividerProps) map[string]string {
 - Descriptive labels for content sections
 - Hidden decorative elements
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -530,7 +530,7 @@ test.describe('Divider Visual Tests', () => {
 });
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Adaptations
 ```css
@@ -564,7 +564,7 @@ test.describe('Divider Visual Tests', () => {
 }
 ```
 
-## 🔧 Customization
+##  Customization
 
 ### CSS Custom Properties
 ```css
@@ -593,7 +593,7 @@ func applyDividerTheme(props DividerProps, theme Theme) DividerProps {
 }
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Section Divider
 ```go
@@ -662,7 +662,7 @@ templ BreadcrumbNavigation() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Layout](../../molecules/layout/)**: Content organization
 - **[Card](../../molecules/card/)**: Content containers

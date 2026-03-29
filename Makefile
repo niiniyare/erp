@@ -11,7 +11,7 @@ MAKEFLAGS    += --warn-undefined-variables --no-builtin-rules --no-print-directo
 .DEFAULT_GOAL := help
 
 # =============================================================================
-# 📋 Configuration
+#  Configuration
 # =============================================================================
 
 # Database
@@ -68,7 +68,7 @@ NC     := $(ESC)[0m
 # =============================================================================
 
 .PHONY: help
-help: ## 📚 Show this help message
+help: ##  Show this help message
 	@echo "$(CYAN)Available targets:$(NC)"
 	@awk 'BEGIN {FS = ":.*##"; printf "\n"} \
 		/^[a-zA-Z0-9_.-]+:.*?##/ { \
@@ -78,7 +78,7 @@ help: ## 📚 Show this help message
 	@echo ""
 
 .PHONY: check-tools
-check-tools: ## 🔧 Verify required tools are installed
+check-tools: ##  Verify required tools are installed
 	@echo "$(BLUE)Checking required tools...$(NC)"
 	@$(foreach tool,$(REQUIRED_TOOLS), \
 		command -v $(tool) >/dev/null 2>&1 || { \
@@ -87,7 +87,7 @@ check-tools: ## 🔧 Verify required tools are installed
 	@echo "$(GREEN)✅  All required tools are installed$(NC)"
 
 .PHONY: status
-status: ## 📊 Show project configuration
+status: ##  Show project configuration
 	@echo "$(CYAN)Project Configuration:$(NC)"
 	@echo "  Database      : $(DB_USER)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)"
 	@echo "  Migrations    : $(MIGRATION_PATH)"
@@ -96,22 +96,22 @@ status: ## 📊 Show project configuration
 	@echo "  Parallel jobs : $(TEST_PARALLEL_JOBS)"
 
 # =============================================================================
-# 🏗️  Code Generation
+# ️  Code Generation
 # =============================================================================
 
 .PHONY: generate
-generate: sqlc mock wire ## 🔄 Run all code generators (SQLC → Mocks → Wire)
+generate: sqlc mock wire ##  Run all code generators (SQLC → Mocks → Wire)
 
 # --- SQLC -------------------------------------------------------------------
 
 .PHONY: sqlc-install
-sqlc-install: ## 📦 Install the sqlc binary
+sqlc-install: ##  Install the sqlc binary
 	@echo "$(BLUE)Installing sqlc...$(NC)"
 	CGO_CFLAGS="-D_GNU_SOURCE" go install -v github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	@echo "$(GREEN)✅  sqlc installed$(NC)"
 
 .PHONY: sqlc
-sqlc: ## 🗄️  Generate SQLC store + db.Store mock
+sqlc: ## ️  Generate SQLC store + db.Store mock
 	@echo "$(BLUE)Generating SQLC code...$(NC)"
 	sqlc generate
 	@echo "$(GREEN)✅  SQLC generation complete$(NC)"
@@ -120,13 +120,13 @@ sqlc: ## 🗄️  Generate SQLC store + db.Store mock
 	@echo "$(GREEN)✅  Mock generation complete$(NC)"
 
 .PHONY: sqlc-lint
-sqlc-lint: ## 🔍 Lint SQL queries
+sqlc-lint: ##  Lint SQL queries
 	@./db/queries/lint.sh
 
 # --- Mocks ------------------------------------------------------------------
 
 .PHONY: mock
-mock: ## 🎭 Regenerate all go:generate mocks
+mock: ##  Regenerate all go:generate mocks
 	@echo "$(BLUE)Generating mocks...$(NC)"
 	go generate ./...
 	@echo "$(GREEN)✅  Mocks generated$(NC)"
@@ -134,7 +134,7 @@ mock: ## 🎭 Regenerate all go:generate mocks
 # --- Wire -------------------------------------------------------------------
 
 .PHONY: wire-install
-wire-install: ## 📦 Install Google Wire
+wire-install: ##  Install Google Wire
 	@echo "$(BLUE)Installing Wire...$(NC)"
 	go install github.com/google/wire/cmd/wire@latest
 	@echo "$(GREEN)✅  Wire installed$(NC)"
@@ -146,7 +146,7 @@ wire: ## ⚡ Generate Wire dependency-injection code
 	@echo "$(GREEN)✅  Wire generation complete$(NC)"
 
 .PHONY: wire-check
-wire-check: ## 🔍 Verify Wire files are up to date
+wire-check: ##  Verify Wire files are up to date
 	@echo "$(BLUE)Checking Wire files...$(NC)"
 	cd cmd/server && wire check
 	@echo "$(GREEN)✅  Wire files are up to date$(NC)"
@@ -154,21 +154,21 @@ wire-check: ## 🔍 Verify Wire files are up to date
 # --- Misc --------------------------------------------------------------------
 
 .PHONY: interface2any
-interface2any: ## 🔄 Replace interface{} with any across all Go files
+interface2any: ##  Replace interface{} with any across all Go files
 	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
 
 # =============================================================================
-# 🏗️  Scaffolding  (awoctl)
+# ️  Scaffolding  (awoctl)
 # =============================================================================
 
 .PHONY: scaffold-install
-scaffold-install: ## 🔧 Build and install the awoctl scaffolding tool
+scaffold-install: ##  Build and install the awoctl scaffolding tool
 	@echo "$(BLUE)Building awoctl...$(NC)"
 	go build -o awoctl ./cmd/awoctl/
 	@echo "$(GREEN)✅  awoctl built$(NC)"
 
 .PHONY: scaffold-module
-scaffold-module: ## 📦 New module  — make scaffold-module name=<n> [docs=true] [tests=true]
+scaffold-module: ##  New module  — make scaffold-module name=<n> [docs=true] [tests=true]
 	@if [ -z "$(name)" ]; then \
 		echo "$(RED)❌  name is required$(NC)"; \
 		echo "$(YELLOW)Usage: make scaffold-module name=inventory [docs=true] [tests=true]$(NC)"; \
@@ -186,7 +186,7 @@ scaffold-module: ## 📦 New module  — make scaffold-module name=<n> [docs=tru
 	@echo "  3. Implement business logic"
 
 .PHONY: scaffold-component
-scaffold-component: ## 🧩 New component — make scaffold-component module=<m> name=<n> type=<t>
+scaffold-component: ##  New component — make scaffold-component module=<m> name=<n> type=<t>
 	@if [ -z "$(module)" ] || [ -z "$(name)" ] || [ -z "$(type)" ]; then \
 		echo "$(RED)❌  module, name, and type are required$(NC)"; \
 		echo "$(YELLOW)Usage: make scaffold-component module=finance name=payment type=entity$(NC)"; \
@@ -209,7 +209,7 @@ scaffold-feature: ## ⭐ New feature — make scaffold-feature path=<module/feat
 	@echo "$(GREEN)✅  Feature '$(path)' generated$(NC)"
 
 .PHONY: scaffold-docs
-scaffold-docs: ## 📖 Generate docs for existing module — make scaffold-docs name=<n>
+scaffold-docs: ##  Generate docs for existing module — make scaffold-docs name=<n>
 	@if [ -z "$(name)" ]; then \
 		echo "$(RED)❌  name is required$(NC)"; \
 		echo "$(YELLOW)Usage: make scaffold-docs name=inventory$(NC)"; \
@@ -220,20 +220,20 @@ scaffold-docs: ## 📖 Generate docs for existing module — make scaffold-docs 
 	@echo "$(GREEN)✅  Docs generated at: docs/reference/modules/$(name)/$(NC)"
 
 .PHONY: scaffold-help
-scaffold-help: ## 📚 Show awoctl help
+scaffold-help: ##  Show awoctl help
 	@./awoctl --help
 
 # =============================================================================
-# 🧪 Tests
+#  Tests
 # =============================================================================
 
 .PHONY: test
-test: test-unit ## 🧪 Default: run unit tests
+test: test-unit ##  Default: run unit tests
 
 # --- Core suites ------------------------------------------------------------
 
 .PHONY: test-unit
-test-unit: ## 🎯 Unit tests with race detection
+test-unit: ##  Unit tests with race detection
 	@echo "$(BLUE)Running unit tests...$(NC)"
 	go test -tags=unit -race -timeout=$(TEST_TIMEOUT) \
 		-parallel=$(TEST_PARALLEL_JOBS) -v $(UNIT_TEST_DIRS)
@@ -247,14 +247,14 @@ test-unit-fast: ## ⚡ Unit tests without race detection
 	@echo "$(GREEN)✅  Fast unit tests passed$(NC)"
 
 .PHONY: test-unit-short
-test-unit-short: ## 🏃 Unit tests, skipping slow cases (-short)
+test-unit-short: ##  Unit tests, skipping slow cases (-short)
 	@echo "$(BLUE)Running unit tests (short)...$(NC)"
 	go test -tags=unit -short -timeout=$(TEST_TIMEOUT_FAST) \
 		-parallel=$(TEST_PARALLEL_JOBS) $(UNIT_TEST_DIRS)
 	@echo "$(GREEN)✅  Short unit tests passed$(NC)"
 
 .PHONY: test-integration
-test-integration: ## 🔗 Integration tests (spins up Docker dependencies)
+test-integration: ##  Integration tests (spins up Docker dependencies)
 	@echo "$(BLUE)Running integration tests...$(NC)"
 	docker-compose -f $(DOCKER_COMPOSE_TEST) up -d postgres redis || true
 	sleep 5
@@ -265,7 +265,7 @@ test-integration: ## 🔗 Integration tests (spins up Docker dependencies)
 	@echo "$(GREEN)✅  Integration tests passed$(NC)"
 
 .PHONY: test-e2e
-test-e2e: ## 🌐 End-to-end tests (full Docker environment)
+test-e2e: ##  End-to-end tests (full Docker environment)
 	@echo "$(BLUE)Running E2E tests...$(NC)"
 	docker-compose -f $(DOCKER_COMPOSE_TEST) up -d || true
 	sleep 10
@@ -277,7 +277,7 @@ test-e2e: ## 🌐 End-to-end tests (full Docker environment)
 # --- Coverage ---------------------------------------------------------------
 
 .PHONY: test-coverage
-test-coverage: ## 📊 Full coverage report (HTML + func summary)
+test-coverage: ##  Full coverage report (HTML + func summary)
 	@echo "$(BLUE)Running tests with coverage...$(NC)"
 	go test -race -timeout=$(TEST_TIMEOUT) \
 		-coverprofile=$(COVERAGE_FILE) -covermode=atomic \
@@ -287,7 +287,7 @@ test-coverage: ## 📊 Full coverage report (HTML + func summary)
 	@echo "$(GREEN)✅  Coverage report: $(COVERAGE_HTML)$(NC)"
 
 .PHONY: test-coverage-unit
-test-coverage-unit: ## 📊 Unit-test coverage only
+test-coverage-unit: ##  Unit-test coverage only
 	@echo "$(BLUE)Running unit tests with coverage...$(NC)"
 	go test -tags=unit -race -timeout=$(TEST_TIMEOUT) \
 		-coverprofile=$(COVERAGE_FILE) -covermode=atomic \
@@ -296,20 +296,20 @@ test-coverage-unit: ## 📊 Unit-test coverage only
 	@echo "$(GREEN)✅  Unit coverage complete$(NC)"
 
 .PHONY: test-coverage-open
-test-coverage-open: test-coverage ## 🌐 Generate and open HTML coverage report
+test-coverage-open: test-coverage ##  Generate and open HTML coverage report
 	open $(COVERAGE_HTML) 2>/dev/null || xdg-open $(COVERAGE_HTML) 2>/dev/null || \
 		echo "$(YELLOW)Open manually: $(COVERAGE_HTML)$(NC)"
 
 # --- Benchmarks -------------------------------------------------------------
 
 .PHONY: test-benchmark
-test-benchmark: ## 🏃 Run benchmark tests
+test-benchmark: ##  Run benchmark tests
 	@echo "$(BLUE)Running benchmarks...$(NC)"
 	go test -bench=. -benchmem -timeout=$(TEST_TIMEOUT) -run=^$$ ./... | tee benchmark.out
 	@echo "$(GREEN)✅  Benchmarks complete$(NC)"
 
 .PHONY: test-benchmark-compare
-test-benchmark-compare: ## 🏃 Benchmark and compare with previous run
+test-benchmark-compare: ##  Benchmark and compare with previous run
 	@echo "$(BLUE)Running benchmarks (count=5)...$(NC)"
 	go test -bench=. -benchmem -count=5 -timeout=$(TEST_TIMEOUT) \
 		-run=^$$ ./... | tee benchmark-new.out
@@ -326,25 +326,25 @@ test-identity: ## 🆔 Identity domain tests
 	go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/identity/...
 
 .PHONY: test-access
-test-access: ## 🔐 Access domain tests
+test-access: ##  Access domain tests
 	go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/access/...
 
 .PHONY: test-audit
-test-audit: ## 📋 Audit domain tests
+test-audit: ##  Audit domain tests
 	go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/audit/...
 
 .PHONY: test-notification
-test-notification: ## 📢 Notification domain tests
+test-notification: ##  Notification domain tests
 	go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/notification/...
 
 .PHONY: test-analytics
-test-analytics: ## 📈 Analytics domain tests
+test-analytics: ##  Analytics domain tests
 	go test -race -timeout=$(TEST_TIMEOUT) -v ./internal/core/analytics/...
 
 # --- Suites & utilities -----------------------------------------------------
 
 .PHONY: test-all
-test-all: ## 🎯 Full suite: unit + integration + e2e
+test-all: ##  Full suite: unit + integration + e2e
 	@echo "$(PURPLE)Running complete test suite...$(NC)"
 	$(MAKE) test-unit
 	$(MAKE) test-integration
@@ -352,30 +352,30 @@ test-all: ## 🎯 Full suite: unit + integration + e2e
 	@echo "$(GREEN)✅  All tests completed$(NC)"
 
 .PHONY: test-ci
-test-ci: ## 🚀 CI pipeline: coverage + integration
+test-ci: ##  CI pipeline: coverage + integration
 	@echo "$(PURPLE)CI test pipeline...$(NC)"
 	$(MAKE) test-coverage
 	$(MAKE) test-integration
 	@echo "$(GREEN)✅  CI pipeline complete$(NC)"
 
 .PHONY: test-watch
-test-watch: ## 👀 Watch *.go files and re-run unit tests (requires entr)
+test-watch: ##  Watch *.go files and re-run unit tests (requires entr)
 	@echo "$(BLUE)Watching for changes (Ctrl-C to stop)...$(NC)"
 	find . -name '*.go' | entr -c $(MAKE) test-unit-fast
 
 .PHONY: test-failed
-test-failed: ## 🔄 Re-run only tests that failed in the last run
+test-failed: ##  Re-run only tests that failed in the last run
 	@echo "$(BLUE)Re-running failed tests...$(NC)"
 	go test -json ./... | tee /tmp/test-output.json
 	jq -r 'select(.Action=="fail" and .Test) | .Package + "/" + .Test' \
 		/tmp/test-output.json | xargs -I{} go test -run {} -v
 
 .PHONY: test-list
-test-list: ## 📋 List all tests
+test-list: ##  List all tests
 	@go test -list . ./... 2>/dev/null | grep -E '^(Test|Example|Benchmark)' | sort
 
 .PHONY: test-clean
-test-clean: ## 🧹 Remove coverage/benchmark artefacts and test containers
+test-clean: ##  Remove coverage/benchmark artefacts and test containers
 	@echo "$(YELLOW)Cleaning test artefacts...$(NC)"
 	rm -f $(COVERAGE_FILE) $(COVERAGE_HTML) benchmark.out benchmark-new.out
 	docker-compose -f $(DOCKER_COMPOSE_TEST) down -v --remove-orphans 2>/dev/null || true
@@ -383,7 +383,7 @@ test-clean: ## 🧹 Remove coverage/benchmark artefacts and test containers
 	@echo "$(GREEN)✅  Test cleanup complete$(NC)"
 
 .PHONY: test-deps
-test-deps: ## 📦 Install test tooling (mockgen, gotestsum)
+test-deps: ##  Install test tooling (mockgen, gotestsum)
 	@echo "$(BLUE)Installing test dependencies...$(NC)"
 	go install github.com/golang/mock/mockgen@latest
 	go install gotest.tools/gotestsum@latest
@@ -391,29 +391,29 @@ test-deps: ## 📦 Install test tooling (mockgen, gotestsum)
 	@command -v benchcmp >/dev/null || echo "$(YELLOW)Tip: install 'benchcmp' for benchmark-compare$(NC)"
 
 # =============================================================================
-# 🎨 Code Quality
+#  Code Quality
 # =============================================================================
 
 .PHONY: fmt
-fmt: ## 🎨 Format all Go source files
+fmt: ##  Format all Go source files
 	@echo "$(BLUE)Formatting...$(NC)"
 	go fmt ./...
 	@echo "$(GREEN)✅  Done$(NC)"
 
 .PHONY: vet
-vet: ## 🔍 Run go vet
+vet: ##  Run go vet
 	@echo "$(BLUE)Running go vet...$(NC)"
 	go vet ./...
 	@echo "$(GREEN)✅  Done$(NC)"
 
 .PHONY: lint
-lint: ## 📝 Run golangci-lint
+lint: ##  Run golangci-lint
 	@echo "$(BLUE)Linting...$(NC)"
 	golangci-lint run ./...
 	@echo "$(GREEN)✅  Done$(NC)"
 
 .PHONY: security
-security: ## 🔒 Run gosec security scanner
+security: ##  Run gosec security scanner
 	@echo "$(BLUE)Running security checks...$(NC)"
 	command -v gosec >/dev/null 2>&1 || \
 		go install github.com/securecodewarrior/gosec/v2/cmd/gosec@latest
@@ -421,26 +421,26 @@ security: ## 🔒 Run gosec security scanner
 	@echo "$(GREEN)✅  Security check complete$(NC)"
 
 .PHONY: quality
-quality: fmt vet lint sqlc-lint ## 🏆 Run all quality checks (fmt + vet + lint + sqlc-lint)
+quality: fmt vet lint sqlc-lint ##  Run all quality checks (fmt + vet + lint + sqlc-lint)
 
 # =============================================================================
-# 🗄️  Database
+# ️  Database
 # =============================================================================
 
 .PHONY: db-create
-db-create: ## 🏗️  Create database
+db-create: ## ️  Create database
 	@echo "$(BLUE)Creating database $(DB_NAME)...$(NC)"
 	createdb --username="$(DB_USER)" --owner="$(DB_USER)" $(DB_NAME)
 	@echo "$(GREEN)✅  Database created$(NC)"
 
 .PHONY: db-drop
-db-drop: ## 💥 Drop database
+db-drop: ##  Drop database
 	@echo "$(RED)Dropping database $(DB_NAME)...$(NC)"
 	dropdb $(DB_NAME)
 	@echo "$(YELLOW)⚠️   Database dropped$(NC)"
 
 .PHONY: db-reset
-db-reset: db-drop db-create migrate-up ## 🔄 Drop → create → migrate
+db-reset: db-drop db-create migrate-up ##  Drop → create → migrate
 
 .PHONY: migrate-up
 migrate-up: ## ⬆️  Apply all pending migrations
@@ -455,13 +455,13 @@ migrate-down: ## ⬇️  Roll back the last migration
 	@echo "$(YELLOW)⚠️   Migration rolled back$(NC)"
 
 .PHONY: migrate-drop
-migrate-drop: ## 💥 Drop all schema objects
+migrate-drop: ##  Drop all schema objects
 	@echo "$(RED)Dropping all schema objects...$(NC)"
 	migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" -verbose drop -f
 	@echo "$(YELLOW)⚠️   Schema dropped$(NC)"
 
 .PHONY: migrate-create
-migrate-create: ## 📝 New migration — make migrate-create name=<migration_name>
+migrate-create: ##  New migration — make migrate-create name=<migration_name>
 	@if [ -z "$(name)" ]; then \
 		echo "$(RED)❌  name is required$(NC)"; \
 		echo "$(YELLOW)Usage: make migrate-create name=add_users_table$(NC)"; \
@@ -472,64 +472,64 @@ migrate-create: ## 📝 New migration — make migrate-create name=<migration_na
 	@echo "$(GREEN)✅  Migration files created$(NC)"
 
 .PHONY: migrate-status
-migrate-status: ## 📊 Show current migration version
+migrate-status: ##  Show current migration version
 	@echo "$(BLUE)Migration status...$(NC)"
 	migrate -path "$(MIGRATION_PATH)" -database "$(DB_URL)" version
 
 # =============================================================================
-# 📚 Documentation
+#  Documentation
 # =============================================================================
 
 .PHONY: docs
-docs: ## 📖 Serve documentation (MkDocs + schema)
+docs: ##  Serve documentation (MkDocs + schema)
 	@echo "$(BLUE)Starting AWO ERP Documentation Server...$(NC)"
 	@echo "  MkDocs  : http://localhost:$(DOC_PORT)/"
 	@echo "  Schema  : http://localhost:$(DOC_PORT)/schema/"
 	cd $(DOCS_PATH) && ./start-docs.sh $(DOC_PORT)
 
 .PHONY: docs-build
-docs-build: ## 🏗️  Build MkDocs static site
+docs-build: ## ️  Build MkDocs static site
 	@echo "$(BLUE)Building documentation...$(NC)"
 	mkdocs build
 	@echo "$(GREEN)✅  Docs built in site/$(NC)"
 
 .PHONY: docs-dev
-docs-dev: docs-build docs ## 👨‍💻 Build then serve documentation
+docs-dev: docs-build docs ## ‍ Build then serve documentation
 
 .PHONY: docs-schema
-docs-schema: ## 🗄️  Generate DB schema documentation (SchemaSpy)
+docs-schema: ## ️  Generate DB schema documentation (SchemaSpy)
 	@echo "$(BLUE)Generating schema documentation...$(NC)"
 	$(DOCS_PATH)/scripts/generate-schema-docs.sh
 	@echo "$(GREEN)✅  Schema docs generated$(NC)"
 
 .PHONY: dbdocs
-dbdocs: ## 📊 Publish DB docs from DBML
+dbdocs: ##  Publish DB docs from DBML
 	@echo "$(BLUE)Building dbdocs...$(NC)"
 	dbdocs build $(DOCS_PATH)/schema.dbml
 	@echo "$(GREEN)✅  DB docs published$(NC)"
 
 .PHONY: sql2dbml
-sql2dbml: ## 🔄 Convert SQL migrations → DBML
+sql2dbml: ##  Convert SQL migrations → DBML
 	sql2dbml $(MIGRATION_PATH)/*.up.sql --postgres -o $(DOCS_PATH)/schema.dbml
 
 # =============================================================================
-# 🚀 Application
+#  Application
 # =============================================================================
 
 .PHONY: run
-run: ## 🚀 Start the server (logs to stdout and $(LOG_FILE))
+run: ##  Start the server (logs to stdout and $(LOG_FILE))
 	@echo "$(BLUE)Starting server... (logs → $(LOG_FILE))$(NC)"
 	go run ./cmd/server/ 2>&1 | tee $(LOG_FILE)
 
 .PHONY: run-bg
-run-bg: ## 🔇 Start the server in the background
+run-bg: ##  Start the server in the background
 	@echo "$(BLUE)Starting server in background...$(NC)"
 	bash -c "go run ./cmd/server/ 2>&1 | tee -a $(LOG_FILE)" &
 	echo $$! > $(PID_FILE)
 	@echo "$(GREEN)Server started (PID: $$(cat $(PID_FILE))) — logs → $(LOG_FILE)$(NC)"
 
 .PHONY: stop
-stop: ## 🛑 Stop the background server
+stop: ##  Stop the background server
 	@if [ -f $(PID_FILE) ]; then \
 		echo "$(RED)Stopping server (PID: $$(cat $(PID_FILE)))...$(NC)"; \
 		kill $$(cat $(PID_FILE)) 2>/dev/null || true; \
@@ -540,7 +540,7 @@ stop: ## 🛑 Stop the background server
 	fi
 
 .PHONY: build
-build: ## 🔨 Compile → bin/server
+build: ##  Compile → bin/server
 	@echo "$(BLUE)Building...$(NC)"
 	go build -o bin/server ./cmd/server/
 	@echo "$(GREEN)✅  Built: bin/server$(NC)"
@@ -551,42 +551,42 @@ temporal-server: ## ⏰ Start Temporal dev server
 	temporal server start-dev
 
 # =============================================================================
-# 🐳 Docker
+#  Docker
 # =============================================================================
 
 .PHONY: docker-build
-docker-build: ## 🐳 Build Docker image
+docker-build: ##  Build Docker image
 	@echo "$(BLUE)Building Docker image...$(NC)"
 	docker build -t erp-app .
 	@echo "$(GREEN)✅  Image built: erp-app$(NC)"
 
 .PHONY: docker-run
-docker-run: ## 🐳 Run Docker image
+docker-run: ##  Run Docker image
 	docker run -p 8080:8080 erp-app
 
 # =============================================================================
-# 🔧 Dependency Management
+#  Dependency Management
 # =============================================================================
 
 .PHONY: deps-update
-deps-update: ## 📦 Update all Go dependencies
+deps-update: ##  Update all Go dependencies
 	@echo "$(BLUE)Updating dependencies...$(NC)"
 	go get -u ./...
 	go mod tidy
 	@echo "$(GREEN)✅  Dependencies updated$(NC)"
 
 .PHONY: deps-check
-deps-check: ## 🔍 Scan dependencies for known vulnerabilities (nancy)
+deps-check: ##  Scan dependencies for known vulnerabilities (nancy)
 	@echo "$(BLUE)Checking for vulnerabilities...$(NC)"
 	go list -json -deps ./... | nancy sleuth
 	@echo "$(GREEN)✅  Dependency check complete$(NC)"
 
 # =============================================================================
-# 📈 Code Statistics
+#  Code Statistics
 # =============================================================================
 
 .PHONY: stats
-stats: ## 📊 Show code statistics with per-language breakdown
+stats: ##  Show code statistics with per-language breakdown
 	@echo "$(BLUE)╔══════════════════════════════════════════════════════════════╗$(NC)"
 	@echo "$(BLUE)║$(NC) $(CYAN)           AWO ERP — CODE STATISTICS$(NC)                        $(BLUE)║$(NC)"
 	@echo "$(BLUE)╚══════════════════════════════════════════════════════════════╝$(NC)"
@@ -630,7 +630,7 @@ stats: ## 📊 Show code statistics with per-language breakdown
 		"TOTAL" "$$total_files" "$$total_lines" "100.0%"; \
 	printf "$(YELLOW)└─────────────┴────────┴────────────┴──────────┘$(NC)\n"; \
 	echo ""; \
-	echo "$(GREEN)📁 Directory breakdown:$(NC)"; \
+	echo "$(GREEN) Directory breakdown:$(NC)"; \
 	for dir in cmd internal pkg db docs test; do \
 		[ -d "$$dir" ] || continue; \
 		n=$$(find "$$dir" -type f | wc -l); \
@@ -641,11 +641,11 @@ stats: ## 📊 Show code statistics with per-language breakdown
 	echo "$(GREEN)✅  Analysis complete$(NC)"
 
 # =============================================================================
-# 🧹 Clean
+#  Clean
 # =============================================================================
 
 .PHONY: clean
-clean: ## 🧹 Remove build artefacts, logs, coverage files, and Go caches
+clean: ##  Remove build artefacts, logs, coverage files, and Go caches
 	@echo "$(YELLOW)Cleaning...$(NC)"
 	rm -f $(LOG_FILE) $(PID_FILE)
 	rm -f $(COVERAGE_FILE) $(COVERAGE_HTML)
@@ -655,36 +655,36 @@ clean: ## 🧹 Remove build artefacts, logs, coverage files, and Go caches
 	@echo "$(GREEN)✅  Clean complete$(NC)"
 
 # =============================================================================
-# 🔄 Composite Workflows
+#  Composite Workflows
 # =============================================================================
 
 .PHONY: dev-setup
-dev-setup: check-tools scaffold-install db-create migrate-up generate test-deps ## 🛠️  Bootstrap development environment
+dev-setup: check-tools scaffold-install db-create migrate-up generate test-deps ## ️  Bootstrap development environment
 
 .PHONY: dev-test
-dev-test: test-unit-fast build ## 👨‍💻 Quick development cycle (unit tests + build)
+dev-test: test-unit-fast build ## ‍ Quick development cycle (unit tests + build)
 
 .PHONY: dev-reset
-dev-reset: clean db-reset generate ## 🔄 Full reset (clean → db reset → codegen)
+dev-reset: clean db-reset generate ##  Full reset (clean → db reset → codegen)
 
 .PHONY: ci
-ci: quality test-ci build ## 🚀 Standard CI pipeline
+ci: quality test-ci build ##  Standard CI pipeline
 
 .PHONY: ci-full
-ci-full: quality test-all build ## 🚀 Full CI pipeline (all test suites)
+ci-full: quality test-all build ##  Full CI pipeline (all test suites)
 
 # =============================================================================
-# 🎯 Short Aliases
+#  Short Aliases
 # =============================================================================
 
 .PHONY: dev setup reset gen coverage bench watch quick
-dev:      dev-test       ## 👨‍💻 → dev-test
-setup:    dev-setup      ## 🛠️  → dev-setup
-reset:    dev-reset      ## 🔄 → dev-reset
-gen:      generate       ## 🔄 → generate
-coverage: test-coverage  ## 📊 → test-coverage
-bench:    test-benchmark ## 🏃 → test-benchmark
-watch:    test-watch     ## 👀 → test-watch
+dev:      dev-test       ## ‍ → dev-test
+setup:    dev-setup      ## ️  → dev-setup
+reset:    dev-reset      ##  → dev-reset
+gen:      generate       ##  → generate
+coverage: test-coverage  ##  → test-coverage
+bench:    test-benchmark ##  → test-benchmark
+watch:    test-watch     ##  → test-watch
 quick:    test-unit-short ## ⚡ → test-unit-short
 
 # Legacy names (backward compatibility)

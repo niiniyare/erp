@@ -2,7 +2,7 @@
 title: SchemaNode
 description:
 type: 0
-group: 🔧 类型
+group:  类型
 menuName: SchemaNode 配置节点
 icon:
 order: 19

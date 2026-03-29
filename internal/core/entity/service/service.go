@@ -25,7 +25,7 @@ type Service interface {
 	CreateRoot(ctx context.Context, tenantID uuid.UUID, name string) (*domain.EntityNode, error)
 }
 
-// ─── Implementation ────────────────────────────────────────────────────────
+// Implementation
 
 type entityService struct {
 	repo  repository.Repository

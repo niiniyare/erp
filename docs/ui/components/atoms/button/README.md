@@ -4,7 +4,7 @@
 **SCOPE**: All button variants, states, and usage patterns  
 **TARGET AUDIENCE**: Developers, designers, component implementers
 
-## 📋 Overview
+##  Overview
 
 Button components are fundamental interactive elements that trigger actions in the ERP system. They follow our design system principles of clarity, consistency, and accessibility while supporting all necessary business workflows.
 
@@ -16,7 +16,7 @@ Button components are fundamental interactive elements that trigger actions in t
 | **[Button Group](button-group.md)** | Related button collections and toggles | Group management |
 | **[Button Toolbar](button-toolbar.md)** | Action toolbars and complex layouts | Advanced layouts |
 
-## 🎨 Design Principles
+##  Design Principles
 
 ### Visual Hierarchy
 ```
@@ -34,7 +34,7 @@ Primary → Secondary → Success → Danger → Ghost
 XS (24px) → SM (32px) → MD (36px) → LG (44px) → XL (52px)
 ```
 
-## 🏗️ Architecture Integration
+## ️ Architecture Integration
 
 ### Schema-Driven Generation
 ```go
@@ -64,7 +64,7 @@ factory.RegisterRenderer("ButtonGroupSchema", &ButtonGroupRenderer{})
 component, _ := factory.RenderToTempl(ctx, "ButtonSchema", buttonProps)
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### Basic Button
 ```go
@@ -108,7 +108,7 @@ templ ActionButtons() {
 }
 ```
 
-## 📐 Design Specifications
+##  Design Specifications
 
 ### Visual Properties
 Based on **design_system.md** specifications:
@@ -137,7 +137,7 @@ Based on **design_system.md** specifications:
 - **Disabled**: Reduced opacity, not-allowed cursor
 - **Loading**: Spinner replaces content, disabled state
 
-## 🔧 Technical Implementation
+##  Technical Implementation
 
 ### JSON Schema Validation
 All button components validate against these schemas:
@@ -178,7 +178,7 @@ func (b ButtonProps) GetClasses() string {
 - **Focus Management**: Visible focus indicators
 - **Screen Reader**: Action announcements
 
-## 📱 Responsive Behavior
+##  Responsive Behavior
 
 ### Mobile Adaptations
 - **Touch Targets**: Minimum 44px touch area
@@ -200,7 +200,7 @@ func (b ButtonProps) GetClasses() string {
 }
 ```
 
-## 🎯 Usage Guidelines
+##  Usage Guidelines
 
 ### When to Use Each Variant
 
@@ -243,7 +243,7 @@ func (b ButtonProps) GetClasses() string {
 - Maintain 16px minimum size
 - Align with text baseline
 
-## 🧪 Testing Requirements
+##  Testing Requirements
 
 ### Visual Testing
 - [ ] All variants render correctly
@@ -266,7 +266,7 @@ func (b ButtonProps) GetClasses() string {
 - [ ] Disabled states prevent interaction
 - [ ] Tooltips appear on hover
 
-## 📚 Related Components
+##  Related Components
 
 ### Form Integration
 - **[Form Controls](../../molecules/forms/)**: Button usage in forms
@@ -280,7 +280,7 @@ func (b ButtonProps) GetClasses() string {
 - **[Modals](../../organisms/modals/)**: Modal action buttons
 - **[Tables](../../organisms/tables/)**: Row action buttons
 
-## 🔗 External References
+##  External References
 
 - **Design System**: `/docs/ui/design_system.md`
 - **Schema Definitions**: `/docs/ui/Schema/definitions/components/atoms/`

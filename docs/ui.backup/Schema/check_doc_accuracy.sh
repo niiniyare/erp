@@ -3,7 +3,7 @@
 # Documentation Accuracy Validation Script
 # Verifies all claims in documentation against actual project implementation
 
-echo "🔍 Starting documentation accuracy validation..."
+echo " Starting documentation accuracy validation..."
 
 # Color codes for output
 RED='\033[0;31m'
@@ -45,7 +45,7 @@ check_directory() {
     fi
 }
 
-echo "📁 Validating critical file paths mentioned in documentation..."
+echo " Validating critical file paths mentioned in documentation..."
 
 # Check critical Go files
 check_file "web/engine/schema_factory.go" "Schema Factory"
@@ -66,7 +66,7 @@ check_directory "docs/ui/Schema/definitions/core" "Core Schemas"
 check_directory "docs/ui/Schema/definitions/components" "Component Schemas"
 
 echo ""
-echo "📊 Validating schema counts..."
+echo " Validating schema counts..."
 
 # Get actual schema counts
 if [[ -d "docs/ui/Schema/definitions" ]]; then
@@ -76,7 +76,7 @@ if [[ -d "docs/ui/Schema/definitions" ]]; then
     INTERACTION_SCHEMAS=$(find docs/ui/Schema/definitions/interactions -name "*.json" 2>/dev/null | wc -l)
     UTILITY_SCHEMAS=$(find docs/ui/Schema/definitions/utility -name "*.json" 2>/dev/null | wc -l)
     
-    echo -e "${GREEN}📈 Actual Schema Counts:${NC}"
+    echo -e "${GREEN} Actual Schema Counts:${NC}"
     echo "   • Total: $TOTAL_SCHEMAS schemas"
     echo "   • Core: $CORE_SCHEMAS schemas"
     echo "   • Components: $COMPONENT_SCHEMAS schemas"
@@ -96,7 +96,7 @@ else
 fi
 
 echo ""
-echo "🔍 Validating specific schema files mentioned in documentation..."
+echo " Validating specific schema files mentioned in documentation..."
 
 # Check for schemas specifically mentioned in documentation
 DOCUMENTED_SCHEMAS=(
@@ -120,7 +120,7 @@ for schema in "${DOCUMENTED_SCHEMAS[@]}"; do
 done
 
 echo ""
-echo "🔧 Validating Go implementations..."
+echo " Validating Go implementations..."
 
 # Check for Go structs/interfaces mentioned in documentation
 GO_TYPES=(
@@ -143,7 +143,7 @@ for type_name in "${GO_TYPES[@]}"; do
 done
 
 echo ""
-echo "📋 Summary Report:"
+echo " Summary Report:"
 echo "==================="
 
 if [[ $ERRORS -eq 0 ]]; then
@@ -162,16 +162,16 @@ if [[ $WARNINGS -gt 0 ]]; then
 fi
 
 echo ""
-echo "📝 Next Steps:"
+echo " Next Steps:"
 if [[ $ERRORS -gt 0 ]]; then
-    echo "1. 🔧 Fix missing files/implementations"
-    echo "2. 📝 Update documentation to match reality"
-    echo "3. 🔄 Re-run this validation script"
+    echo "1.  Fix missing files/implementations"
+    echo "2.  Update documentation to match reality"
+    echo "3.  Re-run this validation script"
     echo "4. ✅ Proceed with documentation updates"
 else
     echo "1. ✅ Documentation is ready for updates"
-    echo "2. 📝 Use actual counts from this report"
-    echo "3. 🔄 Run this script after any changes"
+    echo "2.  Use actual counts from this report"
+    echo "3.  Run this script after any changes"
 fi
 
 # Exit with error code if issues found

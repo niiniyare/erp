@@ -347,9 +347,9 @@ func main() {
     // Main page
     http.Handle("/", templ.Handler(component))
     
-    log.Println("🚀 Server starting on :8080")
-    log.Println("📱 Visit: http://localhost:8080")
-    log.Println("📚 Documentation: docs/ui/README.md")
+    log.Println(" Server starting on :8080")
+    log.Println(" Visit: http://localhost:8080")
+    log.Println(" Documentation: docs/ui/README.md")
     log.Fatal(http.ListenAndServe(":8080", nil))
 }
 ```
@@ -438,11 +438,11 @@ go run cmd/server/main.go
 <!-- LLM-NEXT-STEPS-START -->
 **LEARNING PROGRESSION:**
 1. ✅ **Basic Setup** (you are here)
-2. 📚 **[Basic Components](components/elements.md)** - Learn all available elements
-3. 🏗️ **[Architecture](fundamentals/architecture.md)** - Understand system design
-4. 📋 **[Form Components](components/forms.md)** - Build interactive forms with validation
-5. 🔧 **[Patterns](patterns/composition.md)** - Advanced composition patterns
-6. 🚀 **[Deployment](guides/deployment.md)** - Production deployment strategies
+2.  **[Basic Components](components/elements.md)** - Learn all available elements
+3. ️ **[Architecture](fundamentals/architecture.md)** - Understand system design
+4.  **[Form Components](components/forms.md)** - Build interactive forms with validation
+5.  **[Patterns](patterns/composition.md)** - Advanced composition patterns
+6.  **[Deployment](guides/deployment.md)** - Production deployment strategies
 
 **IMMEDIATE ACTIONS:**
 - Explore more components in `components/elements.md`

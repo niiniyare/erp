@@ -1022,7 +1022,7 @@ func AuditTrailMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
 - **Export Performance**: Asynchronous large data exports with progress tracking
 
 
-<!-- ## 📊 5. Audit & Monitoring API ->
+<!-- ##  5. Audit & Monitoring API ->
 <!-- *Business Value:* audit trails, compliance reporting, and security monitoring for regulatory requirements. -->
 <!---->
 <!-- ```json  -->

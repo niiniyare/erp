@@ -4,7 +4,7 @@
 **SCOPE**: Text editing with formatting, media insertion, and content management  
 **TARGET AUDIENCE**: Developers implementing content management and text editing features
 
-## 📋 Component Overview
+##  Component Overview
 
 Rich text editor component for content creation with formatting tools, media insertion, and HTML output.
 

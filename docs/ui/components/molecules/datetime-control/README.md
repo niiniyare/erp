@@ -4,7 +4,7 @@
 **SCOPE**: All datetime picker types, formats, time constraints, and timezone handling  
 **TARGET AUDIENCE**: Developers implementing appointment scheduling, event management, and timestamped data collection
 
-## 📋 Component Overview
+##  Component Overview
 
 The DateTime Control component provides comprehensive date and time selection capabilities for forms requiring precise temporal input. It combines date selection with time picking, supports multiple formats, timezone handling, validation rules, and range constraints while maintaining accessibility and consistent user experience across different datetime-related interfaces.
 
@@ -13,7 +13,7 @@ The DateTime Control component provides comprehensive date and time selection ca
 - **Related Schemas**: `FormHorizontal.json`, `LabelAlign.json`, `ShortCuts.json`
 - **Base Interface**: Form input control for combined date and time selection
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The DateTime Control component is configured using JSON that conforms to the `DateTimeControlSchema.json`. The JSON configuration renders interactive datetime inputs with validation, formatting, and user-friendly picker interfaces.
 
@@ -582,10 +582,10 @@ type DateTimeControlProps struct {
                     "label": "Priority",
                     "required": true,
                     "options": [
-                        {"label": "🔴 Critical", "value": "critical"},
-                        {"label": "🟠 High", "value": "high"},
-                        {"label": "🟡 Medium", "value": "medium"},
-                        {"label": "🟢 Low", "value": "low"}
+                        {"label": " Critical", "value": "critical"},
+                        {"label": " High", "value": "high"},
+                        {"label": " Medium", "value": "medium"},
+                        {"label": " Low", "value": "low"}
                     ],
                     "value": "medium"
                 },
@@ -1365,7 +1365,7 @@ func getDateTimeShortcuts(shortcuts interface{}) []DateTimeShortcut {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1462,7 +1462,7 @@ describe('DateTime Control Component Integration', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Appointment DateTime Picker
 ```go
@@ -1512,7 +1512,7 @@ templ EventScheduling(startTime, endTime string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Date Control](../date-control/)** - Date-only input
 - **[Time Control](../time-control/)** - Time-only input

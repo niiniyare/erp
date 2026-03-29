@@ -10,7 +10,7 @@ import (
 	"awo.so/internal/core/iam"
 )
 
-// ─── Request / Response types ─────────────────────────────────────────────────
+// Request / Response types
 
 type mfaCompleteRequest struct {
 	PendingToken string `json:"pending_token"`
@@ -25,7 +25,7 @@ type mfaDisableRequest struct {
 	Password string `json:"password"`
 }
 
-// ─── Handlers ─────────────────────────────────────────────────────────────────
+// Handlers
 
 // MFAInitiateHandler handles POST /auth/mfa/initiate.
 // Requires an active session (Authenticate middleware must run before this).
@@ -159,7 +159,7 @@ func MFADisableHandler(userSvc iam.UserService) fiber.Handler {
 	}
 }
 
-// ─── Helper ───────────────────────────────────────────────────────────────────
+// Helper
 
 // mapMFAError maps MFA-specific service errors to HTTP responses.
 func mapMFAError(c *fiber.Ctx, err error) error {

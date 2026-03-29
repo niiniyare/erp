@@ -11,11 +11,11 @@ TEST_USER="${TEST_USER:-admin@example.com}"
 TEST_PASS="${TEST_PASS:-password123}"
 TEST_TENANT="${TEST_TENANT:-default}"
 
-echo "🔐 Testing Authentication API..."
+echo " Testing Authentication API..."
 echo "Base URL: $BASE_URL"
 
 # Test 1: Login
-echo "\n📋 Test 1: User Login"
+echo "\n Test 1: User Login"
 LOGIN_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/login" \
   -H "Content-Type: application/json" \
   -d "{
@@ -35,7 +35,7 @@ else
 fi
 
 # Test 2: Protected Endpoint Access
-echo "\n📋 Test 2: Protected Endpoint Access"
+echo "\n Test 2: Protected Endpoint Access"
 PROTECTED_RESPONSE=$(curl -s -X GET "$BASE_URL/user/profile" \
   -H "Authorization: Bearer $ACCESS_TOKEN")
 
@@ -47,7 +47,7 @@ else
 fi
 
 # Test 3: Token Validation
-echo "\n📋 Test 3: Token Validation"
+echo "\n Test 3: Token Validation"
 VALIDATION_RESPONSE=$(curl -s -X POST "$BASE_URL/auth/validate" \
   -H "Content-Type: application/json" \
   -d "{\"token\": \"$ACCESS_TOKEN\"}")
@@ -59,4 +59,4 @@ else
   echo "Response: $VALIDATION_RESPONSE"
 fi
 
-echo "\n🎉 Authentication API tests completed!"
+echo "\n Authentication API tests completed!"

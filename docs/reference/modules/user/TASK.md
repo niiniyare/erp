@@ -1,10 +1,10 @@
 # IAM Services Restructuring Implementation Plan
 
-## 🎯 Overview
+##  Overview
 
 This document outlines the  plan to restructure existing IAM-related services into a unified, domain-driven IAM module following clean architecture principles. This is a **restructuring effort** that consolidates existing functionality while improving organization and maintainability.
 
-## 🏆 Phase 2.5 RC1 - COMPLETED ✅
+##  Phase 2.5 RC1 - COMPLETED ✅
 
 **Release Date**: December 2024  
 **Status**: Production Ready  
@@ -17,7 +17,7 @@ This document outlines the  plan to restructure existing IAM-related services in
 - ✅ **Production Ready**: Complete observability, monitoring, and deployment artifacts
 - ✅ **Integration Tested**: Multi-tenant isolation and caching compatibility verified
 
-## 📋 Current State Analysis (UPDATED - Based on Actual Codebase)
+##  Current State Analysis (UPDATED - Based on Actual Codebase)
 
 ### Existing Services Structure
 
@@ -71,7 +71,7 @@ internal/core/
 - **SQLC Integration**: Type-safe database operations with proper error handling
 - **Mock Generation**:  test coverage with auto-generated mocks
 
-## 🏗️ Target Architecture (UPDATED)
+## ️ Target Architecture (UPDATED)
 
 ### New IAM Service Structure
 
@@ -160,7 +160,7 @@ type policy.Service interface {
 }
 ```
 
-## 📊 Implementation Progress
+##  Implementation Progress
 
 ### ✅ **COMPLETED WORK**
 
@@ -253,16 +253,16 @@ type policy.Service interface {
 - ✅ **Deployment**: Complete release notes, monitoring recommendations, and artifacts
 - ✅ **Production Ready**: Zero critical security issues, performance validated
 
-### 🔄 **CURRENT STATUS**
+###  **CURRENT STATUS**
 - **Phase 1**: ✅ **COMPLETED** - Foundation structure and interfaces ready
 - **Phase 2.1**: ✅ **COMPLETED** - User Repository and SQLC integration fully working  
 - **Phase 2.2**: ✅ **COMPLETED** - All repository implementations with security hardening
 - **Phase 2.3**: ✅ **COMPLETED** - Core service logic with authentication and authorization
 - **Phase 2.4**: ✅ **COMPLETED** - Authorization adapter hardened and performance validated
 - **Phase 2.5**: ✅ **COMPLETED** - RC1 finalized and production ready
-- **Status**: **🚀 PRODUCTION READY v1.0.0-rc1**
+- **Status**: ** PRODUCTION READY v1.0.0-rc1**
 
-### 🧪 **TEST-DRIVEN COMPLETION CRITERIA**
+###  **TEST-DRIVEN COMPLETION CRITERIA**
 
 Features are only marked as completed when ALL corresponding test cases pass. Based on `@docs/module/user/test_cases.md`:
 
@@ -296,7 +296,7 @@ Features are only marked as completed when ALL corresponding test cases pass. Ba
 
 ---
 
-## 📊 Implementation Phases (UPDATED - Reflects Actual vs Planned Architecture)
+##  Implementation Phases (UPDATED - Reflects Actual vs Planned Architecture)
 
 ### Phase 1: Foundation Setup (Week 1) ✅ COMPLETED
 
@@ -545,7 +545,7 @@ func (s *service) EvaluatePermission(ctx context.Context, req *authorization.Per
 - [ ] Update API handlers to use single IAM service interface
 - [ ] Maintain backward compatibility during transition
 
-## 🔄 Migration Strategy
+##  Migration Strategy
 
 ### Zero-Downtime Migration
 
@@ -599,7 +599,7 @@ func TestIAMService_Integration(t *testing.T) {
 }
 ```
 
-## 🔧 Implementation Details
+##  Implementation Details
 
 ### Tenant Context Integration
 
@@ -661,7 +661,7 @@ func (s *service) auditDataOperation(ctx context.Context, operation string, enti
 }
 ```
 
-## 📝 API Integration
+##  API Integration
 
 ### Handler Updates
 
@@ -717,7 +717,7 @@ func setupIAMService(
 }
 ```
 
-## 📈 Benefits
+##  Benefits
 
 ### Improved Organization
 - Single entry point for all IAM operations
@@ -739,7 +739,7 @@ func setupIAMService(
 - Consistent tenant context management
 - Shared error handling and validation
 
-## 🎯 Success Criteria
+##  Success Criteria
 
 - [ ] Zero downtime during migration
 - [ ] All existing functionality preserved
@@ -750,7 +750,7 @@ func setupIAMService(
 - [ ] Audit logging working for all data operations
 - [ ] Feature flag integration functional
 
-## 📋 Rollback Plan
+##  Rollback Plan
 
 1. **Phase-by-phase rollback**: Each phase can be rolled back independently
 2. **Feature flag controls**: Use existing feature flags to switch between old and new implementations
@@ -760,7 +760,7 @@ func setupIAMService(
 
 ---
 
-## 🔄 Migration Guide
+##  Migration Guide
 
 ### Current State Reality Check
 
@@ -834,7 +834,7 @@ Unified IAM Service
 
 ---
 
-## 🧪 TDD Implementation Plan
+##  TDD Implementation Plan
 
 ### Test-Driven Development Strategy
 
@@ -1010,7 +1010,7 @@ type Service interface {
 | 5 | Integration & E2E | End-to-end workflows, golden path testing | 10 specs (E2E-001 to E2E-010) |
 | 6 | Performance & Security | Load testing, chaos engineering, security validation | 30+ specs (PERF, SECURITY, CHAOS, etc.) |
 
-## 📊 Traceability Matrix
+##  Traceability Matrix
 
 ### Spec ID → Test → Implementation → CI Gate Mapping
 

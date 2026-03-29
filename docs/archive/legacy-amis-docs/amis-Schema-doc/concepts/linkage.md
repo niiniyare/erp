@@ -2,7 +2,7 @@
 title: 联动
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 联动
 icon:
 order: 14

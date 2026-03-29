@@ -3,12 +3,12 @@
 
 * error handling strategies for building resilient Awo ERP applications with proper error propagation, classification, and observability using our enhanced error system*
 
-> **📚 Related Documentation:**
+> ** Related Documentation:**
 > - `docs/contributing/architecture.md` - System architecture and context patterns
 > - `docs/contributing/01-best-practices.md` - Development guidelines and patterns
 > - `docs/contributing/goa.md` - API design and handler architecture
 
-## 🎯 Error Handling Philosophy
+##  Error Handling Philosophy
 
 Awo ERP uses an enhanced error system with structured error types and categories:
 
@@ -19,7 +19,7 @@ Awo ERP uses an enhanced error system with structured error types and categories
 5. **User-friendly Suggestions**: Built-in suggestions for error resolution
 6. **HTTP Status Mapping**: Automatic mapping to appropriate HTTP status codes
 
-## 📊 Awo ERP Error Architecture
+##  Awo ERP Error Architecture
 
 ```mermaid
 graph TD
@@ -56,7 +56,7 @@ graph TD
     T --> U[Client Response]
 ```
 
-## 🏗️ Enhanced Error Type System
+## ️ Enhanced Error Type System
 
 ### 1. **BusinessError - Core Domain Errors**
 
@@ -288,7 +288,7 @@ func ToHTTPError(err error) *HTTPError {
 }
 ```
 
-## 🔄 Error Handling by Layer
+##  Error Handling by Layer
 
 ### 1. **Repository Layer Error Handling**
 
@@ -453,7 +453,7 @@ func (h *AccountHandler) CreateAccount(ctx context.Context, p *goaFinance.Create
 }
 ```
 
-## 📊 Error Type Checking and Classification
+##  Error Type Checking and Classification
 
 ### Error Type Checking Helpers
 
@@ -501,7 +501,7 @@ func IsValidationError(err error) bool {
 }
 ```
 
-## 🚨 Best Practices
+##  Best Practices
 
 ### 1. **Use Appropriate Error Types**
 
@@ -579,7 +579,7 @@ func TestAccountService_CreateAccount_CodeExists(t *testing.T) {
 }
 ```
 
-## 🔗 Error Helper Functions
+##  Error Helper Functions
 
 ### Categories and Severity Levels
 
@@ -609,7 +609,7 @@ const (
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [Architecture Overview](./architecture.md) - Understanding system design and context flow
 - [Best Practices](./01-best-practices.md) - Development guidelines and standards
 - [Database Transactions](./database-transactions.md) - WithTenant patterns and tenant isolation

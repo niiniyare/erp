@@ -2,7 +2,7 @@
 title: 表达式
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 表达式
 icon:
 order: 13

@@ -108,25 +108,30 @@ func (r *repository) Create(ctx context.Context, req *CreateEntityRequest) (*Ent
 	entityID := uuid.New()
 	params.Uuid = entityID
 
-	sqlcEntity, err := r.store.CreateEntity(ctx, params)
+	var sqlcEntity *db.Entity
+	txErr := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		sqlcEntity, e = s.CreateEntity(ctx, params)
+		return e
+	})
 	timer.Stop()
 
-	if err != nil {
+	if txErr != nil {
 		r.metrics.IncrementCounter("database_errors_total", metrics.Fields{
 			"operation":  "create_entity",
 			"error_type": "sql_error",
 		})
 
-		span.RecordError(err)
+		span.RecordError(txErr)
 		span.SetStatus(codes.Error, "Database operation failed")
 
 		logger.ErrorContext(ctx, "Database operation failed",
 			logger.Fields{
-				"error":     err.Error(),
+				"error":     txErr.Error(),
 				"operation": "create_entity",
 			})
 
-		return nil, fmt.Errorf("failed to create entity: %w", err)
+		return nil, fmt.Errorf("failed to create entity: %w", txErr)
 	}
 
 	// Create hierarchy paths if parent exists

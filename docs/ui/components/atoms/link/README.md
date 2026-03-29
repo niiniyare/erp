@@ -4,7 +4,7 @@
 **SCOPE**: All link variants, states, and accessibility patterns  
 **TARGET AUDIENCE**: Developers implementing navigation, references, and interactive text elements
 
-## 📋 Component Overview
+##  Component Overview
 
 The Link component provides accessible navigation elements for both internal routing and external references. It supports various styles, states, and behaviors while maintaining semantic HTML and accessibility standards.
 
@@ -13,7 +13,7 @@ The Link component provides accessible navigation elements for both internal rou
 - **Related Schemas**: `ActionSchema.json`, `ButtonGroupSchema.json`
 - **Base Interface**: Navigation element with semantic meaning
 
-## 🎨 Link Types
+##  Link Types
 
 ### Basic Link
 **Purpose**: Standard navigation and reference links
@@ -251,7 +251,7 @@ templ TabNavigation(props TabNavigationProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -389,7 +389,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Link Styles
 ```css
@@ -955,7 +955,7 @@ templ DownloadLink(props LinkProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1215,7 +1215,7 @@ templ AccessibleLink(props LinkProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1329,7 +1329,7 @@ test.describe('Link Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Navigation Menu
 ```go
@@ -1410,7 +1410,7 @@ templ DashboardTabs() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Button](../button/)** - Action triggers and form submissions
 - **[Navigation](../../organisms/navigation/)** - Complex navigation systems

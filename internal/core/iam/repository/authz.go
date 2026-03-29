@@ -23,7 +23,7 @@ import (
 
 const roleAssignmentCacheTTL = 5 * time.Minute
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // AuthzRepository handles persistence for Casbin role assignments.
 // Cache is managed internally — callers never touch cache directly.
@@ -34,7 +34,7 @@ type AuthzRepository interface {
 	ListExpiredActiveRoleNames(ctx context.Context, subject, domainName string) ([]string, error)
 }
 
-// ─── Adapter (implementation) ─────────────────────────────────────────────────
+// Adapter (implementation)
 
 type authzRepo struct {
 	store   db.Store
@@ -213,7 +213,7 @@ func roleAssignmentCacheKey(subject, domainName string) string {
 	return "authz:ra:" + subject + ":" + domainName
 }
 
-// ─── Casbin pgx Adapter ───────────────────────────────────────────────────────
+// Casbin pgx Adapter
 
 // NewPgxAdapter constructs a Casbin persist.BatchAdapter backed by pgx.
 // Used only by NewAuthzService during initialization.

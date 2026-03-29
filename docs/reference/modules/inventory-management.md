@@ -1,10 +1,10 @@
 # Inventory Management
 
-## 📦 Overview
+##  Overview
 
 The Inventory Management module provides  stock control, warehouse management, procurement, and logistics capabilities. It supports multi-warehouse operations, real-time stock tracking, automated reordering, and advanced inventory optimization techniques including ABC analysis, lot tracking, and serial number management.
 
-## 🏗️ Item Master & Catalog Management
+## ️ Item Master & Catalog Management
 
 ### Item Master Data
 
@@ -192,7 +192,7 @@ CREATE TABLE item_kits (
 );
 ```
 
-## 🏪 Multi-Warehouse Management
+##  Multi-Warehouse Management
 
 ### Warehouse Structure
 
@@ -394,7 +394,7 @@ CREATE TABLE batches (
 );
 ```
 
-## 🔄 Stock Transactions
+##  Stock Transactions
 
 ### Stock Movement Framework
 
@@ -531,7 +531,7 @@ CREATE TRIGGER trigger_update_stock_levels
     EXECUTE FUNCTION update_stock_levels();
 ```
 
-## 🛒 Procurement Management
+##  Procurement Management
 
 ### Purchase Order Management
 
@@ -723,7 +723,7 @@ CREATE TABLE material_request_lines (
 );
 ```
 
-## 📊 Inventory Analytics & Optimization
+##  Inventory Analytics & Optimization
 
 ### ABC Analysis and Classification
 
@@ -936,7 +936,7 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
-## 🔍 Cycle Counting & Physical Inventory
+##  Cycle Counting & Physical Inventory
 
 ### Cycle Count Management
 

@@ -5,7 +5,7 @@
 
 BASE_URL="http://localhost:8080"
 
-echo "🚀 Quick User API Test Suite"
+echo " Quick User API Test Suite"
 echo "=============================="
 echo
 
@@ -88,16 +88,16 @@ echo "11. Delete User (Soft Delete):"
 echo "curl -X DELETE $BASE_URL/api/v1/users/YOUR_USER_ID"
 echo
 
-echo "📝 Complete Test Suite:"
+echo " Complete Test Suite:"
 echo "For testing, run: ./test-user-api.sh"
 echo "For detailed documentation, see: user-api-tests.md"
 echo
 
-echo "🛠️ To start the server:"
+echo "️ To start the server:"
 echo "go run cmd/server/main.go"
 echo
 
-echo "🔧 Required Environment Variables:"
+echo " Required Environment Variables:"
 echo "export DB_USER=admin"
 echo "export DB_PASSWORD=admin"
 echo "export DB_NAME=ledger"

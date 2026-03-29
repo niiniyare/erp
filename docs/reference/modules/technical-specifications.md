@@ -1,10 +1,10 @@
 # Technical Specifications
 
-## 🏗️ Overview
+## ️ Overview
 
 This document provides  technical specifications for the ERP system, including detailed architecture designs, database schemas, API specifications, integration patterns, and deployment configurations. It serves as the definitive technical reference for development, deployment, and maintenance teams.
 
-## 💻 Technology Stack
+##  Technology Stack
 
 ### Backend Technologies
 
@@ -106,7 +106,7 @@ infrastructure:
     deployment: "ArgoCD / Flux"
 ```
 
-## 🗄️ Database Architecture
+## ️ Database Architecture
 
 ### Multi-Tenant Database Design
 
@@ -274,7 +274,7 @@ backup_strategy:
     recovery_point_objective: "1_minute"
 ```
 
-## 🔌 API Architecture
+##  API Architecture
 
 ### RESTful API Design
 
@@ -638,7 +638,7 @@ func (r *SubscriptionResolver) SalesOrderUpdates(ctx context.Context, tenantID s
 }
 ```
 
-## 🔄 Event-Driven Architecture
+##  Event-Driven Architecture
 
 ### Event Sourcing Implementation
 
@@ -873,7 +873,7 @@ func (ec *EventConsumer) ConsumeClaim(session sarama.ConsumerGroupSession, claim
 }
 ```
 
-## 🔐 Security Architecture
+##  Security Architecture
 
 ### Authentication & Authorization
 

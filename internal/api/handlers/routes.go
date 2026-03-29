@@ -17,7 +17,9 @@ import (
 	middlewarePkg "awo.so/internal/api/middleware"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/audit"
+	"awo.so/internal/core/entity"
 	financeService "awo.so/internal/core/finance/service"
+
 	"awo.so/internal/core/iam"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/shared/errors"
@@ -334,6 +336,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		{ModuleAuth, r.registerAuthAPI},
 		{ModuleTenant, r.registerTenantAPI},
 		{ModuleUser, r.registerUserAPI},
+		{"entity", r.registerEntityAPI},
 		{ModuleFinance, r.registerFinanceAPI},
 		{"schema", r.registerSchemaAPI},
 		{"audit", r.registerAuditAPI},
@@ -596,6 +599,49 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 	}
 
 	r.deps.Logger.Info("registered auth API endpoints")
+	return nil
+}
+
+// registerEntityAPI registers entity management endpoints.
+// Requires tenant middleware (RLS) but no session auth — same pattern as user creation.
+func (r *Router) registerEntityAPI(apiRouter fiber.Router) error {
+	if r.deps.Store == nil {
+		r.deps.Logger.Warn("Store not configured, skipping entity route registration")
+		return nil
+	}
+
+	repo := entity.NewRepository(r.deps.Store, r.deps.Tracer, r.deps.Metrics)
+	svc := entity.NewService(repo, r.deps.Tracer, r.deps.Metrics)
+
+	entitiesGroup := apiRouter.Group("/v1/entities")
+	if r.deps.TenantMiddleware != nil {
+		entitiesGroup.Use(r.deps.TenantMiddleware)
+	}
+
+	entitiesGroup.Post("/", func(c *fiber.Ctx) error {
+		var req entity.CreateEntityRequest
+		if err := c.BodyParser(&req); err != nil {
+			return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+		}
+		if req.Name == "" || req.Code == "" || req.Type == "" {
+			return fiber.NewError(fiber.StatusUnprocessableEntity, "name, code, and type are required")
+		}
+		ent, err := svc.CreateEntity(c.UserContext(), req)
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": ent})
+	})
+
+	entitiesGroup.Get("/", func(c *fiber.Ctx) error {
+		entities, err := svc.ListEntities(c.UserContext(), entity.ListEntitiesRequest{Limit: 100})
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
+		}
+		return c.JSON(fiber.Map{"data": entities})
+	})
+
+	r.deps.Logger.Info("registered entity API endpoints")
 	return nil
 }
 

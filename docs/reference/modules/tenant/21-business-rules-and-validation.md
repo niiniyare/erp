@@ -688,9 +688,9 @@ API Rate:      45 / 600/min  [█---------] 8%   Current minute
 ```
 
 **Color Coding**:
-- 🟢 Green (0-79%): Healthy usage
-- 🟡 Yellow (80-95%): Warning - consider action
-- 🔴 Red (96-100%): Critical - action required
+-  Green (0-79%): Healthy usage
+-  Yellow (80-95%): Warning - consider action
+-  Red (96-100%): Critical - action required
 
 ---
 
@@ -1805,7 +1805,7 @@ SOFT-DELETED → Marked for cleanup
 - Invoices from wrong tenant appearing
 - User list includes other tenants' staff
 
-**🚨 This is a CRITICAL security issue**
+** This is a CRITICAL security issue**
 
 **Immediate Steps**:
 
@@ -2056,9 +2056,9 @@ Include this in your support request:
 
 | Priority | Response Time | Examples |
 |----------|--------------|----------|
-| 🔴 Critical | 1 hour | Security breach, system down |
-| 🟡 High | 4 hours | Cannot access, data loss |
-| 🟢 Normal | 24 hours | Feature questions, minor bugs |
+|  Critical | 1 hour | Security breach, system down |
+|  High | 4 hours | Cannot access, data loss |
+|  Normal | 24 hours | Feature questions, minor bugs |
 | ⚪ Low | 48 hours | Feature requests, optimization |
 
 ---

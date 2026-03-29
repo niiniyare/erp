@@ -2,7 +2,7 @@
 
 Welcome to the AWO ERP System API documentation. This directory contains  testing resources, documentation, and utilities for all API endpoints.
 
-## 📁 Directory Structure
+##  Directory Structure
 
 ```
 docs/api/
@@ -23,7 +23,7 @@ docs/api/
     └── manual/                        # Manual testing guides
 ```
 
-## 🚀 Quick Start
+##  Quick Start
 
 ### 1. Setup Environment
 
@@ -66,7 +66,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 # Windows: choco install jq
 ```
 
-## 🔧 Core APIs
+##  Core APIs
 
 ### Entity Management API
 **Location**: `core-apis/entities/`
@@ -86,7 +86,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 - **Features**: Tenant isolation, configuration, management
 - **Quick Test**: `./utilities/scripts/test-tenants.sh`
 
-## 🔄 Workflow APIs
+##  Workflow APIs
 
 ### Access Request Workflow API
 **Location**: `workflows/access-requests/`
@@ -106,7 +106,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 - **Features**: Behavioral patterns, anomaly detection, personalized insights
 - **Quick Test**: `./utilities/scripts/test-user-analytics.sh`
 
-## 🧪 Testing Resources
+##  Testing Resources
 
 ### Automated Testing
 **Location**: `testing/automated/`
@@ -120,7 +120,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 - **Features**: Curl commands, expected responses, error scenarios
 - **Start Here**: `testing/manual/getting-started.md`
 
-## 🛠️ Development Utilities
+## ️ Development Utilities
 
 ### Testing Scripts
 **Location**: `utilities/scripts/`
@@ -134,7 +134,7 @@ curl -X GET http://localhost:8080/api/v1/tenants/health | jq .
 - **Features**: Pre-configured requests, environments, tests
 - **Import**: Import JSON files into Postman
 
-## 📋 Common Operations
+##  Common Operations
 
 ### Full System Test
 ```bash
@@ -171,7 +171,7 @@ curl -X GET http://localhost:8080/health
 # 4. Manual testing as needed
 ```
 
-## 📊 API Endpoints Summary
+##  API Endpoints Summary
 
 ### Health & Status
 ```
@@ -227,7 +227,7 @@ The following APIs are documented but not yet implemented in the current GOA ver
 - User Analytics (/api/v1/analytics/users/*)
 - Entity Management (/api/v1/entities/*)
 
-## 🎯 Testing Strategies
+##  Testing Strategies
 
 ### 1. Unit Testing
 - Test individual endpoints
@@ -249,7 +249,7 @@ The following APIs are documented but not yet implemented in the current GOA ver
 - Input validation testing
 - SQL injection prevention
 
-## 🔍 Troubleshooting Guide
+##  Troubleshooting Guide
 
 ### Common Issues
 
@@ -303,7 +303,7 @@ The following APIs are documented but not yet implemented in the current GOA ver
 4. **Check environment variables** and configuration
 5. **Verify database migrations** are up to date
 
-## 🚨 Security Considerations
+##  Security Considerations
 
 ### Headers Required
 - `X-User-ID`: Required for user context
@@ -321,7 +321,7 @@ The following APIs are documented but not yet implemented in the current GOA ver
 - Use appropriate delays between requests
 - Monitor response headers for rate limit info
 
-## 📈 Performance Benchmarks
+##  Performance Benchmarks
 
 ### Expected Response Times
 - Health check: < 10ms
@@ -336,7 +336,7 @@ The following APIs are documented but not yet implemented in the current GOA ver
 - Analytics: 1 hour
 - Risk assessments: 4 hours
 
-## 🔄 Update Guide
+##  Update Guide
 
 ### Adding New APIs
 1. Create folder under appropriate category

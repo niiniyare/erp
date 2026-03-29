@@ -4,7 +4,7 @@
 **SCOPE**: Main navigation, hierarchical menus, sidebar navigation, and navigation trees  
 **TARGET AUDIENCE**: Developers implementing application navigation, menu systems, and navigation hierarchies
 
-## 📋 Component Overview
+##  Component Overview
 
 Nav provides comprehensive navigation functionality with support for hierarchical menus, icons, badges, search, and multiple display modes. Essential for creating intuitive navigation experiences in ERP systems.
 

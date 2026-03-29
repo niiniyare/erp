@@ -4,7 +4,7 @@
 **SCOPE**: Date range picking, period selection, reporting filters, and temporal data management  
 **TARGET AUDIENCE**: Developers implementing date range filters, reporting interfaces, and temporal data selection
 
-## 📋 Component Overview
+##  Component Overview
 
 Date Range Control provides comprehensive date range selection functionality with start/end date picking, predefined ranges, shortcuts, and validation. Essential for reporting, filtering, and temporal data management in ERP systems.
 

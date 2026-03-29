@@ -37,11 +37,11 @@ log_error() {
 }
 
 log_header() {
-    echo -e "${PURPLE}🚀 $1${NC}"
+    echo -e "${PURPLE} $1${NC}"
 }
 
 log_section() {
-    echo -e "${CYAN}📋 $1${NC}"
+    echo -e "${CYAN} $1${NC}"
 }
 
 # Check if jq is available
@@ -451,7 +451,7 @@ main() {
     
     log_header "Test Summary"
     if [ $failed_tests -eq 0 ]; then
-        log_success "All tests passed! 🎉"
+        log_success "All tests passed! "
         log_info "Total runtime: ${duration}s"
         log_info "Created resources:"
         log_info "  - Tenants: ${#CREATED_TENANT_IDS[@]}"

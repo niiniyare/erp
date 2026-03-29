@@ -3,13 +3,13 @@
 # Schema Organization Script
 # This script implements the categorization plan from SCHEMA_ORGANIZATION_STRATEGY.md
 
-echo "🔄 Starting schema organization..."
+echo " Starting schema organization..."
 
 # Ensure we're in the definitions directory
 cd /data/data/com.termux/files/home/project/erp/docs/ui/Schema/definitions
 
 # Color-related properties
-echo "📁 Organizing core/color properties..."
+echo " Organizing core/color properties..."
 mv core/Property.*Color*.json core/color/ 2>/dev/null || true
 mv core/Property.*Opacity*.json core/color/ 2>/dev/null || true
 mv core/Property.Fill*.json core/color/ 2>/dev/null || true
@@ -22,7 +22,7 @@ mv PresetColor.json core/color/ 2>/dev/null || true
 mv ColorMapType.json core/color/ 2>/dev/null || true
 
 # Typography-related properties
-echo "📝 Organizing core/typography properties..."
+echo " Organizing core/typography properties..."
 mv core/Property.Font*.json core/typography/ 2>/dev/null || true
 mv core/Property.Text*.json core/typography/ 2>/dev/null || true
 mv core/Property.Letter*.json core/typography/ 2>/dev/null || true
@@ -46,7 +46,7 @@ mv TplSchema.json core/typography/ 2>/dev/null || true
 mv WordsSchema.json core/typography/ 2>/dev/null || true
 
 # Layout-related properties
-echo "🏗️ Organizing core/layout properties..."
+echo "️ Organizing core/layout properties..."
 mv core/Property.Display*.json core/layout/ 2>/dev/null || true
 mv core/Property.Flex*.json core/layout/ 2>/dev/null || true
 mv core/Property.Grid*.json core/layout/ 2>/dev/null || true
@@ -83,13 +83,13 @@ mv VBoxSchema.json core/layout/ 2>/dev/null || true
 mv WrapperSchema.json core/layout/ 2>/dev/null || true
 
 # Browser compatibility
-echo "🌐 Organizing core/compatibility properties..."
+echo " Organizing core/compatibility properties..."
 mv core/Property.Moz*.json core/compatibility/ 2>/dev/null || true
 mv core/Property.Ms*.json core/compatibility/ 2>/dev/null || true
 mv core/Property.Webkit*.json core/compatibility/ 2>/dev/null || true
 
 # Move utility files
-echo "🔧 Organizing utility files..."
+echo " Organizing utility files..."
 mv schema_main.json utility/ 2>/dev/null || true
 mv JsonSchema.json utility/ 2>/dev/null || true
 mv Globals.json utility/ 2>/dev/null || true
@@ -128,7 +128,7 @@ mv Options.json components/atoms/ 2>/dev/null || true
 mv LabelAlign.json components/atoms/ 2>/dev/null || true
 
 # Molecular components
-echo "🧬 Organizing components/molecules..."
+echo " Organizing components/molecules..."
 mv AlertSchema.json components/molecules/ 2>/dev/null || true
 mv AvatarSchema.json components/molecules/ 2>/dev/null || true
 mv CalendarSchema.json components/molecules/ 2>/dev/null || true
@@ -160,7 +160,7 @@ mv VideoSchema.json components/molecules/ 2>/dev/null || true
 mv AudioSchema.json components/molecules/ 2>/dev/null || true
 
 # Organism components  
-echo "🦠 Organizing components/organisms..."
+echo " Organizing components/organisms..."
 mv FormSchema.json components/organisms/ 2>/dev/null || true
 mv FormControlSchema.json components/organisms/ 2>/dev/null || true
 mv TableSchema.json components/organisms/ 2>/dev/null || true
@@ -180,7 +180,7 @@ mv ComboControlSchema.json components/organisms/ 2>/dev/null || true
 mv ArrayControlSchema.json components/organisms/ 2>/dev/null || true
 
 # Template components
-echo "📄 Organizing components/templates..."
+echo " Organizing components/templates..."
 mv PageSchema.json components/templates/ 2>/dev/null || true
 mv ServiceSchema.json components/templates/ 2>/dev/null || true
 mv OperationSchema.json components/templates/ 2>/dev/null || true
@@ -189,7 +189,7 @@ mv TasksSchema.json components/templates/ 2>/dev/null || true
 mv IFrameSchema.json components/templates/ 2>/dev/null || true
 
 # Form interactions
-echo "📝 Organizing interactions/forms..."
+echo " Organizing interactions/forms..."
 mv ConditionBuilderControlSchema.json interactions/forms/ 2>/dev/null || true
 mv FormulaControlSchema.json interactions/forms/ 2>/dev/null || true
 mv DiffControlSchema.json interactions/forms/ 2>/dev/null || true
@@ -205,7 +205,7 @@ mv RadiosControlSchema.json interactions/forms/ 2>/dev/null || true
 mv ButtonGroupControlSchema.json interactions/forms/ 2>/dev/null || true
 
 # Navigation interactions
-echo "🧭 Organizing interactions/navigation..."
+echo " Organizing interactions/navigation..."
 mv AnchorNavSchema.json interactions/navigation/ 2>/dev/null || true
 mv AnchorNavSectionSchema.json interactions/navigation/ 2>/dev/null || true
 mv NavItemSchema.json interactions/navigation/ 2>/dev/null || true
@@ -222,7 +222,7 @@ mv AjaxActionSchema.json interactions/navigation/ 2>/dev/null || true
 mv OtherActionSchema.json interactions/navigation/ 2>/dev/null || true
 
 # Data interactions
-echo "📊 Organizing interactions/data..."
+echo " Organizing interactions/data..."
 mv DataProvider.json interactions/data/ 2>/dev/null || true
 mv DataProviderCollection.json interactions/data/ 2>/dev/null || true
 mv ComposedDataProvider.json interactions/data/ 2>/dev/null || true
@@ -238,7 +238,7 @@ mv ListItemSchema.json interactions/data/ 2>/dev/null || true
 mv SparkLineSchema.json interactions/data/ 2>/dev/null || true
 
 echo "✅ Schema organization complete!"
-echo "📊 Summary of organization:"
+echo " Summary of organization:"
 echo "   - core/: $(find core/ -name "*.json" | wc -l) files"
 echo "   - components/: $(find components/ -name "*.json" | wc -l) files" 
 echo "   - interactions/: $(find interactions/ -name "*.json" | wc -l) files"

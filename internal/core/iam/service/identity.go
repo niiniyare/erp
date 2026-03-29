@@ -29,7 +29,7 @@ func sha256Hex(s string) string {
 	return hex.EncodeToString(sum[:])
 }
 
-// ─── Port (interface) ─────────────────────────────────────────────────────────
+// Port (interface)
 
 // UserService defines the application service for identity operations.
 type UserService interface {
@@ -83,7 +83,7 @@ type UserService interface {
 	DisableMFA(ctx context.Context, userID uuid.UUID, password string) error
 }
 
-// ─── Config ───────────────────────────────────────────────────────────────────
+// Config
 
 // UserConfig holds brute-force protection thresholds and MFA settings.
 // TODO(settings): Replace hardcoded defaults with a settings.ConfigurationService lookup.
@@ -109,7 +109,7 @@ func DefaultUserConfig() UserConfig {
 	}
 }
 
-// ─── Implementation ───────────────────────────────────────────────────────────
+// Implementation
 
 type userService struct {
 	repo    repository.UserRepository
@@ -120,8 +120,8 @@ type userService struct {
 }
 
 // NewUserService constructs a UserService with default config.
-func NewUserService(repo repository.UserRepository, tracer tracing.Service, m metrics.MetricsProvider) UserService {
-	return NewUserServiceWithConfig(repo, tracer, m, DefaultUserConfig())
+func NewUserService(repo repository.UserRepository, tracer tracing.Service, m metrics.MetricsProvider, log logger.Logger) UserService {
+	return NewUserServiceWithConfig(repo, tracer, m, DefaultUserConfig(), log)
 }
 
 // NewUserServiceWithConfig constructs a UserService with explicit config.
@@ -130,9 +130,10 @@ func NewUserServiceWithConfig(
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	cfg UserConfig,
+	log logger.Logger,
 ) UserService {
-	log := logger.WithFields(logger.Fields{"component": "iam.identity"})
-	return &userService{repo: repo, tracer: tracer, metrics: m, log: log, cfg: cfg}
+	scopedLog := log.WithFields(logger.Fields{"component": "iam.identity"})
+	return &userService{repo: repo, tracer: tracer, metrics: m, log: scopedLog, cfg: cfg}
 }
 
 func (s *userService) RegisterNewUser(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error) {
@@ -318,7 +319,7 @@ func (s *userService) SearchUsers(ctx context.Context, query string, limit, offs
 }
 
 // Authenticate handles login with brute-force protection.
-//
+// 
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 // TODO(settings): Load thresholds from settings service per-tenant.
 func (s *userService) Authenticate(ctx context.Context, identifier, password string) (*domain.User, error) {
@@ -596,7 +597,7 @@ func (s *userService) GetUserRoles(_ context.Context, _ uuid.UUID) ([]*domain.Us
 	return []*domain.UserRole{}, nil
 }
 
-// ─── MFA methods ──────────────────────────────────────────────────────────────
+// MFA methods
 
 func (s *userService) mfaKey() ([]byte, error) {
 	if len(s.cfg.MFAEncryptionKey) != 32 {
@@ -756,7 +757,7 @@ func (s *userService) DisableMFA(ctx context.Context, userID uuid.UUID, password
 	return nil
 }
 
-// ─── Password reset ───────────────────────────────────────────────────────────
+// Password reset
 
 const passwordResetTTL = time.Hour
 
@@ -840,7 +841,7 @@ func (s *userService) ResetPassword(ctx context.Context, rawToken, newPassword s
 	return nil
 }
 
-// ─── Password helpers ─────────────────────────────────────────────────────────
+// Password helpers
 
 func hashPassword(password string) (string, error) {
 	b, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)

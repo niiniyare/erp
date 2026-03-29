@@ -9,10 +9,10 @@ DOCS_DIR="docs"
 REPORT_FILE="doc-quality-report.json"
 ERROR_COUNT=0
 
-echo "🔍 Running Documentation Quality Checks..."
+echo " Running Documentation Quality Checks..."
 
 # 1. MkDocs Build Validation
-echo "📋 Testing MkDocs build..."
+echo " Testing MkDocs build..."
 if ! mkdocs build --strict 2>&1 | tee mkdocs-build.log; then
     ERROR_COUNT=$((ERROR_COUNT + 1))
     echo "❌ MkDocs build failed"
@@ -21,7 +21,7 @@ else
 fi
 
 # 2. Link Validation
-echo "🔗 Checking internal links..."
+echo " Checking internal links..."
 if command -v markdown-link-check &> /dev/null; then
     find "$DOCS_DIR" -name "*.md" -exec markdown-link-check {} \; > link-check.log 2>&1
     if grep -q "ERROR" link-check.log; then
@@ -35,7 +35,7 @@ else
 fi
 
 # 3. Navigation Completeness
-echo "📚 Validating navigation coverage..."
+echo " Validating navigation coverage..."
 TOTAL_MD_FILES=$(find "$DOCS_DIR" -name "*.md" | wc -l)
 INCLUDED_FILES=$(grep -o '\.md' mkdocs.yml | wc -l)
 COVERAGE=$((INCLUDED_FILES * 100 / TOTAL_MD_FILES))
@@ -64,13 +64,13 @@ cat > "$REPORT_FILE" << EOF
 }
 EOF
 
-echo "📊 Quality report generated: $REPORT_FILE"
+echo " Quality report generated: $REPORT_FILE"
 
 # Exit with appropriate code for CI/CD
 if [ $ERROR_COUNT -eq 0 ]; then
-    echo "🎉 All quality checks passed!"
+    echo " All quality checks passed!"
     exit 0
 else
-    echo "💥 $ERROR_COUNT quality issues detected"
+    echo " $ERROR_COUNT quality issues detected"
     exit 1
 fi

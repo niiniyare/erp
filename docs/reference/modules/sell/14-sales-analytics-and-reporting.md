@@ -13,7 +13,7 @@ Current Month (January 2025):
 ┌──────────────────────────────────────────┐
 │ MTD SALES                                │
 │ 45.2M KES                                │
-│ Target: 50M | 90.4% achieved  🟡         │
+│ Target: 50M | 90.4% achieved           │
 │ YoY Growth: +18%                         │
 └──────────────────────────────────────────┘
 
@@ -92,10 +92,10 @@ Sales by Territory:
 │ Territory  │ Revenue  │ Target │ Achievement│
 ├────────────┼──────────┼────────┼────────────┤
 │ Nairobi    │ 285M     │ 280M   │  102%  ✓   │
-│ Mombasa    │ 145M     │ 160M   │   91%  🟡  │
+│ Mombasa    │ 145M     │ 160M   │   91%    │
 │ Kisumu     │  82M     │  70M   │  117%  ✓   │
 │ Nakuru     │  45M     │  40M   │  113%  ✓   │
-│ Other      │  24M     │  30M   │   80%  🔴  │
+│ Other      │  24M     │  30M   │   80%    │
 │            │          │        │            │
 │ TOTAL      │ 581M     │ 580M   │  100%  ✓   │
 └────────────┴──────────┴────────┴────────────┘
@@ -126,7 +126,7 @@ Sarah Johnson (Nairobi Territory):
 │ QUOTA ATTAINMENT                           │
 │ YTD Sales: 45.2M                           │
 │ Quota: 50M                                 │
-│ Achievement: 90.4%  🟡                     │
+│ Achievement: 90.4%                       │
 │ Rank: 2 of 15                              │
 └────────────────────────────────────────────┘
 
@@ -160,9 +160,9 @@ Team Leaderboard:
 ┌──────┬──────────────┬──────────┬────────────┐
 │ Rank │ Sales Person │ Revenue  │ vs Quota   │
 ├──────┼──────────────┼──────────┼────────────┤
-│  1   │ Mike Chen    │ 52.1M    │  104%  🥇  │
-│  2   │ Sarah J.     │ 45.2M    │   90%  🥈  │
-│  3   │ Jane Mwangi  │ 38.5M    │   77%  🥉  │
+│  1   │ Mike Chen    │ 52.1M    │  104%    │
+│  2   │ Sarah J.     │ 45.2M    │   90%    │
+│  3   │ Jane Mwangi  │ 38.5M    │   77%    │
 │  4   │ Tom Omondi   │ 29.8M    │   60%      │
 │  5   │ Lucy Wanjiru │ 25.4M    │   51%      │
 └──────┴──────────────┴──────────┴────────────┘

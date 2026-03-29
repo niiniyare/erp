@@ -4,7 +4,7 @@
 
 ---
 
-## 📋 Table of Contents
+##  Table of Contents
 
 1. [Architecture Overview](#architecture-overview)
 2. [Technology Stack](#technology-stack)
@@ -1150,7 +1150,7 @@ func (r *tenantRepository) Create(ctx context.Context, tenant *domain.Tenant) er
 func (r *tenantRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Tenant, error) {
     row, err := r.queries.GetTenant(ctx, id)
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == db.ErrNoRows {
             return nil, domain.ErrTenantNotFound
         }
         return nil, err
@@ -1163,7 +1163,7 @@ func (r *tenantRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.T
 func (r *tenantRepository) GetBySlug(ctx context.Context, slug string) (*domain.Tenant, error) {
     row, err := r.queries.GetTenantBySlug(ctx, slug)
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == db.ErrNoRows {
             return nil, domain.ErrTenantNotFound
         }
         return nil, err
@@ -1179,7 +1179,7 @@ func (r *tenantRepository) GetBySubdomain(ctx context.Context, subdomain string)
         Valid:  true,
     })
     if err != nil {
-        if err == sql.ErrNoRows {
+        if err == db.ErrNoRows {
             return nil, domain.ErrTenantNotFound
         }
         return nil, err

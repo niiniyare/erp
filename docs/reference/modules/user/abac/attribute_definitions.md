@@ -520,7 +520,7 @@ var AttributeDefinitionError = Type("AttributeDefinitionError", func() {
 
 
 
-<!-- ## 📋 1. Attribute Management API ->
+<!-- ##  1. Attribute Management API ->
 <!-- ### 1.1 Attribute Definitions ->
 <!-- Business Value: Standardize attribute schemas across the organization for consistent policy evaluation. -->
 <!---->

@@ -4,7 +4,7 @@
 **SCOPE**: Location picking, address input, coordinate selection, and geographic data management  
 **TARGET AUDIENCE**: Developers implementing location-based features, address management, and geographic data entry
 
-## 📋 Component Overview
+##  Component Overview
 
 Location Control provides comprehensive location selection functionality with address autocomplete, coordinate input, map integration, and geographic validation. Essential for location-based ERP features and spatial data management.
 

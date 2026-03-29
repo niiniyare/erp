@@ -1,21 +1,21 @@
-# 🧭 UI Design Pattern Reference Guide
+#  UI Design Pattern Reference Guide
 
-## 📋 Quick Navigation for AI Assistants
+##  Quick Navigation for AI Assistants
 
 **DOCUMENTATION MAP:**
-- 🚀 [Core Philosophy](#1--core-philosophy) - Server-first atomic design principles
-- 🏗️ [Component Architecture](#2--component-architecture) - Struct-based pattern system
+-  [Core Philosophy](#1--core-philosophy) - Server-first atomic design principles
+- ️ [Component Architecture](#2--component-architecture) - Struct-based pattern system
 - ⚙️ [Design Patterns](#3--design-patterns) - Server-driven composition with HTMX
-- 🔒 [Security Patterns](#4--security-patterns) - CSRF, XSS, rate limiting
-- 🌍 [Internationalization](#5--internationalization-i18n) - Multi-language support
-- 🧪 [Testing Strategy](#6--testing-strategy) - Component to integration testing
+-  [Security Patterns](#4--security-patterns) - CSRF, XSS, rate limiting
+-  [Internationalization](#5--internationalization-i18n) - Multi-language support
+-  [Testing Strategy](#6--testing-strategy) - Component to integration testing
 - ⚡ [Performance](#7--performance-optimization) - Budgets and monitoring
-- 🧠 [ViewModel Pattern](#8--viewmodel-pattern) - Type-safe data flow
-- 🧱 [Naming Conventions](#9--naming--conventions) - Consistent file structure
-- 🔁 [Component Lifecycle](#10--component-design-lifecycle) - Design to production
-- 🧭 [Governance Model](#11--ui-review-flow--component-governance) - Review and versioning
-- 🚀 [CI/CD Blueprint](#12--design-system-cicd-blueprint) - Automated validation
-- 📚 [Advanced Patterns](#13--advanced-implementation-patterns) - Optimistic UI, SSE, modals
+-  [ViewModel Pattern](#8--viewmodel-pattern) - Type-safe data flow
+-  [Naming Conventions](#9--naming--conventions) - Consistent file structure
+-  [Component Lifecycle](#10--component-design-lifecycle) - Design to production
+-  [Governance Model](#11--ui-review-flow--component-governance) - Review and versioning
+-  [CI/CD Blueprint](#12--design-system-cicd-blueprint) - Automated validation
+-  [Advanced Patterns](#13--advanced-implementation-patterns) - Optimistic UI, SSE, modals
 
 **TECH STACK:** `Go + Templ + HTMX + Alpine.js + Flowbite + TailwindCSS`  
 **ARCHITECTURE:** Server-side rendered with progressive enhancement  
@@ -32,7 +32,7 @@
 
 ---
 
-## 1. 🧩 Core Philosophy
+## 1.  Core Philosophy
 
 Our UI is built on **Server-Driven Atomic Design** with **Progressive Enhancement** and **Struct-Based Component Props**.
 
@@ -48,7 +48,7 @@ Our UI is built on **Server-Driven Atomic Design** with **Progressive Enhancemen
 
 ---
 
-## 2. 🏗️ Component Architecture
+## 2. ️ Component Architecture
 
 ### 2.1 Folder Hierarchy
 
@@ -850,7 +850,7 @@ templ UserCreateForm(props UserFormProps) {
 
 ---
 
-## 4. 🔒 Security Patterns
+## 4.  Security Patterns
 
 ### 4.1 CSRF Protection
 
@@ -956,7 +956,7 @@ func SecurityHeadersMiddleware(next http.Handler) http.Handler {
 
 ---
 
-## 5. 🌍 Internationalization (i18n)
+## 5.  Internationalization (i18n)
 
 ### 5.1 Translation Pattern
 
@@ -1020,7 +1020,7 @@ templ LanguageSelector(props LanguageSelectorProps) {
 
 ---
 
-## 6. 🧪 Testing Strategy
+## 6.  Testing Strategy
 
 ### 6.1 Component Unit Testing
 
@@ -1225,7 +1225,7 @@ const analyzeBundle = () => {
 
 ---
 
-## 8. 🧠 ViewModel Pattern
+## 8.  ViewModel Pattern
 
 **Pattern:** Encapsulate UI data into typed Go structs (ViewModels) for type safety and separation of concerns.
 
@@ -1312,7 +1312,7 @@ func (h *Handler) Dashboard(w http.ResponseWriter, r *http.Request) {
 
 ---
 
-## 9. 🧱 Naming & Conventions
+## 9.  Naming & Conventions
 
 | Level | Example | Naming Rule | File Location |
 |-------|---------|-------------|---------------|
@@ -1343,24 +1343,24 @@ components/atoms/buttons/
 
 ---
 
-## 10. 🔄 Component Design Lifecycle
+## 10.  Component Design Lifecycle
 
 ### Lifecycle Overview
 
 ```
-🎨 Design → 🧱 Implement → 🔍 Validate → ⚗️ Integrate → 🚀 Release
+ Design →  Implement →  Validate → ⚗️ Integrate →  Release
 ```
 
-### Stage 1: 🎨 Design (UX & Tokens)
+### Stage 1:  Design (UX & Tokens)
 
 | Task | Description |
 |------|-------------|
-| 🧩 Identify Component Level | Atom, Molecule, Organism, or Feature? |
-| 🖋️ Define Design Tokens | Colors, spacing, typography from `/foundations/tokens/` |
-| 🧱 Build Prototype | Figma or Flowbite Playground |
-| 📚 Document Variants | All states: hover, active, error, disabled |
-| 🔡 Define Accessibility | ARIA roles, focus states, keyboard navigation |
-| 🏗️ Design Props Structure | Plan the Go struct fields needed |
+|  Identify Component Level | Atom, Molecule, Organism, or Feature? |
+| ️ Define Design Tokens | Colors, spacing, typography from `/foundations/tokens/` |
+|  Build Prototype | Figma or Flowbite Playground |
+|  Document Variants | All states: hover, active, error, disabled |
+|  Define Accessibility | ARIA roles, focus states, keyboard navigation |
+| ️ Design Props Structure | Plan the Go struct fields needed |
 
 **Deliverables:**
 - Figma reference or prototype link
@@ -1370,15 +1370,15 @@ components/atoms/buttons/
 
 ---
 
-### Stage 2: 🧱 Implementation (Templ + Go)
+### Stage 2:  Implementation (Templ + Go)
 
 | Task | Description |
 |------|-------------|
-| 📁 Create file structure | `components/[level]/[category]/[name].templ` |
-| 🧬 Define Props struct | Create typed Go struct in `props.go` |
-| 🏗️ Implement component | Use semantic HTML + Tailwind utilities |
+|  Create file structure | `components/[level]/[category]/[name].templ` |
+|  Define Props struct | Create typed Go struct in `props.go` |
+| ️ Implement component | Use semantic HTML + Tailwind utilities |
 | ⚡ Add progressive enhancement | HTMX + Alpine.js where needed |
-| 🧾 Add documentation header | Props, usage example, accessibility notes |
+|  Add documentation header | Props, usage example, accessibility notes |
 
 **Example Implementation:**
 
@@ -1457,7 +1457,7 @@ templ ButtonPrimary(props ButtonPrimaryProps) {
 
 ---
 
-### Stage 3: 🔍 Validation (Quality Gate)
+### Stage 3:  Validation (Quality Gate)
 
 | Check | Tool / Method |
 |-------|---------------|
@@ -1482,12 +1482,12 @@ templ ButtonPrimary(props ButtonPrimaryProps) {
 
 | Task | Description |
 |------|-------------|
-| 🔗 Compose higher-level components | Use in molecules/organisms |
-| 🌐 Test in page context | Integrate with real data |
-| 🧩 Wire HTMX endpoints | Add server handlers |
+|  Compose higher-level components | Use in molecules/organisms |
+|  Test in page context | Integrate with real data |
+|  Wire HTMX endpoints | Add server handlers |
 | ⚙️ Add ViewModels | Create typed data structures |
-| 🧠 Test interactivity | Verify HTMX + Alpine.js |
-| 📸 Visual regression test | Capture screenshots for baseline |
+|  Test interactivity | Verify HTMX + Alpine.js |
+|  Visual regression test | Capture screenshots for baseline |
 
 **Example Integration:**
 
@@ -1554,16 +1554,16 @@ func TestFormFieldIntegration(t *testing.T) {
 
 ---
 
-### Stage 5: 🚀 Release (Documentation & Versioning)
+### Stage 5:  Release (Documentation & Versioning)
 
 | Task | Description |
 |------|-------------|
-| 📝 Create component README | Usage examples, props reference |
-| 📘 Update design guide | Add entry to this document |
-| 🔢 Version increment | Follow semantic versioning |
-| 📦 Update changelog | Document new component |
-| 🚀 Merge & tag | Create Git tag for release |
-| 📢 Announce | Notify team via Slack/email |
+|  Create component README | Usage examples, props reference |
+|  Update design guide | Add entry to this document |
+|  Version increment | Follow semantic versioning |
+|  Update changelog | Document new component |
+|  Merge & tag | Create Git tag for release |
+|  Announce | Notify team via Slack/email |
 
 **Component README Template:**
 
@@ -1652,7 +1652,7 @@ Primary action button component for call-to-action interactions.
 
 ---
 
-## 11. 🧭 UI Review Flow & Component Governance
+## 11.  UI Review Flow & Component Governance
 
 ### 11.1 Pull Request Structure
 
@@ -1768,7 +1768,7 @@ git push origin --tags
 | Stage | Action | Duration |
 |-------|--------|----------|
 | **⚠️ Deprecated** | Mark as deprecated in docs + code comments | 1 minor version |
-| **🚧 Migration Period** | Provide migration guide + warnings | 2 minor versions |
+| ** Migration Period** | Provide migration guide + warnings | 2 minor versions |
 | **⛔ Removed** | Delete component + update dependents | Next major version |
 
 **Deprecation Example:**
@@ -1792,11 +1792,11 @@ templ ButtonSecondary(label string) {
 ```go
 // Component maturity labels (in docs and code comments)
 const (
-    StatusExperimental  = "🧪 Experimental"  // May change significantly
-    StatusBeta          = "🚧 Beta"          // Stable API, minor changes possible
+    StatusExperimental  = " Experimental"  // May change significantly
+    StatusBeta          = " Beta"          // Stable API, minor changes possible
     StatusStable        = "✅ Stable"        // Production-ready, versioned
     StatusDeprecated    = "⚠️ Deprecated"    // Scheduled for removal
-    StatusLegacy        = "📦 Legacy"        // Maintained but not recommended
+    StatusLegacy        = " Legacy"        // Maintained but not recommended
 )
 ```
 
@@ -1812,7 +1812,7 @@ Production-ready primary button component.
 
 ---
 
-# ModalExperimental (🧪 Experimental)
+# ModalExperimental ( Experimental)
 
 **⚠️ WARNING**: API may change in future versions.  
 **Status**: Experimental  
@@ -1822,7 +1822,7 @@ Production-ready primary button component.
 
 ---
 
-## 12. 🚀 Design System CI/CD Blueprint
+## 12.  Design System CI/CD Blueprint
 
 ### 12.1 Pipeline Overview
 
@@ -1944,7 +1944,7 @@ jobs:
               issue_number: context.issue.number,
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: '🚀 Preview deployed: https://${{ github.head_ref }}--yoursite.netlify.app'
+              body: ' Preview deployed: https://${{ github.head_ref }}--yoursite.netlify.app'
             })
 
   visual-regression:
@@ -2107,7 +2107,7 @@ if (document.readyState === 'loading') {
 
 ---
 
-## 13. 📚 Advanced Implementation Patterns
+## 13.  Advanced Implementation Patterns
 
 ### 13.1 Optimistic UI Updates
 
@@ -2839,7 +2839,7 @@ func (h *Handler) AddField(w http.ResponseWriter, r *http.Request) {
 
 ---
 
-## 14. 📊 Component Examples & Best Practices Summary
+## 14.  Component Examples & Best Practices Summary
 
 ### 14.1 Complete Component Example
 
@@ -3213,7 +3213,7 @@ func TestUserTable(t *testing.T) {
 
 ---
 
-## 15. 🎓 Quick Reference Guide
+## 15.  Quick Reference Guide
 
 ### Component Hierarchy Reminder
 
@@ -3402,7 +3402,7 @@ func (h *Handler) handleError(w http.ResponseWriter, r *http.Request, err error)
 
 ---
 
-## 16. 🚀 Getting Started Checklist
+## 16.  Getting Started Checklist
 
 ### For New Projects
 
@@ -3470,7 +3470,7 @@ templ OldButton(text string, url string, primary bool) {
 
 ---
 
-## 17. 📚 Additional Resources
+## 17.  Additional Resources
 
 ### Official Documentation
 - **Templ:** https://templ.guide
@@ -3501,7 +3501,7 @@ templ OldButton(text string, url string, primary bool) {
 
 ---
 
-## 18. 🎯 Summary & Next Steps
+## 18.  Summary & Next Steps
 
 This enhanced guide provides:
 

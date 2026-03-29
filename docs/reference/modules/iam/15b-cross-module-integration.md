@@ -10,7 +10,7 @@ Every business module uses these mechanisms to interact with IAM and configurati
 |---|---|---|
 | `middleware.RequirePermission(resource, action)` | Route | Blocks before handler runs |
 | `middleware.RequireFlag(flagKey)` | Route | Feature gate before handler runs |
-| `session.Can(resource, action)` | Handler | Conditional UI logic (show/hide buttons) |
+| `session.CanDo(resource, action)` or `session.Can("resource.action")` | Handler | Conditional UI logic (show/hide buttons) |
 | `session.FeatureEnabled(flagKey)` | Handler | Optional form sections |
 | `session.SettingDecimal/Int/Bool/String(key, default)` | Handler | Tenant configuration values |
 
@@ -36,10 +36,10 @@ func TransactionDetailSchema(deps *app.Deps) fiber.Handler {
         return c.JSON(buildTransactionDetail(TransactionDetailConfig{
             ShowApprovalSection: showApproval,
             ApprovalThreshold:   threshold,
-            CanPost:    s.Can("finance.transactions", "post"),
-            CanApprove: s.Can("finance.transactions", "approve"),
-            CanVoid:    s.Can("finance.transactions", "void"),
-            CanReverse: s.Can("finance.transactions", "reverse"),
+            CanPost:    s.CanDo("finance.transactions", "post"),
+            CanApprove: s.CanDo("finance.transactions", "approve"),
+            CanVoid:    s.CanDo("finance.transactions", "void"),
+            CanReverse: s.CanDo("finance.transactions", "reverse"),
         }))
     }
 }

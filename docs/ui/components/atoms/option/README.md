@@ -4,7 +4,7 @@
 **SCOPE**: All option variants, nested options, lazy loading, and selection states  
 **TARGET AUDIENCE**: Developers implementing dropdowns, selects, radio groups, and choice-based UI components
 
-## 📋 Component Overview
+##  Component Overview
 
 The Option component represents a single selectable item within choice-based UI components like dropdowns, select boxes, radio button groups, and checkbox groups. It supports nested options, lazy loading, conditional visibility, and rich content display while maintaining accessibility and keyboard navigation standards.
 
@@ -13,7 +13,7 @@ The Option component represents a single selectable item within choice-based UI 
 - **Related Schemas**: `Options.json`, `BaseApiObject.json`
 - **Base Interface**: Selectable item for choice-based components
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Option component is configured using JSON that conforms to the `Option.json` schema. It provides the data structure for individual selectable items in various UI components.
 
@@ -904,7 +904,7 @@ templ CheckboxOption(name string, option OptionProps) {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1115,7 +1115,7 @@ describe('Option Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Product Selection Options
 ```go
@@ -1176,7 +1176,7 @@ templ NavigationOptions(userPermissions []string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Select](../../molecules/select/)** - Dropdown selection components
 - **[Radio](../radio/)** - Single choice radio buttons

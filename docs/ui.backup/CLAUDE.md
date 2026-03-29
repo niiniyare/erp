@@ -10,22 +10,22 @@ This UI documentation system is designed to be **LLM-friendly** and provides com
 
 ```
 docs/ui/
-├── README.md                     # 🎯 LLM-optimized entry point and navigation
-├── getting-started.md            # 🚀 Complete setup and installation guide
-├── CLAUDE.md                     # 🤖 This file - AI assistant guidance
-├── templ-llms.md                 # 📚 Advanced Templ features reference
-├── flowbite-llms-full.txt        # 🎨 Complete Flowbite styling reference
+├── README.md                     #  LLM-optimized entry point and navigation
+├── getting-started.md            #  Complete setup and installation guide
+├── CLAUDE.md                     #  This file - AI assistant guidance
+├── templ-llms.md                 #  Advanced Templ features reference
+├── flowbite-llms-full.txt        #  Complete Flowbite styling reference
 ├── fundamentals/
-│   └── architecture.md           # 🏗️ Core system architecture and design principles
+│   └── architecture.md           # ️ Core system architecture and design principles
 ├── components/
-│   ├── elements.md               # 🧱 Foundational UI elements (buttons, inputs, cards)
-│   └── forms.md                  # 📝 Form components and interactive patterns
+│   ├── elements.md               #  Foundational UI elements (buttons, inputs, cards)
+│   └── forms.md                  #  Form components and interactive patterns
 ├── patterns/
-│   └── htmx-integration.md       # 🔄 Server interaction patterns and HTMX implementation
+│   └── htmx-integration.md       #  Server interaction patterns and HTMX implementation
 ├── guides/
 │   └── validation-guide.md       # ✅ Complete validation system implementation
 └── reference/
-    └── api-reference.md          # 📖 Complete API documentation and type definitions
+    └── api-reference.md          #  Complete API documentation and type definitions
 ```
 
 ## Key Technologies
@@ -46,7 +46,7 @@ docs/ui/
 
 ## Navigation Guide for AI Assistants
 
-### 🎯 Quick Start Locations
+###  Quick Start Locations
 
 1. **New to the system?** → Start with `README.md` for overview and navigation
 2. **Setting up a project?** → Go to `getting-started.md` for complete setup instructions
@@ -56,7 +56,7 @@ docs/ui/
 6. **Implementation details?** → Use `guides/validation-guide.md` for complete validation system
 7. **API reference needed?** → Consult `reference/api-reference.md` for complete type definitions
 
-### 🔍 LLM Navigation Markers
+###  LLM Navigation Markers
 
 All documentation files include semantic markers for AI navigation:
 

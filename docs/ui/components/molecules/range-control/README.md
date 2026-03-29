@@ -4,7 +4,7 @@
 **SCOPE**: Single and dual sliders, value ranges, step controls, and custom marks  
 **TARGET AUDIENCE**: Developers implementing numeric inputs, filters, and range selection interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 Range Control provides interactive slider functionality for selecting numeric values or ranges with visual feedback, step controls, marks, and value display options. Essential for numeric input scenarios in ERP forms.
 

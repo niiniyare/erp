@@ -1,8 +1,8 @@
-# 📋 Makefile Documentation Commands
+#  Makefile Documentation Commands
 
 The Makefile has been updated with documentation commands that integrate with the new documentation server implementation.
 
-## 🚀 Available Commands
+##  Available Commands
 
 ### Primary Commands
 
@@ -26,7 +26,7 @@ The Makefile has been updated with documentation commands that integrate with th
 |---------|-------------|--------|
 | `make docs-schema` | Show SchemaSpy command template | `make docs-schema` |
 
-## 🎯 Quick Start Examples
+##  Quick Start Examples
 
 ### Basic Usage
 ```bash
@@ -50,46 +50,46 @@ make docs-build
 make docs-test
 ```
 
-## 🏗️ What Each Command Does
+## ️ What Each Command Does
 
 ### `make docs`
-- 🏢 Starts AWO ERP Documentation Server
-- 📚 Serves MkDocs documentation at `/`
-- 🗄️ Serves Schema documentation at `/schema/`
-- 🌐 Default port: 8081
-- 🔗 Uses `docs/start-docs.sh`
+-  Starts AWO ERP Documentation Server
+-  Serves MkDocs documentation at `/`
+- ️ Serves Schema documentation at `/schema/`
+-  Default port: 8081
+-  Uses `docs/start-docs.sh`
 
 **Output:**
 ```
-🏢 Starting AWO ERP Documentation Server...
-📚 MkDocs documentation: http://localhost:8081/
-🗄️ Schema documentation: http://localhost:8081/schema/
+ Starting AWO ERP Documentation Server...
+ MkDocs documentation: http://localhost:8081/
+️ Schema documentation: http://localhost:8081/schema/
 ```
 
 ### `make docs-build`
-- 📖 Runs `mkdocs build`
+-  Runs `mkdocs build`
 - ✅ Generates static HTML in `site/` directory
-- 🛡️ Safe: Won't overwrite `docs/index.html`
+- ️ Safe: Won't overwrite `docs/index.html`
 
 ### `make docs-test`
-- 🧪 Runs server tests
+-  Runs server tests
 - ✅ Tests all endpoints (MkDocs, Schema, Assets)
-- 📊 Reports HTTP status codes
-- 🚀 Uses port 8082 for testing
+-  Reports HTTP status codes
+-  Uses port 8082 for testing
 
 ### `make docs-dev`
-- 👨‍💻 Development workflow automation
+- ‍ Development workflow automation
 - 1️⃣ First: Builds MkDocs documentation
 - 2️⃣ Then: Starts documentation server
-- 🔄 Perfect for iterative development
+-  Perfect for iterative development
 
 ### `make docs-mkdocs-safe`
-- 🛡️ Tests MkDocs integration safety
+- ️ Tests MkDocs integration safety
 - ✅ Verifies `docs/index.html` protection
-- 🔍 Confirms server serves custom landing page
-- 📝 Shows that `mkdocs build` won't break custom navigation
+-  Confirms server serves custom landing page
+-  Shows that `mkdocs build` won't break custom navigation
 
-## 🔧 Environment Variables
+##  Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
@@ -98,7 +98,7 @@ make docs-test
 | `DB_USER` | `admin` | Database user for schema generation |
 | `DB_PSSWD` | `admin` | Database password for schema generation |
 
-## 🔗 Integration Points
+##  Integration Points
 
 ### With MkDocs
 - ✅ `make docs-build` → `mkdocs build`
@@ -106,16 +106,16 @@ make docs-test
 - ✅ Serves generated content from `site/`
 
 ### With SchemaSpy
-- 📝 `make docs-schema` shows generation command
-- 🎯 Outputs to `docs/schema/`
-- 🔄 Manual generation (requires database connection)
+-  `make docs-schema` shows generation command
+-  Outputs to `docs/schema/`
+-  Manual generation (requires database connection)
 
 ### With Go Server
-- 🚀 Uses `docs/start-docs.sh` for production
-- 🧪 Uses `docs/test-server.sh` for testing
+-  Uses `docs/start-docs.sh` for production
+-  Uses `docs/test-server.sh` for testing
 - ⚙️ Direct Go execution with proper error handling
 
-## 🧪 Testing Commands
+##  Testing Commands
 
 ```bash
 # Test server functionality
@@ -131,7 +131,7 @@ curl http://localhost:8081/schema/             # Test schema
 curl http://localhost:8081/getting-started/   # Test MkDocs
 ```
 
-## 📝 Notes
+##  Notes
 
 - **Port Conflicts**: Commands use different ports for testing
 - **Background Jobs**: Use `Ctrl+C` to stop servers
@@ -139,7 +139,7 @@ curl http://localhost:8081/getting-started/   # Test MkDocs
 - **Database**: Schema generation requires running PostgreSQL
 - **MkDocs**: Requires `mkdocs` and `mkdocs-material` installed
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 ### "Permission denied" errors
 ```bash

@@ -676,7 +676,7 @@ package db
 // 	unicodeContext := map[string]any{
 // 		"用户":       "测试用户",   // Chinese: user: test user
 // 		"действие": "чтение", // Russian: action: reading
-// 		"🔐":        "🔓",      // Emoji
+// 		"":        "",      // Emoji
 // 	}
 // 	unicodeHash := hashContext(t, unicodeContext)
 //

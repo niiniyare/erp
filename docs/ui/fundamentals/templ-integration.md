@@ -4,7 +4,7 @@
 **SCOPE**: Templ syntax, integration patterns, performance optimization  
 **TARGET AUDIENCE**: Go developers, template authors, component builders
 
-## 🎯 Templ Overview
+##  Templ Overview
 
 [Templ](https://templ.guide) is a type-safe, compile-time Go templating language that generates Go code from template files. It provides the foundation for our server-side rendering architecture.
 
@@ -15,7 +15,7 @@
 - **Security**: Automatic HTML escaping and XSS prevention
 - **Tooling**: IDE support, hot reload, error detection
 
-## 🏗️ Templ Architecture in ERP
+## ️ Templ Architecture in ERP
 
 ### Template Compilation Pipeline
 ```
@@ -36,7 +36,7 @@ templ Page() {
 }
 ```
 
-## 📝 Templ Syntax Guide
+##  Templ Syntax Guide
 
 ### Basic Template Structure
 ```go
@@ -124,7 +124,7 @@ templ TableRows(items []TableItem) {
 }
 ```
 
-## 🔧 Component Composition Patterns
+##  Component Composition Patterns
 
 ### Slot Pattern (Children)
 ```go
@@ -204,7 +204,7 @@ templ RenderComponent(componentType string, props map[string]interface{}) {
 }
 ```
 
-## 🚀 Performance Optimization
+##  Performance Optimization
 
 ### HTTP Streaming
 ```go
@@ -280,7 +280,7 @@ templ ExpensiveChart(data ChartData) {
 }
 ```
 
-## 🔗 HTMX Integration Patterns
+##  HTMX Integration Patterns
 
 ### Form Handling
 ```go
@@ -408,7 +408,7 @@ templ UserEditModal(user User) {
 }
 ```
 
-## 🎨 Alpine.js Integration
+##  Alpine.js Integration
 
 ### Client State Management
 ```go
@@ -497,7 +497,7 @@ templ UserForm() {
 }
 ```
 
-## 🔒 Security and Safety
+##  Security and Safety
 
 ### XSS Prevention
 ```go
@@ -537,7 +537,7 @@ templ SecureForm(csrfToken string) {
 }
 ```
 
-## 🧪 Testing Templ Components
+##  Testing Templ Components
 
 ### Unit Testing
 ```go
@@ -579,7 +579,7 @@ func TestUserForm(t *testing.T) {
 }
 ```
 
-## 🛠️ Development Workflow
+## ️ Development Workflow
 
 ### Live Reload Setup
 ```bash
@@ -609,7 +609,7 @@ dev: templ
 	air
 ```
 
-## 📚 Best Practices
+##  Best Practices
 
 ### Template Organization
 ```
@@ -647,7 +647,7 @@ templ SafeComponent(data Data, err error) {
 4. **Use proper HTMX patterns** for efficient updates
 5. **Profile template rendering** in production
 
-## 📚 Related Documentation
+##  Related Documentation
 
 - **[Architecture](architecture.md)**: System design principles
 - **[Schema System](schema-system.md)**: Type-safe component generation

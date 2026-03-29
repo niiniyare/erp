@@ -4,7 +4,7 @@
 **SCOPE**: All table variants, data management, and interactive features  
 **TARGET AUDIENCE**: Developers implementing data-intensive interfaces
 
-## 📋 Table System Overview
+##  Table System Overview
 
 Our advanced table system provides comprehensive data display and management capabilities for enterprise workflows. Built with schema-driven architecture, it supports sorting, filtering, pagination, selection, and real-time updates.
 
@@ -22,7 +22,7 @@ Our advanced table system provides comprehensive data display and management cap
 | **[CRUD Table](crud-table.md)** | Full data operations | Create, read, update, delete | `CRUDSchema.json` |
 | **[Data Grid](data-grid.md)** | Enterprise data grid | Virtual scrolling, cell editing | `CRUD2Schema.json` |
 
-## 🏗️ Architecture Overview
+## ️ Architecture Overview
 
 ### Component Hierarchy
 ```
@@ -86,7 +86,7 @@ type TableProps struct {
 }
 ```
 
-## 📊 Basic Table Implementation
+##  Basic Table Implementation
 
 ### Simple Data Table
 ```go
@@ -141,7 +141,7 @@ templ TableHeader(column ColumnConfig, sortable bool) {
             
             if column.Filterable {
                 <button class="filter-toggle" @click="toggleFilter('{ column.Key }')">
-                    🔽
+                    
                 </button>
             }
         </div>
@@ -217,7 +217,7 @@ templ TableCell(row map[string]interface{}, column ColumnConfig) {
 }
 ```
 
-## 🔧 Advanced Features
+##  Advanced Features
 
 ### Column Configuration
 ```go
@@ -522,7 +522,7 @@ templ PaginatedTable(props TableProps) {
 }
 ```
 
-## 🎯 Row Selection and Bulk Actions
+##  Row Selection and Bulk Actions
 
 ### Selection Implementation
 ```go
@@ -653,7 +653,7 @@ tableProps := TableProps{
 }
 ```
 
-## 🎨 Styling System
+##  Styling System
 
 ### Base Table Styles
 ```css
@@ -830,7 +830,7 @@ tableProps := TableProps{
 }
 ```
 
-## 📱 Mobile Optimizations
+##  Mobile Optimizations
 
 ### Touch-Friendly Interactions
 ```css
@@ -910,7 +910,7 @@ templ VirtualTable(props TableProps) {
 }
 ```
 
-## 🧪 Testing Strategy
+##  Testing Strategy
 
 ### Unit Tests
 ```go
@@ -980,7 +980,7 @@ describe('Table Performance', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Basic Data Table
 ```go
@@ -1039,7 +1039,7 @@ templ UserManagementTable() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[CRUD Operations](crud-table.md)**: Full data management
 - **[Data Grid](data-grid.md)**: Enterprise grid features
@@ -1049,7 +1049,7 @@ templ UserManagementTable() {
 
 ---
 
-**Component Status**: 🔄 In Development  
+**Component Status**:  In Development  
 **Schema Reference**: `TableSchema.json`, `TableSchema2.json`, `CRUDSchema.json`  
 **Features**: Sorting, filtering, pagination, selection, responsive design  
 **Performance**: Supports 10k+ rows with virtual scrolling

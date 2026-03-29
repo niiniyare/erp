@@ -2,7 +2,7 @@
 title: 模板
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 模板
 icon:
 order: 11

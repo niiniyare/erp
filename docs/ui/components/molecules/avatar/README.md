@@ -4,7 +4,7 @@
 **SCOPE**: All avatar types, shapes, sizes, badges, and fallback handling  
 **TARGET AUDIENCE**: Developers implementing user profile displays, team member lists, and identity representations
 
-## 📋 Component Overview
+##  Component Overview
 
 The Avatar component displays user profile pictures, initials, or icons in a consistent, accessible format. It supports multiple sizes, shapes, badge overlays, fallback handling, and responsive design across different user interface contexts.
 
@@ -13,7 +13,7 @@ The Avatar component displays user profile pictures, initials, or icons in a con
 - **Related Schemas**: `BadgeObject.json`, `SchemaIcon.json`
 - **Base Interface**: User identity and profile representation component
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Avatar component is configured using JSON that conforms to the `AvatarSchema.json`. The JSON configuration renders user profile images with appropriate sizing, shape, and fallback behavior.
 
@@ -1135,7 +1135,7 @@ func getErrorHandler(props AvatarProps) string {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1280,7 +1280,7 @@ describe('Avatar Component Accessibility', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### User Profile Avatar
 ```go
@@ -1310,7 +1310,7 @@ templ CommentAvatar(comment Comment) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Badge](../../atoms/badge/)** - Badge overlays for avatars
 - **[Image](../../atoms/image/)** - Base image component

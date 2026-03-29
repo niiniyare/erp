@@ -4,13 +4,12 @@ package featureflag
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
+	"github.com/google/uuid"
 )
 
 // Repository defines the data access interface for feature flags
@@ -103,7 +102,7 @@ func (r *repository) CreateFeatureFlag(ctx context.Context, req *CreateFeatureFl
 func (r *repository) GetFeatureFlagByName(ctx context.Context, name string) (*FeatureFlag, error) {
 	dbFlag, err := r.store.GetFeatureFlagByName(ctx, name)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, ErrFeatureFlagNotFound
 		}
 		return nil, fmt.Errorf("failed to get feature flag by name: %w", err)
@@ -116,7 +115,7 @@ func (r *repository) GetFeatureFlagByName(ctx context.Context, name string) (*Fe
 func (r *repository) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
 	dbFlag, err := r.store.GetFeatureFlagByID(ctx, id)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, ErrFeatureFlagNotFound
 		}
 		return nil, fmt.Errorf("failed to get feature flag by ID: %w", err)

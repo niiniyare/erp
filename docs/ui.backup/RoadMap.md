@@ -1,10 +1,10 @@
 # UI Documentation Restructuring Roadmap
 
-## 🎯 **Objective**
+##  **Objective**
 
 Transform the organically evolved UI documentation into a well-organized, maintainable system that supports our sophisticated schema-driven UI architecture and improves developer productivity.
 
-## 📊 **Current State Analysis**
+##  **Current State Analysis**
 
 ### **Problems Identified**
 - **1,144 total files** with poor organization
@@ -21,7 +21,7 @@ Transform the organically evolved UI documentation into a well-organized, mainta
 - ✅ Advanced CSS runtime system
 - ✅ Working Templ + HTMX + Alpine.js integration
 
-## 📋 **Restructuring Checklist**
+##  **Restructuring Checklist**
 
 ### **Phase 1: Foundation Setup** (Week 1)
 
@@ -260,7 +260,7 @@ docs/ui/Schema/check_doc_accuracy.sh
   - [ ] Complete coverage of features
   - [ ] Clear navigation paths
 
-## 📊 **Success Metrics**
+##  **Success Metrics**
 
 ### **Quantitative Goals**
 - [ ] **Reduce file count** from 1,144 to <200 through consolidation
@@ -274,7 +274,7 @@ docs/ui/Schema/check_doc_accuracy.sh
 - [ ] **Self-service capability** - developers can complete tasks without assistance
 - [ ] **Maintenance efficiency** - easy to keep documentation current
 
-## 🔧 **Validation Commands**
+##  **Validation Commands**
 
 ### **Structure Validation**
 ```bash
@@ -306,7 +306,7 @@ cd docs/ui/quick-start/
 # Verify each step works as documented
 ```
 
-## 📝 **Implementation Notes**
+##  **Implementation Notes**
 
 ### **Content Migration Strategy**
 1. **Preserve valuable content** - don't lose working documentation

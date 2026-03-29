@@ -4,7 +4,7 @@
 **SCOPE**: Full page structure, layout management, sidebar, toolbar, and data initialization  
 **TARGET AUDIENCE**: Developers implementing complete ERP pages, dashboards, and application layouts
 
-## 📋 Component Overview
+##  Component Overview
 
 Page provides comprehensive page-level functionality with support for sidebar layouts, toolbars, data initialization, polling, and responsive design. Essential for creating complete ERP application pages with proper structure and data management.
 

@@ -1,6 +1,7 @@
 package user
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -59,8 +60,8 @@ func NewUserHandler(
 // @Success 201 {object} User
 // @Router /api/v1/users [post]
 func (h *UserHandler) Create(c *fiber.Ctx) error {
-	// Step 1: Start tracing
-	ctx, span := h.tracer.StartSpan(c.Context(), "user.Create")
+	// Step 1: Start tracing — use UserContext so tenant ID set by middleware is preserved
+	ctx, span := h.tracer.StartSpan(c.UserContext(), "user.Create")
 	defer span.End()
 	c.SetUserContext(ctx)
 
@@ -71,7 +72,7 @@ func (h *UserHandler) Create(c *fiber.Ctx) error {
 	}
 
 	// Step 3: Delegate to service
-	createdUser, err := h.service.RegisterNewUser(c.Context(), &req)
+	createdUser, err := h.service.RegisterNewUser(ctx, &req)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -173,7 +174,7 @@ func (h *UserHandler) Get(c *fiber.Ctx) error {
 // @Router /api/v1/users [get]
 func (h *UserHandler) List(c *fiber.Ctx) error {
 	// Step 1: Start tracing
-	ctx, span := h.tracer.StartSpan(c.Context(), "user.List")
+	ctx, span := h.tracer.StartSpan(c.UserContext(), "user.List")
 	defer span.End()
 	c.SetUserContext(ctx)
 
@@ -312,7 +313,7 @@ func (h *UserHandler) Delete(c *fiber.Ctx) error {
 // @Router /api/v1/users/authenticate [post]
 func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	// Step 1: Start tracing
-	ctx, span := h.tracer.StartSpan(c.Context(), "user.Authenticate")
+	ctx, span := h.tracer.StartSpan(c.UserContext(), "user.Authenticate")
 	defer span.End()
 	c.SetUserContext(ctx)
 
@@ -323,7 +324,7 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 	}
 
 	// Step 3: Delegate to service
-	userEntity, err := h.service.Authenticate(c.Context(), req.Identifier, req.Password)
+	userEntity, err := h.service.Authenticate(ctx, req.Identifier, req.Password)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -350,7 +351,7 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 // @Router /api/v1/users/{id}/change-password [post]
 func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	// Step 1: Start tracing
-	ctx, span := h.tracer.StartSpan(c.Context(), "user.ChangePassword")
+	ctx, span := h.tracer.StartSpan(c.UserContext(), "user.ChangePassword")
 	defer span.End()
 	c.SetUserContext(ctx)
 
@@ -371,7 +372,7 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	}
 
 	// Step 3: Delegate to service
-	if err := h.service.ChangePassword(c.Context(), userUUID, req.CurrentPassword, req.NewPassword); err != nil {
+	if err := h.service.ChangePassword(ctx, userUUID, req.CurrentPassword, req.NewPassword); err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
 	}
@@ -502,7 +503,7 @@ func (h *UserHandler) getRequestID(c *fiber.Ctx) string {
 
 func (h *UserHandler) getTenantID(c *fiber.Ctx) string {
 	if tenantID := c.Locals("tenant_id"); tenantID != nil {
-		return tenantID.(string)
+		return fmt.Sprintf("%v", tenantID)
 	}
 	return ""
 }

@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
             patterns: [/\/api\//, /swagger/, /endpoint/, /authentication/, /authorization/],
             helpType: 'api',
             resources: [
-                { title: '🚀 Interactive API Explorer', url: '/reference/api/swagger-ui/' },
+                { title: ' Interactive API Explorer', url: '/reference/api/swagger-ui/' },
                 { title: 'Authentication Guide', url: '/reference/api/auth/' },
                 { title: 'Complete Integration Tutorial', url: '/reference/api/tutorials/api-integration/' }
             ]
@@ -131,7 +131,7 @@ document.addEventListener('DOMContentLoaded', function() {
             hint.className = 'contextual-hint api-hint';
             hint.innerHTML = `
                 <!-- <div style="background: #e3f2fd; border: 1px solid #2196f3; border-radius: 4px; padding: 8px; margin: 8px 0; font-size: 12px;"> -->
-                <!--     💡 <strong>Quick Tip:</strong> Test this endpoint in the  -->
+                <!--      <strong>Quick Tip:</strong> Test this endpoint in the  -->
                 <!--     <a href="/reference/api/swagger-ui/" style="color: #1976d2;">Interactive API Explorer</a> -->
                 <!-- </div> -->
             `;
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             quickAccess.innerHTML = `
                 <div style="font-weight: bold; margin-bottom: 8px; color: #1976d2;">
-                    📚 Related Resources
+                     Related Resources
                 </div>
                 ${contextConfig.resources.map(resource => `
                     <div style="margin: 4px 0;">
@@ -352,7 +352,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             return `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h2 style="margin: 0; color: #1976d2;">📚 Documentation Help</h2>
+                    <h2 style="margin: 0; color: #1976d2;"> Documentation Help</h2>
                     <button onclick="document.getElementById('contextual-help-modal').remove(); window.contextualHelper.helpVisible = false;" 
                             style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
                 </div>
@@ -363,7 +363,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 ${contextConfig ? `
                     <div style="margin-bottom: 20px;">
-                        <h3 style="color: #1976d2;">🎯 Relevant Resources</h3>
+                        <h3 style="color: #1976d2;"> Relevant Resources</h3>
                         ${contextConfig.resources.map(resource => `
                             <div style="margin: 8px 0;">
                                 <a href="${resource.url}" style="color: #1976d2; text-decoration: none;">
@@ -389,7 +389,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <div style="margin-bottom: 16px;">
-                    <h3 style="color: #1976d2;">🚀 Quick Actions</h3>
+                    <h3 style="color: #1976d2;"> Quick Actions</h3>
                     <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                         <a href="/reference/api/swagger-ui/" 
                            style="background: #2196f3; color: white; padding: 8px 12px; border-radius: 4px; text-decoration: none; font-size: 12px;">
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 
                 <div style="padding-top: 16px; border-top: 1px solid #e0e0e0; font-size: 12px; color: #666;">
-                    💡 <strong>Tip:</strong> The help system adapts based on the current page content. 
+                     <strong>Tip:</strong> The help system adapts based on the current page content. 
                     Navigate to different sections to see context-specific assistance.
                 </div>
             `;

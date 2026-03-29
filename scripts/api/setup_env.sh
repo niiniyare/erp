@@ -8,7 +8,7 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../../" && pwd)"
 
 # Source environment variables if .env exists
 if [ -f "$PROJECT_ROOT/.env" ]; then
-    echo "📝 Loading environment from $PROJECT_ROOT/.env"
+    echo " Loading environment from $PROJECT_ROOT/.env"
     # Export variables from .env, handling comments and empty lines
     set -a
     source "$PROJECT_ROOT/.env"

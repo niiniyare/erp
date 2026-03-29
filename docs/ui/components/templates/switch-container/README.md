@@ -4,7 +4,7 @@
 **SCOPE**: State-based UI rendering, conditional components, and dynamic content switching  
 **TARGET AUDIENCE**: Developers implementing conditional interfaces, multi-state components, and dynamic routing
 
-## 📋 Component Overview
+##  Component Overview
 
 SwitchContainer provides powerful conditional rendering capabilities, allowing you to display different components or layouts based on application state, user permissions, or data conditions. Essential for building adaptive interfaces that respond to changing context and state.
 

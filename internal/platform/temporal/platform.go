@@ -81,7 +81,7 @@ func (p *Platform) Start(ctx context.Context) error {
 
 	p.started = true
 
-	p.logger.Info("🚀 Temporal Platform Started", loggerPkg.Fields{
+	p.logger.Info(" Temporal Platform Started", loggerPkg.Fields{
 		"namespace":    p.config.Namespace,
 		"host_port":    p.config.HostPort,
 		"worker_count": len(p.workerManager.workers),

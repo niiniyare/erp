@@ -4,11 +4,11 @@
 **SCOPE**: Component composition patterns, data flow, API integration, and best practices  
 **TARGET AUDIENCE**: Developers building complete ERP applications using the component library
 
-## 📋 Guide Overview
+##  Guide Overview
 
 This guide demonstrates how to effectively combine atoms, molecules, organisms, and templates to create complete ERP business applications. It covers composition patterns, data flow management, and real-world implementation examples.
 
-## 🏗️ Component Architecture Layers
+## ️ Component Architecture Layers
 
 ### Atomic Design Hierarchy
 ```
@@ -21,7 +21,7 @@ Molecules (Cards, Modals, Complex Inputs)
 Atoms (Buttons, Inputs, Text, Icons)
 ```
 
-## 🔄 Data Flow Patterns
+##  Data Flow Patterns
 
 ### 1. Top-Down Data Flow
 ```json
@@ -74,7 +74,7 @@ Atoms (Buttons, Inputs, Text, Icons)
 }
 ```
 
-## 🎯 Complete Application Examples
+##  Complete Application Examples
 
 ### Customer Management Application
 
@@ -642,7 +642,7 @@ Atoms (Buttons, Inputs, Text, Icons)
 }
 ```
 
-## 🛠️ Best Practices
+## ️ Best Practices
 
 ### 1. Component Composition
 - **Keep templates simple**: Page and Service should orchestrate, not implement

@@ -4,7 +4,7 @@
 **SCOPE**: Month range picking, fiscal periods, reporting cycles, and duration-based planning  
 **TARGET AUDIENCE**: Developers implementing period reporting, budget planning, and monthly range filters
 
-## 📋 Component Overview
+##  Component Overview
 
 Month Range Control provides month range selection with start/end month picking, duration limits, shortcuts, and validation. Essential for period-based reporting and planning in ERP systems.
 

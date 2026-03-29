@@ -4,7 +4,7 @@
 **SCOPE**: Quarter picking, fiscal quarters, quarterly data entry, and business reporting cycles  
 **TARGET AUDIENCE**: Developers implementing quarterly reports, business planning, and quarterly data management features
 
-## 📋 Component Overview
+##  Component Overview
 
 Quarter Control provides quarter-only selection functionality with fiscal year support, format customization, shortcuts, and validation. Essential for quarterly business reporting and planning interfaces in ERP systems.
 

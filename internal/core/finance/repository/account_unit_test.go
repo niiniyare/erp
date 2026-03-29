@@ -5,7 +5,6 @@ package repository
 
 import (
 	"context"
-	"database/sql"
 	"testing"
 	"time"
 
@@ -234,7 +233,7 @@ func (s *AccountsRepositoryUnitTestSuite) TestGetByIDNotFound() {
 		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				GetAccountByID(gomock.Any(), accountID).
-				Return(nil, sql.ErrNoRows).
+				Return(nil, db.ErrNoRows).
 				Times(1)
 
 			return fn(ctx, s.mockStore)

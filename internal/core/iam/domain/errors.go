@@ -2,7 +2,7 @@ package domain
 
 import "fmt"
 
-// ─── Domain Error Type ────────────────────────────────────────────────────────
+// Domain Error Type
 
 // Error is the IAM domain error type.
 // It intentionally does not import shared/errors so the domain stays
@@ -17,7 +17,7 @@ func (e *Error) Error() string {
 	return fmt.Sprintf("[iam] %s: %s", e.Code, e.Message)
 }
 
-// ─── Authorization Sentinels ──────────────────────────────────────────────────
+// Authorization Sentinels
 
 var (
 	ErrForbidden      = &Error{"AUTHZ_FORBIDDEN", "access denied", 403}
@@ -26,7 +26,7 @@ var (
 	ErrPolicyConflict = &Error{"AUTHZ_DUPLICATE", "policy already exists", 409}
 )
 
-// ─── Identity Validation Errors ───────────────────────────────────────────────
+// Identity Validation Errors
 
 // ErrInvalidIdentity returns a 400 domain error for invalid identity inputs.
 // Used by CreateUserRequest.Validate() and similar domain-level checks.

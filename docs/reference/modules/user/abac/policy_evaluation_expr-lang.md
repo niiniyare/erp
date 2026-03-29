@@ -323,7 +323,7 @@ result = opaClient.evaluate(policy, input);
 
 ## 6. Risk & Complexity Assessment
 
-### Development Risk: 🔴 **High**
+### Development Risk:  **High**
 
 **Technical Debt Risks:**
 
@@ -497,7 +497,7 @@ var implementationEffort = map[string]map[string]int{
 4. **You need maximum performance** and can justify the development cost
 5. **Your policies are simple** and unlikely to grow complex
 
-### 🎯 **Better Alternatives for Most ABAC Use Cases:**
+###  **Better Alternatives for Most ABAC Use Cases:**
 
 **For Enterprise ABAC:**
 - **OPA/Rego**: Most mature,  ecosystem, industry standard
@@ -558,7 +558,7 @@ If you start with expr-lang and later need to migrate to a purpose-built ABAC en
 
 ## 11. Final Recommendation
 
-### 🔴 **Strong Recommendation: Do NOT use expr-lang for ABAC**
+###  **Strong Recommendation: Do NOT use expr-lang for ABAC**
 
 **Why this is a poor architectural choice:**
 
@@ -568,7 +568,7 @@ If you start with expr-lang and later need to migrate to a purpose-built ABAC en
 4. **Technical Debt Risk**: High likelihood of creating unmaintainable authorization code
 5. **Opportunity Cost**: Time spent building ABAC infrastructure could be spent on business features
 
-### 🎯 **Recommended Alternatives:**
+###  **Recommended Alternatives:**
 
 **For Most Organizations:**
 - **OPA/Rego**: Industry standard,  tooling, multi-language support

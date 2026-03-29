@@ -4,7 +4,7 @@
 **SCOPE**: All image variants, formats, and optimization patterns  
 **TARGET AUDIENCE**: Developers implementing media display, galleries, and visual content
 
-## 📋 Component Overview
+##  Component Overview
 
 The Image component provides optimized media display with comprehensive features for responsive images, lazy loading, accessibility, and error handling. It supports various formats, aspect ratios, and display modes while maintaining performance and user experience standards.
 
@@ -13,7 +13,7 @@ The Image component provides optimized media display with comprehensive features
 - **Related Schemas**: `IconSchema.json`, `StatusSchema.json`
 - **Base Interface**: Media element with optimization features
 
-## 🎨 Image Types
+##  Image Types
 
 ### Basic Image
 **Purpose**: Standard image display with optimization
@@ -257,7 +257,7 @@ templ BackgroundImage(props ImageProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ```go
 type ImageProps struct {
@@ -319,7 +319,7 @@ type ImageSource struct {
 }
 ```
 
-## 🎨 Variants and Styles
+##  Variants and Styles
 
 ### Size Variations
 ```css
@@ -572,7 +572,7 @@ func getImageARIA(props ImageProps) map[string]string {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -717,7 +717,7 @@ test.describe('Image Visual Tests', () => {
 });
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -766,7 +766,7 @@ test.describe('Image Visual Tests', () => {
 }
 ```
 
-## 🔧 Optimization Features
+##  Optimization Features
 
 ### Lazy Loading Implementation
 ```go
@@ -810,7 +810,7 @@ Alpine.data('imageLoader', () => ({
 }));
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Hero Banner
 ```go
@@ -869,7 +869,7 @@ templ ProductGallery() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Icon](../icon/)**: Vector graphics
 - **[Badge](../badge/)**: Status indicators

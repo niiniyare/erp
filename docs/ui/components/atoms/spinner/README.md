@@ -4,7 +4,7 @@
 **SCOPE**: All spinner variants, animations, and loading patterns  
 **TARGET AUDIENCE**: Developers implementing loading states, async operations, and activity indicators
 
-## 📋 Component Overview
+##  Component Overview
 
 The Spinner component provides visual feedback for ongoing processes, loading states, and asynchronous operations. It offers various animation styles, sizes, and integration patterns while maintaining accessibility standards and performance optimization.
 
@@ -13,7 +13,7 @@ The Spinner component provides visual feedback for ongoing processes, loading st
 - **Related Schemas**: `ProgressSchema.json`, `StatusSchema.json`
 - **Base Interface**: Visual indicator for ongoing activity
 
-## 🎨 Spinner Types
+##  Spinner Types
 
 ### Basic Spinner
 **Purpose**: Standard loading indicator for general use
@@ -203,7 +203,7 @@ templ OverlaySpinner(props SpinnerProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ```go
 type SpinnerProps struct {
@@ -237,7 +237,7 @@ type SpinnerProps struct {
 }
 ```
 
-## 🎨 Variants and Styles
+##  Variants and Styles
 
 ### Size Variations
 ```css
@@ -466,7 +466,7 @@ func getSpinnerAttributes(props SpinnerProps) map[string]string {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -564,7 +564,7 @@ test.describe('Spinner Visual Tests', () => {
 });
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Considerations
 ```css
@@ -606,7 +606,7 @@ test.describe('Spinner Visual Tests', () => {
 }
 ```
 
-## 🔧 Performance Optimization
+##  Performance Optimization
 
 ### Animation Optimization
 ```css
@@ -633,7 +633,7 @@ func LazySpinner(props SpinnerProps) templ.Component {
 }
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Loading Button
 ```go
@@ -693,7 +693,7 @@ templ PageLoader() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Progress](../progress/)**: Progress tracking
 - **[Button](../button/)**: Loading buttons

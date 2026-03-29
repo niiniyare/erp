@@ -2,7 +2,7 @@
 
 Complete collection of curl commands for testing the Authentication API.
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### Environment Setup
 ```bash
@@ -20,7 +20,7 @@ sudo apt-get install jq  # Ubuntu/Debian
 brew install jq          # macOS
 ```
 
-## 🔐 Authentication Flow Examples
+##  Authentication Flow Examples
 
 ### 1. User Login
 
@@ -173,7 +173,7 @@ curl -X GET $API_BASE_URL/api/v1/auth/validate \
   -H "Authorization: Bearer $ACCESS_TOKEN" | jq .
 ```
 
-## 🧪  Test Scenarios
+##   Test Scenarios
 
 ### Scenario 1: Complete Authentication Flow
 ```bash
@@ -192,7 +192,7 @@ ACCESS_TOKEN=$(echo $LOGIN_RESPONSE | jq -r '.access_token')
 USER_ID=$(echo $LOGIN_RESPONSE | jq -r '.user.id')
 
 echo "✅ Login successful - User ID: $USER_ID"
-echo "🔑 Access Token: ${ACCESS_TOKEN:0:20}..."
+echo " Access Token: ${ACCESS_TOKEN:0:20}..."
 
 # 2. Validate token
 echo "Step 2: Token Validation"
@@ -410,7 +410,7 @@ curl -s -X POST $API_BASE_URL/api/v1/auth/logout \
 echo "=== Multiple user sessions test completed ==="
 ```
 
-## 📊 Performance and Load Testing
+##  Performance and Load Testing
 
 ### Response Time Testing
 ```bash
@@ -454,7 +454,7 @@ echo "Concurrent login test completed"
 echo "=== Load testing completed ==="
 ```
 
-## 🔧 Utility Functions
+##  Utility Functions
 
 ### Authentication Helper Function
 ```bash
@@ -528,7 +528,7 @@ validate_token() {
 validate_token "$ACCESS_TOKEN"
 ```
 
-## 🚨 Common Issues and Solutions
+##  Common Issues and Solutions
 
 ### Issue: 401 Unauthorized
 ```bash

@@ -7,7 +7,7 @@
 
 ---
 
-## 📖 How to Use This Guide
+##  How to Use This Guide
 
 **New Developers**: Start with Quick Start (§2), then read Part II linearly  
 **Experienced Developers**: Use as reference, jump to specific patterns  

@@ -4,11 +4,10 @@ package notification
 
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
+	"github.com/google/uuid"
 )
 
 // Repository defines the interface for notification data persistence,
@@ -34,7 +33,7 @@ func NewRepository(store db.Store) Repository {
 func (r *repository) GetUserNotificationPreferences(ctx context.Context, userID uuid.UUID) (*NotificationPreferences, error) {
 	prefs, err := r.store.GetUserNotificationPreferences(ctx, userID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			// Preferences not found, create default ones
 			return r.createDefaultPreferences(ctx, userID)
 		}

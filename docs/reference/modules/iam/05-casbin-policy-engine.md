@@ -20,8 +20,12 @@ g = _, _, _
 e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
 
 [matchers]
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch2(r.act, p.act)
+m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
 ```
+
+> **Note:** `keyMatch2` on `obj` supports URL-style path params (`invoice/:id` matches `invoice/abc-123`).
+> `keyMatch` on `act` supports glob wildcards (`*` matches any verb like `read` or `delete`).
+> Using `keyMatch2` on `act` was a prior bug — it treats `:param` syntax, so `*` would **never** match `read`, silently denying all wildcard-action policies.
 
 ### Breaking Down Each Section
 
@@ -102,7 +106,7 @@ Example:
 #### `[matchers]` — How a Request Is Evaluated
 
 ```markdown
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch2(r.act, p.act)
+m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
 
 Step 1: g(r.sub, p.sub, r.dom)
   Does r.sub have the role p.sub in domain r.dom?
@@ -116,29 +120,40 @@ Step 2: r.dom == p.dom
 
 Step 3: keyMatch2(r.obj, p.obj)
   Does the requested object match the policy object pattern?
-  keyMatch2("invoice/inv_123", "invoice/*") → true
-  keyMatch2("invoice/inv_123", "order/*")   → false
-  keyMatch2("invoice/inv_123", "*")         → true
+  Uses URL-style :param wildcards for path segments.
+  keyMatch2("invoice/inv_123", "invoice/:id") → true
+  keyMatch2("invoice/inv_123", "order/:id")   → false
+  keyMatch2("invoice/inv_123", "*")           → true
 
-Step 4: keyMatch2(r.act, p.act)
-  Does the requested action match the policy action?
-  keyMatch2("read",  "read") → true
-  keyMatch2("read",  "*")    → true
-  keyMatch2("delete","read") → false
+Step 4: keyMatch(r.act, p.act)   ← keyMatch, NOT keyMatch2
+  Does the requested action match the policy action pattern?
+  Uses glob wildcards. keyMatch2 would break "*" action policies.
+  keyMatch("read",   "read") → true
+  keyMatch("read",   "*")    → true   (glob: * matches any verb)
+  keyMatch("delete", "read") → false
 ```
 
-### keyMatch2 Pattern Reference
+### Pattern Matching Reference
 
-`keyMatch2` is Casbin's URL-style wildcard function. It supports `*` as a path segment wildcard.
+**`keyMatch2`** is used for `obj` (resource objects) — URL-style `:param` path segments.
 
 | Pattern | Request Object | Match? | Notes |
 |---------|---------------|--------|-------|
-| `invoice/*` | `invoice/inv_123` | ✅ | Single-level wildcard |
+| `invoice/:id` | `invoice/inv_123` | ✅ | Named path parameter |
+| `invoice/*` | `invoice/inv_123` | ✅ | Glob wildcard also works |
 | `invoice/*` | `invoice/inv_123/pdf` | ❌ | Does NOT match sub-paths |
 | `*/export` | `invoice/export` | ✅ | Any resource, export action |
-| `*/export` | `report/finance/export` | ❌ | Only one level before export |
 | `*` | `invoice/inv_123` | ✅ | Matches everything |
 | `report/finance/*` | `report/finance/pnl` | ✅ | Scoped to finance reports |
+
+**`keyMatch`** is used for `act` (action verbs) — glob wildcards only.
+
+| Pattern | Request Action | Match? | Notes |
+|---------|---------------|--------|-------|
+| `read` | `read` | ✅ | Exact match |
+| `*` | `read` | ✅ | Wildcard — any action |
+| `*` | `delete` | ✅ | Wildcard — any action |
+| `read` | `delete` | ❌ | No match |
 
 ### Policy Examples by Module
 

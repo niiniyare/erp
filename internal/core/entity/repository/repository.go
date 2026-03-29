@@ -23,7 +23,7 @@ type Repository interface {
 	List(ctx context.Context) ([]*domain.EntityNode, error)
 }
 
-// ─── Postgres implementation ──────────────────────────────────────────────────
+// Postgres implementation
 
 type postgresRepo struct {
 	store db.Store

@@ -970,6 +970,15 @@ type Querier interface {
 	ListActiveFeatureFlagsAdmin(ctx context.Context, tenantID uuid.UUID) ([]*ListActiveFeatureFlagsAdminRow, error)
 	ListActiveFeatureFlagsUser(ctx context.Context) ([]*ListActiveFeatureFlagsUserRow, error)
 	ListActivePolicies(ctx context.Context) ([]*Policy, error)
+	// Boot schema queries — used by GET /schema/boot to build the AMIS app shell.
+	// Run `make sqlc` after modifying this file.
+	//
+	// Modules and resources are SYSTEM-scoped (tenant_id IS NULL) — no tenant
+	// context needed.  Permission and feature-flag filtering is done in Go using
+	// the pre-computed ResolvedSession (no extra DB round-trips).
+	//
+	// Note: ListActiveSystemModules is defined in modules.sql.
+	ListActiveResourcesByModule(ctx context.Context, moduleID uuid.UUID) ([]*Resource, error)
 	// Returns roles that are currently active and not expired — used by permission computation.
 	ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error)
 	ListActiveSystemModules(ctx context.Context) ([]*Module, error)

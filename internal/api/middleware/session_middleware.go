@@ -82,3 +82,21 @@ func Authorize(permission string) fiber.Handler {
 		return c.Next()
 	}
 }
+
+// RequireFlag returns a Fiber middleware that checks whether the authenticated
+// session has the named feature flag enabled in its pre-computed Configuration.
+//
+// Must run after Authenticate. Returns 403 with "feature not enabled" if the
+// flag is absent or false.
+func RequireFlag(flagKey string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		if !ok || sess == nil {
+			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+		}
+		if !sess.FeatureEnabled(flagKey) {
+			return fiber.NewError(fiber.StatusForbidden, "feature not enabled")
+		}
+		return c.Next()
+	}
+}

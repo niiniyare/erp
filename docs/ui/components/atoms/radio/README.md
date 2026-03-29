@@ -4,7 +4,7 @@
 **SCOPE**: All radio button variants, groups, and interaction patterns  
 **TARGET AUDIENCE**: Developers implementing form controls and selection interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 The Radio Button component provides intuitive single selection from a group of mutually exclusive options. It supports various layouts, validation, and enhanced visual feedback while maintaining full accessibility compliance.
 
@@ -13,7 +13,7 @@ The Radio Button component provides intuitive single selection from a group of m
 - **Related Schemas**: `Options.json`, `Option.json`
 - **Base Interface**: Form control with single selection
 
-## 🎨 Radio Button Types
+##  Radio Button Types
 
 ### Basic Radio Button
 **Purpose**: Simple single selection from a group of options
@@ -288,7 +288,7 @@ templ ImageRadioGroup(props RadioGroupProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -417,7 +417,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Radio Styles
 ```css
@@ -1019,7 +1019,7 @@ templ ValidatedRadioGroup(props RadioGroupProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1235,7 +1235,7 @@ templ AccessibleRadioGroup(props RadioGroupProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1349,7 +1349,7 @@ test.describe('Radio Button Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Payment Method Selection
 ```go
@@ -1451,7 +1451,7 @@ templ ThemeSelection() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Checkbox](../checkbox/)**: Multiple selections from options
 - **[Switch](../switch/)**: Toggle controls for settings

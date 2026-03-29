@@ -2,7 +2,7 @@
 
  observability through structured logging, distributed tracing, and metrics collection for better monitoring, debugging, and performance optimization.
 
-## 📊 Observability Stack Overview
+##  Observability Stack Overview
 
 Our observability system includes three pillars integrated throughout all application layers:
 
@@ -11,7 +11,7 @@ Our observability system includes three pillars integrated throughout all applic
 │                    Application Layers                       │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
 │  │ API Layer   │  │ Service     │  │ Repository  │        │
-│  │ 📝🔍📊     │  │ 📝🔍📊     │  │ 📝🔍📊     │        │
+│  │      │  │      │  │      │        │
 │  └─────────────┘  └─────────────┘  └─────────────┘        │
 └─────────────────────────────────────────────────────────────┘
                               │
@@ -19,16 +19,16 @@ Our observability system includes three pillars integrated throughout all applic
 ┌─────────────────────────────────────────────────────────────┐
 │                 Observability Layer                         │
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐        │
-│  │  📝 Logging │  │ 🔍 Tracing  │  │ 📊 Metrics  │        │
+│  │   Logging │  │  Tracing  │  │  Metrics  │        │
 │  │   (Zap/     │  │ (OpenTel)   │  │ (Prometheus)│        │
 │  │  Zerolog)   │  │             │  │             │        │
 │  └─────────────┘  └─────────────┘  └─────────────┘        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Legend**: 📝 Logging | 🔍 Tracing | 📊 Metrics
+**Legend**:  Logging |  Tracing |  Metrics
 
-## 📝 Structured Logging
+##  Structured Logging
 
 ### Logger Architecture
 
@@ -210,7 +210,7 @@ logger.InfoContext(ctx, "Processing user request", logger.Fields{
 })
 ```
 
-## 🔍 Distributed Tracing
+##  Distributed Tracing
 
 ### Tracing Architecture
 
@@ -471,7 +471,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 }
 ```
 
-## 📊 Metrics Collection
+##  Metrics Collection
 
 ### Metrics Architecture
 
@@ -725,7 +725,7 @@ func (r *repository) Create(ctx context.Context, tenant *Tenant) error {
 }
 ```
 
-## 🔧 Environment Configuration
+##  Environment Configuration
 
 ### Environment Variables
 ```bash
@@ -796,7 +796,7 @@ func initializeObservability() error {
 }
 ```
 
-## 🎯 Best Practices
+##  Best Practices
 
 ### 1. **Consistent Field Names**
 ```go
@@ -872,7 +872,7 @@ logger.Info("Operation completed", logger.Fields{
 
 ---
 
-📚 **Next Steps**:
+ **Next Steps**:
 - [Code Examples](./code-examples.md) - See complete observability integration
 - [Best Practices](./01-best-practices.md) - Development guidelines with observability
 - [Error Handling](./error-handling.md) - Error tracking and monitoring

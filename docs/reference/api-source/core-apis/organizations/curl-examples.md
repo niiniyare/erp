@@ -2,7 +2,7 @@
 
 Complete collection of curl commands for testing the Organization Management API.
 
-## 📋 Prerequisites
+##  Prerequisites
 
 ### Environment Setup
 ```bash
@@ -20,7 +20,7 @@ sudo apt-get install jq  # Ubuntu/Debian
 brew install jq          # macOS
 ```
 
-## 🏢 Organization CRUD Operations
+##  Organization CRUD Operations
 
 ### 1. Create Organization
 
@@ -299,7 +299,7 @@ curl -X PATCH $API_BASE_URL/api/v1/organizations/$TEAM_ID/archive \
   }' -v
 ```
 
-## 🧪  Test Scenarios
+##   Test Scenarios
 
 ### Scenario 1: Complete Organization Lifecycle
 ```bash
@@ -528,7 +528,7 @@ done
 echo "=== Organization types test completed ==="
 ```
 
-## 📊 Performance and Monitoring
+##  Performance and Monitoring
 
 ### Response Time Testing
 ```bash
@@ -575,7 +575,7 @@ echo "Concurrent creation test completed"
 echo "=== Load testing completed ==="
 ```
 
-## 🔧 Utility Functions
+##  Utility Functions
 
 ### Organization Management Helper Function
 ```bash
@@ -672,7 +672,7 @@ get_organization_stats() {
 get_organization_stats
 ```
 
-## 🚨 Common Issues and Solutions
+##  Common Issues and Solutions
 
 ### Issue: Circular Reference Error
 ```bash

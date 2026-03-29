@@ -4,7 +4,7 @@
 **SCOPE**: All switch variants, states, and interaction patterns  
 **TARGET AUDIENCE**: Developers implementing toggle controls and settings interfaces
 
-## 📋 Component Overview
+##  Component Overview
 
 The Switch component provides intuitive toggle controls for binary settings and preferences. It offers immediate visual feedback, smooth animations, and supports various sizes and styles while maintaining full accessibility compliance.
 
@@ -13,7 +13,7 @@ The Switch component provides intuitive toggle controls for binary settings and 
 - **Related Schemas**: `StateSchema.json`, `Options.json`
 - **Base Interface**: Form control with toggle state
 
-## 🎨 Switch Types
+##  Switch Types
 
 ### Basic Switch
 **Purpose**: Simple on/off toggle for boolean settings
@@ -284,7 +284,7 @@ templ AnimatedSwitch(props SwitchProps) {
 }
 ```
 
-## 🎯 Props Interface
+##  Props Interface
 
 ### Core Properties
 ```go
@@ -421,7 +421,7 @@ const (
 )
 ```
 
-## 🎨 Styling Implementation
+##  Styling Implementation
 
 ### Base Switch Styles
 ```css
@@ -1138,7 +1138,7 @@ templ DependentSwitch(props SwitchProps) {
 }
 ```
 
-## 📱 Responsive Design
+##  Responsive Design
 
 ### Mobile Optimizations
 ```css
@@ -1357,7 +1357,7 @@ templ AccessibleSwitch(props SwitchProps) {
 }
 ```
 
-## 🧪 Testing Guidelines
+##  Testing Guidelines
 
 ### Unit Tests
 ```go
@@ -1460,7 +1460,7 @@ test.describe('Switch Visual Tests', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Settings Panel
 ```go
@@ -1537,7 +1537,7 @@ templ FeatureToggles() {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Checkbox](../checkbox/)**: Multiple selections from options
 - **[Radio Button](../radio/)**: Single selection from options

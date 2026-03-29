@@ -2,7 +2,7 @@
 
 This guide provides  curl commands to test the User Management API following the data flow pattern.
 
-## 🚀 Prerequisites
+##  Prerequisites
 
 1. **Start the Server**
 ```bash
@@ -31,7 +31,7 @@ brew install jq
 choco install jq
 ```
 
-## 📋 API Endpoints Overview
+##  API Endpoints Overview
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
@@ -45,7 +45,7 @@ choco install jq
 | PUT | `/api/v1/users/{id}/password` | Update password |
 | GET | `/api/v1/users/{id}/roles` | Get user roles |
 
-## 🔧 Health Check
+##  Health Check
 
 First, verify the server is running:
 
@@ -60,7 +60,7 @@ curl -X GET http://localhost:8080/health | jq .
 # }
 ```
 
-## 👥 User Management Tests
+##  User Management Tests
 
 ### 1. Create User
 
@@ -223,7 +223,7 @@ curl -X GET "http://localhost:8080/api/v1/users/search?q=admin&limit=5&offset=0"
 # }
 ```
 
-## 🔐 Authentication Tests
+##  Authentication Tests
 
 ### 7. Authenticate User
 
@@ -275,7 +275,7 @@ curl -X PUT http://localhost:8080/api/v1/users/$USER_ID/password \
 # }
 ```
 
-## 👑 Role Management Tests
+##  Role Management Tests
 
 ### 9. Get User Roles
 
@@ -372,7 +372,7 @@ curl -X POST http://localhost:8080/api/v1/users \
 # }
 ```
 
-## 📊 Performance and Monitoring
+##  Performance and Monitoring
 
 ### 13. Test with Verbose Output
 
@@ -400,7 +400,7 @@ time curl -X GET http://localhost:8080/api/v1/users/$USER_ID | jq .
 time curl -X GET http://localhost:8080/api/v1/users/$USER_ID | jq .
 ```
 
-## 🔄 Complete Test Sequence
+##  Complete Test Sequence
 
 Here's a complete test sequence that exercises all major functionality:
 
@@ -410,7 +410,7 @@ Here's a complete test sequence that exercises all major functionality:
 # Set base URL
 BASE_URL="http://localhost:8080"
 
-echo "🚀 Starting User API Test Suite..."
+echo " Starting User API Test Suite..."
 
 # 1. Health check
 echo "1. Health check..."
@@ -488,7 +488,7 @@ chmod +x test-user-api.sh
 ./test-user-api.sh
 ```
 
-## 📝 Notes
+##  Notes
 
 - Replace UUIDs with actual values from your responses
 - All passwords must meet security requirements (8+ characters)
@@ -497,7 +497,7 @@ chmod +x test-user-api.sh
 - All endpoints return appropriate HTTP status codes
 - Caching is implemented for performance optimization
 
-## 🚨 Troubleshooting
+##  Troubleshooting
 
 1. **Server not responding**: Check if server is running on port 8080
 2. **Database errors**: Verify database connection and migrations

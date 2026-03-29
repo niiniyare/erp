@@ -2,14 +2,14 @@
 
 This guide explains how we integrate SQLC (SQL Compiler) for type-safe database operations in our multi-tenant ERP system with entity-level data isolation.
 
-## 🎯 What is SQLC?
+##  What is SQLC?
 
 SQLC generates type-safe Go code from SQL queries, providing:
 - Strongly typed Go structs
 - Type-safe query methods  
 - Compile-time query validation
 
-## 🏗️ Architecture Overview
+## ️ Architecture Overview
 
 ```
 SQL Queries (.sql) → SQLC Generator → Generated Go Code
@@ -17,7 +17,7 @@ SQL Queries (.sql) → SQLC Generator → Generated Go Code
 Repository Layer ← Store Interface ← Generated Models & Methods
 ```
 
-## 📁 Project Structure
+##  Project Structure
 
 ```
 db/
@@ -54,7 +54,7 @@ sql:
         emit_pointers_for_null_types: true
 ```
 
-## 🔐 Multi-Tenant & Entity Security Model
+##  Multi-Tenant & Entity Security Model
 
 Our ERP system uses a **three-level security model**:
 
@@ -64,7 +64,7 @@ Our ERP system uses a **three-level security model**:
 
 > **CRITICAL SECURITY REQUIREMENT**: Every query must include both `tenant_id` AND `entity_id` checks where applicable.
 
-## 📝 Query Organization & Naming
+##  Query Organization & Naming
 
 ### **File Naming Convention**
 - Format: `[module]_[feature].sql`
@@ -79,7 +79,7 @@ Our ERP system uses a **three-level security model**:
 - Use descriptive names: `GetActiveUsersByEntity`, `CreateFinancialTransaction`
 - Include operation type: `Create`, `Get`, `List`, `Update`, `SoftDelete`
 
-## 🛡️ Security Patterns (CRITICAL)
+## ️ Security Patterns (CRITICAL)
 
 ### **Required Security Checks in Every Query**
 
@@ -137,7 +137,7 @@ WHERE id = $1
   AND deleted_at IS NULL;
 ```
 
-## 🏷️ Handling Complex Queries with sqlc.arg
+## ️ Handling Complex Queries with sqlc.arg
 
 For complex queries with multiple parameters, use `sqlc.arg` and `sqlc.narg` to avoid generic naming like `column1`, `param2`:
 
@@ -188,7 +188,7 @@ type SearchFinancialTransactionsParams struct {
 }
 ```
 
-## 📋 Query Examples by Module
+##  Query Examples by Module
 
 ### **Financial Module (fin_tx.sql)**
 ```sql
@@ -286,7 +286,7 @@ WHERE ii.tenant_id = current_tenant_id()
 ORDER BY ii.name, il.name;
 ```
 
-## 🏪 Store Interface Pattern
+##  Store Interface Pattern
 
 ### **Generated Store Interface**
 ```go
@@ -322,19 +322,19 @@ func (s *store) WithEntity(ctx context.Context, tenantID, entityID uuid.UUID,
 
 ## ✅ Best Practices
 
-### **🔒 Security (CRITICAL)**
+### ** Security (CRITICAL)**
 - **ALWAYS** include `tenant_id = current_tenant_id()` in queries
 - **ALWAYS** include `entity_id = $x` for entity-scoped operations  
 - **NEVER** use hard deletes - always soft delete with `deleted_at`
 - **VALIDATE** tenant and entity context before query execution
 
-### **📝 Query Organization**
+### ** Query Organization**
 - **Group** related queries by module in separate files
 - **Use** descriptive naming: `[module]_[feature].sql`
 - **Comment** complex queries explaining business logic
 - **Use** sqlc.arg/sqlc.narg for complex parameter naming
 
-### **🏷️ Parameter Naming**
+### **️ Parameter Naming**
 ```sql
 -- ✅ Good: Clear parameter names
 WHERE entity_id = sqlc.arg('entity_id')
@@ -351,7 +351,7 @@ WHERE entity_id = $1 AND status = $2 AND created_at >= $3
 - **Batch** operations when possible
 - **Paginate** large result sets
 
-### **🧪 Entity Isolation Testing**
+### ** Entity Isolation Testing**
 - **Test** cross-entity data access is prevented
 - **Verify** entity context is properly enforced
 - **Validate** user can only access authorized entities
@@ -359,7 +359,7 @@ WHERE entity_id = $1 AND status = $2 AND created_at >= $3
 
 ---
 
-## 🚀 Quick Start Checklist
+##  Quick Start Checklist
 
 - [ ] Configure sqlc.yaml with proper settings
 - [ ] Organize queries by module using naming convention
@@ -372,4 +372,4 @@ WHERE entity_id = $1 AND status = $2 AND created_at >= $3
 
 ---
 
-📚 **Next Steps**: Migration Patterns | [Testing Guide](./general-testing.md) | Performance Optimization
+ **Next Steps**: Migration Patterns | [Testing Guide](./general-testing.md) | Performance Optimization

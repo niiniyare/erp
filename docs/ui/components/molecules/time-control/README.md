@@ -4,7 +4,7 @@
 **SCOPE**: All time picker types, formats, constraints, and validation patterns  
 **TARGET AUDIENCE**: Developers implementing time inputs, schedule management, and duration tracking
 
-## 📋 Component Overview
+##  Component Overview
 
 The Time Control component provides focused time selection capabilities for forms requiring time-only input. It supports multiple time formats, business hour constraints, validation rules, and interactive time picking while maintaining accessibility and consistent user experience across different time-related interfaces.
 
@@ -13,7 +13,7 @@ The Time Control component provides focused time selection capabilities for form
 - **Related Schemas**: `FormHorizontal.json`, `LabelAlign.json`, `ShortCuts.json`
 - **Base Interface**: Form input control for time selection and validation
 
-## 🎨 JSON Schema Configuration
+##  JSON Schema Configuration
 
 The Time Control component is configured using JSON that conforms to the `TimeControlSchema.json`. The JSON configuration renders interactive time inputs with validation, formatting, and user-friendly picker interfaces.
 
@@ -1429,7 +1429,7 @@ func getTimeShortcuts(shortcuts interface{}) []TimeShortcut {
 }
 ```
 
-## 🧪 Testing
+##  Testing
 
 ### Unit Tests
 ```go
@@ -1520,7 +1520,7 @@ describe('Time Control Component Integration', () => {
 });
 ```
 
-## 📚 Usage Examples
+##  Usage Examples
 
 ### Simple Time Picker
 ```go
@@ -1553,7 +1553,7 @@ templ BusinessHoursTime(value string) {
 }
 ```
 
-## 🔗 Related Components
+##  Related Components
 
 - **[Date Control](../date-control/)** - Date input
 - **[DateTime Control](../datetime-control/)** - Combined date and time

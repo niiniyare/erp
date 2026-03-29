@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/settings/domain"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/metrics"
+	"github.com/google/uuid"
 )
 
 // Implement the remaining repository methods
@@ -123,7 +123,7 @@ func (r *configurationRepository) GetConfigDefinition(ctx context.Context, modul
 		ConfigKey:  string(key),
 	})
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if err == db.ErrNoRows {
 			return nil, domain.ErrConfigDefinitionNotFound
 		}
 		return nil, fmt.Errorf("failed to get config definition: %w", err)

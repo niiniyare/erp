@@ -2,7 +2,7 @@
 title: 数据映射
 description:
 type: 0
-group: 💡 概念
+group:  概念
 menuName: 数据映射
 icon:
 order: 12

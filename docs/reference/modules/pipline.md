@@ -2126,14 +2126,14 @@ GET /api/pipeline/document-schema/:type_key/relationships/:rel_name
 The tree shows:
 
 ```
-📄 AP Invoice (invoice)
-  ├── 💰 Total Amount           → fieldValue("invoice", input.invoice_id, "total_amount")
-  ├── 📅 Invoice Date           → fieldValue("invoice", input.invoice_id, "invoice_date")
-  ├── 🏷️  Status                → fieldValue("invoice", input.invoice_id, "status")
-  └── 📋 Invoice Lines (many)
-        ├── 💵 Line Amount      → lineCount("invoice", input.invoice_id)
-        ├── 📦 Item Code        → (use in loop conditions)
-        └── 🏦 GL Account       → (use in loop conditions)
+ AP Invoice (invoice)
+  ├──  Total Amount           → fieldValue("invoice", input.invoice_id, "total_amount")
+  ├──  Invoice Date           → fieldValue("invoice", input.invoice_id, "invoice_date")
+  ├── ️  Status                → fieldValue("invoice", input.invoice_id, "status")
+  └──  Invoice Lines (many)
+        ├──  Line Amount      → lineCount("invoice", input.invoice_id)
+        ├──  Item Code        → (use in loop conditions)
+        └──  GL Account       → (use in loop conditions)
 ```
 
 Clicking any field inserts the correct expression into the formula editor at the cursor position.

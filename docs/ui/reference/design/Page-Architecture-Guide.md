@@ -6,7 +6,7 @@
 **TARGET AUDIENCE**: UX developers, frontend architects, and product designers
 <!-- LLM-CONTEXT-END -->
 
-## 🏗️ Architecture Overview
+## ️ Architecture Overview
 
 This guide defines the **foundational page structures** and **layout patterns** for the ERP interface, providing **reusable templates** and **architectural guidance** for building consistent, scalable page layouts.
 
@@ -18,7 +18,7 @@ This guide defines the **foundational page structures** and **layout patterns** 
 
 ---
 
-## 🎯 Master Layout Template
+##  Master Layout Template
 
 <!-- LLM-SECTION-MASTER-LAYOUT-START -->
 ### **Three-Zone Architecture**
@@ -200,7 +200,7 @@ templ MasterLayout(props MasterLayoutProps) {
 
 ---
 
-## 📊 Page Type Architectures
+##  Page Type Architectures
 
 <!-- LLM-SECTION-PAGE-TYPES-START -->
 ### **1. Dashboard Page Architecture**
@@ -627,7 +627,7 @@ templ TaskKanbanPage(props TaskKanbanProps) {
 
 ---
 
-## 🎪 Modal & Overlay Architectures
+##  Modal & Overlay Architectures
 
 <!-- LLM-SECTION-MODALS-START -->
 ### **Modal Layout Patterns**
@@ -912,7 +912,7 @@ templ CampaignFormModal(props CampaignFormProps) {
 
 ---
 
-## 📱 Responsive Architecture Patterns
+##  Responsive Architecture Patterns
 
 <!-- LLM-SECTION-RESPONSIVE-ARCH-START -->
 ### **Breakpoint Strategy**
@@ -1107,7 +1107,7 @@ Alpine.data('responsiveLayout', () => ({
 
 ---
 
-## 🔧 Implementation Best Practices
+##  Implementation Best Practices
 
 <!-- LLM-SECTION-BEST-PRACTICES-START -->
 ### **Performance Optimization**
@@ -1276,7 +1276,7 @@ Alpine.store('app', {
 
 ---
 
-## 🎯 Architecture Quick Reference
+##  Architecture Quick Reference
 
 ### **Layout Templates**
 - **Dashboard**: Metrics → Charts → Tables + Activity feed

@@ -3,14 +3,14 @@
 
 *A guide for implementing domain modules in Awo ERP following Clean Architecture principles, Temporal workflow orchestration, and modern ERP patterns*
 
-> **📚 Essential Reading:** This guide focuses on `internal/core/` module development. For detailed implementation patterns, also review:
+> ** Essential Reading:** This guide focuses on `internal/core/` module development. For detailed implementation patterns, also review:
 > - `docs/contributing/database-transactions.md` - Database and SQLC patterns
 > - `docs/contributing/goa.md` - API design and code generation  
 > - `docs/contributing/general-testing.md` - Testing strategies and patterns
 > - `docs/contributing/error-handling.md` - Error handling best practices
 > - `docs/contributing/observability.md` - Logging, metrics, and tracing
 
-## **🔍 1. Analysis & Design Phase**
+## ** 1. Analysis & Design Phase**
 - [ ] **Domain Analysis**
   - [ ] Identify bounded context and core business capabilities
   - [ ] Map domain entities and value objects
@@ -31,12 +31,12 @@
   - [ ] Plan external system integrations
   - [ ] Establish idempotency keys for critical operations
 
-## **🧱 2. Core Go Implementation**
+## ** 2. Core Go Implementation**
 - [ ] **Module Structure in `internal/core/`** 
   ```
   internal/core/
   └── {your-module}/          # New module (stock, payroll, hr, etc.)
-      ├── service.go          # 🔥 MAIN MODULE ENTRY POINT - External interface
+      ├── service.go          #  MAIN MODULE ENTRY POINT - External interface
       ├── domain/             # Business entities and rules
       │   ├── entities.go     # Core business entities  
       │   ├── types.go        # Value objects and enums
@@ -105,7 +105,7 @@
   - [ ] Create configuration structs for workflow behavior
   - [ ] Implement environment-specific configuration loading
 
-## **🗄️ 3. Data Layer (Go-Specific)**
+## **️ 3. Data Layer (Go-Specific)**
 - [ ] **Database Setup**
   - [ ] Choose ORM/Query Builder (GORM, Ent, Squirrel, or raw SQL)
   - [ ] Design migration system (`golang-migrate` or custom)
@@ -133,7 +133,7 @@
   - [ ] Build cache invalidation for data mutations
   - [ ] Setup distributed cache for multi-instance deployments
 
-## **🌊 4. Temporal Workflow Integration - NEW**
+## ** 4. Temporal Workflow Integration - NEW**
 - [ ] **Temporal Infrastructure Setup**
   - [ ] Add Temporal configuration to `internal/platform/config/config.go`
   - [ ] Create Temporal client in `internal/platform/temporal/client.go`
@@ -175,7 +175,7 @@
   - [ ] Verify activity retry and compensation logic
   - [ ] Test cross-service activity integration
 
-## **🔌 5. Integration & Messaging**
+## ** 5. Integration & Messaging**
 - [ ] **Internal Communication**
   - [ ] Implement event bus (NATS, RabbitMQ, or Kafka)
   - [ ] Create event publishers with guaranteed delivery
@@ -192,7 +192,7 @@
   - [ ] Implement server and client with interceptors
   - [ ] Add load balancing for service discovery
 
-## **🛡️ 5. Security & Compliance (ERP-Focused)**
+## **️ 5. Security & Compliance (ERP-Focused)**
 - [ ] **Authentication & Authorization**
   - [ ] Integrate with JWT/OAuth2 providers
   - [ ] Implement RBAC with Go middleware
@@ -209,7 +209,7 @@
   - [ ] Build XSS protection for web interfaces
   - [ ] Add rate limiting per user/tenant
 
-## **📡 6. API & Transport Layer**
+## ** 6. API & Transport Layer**
 - [ ] **Goa API Design (Source of Truth)**
   - [ ] Define API contracts in `internal/api/design/` using Goa DSL
   - [ ] Specify request/response payloads with validation rules
@@ -268,7 +268,7 @@
   - [ ] Build performance profiling endpoints (`net/http/pprof`)
   - [ ] Setup log aggregation (ELK, Loki)
 
-## **🧪 8. Testing Strategy (Go + Temporal)**
+## ** 8. Testing Strategy (Go + Temporal)**
 - [ ] **Core Business Logic Testing**
   - [ ] Unit test domain models and value objects
   - [ ] Test services with mocked repository interfaces
@@ -303,7 +303,7 @@
   - [ ] Test concurrent access patterns
   - [ ] Benchmark workflow throughput and latency
 
-<!-- ## **🚀 9. Deployment & DevOps** -->
+<!-- ## ** 9. Deployment & DevOps** -->
 <!-- - [ ] **Containerization** -->
 <!--   - [ ] Create multi-stage Dockerfile -->
 <!--   - [ ] Optimize image size (Alpine base, scratch for static) -->
@@ -320,7 +320,7 @@
 <!--   - [ ] Add resource limits and requests -->
 <!--   - [ ] Configure liveness and readiness probes -->
 <!---->
-## **📊 10. ERP-Specific Considerations**
+## ** 10. ERP-Specific Considerations**
 #### **Multi-Tenancy**
   - [ ] Implement tenant context propagation
   - [ ] Add tenant-based data filtering
@@ -360,7 +360,7 @@
   - [ ] Build feature flag usage analytics and monitoring
   - [ ] Implement feature flag cleanup and lifecycle management
 
-## **🏗️ 11. Advanced ERP Integration Patterns**
+## **️ 11. Advanced ERP Integration Patterns**
 - [ ] **Audit Service Integration**
   - [ ] Create audit event producers in service layer
   - [ ] Implement async audit logging with message queues
@@ -446,7 +446,7 @@ make run                    # Run the app server (includes Temporal worker)
 go mod graph | grep "internal/core" | grep -E "(internal/(api|platform))" && echo "❌ Dependency violation!"
 ```
 
-## **🏗️ Essential Service Dependencies**
+## **️ Essential Service Dependencies**
 
 Every new module in `internal/core/` MUST integrate with these core services for proper multi-tenancy and system cohesion:
 
@@ -467,7 +467,7 @@ func (s *transactionService) CreateTransaction(
 }
 ```
 
-## **🏗️ Service Facade Pattern**
+## **️ Service Facade Pattern**
 
 **Every module MUST implement a service facade at the root level `{module}/service.go` as the single entry point:**
 
@@ -674,7 +674,7 @@ func (s *transactionService) checkPermission(ctx context.Context, action string,
 }
 ```
 
-## **📈 Progressive Implementation Path**
+## ** Progressive Implementation Path**
 
 **Development sequence for any new module (Stock, Payroll, HR, etc.) in `internal/core/`:**
 
@@ -719,7 +719,7 @@ graph TD
 - **Testing** -  test suite (see `docs/contributing/general-testing.md`)
 - **Documentation** - API docs and module guides
 
-## **🎯 Success Criteria**
+## ** Success Criteria**
 - [ ] Service starts and serves traffic within 30 seconds
 - [ ] API response times < 200ms for 95th percentile
 - [ ] Zero-downtime deployments achieved
@@ -744,7 +744,7 @@ graph TD
   - [ ] Gradual rollouts work as expected
   - [ ] Flag usage is monitored and analyzed
 
-## **🏗️ Hexagonal Architecture Anti-Patterns to Avoid**
+## **️ Hexagonal Architecture Anti-Patterns to Avoid**
 
 ### **❌ Service Import Violations**
 ```go
@@ -887,7 +887,7 @@ func main() {
 }
 ```
 
-## **📝 Implementation Notes**
+## ** Implementation Notes**
 
 ### **Module Template Usage**
 This guide serves as a template for implementing **any new module** in `internal/core/`:

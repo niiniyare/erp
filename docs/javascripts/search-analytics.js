@@ -181,7 +181,7 @@
             analyticsQueue = [];
             
             // Send to console for debugging
-            console.group('📊 Search Analytics Batch');
+            console.group(' Search Analytics Batch');
             events.forEach(event => {
                 console.log(`${event.type}:`, event);
             });
@@ -319,7 +319,7 @@
         // Add analytics dashboard access (for debugging)
         if (window.location.search.includes('debug=analytics')) {
             const dashboardBtn = document.createElement('button');
-            dashboardBtn.textContent = '📊 Analytics Report';
+            dashboardBtn.textContent = ' Analytics Report';
             dashboardBtn.style.cssText = `
                 position: fixed;
                 bottom: 20px;
@@ -336,7 +336,7 @@
             
             dashboardBtn.addEventListener('click', function() {
                 const report = searchAnalytics.generateReport();
-                console.group('📈 Search Analytics Report');
+                console.group(' Search Analytics Report');
                 console.log('Session ID:', report.sessionId);
                 console.log('Total Searches:', report.totalSearches);
                 console.log('API Search Percentage:', report.apiSearchPercentage + '%');
