@@ -627,7 +627,7 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 - [x] `AuditService audit.Service` added to `handlers.Dependencies`
 - [x] `GET /api/v1/audit-logs` handler at `internal/api/handlers/audit/handler.go` — gated on `iam.sessions.read`
 - [x] Route registered in `registerAuditAPI`
-- [ ] **TODO**: `validation.go` uses lowercase category values (`authentication`) vs DB constraint uppercase (`AUTH`) — align before calling `Validate()` on server-generated events
+- [x] **FIXED**: `validation.go` `ValidEventCategories` updated to uppercase DB values (`ACCESS`, `ADMIN`, `DATA`, `AUTH`, `SYSTEM`, `COMPLIANCE`); `ValidSeverities` updated to `LOW`, `INFO`, `WARN`, `HIGH`, `CRITICAL`; `ValidDecisions` updated to `ALLOW`, `DENY`, `WARN`
 - [ ] **TODO**: Implement analytics repository stubs (`GetAuditStatsByCategory`, `GetUserRiskProfile`, etc.)
 
 ---
@@ -860,17 +860,18 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 
 ## Phase 20 — API Tests (Behavioral Verification)
 
-> **How to use this section:**
-> Each test has:
-> 1. **Expected behavior** — what the system should do
-> 2. **Request** — exact method, URL, headers, body
-> 3. **Expected outcome** — status code + response shape
-> 4. Checkbox `[ ]` — tick when you've run the call and the outcome matches
+> **Test script written:** `scripts/api/services/iam.sh` — run with:
+> ```
+> bash scripts/api/run.sh --service iam
+> ```
+> or interactively: `bash scripts/api/run.sh`
 >
-> Run a local server (`make run` or `go run ./cmd/server`) before executing these tests.
-> Use `scripts/api/lib/api_client.sh` or `curl` directly.
+> **Prerequisites:** Server running + seed data applied (`bash scripts/seed.sh`).
 >
-> **Note:** All endpoints are under the base URL configured in your `.env` (e.g. `http://localhost:8080`).
+> **Manual tests** (stateful/destructive — run separately):
+> - AT3 — account lockout: hammer AT2 five times first, then verify 423 on correct login
+> - AT6 — missing permission 403: create a user with no finance permissions
+> - AT9 — MFA confirm: scan QR from AT8 and submit real TOTP code
 
 ---
 

@@ -26,30 +26,30 @@ const (
 	MaxRiskScore           = 100
 )
 
-// Valid enum values
+// Valid enum values — must match DB CHECK constraints in 000450_audit_log.up.sql exactly.
 var (
 	ValidSeverities = map[string]bool{
-		"low":      true,
-		"medium":   true,
-		"high":     true,
-		"critical": true,
+		"LOW":      true,
+		"INFO":     true,
+		"WARN":     true,
+		"HIGH":     true,
+		"CRITICAL": true,
 	}
 
 	ValidDecisions = map[string]bool{
-		"allow": true,
-		"deny":  true,
-		"warn":  true,
+		"ALLOW": true,
+		"DENY":  true,
+		"WARN":  true,
 	}
 
+	// DB CHECK: event_category IN ('ACCESS','ADMIN','DATA','AUTH','SYSTEM','COMPLIANCE')
 	ValidEventCategories = map[string]bool{
-		"authentication": true,
-		"authorization":  true,
-		"data_access":    true,
-		"configuration":  true,
-		"user_action":    true,
-		"system":         true,
-		"compliance":     true,
-		"security":       true,
+		"ACCESS":     true, // authorization / access control events
+		"ADMIN":      true, // administrative / configuration changes
+		"DATA":       true, // data access events
+		"AUTH":       true, // authentication events (login, logout, MFA)
+		"SYSTEM":     true, // system-level events
+		"COMPLIANCE": true, // regulatory compliance events
 	}
 )
 

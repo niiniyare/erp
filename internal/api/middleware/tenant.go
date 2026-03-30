@@ -10,13 +10,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/tenant"
 	"awo.so/internal/shared"
 	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // Fiber context keys
@@ -297,7 +297,7 @@ func TenantMiddleware(config TenantMiddlewareConfig) fiber.Handler {
 		// NOTE: This sets the tenant context for PostgreSQL RLS policies.
 		// The RLS policies should be configured as:
 		// CREATE POLICY tenant_isolation ON your_table
-		// USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+		// USING (tenant_id = current_tenant_id()::uuid);
 		//
 		// Connection pooling considerations:
 		// - SetTenantContextFromCtx uses session variables which persist for the connection
