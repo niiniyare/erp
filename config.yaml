@@ -1,230 +1,251 @@
-# Application Configuration
-app:
-  name: "AwoERP"                    # Application name
-  version: "0.1.0"                  # Application version
-  stage: "dev"              # Options: development, staging, production, testing
-  debug: true                       # Enable debug mode (overrides stage-based log level)
-  environment: "local"              # Custom environment identifier
-  namespace: "default"              # Kubernetes namespace or deployment namespace
-
-# Server Configuration
-server:
-  port: "8080"                      # HTTP server port
-  grpc_port: "9090"                 # gRPC server port
-  read_timeout: "30s"               # HTTP read timeout
-  write_timeout: "30s"              # HTTP write timeout
-  host: "0.0.0.0"                   # Server bind address
-  shutdown_timeout: "30s"           # Graceful shutdown timeout
-  max_header_size: "1MB"            # Maximum header size
-  idle_timeout: "60s"               # Keep-alive idle timeout
-
-# Goa Configuration
-goa:
-  # OpenAPI/Swagger Configuration
-  # openapi:
-  #   enabled: true                   # Enable OpenAPI documentation
-  #   path: "/swagger"                # Swagger UI path
-  #   spec_path: "/openapi.json"      # OpenAPI spec endpoint
-  #   title: "Ledger API"             # API title
-  #   description: "Ledger service API documentation"
-  #   version: "1.0.0"                # API version
-  #   contact:
-  #     name: "API Support"
-  #     email: "api-support@example.com"
-  #     url: "https://example.com/support"
-  #   license:
-  #     name: "MIT"
-  #     url: "https://opensource.org/licenses/MIT"
-  #   servers:
-  #     - url: "http://localhost:8080"
-  #       description: "Development server"
-  #     - url: "https://api.example.com"
-  #       description: "Production server"
-
-  # CORS Configuration
-  cors:
-    enabled: true                   # Enable CORS middleware
-    allow_origins:                  # Allowed origins
-      - "http://localhost:3000"
-      - "https://app.example.com"
-    allow_methods:                  # Allowed HTTP methods
-      - "GET"
-      - "POST"
-      - "PUT"
-      - "DELETE"
-      - "OPTIONS"
-      - "PATCH"
-    allow_headers:                  # Allowed headers
-      - "Content-Type"
-      - "Authorization"
-      - "X-Requested-With"
-      - "X-TenantID"
-      - "Accept"
-      - "Origin"
-    expose_headers:                 # Exposed headers
-      - "Content-Length"
-      - "Content-Type"
-      - "X-Total-Count"
-    allow_credentials: true         # Allow credentials
-    max_age: 86400                  # Preflight cache duration (seconds)
-
-  # Request/Response Configuration
-  request:
-    max_body_size: "10MB"           # Maximum request body size
-    timeout: "30s"                  # Request timeout
-    rate_limit:
-      enabled: true                 # Enable rate limiting
-      requests_per_minute: 60       # Requests per minute per IP
-      burst: 10                     # Burst capacity
-
-  # Middleware Configuration
-  middleware:
-    request_id:
-      enabled: true                 # Enable request ID middleware
-      header: "X-Request-ID"        # Request ID header name
-    
-    logging:
-      enabled: true                 # Enable request logging
-      log_request_body: false       # Log request bodies (be careful with sensitive data)
-      log_response_body: false      # Log response bodies
-      skip_paths:                   # Paths to skip logging
-        - "/health"
-        - "/metrics"
-        - "/swagger"
-    
-    recovery:
-      enabled: true                 # Enable panic recovery
-      
-    metrics:
-      enabled: true                 # Enable metrics collection
-      path: "/metrics"              # Metrics endpoint path
-      
-    health:
-      enabled: true                 # Enable health check endpoint
-      path: "/health"               # Health check path
-      detailed: false               # Include detailed health info
-
-  # Security Configuration
-  security:
-    jwt:
-      enabled: true                 # Enable JWT validation
-      signing_method: "HS256"       # JWT signing method
-      claims_map:                   # Custom claims mapping
-        user_id: "sub"
-        roles: "roles"
-        permissions: "permissions"
-    
-    api_key:
-      enabled: false                # Enable API key authentication
-      header: "X-API-Key"           # API key header name
-      
-    basic_auth:
-      enabled: false                # Enable basic authentication
-
-  # Response Configuration
-  response:
-    default_format: "json"          # Default response format
-    pretty_json: true               # Pretty print JSON in development
-    include_stack_trace: false      # Include stack traces in errors (dev only)
-    
-  # File Upload Configuration
-  upload:
-    max_file_size: "50MB"           # Maximum file upload size
-    allowed_types:                  # Allowed MIME types
-      - "image/jpeg"
-      - "image/png"
-      - "image/gif"
-      - "application/pdf"
-      - "text/csv"
-    temp_dir: "/tmp/uploads"        # Temporary upload directory
-    
-  # Circuit Breaker Configuration
-  circuit_breaker:
-    enabled: false                  # Enable circuit breaker
-    failure_threshold: 5            # Failures before opening circuit
-    reset_timeout: "60s"            # Reset timeout
-    half_open_max_requests: 3       # Max requests in half-open state
-
-# Database Configuration (PostgreSQL)
-database:
-  host: "localhost"                 # Use environment variables in production
-  port: 5432
-  user: "admin"
-  password: "admin"
-  database: "ledger"
-  ssl_mode: "disable"               # SSL mode: disable, require, verify-ca, verify-full
-  max_open_conns: 100
-  max_idle_conns: 10
-  conn_max_lifetime: "10m"
-# database:
-#   host: "localhost"                 # Database host
-#   port: 5432                        # Database port
-#   user: "admin"                     # Database username
-#   password: "admin"                 # Database password
-#   database: "ledger"                # Database name
-#   ssl_mode: "disable"               # SSL mode: disable, require, verify-ca, verify-full
-#   max_open_conns: 25                # Maximum open connections
-#   max_idle_conns: 5                 # Maximum idle connections
-#   conn_max_lifetime: "5m"           # Connection maximum lifetime
+# ============================================================
+# AwoERP — Application Configuration
+# ============================================================
 #
-# Redis Configuration
+# Config priority (highest → lowest):
+#   1. Environment variables  (see "Env:" comments on each field)
+#   2. This file
+#   3. Built-in code defaults
+#
+# To override any value at runtime, set the corresponding
+# environment variable — no file change needed.
+# ============================================================
+
+# ── Application ──────────────────────────────────────────────────────────────
+app:
+  name: "AwoERP"       # Env: APP_NAME
+  version: "0.1.0"     # Env: APP_VERSION
+  # Env: APP_STAGE — allowed values: dev | staging | production | testing
+  # Controls stage-based defaults (log level, dev mode, etc.)
+  stage: "dev"
+  # Env: APP_DEBUG / DEBUG — when true forces log level to debug
+  debug: true
+  environment: "local"   # Env: APP_ENV / ENVIRONMENT
+  namespace: "default"   # Env: APP_NAMESPACE / NAMESPACE
+
+# ── HTTP / gRPC Server ───────────────────────────────────────────────────────
+server:
+  host: "0.0.0.0"       # Env: SERVER_HOST
+  port: "8080"          # Env: SERVER_PORT
+  grpc_port: "9090"     # Env: GRPC_PORT
+  read_timeout: "30s"   # Env: SERVER_READ_TIMEOUT
+  write_timeout: "30s"  # Env: SERVER_WRITE_TIMEOUT
+  idle_timeout: "60s"   # Env: SERVER_IDLE_TIMEOUT
+
+# ── PostgreSQL ───────────────────────────────────────────────────────────────
+database:
+  host: "localhost"        # Env: DB_HOST
+  port: 5432               # Env: DB_PORT
+  user: "admin"            # Env: DB_USER
+  password: "admin"        # Env: DB_PASSWORD  — use env var in production
+  database: "ledger"       # Env: DB_NAME
+  # Env: DB_SSL_MODE — disable | require | verify-ca | verify-full
+  ssl_mode: "disable"
+  max_open_conns: 100      # Env: DB_MAX_OPEN_CONNS
+  max_idle_conns: 10       # Env: DB_MAX_IDLE_CONNS
+  conn_max_lifetime: "10m" # Env: DB_CONN_MAX_LIFETIME
+
+# ── Database Migrations ──────────────────────────────────────────────────────
+migration:
+  # Path to migration SQL files — relative to the working directory
+  url: "file://db/migration"
+
+# ── Redis ────────────────────────────────────────────────────────────────────
 redis:
-  host: "localhost"                 # Redis host
-  port: 6379                        # Redis port
-  password: ""                      # Redis password (empty for no auth)
-  db: 0                            # Redis database number
+  host: "localhost"  # Env: REDIS_HOST
+  port: 6379         # Env: REDIS_PORT
+  password: ""       # Env: REDIS_PASSWORD
+  db: 0              # Env: REDIS_DB
 
-# Temporal Configuration
-temporal:
-  host_port: "localhost:7233"       # Temporal server host:port
-  namespace: "default"
-  workers:
-    max_concurrent_activities: 100
-    max_concurrent_workflows: 100
-    worker_stop_timeout: 30s
-  client:
-    identity: "awo-erp"
-    connection_timeout: 30s
-
-# Authentication Configuration
+# ── Authentication ───────────────────────────────────────────────────────────
 auth:
-  jwt_secret: "secret-key" # JWT signing secret (required for production)
+  # FIXME: jwt_secret will be removed once the session-token migration is complete.
+  # The system now uses opaque tokens stored in user_sessions, not JWTs.
+  jwt_secret: "secret-key"      # Env: JWT_SECRET  — MUST use env var in production
+  max_failed_attempts: 5        # Env: AUTH_MAX_FAILED_ATTEMPTS
+  lockout_duration: "15m"       # Env: AUTH_LOCKOUT_DURATION
+  session_ttl: "8h"             # Env: AUTH_SESSION_TTL
+  cookie_name: "session"        # Env: AUTH_COOKIE_NAME
+  # Env: AUTH_REQUIRE_HTTPS — set to true in staging/production
+  require_https: false
 
-# Feature Flags
-features:
-  enable_new_dashboard: false       # Enable new dashboard feature
-
-# Logger Configuration
+# ── Logger ───────────────────────────────────────────────────────────────────
 logger:
-  type: "zerolog"                   # Logger type: zap, zerolog, slog
-  level: "debug"                    # Log level: debug, info, warn, error, fatal
-  format: "console"                 # Log format: json, text, console
-  development: true                 # Enable development mode features
-  service_name: "AwoERP"           # Service name for structured logging
-  version: "1.0.0"                 # Service version for logging
-  output: "stdout"                  # Output destination: stdout, stderr, or file path
+  # Env: LOG_TYPE — zerolog | zap | slog
+  type: "zap"
+  # Env: LOG_LEVEL — debug | info | warn | error | fatal
+  # This value is always used as-is; it is NOT overridden by app.debug.
+  level: "debug"
+  # Env: LOG_FORMAT — json | text | console
+  format: "json"
+  # Env: LOG_DEV — enables development-mode features (pretty output, stack traces)
+  development: true
+  service_name: "AwoERP"  # Env: SERVICE_NAME
+  version: "1.0.0"        # Env: SERVICE_VERSION
+  # Env: LOG_OUTPUT — stdout | stderr | /absolute/path/to/file
+  output: "stdout"
 
-# UI Configuration
+# ── OpenTelemetry Tracing ────────────────────────────────────────────────────
+tracing:
+  enabled: false              # Env: TRACING_ENABLED
+  # Env: TRACING_EXPORTER — stdout | otlp | jaeger
+  exporter: "stdout"
+  # Env: TRACING_PROTOCOL — stdout | grpc | http
+  protocol: "stdout"
+  endpoint: "localhost:4317"  # Env: OTEL_ENDPOINT
+  insecure: true              # Env: OTEL_INSECURE
+  sampling_ratio: 1.0         # Env: TRACING_SAMPLING_RATIO  (0.0–1.0)
+
+# ── Temporal Workflow Engine ─────────────────────────────────────────────────
+temporal:
+  host_port: "localhost:7233"  # Env: TEMPORAL_HOST_PORT
+  namespace: "default"         # Env: TEMPORAL_NAMESPACE
+
+  tls:
+    enabled: false             # Env: TEMPORAL_TLS_ENABLED
+    cert_path: ""              # Env: TEMPORAL_TLS_CERT_PATH
+    key_path: ""               # Env: TEMPORAL_TLS_KEY_PATH
+    ca_path: ""                # Env: TEMPORAL_TLS_CA_PATH
+    server_name: ""            # Env: TEMPORAL_TLS_SERVER_NAME
+    insecure_skip_verify: false # Env: TEMPORAL_TLS_INSECURE_SKIP_VERIFY
+
+  workers:
+    max_concurrent_activities: 100       # Env: TEMPORAL_MAX_CONCURRENT_ACTIVITIES
+    max_concurrent_workflows: 50         # Env: TEMPORAL_MAX_CONCURRENT_WORKFLOWS
+    max_concurrent_local_activities: 100 # Env: TEMPORAL_MAX_CONCURRENT_LOCAL_ACTIVITIES
+    worker_stop_timeout: "30s"           # Env: TEMPORAL_WORKER_STOP_TIMEOUT
+    enable_logging_in_replay: true       # Env: TEMPORAL_ENABLE_LOGGING_IN_REPLAY
+    sticky_schedule_to_start_timeout: "5s"
+
+    # System-wide task queues
+    system:
+      enabled: true                  # Env: TEMPORAL_SYSTEM_WORKER_ENABLED
+      max_concurrent_activities: 50
+      max_concurrent_workflows: 25
+
+    notifications:
+      enabled: true                  # Env: TEMPORAL_NOTIFICATIONS_WORKER_ENABLED
+      max_concurrent_activities: 200
+      max_concurrent_workflows: 100
+
+    analytics:
+      enabled: true                  # Env: TEMPORAL_ANALYTICS_WORKER_ENABLED
+      max_concurrent_activities: 50
+      max_concurrent_workflows: 25
+
+  client:
+    identity: "awo-erp"                    # Env: TEMPORAL_CLIENT_IDENTITY
+    data_converter: "json"
+    failure_converter: "default"
+    connection_timeout: "10s"              # Env: TEMPORAL_CONNECTION_TIMEOUT
+    keep_alive_time: "30s"                 # Env: TEMPORAL_KEEP_ALIVE_TIME
+    keep_alive_timeout: "5s"               # Env: TEMPORAL_KEEP_ALIVE_TIMEOUT
+    keep_alive_permit_without_stream: true
+
+  metrics:
+    enabled: true                              # Env: TEMPORAL_METRICS_ENABLED
+    prometheus_scope: "temporal_awo_erp"       # Env: TEMPORAL_PROMETHEUS_SCOPE
+    reporting_interval: "10s"                  # Env: TEMPORAL_METRICS_REPORTING_INTERVAL
+
+  features:
+    enable_workflow_shadowing: false    # Env: TEMPORAL_ENABLE_WORKFLOW_SHADOWING
+    enable_session_worker: false        # Env: TEMPORAL_ENABLE_SESSION_WORKER
+    enable_batch_operations: true       # Env: TEMPORAL_ENABLE_BATCH_OPERATIONS
+    enable_multi_tenant_isolation: true # Env: TEMPORAL_ENABLE_MULTI_TENANT_ISOLATION
+
+  # Per-module task queue configuration.
+  # To disable a module entirely set enabled: false.
+  modules:
+    finance:
+      enabled: true  # Env: TEMPORAL_FINANCE_MODULE_ENABLED
+      task_queues:
+        standard:
+          enabled: true
+          max_concurrent_activities: 100
+          max_concurrent_workflows: 50
+        high_priority:
+          enabled: true
+          max_concurrent_activities: 50
+          max_concurrent_workflows: 25
+        bulk:
+          enabled: true
+          max_concurrent_activities: 200
+          max_concurrent_workflows: 10
+        long_running:
+          enabled: true
+          max_concurrent_activities: 10
+          max_concurrent_workflows: 5
+
+    iam:
+      enabled: true  # Env: TEMPORAL_IAM_MODULE_ENABLED
+      task_queues:
+        standard:
+          enabled: true
+          max_concurrent_activities: 50
+          max_concurrent_workflows: 25
+        authentication:
+          enabled: true
+          max_concurrent_activities: 200
+          max_concurrent_workflows: 100
+
+    feature_flag:
+      enabled: true  # Env: TEMPORAL_FEATURE_FLAG_MODULE_ENABLED
+      task_queues:
+        standard:
+          enabled: true
+          max_concurrent_activities: 100
+          max_concurrent_workflows: 50
+        evaluation:
+          enabled: true
+          max_concurrent_activities: 500
+          max_concurrent_workflows: 250
+
+    audit:
+      enabled: true  # Env: TEMPORAL_AUDIT_MODULE_ENABLED
+      task_queues:
+        standard:
+          enabled: true
+          max_concurrent_activities: 200
+          max_concurrent_workflows: 100
+
+    abac:
+      enabled: true  # Env: TEMPORAL_ABAC_MODULE_ENABLED
+      task_queues:
+        standard:
+          enabled: true
+          max_concurrent_activities: 100
+          max_concurrent_workflows: 50
+        policy_evaluation:
+          enabled: true
+          max_concurrent_activities: 300
+          max_concurrent_workflows: 150
+
+    tenant:
+      enabled: true
+      task_queues: {}
+
+    entity:
+      enabled: true
+      task_queues: {}
+
+# ── Feature Flags ────────────────────────────────────────────────────────────
+features:
+  enable_new_dashboard: false  # Env: ENABLE_NEW_DASHBOARD
+
+# ── UI ───────────────────────────────────────────────────────────────────────
+# The UI layer inherits HTTP server settings from the top-level `server` block.
+# Only UI-specific overrides are listed here.
 ui:
-  # UI Server settings
   server:
-    port: "8080"
-    host: "0.0.0.0"
-    read_timeout: "30s"
-    write_timeout: "30s"
     idle_timeout: "120s"
     multi_port:
-      enabled: false
-      console_port: "8081"
-      workspace_port: "8082"
-      portal_port: "8083"
-    tls:
-      enabled: false
-      cert_file: ""
-      key_file: ""
-      min_version: "1.2"
+      # When enabled, each UI service runs on its own port.
+      enabled: false          # Env: UI_MULTI_PORT
+      console_port: "8081"    # Env: UI_CONSOLE_PORT
+      workspace_port: "8082"  # Env: UI_WORKSPACE_PORT
+      portal_port: "8083"     # Env: UI_PORTAL_PORT
 
-  # Admin Console UI settings
+  # ── UI services ────────────────────────────────────────────
   console:
     name: "Admin Console"
     description: "Administrative interface for system management"
@@ -239,7 +260,6 @@ ui:
       search: true
       multi_language: false
 
-  # Tenant Workspace UI settings
   workspace:
     name: "Tenant Workspace"
     description: "Collaborative workspace for tenant users"
@@ -254,7 +274,6 @@ ui:
       search: true
       multi_language: false
 
-  # Client Portal UI settings
   portal:
     name: "Client Portal"
     description: "Self-service portal for end customers"
@@ -269,19 +288,13 @@ ui:
       search: true
       multi_language: false
 
-  # Security settings for UI
+  # ── Security ───────────────────────────────────────────────
   security:
     jwt:
-      algorithm: "RS256"
-      public_key_path: ""
-      private_key_path: ""
-      issuer: "awo-erp"
-      audience: "awo-erp-ui"
+      audience: "awo-erp-ui"   # Env: UI_JWT_AUDIENCE
       access_token_ttl: "15m"
       refresh_token_ttl: "24h"
-      clock_skew: "5m"
-      validate_audience: true
-      validate_issuer: true
+
     cors:
       enabled: true
       allowed_origins: []
@@ -290,6 +303,7 @@ ui:
       exposed_headers: []
       allow_credentials: true
       max_age: 86400
+
     csp:
       enabled: true
       default_src: "'self'"
@@ -300,11 +314,15 @@ ui:
       connect_src: "'self'"
       report_uri: ""
       report_only: false
+
     auth:
       oauth:
         enabled: false
+        # When enabled, set per-provider credentials via env vars:
+        #   OAUTH_CLIENT_ID, OAUTH_CLIENT_SECRET
         providers: {}
         redirect_url: ""
+
       saml:
         enabled: false
         metadata_url: ""
@@ -312,56 +330,57 @@ ui:
         acs_url: ""
         cert_path: ""
         key_path: ""
+
       ldap:
         enabled: false
-        host: ""
-        port: 389
+        host: ""        # Env: LDAP_HOST
+        port: 389       # Env: LDAP_PORT
         use_tls: false
-        base_dn: ""
-        bind_dn: ""
-        bind_passwd: ""
+        base_dn: ""     # Env: LDAP_BASE_DN
+        bind_dn: ""     # Env: LDAP_BIND_DN
+        bind_passwd: "" # Env: LDAP_BIND_PASSWD
         user_filter: "(uid=%s)"
+
       mfa:
         enabled: false
         required: false
-        methods: []
+        methods: []        # totp | sms | email
         totp_issuer: "Awo ERP"
         sms_provider: ""
+
       password_policy:
         min_length: 8
         require_upper: true
         require_lower: true
         require_digit: true
         require_special: true
-        max_age: 90
-        history_count: 5
+        max_age: 90       # days before password expires
+        history_count: 5  # number of previous passwords remembered
+
     encryption:
-      data_key: ""
+      data_key: ""          # Env: UI_DATA_KEY
       key_derivation: "pbkdf2"
       force_https: true
       hsts_max_age: 31536000
 
-  # Session management for UI
+  # ── Session ────────────────────────────────────────────────
+  # Redis connection is inherited from the top-level `redis` block.
   session:
-    store: "redis"
-    redis_url: "redis://localhost:6379"
-    redis_db: 0
-    key_prefix: "ui:session:"
     cookie:
       name: "awo_session"
       domain: ""
       path: "/"
       secure: true
       http_only: true
-      same_site: "Lax"
+      same_site: "Lax"   # Strict | Lax | None
     ttl: "8h"
-    refresh_ttl: "720h" # 30 days
+    refresh_ttl: "720h"  # 30 days
     inactivity_timeout: "2h"
-    max_concurrent: 3
-    regenerate: true
+    max_concurrent: 3    # max simultaneous sessions per user
+    regenerate: true     # regenerate session ID on login
     csrf_token: true
 
-  # Asset management for UI
+  # ── Assets ─────────────────────────────────────────────────
   assets:
     static_url: "/static"
     cache_max_age: "24h"
@@ -369,17 +388,17 @@ ui:
     cdn:
       enabled: false
       base_url: ""
-      key_id: ""
-      secret_key: ""
+      key_id: ""     # Env: CDN_KEY_ID
+      secret_key: "" # Env: CDN_SECRET_KEY
     build:
       source_path: "./web/src"
       build_path: "./internal/ui/assets"
       minify: true
       sourcemaps: false
 
-  # Development settings for UI
+  # ── Development helpers ────────────────────────────────────
   development:
-    enabled: false
+    enabled: false       # Env: UI_DEV_MODE
     hot_reload: false
     mock_data: false
     debug_mode: false
@@ -389,207 +408,3 @@ ui:
     profiling: false
     metrics: true
     dev_tools_port: "9090"
-
-# Migration Configuration
-migration:
-  url: "file://db/migration"
-
----
-# Example Production Configuration
-# Copy this section to a separate file (e.g., config-production.yaml) for production use
-
-# app:
-#   name: "ledger"
-#   version: "1.0.0"
-#   stage: "production"
-#   debug: false
-#   environment: "production"
-#   namespace: "ledger-prod"
-#
-# server:
-#   port: "8080"
-#   grpc_port: "9090"
-#   read_timeout: "30s"
-#   write_timeout: "30s"
-#   host: "0.0.0.0"
-#   shutdown_timeout: "15s"
-#   max_header_size: "1MB"
-#   idle_timeout: "60s"
-#
-# goa:
-#   openapi:
-#     enabled: true
-#     path: "/docs"
-#     spec_path: "/openapi.json"
-#     title: "Ledger API"
-#     description: "Production Ledger API"
-#     version: "1.0.0"
-#     servers:
-#       - url: "https://api.example.com"
-#         description: "Production server"
-#
-#   cors:
-#     enabled: true
-#     allow_origins:
-#       - "https://app.example.com"
-#       - "https://admin.example.com"
-#     allow_credentials: true
-#     max_age: 86400
-#
-#   request:
-#     max_body_size: "5MB"
-#     timeout: "15s"
-#     rate_limit:
-#       enabled: true
-#       requests_per_minute: 100
-#       burst: 20
-#
-#   middleware:
-#     logging:
-#       enabled: true
-#       log_request_body: false
-#       log_response_body: false
-#     metrics:
-#       enabled: true
-#     health:
-#       enabled: true
-#       detailed: false
-#
-#   security:
-#     jwt:
-#       enabled: true
-#       signing_method: "RS256"
-#
-#   response:
-#     pretty_json: false
-#     include_stack_trace: false
-#
-# database:
-#   host: "${DB_HOST}"                # Use environment variables in production
-#   port: 5432
-#   user: "${DB_USER}"
-#   password: "${DB_PASSWORD}"
-#   database: "${DB_NAME}"
-#   ssl_mode: "require"               # Enable SSL in production
-#   max_open_conns: 100
-#   max_idle_conns: 10
-#   conn_max_lifetime: "10m"
-#
-# redis:
-#   host: "${REDIS_HOST}"
-#   port: 6379
-#   password: "${REDIS_PASSWORD}"
-#   db: 0
-#
-# temporal:
-#   host_port: "${TEMPORAL_HOST_PORT}"
-#
-# auth:
-#   jwt_secret: "${JWT_SECRET}"       # Always use environment variable for secrets
-#
-# features:
-#   enable_new_dashboard: true
-#
-# logger:
-#   type: "zerolog"
-#   level: "info"                     # Higher log level for production
-#   format: "json"                    # JSON format for structured logging in production
-#   development: false
-#   service_name: "AwoERP"
-#   version: "1.0.0"
-#   output: "stdout"
-#
-# ---
-# # Example Staging Configuration
-# # Copy this section to a separate file (e.g., config-staging.yaml) for staging use
-#
-# app:
-#   name: "ledger"
-#   version: "1.0.0"
-#   stage: "staging"
-#   debug: false
-#   environment: "staging"
-#   namespace: "ledger-staging"
-#
-# server:
-#   port: "8080"
-#   grpc_port: "9090"
-#   read_timeout: "30s"
-#   write_timeout: "30s"
-#
-# database:
-#   host: "${DB_HOST}"
-#   port: 5432
-#   user: "${DB_USER}"
-#   password: "${DB_PASSWORD}"
-#   database: "${DB_NAME}"
-#   ssl_mode: "require"
-#   max_open_conns: 50
-#   max_idle_conns: 10
-#   conn_max_lifetime: "10m"
-#
-# redis:
-#   host: "${REDIS_HOST}"
-#   port: 6379
-#   password: "${REDIS_PASSWORD}"
-#   db: 0
-#
-# temporal:
-#   host_port: "${TEMPORAL_HOST_PORT}"
-#
-# auth:
-#   jwt_secret: "${JWT_SECRET}"
-#
-# features:
-#   enable_new_dashboard: true        # Test new features in staging
-#
-# logger:
-#   type: "zerolog"
-#   level: "debug"                    # More verbose logging for staging
-#   format: "json"
-#   development: false
-#   service_name: "AwoERP"
-#   version: "1.0.0"
-#   output: "stdout"
-#
-# ---
-# Environment Variable Reference
-# These environment variables can override the YAML config values:
-
-# App Configuration
-# APP_NAME, APP_VERSION, APP_STAGE, DEBUG, APP_DEBUG, ENVIRONMENT, APP_ENV, NAMESPACE, APP_NAMESPACE
-
-# Server Configuration  
-# SERVER_PORT, GRPC_PORT, SERVER_READ_TIMEOUT, SERVER_WRITE_TIMEOUT, SERVER_HOST
-# SERVER_SHUTDOWN_TIMEOUT, SERVER_MAX_HEADER_SIZE, SERVER_IDLE_TIMEOUT
-
-# Goa Configuration
-# GOA_OPENAPI_ENABLED, GOA_OPENAPI_PATH, GOA_OPENAPI_SPEC_PATH, GOA_OPENAPI_TITLE
-# GOA_CORS_ENABLED, GOA_CORS_ALLOW_CREDENTIALS, GOA_CORS_MAX_AGE
-# GOA_REQUEST_MAX_BODY_SIZE, GOA_REQUEST_TIMEOUT
-# GOA_RATE_LIMIT_ENABLED, GOA_RATE_LIMIT_RPM, GOA_RATE_LIMIT_BURST
-# GOA_MIDDLEWARE_LOGGING_ENABLED, GOA_MIDDLEWARE_METRICS_ENABLED
-# GOA_MIDDLEWARE_HEALTH_ENABLED, GOA_MIDDLEWARE_HEALTH_PATH
-# GOA_SECURITY_JWT_ENABLED, GOA_SECURITY_JWT_SIGNING_METHOD
-# GOA_RESPONSE_PRETTY_JSON, GOA_RESPONSE_INCLUDE_STACK_TRACE
-# GOA_UPLOAD_MAX_FILE_SIZE, GOA_UPLOAD_TEMP_DIR
-# GOA_CIRCUIT_BREAKER_ENABLED, GOA_CIRCUIT_BREAKER_FAILURE_THRESHOLD
-
-# Database Configuration
-# DB_HOST, DB_PORT, DB_USER, DB_PASSWORD, DB_NAME, DB_SSL_MODE
-# DB_MAX_OPEN_CONNS, DB_MAX_IDLE_CONNS, DB_CONN_MAX_LIFETIME
-
-# Redis Configuration
-# REDIS_HOST, REDIS_PORT, REDIS_PASSWORD, REDIS_DB
-
-# Temporal Configuration
-# TEMPORAL_HOST_PORT
-
-# Auth Configuration
-# JWT_SECRET
-
-# Feature Flags
-# ENABLE_NEW_DASHBOARD
-
-# Logger Configuration
-# LOG_TYPE, LOG_LEVEL, LOG_FORMAT, LOG_DEV, SERVICE_NAME, SERVICE_VERSION, LOG_OUTPUT

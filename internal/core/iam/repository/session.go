@@ -127,19 +127,22 @@ func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
 
 	riskScore := int32(s.RiskScore)
 
-	if err := r.store.CreateSession(ctx, db.CreateSessionParams{
-		UserID:        s.UserID,
-		UserType:      userType,
-		SessionToken:  s.TokenHash,
-		Permissions:   permsJSON,
-		PrincipalID:   principalID,
-		EntityScope:   entityScopeJSON,
-		Configuration: configJSON,
-		IpAddress:     ipAddr,
-		UserAgent:     userAgent,
-		ExpiresAt:     s.ExpiresAt,
-		RiskScore:     &riskScore,
-	}); err != nil {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s2 db.Store) error {
+		return s2.CreateSession(ctx, db.CreateSessionParams{
+			UserID:        s.UserID,
+			UserType:      userType,
+			SessionToken:  s.TokenHash,
+			Permissions:   permsJSON,
+			PrincipalID:   principalID,
+			EntityScope:   entityScopeJSON,
+			Configuration: configJSON,
+			IpAddress:     ipAddr,
+			UserAgent:     userAgent,
+			ExpiresAt:     s.ExpiresAt,
+			RiskScore:     &riskScore,
+		})
+	})
+	if err != nil {
 		return fmt.Errorf("session repo: create session: %w", err)
 	}
 	return nil
@@ -298,7 +301,12 @@ func (r *sessionRepo) ResolveEntityScope(ctx context.Context, entityID uuid.UUID
 	ctx, span := r.tracing.StartSpan(ctx, "session.repo.ResolveEntityScope")
 	defer span.End()
 
-	row, err := r.store.ResolveEntityScope(ctx, entityID)
+	var row *db.ResolveEntityScopeRow
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		row, e = s.ResolveEntityScope(ctx, entityID)
+		return e
+	})
 	if err != nil {
 		// Non-fatal: fall back to the narrowest safe scope.
 		return domain.EntityScope{Type: domain.EntityScopeEntity, EntityID: entityID.String()}, err

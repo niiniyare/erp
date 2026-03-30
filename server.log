@@ -1,0 +1,76 @@
+config: loaded /data/data/com.termux/files/home/project/erp/config.yaml
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered health endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered public routes[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered auth API endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered auth API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered tenant API endpoints as /tenants[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered tenant API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered user API endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered user API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered entity API endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered entity API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [33mWRN[0m [1mFinance services not available, skipping finance API registration[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered finance API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered schema API endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered schema API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered audit API endpoints[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered audit API module[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered UI routes with static assets[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:50:57Z[0m [32mINF[0m [1mregistered routes:[0m [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+ Server starting on 0.0.0.0:8080
+ Environment: local
+ Application: AwoERP v0.1.0 beta
+ Debug mode: true
+ Health check: http://0.0.0.0:8080/health
+ Documentation: http://0.0.0.0:8080/docs
+
+ ┌───────────────────────────────────────────────────┐ 
+ │                AwoERP v0.1.0 beta                 │ 
+ │                  Fiber v2.52.12                   │ 
+ │               http://127.0.0.1:8080               │ 
+ │       (bound on host 0.0.0.0 and port 8080)       │ 
+ │                                                   │ 
+ │ Handlers ............ 75  Processes ........... 1 │ 
+ │ Prefork ....... Disabled  PID ............. 32046 │ 
+ └───────────────────────────────────────────────────┘ 
+
+[90m2026-03-30T05:51:05Z[0m [32mINF[0m [1mhealth check requested[0m [36mmethod=[0mGET [36mpath=[0m/health/ [36mremote_addr=[0m127.0.0.1 [36mservice=[0mAwoERP [36muser_agent=[0mcurl/8.19.0 [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG authentication successful [36mcomponent=[0miam.identity [36mservice=[0mAwoERP [36muser_id=[0m4d09ad5f-5485-44d6-a89b-7d630db2d6b2 [36muser_type=[0mINTERNAL [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Starting tenant-scoped transaction [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG Tenant-scoped transaction completed [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m DBG session created [36mcomponent=[0miam.session [36mservice=[0mAwoERP [36mttl=[0m8h0m0s [36muser_id=[0m4d09ad5f-5485-44d6-a89b-7d630db2d6b2 [36muser_type=[0mINTERNAL [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /api/v1/finance/accounts"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot POST /api/v1/finance/accounts"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mPOST [36mpath=[0m/api/v1/finance/accounts [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /api/v1/finance/transactions"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/transactions [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:08Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /api/v1/finance/reports/trial-balance"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/reports/trial-balance [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"insufficient permissions"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/audit-logs [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/audit-logs [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/schema/boot [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"failed to create API key"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/api-keys [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/audit-logs [36mservice=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:09Z[0m [31mERR[0m [1mRequest error[0m [36merror=[0m[31m[1m"failed to create tenant: [validation] <CONSTRAINT_VIOLATION> A field value failed database validation"[0m[0m [36mcode=[0mCONSTRAINT_VIOLATION [36mip=[0m127.0.0.1 [36mmethod=[0mPOST [36mpath=[0m/api/v1/tenants [36mrequest_id=[0m14da73c2-fadf-47f2-8f32-9f8e057c73dd [36mservice=[0mAwoERP [36mstatus=[0m400 [36mtenant_id=[0m [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:10Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:10Z[0m [31mERR[0m [1mRequest error[0m [36merror=[0m[31m[1m"[business] <NOT_IMPLEMENTED> User listing not yet implemented"[0m[0m [36mcode=[0mNOT_IMPLEMENTED [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/users [36mrequest_id=[0m15da73c2-fadf-47f2-8f32-9f8e057c73dd [36mservice=[0mAwoERP [36mstatus=[0m501 [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:10Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:10Z[0m [31mERR[0m [1mRequest error[0m [36merror=[0m[31m[1m"Key: 'CreateUserRequest.EntityID' Error:Field validation for 'EntityID' failed on the 'required' tag"[0m[0m [36mcode=[0mINTERNAL_ERROR [36mip=[0m127.0.0.1 [36mmethod=[0mPOST [36mpath=[0m/api/v1/users [36mrequest_id=[0m16da73c2-fadf-47f2-8f32-9f8e057c73dd [36mservice=[0mAwoERP [36mstatus=[0m500 [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0
+[90m2026-03-30T05:51:10Z[0m DBG Tenant context set [36mcomponent=[0mdb [36mservice=[0mAwoERP [36mtenant_id=[0me9239b10-5254-4d86-b3b8-2792a8161ead [36mversion=[0m1.0.0

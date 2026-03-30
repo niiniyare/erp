@@ -59,6 +59,12 @@ COMMENT ON CONSTRAINT unique_tenant_entity_key_fy ON entitystate IS 'Prevents du
 ALTER TABLE entitystate
   ADD CONSTRAINT positive_sequence CHECK (sequence > 0);
 
+
+-- GIN index for sequence config lookups by prefix or format
+CREATE INDEX IF NOT EXISTS idx_entitystate_config_gin
+  ON entitystate USING gin(config)
+  WHERE config IS NOT NULL AND config <> '{}'::jsonb;
+
 COMMENT ON CONSTRAINT positive_sequence ON entitystate IS 'Ensures sequence numbers are always positive values';
 
 -- ------------------------------------------------------------------------------------------------

@@ -1,106 +1,114 @@
-# API Testing Scripts
+# AWO API Test Suite
 
-This directory contains organized test scripts for the ERP API endpoints and middleware validation.
+Modular, interactive bash test runner for the AWO ERP REST API.
 
-## Quick Start
+## Quick start
 
 ```bash
-# Run the interactive test menu
-./docs/scripts/api/test.sh
+# Seed the DB first (creates tenant + admin user)
+bash scripts/seed.sh
 
-# View test summary  
-./docs/scripts/api/test.sh --summary
+# Interactive menu
+TENANT_ID=<uuid> bash scripts/api/run.sh
+
+# Run all suites non-interactively
+TENANT_ID=<uuid> bash scripts/api/run.sh --all
+
+# Run one suite
+TENANT_ID=<uuid> bash scripts/api/run.sh --service iam
+
+# List registered services
+bash scripts/api/run.sh --list
 ```
 
-## Test Categories
+## Environment variables
 
-###  Tenant API Tests
-**File:** `test_tenant_api.sh`
-- Tests all tenant CRUD operations
-- Validates native middleware (header/subdomain extraction)
-- Tests public endpoint bypass functionality
-- Covers error scenarios and edge cases
+| Variable         | Default                   | Notes                           |
+|------------------|---------------------------|---------------------------------|
+| `BASE_URL`       | `http://localhost:8080`   |                                 |
+| `ADMIN_EMAIL`    | `admin@platform.local`    | Created by `seed.sh`            |
+| `ADMIN_PASSWORD` | `Admin1234!`              |                                 |
+| `TENANT_ID`      | _(empty)_                 | Required for tenant-scoped ops  |
 
-### ️ Middleware Integration Tests
-**Built into:** `test.sh` (option 4)
-- Tests native HTTP middleware chain
-- Validates tenant context injection
-- Tests public endpoint whitelisting
-- Error handling validation
+## Structure
 
-###  Health Check Tests  
-**Built into:** `test.sh` (option 5)
-- Tests all service health endpoints
-- System readiness validation
-- Service dependency checks
-
-## Prerequisites
-
-1. **Server Running**: Start the ERP server first
-   ```bash
-   go run ./cmd/server/
-   ```
-
-2. **Dependencies**: Ensure curl is available
-   ```bash
-   which curl  # Should show curl location
-   ```
-
-## Test Scenarios
-
-### Tenant API Test Scenarios
-1. **Health Check** (Public endpoint)
-2. **List without tenant** (Should fail with 400)  
-3. **List with tenant header** (Should succeed)
-4. **Get specific tenant** (Tests UUID validation)
-5. **Create tenant** (Tests payload validation)
-6. **Subdomain extraction** (Tests bo.tenant.domain.com pattern)
-
-### Middleware Test Scenarios
-1. **Public endpoint bypass** (No tenant required)
-2. **Missing tenant context** (Should return 400)
-3. **Invalid UUID format** (Should return 400)
-4. **Tenant validation** (Should validate against database)
-
-## Expected Results
-
-| Test | Expected Status | Description |
-|------|----------------|-------------|
-| Health endpoints | 200 | Public endpoints should always work |
-| No tenant header | 400 | Protected endpoints require tenant |
-| Valid tenant header | 200/404 | Depends on tenant existence |
-| Invalid UUID | 400 | Validation should catch malformed UUIDs |
-| Subdomain extraction | 200 | Should extract tenant from subdomain |
-
-## Architecture Validation
-
-These tests validate the Day 4 milestone achievements:
-- ✅ **Native HTTP Middleware**: No Gin dependencies
-- ✅ **Tenant Isolation**: Context-based RLS 
-- ✅ **Public Endpoint Bypass**: Configurable whitelist
-- ✅ **Error Handling**: Proper JSON responses
-- ✅ **GOA Integration**: Clean API layer
-
-## Adding New Tests
-
-1. **Create test script** in this directory
-2. **Add to test.sh menu** with new option
-3. **Update README.md** with test details
-4. **Follow naming convention**: `test_<service>_api.sh`
-
-## File Structure
 ```
-docs/scripts/api/
-├── README.md              # This documentation
-├── test.sh               # Main test entry point
-├── test_tenant_api.sh    # Tenant API tests
-└── test_entity_api.sh    # Entity API tests (coming soon)
+scripts/api/
+├── run.sh              ← entrypoint (interactive + --all + --service)
+├── core/
+│   ├── env.sh          ← config + per-session random values
+│   ├── auth.sh         ← api(), apiv(), login(), logout()
+│   └── utils.sh        ← ok/fail/info, assert helpers, jf()
+├── services/
+│   ├── iam.sh          ← auth, MFA, password reset, API keys, audit
+│   ├── users.sh        ← user CRUD
+│   ├── tenants.sh      ← tenant lifecycle
+│   ├── finance.sh      ← accounts, transactions, reports
+│   └── orders.sh       ← stub (shows how to add a module)
+├── data/               ← runtime cookie jars (gitignored)
+└── logs/               ← test run output (gitignored)
 ```
 
-## Integration with Development Workflow
+## Adding a new module
 
-These scripts are designed to be used during:
-- **Development**: Quick validation of API changes
-- **Migration**: Validation of Gin to GOA conversion  
-- **CI/CD**: Automated testing pipeline (future)
-- **Documentation**: Living examples of API usage
+Create `scripts/api/services/mymodule.sh` — `run.sh` auto-discovers it:
+
+```bash
+#!/usr/bin/env bash
+MENU+=("mymodule:MyModule — short description:run_mymodule")
+
+run_mymodule() {
+  header "MyModule"
+  reset_counters
+  require_auth || { warn "Skipping (not authenticated)"; return 1; }
+
+  sep; info "List items"
+  local resp
+  resp=$(apiv GET /api/v1/mymodule)
+  split_resp "$resp"
+  assert_any "GET /api/v1/mymodule" "$RESP_STATUS" "200" "403" || true
+
+  sep
+  [[ $SUITE_FAILURES -eq 0 ]] && ok "MyModule suite passed" \
+                               || fail "$SUITE_FAILURES failure(s)"
+}
+```
+
+That's all — no registration required beyond the `MENU+=` line.
+
+## Per-session random data
+
+Every run generates a fresh `SESSION_ID` (e.g. `a3f8b2c1`) and derives:
+
+| Variable           | Example                    |
+|--------------------|----------------------------|
+| `TEST_EMAIL`       | `tuser_a3f8b2@test.local`  |
+| `TEST_USERNAME`    | `tuser_a3f8b2`             |
+| `TEST_PASSWORD`    | `Tst_a3f8b21!`             |
+| `TEST_TENANT_NAME` | `TestCo_a3f8b2`            |
+
+No collisions between parallel or back-to-back runs against the same DB.
+
+## Core API reference
+
+```bash
+# HTTP
+api   METHOD path [curl-args]        # request with cookie jar + headers
+apiv  METHOD path [curl-args]        # same + appends \n<status_code>
+api_bearer TOKEN METHOD path         # Bearer-token request (no cookie)
+
+# Session
+login [email] [password]             # authenticate → AUTH_ACTIVE=true
+logout                               # end session
+require_auth                         # login if not already authenticated
+with_anon_session <fn>               # run fn with blank cookie, then restore
+
+# Assertions (increment $SUITE_FAILURES on mismatch)
+split_resp "$resp"                   # sets $RESP_BODY and $RESP_STATUS
+assert_status "label" 200 "$s"       # exact status match
+assert_any "label" "$s" 200 403      # accept any listed code
+
+# JSON
+jf "$body" "data.id"                 # extract nested field (dot notation)
+json_len "$body" "data"              # count items in a JSON array
+```

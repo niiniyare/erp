@@ -22,6 +22,7 @@ DROP INDEX IF EXISTS idx_entitystate_fiscal_year;
 
 DROP INDEX IF EXISTS idx_entitystate_entity_key;
 
+DROP INDEX IF EXISTS idx_entitystate_config_gin;
 -- Drop table
 DROP TABLE IF EXISTS entitystate;
 

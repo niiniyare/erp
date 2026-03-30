@@ -59,7 +59,7 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 			})
 		}
 
-		resolved, rawToken, err := svc.Login(c.Context(), req.Email, req.Password)
+		resolved, rawToken, err := svc.Login(c.UserContext(), req.Email, req.Password)
 		if err != nil {
 			// MFA step 1: Login succeeded but a second factor is required.
 			// rawToken is a short-lived pending token (not a session token).

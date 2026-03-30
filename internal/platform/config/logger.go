@@ -102,9 +102,9 @@ func (l *LoggerConfig) ToLoggerConfig(appConfig *AppConfig) LoggerPackageConfig 
 		config.Type = "zerolog" // Default fallback
 	}
 
-	// Convert log level - prioritize app config's intelligent level detection
+	// Convert log level - use logger.level if set, otherwise derive from app config
 	logLevel := l.Level
-	if logLevel == "" || (appConfig.Debug && logLevel != "debug") {
+	if logLevel == "" {
 		logLevel = appConfig.GetLogLevel()
 	}
 

@@ -727,6 +727,704 @@ These were completed in the earlier `identity` + `authz` packages and migrated i
 | 2 | Repository layer (authz repo + Casbin adapter, user repo, session repo) | ✅ Done |
 | 3 | Service layer (AuthzService, UserService, SessionService) | ✅ Done |
 | 4 | IAM facade (iam.go) + seed.go | ✅ Done |
+
+---
+
+> **NOTE — Phases 17–20 below were added after a code audit revealed that several items marked ✅ in the summary above were not actually implemented in the codebase. Work through these phases in order before closing the IAM module.**
+
+---
+
+## Phase 17 — UserService: Fix Missing Implementation
+
+> **Context:** `internal/core/iam/iam.go` re-exports `iamservice.NewUserService` and `iamservice.UserService`, but `internal/core/iam/service/user.go` does not exist. The package cannot compile until this file is created.
+>
+> The `UserService` is the single component that owns all user-identity operations: credential verification, brute-force protection, MFA secret lifecycle, and password management. `SessionService.Login()` calls it first — if it's missing, login is broken at the root.
+>
+> `UserRepository` is already implemented in `repository/identity.go`. This phase is purely the service layer on top of it.
+
+### U1 — Create `internal/core/iam/service/user.go`
+
+> Define the `UserService` interface (same set of methods already referenced in iam.go) and implement it.
+
+- [ ] `UserService` interface defined with all methods listed below
+- [ ] `userService` struct holds `repo UserRepository`, `tracer`, `metrics`, `log`, `cfg UserConfig`
+- [ ] `NewUserService(repo, tracer, metrics, log) UserService` constructor (default config)
+- [ ] `NewUserServiceWithConfig(repo, tracer, metrics, cfg, log) UserService` constructor
+- [ ] `UserConfig` struct: `MaxFailedAttempts int` (default 5), `LockoutDurations []time.Duration` (escalating: 15m, 30m, 1h, 2h), `MFAEncryptionKey []byte`, `MFAIssuer string`
+
+### U2 — Authenticate + brute-force protection
+
+> `SessionService.Login()` delegates credential checking here. The lockout logic must match what the docs describe exactly — generic error message, escalating backoff.
+
+- [ ] `Authenticate(ctx, email, password string) (*domain.User, error)`
+  - Call `repo.GetUserByEmail` — if not found return `domain.ErrInvalidIdentity` (never "user not found")
+  - Check `user.CanAuthenticate()` — if false: if locked, return `ErrAccountLocked`; if inactive/suspended, return `ErrAccountSuspended`
+  - `bcrypt.CompareHashAndPassword` — constant-time
+  - On mismatch: call `repo.IncrementFailedAttempts`; if count ≥ `cfg.MaxFailedAttempts`, pick lockout duration from `cfg.LockoutDurations[min(count/5, len-1)]`, call `repo.LockAccount`; return generic `ErrInvalidCredentials` (never reveal which field failed)
+  - On success: call `repo.ResetFailedAttempts` + `repo.UpdateLastLogin`; return `*domain.User`
+  - Emit metrics: `iam.auth.attempt`, `iam.auth.failure`, `iam.auth.locked`
+  - Wrap in trace span
+
+### U3 — User CRUD methods
+
+> These are used by admin handlers and provisioning flows.
+
+- [ ] `GetUser(ctx, userID uuid.UUID) (*domain.User, error)`
+- [ ] `GetUserByEmail(ctx, email string) (*domain.User, error)`
+- [ ] `GetUserWithDetails(ctx, userID uuid.UUID) (*domain.UserWithDetails, error)`
+- [ ] `CreateUser(ctx, req domain.CreateUserRequest) (*domain.User, error)` — hash password with bcrypt cost 12 before storing
+- [ ] `UpdateUser(ctx, userID uuid.UUID, req domain.UpdateUserRequest) (*domain.User, error)`
+- [ ] `ListUsers(ctx, req domain.ListUsersRequest) ([]*domain.User, error)`
+
+### U4 — Password management
+
+> bcrypt cost 12. Strength check + history check on every change. Reset token is SHA-256-hashed in DB.
+
+- [ ] `ChangePassword(ctx, req domain.ChangePasswordRequest) error`
+  - Re-verify current password with bcrypt
+  - Call `validatePasswordStrength(newPassword)`
+  - Call `isPasswordReused(newPassword, history)` via `repo.GetPasswordHistory`
+  - Hash new password, call `repo.UpdatePasswordAndHistory`
+- [ ] `ForgotPassword(ctx, email string) (rawToken string, userID uuid.UUID, err error)`
+  - Look up user by email; if not found return `("", uuid.Nil, nil)` (no enumeration)
+  - Generate 32-byte random token; store SHA-256 hash via `repo.CreatePasswordResetToken` (1h expiry)
+  - Return raw token to caller (caller is responsible for sending it via notification service)
+- [ ] `ResetPassword(ctx, token, newPassword string) error`
+  - Look up token hash via `repo.GetPasswordResetToken`; check not expired, not used
+  - `validatePasswordStrength` + `isPasswordReused`
+  - `repo.UpdatePasswordAndHistory` then `repo.MarkPasswordResetTokenUsed`
+  - Call `repo.InvalidateSessionsByUser(ctx, userID)` — all existing sessions expire
+
+### U5 — MFA secret lifecycle
+
+> Secrets are AES-256-GCM encrypted at rest. The pending setup lives in Redis until ConfirmMFA is called.
+
+- [ ] `InitiateMFA(ctx, userID uuid.UUID) (*domain.MFASetup, error)`
+  - Generate 20-byte random secret, base32-encode
+  - AES-256-GCM encrypt with `cfg.MFAEncryptionKey`
+  - Cache encrypted secret at `mfa:setup:{userID}` with 10-min TTL
+  - Return `domain.MFASetup{Secret: base32, QRURI: "otpauth://..."}`
+- [ ] `ConfirmMFA(ctx, userID uuid.UUID, code string) error`
+  - Get pending encrypted secret from cache `mfa:setup:{userID}`
+  - Decrypt → verify TOTP ±1 window
+  - On success: `repo.SetMFASecret(userID, encryptedSecret)` → sets `mfa_enabled = TRUE`
+  - Delete cache key
+- [ ] `ValidateMFACode(ctx, userID uuid.UUID, code string) (bool, error)`
+  - `repo.GetMFASecret(userID)` → decrypt
+  - TOTP verify ±1 window
+  - Replay check: `repo.CheckAndMarkMFAReplay(userID, window)` — 90s TTL key
+- [ ] `DisableMFA(ctx, userID uuid.UUID, password string) error`
+  - Re-verify password with bcrypt
+  - `repo.ClearMFASecret(userID)` — sets `mfa_secret = NULL`, `mfa_enabled = FALSE`
+
+---
+
+## Phase 18 — HTTP Middleware: Rewrite for Session-Based Auth
+
+> **Context:** This system uses DB sessions — not JWT. A session token (cookie `awo_session` or `Authorization: Bearer`) is looked up in Redis first, then DB. The `ResolvedSession` object that comes back carries pre-computed permissions, flags, and settings. Middleware never calls the DB for auth — it trusts the session object entirely.
+>
+> The current state:
+> - `middleware/jwt_auth.go` — **entire file is commented out**, legacy JWT logic
+> - `middleware/authorization.go` — only has `AuthorizeCasbin()` (live Casbin round-trip); missing `Authorize(permission)` (O(1) session map)
+> - `routes.go:authenticateMiddleware()` — **returns a no-op handler** if SessionService not configured
+>
+> All three must be fixed before a single protected route works.
+
+### MW1 — Rewrite `internal/api/middleware/jwt_auth.go` → session-based Authenticate
+
+> Delete the commented-out JWT code. Write a clean `Authenticate(cfg AuthConfig)` middleware that validates sessions. The name `jwt_auth.go` is a legacy filename — keep it to avoid renaming across the codebase.
+
+- [ ] Delete all commented-out code in `jwt_auth.go`
+- [ ] `AuthConfig` struct:
+  ```go
+  type AuthConfig struct {
+      SessionSvc  iam.SessionService
+      APIKeySvc   iam.APIKeyService  // optional — nil = no API key auth
+      CookieName  string             // default "awo_session"
+  }
+  ```
+- [ ] `Authenticate(cfg AuthConfig) fiber.Handler`:
+  - Extract token: check `Authorization: Bearer <token>` header first, then cookie `cfg.CookieName`
+  - If no token found: return 401 `{"error": "authentication required"}`
+  - If token has prefix `eak_`: call `cfg.APIKeySvc.ValidateAPIKey(ctx, token)` — nil APIKeySvc returns 401
+  - Otherwise: call `cfg.SessionSvc.ValidateSession(ctx, token)`
+  - On `ErrUnauthorized` / `ErrSessionExpired`: return 401
+  - On success: set `c.Locals(iam.LocalsKeySession, resolved)`
+  - Set `c.Locals(iam.LocalsKeyPrincipal, resolved.ToPrincipal())`
+  - Inject tenant into Go context: `ctx = context.WithValue(c.Context(), cache.TenantIDKey, resolved.TenantID.String())`; `c.SetUserContext(ctx)`
+
+### MW2 — Add `Authorize(permission string)` to `authorization.go`
+
+> The fast path. Reads pre-computed permissions from the session — zero DB, zero Casbin. Every hot-path route uses this. Keep `AuthorizeCasbin()` for management operations that need live Casbin enforcement.
+
+- [ ] Add `Authorize(permission string) fiber.Handler`:
+  ```go
+  func Authorize(permission string) fiber.Handler {
+      return func(c *fiber.Ctx) error {
+          sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+          if !ok || sess == nil {
+              return c.Status(401).JSON(fiber.Map{"error": "authentication required"})
+          }
+          if !sess.Can(permission) {
+              return c.Status(403).JSON(fiber.Map{"error": "permission denied: " + permission})
+          }
+          return c.Next()
+      }
+  }
+  ```
+- [ ] Add `RequireFlag(flagKey string) fiber.Handler`:
+  ```go
+  func RequireFlag(flagKey string) fiber.Handler {
+      return func(c *fiber.Ctx) error {
+          sess := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+          if !sess.FeatureEnabled(flagKey) {
+              return c.Status(403).JSON(fiber.Map{"error": "feature not enabled for your organisation"})
+          }
+          return c.Next()
+      }
+  }
+  ```
+
+### MW3 — Add context helpers to `authorization.go` (or a new `context_helpers.go`)
+
+> Handlers must never read tenant_id or user_id from query params. They always read from the session. These helpers make that pattern one line.
+
+- [ ] `ContextSession(c *fiber.Ctx) *iam.ResolvedSession` — `c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)`
+- [ ] `ContextTenantID(c *fiber.Ctx) uuid.UUID` — `ContextSession(c).TenantID`
+- [ ] `ContextUserID(c *fiber.Ctx) uuid.UUID` — `ContextSession(c).UserID`
+- [ ] `ContextPrincipal(c *fiber.Ctx) *iam.Principal` — `c.Locals(iam.LocalsKeyPrincipal).(*iam.Principal)`
+
+### MW4 — Wire `authenticateMiddleware()` in `routes.go`
+
+> Currently returns a no-op. Must return the real `Authenticate` middleware. This is what actually plugs everything together.
+
+- [ ] In `authenticateMiddleware()`, build and return `middleware.Authenticate(middleware.AuthConfig{SessionSvc: r.deps.SessionService, APIKeySvc: r.deps.APIKeyService, CookieName: "awo_session"})`
+- [ ] Remove the no-op fallback — if `SessionService` is nil, panic at startup (misconfiguration should not silently pass)
+- [ ] Apply `Authenticate` + `Authorize` on all protected route groups in `registerFinanceAPI`, `registerAuditAPI`, etc.
+- [ ] Confirm `registerAuthAPI` does NOT apply `Authenticate` to login/logout/oauth/mfa-complete (these are public)
+
+---
+
+## Phase 19 — DB & SQLC Verification
+
+> **Context:** SSO (`sso_providers` table) and API keys (`api_keys` table) were added in migrations 000309 and 000310. If these migrations have not been run, or if `make sqlc` has not been run after them, the repository implementations will reference Store methods that don't exist and the build will fail.
+
+### DB1 — Verify migration 000309: `sso_providers`
+
+- [ ] Confirm `db/migration/000309_iam_sso_providers.up.sql` exists
+- [ ] Run `make migrate` — verify it applies without error
+- [ ] Run `make sqlc` — verify `GetSSOProvider`, `UpsertSSOProvider`, `DeactivateSSOProvider`, `ListSSOProviders` appear in `db/sqlc/querier.go`
+- [ ] Confirm `repository/sso.go` compiles without undefined reference errors
+
+### DB2 — Verify migration 000310: `api_keys`
+
+- [ ] Confirm `db/migration/000310_iam_api_keys.up.sql` exists
+- [ ] Run `make migrate` — verify it applies without error
+- [ ] Run `make sqlc` — verify `CreateAPIKey`, `GetAPIKeyByHash`, `RevokeAPIKey`, `ListAPIKeys` appear in `db/sqlc/querier.go`
+- [ ] Confirm `repository/apikey.go` compiles without undefined reference errors
+
+### DB3 — Full build check
+
+- [ ] Run `go build ./...` from repo root — zero errors
+- [ ] Run `go vet ./...` — zero warnings
+
+---
+
+## Phase 20 — API Tests (Behavioral Verification)
+
+> **How to use this section:**
+> Each test has:
+> 1. **Expected behavior** — what the system should do
+> 2. **Request** — exact method, URL, headers, body
+> 3. **Expected outcome** — status code + response shape
+> 4. Checkbox `[ ]` — tick when you've run the call and the outcome matches
+>
+> Run a local server (`make run` or `go run ./cmd/server`) before executing these tests.
+> Use `scripts/api/lib/api_client.sh` or `curl` directly.
+>
+> **Note:** All endpoints are under the base URL configured in your `.env` (e.g. `http://localhost:8080`).
+
+---
+
+### AT1 — Login: valid credentials, no MFA
+
+**Expected behavior:** User provides correct email and password. Server builds a full session (permissions, flags, settings, entity scope), stores the token hash in DB, caches the resolved session in Redis, returns the session data and sets an `HttpOnly` cookie.
+
+**Request:**
+```
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@tenant.test",
+  "password": "correct-password"
+}
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Header: `Set-Cookie: awo_session=<token>; HttpOnly; SameSite=Lax`
+- Body contains: `user_id`, `tenant_id`, non-empty `permissions` map
+- Body does NOT contain the raw token (only cookie gets it)
+- [ ] Pass
+
+---
+
+### AT2 — Login: wrong password
+
+**Expected behavior:** Brute-force protection increments `failed_login_attempts`. The error message is generic — never reveals whether email or password is wrong.
+
+**Request:**
+```
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@tenant.test",
+  "password": "wrong-password"
+}
+```
+
+**Expected outcome:**
+- Status: `401 Unauthorized`
+- Body: `{"error": "invalid email or password"}` — exact wording, no oracle
+- Body does NOT say "user not found" or "password incorrect"
+- [ ] Pass
+
+---
+
+### AT3 — Login: account locked after 5 failures
+
+**Expected behavior:** After ≥5 failed attempts the account is locked for a backoff period. Login is refused even with the correct password until the lockout expires.
+
+**Setup:** Call AT2 five times for the same account first.
+
+**Request:**
+```
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@tenant.test",
+  "password": "correct-password"
+}
+```
+
+**Expected outcome:**
+- Status: `423 Locked`
+- Body: `{"error": "account locked, try again later"}`
+- [ ] Pass
+
+---
+
+### AT4 — Access protected route with valid session cookie
+
+**Expected behavior:** Cookie is present, session validates, permission is satisfied → handler runs.
+
+**Setup:** First call AT1 to obtain the cookie.
+
+**Request:**
+```
+GET /api/v1/finance/invoices
+Cookie: awo_session=<token-from-AT1>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Body: invoice list (may be empty array, not 401/403)
+- [ ] Pass
+
+---
+
+### AT5 — Access protected route without session
+
+**Expected behavior:** No cookie and no Authorization header → `Authenticate` middleware rejects the request immediately; the route handler never runs.
+
+**Request:**
+```
+GET /api/v1/finance/invoices
+```
+(no Cookie, no Authorization header)
+
+**Expected outcome:**
+- Status: `401 Unauthorized`
+- Body: `{"error": "authentication required"}`
+- [ ] Pass
+
+---
+
+### AT6 — Access protected route with valid session but missing permission
+
+**Expected behavior:** Session is valid but the user does not have the specific permission for this route → `Authorize` middleware rejects with 403.
+
+**Setup:** Login as a user who has no `finance.invoices.read` permission.
+
+**Request:**
+```
+GET /api/v1/finance/invoices
+Cookie: awo_session=<token-of-user-without-permission>
+```
+
+**Expected outcome:**
+- Status: `403 Forbidden`
+- Body: `{"error": "permission denied: finance.invoices.read"}` (or similar)
+- [ ] Pass
+
+---
+
+### AT7 — Logout
+
+**Expected behavior:** Cookie is cleared, session row is invalidated in DB, Redis cache key is deleted. Subsequent requests with the same token return 401.
+
+**Setup:** First call AT1 to obtain a token.
+
+**Request:**
+```
+POST /api/v1/auth/logout
+Cookie: awo_session=<token-from-AT1>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Header: `Set-Cookie: awo_session=; Max-Age=0` (cookie cleared)
+- [ ] Pass
+
+**Follow-up — token is dead:**
+```
+GET /api/v1/finance/invoices
+Cookie: awo_session=<same-token>
+```
+- Status: `401 Unauthorized`
+- [ ] Pass
+
+---
+
+### AT8 — MFA: initiate setup
+
+**Expected behavior:** Authenticated user calls initiate; gets back a TOTP secret and QR URI to scan with an authenticator app. Secret is NOT yet activated — user must call confirm next.
+
+**Setup:** Login as a user who does not yet have MFA enabled. Use the resulting cookie.
+
+**Request:**
+```
+POST /api/v1/auth/mfa/initiate
+Cookie: awo_session=<token>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Body: `{"secret": "<base32>", "qr_uri": "otpauth://totp/..."}`
+- MFA is still NOT enabled on the user record yet
+- [ ] Pass
+
+---
+
+### AT9 — MFA: confirm setup
+
+**Expected behavior:** User scans the QR code, generates a TOTP code, sends it. Server activates MFA on the user record. From now on, login requires a second step.
+
+**Setup:** Run AT8 first; generate a valid TOTP code from the returned secret.
+
+**Request:**
+```
+POST /api/v1/auth/mfa/confirm
+Cookie: awo_session=<token>
+Content-Type: application/json
+
+{
+  "code": "123456"
+}
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- `users.mfa_enabled = TRUE` in DB
+- [ ] Pass
+
+---
+
+### AT10 — MFA: login flow (two steps)
+
+**Expected behavior:** After MFA is enabled, login returns 202 with a `pending_token` instead of 200. User must exchange that token + TOTP code at `/auth/mfa/complete` to get a full session.
+
+**Step 1 — credentials:**
+```
+POST /api/v1/auth/login
+Content-Type: application/json
+
+{
+  "email": "mfa-user@tenant.test",
+  "password": "correct-password"
+}
+```
+**Expected outcome of Step 1:**
+- Status: `202 Accepted`
+- Body: `{"mfa_required": true, "pending_token": "<token>"}`
+- No session cookie set yet
+- [ ] Pass
+
+**Step 2 — TOTP exchange (public endpoint — no cookie needed):**
+```
+POST /api/v1/auth/mfa/complete
+Content-Type: application/json
+
+{
+  "pending_token": "<token-from-step-1>",
+  "code": "123456"
+}
+```
+**Expected outcome of Step 2:**
+- Status: `200 OK`
+- Header: `Set-Cookie: awo_session=<token>; HttpOnly; SameSite=Lax`
+- Body: full `ResolvedSession` JSON
+- [ ] Pass
+
+---
+
+### AT11 — MFA: wrong TOTP code
+
+**Expected behavior:** Invalid code at `/mfa/complete` is rejected. Pending token is consumed (single-use) regardless.
+
+**Request:**
+```
+POST /api/v1/auth/mfa/complete
+Content-Type: application/json
+
+{
+  "pending_token": "<valid-pending-token>",
+  "code": "000000"
+}
+```
+
+**Expected outcome:**
+- Status: `401 Unauthorized`
+- Body: `{"error": "invalid MFA code"}`
+- Pending token is now gone (re-using same pending_token returns the same 401 or 404)
+- [ ] Pass
+
+---
+
+### AT12 — MFA: disable
+
+**Expected behavior:** Authenticated user re-provides their password and disables MFA. Login no longer requires TOTP.
+
+**Request:**
+```
+DELETE /api/v1/auth/mfa
+Cookie: awo_session=<token>
+Content-Type: application/json
+
+{
+  "password": "correct-password"
+}
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- `users.mfa_enabled = FALSE`, `users.mfa_secret = NULL` in DB
+- [ ] Pass
+
+---
+
+### AT13 — Password reset: forgot password
+
+**Expected behavior:** Always returns 200 regardless of whether the email exists — prevents user enumeration. If email exists, a reset token is generated and would normally be emailed (currently logged or returned for testing).
+
+**Request:**
+```
+POST /api/v1/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "admin@tenant.test"
+}
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Body: `{"message": "if that email exists, a reset link has been sent"}`
+- Status is also `200` if email does not exist (identical response)
+- [ ] Pass
+
+---
+
+### AT14 — Password reset: set new password
+
+**Expected behavior:** Valid token sets a new password. Token is marked used. All existing sessions are invalidated.
+
+**Setup:** Obtain a raw reset token from AT13 (check server logs or DB `password_reset_tokens.token_hash` lookup).
+
+**Request:**
+```
+POST /api/v1/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "<raw-token>",
+  "password": "NewStr0ng!Password"
+}
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- `password_reset_tokens.used_at` is now set in DB
+- All `user_sessions` rows for that user are invalidated
+- Old session cookie returns 401
+- [ ] Pass
+
+---
+
+### AT15 — Password reset: token reuse rejected
+
+**Expected behavior:** Reset tokens are single-use. Second call with the same token returns 410 Gone.
+
+**Setup:** Run AT14 first (token is now used).
+
+**Request:**
+```
+POST /api/v1/auth/reset-password
+Content-Type: application/json
+
+{
+  "token": "<same-token>",
+  "password": "AnotherStr0ng!Pass"
+}
+```
+
+**Expected outcome:**
+- Status: `410 Gone`
+- Body: `{"error": "reset token already used"}`
+- [ ] Pass
+
+---
+
+### AT16 — API key: create
+
+**Expected behavior:** Authenticated user creates an API key. Raw key is returned once. Subsequent reads show the key name and scopes but never the raw value.
+
+**Request:**
+```
+POST /api/v1/auth/api-keys
+Cookie: awo_session=<admin-token>
+Content-Type: application/json
+
+{
+  "name": "accounting-sync",
+  "scopes": ["finance.invoices.read", "finance.transactions.read"]
+}
+```
+
+**Expected outcome:**
+- Status: `201 Created`
+- Body: `{"id": "...", "name": "accounting-sync", "key": "eak_...", "scopes": [...]}`
+- `key` field starts with `eak_` — returned only in this response
+- DB `api_keys.key_hash` is SHA-256 of the raw key (never plaintext)
+- [ ] Pass
+
+---
+
+### AT17 — API key: authenticate a request
+
+**Expected behavior:** API key passed as Bearer token resolves to a minimal `ResolvedSession` scoped to the key's permissions. No session cookie involved.
+
+**Setup:** Use the `eak_...` key from AT16.
+
+**Request:**
+```
+GET /api/v1/finance/invoices
+Authorization: Bearer eak_<key-from-AT16>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Request is served (key has `finance.invoices.read` scope)
+- [ ] Pass
+
+---
+
+### AT18 — API key: scope ceiling enforced
+
+**Expected behavior:** Even if the owning user has broad permissions, the API key can only exercise the scopes it was created with. A request for a route requiring `finance.transactions.create` should fail.
+
+**Request:**
+```
+POST /api/v1/finance/transactions
+Authorization: Bearer eak_<key-with-only-read-scopes>
+Content-Type: application/json
+
+{ ... }
+```
+
+**Expected outcome:**
+- Status: `403 Forbidden`
+- Body: `{"error": "permission denied: finance.transactions.create"}`
+- [ ] Pass
+
+---
+
+### AT19 — API key: revoke
+
+**Expected behavior:** Revoked key is immediately rejected. Cache eviction happens on revoke; subsequent requests with the key return 401.
+
+**Request:**
+```
+DELETE /api/v1/auth/api-keys/<key-id>
+Cookie: awo_session=<admin-token>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Subsequent call with `Authorization: Bearer eak_<revoked-key>` → `401 Unauthorized`
+- [ ] Pass
+
+---
+
+### AT20 — Session: cross-tenant isolation
+
+**Expected behavior:** A valid session for tenant A cannot access tenant B's data. RLS at DB level and tenant context injection in middleware enforce this.
+
+**Setup:** Two separate tenants, each with their own admin user and session.
+
+**Request (tenant A session trying tenant B path — if route accepts tenant in path):**
+```
+GET /api/v1/finance/invoices
+Cookie: awo_session=<tenant-A-token>
+X-Tenant-ID: <tenant-B-uuid>   (if your routes accept this header)
+```
+
+**Expected outcome:**
+- Status: `403 Forbidden` or returns empty data scoped to tenant A only
+- Never returns tenant B records
+- [ ] Pass
+
+---
+
+### AT21 — Boot schema: session-gated navigation
+
+**Expected behavior:** `GET /schema/boot` returns the AMIS navigation schema. Modules the user cannot see (flag disabled or no read permission) are absent from the response. This is what drives the frontend — no session data is fetched client-side for permissions.
+
+**Request:**
+```
+GET /api/v1/schema/boot
+Cookie: awo_session=<token>
+```
+
+**Expected outcome:**
+- Status: `200 OK`
+- Body: AMIS `app` schema JSON with `pages` array
+- `pages` only includes modules where `sess.FeatureEnabled(slug)` AND `sess.Can(module+".read")`
+- [ ] Pass
+
+---
+
+## Updated Completion Summary
+
+| Phase | Description | Status |
+|---|---|---|
+| 17 | UserService implementation (`service/user.go`) | [ ] Todo |
+| 18 | HTTP middleware rewrite (Authenticate, Authorize, RequireFlag, wire routes) | [ ] Todo |
+| 19 | DB migrations + SQLC verification (SSO, API keys) + `go build` passes | [ ] Todo |
+| 20 | API tests AT1–AT21 (behavioral verification) | [ ] Todo |
 | 5 | HTTP middleware (Authenticate, Authorize) + Login/Logout handlers | ✅ Done |
 | 6 | Security hardening (SHA-256 tokens, tenant guard, RLS fix, AssignableTo) | ✅ Done |
 | 7 | Wire flags + settings into session at login | ✅ Done |

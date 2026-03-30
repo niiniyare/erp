@@ -183,6 +183,7 @@ info "5. Verify login"
 RESP=$(curl -s -w "\n%{http_code}" \
   -X POST "${BASE_URL}/api/v1/auth/login" \
   -H "Content-Type: application/json" \
+  -H "X-Tenant-ID: $TENANT_ID" \
   -d "{\"email\": \"$ADMIN_EMAIL\", \"password\": \"$ADMIN_PASSWORD\"}")
 BODY=$(echo "$RESP" | head -n -1)
 STATUS=$(echo "$RESP" | tail -n 1)
@@ -215,4 +216,4 @@ echo "  Admin   : $ADMIN_EMAIL"
 echo "  Password: $ADMIN_PASSWORD"
 echo ""
 echo "  Run the full test suite:"
-echo "    ADMIN_EMAIL=$ADMIN_EMAIL ADMIN_PASSWORD=$ADMIN_PASSWORD bash scripts/curl_test.sh"
+echo "    TENANT_ID=$TENANT_ID ADMIN_EMAIL=$ADMIN_EMAIL ADMIN_PASSWORD=$ADMIN_PASSWORD bash scripts/curl_test.sh"

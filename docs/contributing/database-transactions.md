@@ -1,7 +1,7 @@
 # Awo ERP Database Transactions and Tenant Isolation
-## *WithTenant Pattern and Context-Based Multi-Tenancy*
+## *WithTenantFromCtx Pattern and Context-Based Multi-Tenancy*
 
-*Guide for managing database transactions with proper tenant isolation using WithTenant pattern, context propagation, and SQLC integration*
+*Guide for managing database transactions with proper tenant isolation using WithTenantFromCtx pattern, context propagation, and SQLC integration*
 
 > ** Related Documentation:**
 > - `docs/contributing/architecture.md` - System architecture and context patterns
@@ -10,12 +10,12 @@
 
 ## Overview
 
-Awo ERP uses the **WithTenant pattern** for database transactions, combining PostgreSQL transaction management with tenant context isolation. The `db.Store` interface provides tenant-aware transaction methods that ensure all operations are properly isolated by setting database session variables within transaction scope.
+Awo ERP uses the **WithTenantFromCtx pattern** for database transactions, combining PostgreSQL transaction management with tenant context isolation. The `db.Store` interface provides tenant-aware transaction methods that ensure all operations are properly isolated by setting database session variables within transaction scope.
 
 ## Key Architecture Components
 
 1. **Context Propagation**: Tenant ID stored in Go context via `shared.GetTenantID(ctx)`
-2. **WithTenant Pattern**: Database transactions with tenant session variables  
+2. **WithTenantFromCtx Pattern**: Database transactions with tenant session variables  
 3. **SQLC Integration**: Type-safe queries with automatic tenant isolation
 4. **Repository Layer**: Clean abstractions over database operations
 
@@ -28,7 +28,7 @@ type Store interface {
     Querier
     // Tenant context methods
     SetTenantContext(ctx context.Context, tenantID uuid.UUID) error
-    WithTenant(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, Store) error) error
+    WithTenantFromCtx(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, Store) error) error
     BeginTxWithTenant(ctx context.Context, tenantID uuid.UUID) (pgx.Tx, Store, error)
     WithTx(ctx context.Context, fn func(context.Context, Store) error) error
     // Connection management
@@ -51,7 +51,7 @@ func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.
     }
 
     // Use tenant-aware transaction for proper isolation
-    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+    return r.store.WithTenantFromCtx(ctx, tenantID, func(ctx context.Context, s db.Store) error {
         // Map domain account to SQLC parameters
         params, err := mapDomainAccountToSQLCCreateDirect(account)
         if err != nil {
@@ -75,7 +75,7 @@ func (r *chartOfAccountsRepository) Create(ctx context.Context, account *domain.
 }
 ```
 
-### 2. **Multi-Operation WithTenant Example**
+### 2. **Multi-Operation WithTenantFromCtx Example**
 
 Complex operations that need multiple queries in the same tenant context:
 
@@ -88,7 +88,7 @@ func (r *transactionRepository) CreateWithEntries(ctx context.Context, transacti
         return fmt.Errorf("tenant ID not found in context")
     }
 
-    return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+    return r.store.WithTenantFromCtx(ctx, tenantID, func(ctx context.Context, s db.Store) error {
         // 1. Create the main transaction
         params := db.CreateTransactionParams{
             EntityID:          transaction.EntityID,

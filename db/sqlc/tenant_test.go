@@ -4,14 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"strings"
 	"testing"
 	"time"
 
+	"awo.so/internal/shared/utils"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"awo.so/internal/shared/utils"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -34,31 +33,31 @@ func int64Ptr(i int64) *int64 {
 	return &i
 }
 
-func setupTestDB(t *testing.T) *pgxpool.Pool {
-	t.Helper()
-
-	databaseURL := os.Getenv("TEST_DATABASE_URL")
-	if databaseURL == "" {
-		databaseURL = "postgresql://admin:admin@localhost:5432/ledger?sslmode=disable"
-		t.Skip("TEST_DATABASE_URL not set, skipping database tests")
-	}
-
-	config, err := pgxpool.ParseConfig(databaseURL)
-	require.NoError(t, err)
-
-	// Configure for testing
-	config.MaxConns = 10
-	config.MinConns = 2
-
-	pool, err := pgxpool.NewWithConfig(context.Background(), config)
-	require.NoError(t, err)
-
-	// Test connection
-	err = pool.Ping(context.Background())
-	require.NoError(t, err)
-
-	return pool
-}
+// func setupTestDB(t *testing.T) *pgxpool.Pool {
+// 	t.Helper()
+//
+// 	databaseURL := os.Getenv("TEST_DATABASE_URL")
+// 	if databaseURL == "" {
+// 		databaseURL = "postgresql://admin:admin@localhost:5432/ledger?sslmode=disable"
+// 		t.Skip("TEST_DATABASE_URL not set, skipping database tests")
+// 	}
+//
+// 	config, err := pgxpool.ParseConfig(databaseURL)
+// 	require.NoError(t, err)
+//
+// 	// Configure for testing
+// 	config.MaxConns = 10
+// 	config.MinConns = 2
+//
+// 	pool, err := pgxpool.NewWithConfig(context.Background(), config)
+// 	require.NoError(t, err)
+//
+// 	// Test connection
+// 	err = pool.Ping(context.Background())
+// 	require.NoError(t, err)
+//
+// 	return pool
+// }
 
 // generateUniqueTestName creates a unique test name to avoid conflicts
 // Keeps names short to fit database constraints (usually VARCHAR(50) or VARCHAR(63))
@@ -173,7 +172,7 @@ type TenantTestSuite struct {
 }
 
 func (suite *TenantTestSuite) SetupSuite() {
-	suite.pool = setupTestDB(suite.T())
+	suite.pool = setupTestDB(suite.T()).pool
 	suite.store = NewStore(suite.pool)
 	suite.testTenants = make([]uuid.UUID, 0)
 }
@@ -1763,7 +1762,7 @@ func TestTenantTestSuite(t *testing.T) {
 func TestTenantLifecycle(t *testing.T) {
 	// Integration tests now always run
 
-	pool := setupTestDB(t)
+	pool := setupTestDB(t).pool
 	defer pool.Close()
 	store := NewStore(pool)
 
@@ -1848,7 +1847,7 @@ func TestTenantLifecycle(t *testing.T) {
 
 // Benchmark tests
 func BenchmarkCreateTenant(b *testing.B) {
-	pool := setupTestDB(&testing.T{})
+	pool := setupTestDB(&testing.T{}).pool
 	defer pool.Close()
 	store := NewStore(pool)
 
@@ -1881,7 +1880,7 @@ func BenchmarkCreateTenant(b *testing.B) {
 
 // Store-specific tenant method tests
 func TestStoreTenantMethods(t *testing.T) {
-	pool := setupTestDB(t)
+	pool := setupTestDB(t).pool
 	defer pool.Close()
 	store := NewStore(pool)
 
@@ -2067,7 +2066,7 @@ func TestStoreTenantMethods(t *testing.T) {
 
 // Tests for valuable database views and materialized views
 func TestTenantViewsAndMaterializedViews(t *testing.T) {
-	pool := setupTestDB(t)
+	pool := setupTestDB(t).pool
 	defer pool.Close()
 	store := NewStore(pool)
 
@@ -2357,7 +2356,7 @@ func TestTenantViewsAndMaterializedViews(t *testing.T) {
 }
 
 func BenchmarkGetTenantByID(b *testing.B) {
-	pool := setupTestDB(&testing.T{})
+	pool := setupTestDB(&testing.T{}).pool
 	defer pool.Close()
 	store := NewStore(pool)
 

@@ -563,6 +563,9 @@ func (r *Router) registerAuthAPI(apiRouter fiber.Router) error {
 	loginCfg := authHandler.DefaultLoginConfig()
 
 	authGroup := apiRouter.Group("/v1/auth")
+	if r.deps.TenantMiddleware != nil {
+		authGroup.Use(r.deps.TenantMiddleware)
+	}
 	authGroup.Post("/login", authHandler.LoginHandler(r.deps.SessionService, loginCfg))
 	authGroup.Post("/logout", authHandler.LogoutHandler(r.deps.SessionService, cookieName))
 

@@ -23,7 +23,10 @@ func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
 // GetTenantID retrieves tenant ID from context
 func GetTenantID(ctx context.Context) (uuid.UUID, bool) {
 	tenantID, ok := ctx.Value(TenantIDKey).(uuid.UUID)
-	return tenantID, ok
+	if !ok || tenantID == uuid.Nil {
+		return uuid.Nil, false
+	}
+	return tenantID, true
 }
 
 // WithUserID adds user ID to context

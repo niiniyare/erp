@@ -70,7 +70,7 @@ func (a *AppConfig) Validate() error {
 	}
 
 	if !validStages[a.Stage] {
-		return fmt.Errorf("invalid app stage: %s, must be one of: development, staging, production, testing", a.Stage)
+		return fmt.Errorf("invalid app stage: %s, must be one of: dev, staging, production, testing", a.Stage)
 	}
 
 	return nil

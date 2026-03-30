@@ -1,3 +1,7 @@
+--
+--
+--
+--
 -- =============================================================================
 -- FIX: Add config JSONB to entitystate for document sequence formatting
 -- =============================================================================
@@ -21,7 +25,8 @@
 -- =============================================================================
 
 ALTER TABLE entitystate
-  ADD COLUMN IF NOT EXISTS config JSONB DEFAULT '{}'::jsonb;
+  ADD COLUMN IF NOT EXISTS cconfig JSONB DEFAULT '{}'::jsonb;
+onfig JSONB DEFAULT '{}'::jsonb;
 
 COMMENT ON COLUMN entitystate.config IS
   'Document sequence formatting config for this entity+document_type. '

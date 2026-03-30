@@ -190,7 +190,12 @@ func (r *userRepository) GetUserByUsername(ctx context.Context, username string)
 }
 
 func (r *userRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (*domain.UserWithDetails, error) {
-	row, err := r.store.GetCompleteUserProfile(ctx, id)
+	var row *db.GetCompleteUserProfileRow
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		row, e = s.GetCompleteUserProfile(ctx, id)
+		return e
+	})
 	if err != nil {
 		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
@@ -201,7 +206,12 @@ func (r *userRepository) GetUserWithDetails(ctx context.Context, id uuid.UUID) (
 }
 
 func (r *userRepository) GetUserPassword(ctx context.Context, userID uuid.UUID) (string, error) {
-	hash, err := r.store.GetUserPasswordByID(ctx, userID)
+	var hash *string
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		hash, e = s.GetUserPasswordByID(ctx, userID)
+		return e
+	})
 	if err != nil {
 		if err == db.ErrNoRows {
 			return "", sharedErrors.ErrUserNotFound
@@ -239,16 +249,20 @@ func (r *userRepository) CreateUser(ctx context.Context, req *domain.CreateUserR
 
 func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, req *domain.UpdateUserRequest) (*domain.User, error) {
 	params := db.UpdateUserParams{ID: id}
-	row, err := r.store.UpdateUser(ctx, params)
+	var user *domain.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, e := s.UpdateUser(ctx, params)
+		if e != nil {
+			return e
+		}
+		user, e = fromSQLCUser(row)
+		return e
+	})
 	if err != nil {
 		if err == db.ErrNoRows {
 			return nil, sharedErrors.ErrUserNotFound
 		}
 		return nil, fmt.Errorf("iam repo: update user: %w", err)
-	}
-	user, err := fromSQLCUser(row)
-	if err != nil {
-		return nil, err
 	}
 	r.invalidateUser(ctx, user.ID, user.Email, user.Username)
 	r.cacheUser(ctx, user)
@@ -256,7 +270,10 @@ func (r *userRepository) UpdateUser(ctx context.Context, id uuid.UUID, req *doma
 }
 
 func (r *userRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
-	if err := r.store.SoftDeleteUser(ctx, id); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.SoftDeleteUser(ctx, id)
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: delete user: %w", err)
 	}
 	r.invalidateUser(ctx, id, "", "")
@@ -264,9 +281,11 @@ func (r *userRepository) DeleteUser(ctx context.Context, id uuid.UUID) error {
 }
 
 func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, newPasswordHash string) error {
-	return r.store.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
-		ID:           userID,
-		PasswordHash: &newPasswordHash,
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
+			ID:           userID,
+			PasswordHash: &newPasswordHash,
+		})
 	})
 }
 
@@ -275,7 +294,10 @@ func (r *userRepository) UpdatePassword(ctx context.Context, userID uuid.UUID, n
 func (r *userRepository) IncrementFailedAttempts(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.IncrementFailedAttempts")
 	defer span.End()
-	if err := r.store.IncrementFailedLogins(ctx, userID); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.IncrementFailedLogins(ctx, userID)
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: increment failed attempts: %w", err)
 	}
 	r.invalidateUser(ctx, userID, "", "")
@@ -285,7 +307,10 @@ func (r *userRepository) IncrementFailedAttempts(ctx context.Context, userID uui
 func (r *userRepository) ResetFailedAttempts(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.ResetFailedAttempts")
 	defer span.End()
-	if err := r.store.UnlockUser(ctx, userID); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.UnlockUser(ctx, userID)
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: reset failed attempts: %w", err)
 	}
 	r.invalidateUser(ctx, userID, "", "")
@@ -295,10 +320,13 @@ func (r *userRepository) ResetFailedAttempts(ctx context.Context, userID uuid.UU
 func (r *userRepository) LockAccount(ctx context.Context, userID uuid.UUID, until time.Time) error {
 	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.LockAccount")
 	defer span.End()
-	if err := r.store.LockAccount(ctx, db.LockAccountParams{
-		ID:           userID,
-		LockoutUntil: sql.NullTime{Time: until, Valid: true},
-	}); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.LockAccount(ctx, db.LockAccountParams{
+			ID:           userID,
+			LockoutUntil: sql.NullTime{Time: until, Valid: true},
+		})
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: lock account: %w", err)
 	}
 	r.invalidateUser(ctx, userID, "", "")
@@ -308,7 +336,10 @@ func (r *userRepository) LockAccount(ctx context.Context, userID uuid.UUID, unti
 func (r *userRepository) UpdateLastLogin(ctx context.Context, userID uuid.UUID) error {
 	ctx, span := r.tracing.StartSpan(ctx, "iam.repo.UpdateLastLogin")
 	defer span.End()
-	if err := r.store.UpdateUserLastLogin(ctx, userID); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.UpdateUserLastLogin(ctx, userID)
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: update last login: %w", err)
 	}
 	r.invalidateUser(ctx, userID, "", "")
@@ -371,11 +402,16 @@ func (r *userRepository) ListUsers(ctx context.Context, req *domain.ListUsersReq
 	if limit == 0 {
 		limit = 50
 	}
-	rows, err := r.store.ListUsers(ctx, db.ListUsersParams{
-		UserType:      req.UserType,
-		AccountStatus: req.AccountStatus,
-		Limit:         limit,
-		Offset:        offset,
+	var rows []*db.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		rows, e = s.ListUsers(ctx, db.ListUsersParams{
+			UserType:      req.UserType,
+			AccountStatus: req.AccountStatus,
+			Limit:         limit,
+			Offset:        offset,
+		})
+		return e
 	})
 	if err != nil {
 		return nil, fmt.Errorf("iam repo: list users: %w", err)
@@ -392,10 +428,15 @@ func (r *userRepository) ListUsers(ctx context.Context, req *domain.ListUsersReq
 }
 
 func (r *userRepository) SearchUsers(ctx context.Context, query string, limit, offset int) ([]*domain.User, error) {
-	rows, err := r.store.SearchUsersAdvanced(ctx, db.SearchUsersAdvancedParams{
-		Query:  &query,
-		Limit:  int32(limit),
-		Offset: int32(offset),
+	var rows []*db.User
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		rows, e = s.SearchUsersAdvanced(ctx, db.SearchUsersAdvancedParams{
+			Query:  &query,
+			Limit:  int32(limit),
+			Offset: int32(offset),
+		})
+		return e
 	})
 	if err != nil {
 		return nil, fmt.Errorf("iam repo: search users: %w", err)
@@ -414,20 +455,24 @@ func (r *userRepository) SearchUsers(ctx context.Context, query string, limit, o
 // Role assignments
 
 func (r *userRepository) AssignUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	_, err := r.store.AssignUserRole(ctx, db.AssignUserRoleParams{
-		PUserID:     userID,
-		PRoleID:     roleID,
-		PEntityID:   entityID,
-		PAssignedBy: uuid.Nil,
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		_, e := s.AssignUserRole(ctx, db.AssignUserRoleParams{
+			PUserID:     userID,
+			PRoleID:     roleID,
+			PEntityID:   entityID,
+			PAssignedBy: uuid.Nil,
+		})
+		return e
 	})
-	return err
 }
 
 func (r *userRepository) RevokeUserRole(ctx context.Context, userID, roleID, entityID uuid.UUID) error {
-	return r.store.RevokeUserRole(ctx, db.RevokeUserRoleParams{
-		PUserID:   userID,
-		PRoleID:   roleID,
-		PEntityID: entityID,
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.RevokeUserRole(ctx, db.RevokeUserRoleParams{
+			PUserID:   userID,
+			PRoleID:   roleID,
+			PEntityID: entityID,
+		})
 	})
 }
 
@@ -436,7 +481,12 @@ func (r *userRepository) RevokeUserRole(ctx context.Context, userID, roleID, ent
 // GetMFASecret returns the encrypted MFA secret and enabled flag from the DB.
 // Requires the GetUserMFASecret SQLC query (generated after `make sqlc`).
 func (r *userRepository) GetMFASecret(ctx context.Context, userID uuid.UUID) (string, bool, error) {
-	row, err := r.store.GetUserMFASecret(ctx, userID)
+	var row *db.GetUserMFASecretRow
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var e error
+		row, e = s.GetUserMFASecret(ctx, userID)
+		return e
+	})
 	if err != nil {
 		if err == db.ErrNoRows {
 			return "", false, sharedErrors.ErrUserNotFound
@@ -454,10 +504,13 @@ func (r *userRepository) GetMFASecret(ctx context.Context, userID uuid.UUID) (st
 // SetMFASecret stores the encrypted secret and sets mfa_enabled = TRUE.
 // Requires the EnableMFA SQLC query (generated after `make sqlc`).
 func (r *userRepository) SetMFASecret(ctx context.Context, userID uuid.UUID, encryptedSecret string) error {
-	if err := r.store.EnableMFA(ctx, db.EnableMFAParams{
-		ID:        userID,
-		MfaSecret: &encryptedSecret,
-	}); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.EnableMFA(ctx, db.EnableMFAParams{
+			ID:        userID,
+			MfaSecret: &encryptedSecret,
+		})
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: set mfa secret: %w", err)
 	}
 	r.invalidateUserByID(ctx, userID)
@@ -467,7 +520,10 @@ func (r *userRepository) SetMFASecret(ctx context.Context, userID uuid.UUID, enc
 // ClearMFASecret sets mfa_secret = NULL and mfa_enabled = FALSE.
 // Requires the DisableMFA SQLC query (generated after `make sqlc`).
 func (r *userRepository) ClearMFASecret(ctx context.Context, userID uuid.UUID) error {
-	if err := r.store.DisableMFA(ctx, userID); err != nil {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		return s.DisableMFA(ctx, userID)
+	})
+	if err != nil {
 		return fmt.Errorf("iam repo: clear mfa secret: %w", err)
 	}
 	r.invalidateUserByID(ctx, userID)
