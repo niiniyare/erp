@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"context"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/internal/core/iam"
+	"awo.so/internal/platform/cache"
 )
 
 // AuthConfig holds configuration for session-based authentication middleware.
@@ -50,7 +52,7 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 			if err != nil || resolved == nil {
 				return fiber.NewError(fiber.StatusUnauthorized, "invalid or revoked API key")
 			}
-			c.Locals(iam.LocalsKeySession, resolved)
+			setSessionLocals(c, resolved)
 			return c.Next()
 		}
 
@@ -60,7 +62,7 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired session")
 		}
 
-		c.Locals(iam.LocalsKeySession, resolved)
+		setSessionLocals(c, resolved)
 		return c.Next()
 	}
 }
@@ -99,4 +101,16 @@ func RequireFlag(flagKey string) fiber.Handler {
 		}
 		return c.Next()
 	}
+}
+
+// setSessionLocals populates all Fiber Locals and Go context values required
+// by downstream handlers and authorization middleware:
+//   - iam.LocalsKeySession   → *iam.ResolvedSession  (permissions, flags, settings)
+//   - iam.LocalsKeyPrincipal → iam.Principal         (Casbin subject + domain)
+//   - cache.TenantIDKey      → tenant UUID string     (RLS context for SQLC queries)
+func setSessionLocals(c *fiber.Ctx, resolved *iam.ResolvedSession) {
+	c.Locals(iam.LocalsKeySession, resolved)
+	c.Locals(iam.LocalsKeyPrincipal, resolved.ToPrincipal())
+	ctx := context.WithValue(c.Context(), cache.TenantIDKey, resolved.TenantID.String())
+	c.SetUserContext(ctx)
 }

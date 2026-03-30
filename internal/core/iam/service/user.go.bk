@@ -1,0 +1,621 @@
+package service
+
+import (
+	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"crypto/hmac"
+	"crypto/rand"
+	"crypto/sha1" //nolint:gosec — SHA-1 is mandated by RFC 6238 TOTP
+	"crypto/sha256"
+	"encoding/base32"
+	"encoding/binary"
+	"encoding/hex"
+	"fmt"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
+
+	"awo.so/internal/core/iam/domain"
+	"awo.so/internal/core/iam/repository"
+	sharedErrors "awo.so/internal/shared/errors"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
+	"awo.so/internal/shared/tracing"
+)
+
+// =============================================================================
+// Configuration
+// =============================================================================
+
+// UserConfig holds tunable thresholds and secrets for the UserService.
+type UserConfig struct {
+	// MaxFailedAttempts is the number of failed logins before the first lockout.
+	MaxFailedAttempts int
+	// LockoutDurations is the escalating backoff sequence applied after each
+	// MaxFailedAttempts threshold is reached: [15m, 30m, 1h, 2h].
+	LockoutDurations []time.Duration
+	// MFAEncryptionKey is the 32-byte AES-256-GCM key used to encrypt TOTP
+	// secrets at rest. Must be exactly 32 bytes for MFA methods to work.
+	MFAEncryptionKey []byte
+	// MFAIssuer is the label shown in authenticator apps (e.g. "Awo ERP").
+	MFAIssuer string
+}
+
+func defaultUserConfig() UserConfig {
+	return UserConfig{
+		MaxFailedAttempts: 5,
+		LockoutDurations:  []time.Duration{15 * time.Minute, 30 * time.Minute, time.Hour, 2 * time.Hour},
+		MFAIssuer:         "Awo",
+	}
+}
+
+// =============================================================================
+// Interface (Port)
+// =============================================================================
+
+// UserService owns all user-identity operations: credential verification,
+// brute-force lockout, MFA secret lifecycle, and password management.
+//
+// SessionService calls Authenticate at login time; MFA handlers call the MFA
+// methods; password-reset handlers call the password methods. This service
+// never touches sessions — that is SessionService's responsibility.
+type UserService interface {
+	// Authenticate verifies email + password, enforces brute-force protection,
+	// and returns the User on success. Returns ErrInvalidCredentials on any
+	// mismatch — never reveals which field was wrong.
+	Authenticate(ctx context.Context, email, password string) (*domain.User, error)
+
+	// CRUD
+	GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*domain.User, error)
+	GetUserWithDetails(ctx context.Context, userID uuid.UUID) (*domain.UserWithDetails, error)
+	CreateUser(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error)
+	UpdateUser(ctx context.Context, userID uuid.UUID, req *domain.UpdateUserRequest) (*domain.User, error)
+	ListUsers(ctx context.Context, req *domain.ListUsersRequest) ([]*domain.User, error)
+
+	// Password management
+	ChangePassword(ctx context.Context, userID uuid.UUID, req *domain.ChangePasswordRequest) error
+	// ForgotPassword generates a single-use reset token (1-hour expiry) and
+	// returns (rawToken, userID, nil). Returns ("", uuid.Nil, nil) when the
+	// email is not found — no enumeration.
+	// NOTE: the caller is responsible for delivering rawToken to the user via email.
+	ForgotPassword(ctx context.Context, email string) (rawToken string, userID uuid.UUID, err error)
+	// ResetPassword validates the token, enforces the password policy, sets the
+	// new password, and returns the affected userID so the caller can invalidate
+	// active sessions via SessionService.LogoutAllForUser.
+	ResetPassword(ctx context.Context, token, newPassword string) (uuid.UUID, error)
+
+	// MFA lifecycle — TOTP (RFC 6238), SHA-1, 6-digit, 30-second window.
+	// Secrets are AES-256-GCM encrypted before storage.
+	InitiateMFA(ctx context.Context, userID uuid.UUID) (*domain.MFASetup, error)
+	ConfirmMFA(ctx context.Context, userID uuid.UUID, code string) error
+	ValidateMFACode(ctx context.Context, userID uuid.UUID, code string) (bool, error)
+	DisableMFA(ctx context.Context, userID uuid.UUID, password string) error
+}
+
+// =============================================================================
+// Implementation
+// =============================================================================
+
+type userService struct {
+	repo    repository.UserRepository
+	tracer  tracing.Service
+	metrics metrics.MetricsProvider
+	log     logger.Logger
+	cfg     UserConfig
+}
+
+// NewUserService constructs a UserService with default brute-force config.
+func NewUserService(
+	repo repository.UserRepository,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	log logger.Logger,
+) UserService {
+	return NewUserServiceWithConfig(repo, tracer, m, defaultUserConfig(), log)
+}
+
+// NewUserServiceWithConfig constructs a UserService with explicit configuration.
+func NewUserServiceWithConfig(
+	repo repository.UserRepository,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	cfg UserConfig,
+	log logger.Logger,
+) UserService {
+	return &userService{
+		repo:    repo,
+		tracer:  tracer,
+		metrics: m,
+		log:     log.WithFields(logger.Fields{"component": "iam.user"}),
+		cfg:     cfg,
+	}
+}
+
+// =============================================================================
+// Authentication
+// =============================================================================
+
+// Authenticate is the single entry point for credential verification.
+// It applies brute-force detection, constant-time bcrypt comparison, and
+// escalating lockout. All error paths return ErrInvalidCredentials to prevent
+// oracle attacks — only ErrAccountLocked is returned separately to allow the
+// UI to show a distinct "try again later" message.
+func (s *userService) Authenticate(ctx context.Context, email, password string) (*domain.User, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.Authenticate")
+	defer span.End()
+
+	user, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		// Do not reveal whether the email exists.
+		s.metrics.IncrementCounter("iam.user.auth.failure", nil)
+		return nil, sharedErrors.ErrInvalidCredentials
+	}
+
+	// Locked accounts get a distinct error so the UI can show a lockout message.
+	if user.IsLocked() {
+		s.metrics.IncrementCounter("iam.user.auth.locked", nil)
+		return nil, sharedErrors.ErrAccountLocked
+	}
+
+	// Inactive / suspended: generic message (no oracle).
+	if !user.CanAuthenticate() {
+		s.metrics.IncrementCounter("iam.user.auth.failure", nil)
+		return nil, sharedErrors.ErrInvalidCredentials
+	}
+
+	storedHash, err := s.repo.GetUserPassword(ctx, user.ID)
+	if err != nil {
+		span.RecordError(err)
+		return nil, sharedErrors.ErrInvalidCredentials
+	}
+
+	// Constant-time comparison — timing must not reveal a valid email.
+	if bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) != nil {
+		_ = s.repo.IncrementFailedAttempts(ctx, user.ID)
+		newCount := int(user.FailedLoginAttempts) + 1
+		if newCount >= s.cfg.MaxFailedAttempts {
+			idx := newCount/s.cfg.MaxFailedAttempts - 1
+			if idx >= len(s.cfg.LockoutDurations) {
+				idx = len(s.cfg.LockoutDurations) - 1
+			}
+			lockUntil := time.Now().Add(s.cfg.LockoutDurations[idx])
+			_ = s.repo.LockAccount(ctx, user.ID, lockUntil)
+			s.metrics.IncrementCounter("iam.user.auth.account_locked", nil)
+		}
+		s.metrics.IncrementCounter("iam.user.auth.failure", nil)
+		return nil, sharedErrors.ErrInvalidCredentials
+	}
+
+	_ = s.repo.ResetFailedAttempts(ctx, user.ID)
+	_ = s.repo.UpdateLastLogin(ctx, user.ID)
+	s.metrics.IncrementCounter("iam.user.auth.success", nil)
+	return user, nil
+}
+
+// =============================================================================
+// CRUD
+// =============================================================================
+
+func (s *userService) GetUser(ctx context.Context, userID uuid.UUID) (*domain.User, error) {
+	return s.repo.GetUserByID(ctx, userID)
+}
+
+func (s *userService) GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
+	return s.repo.GetUserByEmail(ctx, email)
+}
+
+func (s *userService) GetUserWithDetails(ctx context.Context, userID uuid.UUID) (*domain.UserWithDetails, error) {
+	return s.repo.GetUserWithDetails(ctx, userID)
+}
+
+// CreateUser hashes the password with bcrypt (cost 12) before persisting.
+func (s *userService) CreateUser(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.CreateUser")
+	defer span.End()
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+	if err := validatePasswordStrength(req.Password); err != nil {
+		return nil, err
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam user: hash password: %w", err)
+	}
+	return s.repo.CreateUser(ctx, req, string(hash))
+}
+
+func (s *userService) UpdateUser(ctx context.Context, userID uuid.UUID, req *domain.UpdateUserRequest) (*domain.User, error) {
+	return s.repo.UpdateUser(ctx, userID, req)
+}
+
+func (s *userService) ListUsers(ctx context.Context, req *domain.ListUsersRequest) ([]*domain.User, error) {
+	return s.repo.ListUsers(ctx, req)
+}
+
+// =============================================================================
+// Password Management
+// =============================================================================
+
+// ChangePassword re-verifies the current password before accepting a new one.
+// Enforces strength rules and reuse prevention against the last 5 hashes.
+func (s *userService) ChangePassword(ctx context.Context, userID uuid.UUID, req *domain.ChangePasswordRequest) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.ChangePassword")
+	defer span.End()
+
+	storedHash, err := s.repo.GetUserPassword(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(req.CurrentPassword)) != nil {
+		return sharedErrors.ErrInvalidCredentials
+	}
+	if err := validatePasswordStrength(req.NewPassword); err != nil {
+		return err
+	}
+	history, err := s.repo.GetPasswordHistory(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("iam user: get password history: %w", err)
+	}
+	if isPasswordReused(req.NewPassword, history) {
+		return sharedErrors.ErrPasswordReused
+	}
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam user: hash new password: %w", err)
+	}
+	return s.repo.UpdatePasswordAndHistory(ctx, userID, string(newHash), prependHistory(string(newHash), history))
+}
+
+// ForgotPassword generates a SHA-256-hashed reset token (1-hour expiry) and
+// returns the raw token to the caller for delivery.
+// If the email is not found, returns ("", uuid.Nil, nil) — no enumeration.
+func (s *userService) ForgotPassword(ctx context.Context, email string) (string, uuid.UUID, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.ForgotPassword")
+	defer span.End()
+
+	user, err := s.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		// Intentionally swallow the error — caller gets no signal about existence.
+		return "", uuid.Nil, nil
+	}
+
+	rawToken, err := generateRawToken()
+	if err != nil {
+		span.RecordError(err)
+		return "", uuid.Nil, fmt.Errorf("iam user: generate reset token: %w", err)
+	}
+
+	tokenHash := hashToken(rawToken)
+	if err := s.repo.CreatePasswordResetToken(ctx, user.ID, tokenHash, time.Now().Add(time.Hour)); err != nil {
+		span.RecordError(err)
+		return "", uuid.Nil, fmt.Errorf("iam user: store reset token: %w", err)
+	}
+
+	return rawToken, user.ID, nil
+}
+
+// ResetPassword validates the token, enforces password policy, updates the
+// password, and returns the userID so the caller can invalidate active sessions.
+func (s *userService) ResetPassword(ctx context.Context, token, newPassword string) (uuid.UUID, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.ResetPassword")
+	defer span.End()
+
+	tokenHash := hashToken(token)
+	prt, err := s.repo.GetPasswordResetToken(ctx, tokenHash)
+	if err != nil {
+		return uuid.Nil, sharedErrors.ErrPasswordResetTokenNotFound
+	}
+	if prt.IsExpired() {
+		return uuid.Nil, sharedErrors.ErrPasswordResetTokenExpired
+	}
+	if prt.IsUsed() {
+		return uuid.Nil, sharedErrors.ErrPasswordResetTokenUsed
+	}
+	if err := validatePasswordStrength(newPassword); err != nil {
+		return uuid.Nil, err
+	}
+	history, err := s.repo.GetPasswordHistory(ctx, prt.UserID)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("iam user: get password history: %w", err)
+	}
+	if isPasswordReused(newPassword, history) {
+		return uuid.Nil, sharedErrors.ErrPasswordReused
+	}
+	newHash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		span.RecordError(err)
+		return uuid.Nil, fmt.Errorf("iam user: hash password: %w", err)
+	}
+	if err := s.repo.UpdatePasswordAndHistory(ctx, prt.UserID, string(newHash), prependHistory(string(newHash), history)); err != nil {
+		return uuid.Nil, fmt.Errorf("iam user: update password: %w", err)
+	}
+	// Mark used after the password update succeeds — prevents double-use on transient failure.
+	if err := s.repo.MarkPasswordResetTokenUsed(ctx, tokenHash); err != nil {
+		s.log.WithFields(logger.Fields{"error": err}).Warn("failed to mark reset token as used after successful password change")
+	}
+	return prt.UserID, nil
+}
+
+// =============================================================================
+// MFA Lifecycle (TOTP — RFC 6238)
+// =============================================================================
+
+// InitiateMFA generates a new TOTP secret, encrypts it, caches it for 10
+// minutes pending confirmation, and returns the provisioning data.
+// The secret is NOT activated until ConfirmMFA succeeds.
+func (s *userService) InitiateMFA(ctx context.Context, userID uuid.UUID) (*domain.MFASetup, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.InitiateMFA")
+	defer span.End()
+
+	if len(s.cfg.MFAEncryptionKey) != 32 {
+		return nil, fmt.Errorf("iam user: MFAEncryptionKey must be exactly 32 bytes (got %d)", len(s.cfg.MFAEncryptionKey))
+	}
+
+	rawSecret := make([]byte, 20)
+	if _, err := rand.Read(rawSecret); err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam user: generate mfa secret: %w", err)
+	}
+
+	b32 := base32.StdEncoding.WithPadding(base32.NoPadding).EncodeToString(rawSecret)
+
+	encSecret, err := encryptAESGCM(s.cfg.MFAEncryptionKey, rawSecret)
+	if err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam user: encrypt mfa secret: %w", err)
+	}
+
+	if err := s.repo.StorePendingMFASetup(ctx, userID, encSecret); err != nil {
+		span.RecordError(err)
+		return nil, fmt.Errorf("iam user: cache mfa setup: %w", err)
+	}
+
+	user, err := s.repo.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	qrURI := fmt.Sprintf(
+		"otpauth://totp/%s:%s?secret=%s&issuer=%s&algorithm=SHA1&digits=6&period=30",
+		s.cfg.MFAIssuer, user.Email, b32, s.cfg.MFAIssuer,
+	)
+
+	return &domain.MFASetup{Secret: b32, QRURI: qrURI}, nil
+}
+
+// ConfirmMFA validates the first TOTP code against the pending secret and,
+// on success, persists the encrypted secret to the DB and enables MFA.
+func (s *userService) ConfirmMFA(ctx context.Context, userID uuid.UUID, code string) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.ConfirmMFA")
+	defer span.End()
+
+	encSecret, err := s.repo.GetPendingMFASetup(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("iam user: mfa setup not found or expired — call InitiateMFA first")
+	}
+
+	rawSecret, err := decryptAESGCM(s.cfg.MFAEncryptionKey, encSecret)
+	if err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam user: decrypt mfa secret: %w", err)
+	}
+
+	if !verifyTOTP(rawSecret, code) {
+		return sharedErrors.ErrMFAInvalid
+	}
+
+	if err := s.repo.SetMFASecret(ctx, userID, encSecret); err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("iam user: persist mfa secret: %w", err)
+	}
+
+	_ = s.repo.ClearPendingMFASetup(ctx, userID)
+	return nil
+}
+
+// ValidateMFACode verifies a TOTP code for an already-enrolled user.
+// Includes replay prevention via a Redis key per 30-second window.
+func (s *userService) ValidateMFACode(ctx context.Context, userID uuid.UUID, code string) (bool, error) {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.ValidateMFACode")
+	defer span.End()
+
+	encSecret, _, err := s.repo.GetMFASecret(ctx, userID)
+	if err != nil {
+		span.RecordError(err)
+		return false, fmt.Errorf("iam user: get mfa secret: %w", err)
+	}
+
+	rawSecret, err := decryptAESGCM(s.cfg.MFAEncryptionKey, encSecret)
+	if err != nil {
+		span.RecordError(err)
+		return false, fmt.Errorf("iam user: decrypt mfa secret: %w", err)
+	}
+
+	if !verifyTOTP(rawSecret, code) {
+		return false, nil
+	}
+
+	// Replay prevention: one code per 30-second window per user.
+	window := time.Now().Unix() / 30
+	replayed, err := s.repo.CheckAndMarkMFAReplay(ctx, userID, window)
+	if err != nil {
+		// Non-fatal: allow the login rather than blocking on cache errors.
+		s.log.WithFields(logger.Fields{"error": err, "user_id": userID}).Warn("mfa replay check failed")
+	}
+	if replayed {
+		return false, nil
+	}
+
+	return true, nil
+}
+
+// DisableMFA re-verifies the user's password before clearing the TOTP secret.
+func (s *userService) DisableMFA(ctx context.Context, userID uuid.UUID, password string) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.user.DisableMFA")
+	defer span.End()
+
+	storedHash, err := s.repo.GetUserPassword(ctx, userID)
+	if err != nil {
+		return err
+	}
+	if bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)) != nil {
+		return sharedErrors.ErrInvalidCredentials
+	}
+	return s.repo.ClearMFASecret(ctx, userID)
+}
+
+// =============================================================================
+// TOTP — RFC 6238 (pure stdlib)
+// =============================================================================
+
+// verifyTOTP checks code against rawSecret for windows T-1, T, T+1.
+// rawSecret is the decoded bytes (not base32). code must be exactly 6 digits.
+func verifyTOTP(rawSecret []byte, code string) bool {
+	code = strings.TrimSpace(code)
+	if len(code) != 6 {
+		return false
+	}
+	counter := uint64(time.Now().Unix() / 30)
+	for delta := int64(-1); delta <= 1; delta++ {
+		if totpCode(rawSecret, uint64(int64(counter)+delta)) == code {
+			return true
+		}
+	}
+	return false
+}
+
+// totpCode computes a 6-digit HOTP value per RFC 4226 §5 + RFC 6238.
+func totpCode(secret []byte, counter uint64) string {
+	msg := make([]byte, 8)
+	binary.BigEndian.PutUint64(msg, counter)
+
+	mac := hmac.New(sha1.New, secret) //nolint:gosec — SHA-1 mandated by RFC 6238
+	_, _ = mac.Write(msg)
+	h := mac.Sum(nil)
+
+	// Dynamic truncation
+	offset := h[len(h)-1] & 0x0f
+	code := (uint32(h[offset]&0x7f)<<24 |
+		uint32(h[offset+1])<<16 |
+		uint32(h[offset+2])<<8 |
+		uint32(h[offset+3])) % 1_000_000
+
+	return fmt.Sprintf("%06d", code)
+}
+
+// =============================================================================
+// AES-256-GCM helpers
+// =============================================================================
+
+// encryptAESGCM encrypts plaintext and returns hex(nonce || ciphertext).
+func encryptAESGCM(key, plaintext []byte) (string, error) {
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return "", err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return "", err
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err := rand.Read(nonce); err != nil {
+		return "", err
+	}
+	sealed := gcm.Seal(nonce, nonce, plaintext, nil)
+	return hex.EncodeToString(sealed), nil
+}
+
+// decryptAESGCM decrypts hex(nonce || ciphertext).
+func decryptAESGCM(key []byte, ciphertextHex string) ([]byte, error) {
+	data, err := hex.DecodeString(ciphertextHex)
+	if err != nil {
+		return nil, err
+	}
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, err
+	}
+	if len(data) < gcm.NonceSize() {
+		return nil, fmt.Errorf("ciphertext too short")
+	}
+	nonce, ct := data[:gcm.NonceSize()], data[gcm.NonceSize():]
+	return gcm.Open(nil, nonce, ct, nil)
+}
+
+// =============================================================================
+// Password policy helpers
+// =============================================================================
+
+// validatePasswordStrength enforces: ≥12 chars, uppercase, lowercase, digit, special.
+func validatePasswordStrength(password string) error {
+	if len(password) < 12 {
+		return sharedErrors.ErrPasswordTooWeak
+	}
+	var hasUpper, hasLower, hasDigit, hasSpecial bool
+	for _, ch := range password {
+		switch {
+		case ch >= 'A' && ch <= 'Z':
+			hasUpper = true
+		case ch >= 'a' && ch <= 'z':
+			hasLower = true
+		case ch >= '0' && ch <= '9':
+			hasDigit = true
+		default:
+			hasSpecial = true
+		}
+	}
+	if !hasUpper || !hasLower || !hasDigit || !hasSpecial {
+		return sharedErrors.ErrPasswordTooWeak
+	}
+	return nil
+}
+
+// isPasswordReused returns true if plain matches any of the stored bcrypt hashes.
+func isPasswordReused(plain string, history []string) bool {
+	for _, h := range history {
+		if bcrypt.CompareHashAndPassword([]byte(h), []byte(plain)) == nil {
+			return true
+		}
+	}
+	return false
+}
+
+// prependHistory inserts newHash at index 0 and caps the slice at 5 entries.
+func prependHistory(newHash string, existing []string) []string {
+	result := append([]string{newHash}, existing...)
+	if len(result) > 5 {
+		result = result[:5]
+	}
+	return result
+}
+
+// =============================================================================
+// Token helpers
+// =============================================================================
+
+// hashToken returns the hex-encoded SHA-256 of a raw token string.
+func hashToken(raw string) string {
+	h := sha256.Sum256([]byte(raw))
+	return hex.EncodeToString(h[:])
+}
+
+// generateRawToken returns a cryptographically random 32-byte hex string.
+func generateRawToken() (string, error) {
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b), nil
+}

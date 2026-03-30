@@ -1,13 +1,15 @@
 package middleware
 
 import (
-	"awo.so/internal/core/iam"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+
+	"awo.so/internal/core/iam"
 )
 
 // AuthorizationConfig configures legacy authorization middleware behaviour.
-// Used by MiddlewareStack and SecurityValidator; for new routes use Authorize().
+// Used by MiddlewareStack and SecurityValidator; for new routes use Authorize()
+// from session_middleware.go.
 type AuthorizationConfig struct {
 	DefaultDeny           bool     `json:"default_deny"`
 	RequireAuthentication bool     `json:"require_authentication"`
@@ -22,12 +24,47 @@ func DefaultAuthorizationConfig() AuthorizationConfig {
 	}
 }
 
-// AuthorizeCasbin is a Fiber middleware that enforces object+action using the
-// full Casbin engine. Reads the Principal from c.Locals(iam.LocalsKeyPrincipal).
+// =============================================================================
+// Context helpers — use in handlers; never pass tenant/user IDs as params
+// =============================================================================
+
+// ContextSession returns the ResolvedSession stored by Authenticate middleware.
+// Panics on unauthenticated routes — that is a programming error.
+func ContextSession(c *fiber.Ctx) *iam.ResolvedSession {
+	sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+	if !ok || sess == nil {
+		panic("middleware: ContextSession called on unauthenticated route")
+	}
+	return sess
+}
+
+// ContextTenantID returns the tenant UUID from the resolved session.
+func ContextTenantID(c *fiber.Ctx) uuid.UUID {
+	return ContextSession(c).TenantID
+}
+
+// ContextUserID returns the user UUID from the resolved session.
+func ContextUserID(c *fiber.Ctx) uuid.UUID {
+	return ContextSession(c).UserID
+}
+
+// ContextPrincipal returns the Casbin Principal from the resolved session.
+// Use this when calling AuthorizeCasbin manually inside a handler.
+func ContextPrincipal(c *fiber.Ctx) iam.Principal {
+	p, _ := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+	return p
+}
+
+// =============================================================================
+// Casbin path — management operations (live rule engine, not session map)
+// =============================================================================
+
+// AuthorizeCasbin enforces object+action using the full Casbin engine.
+// Reads the Principal from c.Locals(iam.LocalsKeyPrincipal).
 //
-// For normal request-path authz (O(1) permission map lookup) prefer Authorize()
-// from session_middleware.go. Use AuthorizeCasbin only for management operations
-// that require the Casbin rule engine (e.g. role assignment, admin panels).
+// For hot-path API routes prefer Authorize() from session_middleware.go.
+// Use AuthorizeCasbin only for management operations where a live Casbin
+// check is required (e.g. role assignment, admin panels).
 //
 // Example:
 //
