@@ -67,7 +67,7 @@ func CreateAPIKeyHandler(svc iam.APIKeyService) fiber.Handler {
 			CreatedBy: sess.UserID,
 		}
 
-		key, rawToken, err := svc.CreateAPIKey(c.Context(), domReq)
+		key, rawToken, err := svc.CreateAPIKey(c.UserContext(), domReq)
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to create API key")
 		}
@@ -87,7 +87,7 @@ func CreateAPIKeyHandler(svc iam.APIKeyService) fiber.Handler {
 // The raw token is never returned in list responses.
 func ListAPIKeysHandler(svc iam.APIKeyService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		keys, err := svc.ListAPIKeys(c.Context())
+		keys, err := svc.ListAPIKeys(c.UserContext())
 		if err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to list API keys")
 		}
@@ -109,7 +109,7 @@ func RevokeAPIKeyHandler(svc iam.APIKeyService) fiber.Handler {
 			return fiber.NewError(fiber.StatusBadRequest, "invalid key id")
 		}
 
-		if err := svc.RevokeAPIKey(c.Context(), keyID); err != nil {
+		if err := svc.RevokeAPIKey(c.UserContext(), keyID); err != nil {
 			return fiber.NewError(fiber.StatusInternalServerError, "failed to revoke API key")
 		}
 		return c.SendStatus(fiber.StatusNoContent)

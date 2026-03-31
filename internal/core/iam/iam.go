@@ -189,8 +189,9 @@ func NewUserService(repo UserRepository, tracer tracing.Service, m metrics.Metri
 }
 
 // NewUserServiceWithConfig constructs a UserService with explicit brute-force config.
-func NewUserServiceWithConfig(repo UserRepository, tracer tracing.Service, m metrics.MetricsProvider, cfg UserConfig, log logger.Logger) UserService {
-	return iamservice.NewUserServiceWithConfig(repo, tracer, m, cfg, log)
+// Pass authz to enable automatic tenant_admin bootstrap on user creation; pass nil to skip.
+func NewUserServiceWithConfig(repo UserRepository, authz AuthzService, tracer tracing.Service, m metrics.MetricsProvider, cfg UserConfig, log logger.Logger) UserService {
+	return iamservice.NewUserServiceWithConfig(repo, authz, tracer, m, cfg, log)
 }
 
 // New constructs a fully initialised AuthzService backed by PostgreSQL via Casbin.

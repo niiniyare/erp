@@ -38,7 +38,7 @@ func MFAInitiateHandler(userSvc iam.UserService) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
 
-		setup, err := userSvc.InitiateMFA(c.Context(), sess.UserID)
+		setup, err := userSvc.InitiateMFA(c.UserContext(), sess.UserID)
 		if err != nil {
 			return mapMFAError(c, err)
 		}
@@ -76,7 +76,7 @@ func MFAConfirmHandler(userSvc iam.UserService) fiber.Handler {
 			})
 		}
 
-		if err := userSvc.ConfirmMFA(c.Context(), sess.UserID, req.Code); err != nil {
+		if err := userSvc.ConfirmMFA(c.UserContext(), sess.UserID, req.Code); err != nil {
 			return mapMFAError(c, err)
 		}
 
@@ -149,7 +149,7 @@ func MFADisableHandler(userSvc iam.UserService) fiber.Handler {
 			})
 		}
 
-		if err := userSvc.DisableMFA(c.Context(), sess.UserID, req.Password); err != nil {
+		if err := userSvc.DisableMFA(c.UserContext(), sess.UserID, req.Password); err != nil {
 			return mapMFAError(c, err)
 		}
 

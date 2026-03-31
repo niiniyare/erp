@@ -22,4 +22,11 @@ type AuthConfig struct {
 	SessionTTL   time.Duration `yaml:"session_ttl" mapstructure:"session_ttl"`
 	CookieName   string        `yaml:"cookie_name" mapstructure:"cookie_name"`
 	RequireHTTPS bool          `yaml:"require_https" mapstructure:"require_https"`
+
+	// MFA settings
+	// MFAEncryptionKey must be exactly 32 characters — used as AES-256 key to encrypt TOTP secrets at rest.
+	// Set via MFA_ENCRYPTION_KEY env var.  Dev default is a fixed insecure string; override in production.
+	MFAEncryptionKey string `yaml:"mfa_encryption_key" mapstructure:"mfa_encryption_key"`
+	// MFAIssuer is the issuer name shown in authenticator apps (e.g. "AWO ERP").
+	MFAIssuer string `yaml:"mfa_issuer" mapstructure:"mfa_issuer"`
 }

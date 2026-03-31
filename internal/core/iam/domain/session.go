@@ -270,14 +270,14 @@ func (s *Session) IsValid() bool {
 //
 //	Mirrors Session.PrincipalID — non-nil for portal users only.
 type ResolvedSession struct {
-	UserID        uuid.UUID
-	UserType      string     // persisted enum; always use ActorTypeFromUserType() for authz logic
-	TenantID      uuid.UUID  // RLS key — set as app.tenant_id in every DB transaction
-	PrincipalID   *uuid.UUID // non-nil for portal users; identifies the represented party
-	DisplayName   string
-	Permissions   map[string]bool // pre-computed at login; O(1) permission checks via Can() / CanDo()
-	EntityScope   EntityScope     // application-layer entity visibility; enforced in service methods
-	Configuration Configuration   // feature flags, tenant settings, and user preferences
+	UserID        uuid.UUID       `json:"user_id"`
+	UserType      string          `json:"user_type"` // persisted enum; always use ActorTypeFromUserType() for authz logic
+	TenantID      uuid.UUID       `json:"tenant_id"` // RLS key — set as app.tenant_id in every DB transaction
+	PrincipalID   *uuid.UUID      `json:"principal_id,omitempty"` // non-nil for portal users; identifies the represented party
+	DisplayName   string          `json:"display_name"`
+	Permissions   map[string]bool `json:"permissions"` // pre-computed at login; O(1) permission checks via Can() / CanDo()
+	EntityScope   EntityScope     `json:"entity_scope"`     // application-layer entity visibility; enforced in service methods
+	Configuration Configuration   `json:"configuration"`    // feature flags, tenant settings, and user preferences
 }
 
 // LocalsKeySession is the Fiber Locals key for the authenticated ResolvedSession.
@@ -302,6 +302,11 @@ const LocalsKeySession = "resolved_session"
 func (s *ResolvedSession) Can(permission string) bool {
 	if s == nil || s.Permissions == nil {
 		return false
+	}
+	// "*" is a superuser sentinel set by buildPermissions when the session
+	// holds a wildcard allow policy (e.g. tenant_admin with Object="*").
+	if s.Permissions["*"] {
+		return true
 	}
 	return s.Permissions[permission]
 }

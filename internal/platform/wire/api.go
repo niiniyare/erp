@@ -141,10 +141,13 @@ func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracin
 
 // NewIdentityService constructs the IAM user service with brute-force config from app config.
 // cacheSvc is accepted for wire compatibility but cache is handled by the repository.
-func NewIdentityService(repo iam.UserRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config, log logger.Logger) iam.UserService {
-	return iam.NewUserServiceWithConfig(repo, tracer, m, iam.UserConfig{
+// authzSvc is used to bootstrap tenant_admin role on user creation.
+func NewIdentityService(repo iam.UserRepository, authzSvc iam.AuthzService, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config, log logger.Logger) iam.UserService {
+	return iam.NewUserServiceWithConfig(repo, authzSvc, tracer, m, iam.UserConfig{
 		MaxFailedAttempts: cfg.Auth.MaxFailedAttempts,
 		LockoutDuration:   cfg.Auth.LockoutDuration,
+		MFAEncryptionKey:  []byte(cfg.Auth.MFAEncryptionKey),
+		MFAIssuer:         cfg.Auth.MFAIssuer,
 	}, log)
 }
 

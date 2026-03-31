@@ -113,6 +113,7 @@ func DefaultUserConfig() UserConfig {
 
 type userService struct {
 	repo    repository.UserRepository
+	authz   AuthzService // optional — bootstraps default role on user creation
 	tracer  tracing.Service
 	metrics metrics.MetricsProvider
 	log     logger.Logger
@@ -121,19 +122,21 @@ type userService struct {
 
 // NewUserService constructs a UserService with default config.
 func NewUserService(repo repository.UserRepository, tracer tracing.Service, m metrics.MetricsProvider, log logger.Logger) UserService {
-	return NewUserServiceWithConfig(repo, tracer, m, DefaultUserConfig(), log)
+	return NewUserServiceWithConfig(repo, nil, tracer, m, DefaultUserConfig(), log)
 }
 
 // NewUserServiceWithConfig constructs a UserService with explicit config.
+// Pass authz to enable automatic tenant_admin bootstrap on user creation.
 func NewUserServiceWithConfig(
 	repo repository.UserRepository,
+	authz AuthzService,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	cfg UserConfig,
 	log logger.Logger,
 ) UserService {
 	scopedLog := log.WithFields(logger.Fields{"component": "iam.identity"})
-	return &userService{repo: repo, tracer: tracer, metrics: m, log: scopedLog, cfg: cfg}
+	return &userService{repo: repo, authz: authz, tracer: tracer, metrics: m, log: scopedLog, cfg: cfg}
 }
 
 func (s *userService) RegisterNewUser(ctx context.Context, req *domain.CreateUserRequest) (*domain.User, error) {
@@ -168,6 +171,18 @@ func (s *userService) RegisterNewUser(ctx context.Context, req *domain.CreateUse
 			"trace_id": s.tracer.GetTraceID(ctx),
 		})
 		return nil, err
+	}
+
+	// Bootstrap default tenant_admin role for tenant users so they have
+	// permissions from their very first login.
+	if s.authz != nil && domain.ActorTypeFromUserType(string(user.UserType)) == domain.ActorTenant && user.TenantID != uuid.Nil {
+		if bErr := s.authz.BootstrapTenantAdmin(ctx, user.TenantID, user.ID); bErr != nil {
+			s.log.WarnContext(ctx, "bootstrap tenant_admin failed (non-fatal)", logger.Fields{
+				"user_id":   user.ID.String(),
+				"tenant_id": user.TenantID.String(),
+				"error":     bErr.Error(),
+			})
+		}
 	}
 
 	s.log.DebugContext(ctx, "user registered", logger.Fields{"user_id": user.ID.String()})

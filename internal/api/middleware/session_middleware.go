@@ -8,6 +8,7 @@ import (
 
 	"awo.so/internal/core/iam"
 	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared"
 )
 
 // AuthConfig holds configuration for session-based authentication middleware.
@@ -111,6 +112,10 @@ func RequireFlag(flagKey string) fiber.Handler {
 func setSessionLocals(c *fiber.Ctx, resolved *iam.ResolvedSession) {
 	c.Locals(iam.LocalsKeySession, resolved)
 	c.Locals(iam.LocalsKeyPrincipal, resolved.ToPrincipal())
-	ctx := context.WithValue(c.Context(), cache.TenantIDKey, resolved.TenantID.String())
+	// Wrap the existing user context (from tenant middleware) preserving prior values.
+	// Set shared.TenantIDKey (uuid.UUID) for WithTenantFromCtx / DB layer.
+	// Set cache.TenantIDKey (string) for the cache service's tenant namespace lookup.
+	ctx := shared.WithTenantID(c.UserContext(), resolved.TenantID)
+	ctx = context.WithValue(ctx, cache.TenantIDKey, resolved.TenantID.String())
 	c.SetUserContext(ctx)
 }

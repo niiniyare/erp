@@ -171,7 +171,7 @@ func (sc *ServiceContainer) initializeFoundationalServices(ctx context.Context) 
 
 	// Identity Service - User management
 	identityRepo := iam.NewUserRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Tracing, sc.deps.Metrics)
+	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Tracing, sc.deps.Metrics, sc.deps.Logger)
 
 	// Audit Service - Required by other services for logging
 	auditRepo := audit.NewRepository(sc.deps.Store, sc.deps.Logger, sc.deps.Tracing, sc.deps.Metrics)

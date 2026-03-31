@@ -164,7 +164,7 @@ print('yes' if any(p in msg for p in bad) else 'no')
 
   if [[ "$status" =~ ^(200|201)$ ]]; then
     local api_key key_id
-    api_key="$(jf "$body" "key")";   [[ -z "$api_key"  || "$api_key"  == "None" ]] && api_key="$(jf "$body" "data.key")"
+    api_key="$(jf "$body" "token")";  [[ -z "$api_key"  || "$api_key"  == "None" ]] && api_key="$(jf "$body" "data.token")"
     key_id="$(jf "$body" "id")";     [[ -z "$key_id"   || "$key_id"   == "None" ]] && key_id="$(jf "$body" "data.id")"
     ok "  → key: ${api_key:0:14}…  id: ${key_id:0:8}…"
     [[ "$api_key" == eak_* ]] && ok "  → eak_ prefix present" || fail "  → eak_ prefix missing"

@@ -398,6 +398,20 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 		return nil, fmt.Errorf("buildPermissions: GetImplicitRoles: %w", err)
 	}
 
+	// Just-in-time bootstrap: if a tenant user has no roles yet (e.g. they
+	// were created before the bootstrap logic existed), seed the default
+	// tenant_admin role now so the first login isn't permission-less.
+	if len(roles) == 0 && domain.ActorTypeFromUserType(user.UserType) == domain.ActorTenant && user.TenantID != uuid.Nil {
+		if bErr := s.authz.BootstrapTenantAdmin(ctx, user.TenantID, user.ID); bErr != nil {
+			s.log.WarnContext(ctx, "jit bootstrap tenant_admin failed", logger.Fields{
+				"user_id": user.ID.String(), "error": bErr.Error(),
+			})
+		} else {
+			// Reload roles after bootstrap.
+			roles, _ = s.authz.GetImplicitRoles(ctx, subject, domainName)
+		}
+	}
+
 	policies, err := s.authz.GetPolicies(ctx, domainName)
 	if err != nil {
 		span.RecordError(err)
@@ -430,6 +444,14 @@ func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User
 		if !denies[key] {
 			perms[key] = true
 		}
+	}
+
+	// Collapse wildcard: a "*.*" policy (Object="*", Action="*") means the
+	// role has blanket access. Replace it with the special "*" sentinel that
+	// ResolvedSession.Can() recognises so every permission check short-circuits.
+	if perms["*.*"] && !denies["*.*"] {
+		delete(perms, "*.*")
+		perms["*"] = true
 	}
 
 	span.SetAttributes(

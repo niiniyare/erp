@@ -166,6 +166,8 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.session_ttl", 8*time.Hour)
 	v.SetDefault("auth.cookie_name", "session")
 	v.SetDefault("auth.require_https", true)
+	v.SetDefault("auth.mfa_encryption_key", "dev-mfa-key-change-me-in-prod!!!")
+	v.SetDefault("auth.mfa_issuer", "AWO ERP")
 
 	// Logger
 	v.SetDefault("logger.type", "zerolog")
@@ -239,6 +241,8 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("auth.session_ttl", "AUTH_SESSION_TTL")
 	v.BindEnv("auth.cookie_name", "AUTH_COOKIE_NAME")
 	v.BindEnv("auth.require_https", "AUTH_REQUIRE_HTTPS")
+	v.BindEnv("auth.mfa_encryption_key", "MFA_ENCRYPTION_KEY")
+	v.BindEnv("auth.mfa_issuer", "MFA_ISSUER")
 
 	// Logger
 	v.BindEnv("logger.type", "LOG_TYPE")

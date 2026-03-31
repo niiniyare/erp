@@ -46,6 +46,12 @@ type AuthzService interface {
 
 	// Cache
 	InvalidateCache(ctx context.Context) error
+
+	// Bootstrap
+	// BootstrapTenantAdmin seeds a wildcard tenant_admin policy for the given
+	// tenant domain and assigns the user to that role. Safe to call on every
+	// user creation — duplicate policies and assignments are silently ignored.
+	BootstrapTenantAdmin(ctx context.Context, tenantID, userID uuid.UUID) error
 }
 
 // Config
@@ -533,6 +539,33 @@ func (s *authzService) InvalidateCache(ctx context.Context) error {
 	s.metrics.IncrementCounter("iam.authz.cache.invalidated", nil)
 	s.log.DebugContext(ctx, "authz policy cache reloaded", nil)
 	return nil
+}
+
+// Bootstrap
+
+func (s *authzService) BootstrapTenantAdmin(ctx context.Context, tenantID, userID uuid.UUID) error {
+	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.BootstrapTenantAdmin")
+	defer span.End()
+
+	domainName := domain.TenantDomain(tenantID.String())
+	subject := domain.TenantSubject(userID.String())
+	roleName := "tenant_admin"
+
+	// Seed wildcard allow policy for tenant_admin in this domain.
+	// ErrPolicyConflict means it already exists — safe to ignore.
+	if err := s.AddPolicy(ctx, domain.Policy{
+		Subject: roleName,
+		Domain:  domainName,
+		Object:  "*",
+		Action:  "*",
+		Effect:  "allow",
+	}); err != nil && err != domain.ErrPolicyConflict {
+		s.log.WarnContext(ctx, "bootstrap: seed tenant_admin policy failed (non-fatal)", logger.Fields{
+			"domain": domainName, "error": err.Error(),
+		})
+	}
+
+	return s.AssignRole(ctx, tenantID.String(), subject, roleName, domainName)
 }
 
 // Internal helpers
