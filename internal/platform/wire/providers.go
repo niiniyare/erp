@@ -63,6 +63,10 @@ var CoreServiceProviderSet = wire.NewSet(
 	NewAPIKeyRepository,
 	NewAPIKeyService,
 
+	// SSO (OAuth/OIDC)
+	NewSSORepository,
+	NewSSOService,
+
 	// Finance services
 	NewFinanceServices,
 )
@@ -79,6 +83,7 @@ var APIProviderSet = wire.NewSet(
 	// Middleware components
 	NewTenantMiddlewareConfig,
 	NewTenantMiddleware,
+	NewRouteSecurityManager,
 
 	// Handler dependencies
 	NewHandlerDependencies,

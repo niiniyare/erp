@@ -1,54 +1,34 @@
--- =============================================================================
--- MIGRATION 002 UP: Reserved Subdomains
--- =============================================================================
--- Architecture Decision (ADR-002):
---   Reserved subdomains are stored in a table rather than hard-coded in a
---   CHECK constraint for two reasons:
+-- ------------------------------------------------------------------------------------------------
+-- RESERVED_SUBDOMAINS TABLE
+-- ------------------------------------------------------------------------------------------------
+-- Subdomains that tenants may not register, enforced by a BEFORE INSERT OR UPDATE trigger.
+-- Stored in a table (not a CHECK constraint) for two reasons:
+--   1. PostgreSQL CHECK constraints cannot reliably query other tables.
+--   2. Ops can add/remove reserved names with a plain INSERT/DELETE — no DDL, no deployment.
 --
---   1. CHECK constraints in PostgreSQL CANNOT reliably query other tables.
---      The SQL standard technically allows it, but PostgreSQL only re-validates
---      CHECK constraints on the modified row, not on concurrent inserts. This
---      means a table-querying CHECK is silently unreliable. Enforcement is
---      done via a BEFORE INSERT OR UPDATE trigger (migration 007) which fires
---      correctly under all isolation levels.
---
---   2. Operational flexibility: ops can add/remove reserved names (e.g., for
---      new infrastructure routes) with a plain INSERT/DELETE — no DDL, no
---      deployment, no migration required.
---
--- Seeded with common platform-level names. Audit before go-live and extend
--- to match your actual DNS / reverse-proxy routing rules.
--- =============================================================================
-
+-- NOTE: Enforcement trigger (check_subdomain_not_reserved) is added in migration 000057.
+--       Seed with your actual DNS / reverse-proxy routing rules before go-live.
+-- ------------------------------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS reserved_subdomains (
   -- subdomain must obey DNS label rules: lowercase alphanumeric, hyphens
   -- allowed in the middle, max 63 chars (RFC 1035 §2.3.4).
-  subdomain VARCHAR(63) PRIMARY KEY
-    CHECK (subdomain ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'),
-
-  -- Human-readable note explaining WHY this subdomain is reserved.
-  -- Invaluable when someone asks "why can't I register 'status'?"
-  reason    TEXT NOT NULL DEFAULT 'Platform infrastructure',
-
-  -- Who added this entry and when — useful in incident post-mortems.
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  subdomain   VARCHAR(63)   PRIMARY KEY
+                CHECK (subdomain ~* '^[a-z0-9]([a-z0-9-]*[a-z0-9])?$'),
+  reason      TEXT          NOT NULL DEFAULT 'Platform infrastructure',  -- why this subdomain is reserved
+  created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()                        -- when this reservation was added
 );
 
-COMMENT ON TABLE reserved_subdomains IS
-  'Subdomains tenants may not register. '
-  'Enforcement is via trigger on tenants table (see migration 007). '
-  'Ops can add rows here without a schema migration.';
-
-COMMENT ON COLUMN reserved_subdomains.subdomain IS 'DNS label — lowercase alphanumeric plus hyphens, max 63 chars.';
-COMMENT ON COLUMN reserved_subdomains.reason    IS 'Why this subdomain is reserved — required for audit clarity.';
+COMMENT ON TABLE  reserved_subdomains            IS 'Subdomains tenants may not register. Enforcement is via trigger on the tenants table (migration 000057). Ops can add rows here without a schema migration.';
+COMMENT ON COLUMN reserved_subdomains.subdomain  IS 'DNS label — lowercase alphanumeric plus hyphens, max 63 chars.';
+COMMENT ON COLUMN reserved_subdomains.reason     IS 'Why this subdomain is reserved — required for audit clarity.';
 COMMENT ON COLUMN reserved_subdomains.created_at IS 'When this reservation was added.';
 
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 -- SEED DATA
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 -- ON CONFLICT DO NOTHING makes this block safe to re-run.
--- Add your actual infrastructure subdomains here before go-live.
--- -------------------------------------------------------------------------
+-- Extend this list to match your actual DNS / reverse-proxy routing rules.
+-- ------------------------------------------------------------------------------------------------
 INSERT INTO reserved_subdomains (subdomain, reason) VALUES
   ('www',         'Primary web entry point'),
   ('api',         'REST / GraphQL API gateway'),

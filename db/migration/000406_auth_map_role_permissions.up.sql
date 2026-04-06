@@ -30,6 +30,7 @@ COMMENT ON COLUMN role_permissions.conditions   IS 'Additional JSONB conditions 
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE role_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE role_permissions FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY role_permissions_tenant_isolation ON role_permissions FOR ALL TO application_role
     USING (
@@ -42,3 +43,7 @@ CREATE POLICY role_permissions_tenant_isolation ON role_permissions FOR ALL TO a
     );
 
 CREATE POLICY role_permissions_admin_access ON role_permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY role_permissions_ro_select ON role_permissions
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

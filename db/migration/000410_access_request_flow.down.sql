@@ -3,6 +3,8 @@
 -- =====================================================================
 -- Drop RLS policies
 DROP POLICY IF EXISTS access_requests_tenant_isolation ON access_requests;
+DROP POLICY IF EXISTS access_requests_admin_access ON access_requests;
+DROP POLICY IF EXISTS access_requests_ro_select ON access_requests;
 
 -- Disable RLS
 ALTER TABLE

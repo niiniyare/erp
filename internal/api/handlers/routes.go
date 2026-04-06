@@ -19,13 +19,14 @@ import (
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/entity"
 	financeService "awo.so/internal/core/finance/service"
-
 	"awo.so/internal/core/iam"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	workflowsTenant "awo.so/internal/workflows/tenant"
+	temporalclient "go.temporal.io/sdk/client"
 )
 
 // Module names as constants for consistency
@@ -103,41 +104,25 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 	// Create router group for the module
 	router := app.Group(basePath)
 
-	// NOTE: Legacy middleware switching is now replaced by RouteSecurityManager
-	// The security manager handles all middleware configuration based on route groups:
-	// - Public routes: minimal security (health, metrics)
-	// - API routes: full security (auth, tenant, rate limiting, observability)
-	// - UI routes: session-based security (CSRF, security headers)
-
-	// Apply middleware instances based on middleware names (legacy support)
+	// Apply middleware instances based on middleware names.
+	// Security-manager-based middleware (auth, rate limiting) is handled per
+	// route group in registerPublicRoutes / registerAPIRoutes / registerUIRoutes.
 	for _, middlewareName := range middleware {
 		switch middlewareName {
 		case "observability":
-			// Apply comprehensive observability middleware
 			observabilityConfig := middlewarePkg.DefaultObservabilityConfig()
 			observabilityConfig.ServiceName = "erp-api"
 			observabilityConfig.DetailedLogging = true
-			observabilityMiddleware := middlewarePkg.CreateObservabilityMiddleware(
-				r.logger, r.metrics, r.tracer, &observabilityConfig)
-			router.Use(observabilityMiddleware)
+			router.Use(middlewarePkg.CreateObservabilityMiddleware(
+				r.logger, r.metrics, r.tracer, &observabilityConfig))
 		case "cors":
-			// Use development CORS config for tests
 			corsConfig := middlewarePkg.DevelopmentCORSConfig([]int{3000, 8080})
 			router.Use(middlewarePkg.NewCORSMiddleware(corsConfig))
-		case "auth":
-			// TODO: Apply auth middleware when available
-			// router.Use(middleware.AuthMiddleware())
-		case "ratelimit":
-			// Apply rate limiting middleware using existing system
-			// TODO: Configure rate limiting with proper config
-			// router.Use(middlewarePkg.RateLimitMiddleware(config, logger))
 		case "tenant":
-			// Apply tenant middleware for RLS context
 			if deps != nil && deps.TenantMiddleware != nil {
 				router.Use(deps.TenantMiddleware)
 			}
 		default:
-			// Log unknown middleware but don't fail
 			r.logger.Info(fmt.Sprintf("unknown middleware: %s", middlewareName))
 		}
 	}
@@ -228,6 +213,10 @@ type Dependencies struct {
 	// AuditService enables the GET /api/v1/audit-logs endpoint.
 	// Optional — audit routes are skipped when nil.
 	AuditService audit.Service
+
+	// TemporalClient enables async workflow endpoints (e.g. tenant onboarding).
+	// Optional — workflow-backed routes gracefully return 503 when nil.
+	TemporalClient temporalclient.Client
 }
 
 // Validate ensures all required dependencies are present.
@@ -402,17 +391,14 @@ func (r *Router) registerUIRoutes(app *fiber.App) error {
 
 // registerHealth registers health check routes.
 func (r *Router) registerHealth(router fiber.Router) error {
-	// FIXME:pass real system Config here
 	handler := health.NewHealthHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer, nil)
 
 	// Register health endpoints directly on the provided router
 	healthGroup := router.Group("/health")
 	healthGroup.Get("/", handler.Get)
-
-	// Uncomment when implementing Kubernetes-style health checks:
-	// healthGroup.Get("/ready", handler.Ready)   // Readiness probe
-	// healthGroup.Get("/live", handler.Live)     // Liveness probe
-	// healthGroup.Get("/startup", handler.Startup) // Startup probe
+	healthGroup.Get("/ready", handler.Ready)
+	healthGroup.Get("/live", handler.Live)
+	healthGroup.Get("/startup", handler.Startup)
 
 	r.deps.Logger.Info("registered health endpoints")
 	return nil
@@ -428,7 +414,11 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 			WithSuggestion("Ensure tenant service is initialized before creating router")
 	}
 
-	handler := tenantHandler.NewTenantHandler(r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+	var onboardStarter *workflowsTenant.Starter
+	if r.deps.TemporalClient != nil {
+		onboardStarter = workflowsTenant.NewStarter(r.deps.TemporalClient)
+	}
+	handler := tenantHandler.NewTenantHandler(r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer, onboardStarter)
 
 	// Tenant management routes — no tenant middleware (these manage tenants themselves)
 	tenantsGroup := apiRouter.Group("/v1/tenants")
@@ -676,22 +666,6 @@ func (r *Router) authenticateMiddleware() fiber.Handler {
 
 // Future module registration examples:
 //
-// func (r *Router) registerFinance(app *fiber.App) error {
-// 	handler := finance.NewHandler(r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
-//
-// 	return r.registry.RegisterModuleWithMiddleware(
-// 		app,
-// 		ModuleFinance,
-// 		"/api/v1/finance",
-// 		[]string{"cors", "auth", "ratelimit"},
-// 		func(router fiber.Router) {
-// 			router.Get("/accounts", handler.ListAccounts)
-// 			router.Post("/transactions", handler.CreateTransaction)
-// 			router.Get("/reports", handler.GetReports)
-// 		},
-// 	)
-// }
-
 // ListRoutes returns information about all registered routes.
 func (r *Router) ListRoutes() map[string]*ModuleInfo {
 	return r.registry.ListRoutes()

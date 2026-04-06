@@ -1,2 +1,6 @@
--- Drop finance transaction entries table
+-- Drop finance transaction entries RLS policies and table
+DROP POLICY IF EXISTS tenant_isolation_policy ON finance_transaction_entries;
+DROP POLICY IF EXISTS admin_full_access_policy ON finance_transaction_entries;
+DROP POLICY IF EXISTS finance_transaction_entries_ro_select ON finance_transaction_entries;
+ALTER TABLE IF EXISTS finance_transaction_entries NO FORCE ROW LEVEL SECURITY;
 DROP TABLE IF EXISTS finance_transaction_entries CASCADE;

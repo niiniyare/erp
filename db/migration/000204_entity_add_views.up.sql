@@ -44,6 +44,8 @@ SELECT
 FROM org_chart oc
 JOIN tenants t ON oc.tenant_id = t.id;
 
+ALTER VIEW v_tenant_hierarchy SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_ENTITY_STRUCTURE VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -73,6 +75,8 @@ WHERE cc.type = 'COST_CENTER'
   AND d.deleted_at  IS NULL
   AND r.deleted_at  IS NULL
   AND c.deleted_at  IS NULL;
+
+ALTER VIEW v_entity_structure SET (security_invoker = true);
 
 -- ------------------------------------------------------------------------------------------------
 -- V_COST_CENTER_INFO VIEW
@@ -107,6 +111,8 @@ WHERE cc.type = 'COST_CENTER'
   AND d.deleted_at  IS NULL
   AND r.deleted_at  IS NULL
   AND c.deleted_at  IS NULL;
+
+ALTER VIEW v_cost_center_info SET (security_invoker = true);
 
 -- ------------------------------------------------------------------------------------------------
 -- V_DEPARTMENT_SUMMARY VIEW
@@ -146,6 +152,8 @@ GROUP BY
   r.uuid, r.name,
   c.uuid, c.name;
 
+ALTER VIEW v_department_summary SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_COMPANY_STRUCTURE VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -171,6 +179,8 @@ WHERE c.type         = 'COMPANY'
   AND c.deleted_at   IS NULL
   AND e.deleted_at   IS NULL;
 
+ALTER VIEW v_company_structure SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_TENANT_ENTITY_SUMMARY VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -193,6 +203,8 @@ SELECT
 FROM tenants t
 LEFT JOIN entities e ON e.tenant_id = t.id
 GROUP BY t.id, t.name, t."Status";
+
+ALTER VIEW v_tenant_entity_summary SET (security_invoker = true);
 
 -- ------------------------------------------------------------------------------------------------
 -- V_ACTIVE_ENTITIES VIEW
@@ -257,6 +269,8 @@ LEFT JOIN dept_anc     da ON da.descendant_id = e.uuid
 WHERE e.deleted_at IS NULL
   AND e.is_active  = TRUE;
 
+ALTER VIEW v_active_entities SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_ENTITY_CHANGES VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -284,6 +298,8 @@ SELECT
 FROM entities e
 JOIN tenants t ON e.tenant_id = t.id;
 
+ALTER VIEW v_entity_changes SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_ENTITY_PATHS VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -309,6 +325,8 @@ JOIN tenants  t ON hp.tenant_id     = t.id
 WHERE a.deleted_at IS NULL
   AND d.deleted_at IS NULL;
 
+ALTER VIEW v_entity_paths SET (security_invoker = true);
+
 -- ------------------------------------------------------------------------------------------------
 -- V_TENANT_RESOURCE_UTILIZATION VIEW
 -- ------------------------------------------------------------------------------------------------
@@ -331,3 +349,5 @@ FROM tenants t
 LEFT JOIN entities    e  ON e.tenant_id  = t.id
 LEFT JOIN entitystate es ON es.tenant_id = t.id
 GROUP BY t.id, t.name, t."Status";
+
+ALTER VIEW v_tenant_resource_utilization SET (security_invoker = true);

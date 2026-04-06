@@ -71,6 +71,7 @@ COMMENT ON CONSTRAINT positive_sequence ON entitystate IS 'Ensures sequence numb
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE entitystate ENABLE ROW LEVEL SECURITY;
+ALTER TABLE entitystate FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON entitystate FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
@@ -80,4 +81,8 @@ CREATE POLICY tenant_isolation_policy ON entitystate FOR ALL TO application_role
   AND tenant_id = current_tenant_id()
 );
 
-CREATE POLICY admin_full_access_policy ON entitystate FOR ALL TO admin_role USING (TRUE);
+CREATE POLICY admin_full_access_policy ON entitystate FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY entitystate_ro_select ON entitystate
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

@@ -54,6 +54,7 @@ COMMENT ON COLUMN roles.conditions     IS 'JSONB containing time, location, devi
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE roles FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY roles_tenant_isolation ON roles FOR ALL TO application_role
     USING (
@@ -66,3 +67,7 @@ CREATE POLICY roles_tenant_isolation ON roles FOR ALL TO application_role
     );
 
 CREATE POLICY roles_admin_access ON roles FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY roles_ro_select ON roles
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

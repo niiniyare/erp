@@ -82,6 +82,8 @@ GROUP BY
   e.access_attributes,
   u.user_attributes;
 
+ALTER VIEW v_user_complete_view SET (security_invoker = true);
+
 COMMENT ON VIEW v_user_complete_view IS ' view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.';
 
 -- ------------------------------------------------------------------------------------------------
@@ -148,6 +150,8 @@ GROUP BY
   r.module_id,
   m.name;
 
+ALTER VIEW v_role_permissions_summary SET (security_invoker = true);
+
 COMMENT ON VIEW v_role_permissions_summary IS 'Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.';
 
 -- ------------------------------------------------------------------------------------------------
@@ -183,5 +187,7 @@ GROUP BY
 ORDER BY
   hour_bucket DESC,
   event_count DESC;
+
+ALTER VIEW v_audit_summary_view SET (security_invoker = true);
 
 COMMENT ON VIEW v_audit_summary_view IS 'Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.';

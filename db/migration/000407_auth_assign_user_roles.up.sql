@@ -38,6 +38,7 @@ COMMENT ON COLUMN user_roles.conditions      IS 'JSONB containing conditional ac
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY user_roles_tenant_isolation ON user_roles FOR ALL TO application_role
     USING (
@@ -58,3 +59,14 @@ CREATE POLICY user_roles_tenant_isolation ON user_roles FOR ALL TO application_r
     );
 
 CREATE POLICY user_roles_admin_access ON user_roles FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY user_roles_ro_select ON user_roles
+    FOR SELECT TO readonly_role
+    USING (
+        current_tenant_id() IS NOT NULL
+        AND EXISTS (
+            SELECT 1 FROM users u
+            WHERE u.id = user_roles.user_id
+              AND u.tenant_id = current_tenant_id()
+        )
+    );

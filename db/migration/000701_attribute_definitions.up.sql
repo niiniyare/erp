@@ -57,7 +57,15 @@ COMMENT ON COLUMN attribute_definitions.encryption_required IS 'Whether attribut
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE attribute_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attribute_definitions FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY attribute_definitions_tenant_isolation ON attribute_definitions FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY attribute_definitions_admin_access ON attribute_definitions FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY attribute_definitions_ro_select ON attribute_definitions
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

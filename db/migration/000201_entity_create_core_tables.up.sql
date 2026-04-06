@@ -108,6 +108,7 @@ COMMENT ON CONSTRAINT valid_fy_start_month ON entities IS 'Validates fiscal year
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE entities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE entities FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON entities
   FOR ALL TO application_role
@@ -120,10 +121,13 @@ CREATE POLICY tenant_isolation_policy ON entities
     AND tenant_id = current_tenant_id()
   );
 
--- Admin bypass policy
 CREATE POLICY admin_full_access_policy ON entities
   FOR ALL TO admin_role
-  USING (TRUE);
+  USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY entities_ro_select ON entities
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

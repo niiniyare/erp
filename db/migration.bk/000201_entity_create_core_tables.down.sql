@@ -51,6 +51,8 @@ DROP INDEX IF EXISTS idx_entities_deleted_at;
 
 DROP INDEX IF EXISTS idx_entities_address_gin;
 
+DROP INDEX IF EXISTS idx_entities_level;
+DROP INDEX IF EXISTS idx_entities_path;
 DROP INDEX IF EXISTS idx_entities_settings_gin;
 
 DROP INDEX IF EXISTS idx_entities_active;

@@ -29,6 +29,7 @@ CREATE INDEX IF NOT EXISTS idx_sso_providers_tenant_active
 
 -- Row-Level Security
 ALTER TABLE sso_providers ENABLE ROW LEVEL SECURITY;
+ALTER TABLE sso_providers FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY sso_providers_tenant_isolation
     ON sso_providers FOR ALL TO application_role
@@ -39,6 +40,10 @@ CREATE POLICY sso_providers_admin_access
     ON sso_providers FOR ALL TO admin_role
     USING  (TRUE)
     WITH CHECK (TRUE);
+
+CREATE POLICY sso_providers_ro_select ON sso_providers
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 COMMENT ON TABLE sso_providers IS
     'Per-tenant OAuth/OIDC SSO provider configurations. '

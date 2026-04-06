@@ -29,11 +29,19 @@ COMMENT ON COLUMN notification_preferences.quiet_hours        IS 'JSONB object w
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE notification_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notification_preferences FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY notification_preferences_tenant_isolation ON notification_preferences
-  FOR ALL
-  USING (tenant_id = current_tenant_id())
-  WITH CHECK (tenant_id = current_tenant_id());
+  FOR ALL TO application_role
+  USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+  WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY notification_preferences_admin_access ON notification_preferences
+  FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY notification_preferences_ro_select ON notification_preferences
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- TRIGGERS

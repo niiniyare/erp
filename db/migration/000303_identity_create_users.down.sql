@@ -9,6 +9,8 @@ DROP POLICY IF EXISTS users_admin_access ON users;
 
 DROP POLICY IF EXISTS users_tenant_isolation ON users;
 
+DROP POLICY IF EXISTS users_ro_select ON users;
+
 -- Disable RLS
 ALTER TABLE
   IF EXISTS users DISABLE ROW LEVEL SECURITY;

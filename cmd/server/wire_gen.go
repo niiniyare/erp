@@ -41,22 +41,29 @@ func InitializeApplication() (*Application, error) {
 		return nil, err
 	}
 	tenantService := wire.NewTenantService(store, cacheService, service, logger)
-	v := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
-	v3, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
+	userRepository := wire.NewIdentityRepository(store, cacheService, service, metricsProvider)
+	authzService, err := wire.NewAuthzService(store, cacheService, logger, metricsProvider, service)
 	if err != nil {
 		return nil, err
 	}
-	v2 := wire.NewIdentityService(v, v3, cacheService, service, metricsProvider, configConfig, logger)
-	v4 := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
-	v5 := wire.NewSessionService(v2, v3, v4, service, metricsProvider, logger, configConfig)
+	userService := wire.NewIdentityService(userRepository, authzService, cacheService, service, metricsProvider, configConfig, logger)
+	sessionRepository := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
+	sessionService := wire.NewSessionService(userService, authzService, sessionRepository, service, metricsProvider, logger, configConfig)
 	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
-	auditRepo := wire.NewAuditRepository(store, logger, service, metricsProvider)
-	auditSvc := wire.NewAuditService(auditRepo, cacheService, logger, service, metricsProvider)
-	apiKeyRepo := wire.NewAPIKeyRepository(store)
-	apiKeySvc := wire.NewAPIKeyService(apiKeyRepo, cacheService, service, metricsProvider)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
-	v6 := wire.NewTenantMiddleware(tenantMiddlewareConfig)
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v2, v5, services, v6, auditSvc, apiKeySvc, store)
+	v := wire.NewTenantMiddleware(tenantMiddlewareConfig)
+	routeSecurityManager := wire.NewRouteSecurityManager(logger, metricsProvider, service)
+	repository := wire.NewAuditRepository(store, logger, service, metricsProvider)
+	auditService := wire.NewAuditService(repository, cacheService, logger, service, metricsProvider)
+	apiKeyRepository := wire.NewAPIKeyRepository(store)
+	apiKeyService := wire.NewAPIKeyService(apiKeyRepository, cacheService, service, metricsProvider)
+	ssoRepository := wire.NewSSORepository(store)
+	ssoService := wire.NewSSOService(ssoRepository, userService, cacheService, service, metricsProvider, logger, configConfig)
+	client, err := wire.NewTemporalClient(configConfig, logger)
+	if err != nil {
+		return nil, err
+	}
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, userService, sessionService, services, v, routeSecurityManager, auditService, apiKeyService, ssoService, client, store)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err

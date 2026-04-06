@@ -46,10 +46,14 @@ CREATE INDEX idx_role_assignments_granter ON role_assignments(granted_by) WHERE 
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE role_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE role_assignments FORCE  ROW LEVEL SECURITY;
 CREATE POLICY ra_tenant ON role_assignments FOR ALL TO application_role
   USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
   WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 CREATE POLICY ra_admin ON role_assignments FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY ra_ro_select ON role_assignments
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

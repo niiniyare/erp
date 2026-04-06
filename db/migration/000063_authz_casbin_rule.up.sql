@@ -30,6 +30,7 @@ CREATE INDEX idx_casbin_rule_ptype ON casbin_rule(ptype); -- fast filter by row 
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE casbin_rule ENABLE ROW LEVEL SECURITY;
+ALTER TABLE casbin_rule FORCE  ROW LEVEL SECURITY;
 CREATE POLICY casbin_rule_app   ON casbin_rule FOR ALL TO application_role USING (TRUE) WITH CHECK (TRUE);
 CREATE POLICY casbin_rule_admin ON casbin_rule FOR ALL TO admin_role        USING (TRUE) WITH CHECK (TRUE);
 

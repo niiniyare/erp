@@ -24,8 +24,7 @@ ALTER TABLE tenants ENABLE ROW LEVEL SECURITY;
 
 -- Force RLS even for the table owner (typically the migration user).
 -- Without this, the table owner bypasses all policies.
--- Only enable this if your migration user is NOT a superuser.
--- ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
+ALTER TABLE tenants FORCE ROW LEVEL SECURITY;
 
 -- Drop all existing policies before redefining — idempotent re-runs.
 DROP POLICY IF EXISTS tenant_isolation_policy   ON tenants;
@@ -43,22 +42,18 @@ DROP POLICY IF EXISTS readonly_access_policy    ON tenants;
 -- in an empty result set (SELECT) or a policy violation error (INSERT/UPDATE)
 -- — never in cross-tenant data exposure.
 -- ------------------------------------------------------------------------------------------------
--- NOTE: tenant_isolation_policy is intentionally disabled here until the
--- application layer is verified to call set_tenant_context() consistently.
--- Re-enable by uncommenting the CREATE POLICY block below.
---
--- CREATE POLICY tenant_isolation_policy
---   ON tenants
---   FOR ALL
---   TO application_role
---   USING (
---     id         = current_tenant_id()
---     AND deleted_at IS NULL
---   )
---   WITH CHECK (
---     id         = current_tenant_id()
---     AND deleted_at IS NULL
---   );
+CREATE POLICY tenant_isolation_policy
+  ON tenants
+  FOR ALL
+  TO application_role
+  USING (
+    id         = current_tenant_id()
+    AND deleted_at IS NULL
+  )
+  WITH CHECK (
+    id         = current_tenant_id()
+    AND deleted_at IS NULL
+  );
 
 -- ------------------------------------------------------------------------------------------------
 -- admin_role — unrestricted access

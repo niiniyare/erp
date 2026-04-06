@@ -11,6 +11,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
+	temporalclient "go.temporal.io/sdk/client"
+
 	db "awo.so/db/sqlc"
 	"awo.so/internal/api/handlers"
 	"awo.so/internal/api/middleware"
@@ -83,8 +85,7 @@ func setupGlobalMiddleware(app *fiber.App, cfg *config.Config, log logger.Logger
 
 	// CORS middleware
 	app.Use(cors.New(cors.Config{
-		// TODO: AllowOrigins should be fetched from file
-		AllowOrigins:     "http://localhost:3000,https://app.example.com",
+		AllowOrigins:     cfg.Server.AllowedOrigins,
 		AllowMethods:     "GET,POST,HEAD,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-Request-ID,X-TenantID",
 		AllowCredentials: true,
@@ -128,6 +129,14 @@ func NewTenantMiddlewareConfig(
 // NewTenantMiddleware creates the tenant middleware instance
 func NewTenantMiddleware(config middleware.TenantMiddlewareConfig) fiber.Handler {
 	return middleware.TenantMiddleware(config)
+}
+
+// NewRouteSecurityManager creates the route security manager.
+// CORS is disabled here because it is already applied globally in setupGlobalMiddleware.
+func NewRouteSecurityManager(log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) *middleware.RouteSecurityManager {
+	cfg := middleware.DefaultRouteSecurityConfig()
+	cfg.API.EnableCORS = false
+	return middleware.NewRouteSecurityManager(cfg, log, m, tracer)
 }
 
 // ============================================================================
@@ -212,6 +221,31 @@ func NewAPIKeyService(repo iam.APIKeyRepository, cacheSvc cache.Service, tracer 
 }
 
 // ============================================================================
+// SSO PROVIDERS
+// ============================================================================
+
+// NewSSORepository constructs a Postgres-backed SSORepository.
+func NewSSORepository(store db.Store) iam.SSORepository {
+	return iam.NewSSORepository(store)
+}
+
+// NewSSOService constructs the SSOService for OAuth/OIDC login flows.
+func NewSSOService(
+	repo iam.SSORepository,
+	identity iam.UserService,
+	cacheSvc cache.Service,
+	tracer tracing.Service,
+	m metrics.MetricsProvider,
+	log logger.Logger,
+	cfg *config.Config,
+) iam.SSOService {
+	return iam.NewSSOService(repo, identity, tracer, m, log, iam.SSOConfig{
+		EncryptionKey: []byte(cfg.Auth.SSOEncryptionKey),
+		Cache:         cacheSvc,
+	})
+}
+
+// ============================================================================
 // HANDLER PROVIDERS
 // ============================================================================
 
@@ -225,8 +259,11 @@ func NewHandlerDependencies(
 	sessionSvc iam.SessionService,
 	financeServices *financeService.Services,
 	tenantMiddleware fiber.Handler,
+	securityMgr *middleware.RouteSecurityManager,
 	auditSvc audit.Service,
 	apiKeySvc iam.APIKeyService,
+	ssoSvc iam.SSOService,
+	temporalClient temporalclient.Client,
 	store db.Store,
 ) *handlers.Dependencies {
 	authCfg := middleware.DefaultAuthConfig(sessionSvc)
@@ -238,10 +275,13 @@ func NewHandlerDependencies(
 		UserService:      userSvc,
 		FinanceServices:  financeServices,
 		TenantMiddleware: tenantMiddleware,
+		SecurityManager:  securityMgr,
 		SessionService:   sessionSvc,
 		AuthConfig:       &authCfg,
 		AuditService:     auditSvc,
 		APIKeyService:    apiKeySvc,
+		SSOService:       ssoSvc,
+		TemporalClient:   temporalClient,
 		Store:            store,
 	}
 }

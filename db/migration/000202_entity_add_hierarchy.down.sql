@@ -6,6 +6,8 @@ DROP POLICY IF EXISTS admin_full_access_policy ON hierarchy_paths;
 
 DROP POLICY IF EXISTS tenant_isolation_policy ON hierarchy_paths;
 
+DROP POLICY IF EXISTS hierarchy_paths_ro_select ON hierarchy_paths;
+
 -- Disable RLS
 ALTER TABLE
   IF EXISTS hierarchy_paths DISABLE ROW LEVEL SECURITY;

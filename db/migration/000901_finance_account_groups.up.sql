@@ -101,6 +101,7 @@ CREATE INDEX idx_account_groups_statement ON finance_account_groups(
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE finance_account_groups ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_account_groups FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON finance_account_groups
   FOR ALL TO application_role
@@ -115,7 +116,11 @@ CREATE POLICY tenant_isolation_policy ON finance_account_groups
 
 CREATE POLICY admin_full_access_policy ON finance_account_groups
   FOR ALL TO admin_role
-  USING (TRUE);
+  USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY finance_account_groups_ro_select ON finance_account_groups
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

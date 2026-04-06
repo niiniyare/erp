@@ -6,6 +6,8 @@ DROP POLICY IF EXISTS admin_full_access_policy ON entitystate;
 
 DROP POLICY IF EXISTS tenant_isolation_policy ON entitystate;
 
+DROP POLICY IF EXISTS entitystate_ro_select ON entitystate;
+
 -- Disable RLS
 ALTER TABLE
   IF EXISTS entitystate DISABLE ROW LEVEL SECURITY;

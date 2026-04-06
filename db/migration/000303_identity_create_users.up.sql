@@ -141,6 +141,7 @@ ALTER TABLE users
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY users_tenant_isolation ON users FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
@@ -152,6 +153,10 @@ CREATE POLICY users_tenant_isolation ON users FOR ALL TO application_role USING 
 );
 
 CREATE POLICY users_admin_access ON users FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY users_ro_select ON users
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- TRIGGERS

@@ -59,6 +59,11 @@ DROP POLICY IF EXISTS tenant_isolation_policy ON finance_account_validation_rule
 
 DROP POLICY IF EXISTS tenant_isolation_policy ON finance_account_balances;
 
+-- Drop readonly policies added by RLS audit
+DROP POLICY IF EXISTS finance_account_validation_rules_ro_select ON finance_account_validation_rules;
+
+DROP POLICY IF EXISTS finance_account_balances_ro_select ON finance_account_balances;
+
 -- Disable RLS on new tables
 ALTER TABLE
   finance_account_validation_rules DISABLE ROW LEVEL SECURITY;

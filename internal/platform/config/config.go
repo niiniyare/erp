@@ -134,6 +134,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("server.read_timeout", 30*time.Second)
 	v.SetDefault("server.write_timeout", 30*time.Second)
 	v.SetDefault("server.idle_timeout", 60*time.Second)
+	v.SetDefault("server.allowed_origins", "http://localhost:3000,http://localhost:8080")
 
 	// Database
 	v.SetDefault("database.host", "localhost")
@@ -168,6 +169,7 @@ func setDefaults(v *viper.Viper) {
 	v.SetDefault("auth.require_https", true)
 	v.SetDefault("auth.mfa_encryption_key", "dev-mfa-key-change-me-in-prod!!!")
 	v.SetDefault("auth.mfa_issuer", "AWO ERP")
+	v.SetDefault("auth.sso_encryption_key", "dev-sso-key-change-me-in-prod!!!")
 
 	// Logger
 	v.SetDefault("logger.type", "zerolog")
@@ -216,6 +218,7 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("server.read_timeout", "SERVER_READ_TIMEOUT")
 	v.BindEnv("server.write_timeout", "SERVER_WRITE_TIMEOUT")
 	v.BindEnv("server.idle_timeout", "SERVER_IDLE_TIMEOUT")
+	v.BindEnv("server.allowed_origins", "CORS_ALLOWED_ORIGINS")
 
 	// Database
 	v.BindEnv("database.host", "DB_HOST")
@@ -243,6 +246,7 @@ func bindEnvVars(v *viper.Viper) {
 	v.BindEnv("auth.require_https", "AUTH_REQUIRE_HTTPS")
 	v.BindEnv("auth.mfa_encryption_key", "MFA_ENCRYPTION_KEY")
 	v.BindEnv("auth.mfa_issuer", "MFA_ISSUER")
+	v.BindEnv("auth.sso_encryption_key", "SSO_ENCRYPTION_KEY")
 
 	// Logger
 	v.BindEnv("logger.type", "LOG_TYPE")

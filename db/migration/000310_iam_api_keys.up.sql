@@ -30,6 +30,7 @@ CREATE INDEX IF NOT EXISTS idx_api_keys_tenant_id ON api_keys (tenant_id);
 -- ─── Row-Level Security ───────────────────────────────────────────────────────
 
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_keys FORCE  ROW LEVEL SECURITY;
 
 -- application_role: full tenant isolation for all operations.
 -- NOTE: GetAPIKeyByHash (cross-tenant hash lookup during auth) MUST be executed
@@ -55,5 +56,16 @@ DO $$ BEGIN
         CREATE POLICY api_keys_admin_access
             ON api_keys FOR ALL TO admin_role
             USING  (TRUE) WITH CHECK (TRUE);
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_policies
+        WHERE tablename = 'api_keys' AND policyname = 'api_keys_ro_select'
+    ) THEN
+        CREATE POLICY api_keys_ro_select ON api_keys
+            FOR SELECT TO readonly_role
+            USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
     END IF;
 END $$;

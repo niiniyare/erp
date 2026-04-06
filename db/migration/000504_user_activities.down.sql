@@ -15,4 +15,8 @@ DROP FUNCTION IF EXISTS drop_old_user_activities_partitions(INTEGER);
 -- DROP TABLE IF EXISTS user_activities_next2;
 --
 -- Drop the main partitioned table (this will cascade to any remaining partitions)
+DROP POLICY IF EXISTS user_activities_tenant_isolation ON user_activities;
+DROP POLICY IF EXISTS user_activities_admin_bypass ON user_activities;
+DROP POLICY IF EXISTS user_activities_ro_select ON user_activities;
+ALTER TABLE IF EXISTS user_activities NO FORCE ROW LEVEL SECURITY;
 DROP TABLE IF EXISTS user_activities;

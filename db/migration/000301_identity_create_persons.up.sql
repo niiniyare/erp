@@ -89,6 +89,7 @@ CREATE INDEX idx_persons_metadata_gin              ON persons USING gin(metadata
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE persons ENABLE ROW LEVEL SECURITY;
+ALTER TABLE persons FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY persons_tenant_isolation ON persons FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
@@ -99,6 +100,10 @@ CREATE POLICY persons_tenant_isolation ON persons FOR ALL TO application_role US
 );
 
 CREATE POLICY persons_admin_access ON persons FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY persons_ro_select ON persons
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- TRIGGERS

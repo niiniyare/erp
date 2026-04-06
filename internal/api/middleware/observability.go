@@ -155,6 +155,48 @@ func (m *ObservabilityMiddleware) normalizePath(path string) string {
 	return path
 }
 
+// serviceFromPath derives a short service/module name from the request path.
+// e.g. /api/v1/auth/login → "auth", /api/v1/tenants/123 → "tenant", /health → "health"
+func serviceFromPath(path string) string {
+	// Strip leading slash
+	if len(path) > 0 && path[0] == '/' {
+		path = path[1:]
+	}
+	// /health, /metrics, /ping, etc.
+	if path == "health" || path == "metrics" || path == "ping" {
+		return path
+	}
+	// Strip api/v1/ or api/v2/ prefix
+	for _, prefix := range []string{"api/v1/", "api/v2/", "api/"} {
+		if len(path) > len(prefix) && path[:len(prefix)] == prefix {
+			path = path[len(prefix):]
+			break
+		}
+	}
+	// Take the first path segment
+	for i, c := range path {
+		if c == '/' {
+			path = path[:i]
+			break
+		}
+	}
+	// Normalize plurals and aliases
+	switch path {
+	case "tenants":
+		return "tenant"
+	case "users":
+		return "user"
+	case "entities":
+		return "entity"
+	case "audit-logs":
+		return "audit"
+	case "":
+		return "api"
+	default:
+		return path
+	}
+}
+
 // addRequestAttributes adds HTTP request attributes to the span
 func (m *ObservabilityMiddleware) addRequestAttributes(span tracing.Span, c *fiber.Ctx) {
 	span.SetAttributes(
@@ -309,6 +351,7 @@ func (m *ObservabilityMiddleware) logRequestStart(ctx context.Context, c *fiber.
 	}
 
 	fields := logger.Fields{
+		"service":        serviceFromPath(c.Path()),
 		"request_id":     requestID,
 		"method":         c.Method(),
 		"path":           c.Path(),
@@ -332,6 +375,7 @@ func (m *ObservabilityMiddleware) logRequestStart(ctx context.Context, c *fiber.
 // logRequestEnd logs the completion of a request
 func (m *ObservabilityMiddleware) logRequestEnd(ctx context.Context, c *fiber.Ctx, requestID string, statusCode int, duration time.Duration, err error) {
 	fields := logger.Fields{
+		"service":         serviceFromPath(c.Path()),
 		"request_id":      requestID,
 		"method":          c.Method(),
 		"path":            c.Path(),

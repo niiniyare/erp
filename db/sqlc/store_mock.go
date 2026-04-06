@@ -6509,6 +6509,21 @@ func (mr *MockStoreMockRecorder) ListActivePolicies(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActivePolicies", reflect.TypeOf((*MockStore)(nil).ListActivePolicies), ctx)
 }
 
+// ListActiveResourcesByModule mocks base method.
+func (m *MockStore) ListActiveResourcesByModule(ctx context.Context, moduleID uuid.UUID) ([]*Resource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActiveResourcesByModule", ctx, moduleID)
+	ret0, _ := ret[0].([]*Resource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListActiveResourcesByModule indicates an expected call of ListActiveResourcesByModule.
+func (mr *MockStoreMockRecorder) ListActiveResourcesByModule(ctx, moduleID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveResourcesByModule", reflect.TypeOf((*MockStore)(nil).ListActiveResourcesByModule), ctx, moduleID)
+}
+
 // ListActiveRoleAssignments mocks base method.
 func (m *MockStore) ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error) {
 	m.ctrl.T.Helper()
@@ -8896,6 +8911,21 @@ func (m *MockStore) ValidateSequenceIntegrity(ctx context.Context) ([]*ValidateS
 func (mr *MockStoreMockRecorder) ValidateSequenceIntegrity(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateSequenceIntegrity", reflect.TypeOf((*MockStore)(nil).ValidateSequenceIntegrity), ctx)
+}
+
+// ValidateTenantContext mocks base method.
+func (m *MockStore) ValidateTenantContext(ctx context.Context) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateTenantContext", ctx)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateTenantContext indicates an expected call of ValidateTenantContext.
+func (mr *MockStoreMockRecorder) ValidateTenantContext(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateTenantContext", reflect.TypeOf((*MockStore)(nil).ValidateTenantContext), ctx)
 }
 
 // ValidateTransactionBalance mocks base method.
@@ -15499,6 +15529,21 @@ func (mr *MockTxStoreMockRecorder) ListActivePolicies(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActivePolicies", reflect.TypeOf((*MockTxStore)(nil).ListActivePolicies), ctx)
 }
 
+// ListActiveResourcesByModule mocks base method.
+func (m *MockTxStore) ListActiveResourcesByModule(ctx context.Context, moduleID uuid.UUID) ([]*Resource, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListActiveResourcesByModule", ctx, moduleID)
+	ret0, _ := ret[0].([]*Resource)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListActiveResourcesByModule indicates an expected call of ListActiveResourcesByModule.
+func (mr *MockTxStoreMockRecorder) ListActiveResourcesByModule(ctx, moduleID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListActiveResourcesByModule", reflect.TypeOf((*MockTxStore)(nil).ListActiveResourcesByModule), ctx, moduleID)
+}
+
 // ListActiveRoleAssignments mocks base method.
 func (m *MockTxStore) ListActiveRoleAssignments(ctx context.Context, arg ListActiveRoleAssignmentsParams) ([]*ListActiveRoleAssignmentsRow, error) {
 	m.ctrl.T.Helper()
@@ -17900,6 +17945,21 @@ func (m *MockTxStore) ValidateSequenceIntegrity(ctx context.Context) ([]*Validat
 func (mr *MockTxStoreMockRecorder) ValidateSequenceIntegrity(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateSequenceIntegrity", reflect.TypeOf((*MockTxStore)(nil).ValidateSequenceIntegrity), ctx)
+}
+
+// ValidateTenantContext mocks base method.
+func (m *MockTxStore) ValidateTenantContext(ctx context.Context) (uuid.UUID, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ValidateTenantContext", ctx)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ValidateTenantContext indicates an expected call of ValidateTenantContext.
+func (mr *MockTxStoreMockRecorder) ValidateTenantContext(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateTenantContext", reflect.TypeOf((*MockTxStore)(nil).ValidateTenantContext), ctx)
 }
 
 // ValidateTransactionBalance mocks base method.

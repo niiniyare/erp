@@ -30,6 +30,8 @@ DROP POLICY IF EXISTS tenant_isolation_policy ON finance_account_groups;
 
 DROP POLICY IF EXISTS admin_full_access_policy ON finance_account_groups;
 
+DROP POLICY IF EXISTS finance_account_groups_ro_select ON finance_account_groups;
+
 -- Disable RLS
 ALTER TABLE
   finance_account_groups DISABLE ROW LEVEL SECURITY;

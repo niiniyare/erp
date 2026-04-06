@@ -152,21 +152,22 @@ COMMENT ON COLUMN feature_flags.deleted_at IS 'Soft delete timestamp - NULL mean
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
-ALTER TABLE
-  feature_flags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feature_flags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE feature_flags FORCE  ROW LEVEL SECURITY;
 
 -- Tenant isolation policy for application role
-CREATE POLICY feature_flags_tenant_isolation ON feature_flags FOR ALL TO application_role USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY feature_flags_tenant_isolation ON feature_flags FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- Admin role can access all tenants
-CREATE POLICY feature_flags_admin_access ON feature_flags FOR ALL TO admin_role USING (TRUE);
+CREATE POLICY feature_flags_admin_access ON feature_flags FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
 
--- Read-only role for monitoring/analytics
-CREATE POLICY feature_flags_readonly_access ON feature_flags FOR
-SELECT
-  TO readonly_role USING (TRUE);
+-- Read-only role for tenant-scoped analytics
+CREATE POLICY feature_flags_readonly_access ON feature_flags
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- Policy comments
 COMMENT ON POLICY feature_flags_tenant_isolation ON feature_flags IS 'Ensures tenant data isolation for application users';

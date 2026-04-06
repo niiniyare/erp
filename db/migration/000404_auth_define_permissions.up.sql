@@ -35,6 +35,7 @@ COMMENT ON COLUMN permissions.field_restrictions IS 'JSONB containing column-lev
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE permissions FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY permissions_tenant_isolation ON permissions FOR ALL TO application_role
     USING (
@@ -47,3 +48,7 @@ CREATE POLICY permissions_tenant_isolation ON permissions FOR ALL TO application
     );
 
 CREATE POLICY permissions_admin_access ON permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY permissions_ro_select ON permissions
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

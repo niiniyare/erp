@@ -31,7 +31,11 @@ COMMENT ON COLUMN policy_evaluations.evaluation_time_ms  IS 'Policy evaluation t
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE policy_evaluations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE policy_evaluations FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY policy_evaluations_tenant_isolation ON policy_evaluations FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY policy_evaluations_admin_access ON policy_evaluations FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);

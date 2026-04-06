@@ -178,22 +178,45 @@ func (h *UserHandler) List(c *fiber.Ctx) error {
 	defer span.End()
 	c.SetUserContext(ctx)
 
-	// Step 2: Extract pagination parameters and filters
-	_, _ = h.ExtractPaginationParams(c)
+	// Step 2: Extract pagination and filter params
+	offset, limit := h.ExtractPaginationParams(c)
 
-	// Note: For now, we'll use basic listing. In a real implementation,
-	// we would add filtering parameters to the service interface
-	// status := c.Query("status")
-	// userType := c.Query("user_type")
+	var (
+		userType *string
+		status   *string
+	)
+	if v := c.Query("user_type"); v != "" {
+		userType = &v
+	}
+	if v := c.Query("status"); v != "" {
+		status = &v
+	}
 
 	// Step 3: Delegate to service
-	// Note: The current service interface doesn't have a ListUsers method
-	// This would need to be added to the iam.Service interface
-	// For now, we'll return an error indicating this feature needs implementation
-	return h.HandleError(c, errors.NewBusinessError("NOT_IMPLEMENTED", "User listing not yet implemented").
-		WithHTTPStatus(501).
-		WithCategory(errors.CategoryBusiness).
-		WithSuggestion("Add ListUsers method to iam.Service interface"))
+	req := &iam.ListUsersRequest{
+		UserType:      userType,
+		AccountStatus: status,
+		Limit:         limit,
+		Offset:        offset,
+	}
+	users, err := h.service.ListUsers(ctx, req)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+
+	// Step 4: Convert to API response
+	items := make([]*User, 0, len(users))
+	for _, u := range users {
+		items = append(items, h.userToAPIResponse(u))
+	}
+
+	// Step 5: Return with pagination metadata
+	return h.SuccessWithMeta(c, items, map[string]interface{}{
+		"limit":  limit,
+		"offset": offset,
+		"count":  len(items),
+	})
 }
 
 // Update handles user updates (PUT /api/v1/users/:id)

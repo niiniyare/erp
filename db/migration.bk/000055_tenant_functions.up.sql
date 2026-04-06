@@ -1,38 +1,33 @@
--- =============================================================================
--- MIGRATION 005 UP: Tenant Context Functions
--- =============================================================================
--- Architecture Decision (ADR-012): Single-argument set_tenant_context only
---   The v1 two-argument overload set_tenant_context(UUID, TEXT) silently
---   ignored the user_role parameter while pretending to accept it. Dead
---   parameters in SECURITY DEFINER functions are a maintenance liability
---   and create misleading audit trails. The overload is not recreated here.
---   Callers that previously passed two arguments must be updated to use
---   SET ROLE separately (which is the correct mechanism for role switching).
+-- ------------------------------------------------------------------------------------------------
+-- TENANT CONTEXT FUNCTIONS
+-- ------------------------------------------------------------------------------------------------
+-- Transaction-local session functions for setting, reading, and clearing the current tenant.
+-- These functions are the sole mechanism for establishing tenant context before any
+-- RLS-protected query. They are designed for pooled connections — context is cleared
+-- automatically on COMMIT or ROLLBACK (is_local = TRUE in set_config).
 --
--- Architecture Decision (ADR-013): Transaction-local context only
---   set_config(..., TRUE) uses transaction-local scope. The context is
---   cleared automatically on COMMIT or ROLLBACK. This is the only safe
---   default for pooled connections where sessions are reused across tenants.
---   There is deliberately no session-local (is_local=FALSE) variant.
+-- Function inventory:
+--   A. current_tenant_id()       — STABLE, INVOKER: reads app.current_tenant_id from session
+--   B. set_tenant_context(UUID)  — DEFINER, validates tenant, sets context
+--   C. clear_tenant_context()    — INVOKER: clears context (defensive pool hygiene)
+--   D. validate_tenant_context() — DEFINER, STABLE: re-validates mid-transaction
 --
--- Architecture Decision (ADR-014): SECURITY DEFINER with search_path pin
---   Any SECURITY DEFINER function without an explicit SET search_path is
---   vulnerable to search path injection: a malicious user can CREATE a
---   view named "tenants" in their own schema, shadow the real table, and
---   cause the function to validate against fake data. All SECURITY DEFINER
---   functions in this migration pin the search path to pg_catalog, public.
+-- Security design:
+--   • set_config(..., TRUE) uses transaction-local scope — cleared on COMMIT/ROLLBACK.
+--   • All SECURITY DEFINER functions pin SET search_path = pg_catalog, public to prevent
+--     search path injection (a malicious user cannot shadow the tenants table).
+--   • current_tenant_id() uses SECURITY INVOKER — it reads only a session variable,
+--     so no privilege escalation is needed or desired.
+--   • Only app.current_tenant_id is stored in session state. Old app.tenant_status and
+--     app.context_set_at variables are intentionally omitted — they were never read
+--     by any RLS policy and created misleading noise in pg_settings output.
 --
--- Architecture Decision (ADR-015): Minimal session variables
---   v2 stored app.tenant_status and app.context_set_at in session variables
---   but never read them in any RLS policy or function. Dead session state is
---   noise in pg_settings output and misleads ops when debugging connection
---   issues. Only app.current_tenant_id is kept — it is the sole variable
---   that participates in RLS evaluation.
--- =============================================================================
+-- NOTE: GRANTs for these functions are in migration 000059.
+-- ------------------------------------------------------------------------------------------------
 
--- -------------------------------------------------------------------------
--- current_tenant_id()
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
+-- A. current_tenant_id()
+-- ------------------------------------------------------------------------------------------------
 -- Returns the UUID of the tenant set for the current transaction.
 -- Returns NULL if no context is set or the stored value is empty/invalid.
 -- STABLE because it reads a session variable — safe to call multiple times
@@ -40,11 +35,10 @@
 --
 -- Error handling:
 --   WHEN invalid_text_representation — catches malformed UUID strings.
---   We catch ONLY this exception; all other errors propagate normally.
 --   Returning NULL on a bad UUID is correct because this function runs
 --   inside RLS policies — a hard error would crash every query for the
 --   session rather than simply denying access.
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION current_tenant_id()
   RETURNS UUID
   LANGUAGE plpgsql
@@ -77,9 +71,9 @@ COMMENT ON FUNCTION current_tenant_id() IS
   'the variable is empty, or when the value is not a valid UUID (emits WARNING). '
   'Called by RLS policies — never raises an exception.';
 
--- -------------------------------------------------------------------------
--- set_tenant_context(UUID)
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
+-- B. set_tenant_context(UUID)
+-- ------------------------------------------------------------------------------------------------
 -- Validates the tenant and sets the transaction-local context.
 -- Raises an exception on any validation failure — callers must handle it.
 --
@@ -87,14 +81,14 @@ COMMENT ON FUNCTION current_tenant_id() IS
 --   1. Tenant exists and is not soft-deleted.
 --   2. Tenant Status is ACTIVE (not SUSPENDED, PENDING, or ARCHIVED).
 --
--- Only app.current_tenant_id is written. The old app.tenant_status and
--- app.context_set_at variables from v2 are intentionally omitted (ADR-015).
--- -------------------------------------------------------------------------
+-- Only app.current_tenant_id is written. Context is automatically cleared
+-- at transaction end — safe for connection pools.
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION set_tenant_context(p_tenant_id UUID)
   RETURNS VOID
   LANGUAGE plpgsql
   SECURITY DEFINER
-  SET search_path = pg_catalog, public   -- ADR-014: search path injection guard
+  SET search_path = pg_catalog, public   -- search path pin: prevents shadow table injection
 AS $$
 DECLARE
   v_status TEXT;
@@ -122,7 +116,7 @@ BEGIN
   END IF;
 
   -- TRUE = transaction-local: automatically cleared on COMMIT / ROLLBACK.
-  -- This is the only safe behaviour for pooled connections (ADR-013).
+  -- This is the only safe behaviour for pooled connections.
   PERFORM set_config('app.current_tenant_id', p_tenant_id::TEXT, TRUE);
 END;
 $$;
@@ -133,16 +127,16 @@ COMMENT ON FUNCTION set_tenant_context(UUID) IS
   'Context is automatically cleared at transaction end — safe for connection pools. '
   'Raises an exception with a descriptive message on any validation failure.';
 
--- -------------------------------------------------------------------------
--- clear_tenant_context()
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
+-- C. clear_tenant_context()
+-- ------------------------------------------------------------------------------------------------
 -- Explicitly clears the tenant context. Call before returning a connection
 -- to a pool as a defensive measure, even though transaction-local context
 -- is cleared automatically at transaction end.
 --
 -- Uses empty string '' (not NULL) because set_config() requires TEXT.
 -- NULLIF in current_tenant_id() translates '' back to NULL.
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION clear_tenant_context()
   RETURNS VOID
   LANGUAGE plpgsql
@@ -160,20 +154,20 @@ COMMENT ON FUNCTION clear_tenant_context() IS
   'Uses empty string (not NULL) as sentinel — current_tenant_id() '
   'translates it back to NULL via NULLIF.';
 
--- -------------------------------------------------------------------------
--- validate_tenant_context()
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
+-- D. validate_tenant_context()
+-- ------------------------------------------------------------------------------------------------
 -- Re-validates the active tenant mid-transaction or mid-job.
 -- Designed for long-running background jobs and pooled connections where
 -- tenant status may change after the context was first set.
 -- Returns the tenant UUID on success; raises on any failure.
--- -------------------------------------------------------------------------
+-- ------------------------------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION validate_tenant_context()
   RETURNS UUID
   LANGUAGE plpgsql
   STABLE
   SECURITY DEFINER
-  SET search_path = pg_catalog, public   -- ADR-014
+  SET search_path = pg_catalog, public   -- search path pin
 AS $$
 DECLARE
   v_tid    UUID;

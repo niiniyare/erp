@@ -178,3 +178,7 @@ GROUP BY
 
 COMMENT ON VIEW v_finance_account_activity IS 'Account activity summary for monitoring and analysis';
 
+ALTER VIEW v_finance_accounts_hierarchy  SET (security_invoker = true);
+ALTER VIEW v_finance_transaction_summary SET (security_invoker = true);
+ALTER VIEW v_finance_account_activity    SET (security_invoker = true);
+

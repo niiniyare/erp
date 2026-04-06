@@ -57,7 +57,15 @@ COMMENT ON COLUMN audit_log.compliance_flags IS 'JSONB containing compliance-rel
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE audit_log ENABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_log FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY audit_log_tenant_isolation ON audit_log FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY audit_log_tenant_isolation ON audit_log FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY audit_log_admin_access ON audit_log FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY audit_log_ro_select ON audit_log
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

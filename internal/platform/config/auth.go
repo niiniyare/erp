@@ -29,4 +29,8 @@ type AuthConfig struct {
 	MFAEncryptionKey string `yaml:"mfa_encryption_key" mapstructure:"mfa_encryption_key"`
 	// MFAIssuer is the issuer name shown in authenticator apps (e.g. "AWO ERP").
 	MFAIssuer string `yaml:"mfa_issuer" mapstructure:"mfa_issuer"`
+
+	// SSOEncryptionKey is the 32-byte AES-256 key used to encrypt OAuth client secrets at rest.
+	// Set via SSO_ENCRYPTION_KEY env var. Dev default is insecure; override in production.
+	SSOEncryptionKey string `yaml:"sso_encryption_key" mapstructure:"sso_encryption_key"`
 }

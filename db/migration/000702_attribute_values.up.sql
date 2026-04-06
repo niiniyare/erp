@@ -41,10 +41,18 @@ COMMENT ON COLUMN attribute_values.effective_to    IS 'When this attribute value
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE attribute_values ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attribute_values FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY attribute_values_tenant_isolation ON attribute_values FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY attribute_values_tenant_isolation ON attribute_values FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY attribute_values_admin_access ON attribute_values FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY attribute_values_ro_select ON attribute_values
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- INDEXES
@@ -101,7 +109,15 @@ COMMENT ON COLUMN attribute_sources.priority       IS 'Source priority for attri
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE attribute_sources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE attribute_sources FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY attribute_sources_tenant_isolation ON attribute_sources FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY attribute_sources_tenant_isolation ON attribute_sources FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY attribute_sources_admin_access ON attribute_sources FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY attribute_sources_ro_select ON attribute_sources
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

@@ -56,12 +56,17 @@ CREATE INDEX idx_api_keys_expiry ON api_keys(expires_at)
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE api_keys ENABLE ROW LEVEL SECURITY;
+ALTER TABLE api_keys FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY api_keys_tenant_isolation ON api_keys FOR ALL TO application_role
     USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
     WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 CREATE POLICY api_keys_admin_access ON api_keys FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY api_keys_ro_select ON api_keys
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

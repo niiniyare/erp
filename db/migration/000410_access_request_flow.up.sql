@@ -58,7 +58,15 @@ COMMENT ON COLUMN access_requests.auto_revoke IS 'Whether to automatically revok
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE access_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE access_requests FORCE  ROW LEVEL SECURITY;
 
-CREATE POLICY access_requests_tenant_isolation ON access_requests FOR ALL TO public USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY access_requests_tenant_isolation ON access_requests FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
+CREATE POLICY access_requests_admin_access ON access_requests FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY access_requests_ro_select ON access_requests
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

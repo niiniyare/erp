@@ -62,6 +62,7 @@ COMMENT ON COLUMN finance_transaction_entries.original_amount IS 'Original trans
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE finance_transaction_entries ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_transaction_entries FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON finance_transaction_entries
   FOR ALL TO application_role
@@ -76,7 +77,11 @@ CREATE POLICY tenant_isolation_policy ON finance_transaction_entries
 
 CREATE POLICY admin_full_access_policy ON finance_transaction_entries
   FOR ALL TO admin_role
-  USING (TRUE);
+  USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY finance_transaction_entries_ro_select ON finance_transaction_entries
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

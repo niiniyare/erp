@@ -77,6 +77,7 @@ ALTER TABLE user_sessions
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE user_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_sessions FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY user_sessions_tenant_isolation ON user_sessions FOR ALL TO application_role
     USING (
@@ -89,6 +90,10 @@ CREATE POLICY user_sessions_tenant_isolation ON user_sessions FOR ALL TO applica
     );
 
 CREATE POLICY user_sessions_admin_access ON user_sessions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY user_sessions_ro_select ON user_sessions
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS

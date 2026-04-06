@@ -95,6 +95,7 @@ ALTER TABLE employees
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employees FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY employees_tenant_isolation ON employees FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
@@ -107,6 +108,10 @@ CREATE POLICY employees_tenant_isolation ON employees FOR ALL TO application_rol
 );
 
 CREATE POLICY employees_admin_access ON employees FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY employees_ro_select ON employees
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- TRIGGERS

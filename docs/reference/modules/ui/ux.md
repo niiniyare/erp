@@ -896,7 +896,7 @@ Use consistent severity styling across all notification types:
 | **Success** | Green | ✓ | Completed actions, confirmations |
 | **Warning** | Amber | ⚠ | Advisory — action recommended but not required |
 | **Error** | Red | ✗ | Action failed; problem that must be resolved |
-| **Critical** | Red (bold) | 🚨 | System-level issue requiring immediate attention |
+| **Critical** | Red (bold) |  | System-level issue requiring immediate attention |
 
 The severity level determines persistence:
 - Info and Success: auto-dismiss after 5 seconds

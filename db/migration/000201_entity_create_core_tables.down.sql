@@ -21,6 +21,9 @@ DROP POLICY IF EXISTS admin_full_access_policy ON entities;
 -- Drop tenant isolation policy
 DROP POLICY IF EXISTS tenant_isolation_policy ON entities;
 
+-- Drop readonly policy
+DROP POLICY IF EXISTS entities_ro_select ON entities;
+
 -- =====================================================================
 -- DISABLE RLS ON TABLE
 -- =====================================================================

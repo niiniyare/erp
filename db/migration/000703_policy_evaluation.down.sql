@@ -3,8 +3,9 @@
 --
 -- Reverts the policy_evaluations table and associated policies.
 -- ------------------------------------------------------------------------------------------------
--- Drop RLS policy
+-- Drop RLS policies
 DROP POLICY IF EXISTS policy_evaluations_tenant_isolation ON policy_evaluations;
+DROP POLICY IF EXISTS policy_evaluations_admin_access ON policy_evaluations;
 
 -- Disable RLS
 ALTER TABLE

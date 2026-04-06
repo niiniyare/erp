@@ -124,9 +124,8 @@ func mapAuthError(c *fiber.Ctx, err error) error {
 
 	httpErr := sharedErrors.ToHTTPError(err)
 	if httpErr == nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
+		// Return as a Fiber error so the global error handler logs it.
+		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
 
 	switch httpErr.Status {

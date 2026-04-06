@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	coreTenant "awo.so/internal/core/tenant"
+	"awo.so/internal/core/tenant/domain"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -44,17 +45,56 @@ func (h *TenantHandler) Create(c *fiber.Ctx) error {
 	return h.created(c, toResponse(createdTenant, "detailed"))
 }
 
-// Onboard handles a complex, nested creation request for a new organization.
-// This is an example of the "Complex Nested Operations" pattern from the API design.
-// It would typically trigger an asynchronous workflow.
+// onboardRequest is the payload for the onboarding endpoint.
+type onboardRequest struct {
+	Name         string  `json:"name"          validate:"required,min=2,max=255"`
+	Email        string  `json:"email"         validate:"required,email"`
+	CountryCode  string  `json:"country_code"  validate:"required,len=2"`
+	CurrencyCode string  `json:"currency_code" validate:"required,len=3"`
+	Subdomain    *string `json:"subdomain,omitempty"`
+	Industry     *string `json:"industry,omitempty"`
+	CompanySize  *string `json:"company_size,omitempty"`
+}
+
+// Onboard enqueues a TenantProvisioningWorkflow and returns 202 Accepted with
+// the workflow and run IDs. The caller can poll GET /api/v1/tenants/:id for
+// status once provisioning completes and the tenant becomes ACTIVE.
 func (h *TenantHandler) Onboard(c *fiber.Ctx) error {
-	// For now, this is a placeholder. A real implementation would:
-	// 1. Define a complex request struct in `requests.go`.
-	// 2. Validate the complex request.
-	// 3. Start a Temporal workflow (e.g., OnboardingWorkflow).
-	// 4. Return a 202 Accepted response with the job ID, as shown in the API design doc.
+	if h.onboardStarter == nil {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+			"success": false,
+			"error":   "onboarding workflow not available — Temporal is not configured",
+		})
+	}
+
+	ctx, span := h.tracer.StartSpan(c.Context(), "tenant.handler.Onboard")
+	defer span.End()
+
+	var req onboardRequest
+	if err := h.validateRequest(c, &req); err != nil {
+		return h.handleError(c, err)
+	}
+
+	input := domain.ProvisioningInput{
+		Name:         req.Name,
+		Email:        req.Email,
+		CountryCode:  req.CountryCode,
+		CurrencyCode: req.CurrencyCode,
+		Subdomain:    req.Subdomain,
+		Industry:     req.Industry,
+		CompanySize:  req.CompanySize,
+	}
+
+	result, err := h.onboardStarter.StartOnboarding(ctx, input)
+	if err != nil {
+		span.RecordError(err)
+		return h.handleError(c, err)
+	}
+
 	return h.accepted(c, fiber.Map{
-		"status":  "onboarding_endpoint_not_implemented",
-		"message": "This endpoint is a placeholder for a future complex onboarding workflow.",
+		"workflow_id": result.WorkflowID,
+		"run_id":      result.RunID,
+		"status":      "provisioning",
+		"message":     "Tenant provisioning started. Poll GET /api/v1/tenants once the workflow completes.",
 	})
 }

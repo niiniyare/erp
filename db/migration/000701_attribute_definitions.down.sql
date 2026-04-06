@@ -3,8 +3,10 @@
 --
 -- Reverts the attribute_definitions table and associated policies.
 -- ------------------------------------------------------------------------------------------------
--- Drop RLS policy
+-- Drop RLS policies
 DROP POLICY IF EXISTS attribute_definitions_tenant_isolation ON attribute_definitions;
+DROP POLICY IF EXISTS attribute_definitions_admin_access ON attribute_definitions;
+DROP POLICY IF EXISTS attribute_definitions_ro_select ON attribute_definitions;
 
 -- Disable RLS
 ALTER TABLE

@@ -101,26 +101,22 @@ WHERE
   anomaly_score > 50.0;
 
 -- Enable Row Level Security
-ALTER TABLE
-  user_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_activities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_activities FORCE  ROW LEVEL SECURITY;
 
 -- RLS Policy: Users can only access activities within their tenant
-CREATE POLICY user_activities_tenant_isolation ON user_activities FOR ALL TO application_role USING (
-  tenant_id = current_setting('app.current_tenant_id')::uuid
-);
+CREATE POLICY user_activities_tenant_isolation ON user_activities FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
--- RLS Policy: Users can view their own activities (for self-service features)
-CREATE POLICY user_activities_self_access ON user_activities FOR
-SELECT
-  TO application_role USING (
-    user_id = current_setting('app.current_user_id')::uuid
-    AND tenant_id = current_setting('app.current_tenant_id')::uuid
-  );
+-- RLS Policy: Admin bypass - full cross-tenant access for admin tooling
+CREATE POLICY user_activities_admin_bypass ON user_activities FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
 
--- RLS Policy: Admin bypass - system administrators can access all activities within tenant
-CREATE POLICY user_activities_admin_bypass ON user_activities FOR ALL TO admin_role USING (
-  tenant_id = current_setting('app.current_tenant_id')::uuid
-);
+-- RLS Policy: readonly_role - tenant-scoped analytics access
+CREATE POLICY user_activities_ro_select ON user_activities
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- Grant permissions
 GRANT

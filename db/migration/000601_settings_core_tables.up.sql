@@ -78,10 +78,14 @@ CREATE INDEX idx_ts_lookup  ON tenant_settings(tenant_id, setting_key);
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE tenant_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_settings FORCE  ROW LEVEL SECURITY;
 CREATE POLICY ts_tenant_isolation ON tenant_settings FOR ALL TO application_role
     USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
     WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 CREATE POLICY ts_admin_access ON tenant_settings FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY ts_ro_select ON tenant_settings
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS
@@ -118,6 +122,7 @@ CREATE INDEX idx_uprefs_user ON user_preferences(user_id);
 -- ------------------------------------------------------------------------------------------------
 -- Users can only see/edit their own preferences; admins see all
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_preferences FORCE  ROW LEVEL SECURITY;
 CREATE POLICY uprefs_self ON user_preferences FOR ALL TO application_role
     USING  (user_id = current_setting('app.user_id', true)::uuid)
     WITH CHECK (user_id = current_setting('app.user_id', true)::uuid);
@@ -326,9 +331,13 @@ ALTER TABLE tenant_configurations ADD CONSTRAINT valid_settings_version CHECK (s
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE config_definitions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE config_definitions FORCE  ROW LEVEL SECURITY;
 ALTER TABLE configuration_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuration_templates FORCE  ROW LEVEL SECURITY;
 ALTER TABLE configuration_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE configuration_audit FORCE  ROW LEVEL SECURITY;
 ALTER TABLE template_applications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE template_applications FORCE  ROW LEVEL SECURITY;
 
 -- Config definitions are globally readable, only system admins can modify
 CREATE POLICY config_definitions_read ON config_definitions
@@ -363,6 +372,14 @@ CREATE POLICY configuration_templates_update ON configuration_templates
 CREATE POLICY configuration_templates_modify ON configuration_templates
   FOR ALL TO admin_role USING (true) WITH CHECK (true);
 
+-- readonly_role: read SYSTEM templates + own TENANT templates
+CREATE POLICY configuration_templates_ro_select ON configuration_templates
+  FOR SELECT TO readonly_role
+  USING (
+    scope = 'SYSTEM'
+    OR (scope = 'TENANT' AND current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+  );
+
 -- Configuration audit is tenant-isolated
 CREATE POLICY configuration_audit_tenant_isolation ON configuration_audit
   FOR ALL TO application_role
@@ -378,6 +395,10 @@ CREATE POLICY configuration_audit_tenant_isolation ON configuration_audit
 CREATE POLICY configuration_audit_admin_access ON configuration_audit
   FOR ALL TO admin_role USING (true) WITH CHECK (true);
 
+CREATE POLICY configuration_audit_ro_select ON configuration_audit
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
+
 -- Template applications are tenant-isolated
 CREATE POLICY template_applications_tenant_isolation ON template_applications
   FOR ALL TO application_role
@@ -392,6 +413,10 @@ CREATE POLICY template_applications_tenant_isolation ON template_applications
 
 CREATE POLICY template_applications_admin_access ON template_applications
   FOR ALL TO admin_role USING (true) WITH CHECK (true);
+
+CREATE POLICY template_applications_ro_select ON template_applications
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- TRIGGERS

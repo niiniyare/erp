@@ -22,7 +22,7 @@ func newZerologLogger(config Config) (*zerologLogger, error) {
 
 	logger := zerolog.New(output).With().
 		Timestamp().
-		Str("service", config.ServiceName).
+		Str("app", config.ServiceName).
 		Str("version", config.Version).
 		Logger()
 

@@ -34,6 +34,7 @@ COMMENT ON COLUMN user_permissions.granted_by IS 'User who granted this direct p
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE user_permissions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_permissions FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY user_permissions_tenant_isolation ON user_permissions FOR ALL TO application_role USING (
   current_tenant_id() IS NOT NULL
@@ -44,3 +45,7 @@ CREATE POLICY user_permissions_tenant_isolation ON user_permissions FOR ALL TO a
 );
 
 CREATE POLICY user_permissions_admin_access ON user_permissions FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY user_permissions_ro_select ON user_permissions
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

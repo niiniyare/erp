@@ -10,6 +10,7 @@ BEGIN
     ) THEN
         DROP POLICY IF EXISTS policy_evaluations_tenant_isolation ON policy_evaluations;
         DROP POLICY IF EXISTS policy_evaluations_admin_access     ON policy_evaluations;
+        DROP POLICY IF EXISTS policy_evaluations_ro_select        ON policy_evaluations;
 
         EXECUTE $p$
             CREATE POLICY policy_evaluations_tenant_isolation
@@ -33,6 +34,10 @@ BEGIN
                 TO admin_role
                 USING (TRUE)
                 WITH CHECK (TRUE)
+        $p$;
+
+        EXECUTE $p$
+            ALTER TABLE policy_evaluations NO FORCE ROW LEVEL SECURITY
         $p$;
     END IF;
 END

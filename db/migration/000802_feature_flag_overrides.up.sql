@@ -31,10 +31,14 @@ CREATE INDEX idx_tff_flag    ON tenant_feature_flags(flag_id);
 CREATE INDEX idx_tff_lookup  ON tenant_feature_flags(tenant_id, flag_key);
 
 ALTER TABLE tenant_feature_flags ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_feature_flags FORCE  ROW LEVEL SECURITY;
 CREATE POLICY tff_tenant_isolation ON tenant_feature_flags FOR ALL TO application_role
     USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
     WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 CREATE POLICY tff_admin_access ON tenant_feature_flags FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+CREATE POLICY tff_ro_select ON tenant_feature_flags
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON tenant_feature_flags TO application_role;
 GRANT ALL ON tenant_feature_flags TO admin_role;
@@ -99,21 +103,22 @@ COMMENT ON COLUMN tenant_feature_overrides.feature_flag_name IS 'Denormalized fe
 -- =====================================================
 -- ROW LEVEL SECURITY (RLS)
 -- =====================================================
-ALTER TABLE
-  tenant_feature_overrides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_feature_overrides ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tenant_feature_overrides FORCE  ROW LEVEL SECURITY;
 
 -- Tenant isolation policy for application role
-CREATE POLICY tenant_overrides_tenant_isolation ON tenant_feature_overrides FOR ALL TO application_role USING (
-  tenant_id = current_setting('app.current_tenant_id')::UUID
-);
+CREATE POLICY tenant_overrides_tenant_isolation ON tenant_feature_overrides FOR ALL TO application_role
+    USING  (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+    WITH CHECK (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- Admin role can access all tenants
-CREATE POLICY tenant_overrides_admin_access ON tenant_feature_overrides FOR ALL TO admin_role USING (TRUE);
+CREATE POLICY tenant_overrides_admin_access ON tenant_feature_overrides FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
 
--- Read-only role for monitoring/analytics
-CREATE POLICY tenant_overrides_readonly_access ON tenant_feature_overrides FOR
-SELECT
-  TO readonly_role USING (TRUE);
+-- Read-only role — tenant-scoped
+CREATE POLICY tenant_overrides_readonly_access ON tenant_feature_overrides
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- Policy comments
 COMMENT ON POLICY tenant_overrides_tenant_isolation ON tenant_feature_overrides IS 'Ensures tenant data isolation for application users';

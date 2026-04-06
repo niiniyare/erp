@@ -42,6 +42,20 @@ BEGIN
                 USING (TRUE)
                 WITH CHECK (TRUE)
         $p$;
+
+        EXECUTE $p$
+            ALTER TABLE policy_evaluations FORCE ROW LEVEL SECURITY
+        $p$;
+
+        DROP POLICY IF EXISTS policy_evaluations_ro_select ON policy_evaluations;
+
+        EXECUTE $p$
+            CREATE POLICY policy_evaluations_ro_select
+                ON policy_evaluations
+                FOR SELECT
+                TO readonly_role
+                USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id())
+        $p$;
     END IF;
 END
 $$;

@@ -50,6 +50,7 @@ COMMENT ON COLUMN policies.advice       IS 'JSONB defining optional actions and 
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE policies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE policies FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY policies_tenant_isolation ON policies FOR ALL TO application_role
     USING (
@@ -62,3 +63,7 @@ CREATE POLICY policies_tenant_isolation ON policies FOR ALL TO application_role
     );
 
 CREATE POLICY policies_admin ON policies FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY policies_ro_select ON policies
+    FOR SELECT TO readonly_role
+    USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());

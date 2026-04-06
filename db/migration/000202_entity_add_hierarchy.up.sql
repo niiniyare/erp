@@ -93,6 +93,7 @@ CREATE TRIGGER entities_check_hierarchy_depth
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE hierarchy_paths ENABLE ROW LEVEL SECURITY;
+ALTER TABLE hierarchy_paths FORCE  ROW LEVEL SECURITY;
 
 CREATE POLICY tenant_isolation_policy ON hierarchy_paths
   FOR ALL TO application_role
@@ -106,7 +107,11 @@ CREATE POLICY tenant_isolation_policy ON hierarchy_paths
   );
 
 CREATE POLICY admin_full_access_policy ON hierarchy_paths
-  FOR ALL TO admin_role USING (TRUE);
+  FOR ALL TO admin_role USING (TRUE) WITH CHECK (TRUE);
+
+CREATE POLICY hierarchy_paths_ro_select ON hierarchy_paths
+  FOR SELECT TO readonly_role
+  USING (current_tenant_id() IS NOT NULL AND tenant_id = current_tenant_id());
 
 -- ------------------------------------------------------------------------------------------------
 -- PERMISSIONS
