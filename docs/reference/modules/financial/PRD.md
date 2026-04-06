@@ -4435,3 +4435,2017 @@ When a transaction is submitted or posted, validations execute in this order:
 All validation failures return specific, actionable error messages — no generic "An error occurred."
 
 ---
+
+## Bank Reconciliation
+
+### Overview
+
+Bank reconciliation is the process of matching the company's General Ledger cash account balances against the bank's official statement. It ensures every transaction is accounted for and identifies discrepancies (bank errors, unrecorded charges, timing differences) before the period is closed.
+
+The Financial Module provides a structured reconciliation workspace — not just a report — where finance staff can import statements, match entries, investigate differences, and lock the reconciliation for the period.
+
+---
+
+### Reconciliation Workspace
+
+Each bank account has its own reconciliation workspace. One reconciliation is created per statement period (usually monthly).
+
+**Reconciliation Header:**
+```markdown
+Bank Account:       1120 - Checking Account - Main (KES)
+Bank:               Equity Bank Kenya
+Statement Period:   1 January 2025 – 31 January 2025
+Statement Balance:  1,225,000 KES
+GL Balance (1120):  1,210,000 KES
+Status:             IN PROGRESS
+
+Opened by:          Jane Waweru (AP Clerk)
+Opened at:          2025-02-03 09:14
+```
+
+---
+
+### Bank Statement Import
+
+**Supported Import Formats:**
+
+| Format | Description | Common Source |
+|--------|-------------|---------------|
+| OFX/QFX | Open Financial Exchange | Most Kenyan banks |
+| MT940 | SWIFT bank statement | International/correspondent banks |
+| CSV | Comma-separated (configurable mapping) | Any bank with online banking export |
+| Excel | .xlsx with column mapping | Manual extraction |
+| PDF | Parsed via OCR (last resort) | Legacy statements |
+
+**CSV Field Mapping Configuration:**
+```markdown
+Column Map (configured once per bank, reused):
+  Date:           Column A (format: DD/MM/YYYY)
+  Description:    Column B
+  Debit Amount:   Column C
+  Credit Amount:  Column D
+  Reference:      Column E
+  Running Balance: Column F (optional, for validation)
+
+Validation on Import:
+  - Opening balance matches previous period closing ✓
+  - Running balance column reconciles to closing balance ✓
+  - No duplicate statement lines (same date + amount + ref) ✓
+```
+
+**Import Result Summary:**
+```markdown
+Bank Statement Import — January 2025
+  Total lines imported:     87
+  Duplicate lines rejected:  0
+  Opening balance:    441,350 KES ✓ (matches prior period close)
+  Closing balance:  1,225,000 KES
+  Total debits:     2,340,000 KES
+  Total credits:    3,123,650 KES
+```
+
+---
+
+### Auto-Matching Engine
+
+After import, the system attempts to automatically match statement lines to GL entries.
+
+**Matching Rules (applied in priority order):**
+
+```markdown
+RULE M-01: Exact Match (Highest confidence)
+  Criteria: Amount + Date (±0 days) + Reference exact match
+  Auto-match: Yes — requires no user action
+  Example: Bank shows "CHQ 001234 50,000" ↔ GL entry ref "CHQ-001234" 50,000
+
+RULE M-02: Amount + Date Match
+  Criteria: Amount exact + Date within ±2 business days
+  Auto-match: Suggested (user confirms)
+  Example: Bank credit 580,000 on Jan 5 ↔ GL receipt 580,000 on Jan 5
+
+RULE M-03: Amount + Partial Reference Match
+  Criteria: Amount exact + Reference contains substring
+  Auto-match: Suggested (user confirms)
+  Example: Bank "MPESA REF ABC123 25,000" ↔ GL ref "ABC123" 25,000
+
+RULE M-04: Batch Match (One-to-Many)
+  Criteria: Bank total = sum of multiple GL entries
+  Auto-match: Suggested (user confirms group)
+  Example: Bank deposit 150,000 ↔ GL receipts 80,000 + 70,000
+
+RULE M-05: No Match
+  Outcome: Listed as unmatched — requires manual investigation
+```
+
+**Auto-Match Summary:**
+```markdown
+Matching Results:
+  Total statement lines:        87
+  Auto-matched (exact):         61   (70.1%)
+  Suggested (needs confirm):    12   (13.8%)
+  Unmatched — bank only:         9   (10.3%)
+  Unmatched — GL only:           5    (5.7%)
+```
+
+---
+
+### Manual Matching
+
+For unmatched items, the finance clerk works through each one:
+
+**Case 1: Bank charge not in GL**
+```markdown
+Bank Statement Line:
+  Date: 31 Jan 2025 | Description: Monthly Service Fee | Amount: -500 KES
+
+Action: Create GL entry
+Dr. 7740 - Bank Charges          500
+    Cr. 1120 - Checking Account       500
+Description: Jan 2025 bank service fee per statement
+
+→ Line now matched ✓
+```
+
+**Case 2: Deposit in transit (GL has it, bank doesn't yet)**
+```markdown
+GL Entry:
+  Date: 31 Jan 2025 | Ref: REC-0299 | Customer payment | +180,000 KES
+
+Bank Statement:
+  Not on January statement (received Jan 31, bank credited Feb 1)
+
+Action: Mark as "Deposit in Transit"
+  → Does NOT create a GL entry
+  → Carries forward to February reconciliation automatically
+  → Listed in reconciliation notes as timing difference
+```
+
+**Case 3: Outstanding cheque**
+```markdown
+GL Entry:
+  Date: 15 Jan 2025 | Ref: CHQ-001290 | Supplier payment | -85,000 KES
+
+Bank Statement:
+  Not presented in January
+
+Action: Mark as "Outstanding Cheque"
+  → Carries forward to February
+  → If outstanding > 6 months → flag for stale cheque investigation
+```
+
+**Case 4: Bank error**
+```markdown
+Bank Statement:
+  Date: 20 Jan 2025 | Description: Transfer | Amount: -20,000 KES
+  (This transaction belongs to another account — bank error)
+
+Action: Mark as "Bank Error"
+  → Add note: "Reported to bank ref: ERR-2025-0120"
+  → Does not affect GL
+  → Resolves when bank reverses
+```
+
+---
+
+### Reconciliation Statement
+
+The reconciliation produces a formal statement:
+
+```
+BANK RECONCILIATION STATEMENT
+Account: 1120 - Checking Account - Main
+Period:  January 2025
+Prepared by: Jane Waweru | Reviewed by: John Kamau (Finance Manager)
+
+BALANCE PER BANK STATEMENT:                          1,225,000
+─────────────────────────────────────────────────────────────
+ADD: Deposits in Transit
+  31 Jan — REC-0299 Customer payment                   180,000
+─────────────────────────────────────────────────────────────
+LESS: Outstanding Cheques
+  15 Jan — CHQ-001290 Supplier payment                 (85,000)
+  22 Jan — CHQ-001295 Supplier payment                 (60,000)
+─────────────────────────────────────────────────────────────
+LESS: Bank Errors (reported)
+  20 Jan — Erroneous debit (ref ERR-2025-0120)         (20,000)
+─────────────────────────────────────────────────────────────
+ADJUSTED BANK BALANCE:                                1,240,000
+
+BALANCE PER GL (Account 1120):                        1,225,000
+─────────────────────────────────────────────────────────────
+ADD: GL adjustments posted during reconciliation
+  31 Jan — Bank service fee                               500
+  28 Jan — Interest income                             (14,500)
+─────────────────────────────────────────────────────────────
+ADJUSTED GL BALANCE:                                  1,240,000
+
+DIFFERENCE:                                                   0 ✓
+
+Status: BALANCED — ready for approval
+```
+
+---
+
+### Reconciliation Lifecycle
+
+```
+OPEN → IN PROGRESS → BALANCED → UNDER REVIEW → APPROVED → LOCKED
+         ↑                           ↓
+    (reopen if                  (send back if
+     needed)                     issues found)
+```
+
+| State | Who Can Act | Actions Available |
+|-------|------------|------------------|
+| OPEN | AP Clerk | Import statement, begin matching |
+| IN PROGRESS | AP Clerk | Match, create GL adjustments, mark timing differences |
+| BALANCED | AP Clerk | Submit for review |
+| UNDER REVIEW | Finance Manager | Approve or return with comments |
+| APPROVED | Finance Manager | Lock reconciliation |
+| LOCKED | Nobody | Read-only; archived |
+
+**Approval required before period can hard-close.**
+
+---
+
+### Reconciliation Controls
+
+```markdown
+CONTROL R-01: Mandatory before period close
+  No accounting period can transition to HARD CLOSE
+  until all active bank accounts have an APPROVED reconciliation.
+
+CONTROL R-02: GL adjustment audit trail
+  Every GL entry created during reconciliation is tagged
+  with source: "BANK_REC" and reconciliation ID.
+
+CONTROL R-03: Statement import immutability
+  Once a statement is imported, lines cannot be deleted.
+  Corrections require an explanatory note.
+
+CONTROL R-04: Outstanding item aging
+  Items outstanding > 60 days auto-flag for investigation.
+  Items outstanding > 180 days escalate to Finance Manager.
+
+CONTROL R-05: Segregation of duties
+  Reconciliation preparer ≠ reconciliation approver.
+  System enforces this — the submitter cannot approve their own rec.
+```
+
+---
+
+## Cash Management & Forecasting
+
+### Petty Cash (Imprest System)
+
+The imprest system maintains a fixed petty cash float. Disbursements reduce the float; replenishment restores it to the fixed amount.
+
+**Setup:**
+```markdown
+Petty Cash Fund: 50,000 KES
+Account: 1111 - Petty Cash
+Custodian: Office Administrator
+Replenishment Threshold: When balance < 10,000 KES
+```
+
+**Petty Cash Disbursement:**
+```markdown
+Petty Cash Voucher #PC-2025-0045
+  Date: 15 Jan 2025
+  Payee: Courier Service
+  Amount: 1,500 KES
+  Expense Type: Postage & Shipping
+  Authorized by: Office Manager
+  Receipt attached: Yes
+
+No GL entry at disbursement — petty cash is tracked in custodian's log.
+GL entry only on replenishment.
+```
+
+**Petty Cash Replenishment:**
+```markdown
+At replenishment, the full expense detail is recorded:
+
+Replenishment Cheque: CHQ-001310 for 38,500 KES
+(Restores 50,000 fund — 38,500 was spent since last top-up)
+
+Dr. 7520 - Postage & Shipping       8,500
+Dr. 7510 - Office Supplies          6,000
+Dr. 7320 - Utilities                4,000
+Dr. 6400 - Travel Expense          15,000
+Dr. 7740 - Miscellaneous            5,000
+    Cr. 1120 - Checking Account            38,500
+
+Physical cash count after: 50,000 KES ✓
+```
+
+**Petty Cash Shortage/Overage:**
+```markdown
+If count shows 49,200 (short by 800):
+
+Dr. 7510 - Petty Cash Shortage         800
+    Cr. 1111 - Petty Cash                    800
+
+Investigate: missing receipts, math errors, pilferage
+```
+
+---
+
+### Payment Run (Bulk Supplier Payments)
+
+Instead of paying each invoice individually, the system batches due payments into a single payment run.
+
+**Payment Run Process:**
+
+```markdown
+Step 1 — Generate Due Payments Report
+  Filter: AP invoices where due_date <= 2025-02-07
+  Include: Invoices not yet on a payment run
+
+  Result:
+  Supplier          Invoice      Due Date    Amount
+  ────────────────────────────────────────────────
+  XYZ Ltd           INV-2024-440  03 Feb    232,000
+  ABC Supplies      INV-2024-451  05 Feb     58,000
+  Office Pro        INV-2025-001  07 Feb     17,400
+  ────────────────────────────────────────────────
+  Total:                                    307,400
+
+Step 2 — Review & Approve Payment List
+  Finance Manager reviews; may exclude or add items
+  CFO approves total run (> 250,000 KES threshold)
+
+Step 3 — Generate Payment File
+  Output: Bank-compatible payment file
+  Format: SWIFT MT101 | Kenya EFT | Custom CSV for Equity Bank
+
+  File includes: Beneficiary name, account, bank code, amount, reference
+
+Step 4 — Upload to Bank
+  Finance Manager uploads file to internet banking
+  Bank processes batch (same-day or next-day value)
+
+Step 5 — Confirm and Post
+  On bank confirmation receipt:
+
+  Dr. Accounts Payable - XYZ Ltd     232,000
+  Dr. Accounts Payable - ABC Supplies  58,000
+  Dr. Accounts Payable - Office Pro    17,400
+      Cr. Bank Account - Main               307,400
+
+  Payment Run: PR-2025-0012 | Posted by: Jane Waweru
+```
+
+---
+
+### Cash Position Dashboard
+
+Real-time view of available cash across all accounts:
+
+```
+CASH POSITION — As at 06 Feb 2025 09:00 EAT
+
+Account                    Currency    Balance         KES Equivalent
+──────────────────────────────────────────────────────────────────────
+1120 - Checking Main       KES         1,240,000        1,240,000
+1121 - Checking Payroll    KES           350,000          350,000
+1111 - Petty Cash          KES            50,000           50,000
+1130 - USD Account         USD            15,000        1,987,500 *
+1140 - GBP Account         GBP             2,000          329,000 *
+──────────────────────────────────────────────────────────────────────
+TOTAL CASH (KES equiv.)                                  3,956,500
+
+* Converted at 06 Feb 2025 rates: USD/KES 132.50, GBP/KES 164.50
+
+COMMITTED (next 7 days):
+  Payment Run PR-2025-0012 (pending):  (307,400)
+  Payroll run (est. 10 Feb):         (2,000,000)
+──────────────────────────────────────────────────────────────────────
+AVAILABLE POSITION:                                      1,649,100
+```
+
+---
+
+### 13-Week Rolling Cash Flow Forecast
+
+Strategic cash visibility 3 months ahead. Updated weekly.
+
+```
+13-WEEK CASH FLOW FORECAST
+As at: 06 Feb 2025 | Currency: KES
+
+Week    Dates           Receipts    Payments    Net         Closing Balance
+─────────────────────────────────────────────────────────────────────────────
+W1      10–14 Feb      2,500,000   2,500,000           0     3,956,500
+W2      17–21 Feb      1,800,000     900,000     900,000     4,856,500
+W3      24–28 Feb      3,200,000   1,200,000   2,000,000     6,856,500
+W4      03–07 Mar      1,500,000   2,800,000  (1,300,000)    5,556,500
+W5      10–14 Mar      2,800,000   2,100,000     700,000     6,256,500
+...
+W13     30 Apr–02 May  3,100,000   2,400,000     700,000    10,256,500
+
+MINIMUM BALANCE PROJECTION:  3,956,500 (Week 1)
+MAXIMUM BALANCE PROJECTION: 10,256,500 (Week 13)
+TARGET MINIMUM BALANCE:       2,000,000 (Policy: 1 month operating expenses)
+STATUS: ✓ No cash deficit projected in 13-week horizon
+```
+
+**Forecast Data Sources:**
+- **Receipts**: AR aging (expected collection dates) + confirmed sales orders + scheduled customer payments
+- **Payments**: AP aging (due dates) + approved payment runs + payroll schedule + loan repayment schedule + tax payment dates
+
+**Forecast Accuracy Tracking:**
+```markdown
+Week W1 (forecast vs. actual):
+  Receipts forecast: 2,500,000 | Actual: 2,380,000 | Variance: (120,000) -4.8%
+  Payments forecast: 2,500,000 | Actual: 2,495,000 | Variance:     5,000  +0.2%
+
+Variance tracked weekly to improve future forecast accuracy.
+```
+
+---
+
+### Cash Pooling (Multi-Entity)
+
+For multi-entity tenants, excess cash in one entity can be swept to reduce borrowing in another.
+
+```markdown
+CASH POOL — AWO Group
+  Pool Leader: AWO Holdings (holds master account)
+  Pool Members: AWO Nairobi, AWO Mombasa, AWO Kisumu
+
+Daily Sweep (automated, 17:00 EAT):
+  AWO Nairobi surplus:    +500,000  → swept to pool master
+  AWO Mombasa deficit:   (200,000) → funded from pool master
+  AWO Kisumu surplus:    +100,000  → swept to pool master
+  Net pool contribution: +400,000
+
+Intercompany accounting (automatic on sweep):
+  AWO Nairobi:
+    Dr. Intercompany Receivable - AWO Holdings  500,000
+        Cr. Bank Account - Main                       500,000
+
+  AWO Holdings:
+    Dr. Bank Account - Master                   500,000
+        Cr. Intercompany Payable - AWO Nairobi        500,000
+```
+
+---
+
+## User Roles & Permissions Matrix
+
+### IAM Foundation
+
+The Finance module follows the AWO ERP Module/Resource/Action (MRA) framework. Permission keys are derived as:
+
+```
+finance.{resource}.{action}
+```
+
+Four actor domains exist:
+
+| Actor | Subject Format | Domain | Use Case |
+|-------|---------------|--------|----------|
+| Tenant (internal users) | `tenant:{userID}` | `{tenantID}` | All ERP staff |
+| Portal (external users) | `portal:{userID}` | `{tenantID}:portal` | Customers, suppliers |
+| API (machine clients) | `api:{clientID}` | `{tenantID}:api` | Integrations |
+| Platform (ops) | `platform:{userID}` | `_platform_` | AWO support staff |
+
+---
+
+### Finance Module MRA Registry
+
+**Module:** `finance` | Label: Finance | Icon: `fa fa-calculator`
+
+#### Resources & Actions
+
+| Resource Slug | Label | Actions |
+|---------------|-------|---------|
+| `accounts` | Chart of Accounts | `read` `create` `update` `deactivate` |
+| `transactions` | Journal Entries | `read` `create` `submit` `approve` `post` `reverse` `void` |
+| `periods` | Accounting Periods | `read` `close` `reopen` `lock` |
+| `fiscal-years` | Fiscal Years | `read` `create` `close` `lock` |
+| `currencies` | Currencies & Rates | `read` `create` `update` `load-rates` |
+| `cost-centers` | Cost Centers | `read` `create` `update` `deactivate` |
+| `budgets` | Budgets | `read` `create` `update` `approve` `activate` |
+| `bank-accounts` | Bank Accounts | `read` `create` `update` `deactivate` |
+| `reconciliation` | Bank Reconciliation | `read` `create` `match` `submit` `approve` `lock` |
+| `payments` | Payment Runs | `read` `create` `approve` `post` `cancel` |
+| `petty-cash` | Petty Cash | `read` `disburse` `replenish` `count` |
+| `tax-config` | Tax Configuration | `read` `create` `update` |
+| `intercompany` | Intercompany | `read` `create` `match` `eliminate` |
+| `reports` | Financial Reports | `read` `run` `export` `schedule` `share` |
+| `settings` | Finance Settings | `read` `update` |
+
+---
+
+### Role Definitions
+
+#### Role Hierarchy (Finance Domain)
+
+```
+role:report-viewer
+    └── role:finance-viewer
+            └── role:finance-manager
+                    └── role:cfo
+                            └── role:tenant-admin
+```
+
+Each role inherits all permissions of the role below it in the chain, plus its own additional grants.
+
+---
+
+#### role:report-viewer
+
+**Description:** Can run and view financial reports. No data mutation. Assigned to non-finance staff who need visibility (e.g., department heads viewing their cost center P&L).
+
+| Resource | Actions Allowed |
+|----------|----------------|
+| `reports` | `read` `run` `export` |
+| `accounts` | `read` |
+| `cost-centers` | `read` |
+| `periods` | `read` |
+
+---
+
+#### role:finance-viewer
+
+**Description:** Read-only access to all financial data. Inherits `report-viewer`. Suitable for internal auditors during fieldwork or management needing visibility without edit access.
+
+| Resource | Actions Allowed | In addition to report-viewer |
+|----------|----------------|------------------------------|
+| `transactions` | `read` | ✓ new |
+| `budgets` | `read` | ✓ new |
+| `bank-accounts` | `read` | ✓ new |
+| `reconciliation` | `read` | ✓ new |
+| `currencies` | `read` | ✓ new |
+| `tax-config` | `read` | ✓ new |
+| `payments` | `read` | ✓ new |
+| `petty-cash` | `read` | ✓ new |
+
+---
+
+#### role:ap-clerk
+
+**Description:** Accounts payable operations. Creates purchase invoices and processes supplier payments. Cannot approve own transactions or exceed authority limits.
+
+| Resource | Actions Allowed |
+|----------|----------------|
+| `transactions` | `read` `create` `submit` |
+| `payments` | `read` `create` |
+| `petty-cash` | `read` `disburse` `replenish` |
+| `bank-accounts` | `read` |
+| `accounts` | `read` |
+| `currencies` | `read` |
+| `reports` | `read` `run` `export` |
+
+**Cannot:** Approve, post, or reverse any transaction. Cannot approve own payment run.
+
+---
+
+#### role:ar-clerk
+
+**Description:** Accounts receivable operations. Creates sales invoices and records customer receipts.
+
+| Resource | Actions Allowed |
+|----------|----------------|
+| `transactions` | `read` `create` `submit` |
+| `bank-accounts` | `read` |
+| `reconciliation` | `read` `create` `match` |
+| `accounts` | `read` |
+| `currencies` | `read` |
+| `reports` | `read` `run` `export` |
+
+**Cannot:** Approve own transactions. Cannot write off bad debts without Finance Manager approval.
+
+---
+
+#### role:finance-manager
+
+**Description:** Full finance operations. Approves transactions, closes periods, manages reconciliations. Inherits `finance-viewer`.
+
+| Resource | Actions Allowed | Authority Limit |
+|----------|----------------|-----------------|
+| `transactions` | all: `read` `create` `submit` `approve` `post` `reverse` | Up to 500,000 KES |
+| `periods` | `read` `close` `reopen` | Current + prior period only |
+| `budgets` | `read` `create` `update` `approve` | — |
+| `bank-accounts` | `read` `create` `update` | — |
+| `reconciliation` | all actions | — |
+| `payments` | `read` `create` `approve` `post` | Up to 500,000 KES |
+| `cost-centers` | `read` `create` `update` | — |
+| `currencies` | `read` `create` `update` `load-rates` | — |
+| `accounts` | `read` `create` `update` `deactivate` | — |
+| `reports` | all: `read` `run` `export` `schedule` `share` | — |
+
+**Cannot:** Lock fiscal years. Approve own transactions (self-approval blocked systemically).
+
+---
+
+#### role:cfo
+
+**Description:** Full financial authority. Inherits all of `finance-manager` plus high-value approvals, fiscal year management, and tax configuration.
+
+| Resource | Additional Actions | Authority Limit |
+|----------|-------------------|-----------------|
+| `transactions` | all — inherited + no amount limit | Unlimited |
+| `periods` | `lock` | Any period |
+| `fiscal-years` | `read` `close` `lock` | — |
+| `tax-config` | `read` `create` `update` | — |
+| `settings` | `read` `update` | — |
+| `payments` | all — no amount limit | Unlimited |
+| `intercompany` | all: `read` `create` `match` `eliminate` | — |
+
+**Approval authority:** All financial transactions without upper limit.
+
+---
+
+#### role:auditor
+
+**Description:** Time-limited read-only access across all finance resources. Typically assigned with `WithExpiry()` for the audit engagement period. Cannot be self-assigned — requires CFO or higher.
+
+| Resource | Actions Allowed |
+|----------|----------------|
+| All finance resources | `read` only |
+| `reports` | `read` `run` `export` |
+| `reconciliation` | `read` only |
+| `transactions` | `read` only — including reversed/cancelled |
+
+**Temporal:** Always assigned with expiry. Role automatically revoked at expiry (Casbin lazy revocation).
+
+---
+
+#### role:budget-owner
+
+**Description:** Departmental budget responsibility. Can view and propose budget amendments for their cost center(s). Cannot approve own budgets.
+
+| Resource | Actions Allowed |
+|----------|----------------|
+| `budgets` | `read` `create` (draft only) |
+| `cost-centers` | `read` |
+| `reports` | `read` `run` (cost-center-scoped) |
+| `transactions` | `read` (cost-center-scoped) |
+
+---
+
+#### Portal Roles
+
+| Role | Actor Type | Allowed Actions |
+|------|-----------|----------------|
+| `role:portal-customer` | `portal:{id}` | View own invoices, download statements, check payment status |
+| `role:portal-supplier` | `portal:{id}` | View purchase orders addressed to them, submit invoices, track payment |
+
+Portal actors operate in `{tenantID}:portal` domain — completely isolated from internal ERP data.
+
+---
+
+#### API Roles
+
+| Role | Typical Use | Allowed |
+|------|------------|---------|
+| `role:api-readonly` | Reporting integrations | `read` on all finance resources |
+| `role:api-invoice-submit` | Billing systems | `create` invoices, `read` customers/accounts |
+| `role:api-payment-notify` | Bank webhooks | `post` payment receipts, `read` bank-accounts |
+| `role:api-full-access` | Trusted service accounts | All actions |
+
+API actors operate in `{tenantID}:api` domain. A compromised API key never escalates to tenant-user rights.
+
+---
+
+### Permissions Quick Reference
+
+| Permission Key | Description |
+|---------------|-------------|
+| `finance.transactions.read` | View journal entries and GL |
+| `finance.transactions.create` | Create draft entries |
+| `finance.transactions.submit` | Submit for approval |
+| `finance.transactions.approve` | Approve pending entries |
+| `finance.transactions.post` | Post to General Ledger |
+| `finance.transactions.reverse` | Create reversal entry |
+| `finance.periods.close` | Soft/hard close a period |
+| `finance.periods.reopen` | Reopen a closed period |
+| `finance.periods.lock` | Permanently lock a period |
+| `finance.fiscal-years.lock` | Lock a fiscal year |
+| `finance.budgets.approve` | Activate a budget version |
+| `finance.reconciliation.approve` | Sign off bank reconciliation |
+| `finance.reconciliation.lock` | Lock reconciliation permanently |
+| `finance.payments.approve` | Approve a payment run |
+| `finance.settings.update` | Modify finance module settings |
+| `finance.tax-config.update` | Modify tax rates and rules |
+
+---
+
+### Incompatible Role Combinations (SOD)
+
+The system enforces segregation of duties — these pairs cannot be held by the same user:
+
+| Combination | Reason |
+|-------------|--------|
+| `ap-clerk` + `finance-manager` | Cannot approve own AP invoices |
+| `ar-clerk` + `finance-manager` | Cannot approve own AR write-offs |
+| Reconciliation preparer + approver | Cannot self-approve bank rec |
+| Payment creator + payment approver | Cannot self-approve payment run |
+| Budget creator + budget approver | Cannot self-approve budget |
+| User admin + transaction approver | Cannot create ghost approvers |
+
+---
+
+## API & Integration Specification
+
+### Authentication
+
+All API requests require a valid Bearer token in the `Authorization` header.
+
+```http
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsInR5...
+X-Tenant-ID: a1b2c3d4-0000-0000-0000-000000000001
+Content-Type: application/json
+```
+
+**Token Types:**
+
+| Type | Subject Format | Domain | Obtain Via |
+|------|---------------|--------|-----------|
+| Tenant JWT | `tenant:{userID}` | `{tenantID}` | `POST /auth/login` |
+| API Key | `api:{clientID}` | `{tenantID}:api` | Tenant admin panel |
+| Portal JWT | `portal:{userID}` | `{tenantID}:portal` | `POST /portal/auth/login` |
+
+**Rate Limits:**
+
+| Token Type | Requests/minute | Burst |
+|-----------|----------------|-------|
+| Tenant JWT | 300 | 500 |
+| API Key | 120 | 200 |
+| Portal JWT | 60 | 100 |
+
+---
+
+### Base URL & Versioning
+
+```
+https://api.awo-erp.com/v1/finance
+```
+
+All endpoints are prefixed with `/v1/finance`. Breaking changes increment the version.
+
+---
+
+### Standard Response Envelope
+
+**Success:**
+```json
+{
+  "success": true,
+  "data": { ... },
+  "meta": {
+    "page": 1,
+    "per_page": 50,
+    "total": 1240,
+    "total_pages": 25
+  }
+}
+```
+
+**Error:**
+```json
+{
+  "success": false,
+  "error": {
+    "code": "PERIOD_CLOSED",
+    "message": "Accounting period January 2025 is closed.",
+    "field": "transaction_date",
+    "docs": "https://docs.awo-erp.com/errors/PERIOD_CLOSED"
+  }
+}
+```
+
+---
+
+### Chart of Accounts
+
+#### `GET /accounts`
+List accounts with optional filtering.
+
+**Query Parameters:**
+| Param | Type | Description |
+|-------|------|-------------|
+| `root_type` | string | `asset`, `liability`, `equity`, `revenue`, `expense` |
+| `account_type` | string | e.g. `bank`, `receivable`, `payable` |
+| `is_active` | bool | Filter active/inactive |
+| `is_group` | bool | `false` = leaf accounts only |
+| `parent_code` | string | Subtree filter by parent code |
+| `q` | string | Search by code or name |
+| `page` | int | Page number (default 1) |
+| `per_page` | int | Results per page (max 200, default 50) |
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": "uuid",
+      "code": "1120",
+      "name": "Checking Account - Main",
+      "root_type": "asset",
+      "account_type": "bank",
+      "normal_balance": "debit",
+      "currency": "KES",
+      "is_group": false,
+      "is_active": true,
+      "parent_code": "1110",
+      "path": "/1000/1100/1110/1120",
+      "level": 4,
+      "balance": 1240000.00
+    }
+  ]
+}
+```
+
+#### `POST /accounts`
+Create a new account. Requires `finance.accounts.create`.
+
+```json
+{
+  "code": "4310",
+  "name": "Consulting Services Revenue",
+  "root_type": "revenue",
+  "account_type": "income",
+  "parent_code": "4300",
+  "allow_manual_entries": true,
+  "require_reference": false,
+  "currency": null
+}
+```
+
+#### `GET /accounts/{code}`
+Get single account with current balance and recent activity.
+
+#### `PATCH /accounts/{code}`
+Update mutable fields (name, active status, flags). Code and root_type are immutable after transactions exist.
+
+#### `GET /accounts/{code}/ledger`
+GL detail for an account over a date range.
+
+**Query Parameters:** `from`, `to`, `page`, `per_page`
+
+---
+
+### Journal Entries (Transactions)
+
+#### `GET /journal-entries`
+List journal entries.
+
+**Query Parameters:**
+| Param | Description |
+|-------|-------------|
+| `status` | `draft`, `pending_approval`, `approved`, `posted`, `reversed`, `cancelled` |
+| `type` | `manual`, `system`, `recurring`, `imported`, `integration` |
+| `from` | Transaction date from (ISO 8601) |
+| `to` | Transaction date to |
+| `account_code` | Filter entries touching this account |
+| `cost_center_id` | Filter by cost center |
+| `reference` | Search by reference number |
+| `q` | Full-text search on description |
+
+#### `POST /journal-entries`
+Create a new journal entry (status: `draft`).
+
+```json
+{
+  "transaction_date": "2025-01-31",
+  "reference": "CHQ-001234",
+  "description": "Office rent payment January 2025",
+  "currency": "KES",
+  "cost_center_id": "uuid-admin-cc",
+  "lines": [
+    {
+      "account_code": "7310",
+      "debit": 50000.00,
+      "credit": 0,
+      "description": "January 2025 rent",
+      "cost_center_id": null
+    },
+    {
+      "account_code": "1120",
+      "debit": 0,
+      "credit": 50000.00,
+      "description": "Payment via cheque"
+    }
+  ]
+}
+```
+
+**Response:** `201 Created` with full entry including `id` and `reference_number`.
+
+#### `GET /journal-entries/{id}`
+Get a single journal entry with all lines.
+
+#### `POST /journal-entries/{id}/submit`
+Submit draft for approval. Requires `finance.transactions.submit`.
+
+#### `POST /journal-entries/{id}/approve`
+Approve a submitted entry. Requires `finance.transactions.approve`. Returns `409` if user is the submitter (self-approval blocked).
+
+#### `POST /journal-entries/{id}/post`
+Post an approved entry to GL. Requires `finance.transactions.post`.
+
+**Response includes:** `posted_at`, `posting_reference`, updated account balances.
+
+#### `POST /journal-entries/{id}/reverse`
+Create a reversal of a posted entry. Requires `finance.transactions.reverse`.
+
+```json
+{
+  "reversal_date": "2025-02-05",
+  "reason": "Incorrectly coded — see JE-2025-0152 for correction"
+}
+```
+
+**Response:** `201 Created` with the new reversal entry ID.
+
+---
+
+### Accounting Periods
+
+#### `GET /periods`
+List all periods for the current fiscal year.
+
+**Response fields:** `id`, `name`, `start_date`, `end_date`, `status` (`open`, `soft_closed`, `hard_closed`, `locked`), `fiscal_year_id`.
+
+#### `POST /periods/{id}/close`
+Soft or hard close a period. Requires `finance.periods.close`.
+
+```json
+{
+  "close_type": "hard",
+  "reason": "Month-end close complete — all reconciliations approved"
+}
+```
+
+#### `POST /periods/{id}/reopen`
+Reopen a closed period. Requires `finance.periods.reopen`. Logged to audit trail with mandatory reason.
+
+```json
+{
+  "reason": "Late vendor invoice received — PO-2025-0089"
+}
+```
+
+---
+
+### Currencies & Exchange Rates
+
+#### `GET /currencies`
+List configured currencies.
+
+#### `POST /rates`
+Load exchange rates for a date.
+
+```json
+{
+  "date": "2025-02-06",
+  "rates": [
+    { "from": "USD", "to": "KES", "rate": 132.50, "rate_type": "spot" },
+    { "from": "GBP", "to": "KES", "rate": 164.50, "rate_type": "spot" },
+    { "from": "EUR", "to": "KES", "rate": 143.20, "rate_type": "spot" }
+  ]
+}
+```
+
+#### `GET /rates`
+Query historical rates.
+
+**Query Parameters:** `from_currency`, `to_currency`, `date`, `rate_type`
+
+---
+
+### Bank Reconciliation
+
+#### `GET /reconciliations`
+List reconciliations by account and period.
+
+#### `POST /reconciliations`
+Open a new reconciliation.
+
+```json
+{
+  "bank_account_id": "uuid",
+  "period_id": "uuid",
+  "statement_opening_balance": 441350.00,
+  "statement_closing_balance": 1225000.00
+}
+```
+
+#### `POST /reconciliations/{id}/import-statement`
+Upload bank statement. `multipart/form-data` with file + format hint.
+
+```
+POST /reconciliations/{id}/import-statement
+Content-Type: multipart/form-data
+
+file: <statement.csv>
+format: csv
+column_map: {"date":0,"description":1,"debit":2,"credit":3,"reference":4}
+```
+
+#### `GET /reconciliations/{id}/matches`
+Get auto-match suggestions. Returns both matched and unmatched items.
+
+#### `POST /reconciliations/{id}/matches`
+Confirm or create matches manually.
+
+```json
+{
+  "matches": [
+    {
+      "statement_line_id": "uuid",
+      "gl_entry_ids": ["uuid1"],
+      "match_type": "confirmed"
+    },
+    {
+      "statement_line_id": "uuid2",
+      "gl_entry_ids": [],
+      "match_type": "timing_difference",
+      "note": "Deposit in transit — credited Feb 1"
+    }
+  ]
+}
+```
+
+#### `POST /reconciliations/{id}/submit`
+Submit balanced reconciliation for approval.
+
+#### `POST /reconciliations/{id}/approve`
+Approve and lock. Requires `finance.reconciliation.approve`.
+
+---
+
+### Budgets
+
+#### `GET /budgets`
+List budget versions by year.
+
+#### `POST /budgets`
+Create a new budget (draft).
+
+```json
+{
+  "fiscal_year_id": "uuid",
+  "name": "FY2025 Original Budget",
+  "version_label": "V1",
+  "currency": "KES"
+}
+```
+
+#### `POST /budgets/{id}/lines`
+Upload or set budget lines (by account + cost center + period).
+
+#### `POST /budgets/{id}/activate`
+Activate a budget version. Requires `finance.budgets.approve`. Deactivates any currently active version.
+
+#### `GET /budgets/{id}/variance`
+Budget vs. actual variance report.
+
+**Query Parameters:** `period_id`, `cost_center_id`, `account_code`
+
+---
+
+### Payment Runs
+
+#### `GET /payment-runs`
+List payment runs.
+
+#### `POST /payment-runs`
+Create a new payment run from due invoices.
+
+```json
+{
+  "due_on_or_before": "2025-02-07",
+  "bank_account_id": "uuid",
+  "currency": "KES",
+  "invoice_ids": ["uuid1", "uuid2"]
+}
+```
+
+#### `POST /payment-runs/{id}/approve`
+Approve the payment run. Requires `finance.payments.approve`.
+
+#### `POST /payment-runs/{id}/export`
+Download payment file for bank upload.
+
+```json
+{ "format": "equity_eft" }
+```
+
+**Supported formats:** `equity_eft`, `kcb_rtgs`, `swift_mt101`, `generic_csv`
+
+#### `POST /payment-runs/{id}/confirm`
+Confirm payments after bank processing and post GL entries.
+
+---
+
+### Financial Reports (Execution)
+
+#### `POST /reports/trial-balance/run`
+Run trial balance.
+
+```json
+{
+  "as_at": "2025-01-31",
+  "show_zero_balances": false,
+  "cost_center_id": null
+}
+```
+
+#### `POST /reports/balance-sheet/run`
+Run balance sheet with optional comparative period.
+
+```json
+{
+  "as_at": "2025-01-31",
+  "comparative_as_at": "2024-12-31"
+}
+```
+
+#### `POST /reports/profit-loss/run`
+Run income statement.
+
+```json
+{
+  "from": "2025-01-01",
+  "to": "2025-01-31",
+  "comparative_from": "2024-01-01",
+  "comparative_to": "2024-01-31",
+  "cost_center_id": null,
+  "show_budget": true
+}
+```
+
+#### `POST /reports/cash-flow/run`
+Run cash flow statement (indirect method).
+
+```json
+{
+  "from": "2025-01-01",
+  "to": "2025-01-31",
+  "method": "indirect"
+}
+```
+
+#### `POST /reports/ar-aging/run`
+Accounts receivable aging.
+
+```json
+{
+  "as_at": "2025-01-31",
+  "buckets": [30, 60, 90],
+  "currency": "KES"
+}
+```
+
+#### `POST /reports/ap-aging/run`
+Accounts payable aging (same structure as AR).
+
+All report endpoints return:
+```json
+{
+  "success": true,
+  "data": {
+    "report_id": "uuid",
+    "execution_id": "uuid",
+    "status": "completed",
+    "generated_at": "2025-02-06T09:15:42Z",
+    "rows": [ ... ],
+    "totals": { ... },
+    "download_urls": {
+      "pdf":   "https://storage.../report.pdf",
+      "excel": "https://storage.../report.xlsx",
+      "csv":   "https://storage.../report.csv"
+    }
+  }
+}
+```
+
+---
+
+### Webhooks (Outbound Events)
+
+The Finance module emits events that external systems can subscribe to.
+
+#### Event Catalog
+
+| Event | Trigger |
+|-------|---------|
+| `finance.transaction.posted` | Journal entry reaches POSTED status |
+| `finance.transaction.reversed` | Reversal entry created |
+| `finance.period.closed` | Period transitions to HARD_CLOSED |
+| `finance.period.locked` | Period locked permanently |
+| `finance.reconciliation.approved` | Bank rec approved and locked |
+| `finance.payment_run.posted` | Payment run GL entries posted |
+| `finance.budget.activated` | New budget version activated |
+
+#### Webhook Payload Format
+
+```json
+{
+  "event": "finance.transaction.posted",
+  "tenant_id": "a1b2c3d4-...",
+  "timestamp": "2025-02-06T09:15:42Z",
+  "data": {
+    "id": "uuid",
+    "reference_number": "JE-2025-0145",
+    "amount": 50000.00,
+    "currency": "KES",
+    "posted_by": "tenant:usr_001",
+    "posted_at": "2025-02-06T09:15:42Z"
+  },
+  "signature": "sha256=abc123..."
+}
+```
+
+Webhooks are signed with HMAC-SHA256 using the tenant's webhook secret. Retry on non-2xx: 3 attempts with exponential backoff (5m, 30m, 2h).
+
+---
+
+## Non-Functional Requirements
+
+### Performance
+
+| Operation | Target P95 | Target P99 | Max Acceptable |
+|-----------|-----------|-----------|----------------|
+| Journal entry create (validation + save draft) | < 200ms | < 500ms | 1s |
+| Journal entry post (GL update) | < 500ms | < 1s | 2s |
+| Trial balance (up to 500 accounts) | < 2s | < 5s | 10s |
+| Balance sheet render | < 3s | < 7s | 15s |
+| AR/AP aging (up to 10,000 open items) | < 5s | < 10s | 20s |
+| GL detail report (1 account, 1 year) | < 3s | < 5s | 10s |
+| Bank statement import (500 lines) | < 5s | < 10s | 30s |
+| Auto-match engine (500 lines) | < 10s | < 20s | 60s |
+| Exchange rate load (batch of 20 currencies) | < 1s | < 2s | 5s |
+
+**Report Generation:**
+- Reports run against a dedicated **read replica** to avoid impacting transactional DB
+- Long-running reports (> 30s) are executed asynchronously: `POST /reports/.../run` returns `execution_id`; client polls `GET /report-executions/{id}` for status
+- Query timeout hard cap: 120 seconds; returns `timeout` status if exceeded
+
+---
+
+### Scalability
+
+```markdown
+TRANSACTION VOLUME TARGETS:
+
+Per Tenant:
+  - Up to 500,000 GL entries per fiscal year
+  - Up to 10,000 accounts in chart of accounts
+  - Up to 500 cost centers
+  - Up to 100 concurrent users per tenant
+
+Platform Wide:
+  - Up to 1,000 active tenants
+  - Up to 50,000 journal entries per minute (platform total)
+  - Up to 10,000 report executions per hour
+
+Data Retention at Scale:
+  - 7 years of transaction history queryable without archiving
+  - GL detail queries must remain < 5s with 3.5M entries (500k × 7 years)
+  - Achieved via: account-level partitioning, indexed materialized paths,
+    and read-replica routing for all report queries
+```
+
+---
+
+### Availability & Reliability
+
+```markdown
+UPTIME TARGETS:
+
+Overall API: 99.9% monthly uptime (≤ 43.8 minutes downtime/month)
+Report Engine: 99.5% (reports may queue during degraded state)
+Background Jobs (reconciliation, rate import): Best-effort
+
+GRACEFUL DEGRADATION:
+  - If read replica is unavailable, reports queue (do not fail hard)
+  - If exchange rate service is unavailable, last known rate used
+    (with warning to user; transaction not blocked)
+  - If Temporal scheduler is down, scheduled reports queue until recovery
+
+RECOVERY TARGETS:
+  RTO (Recovery Time Objective):  1 hour (DB failover + app restart)
+  RPO (Recovery Point Objective): 5 minutes (DB replication lag)
+
+BACKUP:
+  - Full DB backup: Daily at 02:00 UTC
+  - WAL archiving: Continuous (point-in-time recovery)
+  - Backup retention: 30 days full, 7 years WORM archive for compliance
+```
+
+---
+
+### Security
+
+```markdown
+DATA PROTECTION:
+  - All data encrypted at rest (AES-256)
+  - All API traffic encrypted in transit (TLS 1.3 minimum)
+  - Sensitive fields (bank account numbers) encrypted at column level
+  - PII fields (employee name in payroll) encrypted at column level
+
+ROW-LEVEL SECURITY:
+  - PostgreSQL RLS enforced on all financial tables
+  - Tenant isolation: no query can return rows from another tenant
+  - RLS policies verified in automated tests on every migration
+
+SESSION SECURITY:
+  - JWT expiry: 1 hour (access token), 7 days (refresh token)
+  - Concurrent session limit: 5 sessions per user
+  - MFA required for roles with approve/post/lock permissions
+  - IP allowlist available for API key clients
+
+AUDIT:
+  - Every API request logged: user, endpoint, timestamp, tenant, status
+  - Every financial state change logged with before/after values
+  - Audit log is append-only (no deletes, no updates)
+  - Audit log shipped to SIEM within 60 seconds
+```
+
+---
+
+### Data Integrity
+
+```markdown
+DATABASE:
+  - All financial tables use transactions (ACID compliance)
+  - Foreign key constraints enforced on all relationships
+  - CHECK constraints on critical fields (status enums, positive amounts)
+  - No application-level soft-deletes on posted financial data
+
+IDEMPOTENCY:
+  - All POST endpoints accept X-Idempotency-Key header
+  - Duplicate requests with same key return original response (no double-post)
+  - Idempotency keys stored for 24 hours
+
+CONCURRENCY:
+  - Optimistic locking on journal entries (version field)
+  - Period close uses advisory locks to prevent concurrent closes
+  - Account balance updates use SELECT FOR UPDATE on posting path
+```
+
+---
+
+### Compliance & Auditability
+
+```markdown
+REGULATORY:
+  - Financial data retained for minimum 7 years (configurable to 10)
+  - All data deletions require dual authorization + legal hold check
+  - GDPR: PII can be anonymized on request (but financial records preserved)
+  - SOX: Immutable audit trail, segregation of duties enforced at DB level
+
+EXPORT FOR AUDIT:
+  - Full tenant data export available within 24 hours of request
+  - Formats: JSON (machine-readable), PDF (human-readable audit package)
+  - Includes: all transactions, approvals, configuration changes, user access log
+```
+
+---
+
+## Data Import & Export
+
+### Import Overview
+
+All imports follow the same lifecycle:
+
+```
+UPLOAD → VALIDATE → PREVIEW → CONFIRM → PROCESS → RESULT
+           ↓                               ↓
+        REJECTED                        PARTIALLY FAILED
+        (schema errors)               (row-level errors reported)
+```
+
+Imports are **transactional**: either all rows succeed or none are committed (unless `partial_commit: true` is specified).
+
+---
+
+### Journal Entry Bulk Import
+
+**Use case:** Migrate historical entries, upload payroll data from HR system, import from legacy system.
+
+**Template (CSV):**
+```csv
+transaction_date,reference,description,account_code,debit,credit,cost_center_code,currency,notes
+2025-01-15,CHQ-001234,Office rent January,7310,50000,,CC-ADMIN,,
+2025-01-15,CHQ-001234,Office rent January,1120,,50000,CC-ADMIN,,
+2025-01-20,INV-0451,Sale to ABC Corp,1210,580000,,CC-SALES,KES,
+2025-01-20,INV-0451,Sale to ABC Corp,4110,,500000,CC-SALES,KES,
+2025-01-20,INV-0451,Sale to ABC Corp,2310,,80000,CC-SALES,KES,VAT 16%
+```
+
+**Rules:**
+- Rows with the same `reference` are grouped into one journal entry
+- Each group must balance (total debit = total credit)
+- `account_code` must exist and be active leaf account
+- `transaction_date` must be in an open period
+- Missing `currency` defaults to tenant base currency
+
+**API Endpoint:**
+```
+POST /import/journal-entries
+Content-Type: multipart/form-data
+
+file: <entries.csv>
+options: {
+  "validate_only": false,
+  "partial_commit": false,
+  "post_immediately": false
+}
+```
+
+**Response:**
+```json
+{
+  "import_id": "uuid",
+  "total_rows": 5,
+  "total_entries": 2,
+  "valid": 2,
+  "invalid": 0,
+  "warnings": [],
+  "errors": [],
+  "entries_created": ["JE-2025-0145", "JE-2025-0146"],
+  "status": "completed"
+}
+```
+
+---
+
+### Chart of Accounts Import
+
+**Template (CSV):**
+```csv
+code,name,root_type,account_type,parent_code,is_group,allow_manual_entries,require_reference,currency
+1000,Assets,asset,root,,,false,false,
+1100,Current Assets,asset,group,1000,true,false,false,
+1110,Cash & Cash Equivalents,asset,group,1100,true,false,false,
+1111,Petty Cash,asset,cash,1110,false,true,false,KES
+1120,Checking Account - Main,asset,bank,1110,false,true,false,KES
+```
+
+**Validation:**
+- Codes must be unique
+- Parent must exist before children (import is ordered by hierarchy depth automatically)
+- Root type must be consistent with parent's root type
+- `is_group: true` accounts may not have `account_type` set to a leaf type
+
+**API Endpoint:**
+```
+POST /import/accounts
+```
+
+---
+
+### Opening Balance Import
+
+**Template (CSV):**
+```csv
+account_code,debit,credit,currency,notes
+1120,1250000,,KES,Opening cash - main account
+1210,3450000,,KES,Opening AR per aged debtors list
+1310,2100000,,KES,Opening inventory per count sheet
+1530,8500000,,KES,Equipment at cost
+1535,,2040000,KES,Accumulated depreciation
+2110,,1850000,KES,Opening AP per aged creditors list
+2510,,3000000,KES,Long-term loan - Equity Bank
+3300,,695000,KES,Retained earnings (balancing figure)
+```
+
+**Rules:**
+- Total debits must equal total credits (hard validation)
+- Only balance sheet accounts (asset, liability, equity) — no P&L accounts
+- All entries posted to a single opening balance journal entry
+- Opening balance period must be open
+
+---
+
+### Budget Import
+
+**Template (CSV):**
+```csv
+account_code,cost_center_code,jan,feb,mar,apr,may,jun,jul,aug,sep,oct,nov,dec
+7110,CC-SALES,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000,1000000
+7110,CC-OPS,600000,600000,600000,600000,600000,600000,600000,600000,600000,600000,600000,600000
+6300,CC-MKT,500000,200000,200000,800000,200000,200000,500000,200000,200000,800000,200000,300000
+```
+
+**API Endpoint:**
+```
+POST /budgets/{id}/import-lines
+```
+
+---
+
+### Bank Statement Import
+
+**OFX Format (recommended — most banks support):**
+```xml
+<OFX>
+  <BANKMSGSRSV1>
+    <STMTTRNRS>
+      <STMTRS>
+        <CURDEF>KES</CURDEF>
+        <BANKACCTFROM>
+          <ACCTID>0123456789</ACCTID>
+        </BANKACCTFROM>
+        <BANKTRANLIST>
+          <DTSTART>20250101</DTSTART>
+          <DTEND>20250131</DTEND>
+          <STMTTRN>
+            <TRNTYPE>DEBIT</TRNTYPE>
+            <DTPOSTED>20250105</DTPOSTED>
+            <TRNAMT>-50000.00</TRNAMT>
+            <FITID>TXN20250105001</FITID>
+            <NAME>Office Rent - January</NAME>
+            <MEMO>CHQ-001234</MEMO>
+          </STMTTRN>
+        </BANKTRANLIST>
+        <LEDGERBAL>
+          <BALAMT>1225000.00</BALAMT>
+          <DTASOF>20250131</DTASOF>
+        </LEDGERBAL>
+      </STMTRS>
+    </STMTTRNRS>
+  </BANKMSGSRSV1>
+</OFX>
+```
+
+**MT940 Format (SWIFT):**
+```
+:20:STMT-20250131
+:25:KE0123456789/KES
+:28C:00001/001
+:60F:C250101KES441350,00
+:61:2501050105D50000,00NCHQ001234
+:86:Office rent January 2025
+:62F:C250131KES1225000,00
+```
+
+**CSV Format (configurable column mapping):**
+```
+POST /reconciliations/{id}/import-statement
+Content-Type: multipart/form-data
+
+file: <statement.csv>
+format: csv
+column_map: {"date":"A","description":"B","debit":"C","credit":"D","reference":"E","balance":"F"}
+date_format: DD/MM/YYYY
+```
+
+---
+
+### Export Formats
+
+#### GL Export
+
+```
+GET /export/general-ledger?from=2025-01-01&to=2025-01-31&format=csv
+```
+
+**CSV Output Columns:**
+```
+entry_date, posting_date, reference, description, account_code, account_name,
+debit, credit, balance, cost_center, currency, fx_rate, base_amount,
+transaction_type, status, created_by, posted_by, posted_at
+```
+
+#### Financial Statements Export
+
+```
+POST /reports/balance-sheet/run
+→ response includes download_urls.pdf, download_urls.excel, download_urls.csv
+```
+
+All statutory report exports include:
+- Cover page (company name, period, prepared by, date)
+- Comparative column (prior year or prior period)
+- Notes section (configurable)
+- Digital signature block for CFO sign-off
+
+#### Audit Package Export
+
+Full audit-ready data package for a fiscal year:
+
+```
+GET /export/audit-package?fiscal_year_id=uuid&format=zip
+```
+
+**Package Contents:**
+```
+audit-package-FY2025/
+  ├── trial-balance.xlsx
+  ├── balance-sheet.xlsx
+  ├── income-statement.xlsx
+  ├── cash-flow.xlsx
+  ├── general-ledger-detail.xlsx      (all accounts, all entries)
+  ├── ar-aging.xlsx
+  ├── ap-aging.xlsx
+  ├── journal-entries-detail.xlsx     (all entries with approval chain)
+  ├── user-access-log.xlsx            (who had what access, when)
+  ├── configuration-changes.xlsx      (COA changes, settings changes)
+  └── bank-reconciliations/
+      ├── rec-jan-2025.pdf
+      ├── rec-feb-2025.pdf
+      └── ...
+```
+
+---
+
+### Exchange Rate Export
+
+```
+GET /export/exchange-rates?from=2025-01-01&to=2025-01-31
+```
+
+Returns all loaded rates in date range — required for audit trail of FC transaction valuations.
+
+---
+
+## Intercompany Module
+
+### Overview
+
+The Intercompany module manages financial transactions **between legal entities within the same group**. It ensures:
+- Both sides of every intercompany transaction are recorded correctly
+- Period-end eliminations are generated automatically
+- Intercompany balances net to zero on consolidation
+- Intercompany profit on transferred inventory is eliminated
+
+**When it applies:**
+- Management fee recharges from head office to subsidiaries
+- Loans and cash advances between entities
+- Goods or services sold between group companies
+- Shared staff costs allocated across entities
+- Cash pooling sweeps (see Cash Management section)
+
+---
+
+### Entity Setup
+
+```markdown
+Group Structure:
+  AWO Holdings Ltd (Parent)
+    ├── AWO Nairobi Ltd (Subsidiary 1)
+    ├── AWO Mombasa Ltd (Subsidiary 2)
+    └── AWO International Ltd (Subsidiary 3, USD functional currency)
+
+Intercompany Account Pairs:
+  Each entity pair has dedicated IC accounts:
+
+  AWO Holdings:
+    1810 - IC Receivable - AWO Nairobi
+    1811 - IC Receivable - AWO Mombasa
+    1812 - IC Receivable - AWO International
+    2610 - IC Payable - AWO Nairobi
+    2611 - IC Payable - AWO Mombasa
+    2612 - IC Payable - AWO International
+
+  AWO Nairobi:
+    1820 - IC Receivable - AWO Holdings
+    2620 - IC Payable - AWO Holdings
+```
+
+---
+
+### Intercompany Transaction Types
+
+#### Type 1: Management Fee Recharge
+
+AWO Holdings charges a monthly management fee to subsidiaries for shared services.
+
+```markdown
+Monthly Management Fee: 500,000 KES per subsidiary
+
+AWO HOLDINGS BOOKS:
+Dr. 1810 - IC Receivable - AWO Nairobi    500,000
+    Cr. 4400 - Management Fee Revenue          500,000
+
+AWO NAIROBI BOOKS:
+Dr. 7800 - Management Fee Expense         500,000
+    Cr. 2620 - IC Payable - AWO Holdings       500,000
+
+System validates:
+  IC Receivable (Holdings) = IC Payable (Nairobi) ✓
+```
+
+#### Type 2: Intercompany Loan
+
+```markdown
+AWO Holdings lends 5,000,000 KES to AWO Mombasa at 10% p.a.
+
+DRAWDOWN:
+AWO HOLDINGS:
+Dr. 1820 - IC Loan Receivable - Mombasa  5,000,000
+    Cr. 1120 - Cash                           5,000,000
+
+AWO MOMBASA:
+Dr. 1120 - Cash                          5,000,000
+    Cr. 2630 - IC Loan Payable - Holdings     5,000,000
+
+MONTHLY INTEREST:
+Rate: 10% / 12 = 41,667 KES/month
+
+AWO HOLDINGS:
+Dr. 1820 - IC Loan Receivable - Mombasa     41,667
+    Cr. 4510 - Interest Income - IC              41,667
+
+AWO MOMBASA:
+Dr. 9100 - Interest Expense - IC            41,667
+    Cr. 2630 - IC Loan Payable - Holdings        41,667
+```
+
+#### Type 3: Intercompany Goods Transfer
+
+AWO Holdings sells goods to AWO Nairobi (transfer pricing applies).
+
+```markdown
+Transfer: 1,000 units at transfer price 400 KES/unit
+Cost to Holdings: 300 KES/unit
+IC Profit: 100 KES/unit × 1,000 = 100,000 KES
+
+AWO HOLDINGS:
+Dr. 1810 - IC Receivable - Nairobi        400,000
+    Cr. 5100 - COGS                            300,000
+    Cr. 4110 - IC Sales Revenue                100,000
+
+AWO NAIROBI:
+Dr. 1310 - Inventory                      400,000
+    Cr. 2620 - IC Payable - Holdings           400,000
+
+CONSOLIDATION ELIMINATION:
+  Step 1: Eliminate IC sale and purchase
+  Dr. 4110 - IC Sales Revenue              400,000
+      Cr. 5100 - COGS (in Holdings)            400,000
+
+  Step 2: Eliminate unrealized IC profit in inventory
+  (Only if Nairobi has not yet sold the goods to external customers)
+  Dr. 3400 - Retained Earnings             100,000
+      Cr. 1310 - Inventory (in Nairobi)        100,000
+```
+
+---
+
+### Period-End IC Matching
+
+At each period end, the system runs an intercompany matching process:
+
+**Step 1: IC Balance Report**
+```
+INTERCOMPANY BALANCE REPORT — January 2025
+
+Entity Pair               Receivable (Holdings)  Payable (Nairobi)  Difference
+──────────────────────────────────────────────────────────────────────────────
+Holdings ↔ Nairobi         5,500,000              5,500,000               0 ✓
+Holdings ↔ Mombasa         5,041,667              5,041,667               0 ✓
+Holdings ↔ International   2,000,000 KES          $15,503 USD        12,500 ⚠️
+──────────────────────────────────────────────────────────────────────────────
+
+⚠️ Holdings ↔ International: KES 12,500 difference
+   Cause: Exchange rate movement between invoice date (128.00) and month-end (130.00)
+   Action: Post FX revaluation or agree to settlement rate
+```
+
+**Step 2: IC Reconciliation Statement**
+
+Each entity pair produces a reconciliation confirming balances agree before the period is closed. This is mandatory — the consolidation cannot proceed with open IC differences.
+
+---
+
+### Consolidation Eliminations
+
+At year-end (or whenever consolidated statements are prepared):
+
+```markdown
+ELIMINATION ENTRIES (in consolidation workbook):
+
+1. IC Revenue / IC Expense Elimination
+   Dr. IC Sales Revenue (Holdings)      12,000,000
+       Cr. IC Purchases/COGS (Nairobi)      12,000,000
+
+2. IC Loan Balance Elimination
+   Dr. IC Loan Payable (Mombasa)         5,500,000
+       Cr. IC Loan Receivable (Holdings)    5,500,000
+
+3. IC Interest Income / Expense Elimination
+   Dr. IC Interest Income (Holdings)       500,000
+       Cr. IC Interest Expense (Mombasa)    500,000
+
+4. IC Dividend Elimination
+   Dr. Dividend Income (Holdings)        2,000,000
+       Cr. Dividends Paid (Subsidiary)      2,000,000
+
+5. Unrealized IC Profit in Inventory
+   Dr. Opening Retained Earnings          100,000
+       Cr. Inventory                         100,000
+   (If goods still in inventory at year-end)
+
+Result: Consolidated statements show only transactions
+        with parties OUTSIDE the group.
+```
+
+---
+
+### Multi-Currency Intercompany
+
+When entities have different functional currencies (e.g., Holdings in KES, International in USD):
+
+```markdown
+SCENARIO: Holdings invoices International for $15,000 USD
+
+Invoice Date (USD/KES: 128.00):
+Holdings records: IC Receivable 1,920,000 KES (15,000 × 128)
+International records: IC Payable $15,000 USD
+
+Month-End (USD/KES: 132.50):
+Holdings revalues: IC Receivable → 1,987,500 KES (15,000 × 132.50)
+Unrealized FX Gain: 67,500 KES
+
+CONSOLIDATION:
+Holdings IC Receivable: 1,987,500 KES
+International IC Payable: $15,000 → 1,987,500 KES at current rate
+
+Difference: 0 ✓ (both revalued at same closing rate)
+Translation adjustment posted to OCI (Other Comprehensive Income)
+```
+
+---
+
+### IC Netting (Cash Settlement)
+
+Instead of each entity paying separately, netting consolidates all intercompany settlements into a single payment:
+
+```markdown
+MONTHLY NETTING — January 2025
+
+AWO Nairobi owes AWO Holdings:       5,500,000 (management fees + goods)
+AWO Holdings owes AWO Nairobi:       2,000,000 (services rendered by Nairobi)
+
+NET: AWO Nairobi pays AWO Holdings:  3,500,000 KES
+
+Single payment replaces multiple transactions.
+
+After settlement:
+Dr. IC Payable - Holdings        5,500,000
+    Cr. IC Receivable - Nairobi      2,000,000
+    Cr. Cash                         3,500,000
+
+Both IC accounts cleared to zero ✓
+```
+
+---
+
+## Report Catalog
+
+### Report Engine Integration
+
+All financial reports are built on the Dynamic Report Generation System. Each report has a `data_source` pointing to a purpose-built PostgreSQL view on the read replica. Reports can be:
+- Run on-demand via UI or API
+- Scheduled (daily, weekly, monthly, cron) with email/webhook delivery
+- Customized (column selection, filters, grouping) via the Report Builder
+- Exported in table, chart, pivot, PDF, Excel, or CSV format
+
+Permission required to run any financial report: `finance.reports.run`
+
+---
+
+### Statutory Financial Statements
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| Balance Sheet | `v_balance_sheet` | `as_at`, `comparative_as_at`, `cost_center_id` | PDF, Excel, table |
+| Income Statement (P&L) | `v_profit_loss` | `from`, `to`, `comparative_from`, `comparative_to`, `cost_center_id` | PDF, Excel, table |
+| Cash Flow Statement | `v_cash_flow` | `from`, `to`, `method` (indirect/direct) | PDF, Excel, table |
+| Statement of Changes in Equity | `v_equity_changes` | `fiscal_year_id` | PDF, Excel, table |
+| Trial Balance | `v_trial_balance` | `as_at`, `show_zero_balances`, `cost_center_id` | Excel, CSV, table |
+
+**Balance Sheet `v_balance_sheet` columns:**
+`section`, `root_type`, `account_group`, `account_code`, `account_name`, `current_balance`, `comparative_balance`, `movement`, `level`, `is_group`
+
+---
+
+### Management & Analysis Reports
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| Budget vs. Actual | `v_budget_vs_actual` | `fiscal_year_id`, `period_id`, `cost_center_id`, `budget_version_id` | Excel, table, chart |
+| Departmental P&L | `v_cost_center_pl` | `from`, `to`, `cost_center_id` | Excel, table |
+| Cost Center Comparison | `v_cost_center_comparison` | `from`, `to`, `group_by_level` | Table, chart |
+| Cost Center Trend | `v_cost_center_trend` | `periods` (list), `cost_center_id`, `account_code` | Chart, table |
+| Profitability by Division | `v_division_profitability` | `from`, `to` | Table, chart |
+| FX Gain/Loss Summary | `v_fx_gainloss` | `from`, `to`, `currency` | Excel, table |
+| Intercompany Summary | `v_intercompany_balances` | `as_at`, `entity_pair` | Table, Excel |
+
+---
+
+### Subsidiary Ledger Reports
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| GL Detail | `v_gl_detail` | `account_code`, `from`, `to`, `cost_center_id` | Excel, CSV, table |
+| Account Statement | `v_account_statement` | `account_code`, `from`, `to` | PDF, Excel |
+| AR Aging | `v_ar_aging` | `as_at`, `buckets` [30,60,90], `customer_id` | Excel, PDF, table |
+| AP Aging | `v_ap_aging` | `as_at`, `buckets` [30,60,90], `supplier_id` | Excel, PDF, table |
+| Customer Statement | `v_customer_statement` | `customer_id`, `from`, `to` | PDF, Excel |
+| Supplier Statement | `v_supplier_statement` | `supplier_id`, `from`, `to` | PDF, Excel |
+| Outstanding Payments | `v_outstanding_payments` | `as_at`, `currency`, `overdue_only` | Table, Excel |
+| Cash Book | `v_cash_book` | `bank_account_id`, `from`, `to` | PDF, Excel |
+| Bank Reconciliation Report | `v_bank_rec_summary` | `bank_account_id`, `period_id` | PDF |
+
+---
+
+### Tax & Compliance Reports
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| VAT Return Summary | `v_vat_return` | `from`, `to` | PDF, Excel |
+| VAT Detail (Input) | `v_vat_input_detail` | `from`, `to`, `supplier_id` | Excel, CSV |
+| VAT Detail (Output) | `v_vat_output_detail` | `from`, `to`, `customer_id` | Excel, CSV |
+| Withholding Tax Register | `v_wht_register` | `from`, `to`, `payee_id` | Excel, PDF |
+| Audit Trail | `v_audit_trail` | `from`, `to`, `user_id`, `action_type` | Excel, CSV |
+| Period Close Checklist | `v_period_close_status` | `period_id` | PDF, table |
+| Fixed Asset Register | `v_fixed_asset_register` | `as_at`, `asset_class` | Excel, PDF |
+| Depreciation Schedule | `v_depreciation_schedule` | `fiscal_year_id`, `asset_class` | Excel |
+
+---
+
+### Cash & Treasury Reports
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| Cash Position | `v_cash_position` | `as_at`, `currency` | Table, dashboard |
+| 13-Week Cash Forecast | `v_cash_forecast` | `from`, `weeks` (1–26) | Chart, Excel |
+| Payment Run History | `v_payment_runs` | `from`, `to`, `bank_account_id` | Table, Excel |
+| Outstanding Cheques | `v_outstanding_cheques` | `as_at`, `bank_account_id` | Table, Excel |
+| Petty Cash Summary | `v_petty_cash` | `from`, `to`, `custodian_id` | PDF, table |
+
+---
+
+### Exchange Rate Reports
+
+| Report Name | Data Source View | Key Parameters | Output Formats |
+|-------------|-----------------|---------------|----------------|
+| Exchange Rate History | `v_exchange_rates` | `currency`, `from`, `to`, `rate_type` | Chart, Excel |
+| Unrealized FX Positions | `v_unrealized_fx` | `as_at`, `currency` | Table, Excel |
+| Realized FX Gain/Loss | `v_realized_fx` | `from`, `to`, `currency` | Table, Excel |
+| FC Bank Account Revaluation | `v_fc_revaluation` | `as_at` | Table, Excel |
+
+---
+
+### System Reports (Pre-Built, Non-Customizable)
+
+These reports are `is_system: true` in `report_definitions` — they cannot be deleted or structurally modified by tenants, only filtered.
+
+| Report Name | Refresh | Description |
+|-------------|---------|-------------|
+| Daily GL Summary | Daily 06:00 | Previous day's posting activity by account |
+| Outstanding Approvals | Real-time | All transactions pending approval, by approver |
+| Period Close Status | Real-time | Open items blocking period close for each period |
+| Budget Exception Report | Daily | Accounts where actuals exceed budget by > 10% |
+| IC Balance Discrepancy | Daily | Intercompany pairs with unmatched balances |
+| Stale Outstanding Cheques | Weekly | Cheques outstanding > 60 days |
+| Audit Log Digest | Daily | All high-risk actions from previous day |
+
+---
+
+### Report Scheduling Examples
+
+```markdown
+EXAMPLE 1: Monthly P&L to Management
+Report: Income Statement
+Schedule: Monthly, Day 10 of each month at 08:00 EAT
+Parameters: Prior month (dynamic), comparative prior year
+Output: PDF
+Delivery: Email → CFO, Finance Manager, CEO
+Subject: "[AWO ERP] Income Statement — {month} {year}"
+
+EXAMPLE 2: Daily Cash Position to Treasury
+Report: Cash Position
+Schedule: Daily, 08:30 EAT (after overnight processing)
+Parameters: As at today
+Output: Table (email body)
+Delivery: Email → CFO, Treasury team
+
+EXAMPLE 3: Weekly AP Aging to Finance
+Report: AP Aging
+Schedule: Every Monday 07:00 EAT
+Parameters: As at previous Friday, buckets 30/60/90
+Output: Excel attachment
+Delivery: Email → AP Team, Finance Manager
+
+EXAMPLE 4: Audit Log to SIEM via Webhook
+Report: Audit Trail
+Schedule: Daily 00:05 (prior day's events)
+Output: JSON (structured)
+Delivery: Webhook → SIEM endpoint
+Headers: { "X-Source": "awo-erp-finance", "Authorization": "Bearer ..." }
+```
+
+---
+
