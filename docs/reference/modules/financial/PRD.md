@@ -3061,3 +3061,1377 @@ Dr. Accumulated Depreciation        60,000
 
 ---
 
+## Financial Reporting Framework
+
+### Report Categories
+
+The Financial Module produces four categories of reports, each serving a distinct audience and purpose.
+
+**1. Statutory Financial Statements**
+Mandatory reports for regulatory compliance and external stakeholders:
+- Balance Sheet (Statement of Financial Position)
+- Income Statement (Profit & Loss)
+- Cash Flow Statement
+- Statement of Changes in Equity
+- Notes to Financial Statements
+
+**2. Management Reports**
+Internal reports for decision-making:
+- Budget vs. Actual (by cost center, period, account)
+- Departmental P&L
+- Rolling forecasts
+- KPI dashboards
+
+**3. Subsidiary Ledger Reports**
+Detailed supporting reports:
+- Accounts Receivable Aging
+- Accounts Payable Aging
+- General Ledger Detail
+- Trial Balance
+
+**4. Compliance Reports**
+Tax and regulatory filings:
+- VAT Return (input/output tax summary)
+- Withholding Tax Register
+- PAYE Summary
+- Statutory deduction schedules
+
+---
+
+### Core Financial Statements
+
+#### Balance Sheet
+
+Snapshot of financial position at a specific date. Follows the fundamental equation:
+**Assets = Liabilities + Equity**
+
+```
+BALANCE SHEET
+As at 31 January 2025
+
+ASSETS                              KES
+─────────────────────────────────────────
+Current Assets
+  Cash & Cash Equivalents       1,250,000
+  Accounts Receivable           3,450,000
+  Inventory                     2,100,000
+  Prepaid Expenses                180,000
+  VAT Receivable                  320,000
+─────────────────────────────────────────
+Total Current Assets            7,300,000
+
+Non-Current Assets
+  Property, Plant & Equipment   8,500,000
+  Less: Accumulated Depreciation(2,040,000)
+  Intangible Assets               500,000
+  Long-Term Investments           750,000
+─────────────────────────────────────────
+Total Non-Current Assets        7,710,000
+
+TOTAL ASSETS                   15,010,000
+
+LIABILITIES
+─────────────────────────────────────────
+Current Liabilities
+  Accounts Payable              1,850,000
+  VAT Payable                     480,000
+  Accrued Expenses                220,000
+  Short-Term Loan                 500,000
+─────────────────────────────────────────
+Total Current Liabilities       3,050,000
+
+Non-Current Liabilities
+  Long-Term Loan                3,000,000
+  Deferred Tax Liability          150,000
+─────────────────────────────────────────
+Total Non-Current Liabilities   3,150,000
+
+TOTAL LIABILITIES               6,200,000
+
+EQUITY
+─────────────────────────────────────────
+  Share Capital                 5,000,000
+  Retained Earnings             2,935,000
+  Current Year Earnings           875,000
+─────────────────────────────────────────
+TOTAL EQUITY                    8,810,000
+
+TOTAL LIABILITIES + EQUITY     15,010,000 ✓
+```
+
+**Balance Sheet Rules:**
+- Assets must always equal Liabilities + Equity
+- Comparative columns (prior year) required for statutory filings
+- Current vs. non-current classification based on 12-month rule
+- Contra-asset accounts (Accumulated Depreciation, Allowance for Doubtful Accounts) reduce gross values
+
+---
+
+#### Income Statement (Profit & Loss)
+
+Performance over a period — revenue earned minus expenses incurred.
+
+```
+INCOME STATEMENT
+For the Month of January 2025
+
+                                   Jan 2025    YTD 2025
+─────────────────────────────────────────────────────────
+REVENUE
+  Product Sales                  5,250,000    5,250,000
+  Service Revenue                  750,000      750,000
+  Other Income                      25,000       25,000
+─────────────────────────────────────────────────────────
+Total Revenue                    6,025,000    6,025,000
+
+COST OF SALES
+  Cost of Goods Sold             2,100,000    2,100,000
+  Direct Labor                     400,000      400,000
+  Manufacturing Overhead            200,000      200,000
+─────────────────────────────────────────────────────────
+Total Cost of Sales              2,700,000    2,700,000
+
+GROSS PROFIT                     3,325,000    3,325,000
+Gross Margin %                       55.2%        55.2%
+
+OPERATING EXPENSES
+  Salaries & Benefits            1,050,000    1,050,000
+  Rent                              50,000       50,000
+  Utilities                         52,000       52,000
+  Depreciation                       8,500        8,500
+  Marketing                        480,000      480,000
+  Travel & Entertainment           175,000      175,000
+  Other Operating                  150,000      150,000
+─────────────────────────────────────────────────────────
+Total Operating Expenses         1,965,500    1,965,500
+
+OPERATING INCOME (EBIT)          1,359,500    1,359,500
+
+  Interest Expense                 (75,000)     (75,000)
+  Foreign Exchange Gain/(Loss)      30,000       30,000
+─────────────────────────────────────────────────────────
+INCOME BEFORE TAX                1,314,500    1,314,500
+
+  Income Tax Expense (30%)        (394,350)    (394,350)
+─────────────────────────────────────────────────────────
+NET INCOME                         920,150      920,150
+Net Margin %                         15.3%        15.3%
+```
+
+---
+
+#### Cash Flow Statement
+
+Cash movements classified by activity type. Critical for liquidity management.
+
+```
+CASH FLOW STATEMENT
+For the Month of January 2025
+
+OPERATING ACTIVITIES                         KES
+─────────────────────────────────────────────────
+Net Income                                920,150
+
+Adjustments for non-cash items:
+  Add: Depreciation                         8,500
+  Add: Amortization                         5,000
+
+Changes in Working Capital:
+  (Increase)/Decrease in Receivables     (450,000)
+  (Increase)/Decrease in Inventory        120,000
+  (Increase)/Decrease in Prepaid           (30,000)
+  Increase/(Decrease) in Payables         280,000
+  Increase/(Decrease) in Accruals          45,000
+─────────────────────────────────────────────────
+Net Cash from Operating Activities        898,650
+
+INVESTING ACTIVITIES
+─────────────────────────────────────────────────
+  Purchase of Equipment                  (250,000)
+  Proceeds from Asset Disposal             35,000
+  Purchase of Investments                (100,000)
+─────────────────────────────────────────────────
+Net Cash used in Investing Activities    (315,000)
+
+FINANCING ACTIVITIES
+─────────────────────────────────────────────────
+  Loan Repayment                         (100,000)
+  New Loan Drawdown                       500,000
+  Owner Drawings                         (200,000)
+─────────────────────────────────────────────────
+Net Cash from Financing Activities        200,000
+
+NET INCREASE IN CASH                      783,650
+Opening Cash Balance                      466,350
+─────────────────────────────────────────────────
+CLOSING CASH BALANCE                    1,250,000 ✓
+```
+
+**Indirect Method (above) vs. Direct Method:**
+- Indirect: Starts from net income, adjusts for non-cash items (most common)
+- Direct: Lists actual cash receipts and payments (preferred by IFRS, harder to prepare)
+
+---
+
+#### Trial Balance
+
+Internal listing of all account balances — primary tool for verifying double-entry integrity.
+
+```
+TRIAL BALANCE
+As at 31 January 2025
+
+Account                           Debit        Credit
+──────────────────────────────────────────────────────
+1120 Cash - Main Account       1,200,000
+1121 Cash - Payroll               50,000
+1210 Accounts Receivable       3,450,000
+1310 Inventory                 2,100,000
+1410 Prepaid Expenses            180,000
+1430 VAT Receivable              320,000
+1530 Equipment                 8,500,000
+1535 Accum Depr - Equipment                  2,040,000
+2110 Accounts Payable                        1,850,000
+2310 VAT Payable                               480,000
+2230 Accrued Expenses                          220,000
+2410 Short-Term Loan                           500,000
+2510 Long-Term Loan                          3,000,000
+3100 Share Capital                           5,000,000
+3300 Retained Earnings                       2,935,000
+4110 Product Sales Revenue                   5,250,000
+4310 Service Revenue                           750,000
+5100 Cost of Goods Sold        2,100,000
+7110 Salaries Expense          1,050,000
+7310 Rent Expense                 50,000
+...
+──────────────────────────────────────────────────────
+TOTALS                        22,025,000   22,025,000 ✓
+```
+
+---
+
+### AR & AP Aging Reports
+
+**Accounts Receivable Aging:**
+
+```
+AR AGING REPORT
+As at 31 January 2025
+
+Customer        Total     Current   31-60d    61-90d    >90d
+──────────────────────────────────────────────────────────────
+ABC Corp        450,000   450,000        -         -         -
+XYZ Ltd         325,000   125,000   200,000        -         -
+MNO Co          180,000        -    80,000    100,000        -
+PQR Inc          95,000        -         -     45,000    50,000
+──────────────────────────────────────────────────────────────
+TOTAL         1,050,000   575,000   280,000   145,000    50,000
+%                           54.8%     26.7%     13.8%     4.8%
+
+⚠️ PQR Inc 50,000 over 90 days — consider provision
+```
+
+**Bad Debt Provision:**
+```
+Dr. Bad Debt Expense           10,000
+    Cr. Allowance for Doubtful Accounts  10,000
+Description: 20% provision on >90 day balance PQR Inc
+```
+
+---
+
+### General Ledger Detail Report
+
+Drill-down from any account balance to individual transactions:
+
+```
+GL DETAIL — Account: 1210 Accounts Receivable
+Period: January 2025
+
+Date        Ref         Description              Debit      Credit    Balance
+────────────────────────────────────────────────────────────────────────────
+01/01/25    OB-001      Opening Balance                             3,000,000
+05/01/25    INV-0451    Sale - ABC Corp          580,000             3,580,000
+12/01/25    REC-0122    Payment - XYZ Ltd                 325,000   3,255,000
+18/01/25    INV-0472    Sale - MNO Co            195,000             3,450,000
+────────────────────────────────────────────────────────────────────────────
+CLOSING BALANCE                                                     3,450,000
+```
+
+---
+
+### Report Configuration & Customization
+
+**Report Parameters:**
+- Date range (as-at date, period, custom)
+- Comparative period (prior month, prior year, budget)
+- Currency (base, foreign, both)
+- Cost center filter or grouping
+- Account group filter
+- Detail level (summary vs. transaction-level)
+
+**Output Formats:**
+- On-screen (with drill-down)
+- PDF (for distribution/archiving)
+- Excel (for analysis)
+- CSV (for import to other systems)
+
+**Scheduling:**
+- On-demand
+- Scheduled delivery (daily, weekly, monthly)
+- Triggered (on period close)
+- Email distribution to stakeholders
+
+---
+
+## Approval Workflows
+
+### Why Approval Workflows Matter
+
+Without controlled approvals:
+- ❌ Anyone can post any amount to any account
+- ❌ No check on errors or fraud
+- ❌ No audit trail of authorization
+- ❌ Regulators and auditors find control gaps
+
+With structured approvals:
+- ✅ Segregation of duties enforced systemically
+- ✅ Authority limits aligned to policy
+- ✅ Complete approval audit trail
+- ✅ Escalation when approver unavailable
+- ✅ SOX and IFRS compliance supported
+
+---
+
+### Approval Rule Design
+
+**Trigger Dimensions:**
+
+Each approval rule is triggered by a combination of:
+
+```markdown
+**Rule Definition Fields:**
+- Transaction Type: [Journal Entry, Payment, Invoice, etc.]
+- Amount Threshold: [Min and Max range]
+- Account Group: [e.g., "All Cash Accounts", "Equity Accounts"]
+- Cost Center: [Specific department or "All"]
+- Currency: [Specific or "All"]
+- Approver Role: [Finance Manager, CFO, etc.]
+- Approval Mode: [Sequential, Parallel, Any-one-of]
+```
+
+---
+
+### Approval Hierarchy Examples
+
+**Example 1: Journal Entry Approvals by Amount**
+
+```markdown
+Rule Set: Manual Journal Entries
+
+Tier 1 — Up to 50,000 KES:
+  Approver: Senior Accountant
+  SLA: 4 hours
+
+Tier 2 — 50,001 to 500,000 KES:
+  Approver: Finance Manager
+  SLA: 8 hours
+
+Tier 3 — 500,001 to 2,000,000 KES:
+  Approver: CFO
+  SLA: 24 hours
+
+Tier 4 — Above 2,000,000 KES:
+  Sequential: Finance Manager → CFO → CEO
+  SLA: 48 hours
+```
+
+**Example 2: Payment Approvals**
+
+```markdown
+Rule Set: Supplier Payments
+
+< 25,000 KES:        AP Supervisor (single approval)
+25,001–250,000 KES:  Finance Manager (single approval)
+250,001–1,000,000:   Finance Manager + CFO (sequential)
+> 1,000,000 KES:     Finance Manager + CFO + CEO (sequential)
+
+Special Rule — Cash payments:
+  Any amount: Requires CFO approval regardless of amount
+```
+
+**Example 3: Account-Based Rules**
+
+```markdown
+Sensitive Accounts:
+- All accounts 1110–1140 (Cash): CFO approval for any debit
+- Account 3500 (Owner Draws): CEO approval always
+- Account 9900 (Tax Expense): CFO + Tax Advisor sign-off
+- Retained Earnings adjustments: Board resolution required
+```
+
+---
+
+### Approval States & Actions
+
+```
+DRAFT
+  ↓ [Submit]
+PENDING_APPROVAL
+  ↓ [Approve]          ↓ [Reject]          ↓ [Request Info]
+APPROVED              REJECTED            INFO_REQUESTED
+  ↓ [Post]              ↓ [Edit]              ↓ [Respond]
+POSTED                DRAFT               PENDING_APPROVAL
+```
+
+**Approver Actions:**
+
+| Action | Effect | Notification |
+|--------|--------|-------------|
+| Approve | Moves to next tier or APPROVED | Submitter + next approver |
+| Reject | Returns to REJECTED (editable) | Submitter with reason |
+| Request Information | Pauses workflow | Submitter must respond |
+| Delegate | Transfers to alternate approver | Delegate + submitter |
+| Escalate | Moves to higher authority | Escalation target |
+
+---
+
+### Delegation & Escalation
+
+**Delegation (Planned Absence):**
+```markdown
+Finance Manager sets delegation:
+- Delegate To: Senior Accountant
+- Valid From: 2025-02-10
+- Valid To: 2025-02-17
+- Scope: All approvals up to 200,000 KES
+- Excludes: Cash account approvals
+
+System automatically routes approvals to delegate during period.
+```
+
+**Escalation (SLA Breach):**
+```markdown
+SLA Configuration:
+- Finance Manager approval SLA: 8 hours
+- If not actioned in 8 hours:
+  → Reminder notification sent to Finance Manager
+- If not actioned in 12 hours:
+  → Auto-escalate to CFO
+  → Alert to Finance Director
+  → Log SLA breach in audit trail
+```
+
+---
+
+### Segregation of Duties Matrix
+
+The system enforces these incompatible roles — no single user can hold conflicting permissions:
+
+```markdown
+INCOMPATIBLE COMBINATIONS (must be different users):
+
+1. Create Transaction + Approve Transaction
+   → Prevents self-approval of own entries
+
+2. Create Supplier + Approve Payment to Supplier
+   → Prevents fictitious vendor fraud
+
+3. Manage Exchange Rates + Process FC Transactions
+   → Prevents rate manipulation
+
+4. Administer Users + Approve Transactions
+   → Prevents creating ghost approvers
+
+5. Process Payroll + Approve Payroll
+   → Prevents unauthorized salary changes
+
+6. Enter Opening Balances + Approve Opening Balances
+   → Protects migration integrity
+```
+
+---
+
+### Approval Audit Trail
+
+Every approval action is permanently logged:
+
+```markdown
+Audit Entry:
+  Transaction: JE-2025-0145
+  Amount: 750,000 KES
+  Action: APPROVED
+  Approver: Jane Waweru (Finance Manager)
+  Timestamp: 2025-01-15 14:32:07 EAT
+  IP Address: 192.168.1.45
+  Device: Desktop Chrome
+  Comment: "Verified against PO #2345 and delivery receipt"
+  Previous Approver: John Kamau (Senior Accountant) @ 11:15:22
+```
+
+This log is:
+- Immutable (cannot be edited or deleted)
+- Exportable for auditors
+- Searchable by transaction, user, date, action
+
+---
+
+## Compliance & Regulatory Features
+
+### GAAP & IFRS Compliance
+
+The module is designed to support both GAAP (US) and IFRS (international) reporting standards. Key controls:
+
+**Revenue Recognition (IFRS 15 / ASC 606):**
+```markdown
+Revenue is recognized when (or as) performance obligations are satisfied:
+
+1. Contract identified with customer
+2. Performance obligations identified
+3. Transaction price determined
+4. Price allocated to obligations
+5. Revenue recognized when obligation satisfied
+
+System Control:
+- Revenue cannot be posted before delivery confirmation
+- Deferred revenue account used for advance payments
+- Automatic recognition schedule for subscriptions/contracts
+```
+
+**Lease Accounting (IFRS 16):**
+```markdown
+Operating leases now on balance sheet:
+
+Right-of-Use Asset recognition:
+Dr. Right-of-Use Asset           500,000
+    Cr. Lease Liability                  500,000
+
+Monthly Recognition:
+Dr. Depreciation - ROU Asset      8,333
+Dr. Interest Expense               2,500
+    Cr. Lease Liability                    2,500
+    Cr. Accumulated Depreciation          8,333
+
+Dr. Lease Liability               10,000
+    Cr. Cash (monthly payment)            10,000
+```
+
+**Inventory Costing Methods:**
+```markdown
+Supported methods (consistent application required):
+- FIFO (First In, First Out)
+- Weighted Average Cost
+- Specific Identification
+
+Note: LIFO not permitted under IFRS
+```
+
+---
+
+### VAT / Tax Compliance
+
+**VAT Calculation and Posting:**
+
+```markdown
+Standard Sales Transaction with VAT:
+
+Gross Sale: 100,000 KES
+VAT (16%):   16,000 KES
+Total:       116,000 KES
+
+Journal Entry:
+Dr. Accounts Receivable          116,000
+    Cr. Sales Revenue                    100,000
+    Cr. VAT Payable (Output)              16,000
+```
+
+**Input VAT (Purchases):**
+
+```markdown
+Purchase with Claimable VAT:
+
+Invoice: 58,000 KES (50,000 + 8,000 VAT)
+
+Dr. Inventory / Expense           50,000
+Dr. VAT Receivable (Input)         8,000
+    Cr. Accounts Payable                  58,000
+```
+
+**VAT Return Calculation:**
+
+```markdown
+Monthly VAT Return:
+
+Output VAT (charged to customers):        480,000
+Input VAT (paid to suppliers):           (320,000)
+─────────────────────────────────────────────────
+NET VAT PAYABLE to KRA:                   160,000
+
+Journal Entry on Filing:
+Dr. VAT Payable                  480,000
+    Cr. VAT Receivable                    320,000
+    Cr. Cash / Bank                       160,000
+```
+
+**Withholding Tax:**
+
+```markdown
+When paying a consultant (5% WHT applies):
+
+Invoice Amount:    100,000 KES
+WHT (5%):           (5,000) KES
+Net Payment:        95,000 KES
+
+Dr. Consulting Expense           100,000
+    Cr. Accounts Payable                 100,000
+
+On Payment:
+Dr. Accounts Payable             100,000
+    Cr. Cash                              95,000
+    Cr. WHT Payable                        5,000
+
+WHT remitted to tax authority monthly:
+Dr. WHT Payable                    5,000
+    Cr. Cash                               5,000
+```
+
+---
+
+### SOX Compliance Controls
+
+For companies subject to Sarbanes-Oxley (or equivalent corporate governance):
+
+**Control 1: Access Controls**
+```markdown
+- Role-based permissions with least-privilege principle
+- No shared user accounts
+- Password policy enforced at system level
+- Session timeout after inactivity
+- Multi-factor authentication for sensitive operations
+```
+
+**Control 2: Change Management**
+```markdown
+- All configuration changes logged with before/after values
+- COA changes require Finance Manager approval
+- Period open/close logged with authorizer identity
+- User role changes require IT + Finance co-approval
+```
+
+**Control 3: Audit Trail Completeness**
+```markdown
+Every record maintains:
+- Created by (user ID + timestamp)
+- Last modified by (user ID + timestamp)
+- Approved by (user ID + timestamp)
+- Posted by (user ID + timestamp)
+- Reversed by (user ID + timestamp, if applicable)
+
+Cannot be overridden or deleted.
+```
+
+**Control 4: Reconciliation Controls**
+```markdown
+Automated reconciliation checks run at period close:
+- GL control account = subsidiary ledger total (AR, AP, Inventory)
+- Bank balance per GL = bank statement balance
+- Intercompany accounts net to zero
+- Budget-to-actual variance flagged above threshold
+```
+
+---
+
+### Multi-Entity & Intercompany
+
+**Intercompany Transaction Example:**
+
+```markdown
+Scenario: Parent loans 1,000,000 KES to Subsidiary
+
+PARENT BOOKS:
+Dr. Intercompany Receivable - Sub    1,000,000
+    Cr. Cash                                 1,000,000
+
+SUBSIDIARY BOOKS:
+Dr. Cash                             1,000,000
+    Cr. Intercompany Payable - Parent        1,000,000
+
+CONSOLIDATION ELIMINATION:
+Dr. Intercompany Payable             1,000,000
+    Cr. Intercompany Receivable              1,000,000
+(Eliminates intra-group balances on consolidated statements)
+```
+
+**Intercompany Rules:**
+1. Corresponding entries must be posted in both entities
+2. System validates intercompany accounts net to zero at consolidation
+3. Intercompany profit on transferred inventory eliminated on consolidation
+4. Currency differences on intercompany balances posted to translation reserve
+
+---
+
+### Data Retention & Archiving
+
+```markdown
+Retention Policy:
+- Transaction records: 7 years minimum (statutory requirement)
+- Audit logs: 7 years minimum
+- Tax-related records: 10 years
+- Annual financial statements: Permanent
+
+Archiving Process:
+- Records older than 5 years moved to archive storage
+- Archived records remain queryable (read-only)
+- Archive export available for auditor access
+- Deletion requires CFO + Legal approval and is logged
+```
+
+---
+
+## Common Business Scenarios
+
+### Scenario 1: Month-End Accruals
+
+**Problem:** Received electricity service in January but bill arrives February 5.
+
+```markdown
+Step 1 — January 31 (Accrual):
+Dr. Utilities Expense             22,000
+    Cr. Accrued Utilities                 22,000
+Description: Jan electricity estimate (meter reading)
+Auto-Reversal Date: 2025-02-01
+
+Step 2 — February 1 (Automatic Reversal):
+Dr. Accrued Utilities             22,000
+    Cr. Utilities Expense                 22,000
+Description: Auto-reversal of Jan accrual
+
+Step 3 — February 5 (Actual Bill):
+Dr. Utilities Expense             21,450
+Dr. VAT Receivable                 3,432
+    Cr. Accounts Payable                  24,882
+Description: Jan electricity bill KEN-2025-0145
+
+Result:
+- January P&L includes 22,000 estimate ✓
+- February P&L shows actual 21,450 ✓
+- Accrual cleared, no double-count ✓
+```
+
+---
+
+### Scenario 2: Customer Advance Payment
+
+**Problem:** Customer pays 500,000 KES upfront before delivery.
+
+```markdown
+Step 1 — Receipt of Advance:
+Dr. Bank Account                 500,000
+    Cr. Customer Deposits (Liability)    500,000
+Description: Advance from ABC Corp - Order #5001
+
+Step 2 — Goods Delivered (Invoice):
+Dr. Accounts Receivable          580,000
+    Cr. Sales Revenue                    500,000
+    Cr. VAT Payable                       80,000
+Description: Invoice INV-2025-0301 for Order #5001
+
+Step 3 — Apply Advance to Invoice:
+Dr. Customer Deposits            500,000
+    Cr. Accounts Receivable              500,000
+Description: Apply advance to INV-2025-0301
+
+Step 4 — Collect Balance:
+Dr. Bank Account                  80,000
+    Cr. Accounts Receivable               80,000
+Description: Balance payment - VAT only
+
+Net Result:
+- Revenue recognized on delivery ✓
+- No premature P&L recognition ✓
+- Liability cleared ✓
+```
+
+---
+
+### Scenario 3: Loan Drawdown and Repayment
+
+**Problem:** Company draws a new 5,000,000 KES term loan.
+
+```markdown
+Loan Drawdown:
+Dr. Bank Account               5,000,000
+    Cr. Long-Term Loan                 5,000,000
+
+Monthly Repayment (Capital + Interest):
+Loan: 5,000,000 | Rate: 12% p.a. | Term: 60 months
+Monthly Payment: ~111,222 KES
+
+Month 1 Interest: 5,000,000 × 1% = 50,000
+Month 1 Capital:  111,222 - 50,000 = 61,222
+
+Dr. Long-Term Loan (Capital)      61,222
+Dr. Interest Expense              50,000
+    Cr. Bank Account                     111,222
+
+Reclassify current portion at year-end:
+Dr. Long-Term Loan               734,664  (12 months capital)
+    Cr. Current Portion of LT Loan       734,664
+```
+
+---
+
+### Scenario 4: Bad Debt Write-Off
+
+**Problem:** Customer PQR Inc has gone insolvent. Balance: 50,000 KES.
+
+```markdown
+Step 1 — Provision (when doubt arises):
+Dr. Bad Debt Expense              50,000
+    Cr. Allowance for Doubtful Accounts  50,000
+Description: Provision — PQR Inc insolvency proceedings
+
+Step 2 — Write-Off (when confirmed uncollectable):
+Dr. Allowance for Doubtful Accounts 50,000
+    Cr. Accounts Receivable - PQR Inc    50,000
+Description: Write-off confirmed — liquidator notice ref LIQ-456
+
+Step 3 — Recovery (if later recovered):
+Dr. Accounts Receivable - PQR Inc 50,000
+    Cr. Bad Debt Recovery Income         50,000
+
+Dr. Bank Account                  50,000
+    Cr. Accounts Receivable - PQR Inc    50,000
+
+Note: P&L hit is in Step 1 (provision), not Step 2.
+Write-off is balance sheet only when provision already exists.
+```
+
+---
+
+### Scenario 5: Foreign Currency Supplier Payment
+
+**Problem:** Pay US supplier $20,000. Invoice rate was 128.00 KES/USD; payment rate is 132.50 KES/USD.
+
+```markdown
+Invoice Date (Rate 128.00):
+Dr. Inventory                  2,560,000  (20,000 × 128)
+    Cr. AP - USD Supplier              2,560,000
+
+Payment Date (Rate 132.50):
+Cash needed: 20,000 × 132.50 = 2,650,000 KES
+FX Loss:  2,650,000 - 2,560,000 = 90,000 KES
+
+Dr. AP - USD Supplier          2,560,000
+Dr. Foreign Exchange Loss         90,000
+    Cr. Bank Account - KES         2,650,000
+
+P&L Impact:
+- Inventory cost remains at invoice rate (2,560,000) ✓
+- FX loss (90,000) separately recognized in Other Expenses ✓
+```
+
+---
+
+### Scenario 6: Prepaid Insurance Schedule
+
+**Problem:** Pay annual insurance premium 480,000 KES on January 1.
+
+```markdown
+January 1 — Full Payment:
+Dr. Prepaid Insurance            480,000
+    Cr. Bank Account                     480,000
+
+Each Month (40,000 KES/month recognition):
+Dr. Insurance Expense             40,000
+    Cr. Prepaid Insurance                 40,000
+
+Recurring entry set up for 12 months automatically.
+
+Balance Sheet Impact:
+- Jan 1:  Prepaid = 480,000
+- Jan 31: Prepaid = 440,000 (11 months remaining)
+- Jun 30: Prepaid = 240,000 (6 months remaining)
+- Dec 31: Prepaid = 0 (fully expensed) ✓
+```
+
+---
+
+### Scenario 7: Intercompany Recharge
+
+**Problem:** Head office provides shared services to branch. Recharge 150,000 KES.
+
+```markdown
+HEAD OFFICE BOOKS:
+Dr. Intercompany Receivable - Branch  150,000
+    Cr. Shared Services Revenue               150,000
+
+BRANCH BOOKS:
+Dr. Shared Services Expense      150,000
+    Cr. Intercompany Payable - HO            150,000
+
+Settlement (monthly):
+HEAD OFFICE:
+Dr. Bank Account                 150,000
+    Cr. Intercompany Receivable          150,000
+
+BRANCH:
+Dr. Intercompany Payable         150,000
+    Cr. Bank Account                     150,000
+
+Consolidation: Intercompany revenue/expense eliminated.
+Each entity's standalone P&L shows full cost/income.
+```
+
+---
+
+## Troubleshooting Guide
+
+### Problem 1: Trial Balance Does Not Balance
+
+**Symptom:** Total debits ≠ total credits on trial balance.
+
+**Causes & Resolutions:**
+
+```markdown
+Check 1 — Incomplete Transactions
+- Run "Incomplete Transactions" report
+- Look for entries with missing lines
+- Resolution: Complete or cancel the entry
+
+Check 2 — Opening Balance Error
+- Run trial balance as at go-live date only
+- Compare to source system trial balance
+- Resolution: Post correcting opening entry
+
+Check 3 — Currency Conversion Rounding
+- Check transactions with very small amounts
+- Multi-currency rounding can create 1-cent differences
+- Resolution: Post rounding adjustment to Suspense account
+
+Check 4 — System/Integration Error
+- Check system error logs for failed postings
+- Look for integration transactions stuck in PENDING
+- Resolution: Repost failed entries; escalate to IT if persistent
+```
+
+---
+
+### Problem 2: Bank Reconciliation Difference
+
+**Symptom:** GL bank balance differs from bank statement.
+
+**Standard Investigation Checklist:**
+
+```markdown
+Step 1 — List Outstanding Items
+  Items in GL but not bank statement:
+  - Checks issued but not yet presented
+  - Deposits in transit
+
+  Items on bank statement but not GL:
+  - Bank charges not yet recorded
+  - Interest income not yet recorded
+  - Direct debits not yet entered
+
+Step 2 — Prepare Reconciliation
+  GL Balance per Books:         1,250,000
+  Add: Deposits in Transit         80,000
+  Less: Outstanding Checks       (120,000)
+  ─────────────────────────────────────────
+  Adjusted GL Balance:          1,210,000
+
+  Bank Statement Balance:       1,225,000
+  Less: Bank Charges not in GL    (15,000)
+  ─────────────────────────────────────────
+  Adjusted Bank Balance:        1,210,000 ✓
+
+Step 3 — Post Adjustments
+  Dr. Bank Charges                 15,000
+      Cr. Bank Account                     15,000
+```
+
+---
+
+### Problem 3: Accounts Receivable Control Account Mismatch
+
+**Symptom:** AR control account balance ≠ sum of customer balances.
+
+```markdown
+Cause 1 — Direct GL Posting to AR Account
+- Someone posted directly to AR control instead of via invoice
+- Detection: AR detail report vs GL detail report side by side
+- Resolution: Reverse direct entry; re-enter via proper invoice
+
+Cause 2 — Multi-Currency Revaluation Not Applied
+- FC invoices not revalued at period end
+- Resolution: Run period-end revaluation for all FC accounts
+
+Cause 3 — Deleted Customer Record with Open Balance
+- Customer deleted while balance remained
+- Resolution: Restore customer or post write-off
+
+Cause 4 — Failed Integration Transaction
+- Sales module posting partially failed
+- Detection: Check integration error log
+- Resolution: Retry or manually enter missing entry
+```
+
+---
+
+### Problem 4: Posted Transaction with Wrong Account
+
+**Symptom:** Expense posted to wrong account (already posted, cannot edit).
+
+```markdown
+Option 1 — Reversal + Re-entry (Preferred)
+
+Step 1: Reverse original entry:
+  Dr. Correct Account (Advertising)     5,000
+      Cr. Wrong Account (Office Supplies)     5,000
+  Reference: "Reversal of JE-2025-0089 - wrong account"
+
+Step 2: Post correct entry:
+  Dr. Advertising Expense             5,000
+      Cr. Cash                              5,000
+  Reference: "Repost of JE-2025-0089 corrected account"
+
+Option 2 — Reclassification Entry (simpler, acceptable for small amounts)
+  Dr. Advertising Expense             5,000
+      Cr. Office Supplies Expense          5,000
+  Description: "Reclassify marketing materials to correct account"
+
+Both options are auditable. Use Option 1 for material amounts.
+```
+
+---
+
+### Problem 5: Period Accidentally Closed Too Early
+
+**Symptom:** Transactions need to be posted in a period that is now closed.
+
+```markdown
+Procedure:
+1. Assess materiality — is this worth reopening?
+   - Immaterial: Post in current open period with prior-period flag
+   - Material: Reopen the period
+
+2. To reopen (requires CFO permission):
+   - Navigate to Period Management
+   - Select closed period
+   - Click "Reopen Period" — enter reason
+   - System logs: who, when, why
+
+3. Post required transactions
+
+4. Re-close the period immediately
+
+5. Re-run and distribute affected reports
+
+6. Notify stakeholders of restatement if reports already distributed
+
+7. Document the exception in the monthly close checklist
+```
+
+---
+
+### Problem 6: Duplicate Invoice Posted
+
+**Symptom:** Same supplier invoice posted twice.
+
+```markdown
+Detection:
+- AP aging shows two entries for same invoice number
+- Supplier statement reconciliation reveals duplicate
+- Duplicate invoice report (filter by supplier + amount + date range)
+
+Resolution:
+Step 1: Identify the duplicate entry number
+
+Step 2: If payment not yet made:
+  - Reverse the duplicate invoice entry
+  - Dr. AP - Supplier        [Amount]
+      Cr. Expense Account          [Amount]
+
+Step 3: If payment already made:
+  - Contact supplier for credit note or refund
+  - On receipt of credit note:
+    Dr. AP - Supplier        [Amount]
+        Cr. Expense Account        [Amount]
+  - Apply credit to next invoice or request refund
+
+Prevention:
+- Enable "Duplicate Invoice Check" system setting
+- System warns/blocks if same supplier + invoice number + amount exists
+```
+
+---
+
+### Problem 7: Foreign Exchange Rate Missing
+
+**Symptom:** Cannot post foreign currency transaction — no rate found for date.
+
+```markdown
+Resolution:
+1. Check exchange rate master for the transaction date
+   - If missing: Enter rate manually (source from Central Bank)
+   - If rate entry blocked: Contact Finance Manager to authorize
+
+2. If transaction is backdated and rate no longer available:
+   - Use the nearest available date rate
+   - Document the substitution and reason
+   - Add note to transaction description
+
+3. Prevent recurrence:
+   - Set up daily rate import automation
+   - Configure alert: "No rate loaded by 9 AM" → notify Finance team
+   - Keep at least 30-day historical rates always loaded
+```
+
+---
+
+## Business Rules & Validation
+
+### Core Financial Rules
+
+These rules are enforced by the system and cannot be bypassed:
+
+```markdown
+RULE F-01: Double-Entry Integrity
+  Condition: Total debits MUST equal total credits
+  Enforcement: Hard block — transaction cannot be saved
+  Error: "Transaction is not balanced. Debit total: X, Credit total: Y"
+
+RULE F-02: Minimum Lines
+  Condition: Every transaction requires minimum 2 lines
+  Enforcement: Hard block
+  Error: "Transaction must have at least one debit and one credit line"
+
+RULE F-03: Positive Amounts Only
+  Condition: Line amounts must be > 0
+  Enforcement: Hard block
+  Error: "Amount must be greater than zero"
+
+RULE F-04: No Dual-Sided Lines
+  Condition: Each line must have debit OR credit, not both
+  Enforcement: Hard block
+  Error: "A transaction line cannot have both debit and credit amounts"
+
+RULE F-05: Leaf Account Only
+  Condition: Transactions can only post to leaf (non-group) accounts
+  Enforcement: Hard block
+  Error: "Account [X] is a group account and cannot accept transactions"
+
+RULE F-06: Active Account Only
+  Condition: Transactions can only post to active accounts
+  Enforcement: Hard block
+  Error: "Account [X] is inactive"
+```
+
+---
+
+### Date & Period Rules
+
+```markdown
+RULE P-01: Open Period Required
+  Condition: Transaction date must fall in an open accounting period
+  Enforcement: Hard block
+  Error: "Period [Month Year] is closed. Contact Finance to reopen."
+
+RULE P-02: No Future Dates
+  Condition: Transaction date cannot be in the future
+  Enforcement: Hard block (configurable to warn for integration transactions)
+  Error: "Transaction date cannot be in the future"
+
+RULE P-03: Fiscal Year Boundary
+  Condition: Transactions cannot span two fiscal years
+  Enforcement: Hard block
+  Error: "Transaction date is outside the current fiscal year"
+
+RULE P-04: Posting Date Alignment
+  Condition: Posting date must be >= transaction date
+  Enforcement: Hard block
+  Error: "Posting date cannot be before transaction date"
+```
+
+---
+
+### Account-Specific Rules
+
+```markdown
+RULE A-01: Manual Entry Permission
+  Condition: Account must have "Allow Manual Entries" enabled
+  Applies to: MANUAL transaction type only
+  Enforcement: Hard block
+  Error: "Account [X] does not allow manual journal entries"
+  Note: System/Integration entries bypass this rule
+
+RULE A-02: Reference Required
+  Condition: If account has "Require Reference" flag, line must have reference
+  Enforcement: Hard block
+  Error: "Reference number is required for account [X]"
+
+RULE A-03: Cost Center Required
+  Condition: If account type = Expense and cost center tracking is enabled
+  Enforcement: Configurable (warn or block)
+  Error: "Cost center is required for expense account [X]"
+
+RULE A-04: Currency Consistency
+  Condition: If account has a locked currency (e.g., USD bank account),
+             all transactions must use that currency
+  Enforcement: Hard block
+  Error: "Account [X] is locked to currency USD"
+```
+
+---
+
+### Approval & Authorization Rules
+
+```markdown
+RULE W-01: Self-Approval Prohibited
+  Condition: Approver cannot approve their own submissions
+  Enforcement: Hard block
+  Error: "You cannot approve your own transaction"
+
+RULE W-02: Authority Limit
+  Condition: Approver cannot approve above their configured limit
+  Enforcement: Hard block — auto-escalated to next tier
+  Error: "Amount exceeds your approval authority. Escalated to [Role]."
+
+RULE W-03: Sequential Order
+  Condition: For sequential approvals, tier N+1 cannot act before tier N
+  Enforcement: Hard block
+  Error: "Awaiting approval from [User] before this step can proceed"
+
+RULE W-04: Post Requires Approval
+  Condition: If approval workflow is active, APPROVED status required before POST
+  Enforcement: Hard block
+  Error: "Transaction must be approved before posting"
+```
+
+---
+
+### Budget Rules
+
+```markdown
+RULE B-01: Budget Availability Check (Soft Control)
+  Condition: Posting expense > remaining budget triggers warning
+  Enforcement: Warning with override option
+  Warning: "This entry will exceed budget by [Amount]. Reason required to proceed."
+
+RULE B-02: Hard Budget Stop
+  Condition: When hard budget control enabled, posting above budget blocked
+  Enforcement: Hard block
+  Error: "Insufficient budget. Available: [X]. Required: [Y].
+          Request a budget amendment to proceed."
+
+RULE B-03: Budget Period Alignment
+  Condition: Budget check uses transaction date to find correct budget period
+  Enforcement: Automatic — no user action needed
+
+RULE B-04: Budget Version
+  Condition: System uses the ACTIVE budget version for checks
+  Rule: Only one budget version can be ACTIVE at a time
+  Enforcement: System prevents activating two versions simultaneously
+```
+
+---
+
+### Currency Rules
+
+```markdown
+RULE C-01: Exchange Rate Required
+  Condition: Foreign currency transaction requires rate for transaction date
+  Enforcement: Hard block
+  Error: "No exchange rate found for [Currency] on [Date]. Load rate and retry."
+
+RULE C-02: Rate Reasonableness Check
+  Condition: If new rate deviates > configured threshold from previous rate,
+             manual confirmation required
+  Default Threshold: 5% deviation triggers alert
+  Enforcement: Warning — authorized user must confirm
+
+RULE C-03: Functional Currency Calculation
+  Condition: System calculates functional currency = FC Amount × Exchange Rate
+  Rule: User cannot manually override the functional currency amount
+  Enforcement: Calculated field (read-only)
+
+RULE C-04: Revaluation at Period End
+  Condition: Open FC balances must be revalued at period-end rate
+  Enforcement: Checklist reminder in period-close workflow
+  Blocking: Period cannot hard-close without confirming revaluation run
+```
+
+---
+
+### Data Integrity Rules
+
+```markdown
+RULE D-01: Posted Entry Immutability
+  Condition: Once POSTED, a transaction cannot be edited
+  Enforcement: All fields locked; Edit button hidden
+  Correction path: Create a reversal entry
+
+RULE D-02: Account Code Immutability
+  Condition: Once a transaction exists against an account code, the code
+             cannot be changed
+  Enforcement: Hard block on COA edit screen
+  Error: "Account code cannot be changed after transactions are posted"
+
+RULE D-03: Fiscal Year Lock
+  Condition: Once a fiscal year is LOCKED, no transactions permitted
+  Enforcement: Hard block across all entry points
+  Unlock: Requires CFO + CEO dual authorization; logs to audit trail
+
+RULE D-04: Audit Trail Preservation
+  Condition: Audit trail records cannot be deleted, edited, or suppressed
+  Enforcement: Database-level (not user-configurable)
+  Applies to: All transactions, approvals, configuration changes, logins
+```
+
+---
+
+### Validation Execution Order
+
+When a transaction is submitted or posted, validations execute in this order:
+
+```
+1. Structural Validation
+   - Line count (≥ 2)
+   - Balance (debits = credits)
+   - Amount signs (positive only)
+
+2. Date Validation
+   - Not future
+   - Period open
+   - Fiscal year boundary
+
+3. Account Validation
+   - Exists and active
+   - Is leaf account
+   - Allows manual entries (if applicable)
+   - Currency locked (if applicable)
+   - Reference required (if applicable)
+   - Cost center required (if applicable)
+
+4. Authorization Validation
+   - User has permission for accounts
+   - Approval obtained (if required)
+   - Authority limit not exceeded
+
+5. Business Rule Validation
+   - Budget availability (if enabled)
+   - Exchange rate available (if FC)
+   - Duplicate check (if enabled)
+
+6. Integration Validation
+   - Source document exists (for integration transactions)
+   - Source document not already posted to GL
+
+7. Post to General Ledger
+   - Only if all above pass
+```
+
+All validation failures return specific, actionable error messages — no generic "An error occurred."
+
+---
