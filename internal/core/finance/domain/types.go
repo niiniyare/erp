@@ -105,9 +105,8 @@ const (
 	TransactionTypeImported     TransactionType = "IMPORTED"   // Imported from external systems
 	TransactionTypeRecurring    TransactionType = "RECURRING"  // Auto-generated recurring transactions
 	TransactionTypeAdjustment   TransactionType = "ADJUSTMENT" // Correcting/adjusting entries
-	TransactionTypeClosing      TransactionType = "CLOSING"    // Period-end closing entries
-	TransactionTypeJournal      TransactionType = "JOURNAL"
-	TransactionTypeJournalEntry TransactionType = "JOURNAL_ENTRY" // Journal entry transactions
+	TransactionTypeClosing      TransactionType = "CLOSING"       // Period-end closing entries
+	TransactionTypeJournalEntry TransactionType = "JOURNAL_ENTRY" // Manual journal entry transactions
 	TransactionTypeOpening      TransactionType = "OPENING"       // Opening balance transactions
 	TransactionTypeInvoice      TransactionType = "INVOICE"
 	TransactionTypePayment      TransactionType = "PAYMENT"
@@ -119,7 +118,7 @@ func (tt TransactionType) IsValid() bool {
 	switch tt {
 	case TransactionTypeManual, TransactionTypeSystem, TransactionTypeImported,
 		TransactionTypeRecurring, TransactionTypeAdjustment, TransactionTypeClosing,
-		TransactionTypeJournal, TransactionTypeJournalEntry, TransactionTypeOpening,
+		TransactionTypeJournalEntry, TransactionTypeOpening,
 		TransactionTypeInvoice, TransactionTypePayment, TransactionTypePurchase:
 		return true
 	default:
@@ -177,10 +176,12 @@ func (ts TransactionStatus) IsValid() bool {
 	}
 }
 
-// IsEditable returns true if the transaction can be modified in this status
+// IsEditable returns true if the transaction can be modified in this status.
+// Only DRAFT and REJECTED transactions are editable — a pending-approval transaction
+// is locked until the approver acts; editing it would invalidate the in-flight request.
 func (ts TransactionStatus) IsEditable() bool {
 	switch ts {
-	case TransactionStatusDraft, TransactionStatusPendingApproval:
+	case TransactionStatusDraft, TransactionStatusRejected:
 		return true
 	default:
 		return false
@@ -235,37 +236,37 @@ func (as ApprovalStatus) String() string {
 	return string(as)
 }
 
-// RejectionReason represents the reason for transaction rejection
+// RejectionReason represents the reason a transaction was rejected during the approval workflow.
+// These are accounting-domain reasons, not payment-gateway codes.
 type RejectionReason string
 
-// Enumeration of supported rejection reasons
 const (
-	InsufficientFunds     RejectionReason = "INSUFFICIENT_FUNDS"
-	InvalidAccount        RejectionReason = "INVALID_ACCOUNT"
-	TransactionLimit      RejectionReason = "TRANSACTION_LIMIT_EXCEEDED"
-	DailyLimit            RejectionReason = "DAILY_LIMIT_EXCEEDED"
-	FraudSuspected        RejectionReason = "FRAUD_SUSPECTED"
-	AuthorizationRequired RejectionReason = "AUTHORIZATION_REQUIRED"
-	ExpiredCard           RejectionReason = "EXPIRED_CARD"
-	InvalidMerchant       RejectionReason = "INVALID_MERCHANT"
-	TechnicalError        RejectionReason = "TECHNICAL_ERROR"
-	InvalidAmount         RejectionReason = "INVALID_AMOUNT"
-	DuplicateTransaction  RejectionReason = "DUPLICATE_TRANSACTION"
+	RejectionReasonInvalidAccount      RejectionReason = "INVALID_ACCOUNT"       // Account does not exist, is inactive, or rejects transactions
+	RejectionReasonPeriodClosed        RejectionReason = "PERIOD_CLOSED"         // Accounting period is closed; no further postings allowed
+	RejectionReasonBudgetExceeded      RejectionReason = "BUDGET_EXCEEDED"       // Transaction would breach the approved budget
+	RejectionReasonUnbalancedEntry     RejectionReason = "UNBALANCED_ENTRY"      // Debits ≠ credits; double-entry principle violated
+	RejectionReasonMissingDocumentation RejectionReason = "MISSING_DOCUMENTATION" // Required supporting document not attached
+	RejectionReasonDuplicateTransaction RejectionReason = "DUPLICATE_TRANSACTION" // Suspected duplicate of an existing transaction
+	RejectionReasonAmountMismatch      RejectionReason = "AMOUNT_MISMATCH"       // Amount differs from approved purchase order / contract
+	RejectionReasonUnauthorisedAccount RejectionReason = "UNAUTHORISED_ACCOUNT"  // Submitter lacks permission to post to this account
+	RejectionReasonCurrencyMismatch    RejectionReason = "CURRENCY_MISMATCH"     // Transaction currency inconsistent with account currency
+	RejectionReasonPolicyViolation     RejectionReason = "POLICY_VIOLATION"      // Violates a company policy (e.g. segregation of duties)
+	RejectionReasonOther               RejectionReason = "OTHER"                 // Catch-all; rejector must supply a note
 )
 
 // ValidReasons contains all supported rejection reasons for validation
 var ValidReasons = []RejectionReason{
-	InsufficientFunds,
-	InvalidAccount,
-	TransactionLimit,
-	DailyLimit,
-	FraudSuspected,
-	AuthorizationRequired,
-	ExpiredCard,
-	InvalidMerchant,
-	TechnicalError,
-	InvalidAmount,
-	DuplicateTransaction,
+	RejectionReasonInvalidAccount,
+	RejectionReasonPeriodClosed,
+	RejectionReasonBudgetExceeded,
+	RejectionReasonUnbalancedEntry,
+	RejectionReasonMissingDocumentation,
+	RejectionReasonDuplicateTransaction,
+	RejectionReasonAmountMismatch,
+	RejectionReasonUnauthorisedAccount,
+	RejectionReasonCurrencyMismatch,
+	RejectionReasonPolicyViolation,
+	RejectionReasonOther,
 }
 
 // IsValid checks if the rejection reason is supported
@@ -334,16 +335,41 @@ func GetNormalBalanceForRootType(rootType RootType) NormalBalance {
 	}
 }
 
-// ValidationError represents a validation error
+// ValidationSeverity classifies how serious a validation finding is.
+type ValidationSeverity string
+
+const (
+	ValidationSeverityError   ValidationSeverity = "ERROR"   // Must be fixed before saving
+	ValidationSeverityWarning ValidationSeverity = "WARNING" // Should be reviewed; save is allowed
+	ValidationSeverityInfo    ValidationSeverity = "INFO"    // Informational only
+)
+
+// ValidationError represents a validation finding.
+// Field supports nested paths such as "entries[0].amount".
 type ValidationError struct {
-	Field   string `json:"field"`   // The field that failed validation
-	Message string `json:"message"` // Human-readable error message
-	Code    string `json:"code"`    // Machine-readable error code for i18n
+	Field    string             `json:"field"`    // Dot/bracket path to the failing field
+	Message  string             `json:"message"`  // Human-readable description
+	Code     string             `json:"code"`     // Machine-readable code for i18n
+	Severity ValidationSeverity `json:"severity"` // ERROR, WARNING, or INFO
 }
 
 // Error implements the error interface
 func (ve ValidationError) Error() string {
 	return ve.Message
+}
+
+// EffectiveSeverity returns the severity, treating the zero value as ERROR so that
+// existing ValidationError literals without an explicit Severity field remain blockers.
+func (ve ValidationError) EffectiveSeverity() ValidationSeverity {
+	if ve.Severity == "" {
+		return ValidationSeverityError
+	}
+	return ve.Severity
+}
+
+// IsBlocker returns true when the finding must be resolved before the record can be saved.
+func (ve ValidationError) IsBlocker() bool {
+	return ve.EffectiveSeverity() == ValidationSeverityError
 }
 
 // StatementSection represents financial statement sections
@@ -400,5 +426,3 @@ func (cfc CashFlowCategory) String() string {
 	return string(cfc)
 }
 
-// TODO: Add severity levels to ValidationError (ERROR, WARNING, INFO)
-// TODO: Add support for nested field paths (e.g., "entries[0].amount")

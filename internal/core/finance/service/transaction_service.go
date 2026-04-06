@@ -26,6 +26,7 @@ type TransactionService interface {
 	CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
 	GetTransactionByNumber(ctx context.Context, number string) (*domain.Transaction, error)
+	GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (*domain.TransactionWithEntries, error)
 	UpdateTransaction(ctx context.Context, id uuid.UUID, req domain.Transaction) (*domain.Transaction, error)
 	DeleteTransaction(ctx context.Context, id uuid.UUID) error
 	ListTransactions(ctx context.Context, req *domain.TransactionFilter) ([]*domain.Transaction, error)
@@ -33,8 +34,6 @@ type TransactionService interface {
 	ReverseTransaction(ctx context.Context, id uuid.UUID, reason string) (*domain.Transaction, error)
 	ApproveTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error)
 	RejectTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error)
-	// GetTransactionWithEntries - TODO: Implement with proper type
-	// GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (*domain.TransactionWithEntries, error)
 	ValidateTransaction(ctx context.Context, transaction *domain.Transaction, entries []*domain.TransactionEntry) ([]domain.ValidationError, error)
 	SearchTransactions(ctx context.Context, query string, limit int, offset int) ([]*domain.Transaction, error)
 	GetTransactionSummary(ctx context.Context, startDate, endDate time.Time) (*domain.TransactionSummary, error)
@@ -212,6 +211,40 @@ func (s *transactionService) GetTransactionByID(ctx context.Context, id uuid.UUI
 		})
 
 	return transaction, nil
+}
+
+// GetTransactionWithEntries fetches the transaction header and all of its journal entries
+// in two sequential repository calls and returns them as a single composite value.
+func (s *transactionService) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (*domain.TransactionWithEntries, error) {
+	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.get_transaction_with_entries",
+		tracing.WithSpanKind(tracing.SpanKindInternal),
+		tracing.WithAttributes(
+			attribute.String("transaction.id", id.String()),
+		))
+	defer span.End()
+
+	transaction, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		if err == errors.ErrNotFound {
+			return nil, errors.ErrNotFound
+		}
+		return nil, fmt.Errorf("failed to get transaction: %w", err)
+	}
+
+	entries, err := s.repo.GetEntriesByTransaction(ctx, id)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to get transaction entries",
+			logger.Fields{
+				"transaction_id": id.String(),
+				"error":          err.Error(),
+			})
+		return nil, fmt.Errorf("failed to get transaction entries: %w", err)
+	}
+
+	return &domain.TransactionWithEntries{
+		Transaction: *transaction,
+		Entries:     entries,
+	}, nil
 }
 
 func (s *transactionService) GetTransactionByNumber(ctx context.Context, number string) (*domain.Transaction, error) {
@@ -839,8 +872,7 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 
 	rejectedAt := time.Now()
 	notesPtr := &notes
-	// Using "OTHER" as default rejection reason - this may need domain-specific logic
-	rejectionReason := domain.RejectionReason("OTHER")
+	rejectionReason := domain.RejectionReasonOther
 	err = s.repo.Reject(ctx, id, transaction.CreatedBy, rejectedAt, rejectionReason, notesPtr)
 	duration := timer.Stop()
 
@@ -883,47 +915,15 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 	return rejectedTransaction, nil
 }
 
-// TODO: Implement TransactionWithEntries type
-/*
-func (s *transactionService) GetTransactionWithEntries(ctx context.Context, id uuid.UUID) (*domain.TransactionWithEntries, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.get_transaction_with_entries",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("transaction.id", id.String()),
-		))
-	defer span.End()
-
-	logger.DebugContext(ctx, "Getting transaction with entries",
-		logger.Fields{"transaction_id": id.String()})
-
-	transactionWithEntries, err := s.repo.GetWithEntries(ctx, id)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get transaction with entries",
-			logger.Fields{
-				"transaction_id": id.String(),
-				"error":          err.Error(),
-			})
-		return nil, fmt.Errorf("failed to get transaction with entries: %w", err)
-	}
-
-	logger.DebugContext(ctx, "Transaction with entries retrieved successfully",
-		logger.Fields{
-			"transaction_id": id.String(),
-			"entries_count":  len(transactionWithEntries.Entries),
-		})
-
-	return transactionWithEntries, nil
-}
-*/
-
 func (s *transactionService) ValidateTransaction(ctx context.Context, transaction *domain.Transaction, entries []*domain.TransactionEntry) ([]domain.ValidationError, error) {
 	var errors []domain.ValidationError
 
 	if len(entries) == 0 {
 		errors = append(errors, domain.ValidationError{
-			Field:   "entries",
-			Message: "Transaction must have at least one entry",
-			Code:    "MISSING_ENTRIES",
+			Field:    "entries",
+			Message:  "Transaction must have at least one entry",
+			Code:     "MISSING_ENTRIES",
+			Severity: domain.ValidationSeverityError,
 		})
 		return errors, nil
 	}
@@ -943,9 +943,10 @@ func (s *transactionService) ValidateTransaction(ctx context.Context, transactio
 		account, err := s.accountRepo.GetByID(ctx, entry.AccountID)
 		if err != nil {
 			errors = append(errors, domain.ValidationError{
-				Field:   fmt.Sprintf("entry.%d.account_id", entry.EntryNumber),
-				Message: "Account not found",
-				Code:    "INVALID_ACCOUNT",
+				Field:    fmt.Sprintf("entries[%d].account_id", entry.EntryNumber),
+				Message:  "Account not found",
+				Code:     "INVALID_ACCOUNT",
+				Severity: domain.ValidationSeverityError,
 			})
 			continue
 		}
@@ -961,25 +962,28 @@ func (s *transactionService) ValidateTransaction(ctx context.Context, transactio
 
 	if !totalDebits.Equal(totalCredits) {
 		errors = append(errors, domain.ValidationError{
-			Field:   "transaction",
-			Message: fmt.Sprintf("Transaction is not balanced - debits: %s, credits: %s", totalDebits.String(), totalCredits.String()),
-			Code:    "UNBALANCED_TRANSACTION",
+			Field:    "transaction",
+			Message:  fmt.Sprintf("Transaction is not balanced — debits: %s, credits: %s", totalDebits.String(), totalCredits.String()),
+			Code:     "UNBALANCED_TRANSACTION",
+			Severity: domain.ValidationSeverityError,
 		})
 	}
 
 	if totalDebits.Equal(decimal.Zero) {
 		errors = append(errors, domain.ValidationError{
-			Field:   "transaction",
-			Message: "Transaction cannot have zero amounts",
-			Code:    "ZERO_AMOUNT_TRANSACTION",
+			Field:    "transaction",
+			Message:  "Transaction cannot have zero amounts",
+			Code:     "ZERO_AMOUNT_TRANSACTION",
+			Severity: domain.ValidationSeverityError,
 		})
 	}
 
 	if len(accountMap) < 2 {
 		errors = append(errors, domain.ValidationError{
-			Field:   "transaction",
-			Message: "Transaction must affect at least two accounts",
-			Code:    "SINGLE_ACCOUNT_TRANSACTION",
+			Field:    "transaction",
+			Message:  "Transaction must affect at least two accounts",
+			Code:     "SINGLE_ACCOUNT_TRANSACTION",
+			Severity: domain.ValidationSeverityError,
 		})
 	}
 

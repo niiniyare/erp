@@ -100,23 +100,108 @@ type StatusTransition struct {
 	ValidationRequired bool          // Whether validation is required before transition
 }
 
-// AllowedTransitions defines all permitted status transitions for accounts
+// AllowedTransitions defines all permitted status transitions for accounts.
+// Each row encodes the business rule: who can trigger the transition and whether
+// the account must pass a full validation run before the move is allowed.
 var AllowedTransitions = []StatusTransition{
-	// Draft -> Pending Approval: Initial submission for review
-	{AccountStatusDraft, AccountStatusPendingApproval, "accounts.submit", true},
-	// Pending Approval -> Active: Approval process completion
-	{AccountStatusPendingApproval, AccountStatusActive, "accounts.approve", true},
-	// Active -> Inactive: Voluntary deactivation
-	{AccountStatusActive, AccountStatusInactive, "accounts.deactivate", false},
-	// Active -> Suspended: Administrative suspension
-	{AccountStatusActive, AccountStatusSuspended, "accounts.suspend", false},
-	// Suspended -> Active: Reactivation after suspension
-	{AccountStatusSuspended, AccountStatusActive, "accounts.activate", true},
-	// Inactive -> Closed: Final closure of inactive account
-	{AccountStatusInactive, AccountStatusClosed, "accounts.close", true},
-	// Closed -> Archived: Long-term storage of closed accounts
-	{AccountStatusClosed, AccountStatusArchived, "accounts.archive", false},
-	// ... more transitions
+	// ── Initial lifecycle ───────────────────────────────────────────────────────
+	// DRAFT → PENDING_APPROVAL: submit for approval
+	{AccountStatusDraft, AccountStatusPendingApproval, "finance.accounts.submit", true},
+	// DRAFT → ACTIVE: direct activation (trusted/system workflows, e.g. seed scripts)
+	{AccountStatusDraft, AccountStatusActive, "finance.accounts.activate", true},
+
+	// ── Approval flow ───────────────────────────────────────────────────────────
+	// PENDING_APPROVAL → ACTIVE: approver accepts
+	{AccountStatusPendingApproval, AccountStatusActive, "finance.accounts.approve", true},
+	// PENDING_APPROVAL → DRAFT: approver rejects; submitter must revise
+	{AccountStatusPendingApproval, AccountStatusDraft, "finance.accounts.reject", false},
+
+	// ── Normal operational transitions ──────────────────────────────────────────
+	// ACTIVE → INACTIVE: voluntary deactivation (balance must be zero)
+	{AccountStatusActive, AccountStatusInactive, "finance.accounts.deactivate", false},
+	// ACTIVE → SUSPENDED: administrative suspension (e.g. compliance hold)
+	{AccountStatusActive, AccountStatusSuspended, "finance.accounts.suspend", false},
+	// ACTIVE → RESTRICTED: limit to read-only / approval-only entries
+	{AccountStatusActive, AccountStatusRestricted, "finance.accounts.restrict", false},
+	// ACTIVE → FROZEN: hard freeze — no transactions at all
+	{AccountStatusActive, AccountStatusFrozen, "finance.accounts.freeze", false},
+	// ACTIVE → UNDER_REVIEW: flag for internal audit or compliance review
+	{AccountStatusActive, AccountStatusUnderReview, "finance.accounts.review", false},
+	// ACTIVE → YEAR_END_PROCESSING: lock for year-end close; only closing entries
+	{AccountStatusActive, AccountStatusYearEndProcessing, "finance.accounts.year_end", true},
+	// ACTIVE → AUDIT_LOCK: external audit in progress; read-only
+	{AccountStatusActive, AccountStatusAuditLock, "finance.accounts.audit_lock", false},
+	// ACTIVE → COMPLIANCE_HOLD: regulatory / sanctions hold
+	{AccountStatusActive, AccountStatusComplianceHold, "finance.accounts.compliance_hold", false},
+	// ACTIVE → SYSTEM_MAINTENANCE: brief technical window (e.g. migration)
+	{AccountStatusActive, AccountStatusSystemMaintenance, "finance.accounts.maintenance", false},
+	// ACTIVE → DATA_ERROR: automated detection of data integrity issue
+	{AccountStatusActive, AccountStatusDataError, "finance.accounts.flag_error", false},
+
+	// ── Releasing administrative holds ──────────────────────────────────────────
+	// SUSPENDED → ACTIVE: lift suspension after resolution
+	{AccountStatusSuspended, AccountStatusActive, "finance.accounts.activate", true},
+	// SUSPENDED → INACTIVE: deactivate without restoring (avoids re-entry)
+	{AccountStatusSuspended, AccountStatusInactive, "finance.accounts.deactivate", false},
+	// RESTRICTED → ACTIVE: lift restriction
+	{AccountStatusRestricted, AccountStatusActive, "finance.accounts.activate", true},
+	// RESTRICTED → FROZEN: escalate restriction to hard freeze
+	{AccountStatusRestricted, AccountStatusFrozen, "finance.accounts.freeze", false},
+	// FROZEN → ACTIVE: unfreeze
+	{AccountStatusFrozen, AccountStatusActive, "finance.accounts.activate", true},
+	// FROZEN → RESTRICTED: partially unfreeze (back to restricted mode)
+	{AccountStatusFrozen, AccountStatusRestricted, "finance.accounts.restrict", false},
+	// UNDER_REVIEW → ACTIVE: review completed, no issues found
+	{AccountStatusUnderReview, AccountStatusActive, "finance.accounts.activate", true},
+	// UNDER_REVIEW → RESTRICTED: review found issues; restrict pending resolution
+	{AccountStatusUnderReview, AccountStatusRestricted, "finance.accounts.restrict", false},
+	// UNDER_REVIEW → FROZEN: review found serious issues
+	{AccountStatusUnderReview, AccountStatusFrozen, "finance.accounts.freeze", false},
+	// YEAR_END_PROCESSING → ACTIVE: year-end close completed
+	{AccountStatusYearEndProcessing, AccountStatusActive, "finance.accounts.activate", true},
+	// AUDIT_LOCK → ACTIVE: audit completed
+	{AccountStatusAuditLock, AccountStatusActive, "finance.accounts.activate", true},
+	// COMPLIANCE_HOLD → ACTIVE: hold lifted by compliance officer
+	{AccountStatusComplianceHold, AccountStatusActive, "finance.accounts.activate", true},
+	// SYSTEM_MAINTENANCE → ACTIVE: maintenance window finished
+	{AccountStatusSystemMaintenance, AccountStatusActive, "finance.accounts.activate", false},
+	// DATA_ERROR → ACTIVE: data corrected and validated
+	{AccountStatusDataError, AccountStatusActive, "finance.accounts.activate", true},
+	// DATA_ERROR → DRAFT: reset for re-submission after data correction
+	{AccountStatusDataError, AccountStatusDraft, "finance.accounts.reset", true},
+
+	// ── Terminal transitions ─────────────────────────────────────────────────────
+	// INACTIVE → ACTIVE: reactivate a dormant account
+	{AccountStatusInactive, AccountStatusActive, "finance.accounts.activate", true},
+	// INACTIVE → SUSPENDED: re-suspend before final closure
+	{AccountStatusInactive, AccountStatusSuspended, "finance.accounts.suspend", false},
+	// INACTIVE → CLOSED: permanently close (balance must be zero)
+	{AccountStatusInactive, AccountStatusClosed, "finance.accounts.close", true},
+	// CLOSED → ARCHIVED: move to long-term storage
+	{AccountStatusClosed, AccountStatusArchived, "finance.accounts.archive", false},
+}
+
+// CanTransitionTo reports whether a transition from the account's current status to
+// newStatus is defined in AllowedTransitions.
+func (a *Accounts) CanTransitionTo(newStatus AccountStatus) bool {
+	for _, t := range AllowedTransitions {
+		if t.From == a.Status && t.To == newStatus {
+			return true
+		}
+	}
+	return false
+}
+
+// TransitionTo attempts to move the account to newStatus.
+// It returns the matching StatusTransition (for the caller to enforce the required
+// permission) or an error if the transition is not permitted.
+func (a *Accounts) TransitionTo(newStatus AccountStatus) (StatusTransition, error) {
+	for _, t := range AllowedTransitions {
+		if t.From == a.Status && t.To == newStatus {
+			return t, nil
+		}
+	}
+	return StatusTransition{}, fmt.Errorf("transition from %s to %s is not allowed", a.Status, newStatus)
 }
 
 // CanAcceptTransactions determines if the account can receive financial transactions
