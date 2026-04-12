@@ -120,6 +120,7 @@ type TransactionRepository interface {
 	GetByStatus(ctx context.Context, status TransactionStatus, limit int) ([]*Transaction, error)
 	GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*Transaction, error)
 	GetRecurringTransactions(ctx context.Context, dueDate time.Time) ([]*Transaction, error)
+	UpdateNextRecurringDate(ctx context.Context, transactionID uuid.UUID, nextDate time.Time) error
 
 	// Transaction entries
 	CreateEntry(ctx context.Context, entry *TransactionEntry) error
@@ -378,6 +379,20 @@ type CostCenterRepository interface {
 }
 // - NotificationRepository for system notifications
 // - CurrencyRepository for exchange rate management
+
+// ExchangeRateRepository defines persistence for exchange rates.
+// All reads use the on-date-or-before look-up semantics described in the
+// currency-management guide (most recent rate on/before the requested date).
+type ExchangeRateRepository interface {
+	// Upsert inserts or updates a rate for (fromCurrency, toCurrency, effectiveDate, rateType).
+	Upsert(ctx context.Context, rate *ExchangeRate) error
+	// GetRate returns the most recent rate for the pair on or before asOfDate.
+	GetRate(ctx context.Context, fromCurrency, toCurrency string, rateType RateType, asOfDate time.Time) (*ExchangeRate, error)
+	// ListRates lists rates for a currency pair within an optional date range.
+	ListRates(ctx context.Context, fromCurrency, toCurrency string, from, to *time.Time, limit int) ([]*ExchangeRate, error)
+	// DeleteExpired removes rates whose expiry_date is before cutoff.
+	DeleteExpired(ctx context.Context, cutoff time.Time) error
+}
 
 // NOTE: All repository implementations should:
 // 1. Enforce tenant isolation using current_tenant_id()

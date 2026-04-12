@@ -1285,14 +1285,13 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 		}
 	}
 
-	// TODO: Implement UpdateNextRecurringDate method in repository interface
-	// if err := s.repo.UpdateNextRecurringDate(ctx, templateID, s.calculateNextRecurringDate(template, date)); err != nil {
-	if false { // Placeholder condition
+	if err := s.repo.UpdateNextRecurringDate(ctx, templateID, s.calculateNextRecurringDate(template, date)); err != nil {
 		logger.WarnContext(ctx, "Failed to update next recurring date",
 			logger.Fields{
 				"template_id": templateID.String(),
 				"error":       err.Error(),
 			})
+		// Non-fatal: recurring will be regenerated via due-date scan on next run
 	}
 
 	logger.InfoContext(ctx, "Recurring transaction created successfully",
@@ -1306,27 +1305,18 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 }
 
 func (s *transactionService) updateAccountBalances(ctx context.Context, entries []*domain.TransactionEntry) error {
-	accountBalances := make(map[uuid.UUID]decimal.Decimal)
-
+	// Collect unique account IDs affected by these entries.
+	seen := make(map[uuid.UUID]struct{})
 	for _, entry := range entries {
-		currentBalance, exists := accountBalances[entry.AccountID]
-		if !exists {
-			currentBalance = decimal.Zero
-		}
-
-		if entry.IsDebit() {
-			currentBalance = currentBalance.Add(entry.DebitAmount)
-		} else {
-			currentBalance = currentBalance.Sub(entry.CreditAmount)
-		}
-
-		accountBalances[entry.AccountID] = currentBalance
+		seen[entry.AccountID] = struct{}{}
 	}
 
-	for accountID, balanceChange := range accountBalances {
-		account, err := s.accountRepo.GetByID(ctx, accountID)
+	now := time.Now()
+	for accountID := range seen {
+		// Recalculate the full balance from actual transaction entries (not an incremental delta).
+		balance, err := s.accountRepo.GetAccountBalance(ctx, accountID, &now)
 		if err != nil {
-			logger.ErrorContext(ctx, "Failed to get account for balance update",
+			logger.ErrorContext(ctx, "Failed to recalculate account balance",
 				logger.Fields{
 					"account_id": accountID.String(),
 					"error":      err.Error(),
@@ -1334,21 +1324,8 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 			continue
 		}
 
-		newBalance := account.CurrentBalance.Add(balanceChange)
-		newYTDBalance := account.YTDBalance.Add(balanceChange)
-		now := time.Now()
-
-		balance := domain.AccountBalance{
-			AccountID:    accountID,
-			Account:      *account,
-			NetBalance:   newBalance,
-			TotalDebits:  newYTDBalance, // approximation until TASK-026 wires real SUM queries
-			TotalCredits: decimal.Zero,
-			AsOfDate:     now,
-		}
-
-		if err := s.accountRepo.UpdateBalance(ctx, accountID, balance); err != nil {
-			logger.ErrorContext(ctx, "Failed to update account balance",
+		if err := s.accountRepo.UpdateBalance(ctx, accountID, *balance); err != nil {
+			logger.ErrorContext(ctx, "Failed to persist account balance",
 				logger.Fields{
 					"account_id": accountID.String(),
 					"error":      err.Error(),

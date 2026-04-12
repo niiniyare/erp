@@ -1,0 +1,47 @@
+-- =====================================================================
+-- FINANCE MODULE — EXCHANGE RATES TABLE
+-- Tenant-isolated exchange rate storage.
+-- On-date-or-before lookup semantics; upsert on (tenant, pair, date, type).
+-- =====================================================================
+
+CREATE TABLE IF NOT EXISTS finance_exchange_rates (
+    id             UUID        NOT NULL DEFAULT gen_random_uuid(),
+    tenant_id      UUID        NOT NULL REFERENCES tenants(id),
+    from_currency  CHAR(3)     NOT NULL,
+    to_currency    CHAR(3)     NOT NULL,
+    rate           NUMERIC(20, 8) NOT NULL CHECK (rate > 0),
+    rate_type      TEXT        NOT NULL
+                       CHECK (rate_type IN ('SPOT','CLOSING','AVERAGE','HISTORICAL','FIXED','OFFICIAL')),
+    effective_date DATE        NOT NULL,
+    expiry_date    DATE,
+    source         TEXT        NOT NULL DEFAULT '',
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    created_by     UUID,
+
+    PRIMARY KEY (id),
+    CONSTRAINT finance_exchange_rates_unique_pair_date_type
+        UNIQUE (tenant_id, from_currency, to_currency, effective_date, rate_type),
+    CONSTRAINT finance_exchange_rates_diff_currencies
+        CHECK (from_currency <> to_currency),
+    CONSTRAINT finance_exchange_rates_expiry_after_effective
+        CHECK (expiry_date IS NULL OR expiry_date >= effective_date)
+);
+
+CREATE INDEX idx_finance_exchange_rates_tenant
+    ON finance_exchange_rates (tenant_id);
+
+CREATE INDEX idx_finance_exchange_rates_pair_date
+    ON finance_exchange_rates (tenant_id, from_currency, to_currency, effective_date DESC);
+
+-- Row-level security: each tenant sees only its own rates.
+ALTER TABLE finance_exchange_rates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_exchange_rates FORCE  ROW LEVEL SECURITY;
+
+CREATE POLICY finance_exchange_rates_app_all ON finance_exchange_rates
+    FOR ALL TO application_role
+    USING     (tenant_id = current_tenant_id())
+    WITH CHECK (tenant_id = current_tenant_id());
+
+CREATE POLICY finance_exchange_rates_ro_select ON finance_exchange_rates
+    FOR SELECT TO readonly_role
+    USING (tenant_id = current_tenant_id());

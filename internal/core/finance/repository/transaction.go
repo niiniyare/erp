@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -967,11 +968,11 @@ func (r *transactionRepository) GetEntriesByAccount(ctx context.Context, account
 		if filter.Offset != nil {
 			offset = int32(*filter.Offset)
 		}
-		if filter.StartDate != nil {
-			from = *filter.StartDate
-		}
-		if filter.EndDate != nil {
-			to = *filter.EndDate
+		if filter.DateRange != nil {
+			from = filter.DateRange.StartDate
+			if filter.DateRange.EndDate != nil {
+				to = *filter.DateRange.EndDate
+			}
 		}
 	}
 
@@ -1031,9 +1032,38 @@ func (r *transactionRepository) DeleteEntry(ctx context.Context, id uuid.UUID) e
 }
 
 func (r *transactionRepository) SearchEntries(ctx context.Context, query string, filters *domain.EntryFilter, limit int, offset int) ([]*domain.TransactionEntry, error) {
-	// Delegate to GetEntriesByAccount with a query-based filter when account is specified.
-	// Full-text entry search requires a dedicated SQLC query — tracked in TASK-029.
-	return nil, fmt.Errorf("SearchEntries: full-text entry search not yet implemented (TASK-029)")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.SearchEntries")
+	defer span.End()
+
+	// No dedicated full-text SQLC query for entries exists yet.
+	// Fall back: if a specific account is requested, delegate to GetEntriesByAccount
+	// and post-filter by description/reference containing the query string.
+	if filters != nil && filters.AccountID != nil {
+		lim := limit
+		off := offset
+		f := &domain.EntryFilter{
+			AccountID: filters.AccountID,
+			DateRange: filters.DateRange,
+			Limit:     &lim,
+			Offset:    &off,
+		}
+		all, err := r.GetEntriesByAccount(ctx, *filters.AccountID, f)
+		if err != nil {
+			return nil, err
+		}
+		q := strings.ToLower(query)
+		out := make([]*domain.TransactionEntry, 0)
+		for i := range all {
+			e := all[i]
+			if strings.Contains(strings.ToLower(e.Description), q) ||
+				(e.Reference != nil && strings.Contains(strings.ToLower(*e.Reference), q)) {
+				out = append(out, &e)
+			}
+		}
+		return out, nil
+	}
+	// Without an account filter a global search is not supported without a dedicated index.
+	return nil, fmt.Errorf("SearchEntries: provide an account_id filter for entry search (global full-text search requires a dedicated SQLC query)")
 }
 
 func (r *transactionRepository) UpdateReconciliationStatus(ctx context.Context, entryID uuid.UUID, reconciled bool, reconciledDate *time.Time, reconciliationRef *string) error {
@@ -1067,7 +1097,7 @@ func (r *transactionRepository) UpdateReconciliationStatus(ctx context.Context, 
 func (r *transactionRepository) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoffDate *time.Time) ([]*domain.TransactionEntry, error) {
 	filter := &domain.EntryFilter{}
 	if cutoffDate != nil {
-		filter.EndDate = cutoffDate
+		filter.DateRange = &domain.DateRange{EndDate: cutoffDate}
 	}
 	entries, err := r.GetEntriesByAccount(ctx, accountID, filter)
 	if err != nil {
@@ -1085,32 +1115,31 @@ func (r *transactionRepository) GetUnreconciledEntries(ctx context.Context, acco
 
 func (r *transactionRepository) GetEntrySummary(ctx context.Context, accountID uuid.UUID, startDate, endDate time.Time) (*domain.TransactionSummary, error) {
 	entries, err := r.GetEntriesByAccount(ctx, accountID, &domain.EntryFilter{
-		StartDate: &startDate,
-		EndDate:   &endDate,
+		DateRange: &domain.DateRange{StartDate: startDate, EndDate: &endDate},
 	})
 	if err != nil {
 		return nil, err
 	}
-	var totalDebits, totalCredits decimal.Decimal
+	var totalDebit, totalCredit decimal.Decimal
 	for _, e := range entries {
-		totalDebits = totalDebits.Add(e.DebitAmount)
-		totalCredits = totalCredits.Add(e.CreditAmount)
+		totalDebit = totalDebit.Add(e.DebitAmount)
+		totalCredit = totalCredit.Add(e.CreditAmount)
 	}
 	return &domain.TransactionSummary{
-		TotalDebits:  totalDebits,
-		TotalCredits: totalCredits,
-		NetAmount:    totalDebits.Sub(totalCredits),
-		Count:        len(entries),
+		TotalDebit:       totalDebit,
+		TotalCredit:      totalCredit,
+		TransactionCount: int64(len(entries)),
 	}, nil
 }
 
 func (r *transactionRepository) GetAccountTransactionSummary(ctx context.Context, accountID uuid.UUID, dateRange *domain.DateRange) (*domain.TransactionSummary, error) {
 	var start, end time.Time
+	end = time.Now()
 	if dateRange != nil {
 		start = dateRange.StartDate
-		end = dateRange.EndDate
-	} else {
-		end = time.Now()
+		if dateRange.EndDate != nil {
+			end = *dateRange.EndDate
+		}
 	}
 	return r.GetEntrySummary(ctx, accountID, start, end)
 }
@@ -1132,14 +1161,13 @@ func (r *transactionRepository) GetByStatus(ctx context.Context, status domain.T
 }
 
 func (r *transactionRepository) ListByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*domain.Transaction, error) {
-	filter := &domain.TransactionFilter{
-		StartDate: &startDate,
-		EndDate:   &endDate,
-	}
 	limit := 1000
 	offset := 0
-	filter.Limit = &limit
-	filter.Offset = &offset
+	filter := &domain.TransactionFilter{
+		DateRange: &domain.DateRange{StartDate: startDate, EndDate: &endDate},
+		Limit:     &limit,
+		Offset:    &offset,
+	}
 	return r.List(ctx, filter)
 }
 
@@ -1160,16 +1188,25 @@ func (r *transactionRepository) ListByAccount(ctx context.Context, accountID uui
 }
 
 func (r *transactionRepository) GetRecurringTransactions(ctx context.Context, dueDate time.Time) ([]*domain.Transaction, error) {
-	isRecurring := true
-	filter := &domain.TransactionFilter{
-		IsRecurring: &isRecurring,
-		EndDate:     &dueDate,
-	}
 	limit := 500
 	offset := 0
-	filter.Limit = &limit
-	filter.Offset = &offset
-	return r.List(ctx, filter)
+	filter := &domain.TransactionFilter{
+		DateRange: &domain.DateRange{EndDate: &dueDate},
+		Limit:     &limit,
+		Offset:    &offset,
+	}
+	all, err := r.List(ctx, filter)
+	if err != nil {
+		return nil, err
+	}
+	// Filter to recurring transactions only (List has no IsRecurring param)
+	recurring := make([]*domain.Transaction, 0)
+	for _, t := range all {
+		if t.IsRecurring {
+			recurring = append(recurring, t)
+		}
+	}
+	return recurring, nil
 }
 
 // ── Post / Approve / Reject / Reverse delegators ─────────────────────────────
@@ -1221,8 +1258,64 @@ func (r *transactionRepository) ValidateTransaction(ctx context.Context, transac
 }
 
 func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.TransactionSummary, error) {
-	// Full summary aggregation requires a dedicated SQLC query — tracked in TASK-029.
-	return nil, fmt.Errorf("GetTransactionSummary not yet implemented (TASK-029)")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetTransactionSummary")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	dateFrom := time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC)
+	dateTo := time.Now()
+	if filter != nil && filter.DateRange != nil {
+		if !filter.DateRange.StartDate.IsZero() {
+			dateFrom = filter.DateRange.StartDate
+		}
+		if filter.DateRange.EndDate != nil {
+			dateTo = *filter.DateRange.EndDate
+		}
+	}
+
+	var summaries []*domain.TransactionSummary
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		rows, err := s.GetTransactionSummaryByPeriod(ctx, db.GetTransactionSummaryByPeriodParams{
+			DateFrom: dateFrom,
+			DateTo:   dateTo,
+		})
+		if err != nil {
+			return r.mapDatabaseError(err, "get_transaction_summary")
+		}
+		summaries = make([]*domain.TransactionSummary, 0, len(rows))
+		for _, row := range rows {
+			summaries = append(summaries, &domain.TransactionSummary{
+				TransactionType:   domain.TransactionType(row.TransactionType),
+				TransactionStatus: domain.TransactionStatus(row.TransactionStatus),
+				TransactionCount:  row.TransactionCount,
+				TotalDebit:        decimal.NewFromInt(row.TotalDebit),
+				TotalCredit:       decimal.NewFromInt(row.TotalCredit),
+			})
+		}
+		return nil
+	})
+	return summaries, err
+}
+
+func (r *transactionRepository) UpdateNextRecurringDate(ctx context.Context, transactionID uuid.UUID, nextDate time.Time) error {
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.UpdateNextRecurringDate")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
+	}
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		return s.UpdateRecurringTransactionNextDate(ctx, db.UpdateRecurringTransactionNextDateParams{
+			TransactionID:     transactionID,
+			NextRecurringDate: nextDate,
+		})
+	})
 }
 
 // ── Bulk / archive / restore ──────────────────────────────────────────────────

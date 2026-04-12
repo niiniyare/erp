@@ -31,6 +31,9 @@ var (
 	ErrInvalidTransactionEntry        = errors.New("invalid transaction entry")
 	ErrInsufficientTransactionEntries = errors.New("transaction must have at least 2 entries")
 
+	// Exchange rate errors
+	ErrExchangeRateNotFound = errors.New("exchange rate not found")
+
 	// Validation errors
 	ErrInvalidCurrencyCode = errors.New("invalid currency code")
 	ErrInvalidExchangeRate = errors.New("invalid exchange rate")

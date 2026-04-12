@@ -785,8 +785,6 @@ func mapNullRecurringFrequencyToDomainString(recurringFreq *string) *string {
 
 // Enhanced view-based mapper functions
 
-// TODO: These mapper functions will be implemented once SQLC generates the types
-// mapSQLCAccountWithGroupsToDomain maps SQLC AccountWithGroups to domain type
 func mapSQLCAccountWithGroupsToDomain(sqlcAccount db.VFinanceAccountsWithGroup) (*domain.AccountWithGroups, error) {
 	// Convert pgtype.Numeric to decimal.Decimal
 	currentBalance := pgNumericToDecimal(sqlcAccount.CurrentBalance)

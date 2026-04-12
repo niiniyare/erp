@@ -12,6 +12,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 
 	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/tracing"
 )
 
@@ -241,8 +242,10 @@ func (s *transactionNumberingService) ReserveTransactionNumber(ctx context.Conte
 	}
 
 	// Create reservation
-	// TODO: Extract user ID from context
-	userID := uuid.New() // placeholder
+	userID, ok := shared.GetUserID(ctx)
+	if !ok {
+		userID = uuid.New() // fallback for non-authenticated callers (e.g. system jobs)
+	}
 	reservation := &NumberReservation{
 		ID:                uuid.New(),
 		TenantID:          req.TenantID,

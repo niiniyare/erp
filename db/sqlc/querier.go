@@ -248,6 +248,7 @@ type Querier interface {
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
 	DeleteEntityConfiguration(ctx context.Context, arg DeleteEntityConfigurationParams) error
+	DeleteExpiredExchangeRates(ctx context.Context, expiryDate time.Time) error
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
 	// Delete audit events older than specified date (for retention policies)
@@ -675,6 +676,8 @@ type Querier interface {
 	GetEventTimelineForUser(ctx context.Context, arg GetEventTimelineForUserParams) ([]*GetEventTimelineForUserRow, error)
 	// Get event type distribution for analysis
 	GetEventTypeDistribution(ctx context.Context, arg GetEventTypeDistributionParams) ([]*GetEventTypeDistributionRow, error)
+	// Returns the most recent rate for a pair on or before asOfDate.
+	GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error)
 	GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	// Get failed access attempts within a time range
 	GetFailedAccessAttempts(ctx context.Context, arg GetFailedAccessAttemptsParams) ([]*GetFailedAccessAttemptsRow, error)
@@ -1015,6 +1018,7 @@ type Querier interface {
 	// Returns all entities within the subtree rooted at the given path prefix.
 	// Used by business repos for subtree-scoped data queries.
 	ListEntitySubtree(ctx context.Context, dollar_1 *string) ([]*ListEntitySubtreeRow, error)
+	ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error)
 	ListExpiredActiveRoleNames(ctx context.Context, arg ListExpiredActiveRoleNamesParams) ([]string, error)
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
 	ListFlagDefinitions(ctx context.Context, dollar_1 bool) ([]*FeatureFlagDefinition, error)
@@ -1247,6 +1251,13 @@ type Querier interface {
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
+	// =====================================================================
+	// FINANCE MODULE — EXCHANGE RATES QUERIES
+	// Tenant-isolated exchange rate persistence.
+	// Rate look-up uses on-date-or-before semantics (most recent rate
+	// on or before the requested date for each currency pair).
+	// =====================================================================
+	UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error)
 	UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssignmentParams) error
 	UpsertSSOProvider(ctx context.Context, arg UpsertSSOProviderParams) (*SsoProvider, error)
 	// Enable or disable a flag for a specific tenant.

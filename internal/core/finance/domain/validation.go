@@ -296,14 +296,8 @@ func (v *BusinessRuleValidator) ValidateAccountCode(code string, tenantID uuid.U
 		})
 	}
 
-	// TODO: Check uniqueness in repository
-	// if accountCodeExists(code, tenantID, entityID) {
-	//     errors = append(errors, ValidationError{
-	//         Field:   "account_code",
-	//         Message: "Account code already exists",
-	//         Code:    "DUPLICATE_ACCOUNT_CODE",
-	//     })
-	// }
+	// Uniqueness is a service-layer concern, not a domain-validator concern.
+	// See: AccountService.ValidateAccountCode → AccountsRepository.IsAccountCodeUnique
 
 	return errors
 }
@@ -315,14 +309,8 @@ func (v *BusinessRuleValidator) ValidateTransactionNumber(number string, tenantI
 	fieldValidator := &FieldValidator{}
 	errors = append(errors, fieldValidator.ValidateString(number, "transaction_number", true, MaxTransactionNumberLength, TransactionNumberPattern)...)
 
-	// TODO: Check uniqueness in repository
-	// if transactionNumberExists(number, tenantID, entityID) {
-	//     errors = append(errors, ValidationError{
-	//         Field:   "transaction_number",
-	//         Message: "Transaction number already exists",
-	//         Code:    "DUPLICATE_TRANSACTION_NUMBER",
-	//     })
-	// }
+	// Uniqueness is a service-layer concern, not a domain-validator concern.
+	// See: TransactionService → TransactionRepository.IsTransactionNumberUnique
 
 	return errors
 }

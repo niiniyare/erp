@@ -580,6 +580,20 @@ type FinanceAccountValidationRule struct {
 	UpdatedBy                *uuid.UUID     `json:"updated_by"`
 }
 
+type FinanceExchangeRate struct {
+	ID            uuid.UUID      `json:"id"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	FromCurrency  string         `json:"from_currency"`
+	ToCurrency    string         `json:"to_currency"`
+	Rate          pgtype.Numeric `json:"rate"`
+	RateType      string         `json:"rate_type"`
+	EffectiveDate time.Time      `json:"effective_date"`
+	ExpiryDate    time.Time      `json:"expiry_date"`
+	Source        string         `json:"source"`
+	CreatedAt     time.Time      `json:"created_at"`
+	CreatedBy     *uuid.UUID     `json:"created_by"`
+}
+
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
 type FinanceTransaction struct {
 	ID       uuid.UUID  `json:"id"`
