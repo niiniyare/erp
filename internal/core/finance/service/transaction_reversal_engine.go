@@ -192,16 +192,18 @@ type ReversalRecord struct {
 
 // transactionReversalEngine implements TransactionReversalEngine
 type transactionReversalEngine struct {
-	transactionRepository domain.TransactionRepository
-	numberingService      TransactionNumberingService
-	postingEngine         TransactionPostingEngine
-	validator             DoubleEntryValidator
-	tracing               tracing.Service
+	transactionRepository  domain.TransactionRepository
+	reversalHistoryRepo    domain.ReversalHistoryRepository
+	numberingService       TransactionNumberingService
+	postingEngine          TransactionPostingEngine
+	validator              DoubleEntryValidator
+	tracing                tracing.Service
 }
 
 // TransactionReversalEngineDeps represents dependencies for the reversal engine
 type TransactionReversalEngineDeps struct {
 	TransactionRepository domain.TransactionRepository
+	ReversalHistoryRepo   domain.ReversalHistoryRepository
 	NumberingService      TransactionNumberingService
 	PostingEngine         TransactionPostingEngine
 	Validator             DoubleEntryValidator
@@ -212,6 +214,7 @@ type TransactionReversalEngineDeps struct {
 func NewTransactionReversalEngine(deps TransactionReversalEngineDeps) TransactionReversalEngine {
 	return &transactionReversalEngine{
 		transactionRepository: deps.TransactionRepository,
+		reversalHistoryRepo:   deps.ReversalHistoryRepo,
 		numberingService:      deps.NumberingService,
 		postingEngine:         deps.PostingEngine,
 		validator:             deps.Validator,
@@ -287,6 +290,22 @@ func (e *transactionReversalEngine) CreateReversalTransaction(ctx context.Contex
 	if err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Failed to update original transaction: %v", err))
 		return result, err
+	}
+
+	// 5b. Persist the reversal history record so the double-reversal guard and
+	//     audit UI have accurate data (replaces the fabricated uuid.New() placeholders).
+	if e.reversalHistoryRepo != nil {
+		histRec := &domain.ReversalHistoryRecord{
+			OriginalTransactionID: req.OriginalTransactionID,
+			ReversalTransactionID: reversalTransaction.ID,
+			Reason:                req.ReversalReason,
+			ReversedBy:            req.ReversedBy,
+		}
+		if insertErr := e.reversalHistoryRepo.Insert(ctx, histRec); insertErr != nil {
+			// Non-fatal: the reversal itself succeeded; log and continue.
+			result.Warnings = append(result.Warnings,
+				fmt.Sprintf("Failed to persist reversal history: %v", insertErr))
+		}
 	}
 
 	// 6. Auto-post the reversal if requested
@@ -448,8 +467,27 @@ func (e *transactionReversalEngine) ValidateReversalEligibility(ctx context.Cont
 		}
 	}
 
-	// 4. Check for existing reversals (this transaction reversing others)
-	// TODO: Implement check for whether this transaction has already reversed others
+	// 4. Guard: a reversal transaction must not itself be reversed.
+	//    Query finance_reversal_history to see if transactionID appears as a
+	//    reversal_transaction_id (i.e. it IS a reversal of another transaction).
+	if e.reversalHistoryRepo != nil {
+		isReversal, checkErr := e.reversalHistoryRepo.IsReversal(ctx, transactionID)
+		if checkErr == nil && isReversal {
+			result.CanReverse = false
+			result.Errors = append(result.Errors, ValidationError{
+				Field:    "transaction_id",
+				Message:  "Cannot reverse a reversal transaction",
+				Code:     "CANNOT_REVERSE_REVERSAL",
+				Severity: "ERROR",
+				Value:    transactionID,
+			})
+			result.ReversalConstraints = append(result.ReversalConstraints, ReversalConstraint{
+				Type:        ReversalConstraintHasReversals,
+				Description: "This transaction is itself a reversal and cannot be reversed again",
+				Blocking:    true,
+			})
+		}
+	}
 
 	// Set final validation level
 	if len(result.Errors) > 0 {
@@ -483,22 +521,44 @@ func (e *transactionReversalEngine) GetReversalHistory(ctx context.Context, tran
 
 	result.IsReversed = transaction.IsReversed
 
-	// TODO: In a full implementation, this would query a reversal audit table
-	// For now, just check if the transaction has a reversal reference
-	if transaction.ReversedByTransactionID != nil {
+	// Query the persisted reversal history table for accurate data.
+	if e.reversalHistoryRepo != nil {
+		records, err := e.reversalHistoryRepo.GetByOriginal(ctx, transactionID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to load reversal history: %w", err)
+		}
+		for _, rec := range records {
+			reason := rec.Reason
+			if reason == "" && transaction.ReversalReason != nil {
+				reason = *transaction.ReversalReason
+			}
+			result.ReversalChain = append(result.ReversalChain, ReversalRecord{
+				ReversalID:            rec.ID,
+				ReversalTransactionID: rec.ReversalTransactionID,
+				ReversalDate:          rec.CreatedAt,
+				ReversedBy:            rec.ReversedBy,
+				ReversalReason:        reason,
+				ReversalType:          ReversalTypeFull,
+				Status:                "COMPLETED",
+			})
+		}
+		result.HasReversals = len(result.ReversalChain) > 0
+	} else if transaction.ReversedByTransactionID != nil {
+		// Fallback when repo is not injected (e.g. tests without full DI).
 		result.HasReversals = true
-
-		reversalRecord := ReversalRecord{
-			ReversalID:            uuid.New(), // Would be from audit table
+		reason := ""
+		if transaction.ReversalReason != nil {
+			reason = *transaction.ReversalReason
+		}
+		result.ReversalChain = append(result.ReversalChain, ReversalRecord{
+			ReversalID:            uuid.Nil,
 			ReversalTransactionID: *transaction.ReversedByTransactionID,
-			ReversalDate:          time.Now(), // Would be from audit table
-			ReversedBy:            uuid.New(), // Would be from audit table
-			ReversalReason:        *transaction.ReversalReason,
+			ReversalDate:          time.Time{},
+			ReversedBy:            uuid.Nil,
+			ReversalReason:        reason,
 			ReversalType:          ReversalTypeFull,
 			Status:                "COMPLETED",
-		}
-
-		result.ReversalChain = append(result.ReversalChain, reversalRecord)
+		})
 	}
 
 	return result, nil

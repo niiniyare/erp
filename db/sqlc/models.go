@@ -594,6 +594,16 @@ type FinanceExchangeRate struct {
 	CreatedBy     *uuid.UUID     `json:"created_by"`
 }
 
+type FinanceReversalHistory struct {
+	ID                    uuid.UUID  `json:"id"`
+	TenantID              uuid.UUID  `json:"tenant_id"`
+	OriginalTransactionID uuid.UUID  `json:"original_transaction_id"`
+	ReversalTransactionID uuid.UUID  `json:"reversal_transaction_id"`
+	Reason                string     `json:"reason"`
+	ReversedBy            *uuid.UUID `json:"reversed_by"`
+	CreatedAt             time.Time  `json:"created_at"`
+}
+
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.
 type FinanceTransaction struct {
 	ID       uuid.UUID  `json:"id"`

@@ -822,6 +822,7 @@ type Querier interface {
 	GetRelatedEventsByContext(ctx context.Context, arg GetRelatedEventsByContextParams) ([]*GetRelatedEventsByContextRow, error)
 	GetRequiredAttributeDefinitions(ctx context.Context) ([]*AttributeDefinition, error)
 	GetResourceEvaluationHistory(ctx context.Context, arg GetResourceEvaluationHistoryParams) ([]*PolicyEvaluation, error)
+	GetReversalHistoryByOriginal(ctx context.Context, originalTransactionID uuid.UUID) ([]*GetReversalHistoryByOriginalRow, error)
 	GetRootAccounts(ctx context.Context) ([]*FinanceAccount, error)
 	GetRootAccountsView(ctx context.Context, arg GetRootAccountsViewParams) ([]*VFinanceAccountsHierarchy, error)
 	// SSO provider configuration queries.
@@ -941,6 +942,13 @@ type Querier interface {
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
 	IncrementSequenceNumber(ctx context.Context, argUuid uuid.UUID) (int64, error)
 	InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) (*TenantUsageStat, error)
+	// =====================================================================
+	// FINANCE MODULE — REVERSAL HISTORY QUERIES
+	// Tracks every reversal event so that:
+	//   (a) GetReversalHistory returns accurate data rather than fabricated UUIDs
+	//   (b) A reversal transaction cannot itself be reversed (double-reversal guard)
+	// =====================================================================
+	InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error
 	InvalidateActionEvaluations(ctx context.Context, action string) error
 	InvalidateAllEvaluations(ctx context.Context) error
 	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
@@ -954,6 +962,8 @@ type Querier interface {
 	InvalidateSessionsByUser(ctx context.Context, userID uuid.UUID) error
 	InvalidateUserEvaluations(ctx context.Context, userID uuid.UUID) error
 	IsEntityAncestor(ctx context.Context, arg IsEntityAncestorParams) (bool, error)
+	// Returns true if the given transaction_id is itself a reversal of another.
+	IsReversalTransaction(ctx context.Context, reversalTransactionID uuid.UUID) (bool, error)
 	ListAPIKeys(ctx context.Context) ([]*ListAPIKeysRow, error)
 	ListAccessRequestsByStatus(ctx context.Context, arg ListAccessRequestsByStatusParams) ([]*AccessRequest, error)
 	ListAccountBalances(ctx context.Context, arg ListAccountBalancesParams) ([]*FinanceAccountBalance, error)

@@ -151,6 +151,29 @@ type TransactionRepository interface {
 	GetNextTransactionNumber(ctx context.Context, entityID *uuid.UUID, transactionType TransactionType) (string, error)
 }
 
+// ReversalHistoryRecord is the persisted record of a single reversal event.
+type ReversalHistoryRecord struct {
+	ID                    uuid.UUID `json:"id"`
+	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
+	ReversalTransactionID uuid.UUID `json:"reversal_transaction_id"`
+	Reason                string    `json:"reason"`
+	ReversedBy            uuid.UUID `json:"reversed_by"`
+	CreatedAt             time.Time `json:"created_at"`
+}
+
+// ReversalHistoryRepository persists and queries the finance_reversal_history table.
+type ReversalHistoryRepository interface {
+	// Insert persists a reversal event immediately after the reversal transaction is saved.
+	Insert(ctx context.Context, rec *ReversalHistoryRecord) error
+
+	// IsReversal returns true if transactionID appears as a reversal_transaction_id
+	// in the history table — i.e., the transaction is itself a reversal of another.
+	IsReversal(ctx context.Context, transactionID uuid.UUID) (bool, error)
+
+	// GetByOriginal returns all reversal records for a given original transaction.
+	GetByOriginal(ctx context.Context, originalTransactionID uuid.UUID) ([]*ReversalHistoryRecord, error)
+}
+
 // AuditRepository defines the contract for audit trail persistence
 type AuditRepository interface {
 	CreateAuditEntry(ctx context.Context, entry *AuditEntry) error

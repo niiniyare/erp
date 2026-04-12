@@ -1,0 +1,672 @@
+{
+  "type": "page",
+  "title": "Users",
+  "subTitle": "Manage user accounts, roles, and permissions",
+  "remark": "View and manage all user accounts across your organization. Control access levels and monitor user activity.",
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "New User",
+      "level": "primary",
+      "icon": "fa fa-plus",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "Create User",
+        "size": "lg",
+        "closeOnEsc": true,
+        "actions": [
+          {"type": "button", "label": "Cancel", "actionType": "close"},
+          {"type": "button", "label": "Submit", "actionType": "confirm", "level": "primary"}
+        ],
+        "body": {
+          "type": "wizard",
+          "api": "post:/api/v1/users",
+          "actionPrevLabel": "Previous",
+          "actionNextLabel": "Next",
+          "actionFinishLabel": "Create User",
+          "steps": [
+            {
+              "title": "Account Info",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "first_name",
+                      "label": "First Name",
+                      "required": true,
+                      "placeholder": "e.g. John",
+                      "validations": {"minLength": 2, "maxLength": 100}
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "last_name",
+                      "label": "Last Name",
+                      "required": true,
+                      "placeholder": "e.g. Doe",
+                      "validations": {"minLength": 2, "maxLength": 100}
+                    }
+                  ]
+                },
+                {
+                  "type": "input-email",
+                  "name": "email",
+                  "label": "Email Address",
+                  "required": true,
+                  "placeholder": "john.doe@company.com",
+                  "description": "User will receive login credentials at this email"
+                },
+                {
+                  "type": "input-text",
+                  "name": "username",
+                  "label": "Username",
+                  "placeholder": "e.g. jdoe",
+                  "description": "Optional. Auto-generated from email if left blank",
+                  "validations": {"matchRegexp": "/^[a-z0-9._-]+$/"},
+                  "validationErrors": {"matchRegexp": "Username must be lowercase alphanumeric with dots, underscores, or hyphens"}
+                }
+              ]
+            },
+            {
+              "title": "Role & Organization",
+              "body": [
+                {
+                  "type": "select",
+                  "name": "organization_id",
+                  "label": "Organization",
+                  "required": true,
+                  "searchable": true,
+                  "source": "/api/v1/tenants?fields=id,name&status=ACTIVE",
+                  "labelField": "name",
+                  "valueField": "id",
+                  "description": "Primary organization for this user"
+                },
+                {
+                  "type": "select",
+                  "name": "role",
+                  "label": "Role",
+                  "required": true,
+                  "searchable": true,
+                  "options": [
+                    {"label": "Super Admin", "value": "SUPER_ADMIN", "description": "Full system access"},
+                    {"label": "Admin", "value": "ADMIN", "description": "Organization-level access"},
+                    {"label": "Manager", "value": "MANAGER", "description": "Department management"},
+                    {"label": "User", "value": "USER", "description": "Standard user access"},
+                    {"label": "Guest", "value": "GUEST", "description": "Read-only access"}
+                  ]
+                },
+                {
+                  "type": "input-text",
+                  "name": "department",
+                  "label": "Department",
+                  "placeholder": "e.g. Sales, Engineering, HR"
+                }
+              ]
+            },
+            {
+              "title": "Contact & Profile",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "phone",
+                      "label": "Phone Number",
+                      "placeholder": "+1 (555) 123-4567"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "job_title",
+                      "label": "Job Title",
+                      "placeholder": "e.g. Sales Manager"
+                    }
+                  ]
+                },
+                {
+                  "type": "textarea",
+                  "name": "bio",
+                  "label": "Bio",
+                  "placeholder": "Brief description about the user",
+                  "rows": 3
+                },
+                {
+                  "type": "input-image",
+                  "name": "avatar",
+                  "label": "Profile Picture",
+                  "receiver": {"url": "/api/v1/upload"},
+                  "description": "Upload profile photo (recommended: 200x200px)"
+                },
+                {
+                  "type": "switch",
+                  "name": "send_welcome_email",
+                  "label": "Send Welcome Email",
+                  "value": true,
+                  "description": "Send account setup instructions to user"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "button",
+      "label": "Refresh",
+      "icon": "fa fa-sync",
+      "level": "default",
+      "actionType": "reload",
+      "target": "user-crud"
+    }
+  ],
+  "body": [
+    {
+      "type": "crud",
+      "name": "user-crud",
+      "api": "/api/v1/users",
+      "syncLocation": false,
+      "autoFillHeight": true,
+      "perPage": 20,
+      "perPageAvailable": [10, 20, 50],
+      "headerToolbar": [
+        "bulkActions",
+        {
+          "type": "pagination",
+          "align": "left"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "label": "Columns"
+        },
+        {
+          "type": "tpl",
+          "tpl": "<span class='text-muted text-sm'>${count} of ${total} users</span>",
+          "className": "m-l-sm",
+          "align": "right"
+        }
+      ],
+      "footerToolbar": [
+        {
+          "type": "tpl",
+          "tpl": "Showing ${count} records"
+        },
+        {
+          "type": "switch-per-page",
+          "label": "Per page"
+        },
+        {
+          "type": "pagination",
+          "layout": ["pager", "go"],
+          "actionPerPage": "Per page"
+        }
+      ],
+      "bulkActions": [
+        {
+          "label": "Bulk Activate",
+          "actionType": "ajax",
+          "level": "success",
+          "icon": "fa fa-check",
+          "api": "post:/api/v1/users/${ids|raw}/activate",
+          "confirmText": "Activate ${selectedItems.length} selected users?"
+        },
+        {
+          "label": "Bulk Suspend",
+          "actionType": "ajax",
+          "level": "warning",
+          "icon": "fa fa-pause",
+          "api": "post:/api/v1/users/${ids|raw}/suspend",
+          "confirmText": "Suspend ${selectedItems.length} selected users?"
+        },
+        {
+          "label": "Send Password Reset",
+          "actionType": "ajax",
+          "level": "info",
+          "icon": "fa fa-key",
+          "api": "post:/api/v1/users/${ids|raw}/reset-password",
+          "confirmText": "Send password reset emails to ${selectedItems.length} selected users?"
+        }
+      ],
+      "filter": {
+        "title": "",
+        "submitText": "Search",
+        "body": [
+          {
+            "type": "group",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "search",
+                "placeholder": "Search by name, email, or username...",
+                "clearable": true,
+                "addOn": {
+                  "type": "button",
+                  "icon": "fa fa-search",
+                  "actionType": "submit",
+                  "level": "primary"
+                }
+              },
+              {
+                "type": "select",
+                "name": "role",
+                "placeholder": "All Roles",
+                "clearable": true,
+                "searchable": true,
+                "options": [
+                  {"label": "Super Admin", "value": "SUPER_ADMIN"},
+                  {"label": "Admin", "value": "ADMIN"},
+                  {"label": "Manager", "value": "MANAGER"},
+                  {"label": "User", "value": "USER"},
+                  {"label": "Guest", "value": "GUEST"}
+                ]
+              },
+              {
+                "type": "select",
+                "name": "status",
+                "placeholder": "All Statuses",
+                "clearable": true,
+                "searchable": true,
+                "options": [
+                  {"label": "Active", "value": "ACTIVE"},
+                  {"label": "Suspended", "value": "SUSPENDED"},
+                  {"label": "Pending", "value": "PENDING"},
+                  {"label": "Locked", "value": "LOCKED"}
+                ]
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {"type": "reset", "label": "Clear"},
+          {"type": "submit", "label": "Apply Filters", "level": "primary"}
+        ]
+      },
+      "columns": [
+        {
+          "name": "avatar",
+          "label": "Avatar",
+          "type": "image",
+          "width": 60,
+          "thumbMode": "cover",
+          "enlargeAble": false
+        },
+        {
+          "name": "full_name",
+          "label": "User",
+          "sortable": true,
+          "type": "tpl",
+          "tpl": "<div><strong>${first_name} ${last_name}</strong><br/><small class='text-muted'>${email}</small></div>"
+        },
+        {
+          "name": "organization.name",
+          "label": "Organization",
+          "type": "tpl",
+          "tpl": "${organization.name|default:-}",
+          "toggled": true
+        },
+        {
+          "name": "role",
+          "label": "Role",
+          "sortable": true,
+          "type": "mapping",
+          "map": {
+            "SUPER_ADMIN": "<span class='label label-danger'><i class='fa fa-crown'></i> Super Admin</span>",
+            "ADMIN": "<span class='label label-primary'><i class='fa fa-user-shield'></i> Admin</span>",
+            "MANAGER": "<span class='label label-info'><i class='fa fa-users-cog'></i> Manager</span>",
+            "USER": "<span class='label label-success'><i class='fa fa-user'></i> User</span>",
+            "GUEST": "<span class='label label-default'><i class='fa fa-eye'></i> Guest</span>",
+            "*": "<span class='label label-default'>${role}</span>"
+          }
+        },
+        {
+          "name": "status",
+          "label": "Status",
+          "sortable": true,
+          "type": "mapping",
+          "map": {
+            "ACTIVE": "<span class='label label-success'><i class='fa fa-check-circle'></i> Active</span>",
+            "SUSPENDED": "<span class='label label-warning'><i class='fa fa-pause-circle'></i> Suspended</span>",
+            "PENDING": "<span class='label label-info'><i class='fa fa-clock'></i> Pending</span>",
+            "LOCKED": "<span class='label label-danger'><i class='fa fa-lock'></i> Locked</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          }
+        },
+        {
+          "name": "timestamps.last_login_at",
+          "label": "Last Login",
+          "type": "datetime",
+          "format": "YYYY-MM-DD HH:mm",
+          "toggled": true
+        },
+        {
+          "name": "timestamps.created_at",
+          "label": "Created",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "sortable": true,
+          "toggled": false
+        },
+        {
+          "type": "operation",
+          "label": "Actions",
+          "width": 180,
+          "buttons": [
+            {
+              "label": "View",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-eye",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "${first_name} ${last_name}",
+                "size": "lg",
+                "actions": [
+                  {"type": "button", "label": "Close", "actionType": "close"}
+                ],
+                "body": {
+                  "type": "service",
+                  "api": "/api/v1/users/${id}?view=detailed",
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "Overview",
+                          "icon": "fa fa-info-circle",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 3,
+                                  "body": {
+                                    "type": "image",
+                                    "src": "${avatar}",
+                                    "className": "m-b",
+                                    "enlargeAble": true,
+                                    "thumbMode": "cover"
+                                  }
+                                },
+                                {
+                                  "md": 9,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "User Information",
+                                    "column": 2,
+                                    "items": [
+                                      {"label": "ID", "content": "${id}"},
+                                      {"label": "Full Name", "content": "${first_name} ${last_name}"},
+                                      {"label": "Email", "content": "${email}"},
+                                      {"label": "Username", "content": "${username|default:-}"},
+                                      {"label": "Phone", "content": "${phone|default:-}"},
+                                      {"label": "Job Title", "content": "${job_title|default:-}"},
+                                      {"label": "Department", "content": "${department|default:-}"},
+                                      {"label": "Role", "content": "${role}"},
+                                      {"label": "Status", "content": "${status}"},
+                                      {"label": "Organization", "content": "${organization.name}"}
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "property",
+                              "title": "Bio",
+                              "column": 1,
+                              "items": [
+                                {"label": "", "content": "${bio|default:No bio provided}"}
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Activity",
+                          "icon": "fa fa-chart-line",
+                          "body": {
+                            "type": "property",
+                            "title": "Activity Metrics",
+                            "column": 2,
+                            "items": [
+                              {"label": "Last Login", "content": "${timestamps.last_login_at|default:Never}"},
+                              {"label": "Login Count", "content": "${metrics.login_count|default:0}"},
+                              {"label": "Failed Logins", "content": "${metrics.failed_login_count|default:0}"},
+                              {"label": "Last Activity", "content": "${timestamps.last_activity_at|default:N/A}"}
+                            ]
+                          }
+                        },
+                        {
+                          "title": "Timeline",
+                          "icon": "fa fa-clock",
+                          "body": {
+                            "type": "property",
+                            "title": "Timestamps",
+                            "column": 2,
+                            "items": [
+                              {"label": "Created", "content": "${timestamps.created_at}"},
+                              {"label": "Updated", "content": "${timestamps.updated_at}"},
+                              {"label": "Email Verified", "content": "${timestamps.email_verified_at|default:Not verified}"},
+                              {"label": "Suspended At", "content": "${timestamps.suspended_at|default:N/A}"}
+                            ]
+                          }
+                        },
+                        {
+                          "title": "Permissions",
+                          "icon": "fa fa-key",
+                          "body": {
+                            "type": "json",
+                            "value": "${permissions|json}",
+                            "placeholder": "No custom permissions"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "label": "Edit",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-pen",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "Edit — ${first_name} ${last_name}",
+                "size": "lg",
+                "closeOnEsc": true,
+                "body": {
+                  "type": "form",
+                  "api": "put:/api/v1/users/${id}",
+                  "initApi": "/api/v1/users/${id}?view=detailed",
+                  "submitText": "Save",
+                  "resetAfterSubmit": false,
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "Profile",
+                          "body": [
+                            {
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "first_name",
+                                  "label": "First Name",
+                                  "required": true
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "last_name",
+                                  "label": "Last Name",
+                                  "required": true
+                                }
+                              ]
+                            },
+                            {
+                              "type": "input-email",
+                              "name": "email",
+                              "label": "Email",
+                              "required": true
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "phone",
+                              "label": "Phone"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "job_title",
+                              "label": "Job Title"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "bio",
+                              "label": "Bio",
+                              "rows": 3
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Access",
+                          "body": [
+                            {
+                              "type": "select",
+                              "name": "role",
+                              "label": "Role",
+                              "required": true,
+                              "options": [
+                                {"label": "Super Admin", "value": "SUPER_ADMIN"},
+                                {"label": "Admin", "value": "ADMIN"},
+                                {"label": "Manager", "value": "MANAGER"},
+                                {"label": "User", "value": "USER"},
+                                {"label": "Guest", "value": "GUEST"}
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "department",
+                              "label": "Department"
+                            },
+                            {
+                              "type": "select",
+                              "name": "organization_id",
+                              "label": "Organization",
+                              "source": "/api/v1/tenants?fields=id,name",
+                              "labelField": "name",
+                              "valueField": "id"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "dropdown-button",
+              "label": "",
+              "icon": "fa fa-ellipsis-v",
+              "level": "link",
+              "buttons": [
+                {
+                  "label": "Activate",
+                  "type": "button",
+                  "icon": "fa fa-check text-success",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/users/${id}/activate",
+                  "confirmText": "Activate user '${first_name} ${last_name}'?",
+                  "visibleOn": "this.status !== 'ACTIVE'"
+                },
+                {
+                  "label": "Suspend",
+                  "type": "button",
+                  "icon": "fa fa-pause text-warning",
+                  "actionType": "dialog",
+                  "visibleOn": "this.status === 'ACTIVE'",
+                  "dialog": {
+                    "title": "Suspend — ${first_name} ${last_name}",
+                    "body": {
+                      "type": "form",
+                      "api": "post:/api/v1/users/${id}/suspend",
+                      "body": [
+                        {
+                          "type": "alert",
+                          "level": "warning",
+                          "body": "Suspending will immediately revoke all access for this user."
+                        },
+                        {
+                          "type": "textarea",
+                          "name": "reason",
+                          "label": "Suspension Reason",
+                          "required": true,
+                          "validations": {"minLength": 10},
+                          "placeholder": "Why is this user being suspended?",
+                          "rows": 3
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "label": "Reset Password",
+                  "type": "button",
+                  "icon": "fa fa-key",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/users/${id}/reset-password",
+                  "confirmText": "Send password reset email to '${email}'?"
+                },
+                {
+                  "label": "Unlock Account",
+                  "type": "button",
+                  "icon": "fa fa-unlock text-info",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/users/${id}/unlock",
+                  "confirmText": "Unlock user account?",
+                  "visibleOn": "this.status === 'LOCKED'"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Impersonate",
+                  "type": "button",
+                  "icon": "fa fa-user-secret",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/users/${id}/impersonate",
+                  "confirmText": "Login as '${first_name} ${last_name}'? This action will be logged."
+                },
+                {
+                  "label": "View Audit Log",
+                  "type": "button",
+                  "icon": "fa fa-history",
+                  "actionType": "link",
+                  "link": "/audit-logs?user_id=${id}"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Copy ID",
+                  "type": "button",
+                  "icon": "fa fa-copy",
+                  "actionType": "copy",
+                  "content": "${id}"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Delete",
+                  "type": "button",
+                  "icon": "fa fa-trash text-danger",
+                  "className": "text-danger",
+                  "actionType": "ajax",
+                  "api": "delete:/api/v1/users/${id}",
+                  "confirmText": "Permanently delete user '${first_name} ${last_name}'? All associated data will be removed."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,753 @@
+{
+  "type": "page",
+  "title": "Products",
+  "subTitle": "Manage your complete product catalog and inventory",
+  "remark": "Track products, manage stock levels, and organize your inventory across categories. Use filters to find specific items.",
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "New Product",
+      "level": "primary",
+      "icon": "fa fa-plus",
+      "actionType": "dialog",
+      "dialog": {
+        "title": "Create Product",
+        "size": "lg",
+        "closeOnEsc": true,
+        "actions": [
+          {"type": "button", "label": "Cancel", "actionType": "close"},
+          {"type": "button", "label": "Submit", "actionType": "confirm", "level": "primary"}
+        ],
+        "body": {
+          "type": "wizard",
+          "api": "post:/api/v1/products",
+          "actionPrevLabel": "Previous",
+          "actionNextLabel": "Next",
+          "actionFinishLabel": "Create Product",
+          "steps": [
+            {
+              "title": "Basic Info",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "Product Name",
+                      "required": true,
+                      "placeholder": "e.g. Wireless Mouse",
+                      "validations": {"minLength": 2, "maxLength": 255},
+                      "validationErrors": {
+                        "minLength": "Name must be at least 2 characters",
+                        "maxLength": "Name must not exceed 255 characters"
+                      }
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "sku",
+                      "label": "SKU",
+                      "required": true,
+                      "placeholder": "e.g. WM-001",
+                      "description": "Stock Keeping Unit - unique identifier",
+                      "validations": {"matchRegexp": "/^[A-Z0-9-]+$/"},
+                      "validationErrors": {"matchRegexp": "SKU must be uppercase alphanumeric with hyphens only"}
+                    }
+                  ]
+                },
+                {
+                  "type": "textarea",
+                  "name": "description",
+                  "label": "Description",
+                  "placeholder": "Detailed product description...",
+                  "rows": 3
+                }
+              ]
+            },
+            {
+              "title": "Category & Pricing",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "select",
+                      "name": "category",
+                      "label": "Category",
+                      "required": true,
+                      "searchable": true,
+                      "clearable": true,
+                      "options": [
+                        {"label": "Electronics", "value": "ELECTRONICS"},
+                        {"label": "Clothing & Apparel", "value": "CLOTHING"},
+                        {"label": "Food & Beverage", "value": "FOOD"},
+                        {"label": "Home & Garden", "value": "HOME"},
+                        {"label": "Sports & Outdoors", "value": "SPORTS"},
+                        {"label": "Books & Media", "value": "BOOKS"},
+                        {"label": "Health & Beauty", "value": "HEALTH"},
+                        {"label": "Toys & Games", "value": "TOYS"}
+                      ]
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "brand",
+                      "label": "Brand",
+                      "placeholder": "e.g. Logitech, Nike"
+                    }
+                  ]
+                },
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-number",
+                      "name": "price",
+                      "label": "Unit Price",
+                      "required": true,
+                      "min": 0,
+                      "precision": 2,
+                      "prefix": "$"
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "cost",
+                      "label": "Cost Price",
+                      "min": 0,
+                      "precision": 2,
+                      "prefix": "$",
+                      "description": "Your cost to acquire/produce"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Inventory",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-number",
+                      "name": "stock",
+                      "label": "Current Stock",
+                      "required": true,
+                      "min": 0,
+                      "value": 0
+                    },
+                    {
+                      "type": "input-number",
+                      "name": "reorder_level",
+                      "label": "Reorder Level",
+                      "min": 0,
+                      "description": "Alert when stock falls below this"
+                    }
+                  ]
+                },
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "barcode",
+                      "label": "Barcode",
+                      "placeholder": "EAN/UPC code"
+                    },
+                    {
+                      "type": "select",
+                      "name": "unit",
+                      "label": "Unit of Measure",
+                      "value": "PIECE",
+                      "options": [
+                        {"label": "Piece", "value": "PIECE"},
+                        {"label": "Box", "value": "BOX"},
+                        {"label": "Kilogram", "value": "KG"},
+                        {"label": "Liter", "value": "LITER"},
+                        {"label": "Meter", "value": "METER"}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "input-image",
+                  "name": "image",
+                  "label": "Product Image",
+                  "receiver": {"url": "/api/v1/upload"},
+                  "description": "Upload product photo (max 2MB)"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "button",
+      "label": "Refresh",
+      "icon": "fa fa-sync",
+      "level": "default",
+      "actionType": "reload",
+      "target": "product-crud"
+    }
+  ],
+  "body": [
+    {
+      "type": "crud",
+      "name": "product-crud",
+      "api": "/api/v1/products",
+      "syncLocation": false,
+      "autoFillHeight": true,
+      "perPage": 20,
+      "perPageAvailable": [10, 20, 50],
+      "headerToolbar": [
+        "bulkActions",
+        {
+          "type": "pagination",
+          "align": "left"
+        },
+        {
+          "type": "columns-toggler",
+          "align": "right",
+          "label": "Columns"
+        },
+        {
+          "type": "tpl",
+          "tpl": "<span class='text-muted text-sm'>${count} of ${total} products</span>",
+          "className": "m-l-sm",
+          "align": "right"
+        }
+      ],
+      "footerToolbar": [
+        {
+          "type": "tpl",
+          "tpl": "Showing ${count} records"
+        },
+        {
+          "type": "switch-per-page",
+          "label": "Per page"
+        },
+        {
+          "type": "pagination",
+          "layout": ["pager", "go"],
+          "actionPerPage": "Per page"
+        }
+      ],
+      "bulkActions": [
+        {
+          "label": "Bulk Activate",
+          "actionType": "ajax",
+          "level": "success",
+          "icon": "fa fa-check",
+          "api": "post:/api/v1/products/${ids|raw}/activate",
+          "confirmText": "Activate ${selectedItems.length} selected products?"
+        },
+        {
+          "label": "Bulk Deactivate",
+          "actionType": "ajax",
+          "level": "warning",
+          "icon": "fa fa-ban",
+          "api": "post:/api/v1/products/${ids|raw}/deactivate",
+          "confirmText": "Deactivate ${selectedItems.length} selected products?"
+        },
+        {
+          "label": "Bulk Delete",
+          "actionType": "ajax",
+          "level": "danger",
+          "icon": "fa fa-trash",
+          "api": "delete:/api/v1/products/${ids|raw}",
+          "confirmText": "Permanently delete ${selectedItems.length} selected products?"
+        }
+      ],
+      "filter": {
+        "title": "",
+        "submitText": "Search",
+        "body": [
+          {
+            "type": "group",
+            "body": [
+              {
+                "type": "input-text",
+                "name": "search",
+                "placeholder": "Search by name, SKU, or barcode...",
+                "clearable": true,
+                "addOn": {
+                  "type": "button",
+                  "icon": "fa fa-search",
+                  "actionType": "submit",
+                  "level": "primary"
+                }
+              },
+              {
+                "type": "select",
+                "name": "category",
+                "placeholder": "All Categories",
+                "clearable": true,
+                "searchable": true,
+                "options": [
+                  {"label": "Electronics", "value": "ELECTRONICS"},
+                  {"label": "Clothing & Apparel", "value": "CLOTHING"},
+                  {"label": "Food & Beverage", "value": "FOOD"},
+                  {"label": "Home & Garden", "value": "HOME"},
+                  {"label": "Sports & Outdoors", "value": "SPORTS"},
+                  {"label": "Books & Media", "value": "BOOKS"},
+                  {"label": "Health & Beauty", "value": "HEALTH"},
+                  {"label": "Toys & Games", "value": "TOYS"}
+                ]
+              },
+              {
+                "type": "select",
+                "name": "status",
+                "placeholder": "All Statuses",
+                "clearable": true,
+                "options": [
+                  {"label": "Active", "value": "ACTIVE"},
+                  {"label": "Inactive", "value": "INACTIVE"},
+                  {"label": "Out of Stock", "value": "OUT_OF_STOCK"},
+                  {"label": "Discontinued", "value": "DISCONTINUED"}
+                ]
+              }
+            ]
+          }
+        ],
+        "actions": [
+          {"type": "reset", "label": "Clear"},
+          {"type": "submit", "label": "Apply Filters", "level": "primary"}
+        ]
+      },
+      "columns": [
+        {
+          "name": "image",
+          "label": "Image",
+          "type": "image",
+          "width": 80,
+          "enlargeAble": true,
+          "thumbMode": "cover"
+        },
+        {
+          "name": "name",
+          "label": "Product",
+          "sortable": true,
+          "type": "tpl",
+          "tpl": "<div><strong>${name}</strong><br/><small class='text-muted'>${sku}</small></div>"
+        },
+        {
+          "name": "category",
+          "label": "Category",
+          "type": "mapping",
+          "map": {
+            "ELECTRONICS": "<span class='label label-info'><i class='fa fa-laptop'></i> Electronics</span>",
+            "CLOTHING": "<span class='label label-success'><i class='fa fa-tshirt'></i> Clothing</span>",
+            "FOOD": "<span class='label label-warning'><i class='fa fa-utensils'></i> Food & Beverage</span>",
+            "HOME": "<span class='label label-primary'><i class='fa fa-home'></i> Home & Garden</span>",
+            "SPORTS": "<span class='label label-danger'><i class='fa fa-football-ball'></i> Sports</span>",
+            "BOOKS": "<span class='label label-default'><i class='fa fa-book'></i> Books</span>",
+            "HEALTH": "<span class='label label-success'><i class='fa fa-heart'></i> Health</span>",
+            "TOYS": "<span class='label label-info'><i class='fa fa-gamepad'></i> Toys</span>",
+            "*": "<span class='label label-default'>${category}</span>"
+          }
+        },
+        {
+          "name": "price",
+          "label": "Price",
+          "type": "tpl",
+          "tpl": "$${price|number:2}",
+          "sortable": true
+        },
+        {
+          "name": "stock",
+          "label": "Stock",
+          "sortable": true,
+          "type": "tpl",
+          "tpl": "<span class='${stock <= 0 ? \"text-danger\" : stock < reorder_level ? \"text-warning\" : \"text-success\"}'><i class='fa fa-box'></i> ${stock}</span>"
+        },
+        {
+          "name": "status",
+          "label": "Status",
+          "sortable": true,
+          "type": "mapping",
+          "map": {
+            "ACTIVE": "<span class='label label-success'><i class='fa fa-check-circle'></i> Active</span>",
+            "INACTIVE": "<span class='label label-default'><i class='fa fa-times-circle'></i> Inactive</span>",
+            "OUT_OF_STOCK": "<span class='label label-danger'><i class='fa fa-exclamation-circle'></i> Out of Stock</span>",
+            "DISCONTINUED": "<span class='label label-warning'><i class='fa fa-ban'></i> Discontinued</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          },
+          "toggled": true
+        },
+        {
+          "name": "timestamps.created_at",
+          "label": "Created",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "sortable": true,
+          "toggled": false
+        },
+        {
+          "type": "operation",
+          "label": "Actions",
+          "width": 180,
+          "buttons": [
+            {
+              "label": "View",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-eye",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "${name}",
+                "size": "lg",
+                "actions": [
+                  {"type": "button", "label": "Close", "actionType": "close"}
+                ],
+                "body": {
+                  "type": "service",
+                  "api": "/api/v1/products/${id}?view=detailed",
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "Overview",
+                          "icon": "fa fa-info-circle",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 4,
+                                  "body": {
+                                    "type": "image",
+                                    "src": "${image}",
+                                    "className": "m-b",
+                                    "enlargeAble": true
+                                  }
+                                },
+                                {
+                                  "md": 8,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "Product Details",
+                                    "column": 2,
+                                    "items": [
+                                      {"label": "ID", "content": "${id}"},
+                                      {"label": "SKU", "content": "${sku}"},
+                                      {"label": "Name", "content": "${name}"},
+                                      {"label": "Brand", "content": "${brand|default:-}"},
+                                      {"label": "Category", "content": "${category}"},
+                                      {"label": "Barcode", "content": "${barcode|default:-}"},
+                                      {"label": "Status", "content": "${status}"},
+                                      {"label": "Unit", "content": "${unit|default:Piece}"}
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            {
+                              "type": "property",
+                              "title": "Description",
+                              "column": 1,
+                              "items": [
+                                {"label": "", "content": "${description|default:No description provided}"}
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Pricing & Stock",
+                          "icon": "fa fa-dollar-sign",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 6,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "Pricing",
+                                    "column": 1,
+                                    "items": [
+                                      {"label": "Sale Price", "content": "$${price}"},
+                                      {"label": "Cost Price", "content": "$${cost|default:0.00}"},
+                                      {"label": "Profit Margin", "content": "${((price - cost) / price * 100)|number:2}%"}
+                                    ]
+                                  }
+                                },
+                                {
+                                  "md": 6,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "Inventory",
+                                    "column": 1,
+                                    "items": [
+                                      {"label": "Current Stock", "content": "${stock}"},
+                                      {"label": "Reorder Level", "content": "${reorder_level|default:Not set}"},
+                                      {"label": "Stock Value", "content": "$${(stock * cost)|number:2}"}
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Timeline",
+                          "icon": "fa fa-clock",
+                          "body": {
+                            "type": "property",
+                            "title": "Timestamps",
+                            "column": 2,
+                            "items": [
+                              {"label": "Created", "content": "${timestamps.created_at}"},
+                              {"label": "Updated", "content": "${timestamps.updated_at}"},
+                              {"label": "Last Sold", "content": "${timestamps.last_sold_at|default:N/A}"}
+                            ]
+                          }
+                        },
+                        {
+                          "title": "Metadata",
+                          "icon": "fa fa-database",
+                          "body": {
+                            "type": "json",
+                            "value": "${metadata|json}",
+                            "placeholder": "No metadata"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "label": "Edit",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-pen",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "Edit — ${name}",
+                "size": "lg",
+                "closeOnEsc": true,
+                "body": {
+                  "type": "form",
+                  "api": "put:/api/v1/products/${id}",
+                  "initApi": "/api/v1/products/${id}?view=detailed",
+                  "submitText": "Save",
+                  "resetAfterSubmit": false,
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "General",
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "name",
+                              "label": "Product Name",
+                              "required": true
+                            },
+                            {
+                              "type": "static",
+                              "name": "sku",
+                              "label": "SKU",
+                              "copyable": true
+                            },
+                            {
+                              "type": "select",
+                              "name": "category",
+                              "label": "Category",
+                              "searchable": true,
+                              "options": [
+                                {"label": "Electronics", "value": "ELECTRONICS"},
+                                {"label": "Clothing & Apparel", "value": "CLOTHING"},
+                                {"label": "Food & Beverage", "value": "FOOD"},
+                                {"label": "Home & Garden", "value": "HOME"},
+                                {"label": "Sports & Outdoors", "value": "SPORTS"}
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "brand",
+                              "label": "Brand"
+                            },
+                            {
+                              "type": "textarea",
+                              "name": "description",
+                              "label": "Description",
+                              "rows": 3
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Pricing & Stock",
+                          "body": [
+                            {
+                              "type": "input-number",
+                              "name": "price",
+                              "label": "Sale Price",
+                              "required": true,
+                              "min": 0,
+                              "precision": 2,
+                              "prefix": "$"
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "cost",
+                              "label": "Cost Price",
+                              "min": 0,
+                              "precision": 2,
+                              "prefix": "$"
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "stock",
+                              "label": "Current Stock",
+                              "required": true,
+                              "min": 0
+                            },
+                            {
+                              "type": "input-number",
+                              "name": "reorder_level",
+                              "label": "Reorder Level",
+                              "min": 0
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Additional",
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "barcode",
+                              "label": "Barcode"
+                            },
+                            {
+                              "type": "select",
+                              "name": "unit",
+                              "label": "Unit of Measure",
+                              "options": [
+                                {"label": "Piece", "value": "PIECE"},
+                                {"label": "Box", "value": "BOX"},
+                                {"label": "Kilogram", "value": "KG"}
+                              ]
+                            },
+                            {
+                              "type": "input-image",
+                              "name": "image",
+                              "label": "Product Image",
+                              "receiver": {"url": "/api/v1/upload"}
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "dropdown-button",
+              "label": "",
+              "icon": "fa fa-ellipsis-v",
+              "level": "link",
+              "buttons": [
+                {
+                  "label": "Activate",
+                  "type": "button",
+                  "icon": "fa fa-check text-success",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/products/${id}/activate",
+                  "confirmText": "Activate '${name}'?",
+                  "visibleOn": "this.status !== 'ACTIVE'"
+                },
+                {
+                  "label": "Deactivate",
+                  "type": "button",
+                  "icon": "fa fa-ban text-warning",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/products/${id}/deactivate",
+                  "confirmText": "Deactivate '${name}'?",
+                  "visibleOn": "this.status === 'ACTIVE'"
+                },
+                {
+                  "label": "Mark Discontinued",
+                  "type": "button",
+                  "icon": "fa fa-archive text-muted",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/products/${id}/discontinue",
+                  "confirmText": "Mark '${name}' as discontinued?",
+                  "visibleOn": "this.status !== 'DISCONTINUED'"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Adjust Stock",
+                  "type": "button",
+                  "icon": "fa fa-boxes",
+                  "actionType": "dialog",
+                  "dialog": {
+                    "title": "Adjust Stock — ${name}",
+                    "body": {
+                      "type": "form",
+                      "api": "post:/api/v1/products/${id}/adjust-stock",
+                      "body": [
+                        {
+                          "type": "alert",
+                          "level": "info",
+                          "body": "Current stock: <strong>${stock}</strong>"
+                        },
+                        {
+                          "type": "radios",
+                          "name": "adjustment_type",
+                          "label": "Adjustment Type",
+                          "required": true,
+                          "value": "ADD",
+                          "options": [
+                            {"label": "Add Stock", "value": "ADD"},
+                            {"label": "Remove Stock", "value": "REMOVE"},
+                            {"label": "Set Absolute", "value": "SET"}
+                          ]
+                        },
+                        {
+                          "type": "input-number",
+                          "name": "quantity",
+                          "label": "Quantity",
+                          "required": true,
+                          "min": 0
+                        },
+                        {
+                          "type": "textarea",
+                          "name": "reason",
+                          "label": "Reason",
+                          "placeholder": "Why is this adjustment being made?",
+                          "rows": 2
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "label": "Copy ID",
+                  "type": "button",
+                  "icon": "fa fa-copy",
+                  "actionType": "copy",
+                  "content": "${id}"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Delete",
+                  "type": "button",
+                  "icon": "fa fa-trash text-danger",
+                  "className": "text-danger",
+                  "actionType": "ajax",
+                  "api": "delete:/api/v1/products/${id}",
+                  "confirmText": "Permanently delete '${name}'? This action cannot be undone."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

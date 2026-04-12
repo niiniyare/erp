@@ -32,6 +32,18 @@
 23. [Design Tokens](./23-design-tokens.md)
 24. [Known Issues & Workarounds](./24-known-issues.md)
 25. [Implementation Checklist](./25-implementation-checklist.md)
+26. [The AMIS Way](./26-the-amis-way.md) ⭐ Read this first if you're new to the project
+27. [Decisions & Opinions](./27-decisions-and-opinions.md) ⭐ Architecture decisions with reasoning
+
+---
+
+## Start Here
+
+If you are new: read [§26 The AMIS Way](./26-the-amis-way.md) before anything else. It explains what AMIS is for, where the current implementation drifts from it, and the decisions that will shape the next phase.
+
+If you are building a new page: [§25 Implementation Checklist](./25-implementation-checklist.md) before marking it done.
+
+If you are making an architecture decision: [§27 Decisions & Opinions](./27-decisions-and-opinions.md) first — the decision may already be made.
 
 ---
 

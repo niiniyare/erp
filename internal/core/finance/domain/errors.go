@@ -19,6 +19,7 @@ var (
 	ErrCircularAccountReference = errors.New("circular account reference detected")
 
 	// Transaction errors
+	ErrCannotReverseReversal          = errors.New("cannot reverse a reversal transaction")
 	ErrTransactionNotFound            = errors.New("transaction not found")
 	ErrTransactionNumberExists        = errors.New("transaction number already exists")
 	ErrTransactionAlreadyPosted       = errors.New("transaction already posted")

@@ -1,0 +1,781 @@
+{
+  "type": "page",
+  "title": "Tenants",
+  "subTitle": "Manage tenants, lifecycle, and settings",
+  "remark": "All tenants are managed here. Use filters to narrow results or create new tenants with the toolbar.",
+  "css": {
+    ".cxd-Page-body": {
+      "padding": "0 !important"
+    },
+    ".cxd-Crud": {
+      "margin": "0 !important"
+    },
+    ".cxd-Table": {
+      "margin": "0 !important"
+    },
+    ".cxd-Table-table": {
+      "font-size": "13px"
+    },
+    ".cxd-Table-table th": {
+      "padding": "8px 4px",
+      "font-size": "12px"
+    },
+    ".cxd-Table-table td": {
+      "padding": "8px 4px"
+    }
+  },
+  "toolbar": [
+    {
+      "type": "button",
+      "label": "New Tenant",
+      "level": "primary",
+      "icon": "fa fa-plus",
+      "actionType": "dialog",
+      "className": "m-r-xs",
+      "dialog": {
+        "title": "Create Tenant",
+        "size": "lg",
+        "closeOnEsc": true,
+        "actions": [
+          {"type": "button", "label": "Cancel", "actionType": "close"},
+          {"type": "button", "label": "Submit", "actionType": "confirm", "level": "primary"}
+        ],
+        "body": {
+          "type": "wizard",
+          "api": "post:/api/v1/tenants",
+          "actionPrevLabel": "Previous",
+          "actionNextLabel": "Next",
+          "actionFinishLabel": "Create",
+          "steps": [
+            {
+              "title": "Basic Info",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "name",
+                      "label": "Tenant Name",
+                      "required": true,
+                      "placeholder": "e.g. Acme Corporation",
+                      "validations": {"minLength": 2, "maxLength": 255},
+                      "validationErrors": {
+                        "minLength": "Name must be at least 2 characters",
+                        "maxLength": "Name must not exceed 255 characters"
+                      }
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "slug",
+                      "label": "Slug",
+                      "placeholder": "e.g. acme-corp",
+                      "description": "URL-friendly identifier. Auto-generated from name if left blank.",
+                      "validations": {"matchRegexp": "/^[a-z0-9]+(?:-[a-z0-9]+)*$/"},
+                      "validationErrors": {"matchRegexp": "Slug must be lowercase alphanumeric with hyphens only"}
+                    }
+                  ]
+                },
+                {
+                  "type": "input-email",
+                  "name": "email",
+                  "label": "Primary Email",
+                  "required": true,
+                  "placeholder": "admin@example.com",
+                  "description": "Main contact email for this tenant"
+                }
+              ]
+            },
+            {
+              "title": "Region & Currency",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "select",
+                      "name": "country_code",
+                      "label": "Country",
+                      "required": true,
+                      "searchable": true,
+                      "clearable": true,
+                      "options": [
+                        {"label": "United States", "value": "US"},
+                        {"label": "United Kingdom", "value": "GB"},
+                        {"label": "Kenya", "value": "KE"},
+                        {"label": "Somalia", "value": "SO"},
+                        {"label": "Canada", "value": "CA"},
+                        {"label": "Germany", "value": "DE"},
+                        {"label": "France", "value": "FR"},
+                        {"label": "India", "value": "IN"},
+                        {"label": "Australia", "value": "AU"},
+                        {"label": "Japan", "value": "JP"},
+                        {"label": "United Arab Emirates", "value": "AE"},
+                        {"label": "Saudi Arabia", "value": "SA"},
+                        {"label": "Nigeria", "value": "NG"},
+                        {"label": "South Africa", "value": "ZA"},
+                        {"label": "Ethiopia", "value": "ET"},
+                        {"label": "Tanzania", "value": "TZ"},
+                        {"label": "Uganda", "value": "UG"},
+                        {"label": "Djibouti", "value": "DJ"}
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "currency_code",
+                      "label": "Currency",
+                      "required": true,
+                      "searchable": true,
+                      "clearable": true,
+                      "options": [
+                        {"label": "USD — US Dollar", "value": "USD"},
+                        {"label": "GBP — British Pound", "value": "GBP"},
+                        {"label": "KES — Kenyan Shilling", "value": "KES"},
+                        {"label": "EUR — Euro", "value": "EUR"},
+                        {"label": "CAD — Canadian Dollar", "value": "CAD"},
+                        {"label": "AUD — Australian Dollar", "value": "AUD"},
+                        {"label": "INR — Indian Rupee", "value": "INR"},
+                        {"label": "JPY — Japanese Yen", "value": "JPY"},
+                        {"label": "AED — UAE Dirham", "value": "AED"},
+                        {"label": "SAR — Saudi Riyal", "value": "SAR"},
+                        {"label": "NGN — Nigerian Naira", "value": "NGN"},
+                        {"label": "ZAR — South African Rand", "value": "ZAR"},
+                        {"label": "ETB — Ethiopian Birr", "value": "ETB"},
+                        {"label": "TZS — Tanzanian Shilling", "value": "TZS"},
+                        {"label": "UGX — Ugandan Shilling", "value": "UGX"},
+                        {"label": "DJF — Djiboutian Franc", "value": "DJF"}
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "title": "Details",
+              "body": [
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "industry",
+                      "label": "Industry",
+                      "placeholder": "e.g. Technology, Healthcare, Finance"
+                    },
+                    {
+                      "type": "select",
+                      "name": "company_size",
+                      "label": "Company Size",
+                      "clearable": true,
+                      "searchable": true,
+                      "options": [
+                        {"label": "Startup (1–10)", "value": "STARTUP"},
+                        {"label": "Small (11–50)", "value": "SMALL"},
+                        {"label": "Medium (51–200)", "value": "MEDIUM"},
+                        {"label": "Large (201–1000)", "value": "LARGE"},
+                        {"label": "Enterprise (1000+)", "value": "ENTERPRISE"}
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "group",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "tax_id",
+                      "label": "Tax ID",
+                      "placeholder": "e.g. EIN, VAT number"
+                    },
+                    {
+                      "type": "input-text",
+                      "name": "registration_number",
+                      "label": "Registration Number",
+                      "placeholder": "Business registration number"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "button",
+      "label": "",
+      "icon": "fa fa-sync",
+      "level": "default",
+      "actionType": "reload",
+      "target": "org-crud",
+      "size": "sm"
+    }
+  ],
+  "body": [
+    {
+      "type": "crud",
+      "name": "org-crud",
+      "api": "/api/v1/tenants",
+      "syncLocation": false,
+      "autoFillHeight": true,
+      "affixHeader": false,
+      "perPage": 10,
+      "perPageAvailable": [10, 20, 50],
+      "keepItemSelectionOnPageChange": true,
+      "loadDataOnce": false,
+      "headerToolbar": [
+        {
+          "type": "flex",
+          "className": "p-xs",
+          "style": {
+            "flexWrap": "wrap",
+            "gap": "6px",
+            "alignItems": "center"
+          },
+          "items": [
+            {
+              "type": "button",
+              "icon": "fa fa-filter",
+              "level": "light",
+              "size": "xs",
+              "actionType": "drawer",
+              "tooltip": "Filters",
+              "drawer": {
+                "title": "Filters",
+                "size": "sm",
+                "position": "right",
+                "closeOnEsc": true,
+                "body": {
+                  "type": "form",
+                  "mode": "normal",
+                  "wrapWithPanel": false,
+                  "target": "org-crud",
+                  "body": [
+                    {
+                      "type": "input-text",
+                      "name": "search",
+                      "label": "Search",
+                      "placeholder": "Name or slug...",
+                      "clearable": true,
+                      "size": "sm"
+                    },
+                    {
+                      "type": "select",
+                      "name": "status",
+                      "label": "Status",
+                      "placeholder": "All",
+                      "clearable": true,
+                      "size": "sm",
+                      "options": [
+                        {"label": "Active", "value": "ACTIVE"},
+                        {"label": "Suspended", "value": "SUSPENDED"},
+                        {"label": "Pending", "value": "PENDING"},
+                        {"label": "Archived", "value": "ARCHIVED"}
+                      ]
+                    },
+                    {
+                      "type": "select",
+                      "name": "sort_by",
+                      "label": "Sort",
+                      "clearable": true,
+                      "size": "sm",
+                      "value": "created_at",
+                      "options": [
+                        {"label": "Created", "value": "created_at"},
+                        {"label": "Name", "value": "name"},
+                        {"label": "Status", "value": "status"}
+                      ]
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "type": "reset",
+                      "label": "Clear",
+                      "level": "default",
+                      "size": "sm"
+                    },
+                    {
+                      "type": "submit",
+                      "label": "Apply",
+                      "level": "primary",
+                      "size": "sm"
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "dropdown-button",
+              "icon": "fa fa-tasks",
+              "level": "light",
+              "size": "xs",
+              "hideCaret": true,
+              "tooltip": "Bulk Actions",
+              "closeOnClick": true,
+              "buttons": [
+                {
+                  "label": "Activate",
+                  "actionType": "ajax",
+                  "icon": "fa fa-check",
+                  "api": "post:/api/v1/tenants/${ids|raw}/activate",
+                  "confirmText": "Activate ${selectedItems.length} tenants?"
+                },
+                {
+                  "label": "Suspend",
+                  "actionType": "ajax",
+                  "icon": "fa fa-pause",
+                  "api": "post:/api/v1/tenants/${ids|raw}/suspend",
+                  "confirmText": "Suspend ${selectedItems.length} tenants?"
+                }
+              ]
+            },
+            {
+              "type": "tpl",
+              "tpl": "<small class='text-muted text-xs'>${count}/${total}</small>",
+              "className": "v-middle"
+            }
+          ]
+        }
+      ],
+      "footerToolbar": [
+        {
+          "type": "flex",
+          "className": "p-xs",
+          "style": {
+            "flexWrap": "wrap",
+            "gap": "6px",
+            "fontSize": "12px",
+            "alignItems": "center",
+            "justifyContent": "center"
+          },
+          "items": [
+            {
+              "type": "pagination",
+              "layout": ["pager"],
+              "maxButtons": 4,
+              "hasNext": true
+            }
+          ]
+        }
+      ],
+      "bulkActions": [],
+      "columns": [
+        {
+          "name": "name",
+          "label": "Tenant",
+          "sortable": false,
+          "type": "tpl",
+          "tpl": "<div><strong>${name}</strong><br/><small class='text-muted text-xs'>${slug}</small></div>"
+        },
+        {
+          "name": "status",
+          "label": "Status",
+          "sortable": false,
+          "type": "mapping",
+          "map": {
+            "ACTIVE": "<span class='label label-success'><i class='fa fa-check'></i> Active</span>",
+            "SUSPENDED": "<span class='label label-warning'><i class='fa fa-pause'></i> Suspend</span>",
+            "PENDING": "<span class='label label-info'><i class='fa fa-clock'></i> Pending</span>",
+            "ARCHIVED": "<span class='label label-default'><i class='fa fa-archive'></i> Archive</span>",
+            "*": "<span class='label label-default'>${status}</span>"
+          }
+        },
+        {
+          "name": "plan_tier",
+          "label": "Plan",
+          "sortable": false,
+          "type": "mapping",
+          "map": {
+            "STARTER":      "<span class='label label-default'>Starter</span>",
+            "GROWTH":       "<span class='label label-info'>Growth</span>",
+            "PROFESSIONAL": "<span class='label label-primary'>Pro</span>",
+            "ENTERPRISE":   "<span class='label label-success'>Enterprise</span>",
+            "*":            "<span class='label label-default'>${plan_tier}</span>"
+          }
+        },
+        {
+          "name": "email",
+          "label": "Email",
+          "type": "tpl",
+          "tpl": "<a href='mailto:${email}' class='text-xs'>${email}</a>",
+          "toggled": false,
+          "breakpoint": "lg"
+        },
+        {
+          "name": "currency_code",
+          "label": "Currency",
+          "toggled": false,
+          "breakpoint": "xl"
+        },
+        {
+          "name": "created_at",
+          "label": "Created",
+          "type": "date",
+          "format": "YYYY-MM-DD",
+          "sortable": false,
+          "toggled": false,
+          "breakpoint": "xl"
+        },
+        {
+          "type": "operation",
+          "label": "Actions",
+          "buttons": [
+            {
+              "label": "",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-eye",
+              "size": "xs",
+              "tooltip": "View",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "${name}",
+                "size": "lg",
+                "actions": [
+                  {"type": "button", "label": "Close", "actionType": "close"}
+                ],
+                "body": {
+                  "type": "service",
+                  "api": "/api/v1/tenants/${id}?view=detailed",
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "Overview",
+                          "icon": "fa fa-info-circle",
+                          "body": [
+                            {
+                              "type": "grid",
+                              "columns": [
+                                {
+                                  "md": 6,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "Identity",
+                                    "column": 1,
+                                    "items": [
+                                      {"label": "ID", "content": "${id}", "span": 1},
+                                      {"label": "Name", "content": "${name}"},
+                                      {"label": "Slug", "content": "${slug}"},
+                                      {"label": "Email", "content": "${email}"},
+                                      {"label": "Status", "content": "${status}"},
+                                      {"label": "Plan", "content": "${plan_tier|default:-}"}
+                                    ]
+                                  }
+                                },
+                                {
+                                  "md": 6,
+                                  "body": {
+                                    "type": "property",
+                                    "title": "Business",
+                                    "column": 1,
+                                    "items": [
+                                      {"label": "Industry", "content": "${industry|default:-}"},
+                                      {"label": "Company Size", "content": "${company_size|default:-}"},
+                                      {"label": "Currency", "content": "${currency_code|default:-}"},
+                                      {"label": "Timezone", "content": "${timezone|default:-}"},
+                                      {"label": "Subdomain", "content": "${subdomain|default:-}"},
+                                      {"label": "Tax ID", "content": "${tax_id|default:-}"},
+                                      {"label": "Registration No.", "content": "${registration_number|default:-}"},
+                                      {"label": "Legal Entity", "content": "${legal_entity_type|default:-}"}
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Timeline",
+                          "icon": "fa fa-clock",
+                          "body": {
+                            "type": "property",
+                            "title": "Timestamps",
+                            "column": 2,
+                            "items": [
+                              {"label": "Created", "content": "${created_at}"},
+                              {"label": "Updated", "content": "${updated_at}"},
+                              {"label": "Last Activity", "content": "${last_activity_at|default:N/A}"},
+                              {"label": "Deleted", "content": "${deleted_at|default:N/A}"}
+                            ]
+                          }
+                        },
+                        {
+                          "title": "Settings",
+                          "icon": "fa fa-cog",
+                          "body": {
+                            "type": "json",
+                            "value": "${settings|json}",
+                            "placeholder": "No custom settings configured"
+                          }
+                        },
+                        {
+                          "title": "Metadata",
+                          "icon": "fa fa-database",
+                          "body": {
+                            "type": "json",
+                            "value": "${metadata|json}",
+                            "placeholder": "No metadata"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "label": "",
+              "type": "button",
+              "level": "link",
+              "icon": "fa fa-pen",
+              "size": "xs",
+              "tooltip": "Edit",
+              "actionType": "dialog",
+              "dialog": {
+                "title": "Edit — ${name}",
+                "size": "md",
+                "closeOnEsc": true,
+                "body": {
+                  "type": "form",
+                  "api": "put:/api/v1/tenants/${id}",
+                  "initApi": "/api/v1/tenants/${id}?view=detailed",
+                  "submitText": "Save",
+                  "resetAfterSubmit": false,
+                  "body": [
+                    {
+                      "type": "tabs",
+                      "tabs": [
+                        {
+                          "title": "General",
+                          "body": [
+                            {
+                              "type": "input-text",
+                              "name": "name",
+                              "label": "Name",
+                              "required": true,
+                              "validations": {"minLength": 2, "maxLength": 255}
+                            },
+                            {
+                              "type": "static",
+                              "name": "slug",
+                              "label": "Slug",
+                              "copyable": true
+                            },
+                            {
+                              "type": "input-email",
+                              "name": "email",
+                              "label": "Email"
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "subdomain",
+                              "label": "Subdomain",
+                              "description": "Custom subdomain for this tenant",
+                              "placeholder": "e.g. acme"
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Business Details",
+                          "body": [
+                            {
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "industry",
+                                  "label": "Industry",
+                                  "placeholder": "e.g. Technology, Healthcare"
+                                },
+                                {
+                                  "type": "select",
+                                  "name": "company_size",
+                                  "label": "Company Size",
+                                  "clearable": true,
+                                  "searchable": true,
+                                  "options": [
+                                    {"label": "Startup (1–10)", "value": "STARTUP"},
+                                    {"label": "Small (11–50)", "value": "SMALL"},
+                                    {"label": "Medium (51–200)", "value": "MEDIUM"},
+                                    {"label": "Large (201–1000)", "value": "LARGE"},
+                                    {"label": "Enterprise (1000+)", "value": "ENTERPRISE"}
+                                  ]
+                                }
+                              ]
+                            },
+                            {
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "input-text",
+                                  "name": "tax_id",
+                                  "label": "Tax ID",
+                                  "placeholder": "e.g. EIN, VAT number"
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "registration_number",
+                                  "label": "Registration Number",
+                                  "placeholder": "Business registration number"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "input-text",
+                              "name": "legal_entity_type",
+                              "label": "Legal Entity Type",
+                              "placeholder": "e.g. LLC, Corporation, Partnership"
+                            }
+                          ]
+                        },
+                        {
+                          "title": "Locale & Plan",
+                          "body": [
+                            {
+                              "type": "group",
+                              "body": [
+                                {
+                                  "type": "select",
+                                  "name": "currency_code",
+                                  "label": "Currency",
+                                  "searchable": true,
+                                  "clearable": true,
+                                  "options": [
+                                    {"label": "USD — US Dollar", "value": "USD"},
+                                    {"label": "GBP — British Pound", "value": "GBP"},
+                                    {"label": "KES — Kenyan Shilling", "value": "KES"},
+                                    {"label": "EUR — Euro", "value": "EUR"},
+                                    {"label": "CAD — Canadian Dollar", "value": "CAD"},
+                                    {"label": "AUD — Australian Dollar", "value": "AUD"},
+                                    {"label": "INR — Indian Rupee", "value": "INR"},
+                                    {"label": "AED — UAE Dirham", "value": "AED"},
+                                    {"label": "SAR — Saudi Riyal", "value": "SAR"},
+                                    {"label": "NGN — Nigerian Naira", "value": "NGN"},
+                                    {"label": "ZAR — South African Rand", "value": "ZAR"},
+                                    {"label": "ETB — Ethiopian Birr", "value": "ETB"},
+                                    {"label": "TZS — Tanzanian Shilling", "value": "TZS"},
+                                    {"label": "UGX — Ugandan Shilling", "value": "UGX"},
+                                    {"label": "DJF — Djiboutian Franc", "value": "DJF"}
+                                  ]
+                                },
+                                {
+                                  "type": "input-text",
+                                  "name": "timezone",
+                                  "label": "Timezone",
+                                  "placeholder": "e.g. UTC, America/New_York",
+                                  "description": "IANA timezone identifier"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "select",
+                              "name": "plan_tier",
+                              "label": "Plan Tier",
+                              "clearable": false,
+                              "description": "Subscription plan. The Billing module is the source of truth — this is a denormalized signal.",
+                              "options": [
+                                {"label": "Starter", "value": "STARTER"},
+                                {"label": "Growth", "value": "GROWTH"},
+                                {"label": "Professional", "value": "PROFESSIONAL"},
+                                {"label": "Enterprise", "value": "ENTERPRISE"}
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "dropdown-button",
+              "label": "",
+              "icon": "fa fa-ellipsis-v",
+              "level": "link",
+              "size": "xs",
+              "hideCaret": true,
+              "tooltip": "More",
+              "buttons": [
+                {
+                  "label": "Activate",
+                  "type": "button",
+                  "icon": "fa fa-check text-success",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/tenants/${id}/activate",
+                  "confirmText": "Activate '${name}'?",
+                  "visibleOn": "this.status !== 'ACTIVE'"
+                },
+                {
+                  "label": "Suspend",
+                  "type": "button",
+                  "icon": "fa fa-pause text-warning",
+                  "actionType": "dialog",
+                  "visibleOn": "this.status === 'ACTIVE'",
+                  "dialog": {
+                    "title": "Suspend — ${name}",
+                    "actions": [
+                      {"type": "button", "label": "Cancel", "actionType": "close"},
+                      {"type": "button", "label": "Confirm Suspend", "actionType": "confirm", "level": "warning"}
+                    ],
+                    "body": {
+                      "type": "form",
+                      "api": "post:/api/v1/tenants/${id}/suspend",
+                      "submitText": "Suspend",
+                      "body": [
+                        {
+                          "type": "alert",
+                          "level": "warning",
+                          "body": "Suspending will immediately restrict access for all users in this tenant."
+                        },
+                        {
+                          "type": "textarea",
+                          "name": "reason",
+                          "label": "Suspension Reason",
+                          "required": true,
+                          "validations": {"minLength": 10},
+                          "validationErrors": {"minLength": "Please provide at least 10 characters explaining the reason"},
+                          "placeholder": "Why is this tenant being suspended?",
+                          "rows": 3
+                        }
+                      ]
+                    }
+                  }
+                },
+                {
+                  "label": "Archive",
+                  "type": "button",
+                  "icon": "fa fa-archive text-muted",
+                  "actionType": "ajax",
+                  "api": "post:/api/v1/tenants/${id}/archive",
+                  "confirmText": "Archive '${name}'? This is a permanent action that cannot be easily undone.",
+                  "visibleOn": "this.status !== 'ARCHIVED'"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Copy ID",
+                  "type": "button",
+                  "icon": "fa fa-copy",
+                  "actionType": "copy",
+                  "content": "${id}"
+                },
+                {"type": "divider"},
+                {
+                  "label": "Delete",
+                  "type": "button",
+                  "icon": "fa fa-trash text-danger",
+                  "className": "text-danger",
+                  "actionType": "ajax",
+                  "api": "delete:/api/v1/tenants/${id}",
+                  "confirmText": "Permanently delete '${name}'? This action cannot be undone and all associated data will be lost."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
