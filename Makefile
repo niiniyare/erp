@@ -20,8 +20,7 @@ DB_USER  ?= admin
 DB_PSSWD ?= admin
 DB_HOST  ?= localhost
 DB_PORT  ?= 5432
-# DB_URL   ?= postgresql://$(DB_USER):$(DB_PSSWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
-DB_URL   ?= postgresql://neondb_owner:npg_9FWOGEYhV7nS@ep-aged-heart-amlbsskp-pooler.c-5.us-east-1.aws.neon.tech/ledger?sslmode=require&channel_binding=require
+DB_URL   ?= postgresql://$(DB_USER):$(DB_PSSWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 # Paths
 MIGRATION_PATH := db/migration
 SQLC_OUT       := db/sqlc
