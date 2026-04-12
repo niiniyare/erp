@@ -208,16 +208,41 @@ func ParseTransactionStatus(s string) (TransactionStatus, error) {
 	return ts, nil
 }
 
-// ApprovalStatus represents the approval status of a transaction
+// ApprovalStatus represents the approval status of a transaction.
+//
+// Lifecycle:
+//
+//	NOT_REQUIRED → (posting proceeds directly)
+//	PENDING → APPROVED | REJECTED | PARTIALLY_APPROVED | EXPIRED
+//	PARTIALLY_APPROVED → APPROVED | REJECTED | EXPIRED
+//	EXPIRED → (transaction reverts to DRAFT; submitter notified by Temporal workflow)
 type ApprovalStatus string
 
 const (
-	ApprovalStatusNotRequired       ApprovalStatus = "NOT_REQUIRED"       // No approval needed
-	ApprovalStatusPending           ApprovalStatus = "PENDING"            // Waiting for approval
-	ApprovalStatusApproved          ApprovalStatus = "APPROVED"           // Approved by authorized user
-	ApprovalStatusRejected          ApprovalStatus = "REJECTED"           // Rejected by approver
-	ApprovalStatusPartiallyApproved ApprovalStatus = "PARTIALLY_APPROVED" // Partially approved (multi-level approval)
-	ApprovalStatusExpired           ApprovalStatus = "EXPIRED"            // Approval request has expired
+	// ApprovalStatusNotRequired — transaction does not require approval before posting.
+	ApprovalStatusNotRequired ApprovalStatus = "NOT_REQUIRED"
+
+	// ApprovalStatusPending — approval request submitted; awaiting action from the first
+	// (or only) approver in the configured approval chain.
+	ApprovalStatusPending ApprovalStatus = "PENDING"
+
+	// ApprovalStatusApproved — all required approval tiers have approved.
+	// The transaction may now be posted.
+	ApprovalStatusApproved ApprovalStatus = "APPROVED"
+
+	// ApprovalStatusRejected — at least one approver has rejected the transaction.
+	// The transaction returns to DRAFT so the submitter can correct and resubmit.
+	ApprovalStatusRejected ApprovalStatus = "REJECTED"
+
+	// ApprovalStatusPartiallyApproved — used in sequential multi-tier approval.
+	// Tier N has approved but tier N+1 has not yet acted. The transaction is still
+	// locked (not editable) until the final tier approves or rejects.
+	ApprovalStatusPartiallyApproved ApprovalStatus = "PARTIALLY_APPROVED"
+
+	// ApprovalStatusExpired — the approval request was not acted on within the
+	// configured SLA (default 48 hours). A Temporal timer triggers this transition;
+	// the transaction reverts to DRAFT and the submitter receives a notification.
+	ApprovalStatusExpired ApprovalStatus = "EXPIRED"
 )
 
 // IsValid validates if the ApprovalStatus is one of the defined constants

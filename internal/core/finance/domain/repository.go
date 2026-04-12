@@ -160,17 +160,27 @@ type AuditRepository interface {
 
 // Filter and parameter structures
 
-// AccountFilter defines filtering options for chart of accounts queries
+// AccountFilter defines filtering options for chart of accounts queries.
+// All pointer fields are optional; nil means "no filter on this field".
 type AccountFilter struct {
-	EntityID   *uuid.UUID `json:"entity_id,omitempty"`
-	RootType   *RootType  `json:"root_type,omitempty"`
-	ParentID   *uuid.UUID `json:"parent_id,omitempty"`
-	IsActive   *bool      `json:"is_active,omitempty"`
-	SearchTerm *string    `json:"search_term,omitempty"`
+	TenantID    uuid.UUID  `json:"tenant_id"`
+	EntityID    *uuid.UUID `json:"entity_id,omitempty"`
+	RootType    *RootType  `json:"root_type,omitempty"`
+	AccountType *string    `json:"account_type,omitempty"` // e.g. "BANK", "CASH", "PAYABLE"
+	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+	ParentCode  *string    `json:"parent_code,omitempty"` // alternative to ParentID
+	IsActive    *bool      `json:"is_active,omitempty"`
+	IsGroup     *bool      `json:"is_group,omitempty"` // true = groups only, false = leaf only
+	// Query is a full-text search term matched against account code and name.
+	// SearchTerm is kept for backward compatibility and is equivalent to Query.
+	Query      string  `json:"query,omitempty"`
+	SearchTerm *string `json:"search_term,omitempty"`
 
-	// Pagination
-	Limit  *int `json:"limit,omitempty"`
-	Offset *int `json:"offset,omitempty"`
+	// Pagination — Page/PerPage are preferred; Limit/Offset are kept for backward compat.
+	Page    int  `json:"page,omitempty"`
+	PerPage int  `json:"per_page,omitempty"`
+	Limit   *int `json:"limit,omitempty"`
+	Offset  *int `json:"offset,omitempty"`
 
 	// Sorting
 	SortBy    *string `json:"sort_by,omitempty"`
@@ -204,7 +214,8 @@ type EntryFilter struct {
 	DateRange     *DateRange   `json:"date_range,omitempty"`
 	AmountRange   *AmountRange `json:"amount_range,omitempty"`
 	Reconciled    *bool        `json:"reconciled,omitempty"`
-	CostCenter    *string      `json:"cost_center,omitempty"`
+	CostCenterID  *uuid.UUID   `json:"cost_center_id,omitempty"` // Filter by cost centre FK
+	CostCenter    *string      `json:"cost_center,omitempty"`    // Deprecated; prefer CostCenterID
 	Department    *string      `json:"department,omitempty"`
 	ProjectID     *uuid.UUID   `json:"project_id,omitempty"`
 
@@ -337,11 +348,34 @@ type RepositoryFactory interface {
 	CreateUnitOfWork() UnitOfWork
 }
 
-// TODO: Consider adding the following repository interfaces for extended functionality:
-// - ReconciliationRepository for bank reconciliation
-// - ReportingRepository for optimized reporting queries
-// - ConfigurationRepository for tenant/entity-specific settings
-// - AttachmentRepository for document management
+// PeriodRepository defines persistence operations for fiscal years and accounting periods.
+type PeriodRepository interface {
+	// FiscalYear operations
+	CreateFiscalYear(ctx context.Context, fy *FiscalYear) error
+	GetFiscalYearByID(ctx context.Context, id uuid.UUID) (*FiscalYear, error)
+	GetFiscalYearByYear(ctx context.Context, tenantID uuid.UUID, year int) (*FiscalYear, error)
+	ListFiscalYears(ctx context.Context, tenantID uuid.UUID) ([]*FiscalYear, error)
+	UpdateFiscalYear(ctx context.Context, fy *FiscalYear) error
+
+	// AccountingPeriod operations
+	CreatePeriod(ctx context.Context, period *AccountingPeriod) error
+	GetPeriodByID(ctx context.Context, id uuid.UUID) (*AccountingPeriod, error)
+	GetPeriodForDate(ctx context.Context, tenantID uuid.UUID, date time.Time) (*AccountingPeriod, error)
+	GetCurrentPeriod(ctx context.Context, tenantID uuid.UUID) (*AccountingPeriod, error)
+	ListPeriods(ctx context.Context, tenantID, fiscalYearID uuid.UUID) ([]*AccountingPeriod, error)
+	UpdatePeriod(ctx context.Context, period *AccountingPeriod) error
+}
+
+// CostCenterRepository defines persistence operations for cost centres.
+type CostCenterRepository interface {
+	Create(ctx context.Context, cc *CostCenter) error
+	GetByID(ctx context.Context, id uuid.UUID) (*CostCenter, error)
+	GetByCode(ctx context.Context, tenantID uuid.UUID, code string) (*CostCenter, error)
+	Update(ctx context.Context, cc *CostCenter) error
+	Delete(ctx context.Context, id uuid.UUID) error
+	List(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*CostCenter, error)
+	ValidateCode(ctx context.Context, tenantID uuid.UUID, code string, excludeID *uuid.UUID) error
+}
 // - NotificationRepository for system notifications
 // - CurrencyRepository for exchange rate management
 

@@ -27,9 +27,10 @@ type TransactionEntry struct {
 	Reference   *string `json:"reference,omitempty"` // Entry-specific reference
 
 	// Dimensional analysis - for cost accounting and reporting
-	CostCenter *string    `json:"cost_center,omitempty"` // Cost center code
-	Department *string    `json:"department,omitempty"`  // Department code
-	ProjectID  *uuid.UUID `json:"project_id,omitempty"`  // Project reference
+	CostCenterID *uuid.UUID `json:"cost_center_id,omitempty"` // Cost centre FK (preferred)
+	CostCenter   *string    `json:"cost_center,omitempty"`    // Cost centre code — deprecated; use CostCenterID
+	Department   *string    `json:"department,omitempty"`     // Department code
+	ProjectID    *uuid.UUID `json:"project_id,omitempty"`     // Project reference
 
 	// Multi-currency support
 	OriginalCurrency *string         `json:"original_currency,omitempty"` // Original currency if different

@@ -797,169 +797,509 @@ func (r *transactionRepository) CalculateAccountBalance(ctx context.Context, acc
 		return decimal.Zero, fmt.Errorf("tenant ID not found in context")
 	}
 
+	date := time.Now()
+	if asOfDate != nil {
+		date = *asOfDate
+	}
+
 	var balance decimal.Decimal
 	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
-		// TODO: Implement proper balance calculation logic
-		// This would involve summing debit/credit entries for the account
-		// For now, return zero as a stub implementation
-		balance = decimal.Zero
+		row, err := s.GetAccountTransactionBalance(ctx, db.GetAccountTransactionBalanceParams{
+			AccountID: accountID,
+			AsOfDate:  date,
+		})
+		if err != nil {
+			return fmt.Errorf("calculate balance: %w", err)
+		}
+		// GetAccountTransactionBalanceRow returns int64 SUM values (scaled integers from NUMERIC)
+		balance = decimal.NewFromInt(row.NetBalance)
 		return nil
 	})
 
 	return balance, err
 }
 
-// Stub implementations for missing interface methods
-// These are minimal implementations to satisfy the interface
+// ── Entry mapper ──────────────────────────────────────────────────────────────
 
-func (r *transactionRepository) CreateEntries(ctx context.Context, entries []*domain.TransactionEntry) error {
-	// TODO: Implement proper entry creation
-	return fmt.Errorf("CreateEntries not implemented")
+func mapSQLCEntryToDomain(e *db.FinanceTransactionEntry) domain.TransactionEntry {
+	var reconciledDate *time.Time
+	if !e.ReconciledDate.IsZero() {
+		reconciledDate = &e.ReconciledDate
+	}
+	var deletedAt *time.Time
+	if e.DeletedAt.Valid {
+		deletedAt = &e.DeletedAt.Time
+	}
+	return domain.TransactionEntry{
+		ID:                      e.ID,
+		TenantID:                e.TenantID,
+		TransactionID:           e.TransactionID,
+		EntryNumber:             e.EntryNumber,
+		AccountID:               e.AccountID,
+		DebitAmount:             pgNumericToDecimal(e.DebitAmount),
+		CreditAmount:            pgNumericToDecimal(e.CreditAmount),
+		Description:             e.Description,
+		Reference:               e.Reference,
+		CostCenter:              e.CostCenter,
+		Department:              e.Department,
+		ProjectID:               e.ProjectID,
+		OriginalCurrency:        e.OriginalCurrency,
+		OriginalAmount:          pgNumericToDecimal(e.OriginalAmount),
+		ExchangeRate:            pgNumericToDecimal(e.ExchangeRate),
+		TaxCode:                 e.TaxCode,
+		TaxRate:                 pgNumericToDecimal(e.TaxRate),
+		TaxAmount:               pgNumericToDecimal(e.TaxAmount),
+		Reconciled:              getBoolValue(e.Reconciled),
+		ReconciledDate:          reconciledDate,
+		ReconciliationReference: e.ReconciliationReference,
+		CreatedAt:               e.CreatedAt,
+		UpdatedAt:               e.UpdatedAt,
+		DeletedAt:               deletedAt,
+	}
 }
 
-func (r *transactionRepository) ListByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
-	// TODO: Implement proper account-based listing
-	return nil, fmt.Errorf("ListByAccount not implemented")
-}
-
-func (r *transactionRepository) ListByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*domain.Transaction, error) {
-	// TODO: Implement proper date range listing
-	return nil, fmt.Errorf("ListByDateRange not implemented")
-}
-
-func (r *transactionRepository) GetByStatus(ctx context.Context, status domain.TransactionStatus, limit int) ([]*domain.Transaction, error) {
-	// TODO: Implement proper status-based retrieval
-	return nil, fmt.Errorf("GetByStatus not implemented")
-}
-
-func (r *transactionRepository) GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*domain.Transaction, error) {
-	// Use existing implementation but adapt signature
-	return r.GetPendingApprovalTransactions(ctx, 50, 0)
-}
-
-func (r *transactionRepository) GetRecurringTransactions(ctx context.Context, dueDate time.Time) ([]*domain.Transaction, error) {
-	// TODO: Implement proper recurring transaction retrieval
-	return nil, fmt.Errorf("GetRecurringTransactions not implemented")
-}
+// ── Entry CRUD ────────────────────────────────────────────────────────────────
 
 func (r *transactionRepository) CreateEntry(ctx context.Context, entry *domain.TransactionEntry) error {
-	// TODO: Implement proper single entry creation
-	return fmt.Errorf("CreateEntry not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.CreateEntry")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
+	}
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		_, err := s.CreateTransactionEntry(ctx, db.CreateTransactionEntryParams{
+			TransactionID:    entry.TransactionID,
+			EntryNumber:      entry.EntryNumber,
+			AccountID:        entry.AccountID,
+			DebitAmount:      decimalToPgNumeric(&entry.DebitAmount),
+			CreditAmount:     decimalToPgNumeric(&entry.CreditAmount),
+			Description:      entry.Description,
+			Reference:        entry.Reference,
+			CostCenter:       entry.CostCenter,
+			Department:       entry.Department,
+			ProjectID:        entry.ProjectID,
+			OriginalCurrency: entry.OriginalCurrency,
+			OriginalAmount:   decimalToPgNumeric(&entry.OriginalAmount),
+			ExchangeRate:     decimalToPgNumeric(&entry.ExchangeRate),
+			TaxCode:          entry.TaxCode,
+			TaxRate:          decimalToPgNumeric(&entry.TaxRate),
+			TaxAmount:        decimalToPgNumeric(&entry.TaxAmount),
+		})
+		return r.mapDatabaseError(err, "create_entry")
+	})
+}
+
+func (r *transactionRepository) CreateEntries(ctx context.Context, entries []*domain.TransactionEntry) error {
+	for _, e := range entries {
+		if err := r.CreateEntry(ctx, e); err != nil {
+			return fmt.Errorf("CreateEntries: entry %d: %w", e.EntryNumber, err)
+		}
+	}
+	return nil
 }
 
 func (r *transactionRepository) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
-	// TODO: Implement proper entry retrieval
-	return nil, fmt.Errorf("GetEntryByID not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntryByID")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var entry *domain.TransactionEntry
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		row, err := s.GetTransactionEntryByID(ctx, id)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_entry_by_id")
+		}
+		e := mapSQLCEntryToDomain(row)
+		entry = &e
+		return nil
+	})
+	return entry, err
 }
 
 func (r *transactionRepository) GetEntriesByTransaction(ctx context.Context, transactionID uuid.UUID) ([]domain.TransactionEntry, error) {
-	// TODO: Implement proper entries by transaction retrieval
-	return nil, fmt.Errorf("GetEntriesByTransaction not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntriesByTransaction")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var entries []domain.TransactionEntry
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		rows, err := s.ListTransactionEntries(ctx, transactionID)
+		if err != nil {
+			return r.mapDatabaseError(err, "get_entries_by_transaction")
+		}
+		entries = make([]domain.TransactionEntry, 0, len(rows))
+		for _, row := range rows {
+			entries = append(entries, mapSQLCEntryToDomain(row))
+		}
+		return nil
+	})
+	return entries, err
 }
 
 func (r *transactionRepository) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.EntryFilter) ([]domain.TransactionEntry, error) {
-	// TODO: Implement proper entries by account retrieval
-	return nil, fmt.Errorf("GetEntriesByAccount not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntriesByAccount")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+
+	limit := int32(100)
+	offset := int32(0)
+	from := time.Time{}
+	to := time.Now()
+	if filter != nil {
+		if filter.Limit != nil {
+			limit = int32(*filter.Limit)
+		}
+		if filter.Offset != nil {
+			offset = int32(*filter.Offset)
+		}
+		if filter.StartDate != nil {
+			from = *filter.StartDate
+		}
+		if filter.EndDate != nil {
+			to = *filter.EndDate
+		}
+	}
+
+	var entries []domain.TransactionEntry
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		rows, err := s.GetAccountEntries(ctx, db.GetAccountEntriesParams{
+			AccountID:         accountID,
+			DateFrom:          from,
+			DateTo:            to,
+			TransactionStatus: string(domain.TransactionStatusPosted),
+			Offset:            offset,
+			Limit:             limit,
+		})
+		if err != nil {
+			return r.mapDatabaseError(err, "get_entries_by_account")
+		}
+		entries = make([]domain.TransactionEntry, 0, len(rows))
+		for _, row := range rows {
+			entries = append(entries, domain.TransactionEntry{
+				ID:            row.ID,
+				TransactionID: row.TransactionID,
+				EntryNumber:   row.EntryNumber,
+				AccountID:     row.AccountID,
+				DebitAmount:   pgNumericToDecimal(row.DebitAmount),
+				CreditAmount:  pgNumericToDecimal(row.CreditAmount),
+				Description:   row.Description,
+				Reference:     row.Reference,
+				CostCenter:    row.CostCenter,
+				Department:    row.Department,
+				ProjectID:     row.ProjectID,
+				CreatedAt:     row.CreatedAt,
+			})
+		}
+		return nil
+	})
+	return entries, err
 }
 
 func (r *transactionRepository) UpdateEntry(ctx context.Context, entry *domain.TransactionEntry) error {
-	// TODO: Implement proper entry update
-	return fmt.Errorf("UpdateEntry not implemented")
+	// Entry lines are immutable after posting per double-entry accounting rules.
+	// Corrections are made by reversing and reposting the parent transaction.
+	return fmt.Errorf("transaction entries are immutable — reverse and repost to correct")
 }
 
 func (r *transactionRepository) DeleteEntry(ctx context.Context, id uuid.UUID) error {
-	// TODO: Implement proper entry deletion
-	return fmt.Errorf("DeleteEntry not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.DeleteEntry")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
+	}
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		return r.mapDatabaseError(s.DeleteTransactionEntry(ctx, id), "delete_entry")
+	})
 }
 
 func (r *transactionRepository) SearchEntries(ctx context.Context, query string, filters *domain.EntryFilter, limit int, offset int) ([]*domain.TransactionEntry, error) {
-	// TODO: Implement proper entry search
-	return nil, fmt.Errorf("SearchEntries not implemented")
+	// Delegate to GetEntriesByAccount with a query-based filter when account is specified.
+	// Full-text entry search requires a dedicated SQLC query — tracked in TASK-029.
+	return nil, fmt.Errorf("SearchEntries: full-text entry search not yet implemented (TASK-029)")
 }
 
 func (r *transactionRepository) UpdateReconciliationStatus(ctx context.Context, entryID uuid.UUID, reconciled bool, reconciledDate *time.Time, reconciliationRef *string) error {
-	// TODO: Implement proper reconciliation status update
-	return fmt.Errorf("UpdateReconciliationStatus not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.UpdateReconciliationStatus")
+	defer span.End()
+
+	if !reconciled {
+		// Unreconcile path: no direct SQLC query — tracked in TASK-029.
+		return fmt.Errorf("unreconcile not yet implemented (TASK-029)")
+	}
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
+	}
+
+	date := time.Now()
+	if reconciledDate != nil {
+		date = *reconciledDate
+	}
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		return r.mapDatabaseError(s.MarkEntriesReconciled(ctx, db.MarkEntriesReconciledParams{
+			ReconciledDate:          date,
+			ReconciliationReference: reconciliationRef,
+			EntryIds:                []uuid.UUID{entryID},
+		}), "mark_reconciled")
+	})
 }
 
 func (r *transactionRepository) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoffDate *time.Time) ([]*domain.TransactionEntry, error) {
-	// TODO: Implement proper unreconciled entries retrieval
-	return nil, fmt.Errorf("GetUnreconciledEntries not implemented")
+	filter := &domain.EntryFilter{}
+	if cutoffDate != nil {
+		filter.EndDate = cutoffDate
+	}
+	entries, err := r.GetEntriesByAccount(ctx, accountID, filter)
+	if err != nil {
+		return nil, err
+	}
+	var unreconciled []*domain.TransactionEntry
+	for i := range entries {
+		if !entries[i].Reconciled {
+			e := entries[i]
+			unreconciled = append(unreconciled, &e)
+		}
+	}
+	return unreconciled, nil
 }
 
 func (r *transactionRepository) GetEntrySummary(ctx context.Context, accountID uuid.UUID, startDate, endDate time.Time) (*domain.TransactionSummary, error) {
-	// TODO: Implement proper entry summary
-	return nil, fmt.Errorf("GetEntrySummary not implemented")
+	entries, err := r.GetEntriesByAccount(ctx, accountID, &domain.EntryFilter{
+		StartDate: &startDate,
+		EndDate:   &endDate,
+	})
+	if err != nil {
+		return nil, err
+	}
+	var totalDebits, totalCredits decimal.Decimal
+	for _, e := range entries {
+		totalDebits = totalDebits.Add(e.DebitAmount)
+		totalCredits = totalCredits.Add(e.CreditAmount)
+	}
+	return &domain.TransactionSummary{
+		TotalDebits:  totalDebits,
+		TotalCredits: totalCredits,
+		NetAmount:    totalDebits.Sub(totalCredits),
+		Count:        len(entries),
+	}, nil
 }
 
 func (r *transactionRepository) GetAccountTransactionSummary(ctx context.Context, accountID uuid.UUID, dateRange *domain.DateRange) (*domain.TransactionSummary, error) {
-	// TODO: Implement proper account transaction summary
-	return nil, fmt.Errorf("GetAccountTransactionSummary not implemented")
+	var start, end time.Time
+	if dateRange != nil {
+		start = dateRange.StartDate
+		end = dateRange.EndDate
+	} else {
+		end = time.Now()
+	}
+	return r.GetEntrySummary(ctx, accountID, start, end)
 }
 
+// ── Status / listing helpers ──────────────────────────────────────────────────
+
+func (r *transactionRepository) GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*domain.Transaction, error) {
+	return r.GetPendingApprovalTransactions(ctx, 50, 0)
+}
+
+func (r *transactionRepository) GetByStatus(ctx context.Context, status domain.TransactionStatus, limit int) ([]*domain.Transaction, error) {
+	filter := &domain.TransactionFilter{
+		Status: &status,
+		Limit:  &limit,
+	}
+	offset := 0
+	filter.Offset = &offset
+	return r.List(ctx, filter)
+}
+
+func (r *transactionRepository) ListByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*domain.Transaction, error) {
+	filter := &domain.TransactionFilter{
+		StartDate: &startDate,
+		EndDate:   &endDate,
+	}
+	limit := 1000
+	offset := 0
+	filter.Limit = &limit
+	filter.Offset = &offset
+	return r.List(ctx, filter)
+}
+
+func (r *transactionRepository) ListByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
+	if filter == nil {
+		filter = &domain.TransactionFilter{}
+	}
+	filter.AccountID = &accountID
+	limit := 100
+	offset := 0
+	if filter.Limit == nil {
+		filter.Limit = &limit
+	}
+	if filter.Offset == nil {
+		filter.Offset = &offset
+	}
+	return r.List(ctx, filter)
+}
+
+func (r *transactionRepository) GetRecurringTransactions(ctx context.Context, dueDate time.Time) ([]*domain.Transaction, error) {
+	isRecurring := true
+	filter := &domain.TransactionFilter{
+		IsRecurring: &isRecurring,
+		EndDate:     &dueDate,
+	}
+	limit := 500
+	offset := 0
+	filter.Limit = &limit
+	filter.Offset = &offset
+	return r.List(ctx, filter)
+}
+
+// ── Post / Approve / Reject / Reverse delegators ─────────────────────────────
+
 func (r *transactionRepository) Post(ctx context.Context, transactionID uuid.UUID, postedBy uuid.UUID, postedAt time.Time) error {
-	// Use existing implementation but adapt signature
 	return r.PostTransaction(ctx, transactionID)
 }
 
 func (r *transactionRepository) Approve(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) error {
-	// Use existing implementation but adapt signature
 	return r.ApproveTransaction(ctx, transactionID, approvedBy, approvedAt, notes)
 }
 
 func (r *transactionRepository) Reject(ctx context.Context, transactionID uuid.UUID, rejectedBy uuid.UUID, rejectedAt time.Time, reason domain.RejectionReason, notes *string) error {
-	// Use existing implementation but adapt signature
 	return r.RejectTransaction(ctx, transactionID, notes)
 }
 
 func (r *transactionRepository) Reverse(ctx context.Context, originalID, reversalID uuid.UUID, reason string) error {
-	// Use existing implementation but adapt signature
 	return r.ReverseTransaction(ctx, originalID, reversalID, reason)
 }
 
-func (r *transactionRepository) IsTransactionNumberUnique(ctx context.Context, entityID *uuid.UUID, transactionNumber string, excludeID *uuid.UUID) (bool, error) {
-	// TODO: Implement proper uniqueness check
-	return true, nil
-}
+// ── Uniqueness / validation ───────────────────────────────────────────────────
 
-func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.TransactionSummary, error) {
-	// TODO: Implement proper transaction summary
-	return nil, fmt.Errorf("GetTransactionSummary not implemented")
+func (r *transactionRepository) IsTransactionNumberUnique(ctx context.Context, entityID *uuid.UUID, transactionNumber string, excludeID *uuid.UUID) (bool, error) {
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.IsTransactionNumberUnique")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return false, fmt.Errorf("tenant ID not found in context")
+	}
+
+	var unique bool
+	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		existing, err := s.GetTransactionByNumber(ctx, transactionNumber)
+		if err != nil {
+			// Not found → unique
+			unique = true
+			return nil
+		}
+		// Found → unique only if it's the excluded record (update case)
+		unique = excludeID != nil && existing.ID == *excludeID
+		return nil
+	})
+	return unique, err
 }
 
 func (r *transactionRepository) ValidateTransaction(ctx context.Context, transaction *domain.Transaction) ([]domain.ValidationError, error) {
-	// TODO: Implement proper transaction validation
 	return transaction.Validate(), nil
 }
 
+func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.TransactionSummary, error) {
+	// Full summary aggregation requires a dedicated SQLC query — tracked in TASK-029.
+	return nil, fmt.Errorf("GetTransactionSummary not yet implemented (TASK-029)")
+}
+
+// ── Bulk / archive / restore ──────────────────────────────────────────────────
+
 func (r *transactionRepository) BulkCreate(ctx context.Context, transactions []*domain.Transaction) error {
-	// TODO: Implement proper bulk creation
-	return fmt.Errorf("BulkCreate not implemented")
+	for _, t := range transactions {
+		if err := r.Create(ctx, t); err != nil {
+			return fmt.Errorf("BulkCreate: transaction %s: %w", t.TransactionNumber, err)
+		}
+	}
+	return nil
 }
 
 func (r *transactionRepository) BulkUpdate(ctx context.Context, transactions []*domain.Transaction) error {
-	// TODO: Implement proper bulk update
-	return fmt.Errorf("BulkUpdate not implemented")
+	for _, t := range transactions {
+		if err := r.Update(ctx, t); err != nil {
+			return fmt.Errorf("BulkUpdate: transaction %s: %w", t.TransactionNumber, err)
+		}
+	}
+	return nil
 }
 
 func (r *transactionRepository) Archive(ctx context.Context, transactionID uuid.UUID, archivedBy uuid.UUID, archivedAt time.Time) error {
-	// TODO: Implement proper archiving
-	return fmt.Errorf("Archive not implemented")
+	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Archive")
+	defer span.End()
+
+	tenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return fmt.Errorf("tenant ID not found in context")
+	}
+
+	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+		return r.mapDatabaseError(s.SoftDeleteTransaction(ctx, db.SoftDeleteTransactionParams{
+			UpdatedBy:     &archivedBy,
+			TransactionID: transactionID,
+		}), "archive_transaction")
+	})
 }
 
 func (r *transactionRepository) Restore(ctx context.Context, transactionID uuid.UUID, restoredBy uuid.UUID, restoredAt time.Time) error {
-	// TODO: Implement proper restoration
-	return fmt.Errorf("Restore not implemented")
+	// Restore from archive requires an UN-delete query not yet in SQLC — tracked in TASK-029.
+	return fmt.Errorf("Restore not yet implemented (TASK-029)")
 }
 
 func (r *transactionRepository) ValidateAccountsExist(ctx context.Context, accountIDs []uuid.UUID) error {
-	// TODO: Implement proper account existence validation
-	return fmt.Errorf("ValidateAccountsExist not implemented")
+	for _, id := range accountIDs {
+		tenantID, ok := shared.GetTenantID(ctx)
+		if !ok {
+			return fmt.Errorf("tenant ID not found in context")
+		}
+		if err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+			_, err := s.GetAccountByID(ctx, id)
+			return err
+		}); err != nil {
+			return fmt.Errorf("account %s not found: %w", id, err)
+		}
+	}
+	return nil
 }
 
 func (r *transactionRepository) GetNextTransactionNumber(ctx context.Context, entityID *uuid.UUID, transactionType domain.TransactionType) (string, error) {
-	// TODO: Implement proper transaction number generation
-	return "TXN-001", nil
+	// Sequence-based number generation requires a DB sequence or counter table.
+	// Tracked in TASK-029. Using timestamp-based fallback for now.
+	prefix := "TXN"
+	switch transactionType {
+	case domain.TransactionTypeJournalEntry:
+		prefix = "JE"
+	case domain.TransactionTypeManual:
+		prefix = "MAN"
+	case domain.TransactionTypeAdjustment:
+		prefix = "ADJ"
+	case domain.TransactionTypeRecurring:
+		prefix = "REC"
+	case domain.TransactionTypeClosing:
+		prefix = "CLO"
+	}
+	return fmt.Sprintf("%s-%d", prefix, time.Now().UnixMilli()), nil
 }
 
 // Helper functions

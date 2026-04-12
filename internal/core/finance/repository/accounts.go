@@ -411,25 +411,36 @@ func (r *accountsRepository) GetAccountHierarchy(ctx context.Context, rootID uui
 	return accounts, nil
 }
 
-// GetAccountPath retrieves the full path of accounts from root to specified account
+// GetAccountPath retrieves the full path of accounts from root to specified account.
+// The materialized path is stored as "/code1/code2/code3/" — split on "/" to obtain
+// the ordered list of account codes, then fetch each account by code.
 func (r *accountsRepository) GetAccountPath(ctx context.Context, accountID uuid.UUID) ([]domain.Accounts, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountPath")
 	defer span.End()
 
-	// Get the account first
 	account, err := r.GetByID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
 
-	// If no path is set, return just the account itself
 	if account.AccountPath == nil || *account.AccountPath == "" {
 		return []domain.Accounts{*account}, nil
 	}
 
-	// TODO: Parse account path and retrieve all accounts in the path
-	// For now, just return the single account
-	return []domain.Accounts{*account}, nil
+	// "/code1/code2/code3/" → ["code1", "code2", "code3"]
+	codes := strings.Split(strings.Trim(*account.AccountPath, "/"), "/")
+	path := make([]domain.Accounts, 0, len(codes))
+	for _, code := range codes {
+		if code == "" {
+			continue
+		}
+		a, err := r.GetByCode(ctx, nil, code)
+		if err != nil {
+			continue // skip missing ancestors (deleted accounts)
+		}
+		path = append(path, *a)
+	}
+	return path, nil
 }
 
 // ValidateHierarchy validates if the parent-child relationship is valid
@@ -461,17 +472,7 @@ func (r *accountsRepository) GetAccountBalance(ctx context.Context, accountID uu
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountBalance")
 	defer span.End()
 
-	// Get account to retrieve current balance
 	account, err := r.GetByID(ctx, accountID)
-	if err != nil {
-		return nil, err
-	}
-
-	// Use current balance from account record
-	balanceAmount := account.CurrentBalance
-
-	// Get account details
-	accountDetails, err := r.GetByID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -481,12 +482,34 @@ func (r *accountsRepository) GetAccountBalance(ctx context.Context, accountID uu
 		asOfTime = *asOfDate
 	}
 
+	var totalDebits, totalCredits, netBalance decimal.Decimal
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		row, err := s.GetAccountTransactionBalance(ctx, db.GetAccountTransactionBalanceParams{
+			AccountID: accountID,
+			AsOfDate:  asOfTime,
+		})
+		if err != nil {
+			if err == db.ErrNoRows {
+				return nil // no entries yet — zero balance
+			}
+			return r.mapDatabaseError(err, "get_account_transaction_balance")
+		}
+		// SUM values are scaled int64 (amounts stored as minor units / CAST in SQL)
+		totalDebits = decimal.NewFromInt(row.TotalDebits)
+		totalCredits = decimal.NewFromInt(row.TotalCredits)
+		netBalance = decimal.NewFromInt(row.NetBalance)
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
 	return &domain.AccountBalance{
 		AccountID:    accountID,
-		Account:      *accountDetails,
-		TotalDebits:  decimal.Zero, // TODO: Calculate from transaction entries
-		TotalCredits: decimal.Zero, // TODO: Calculate from transaction entries
-		NetBalance:   balanceAmount,
+		Account:      *account,
+		TotalDebits:  totalDebits,
+		TotalCredits: totalCredits,
+		NetBalance:   netBalance,
 		AsOfDate:     asOfTime,
 	}, nil
 }
@@ -512,9 +535,47 @@ func (r *accountsRepository) GetTrialBalance(ctx context.Context, entityID *uuid
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetTrialBalance")
 	defer span.End()
 
-	// TODO: Implement proper trial balance calculation
-	// For now, return empty result
-	entries := make([]*domain.TrialBalanceEntry, 0)
+	balanceDate := time.Now()
+	if asOfDate != nil {
+		balanceDate = *asOfDate
+	}
+
+	// GetBalancesForTrialBalance accepts entity_id as uuid (NULL-uuid means all entities)
+	var entityUUID uuid.UUID
+	if entityID != nil {
+		entityUUID = *entityID
+	}
+
+	var entries []*domain.TrialBalanceEntry
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		rows, err := s.GetBalancesForTrialBalance(ctx, db.GetBalancesForTrialBalanceParams{
+			Column1:     entityUUID,
+			BalanceDate: balanceDate,
+		})
+		if err != nil {
+			return r.mapDatabaseError(err, "get_balances_for_trial_balance")
+		}
+
+		entries = make([]*domain.TrialBalanceEntry, 0, len(rows))
+		for _, row := range rows {
+			entries = append(entries, &domain.TrialBalanceEntry{
+				Account: domain.Accounts{
+					ID:            row.AccountID,
+					AccountCode:   row.AccountCode,
+					AccountName:   row.AccountName,
+					RootType:      mapSQLCRootTypeToDomain(row.RootType),
+					NormalBalance: domain.NormalBalance(row.NormalBalance),
+				},
+				TotalDebits:  pgTypeNumericToDecimal(row.PeriodDebits),
+				TotalCredits: pgTypeNumericToDecimal(row.PeriodCredits),
+				NetBalance:   pgTypeNumericToDecimal(row.ClosingBalance),
+			})
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
 
 	return entries, nil
 }
@@ -653,9 +714,24 @@ func (r *accountsRepository) HasTransactions(ctx context.Context, accountID uuid
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.HasTransactions")
 	defer span.End()
 
-	// TODO: Implement by checking transaction entries table
-	// For now, return false
-	return false, nil
+	var count int64
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		var err error
+		count, err = s.CountAccountEntries(ctx, db.CountAccountEntriesParams{
+			AccountID:         accountID,
+			DateFrom:          time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC),
+			DateTo:            time.Now().AddDate(100, 0, 0),
+			TransactionStatus: nil, // all statuses
+		})
+		if err != nil {
+			return r.mapDatabaseError(err, "count_account_entries")
+		}
+		return nil
+	})
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
 }
 
 func (r *accountsRepository) Search(ctx context.Context, query string, limit int) ([]*domain.Accounts, error) {
@@ -670,8 +746,34 @@ func (r *accountsRepository) UpdateBalance(ctx context.Context, accountID uuid.U
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.UpdateBalance")
 	defer span.End()
 
-	// For now, do nothing
-	return nil
+	decToNumeric := func(d decimal.Decimal) pgtype.Numeric {
+		var n pgtype.Numeric
+		_ = n.Scan(d.String())
+		return n
+	}
+
+	var createdBy *uuid.UUID
+	if userID, ok := shared.GetUserID(ctx); ok {
+		createdBy = &userID
+	}
+
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+		_, err := s.UpsertAccountBalance(ctx, db.UpsertAccountBalanceParams{
+			AccountID:      accountID,
+			BalanceDate:    balance.AsOfDate,
+			FiscalYear:     int32(balance.AsOfDate.Year()),
+			FiscalPeriod:   int32(balance.AsOfDate.Month()),
+			OpeningBalance: decToNumeric(decimal.Zero), // opening balance managed separately
+			PeriodDebits:   decToNumeric(balance.TotalDebits),
+			PeriodCredits:  decToNumeric(balance.TotalCredits),
+			ClosingBalance: decToNumeric(balance.NetBalance),
+			CreatedBy:      createdBy,
+		})
+		if err != nil {
+			return r.mapDatabaseError(err, "upsert_account_balance")
+		}
+		return nil
+	})
 }
 
 func (r *accountsRepository) GetChildren(ctx context.Context, accountID uuid.UUID) ([]*domain.Accounts, error) {

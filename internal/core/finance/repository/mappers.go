@@ -378,8 +378,8 @@ func mapDomainTransactionToSQLCCreate(req *domain.CreateTransactionRequest) (db.
 		transactionType = "ADJUSTMENT"
 	case domain.TransactionTypeClosing:
 		transactionType = "CLOSING"
-	case domain.TransactionTypeJournal:
-		transactionType = "MANUAL" // Based on schema, JOURNAL maps to valid type
+	case domain.TransactionTypeJournalEntry:
+		transactionType = "MANUAL" // JOURNAL_ENTRY maps to MANUAL in the DB enum
 	case domain.TransactionTypeInvoice:
 		transactionType = "MANUAL" // Based on schema, INVOICE maps to valid type
 	case domain.TransactionTypePayment:
@@ -540,8 +540,8 @@ func mapDomainTransactionTypeToSQLCEnum(transactionType domain.TransactionType) 
 		return "ADJUSTMENT"
 	case domain.TransactionTypeClosing:
 		return "CLOSING"
-	case domain.TransactionTypeJournal:
-		return "MANUAL" // Based on schema, JOURNAL maps to valid type
+	case domain.TransactionTypeJournalEntry:
+		return "MANUAL" // JOURNAL_ENTRY maps to MANUAL in the DB enum
 	case domain.TransactionTypeInvoice:
 		return "MANUAL" // Based on schema, INVOICE maps to valid type
 	case domain.TransactionTypePayment:

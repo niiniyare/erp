@@ -8,6 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"awo.so/internal/core/finance/domain"
+	financePipeline "awo.so/internal/core/finance/pipeline"
+	corePipeline "awo.so/internal/pipeline"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
@@ -17,11 +19,6 @@ import (
 )
 
 type TransactionService interface {
-	// Handler convenience methods (for backward compatibility)
-	Create(ctx context.Context, req *domain.CreateTransactionRequest) (*domain.Transaction, error)
-	GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
-	List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error)
-
 	// Core transaction operations
 	CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error)
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
@@ -46,6 +43,7 @@ type transactionService struct {
 	repo         domain.TransactionRepository
 	accountRepo  domain.AccountsRepository
 	entryService TransactionEntryService
+	postPipeline *corePipeline.PipelineBuilder // nil → falls back to inline logic
 	tracing      tracing.Service
 	metrics      metrics.MetricsProvider
 }
@@ -66,20 +64,26 @@ func NewTransactionService(
 	}
 }
 
-// Handler convenience methods (delegate to main methods)
-func (s *transactionService) Create(ctx context.Context, req *domain.CreateTransactionRequest) (*domain.Transaction, error) {
-	if req == nil {
-		return nil, errors.NewBusinessError("INVALID_REQUEST", "request cannot be nil")
+// NewTransactionServiceWithPipeline creates a TransactionService that routes
+// PostTransaction through the composable finance pipeline.
+// periodRepo may be nil when period management is not yet provisioned.
+func NewTransactionServiceWithPipeline(
+	repo domain.TransactionRepository,
+	accountRepo domain.AccountsRepository,
+	periodRepo domain.PeriodRepository,
+	entryService TransactionEntryService,
+	txRunner corePipeline.TxRunner,
+	tracing tracing.Service,
+	metrics metrics.MetricsProvider,
+) TransactionService {
+	return &transactionService{
+		repo:         repo,
+		accountRepo:  accountRepo,
+		entryService: entryService,
+		postPipeline: financePipeline.NewPostTransactionPipeline(repo, accountRepo, periodRepo, txRunner),
+		tracing:      tracing,
+		metrics:      metrics,
 	}
-	return s.CreateTransaction(ctx, *req)
-}
-
-func (s *transactionService) GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
-	return s.GetTransactionByID(ctx, id)
-}
-
-func (s *transactionService) List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
-	return s.ListTransactions(ctx, filter)
 }
 
 func (s *transactionService) CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error) {
@@ -523,6 +527,83 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 	logger.InfoContext(ctx, "Starting transaction posting",
 		logger.Fields{"transaction_id": id.String()})
 
+	// ── Pipeline path ──────────────────────────────────────────────────────────
+	if s.postPipeline != nil {
+		return s.postTransactionViaPipeline(ctx, id, postingDate)
+	}
+
+	// ── Legacy inline path (no pipeline injected) ──────────────────────────────
+	return s.postTransactionInline(ctx, id, postingDate)
+}
+
+// postTransactionViaPipeline runs PostTransaction through the composable stage
+// pipeline. Stages handle: load → balance check → period check → account
+// validation → GL write.
+func (s *transactionService) postTransactionViaPipeline(ctx context.Context, id uuid.UUID, postingDate *time.Time) (*domain.Transaction, error) {
+	// Load transaction first to get the CreatedBy for PostedBy
+	txn, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	pd := time.Now()
+	if postingDate != nil {
+		pd = *postingDate
+	}
+
+	opCtx := corePipeline.AcquireOperationContext()
+	defer corePipeline.ReleaseOperationContext(opCtx)
+
+	opCtx.Ctx = ctx
+	opCtx.Session = nil // populated by caller via middleware in real requests
+	opCtx.OperationKey = "finance.transaction.post"
+	opCtx.Input = &financePipeline.PostTransactionInput{
+		TransactionID: id,
+		PostingDate:   pd,
+		TenantID:      txn.TenantID,
+		PostedBy:      txn.CreatedBy,
+	}
+
+	timer := s.metrics.Timer("transaction_posting_duration", metrics.Fields{
+		"transaction_type": string(txn.TransactionType),
+	})
+
+	if err := s.postPipeline.Run(opCtx); err != nil {
+		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
+			"error_type": "pipeline_error",
+		})
+		return nil, err
+	}
+
+	duration := timer.Stop()
+
+	postedTransaction, err := s.repo.GetByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve posted transaction: %w", err)
+	}
+
+	s.metrics.IncrementCounter("transactions_posted_total", metrics.Fields{
+		"transaction_type": string(txn.TransactionType),
+		"status":           "success",
+	})
+	s.metrics.ObserveHistogram("transaction_posting_duration", duration.Seconds(), metrics.Fields{
+		"transaction_type": string(txn.TransactionType),
+	})
+
+	logger.InfoContext(ctx, "Transaction posted successfully via pipeline",
+		logger.Fields{
+			"transaction_id":     postedTransaction.ID.String(),
+			"transaction_number": postedTransaction.TransactionNumber,
+			"posting_date":       pd.Format("2006-01-02"),
+			"duration_ms":        duration.Milliseconds(),
+		})
+
+	return postedTransaction, nil
+}
+
+// postTransactionInline is the original non-pipeline implementation, kept as
+// a fallback when the service is constructed without a pipeline.
+func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.UUID, postingDate *time.Time) (*domain.Transaction, error) {
 	transaction, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -533,14 +614,7 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
 			"error_type": "invalid_status",
 		})
-
-		logger.WarnContext(ctx, "Transaction cannot be posted",
-			logger.Fields{
-				"transaction_id":     id.String(),
-				"transaction_status": string(transaction.TransactionStatus),
-			})
-
-		return nil, errors.NewBusinessError("invalid_status", "Transaction must be approved or draft to be posted")
+		return nil, errors.NewBusinessError("INVALID_STATUS", "Transaction must be approved or draft to be posted")
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
@@ -552,11 +626,7 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
 			"error_type": "no_entries",
 		})
-
-		logger.WarnContext(ctx, "Cannot post transaction without entries",
-			logger.Fields{"transaction_id": id.String()})
-
-		return nil, errors.NewBusinessError("no_entries", "Cannot post transaction without entries")
+		return nil, errors.NewBusinessError("NO_ENTRIES", "Cannot post transaction without entries")
 	}
 
 	validationErrors, err := s.ValidateTransaction(ctx, transaction, entries)
@@ -568,14 +638,8 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
 			"error_type": "validation_failed",
 		})
-
-		logger.WarnContext(ctx, "Transaction validation failed",
-			logger.Fields{
-				"transaction_id": id.String(),
-				"errors":         len(validationErrors),
-			})
-
-		return nil, errors.NewBusinessError("transaction_posting_validation", fmt.Sprintf("Transaction validation failed: %v", validationErrors))
+		return nil, errors.NewBusinessError("TRANSACTION_POSTING_VALIDATION",
+			fmt.Sprintf("Transaction validation failed: %v", validationErrors))
 	}
 
 	if postingDate == nil {
@@ -594,13 +658,6 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-
-		logger.ErrorContext(ctx, "Failed to post transaction",
-			logger.Fields{
-				"transaction_id": id.String(),
-				"error":          err.Error(),
-			})
-
 		return nil, fmt.Errorf("failed to post transaction: %w", err)
 	}
 
@@ -611,21 +668,16 @@ func (s *transactionService) PostTransaction(ctx context.Context, id uuid.UUID, 
 
 	if err := s.updateAccountBalances(ctx, entries); err != nil {
 		logger.ErrorContext(ctx, "Failed to update account balances after posting",
-			logger.Fields{
-				"transaction_id": id.String(),
-				"error":          err.Error(),
-			})
+			logger.Fields{"transaction_id": id.String(), "error": err.Error()})
 	}
 
 	s.metrics.IncrementCounter("transactions_posted_total", metrics.Fields{
 		"transaction_type": string(transaction.TransactionType),
 		"status":           "success",
 	})
-
-	s.metrics.ObserveHistogram("transaction_posting_duration",
-		duration.Seconds(), metrics.Fields{
-			"transaction_type": string(transaction.TransactionType),
-		})
+	s.metrics.ObserveHistogram("transaction_posting_duration", duration.Seconds(), metrics.Fields{
+		"transaction_type": string(transaction.TransactionType),
+	})
 
 	logger.InfoContext(ctx, "Transaction posted successfully",
 		logger.Fields{
@@ -730,10 +782,9 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		}
 	}
 
-	// TODO: Implement MarkAsReversed method in repository interface
-	// if err := s.repo.MarkAsReversed(ctx, id, reversalTransaction.ID, reason); err != nil {
-	// 	return nil, fmt.Errorf("failed to mark transaction as reversed: %w", err)
-	// }
+	if err := s.repo.Reverse(ctx, id, reversalTransaction.ID, reason); err != nil {
+		return nil, fmt.Errorf("failed to mark transaction as reversed: %w", err)
+	}
 
 	_, err = s.PostTransaction(ctx, reversalTransaction.ID, nil)
 	if err != nil {
@@ -1283,19 +1334,20 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 			continue
 		}
 
-		_ = account.CurrentBalance.Add(balanceChange) // newBalance - unused
-		_ = account.YTDBalance.Add(balanceChange)     // newYTDBalance - unused
+		newBalance := account.CurrentBalance.Add(balanceChange)
+		newYTDBalance := account.YTDBalance.Add(balanceChange)
+		now := time.Now()
 
-		// TODO: Fix AccountBalance struct definition
-		// balance := domain.AccountBalance{
-		// 	CurrentBalance:      newBalance,
-		// 	YTDBalance:          newYTDBalance,
-		// 	LastTransactionDate: &time.Time{},
-		// }
+		balance := domain.AccountBalance{
+			AccountID:    accountID,
+			Account:      *account,
+			NetBalance:   newBalance,
+			TotalDebits:  newYTDBalance, // approximation until TASK-026 wires real SUM queries
+			TotalCredits: decimal.Zero,
+			AsOfDate:     now,
+		}
 
-		// if err := s.accountRepo.UpdateBalance(ctx, accountID, balance); err != nil {
-		// Temporary: skip balance update to avoid struct issues
-		if false {
+		if err := s.accountRepo.UpdateBalance(ctx, accountID, balance); err != nil {
 			logger.ErrorContext(ctx, "Failed to update account balance",
 				logger.Fields{
 					"account_id": accountID.String(),

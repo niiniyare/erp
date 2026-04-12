@@ -231,6 +231,10 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		return nil, err
 	}
 
+	// Parent validation: root type consistency + path / level derivation.
+	var accountPath *string
+	var accountLevel int32 = 0
+
 	if req.ParentAccountID != nil {
 		parentAccount, err := s.accountRepo.GetByID(ctx, *req.ParentAccountID)
 		if err != nil {
@@ -245,8 +249,32 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		}
 
 		if !parentAccount.IsActive {
-			return nil, fmt.Errorf("cannot create account under inactive parent")
+			return nil, errors.NewBusinessError("INVALID_PARENT", "cannot create account under inactive parent")
 		}
+
+		if parentAccount.RootType != req.RootType {
+			return nil, errors.NewBusinessError("ROOT_TYPE_MISMATCH",
+				fmt.Sprintf("account root_type %q does not match parent root_type %q", req.RootType, parentAccount.RootType))
+		}
+
+		// Derive materialized path: parent_path + code + "/"
+		parentPath := "/" + parentAccount.AccountCode + "/"
+		if parentAccount.AccountPath != nil && *parentAccount.AccountPath != "" {
+			parentPath = *parentAccount.AccountPath
+		}
+		p := parentPath + req.AccountCode + "/"
+		accountPath = &p
+		accountLevel = parentAccount.AccountLevel + 1
+	} else {
+		// Root-level account: path is just the code.
+		p := "/" + req.AccountCode + "/"
+		accountPath = &p
+	}
+
+	// Auto-set normal balance from root type when caller did not provide one.
+	normalBalance := req.NormalBalance
+	if normalBalance == "" {
+		normalBalance = domain.GetNormalBalanceForRootType(req.RootType)
 	}
 
 	timer := s.metrics.Timer("account_creation_duration", metrics.Fields{
@@ -260,10 +288,14 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		AccountName:                 req.AccountName,
 		AccountDescription:          req.AccountDescription,
 		ParentAccountID:             req.ParentAccountID,
+		AccountPath:                 accountPath,
+		AccountLevel:                accountLevel,
+		IsLeafAccount:               true, // new accounts start as leaves; flipped when a child is created
+		Status:                      domain.AccountStatusDraft,
 		RootType:                    req.RootType,
 		AccountType:                 req.AccountType,
 		AccountSubtype:              req.AccountSubtype,
-		NormalBalance:               req.NormalBalance,
+		NormalBalance:               normalBalance,
 		IsControlAccount:            req.IsControlAccount,
 		ControlAccountID:            req.ControlAccountID,
 		CurrencyCode:                req.CurrencyCode,

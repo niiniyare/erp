@@ -1197,32 +1197,474 @@ func TestNestedFieldPath(t *testing.T) {
 
 ---
 
+---
+
+## P0 — Repository & Persistence Stubs (Blocking Correctness)
+
+---
+
+### TASK-024 `[ ]` Fix `AccountBalance` struct + add `MarkAsReversed` to repository
+
+**Priority:** P0
+**File:** `internal/core/finance/service/transaction_service.go:1341`, `internal/core/finance/domain/repository.go`
+
+**Problem:**
+Two silent failures in the reversal and posting paths:
+1. `updateAccountBalances` (line 1341) is wrapped in a dead-code block because the `AccountBalance` struct fields used don't match the actual domain struct — balances are **never updated** after a post.
+2. `ReverseTransaction` calls `repo.MarkAsReversed` (line 785) via a commented-out block because the method doesn't exist in the `TransactionRepository` interface — a reversed transaction is **never flagged**, allowing double-reversal.
+
+**Solution:**
+1. Reconcile `AccountBalance` field references in `updateAccountBalances` against `domain.AccountBalance`; remove the dead-code wrapper so the method is actually called.
+2. Add `MarkAsReversed(ctx context.Context, id uuid.UUID, reversalID uuid.UUID, reason string) error` to `TransactionRepository` interface and provide a concrete stub in `repository/transaction.go`.
+3. Uncomment the `MarkAsReversed` call in `ReverseTransaction`.
+
+**Expected Outcome:**
+- Account balances change after every post
+- A reversed transaction cannot be reversed again (`IsReversed == true` check blocks it)
+
+**How to Test:**
+```go
+func TestPostUpdatesBalance(t *testing.T) {
+    // Post Dr Cash 50,000 / Cr Revenue 50,000
+    // Cash account balance decreases by 50,000
+    // Revenue account balance increases by 50,000
+}
+
+func TestDoubleReversal_Blocked(t *testing.T) {
+    // Reverse transaction → success, IsReversed = true
+    // Reverse same transaction again → ALREADY_REVERSED error
+}
+```
+
+---
+
+### TASK-025 `[ ]` Wire transaction repository stubs to real SQLC queries
+
+**Priority:** P0
+**File:** `internal/core/finance/repository/transaction.go:802–961`
+
+**Problem:**
+~20 stub methods in the concrete `TransactionRepository` return `nil` or zero values without touching the database. The affected methods include all entry CRUD, balance calculation, account-based listing, date-range listing, status retrieval, recurring transaction retrieval, reconciliation updates, bulk operations, archiving, and transaction number generation. Everything persisted by the service layer is silently lost.
+
+**Solution:**
+For each stub, find the matching SQLC-generated query in `db/sqlc/` and wire it through the existing mapper pattern already established in `repository/accounts.go`. Key methods in priority order:
+1. `CreateEntry` / `CreateEntries` — nothing works without these
+2. `GetEntryByID` / `GetEntriesByTransaction` / `GetEntriesByAccount`
+3. `UpdateEntry` / `DeleteEntry`
+4. `IsTransactionNumberUnique` / `GetNextTransactionNumber`
+5. `GetByStatus` / `GetByDateRange` / `GetByAccount`
+6. `CalculateAccountBalance` (SUM query on entries)
+7. `UpdateReconciliationStatus` / `GetUnreconciledEntries`
+8. `GetEntrySummary` / `GetAccountTransactionSummary`
+9. `CreateBulk` / `UpdateBulk` / `Archive` / `Restore`
+10. `ValidateAccountsExist`
+
+**Expected Outcome:**
+- Entries written by `CreateEntry` are retrievable via `GetEntriesByTransaction`
+- `CalculateAccountBalance` returns a real SUM from the entries table
+- `GetNextTransactionNumber` returns an incrementing, tenant-scoped sequence
+
+**How to Test:**
+```go
+func TestCreateAndRetrieveEntries(t *testing.T) {
+    // Create transaction + 2 entries
+    // GetEntriesByTransaction → 2 entries returned, amounts match
+}
+
+func TestTransactionNumberUniqueness(t *testing.T) {
+    // Create txn with number "JE-001"
+    // IsTransactionNumberUnique("JE-001") → false
+    // IsTransactionNumberUnique("JE-002") → true
+}
+```
+
+---
+
+### TASK-026 `[ ]` Wire account balance / trial balance queries from entries
+
+**Priority:** P0
+**File:** `internal/core/finance/repository/accounts.go:430, 452–453, 487–488, 515, 656`
+**Depends On:** TASK-025
+
+**Problem:**
+Five stubs in the accounts repository depend on reading from the transaction entries table:
+1. `CalculateAccountBalance` (line 487) — returns zero totals; needs `SUM(debit_amount)` / `SUM(credit_amount)` grouped by account from `finance_transaction_entries`
+2. `GetTrialBalance` (line 515) — returns nothing; needs a full tenant-scoped GROUP BY query across all accounts and their entries
+3. `HasTransactions` (line 656) — always returns `false`; prevents the "cannot delete account with entries" guard from firing
+4. `GetAccountPath` (line 430) — returns empty slice; needs to parse the materialized `account_path` string and fetch each ancestor account
+5. `ValidateHierarchy` (line 452) — no circular-reference detection
+
+**Solution:**
+- `CalculateAccountBalance`: `SELECT SUM(debit_amount), SUM(credit_amount) FROM finance_transaction_entries WHERE account_id = $1 AND tenant_id = $2 AND transaction status = POSTED`
+- `GetTrialBalance`: GROUP BY `account_id`, JOIN to `accounts` for code/name
+- `HasTransactions`: `SELECT EXISTS(SELECT 1 FROM finance_transaction_entries WHERE account_id = $1)`
+- `GetAccountPath`: split `account_path` string on `/`, query accounts by code for each segment
+- `ValidateHierarchy`: walk `parent_account_id` chain, error if a cycle is detected
+
+**Expected Outcome:**
+- Trial balance report returns real debit/credit totals per account
+- Deleting an account with entries returns `ACCOUNT_HAS_TRANSACTIONS` error
+- `GetAccountPath` returns the full ancestor chain
+
+**How to Test:**
+```go
+func TestTrialBalance_MatchesPostedEntries(t *testing.T) {
+    // Post Dr Cash 100 / Cr Revenue 100
+    // GetTrialBalance → Cash debit total = 100, Revenue credit total = 100
+}
+
+func TestDeleteAccount_Blocked_WhenHasEntries(t *testing.T) {
+    // Post entry to account
+    // Delete account → ACCOUNT_HAS_TRANSACTIONS error
+}
+```
+
+---
+
+### TASK-027 `[ ]` Wire posting engine balance update
+
+**Priority:** P0
+**File:** `internal/core/finance/service/transaction_posting_engine.go:510, 574`
+**Depends On:** TASK-024, TASK-025, TASK-026
+
+**Problem:**
+`RecalculateBalances` (line 510) reads the current cached balance and returns it unchanged — it never recalculates from entries. `BatchPostTransactions` (line 574) skips the balance update step entirely. Account balances shown in reports never change after posting even once Groups 1–3 are wired.
+
+**Solution:**
+1. In `RecalculateBalances`: call `accountRepo.CalculateAccountBalance(ctx, accountID)` for each affected account and then `accountRepo.UpdateBalance(ctx, accountID, newBalance)`.
+2. In `BatchPostTransactions`: collect all unique `account_id` values from all batched entries, aggregate the net debit/credit delta per account, then apply a single `UpdateBalance` per account.
+
+**Expected Outcome:**
+- After posting, `account.CurrentBalance` reflects the net of all posted entries
+- Batch posting correctly aggregates all entry movements before writing balances
+
+**How to Test:**
+```go
+func TestBatchPost_BalancesAggregated(t *testing.T) {
+    // Two transactions both debit Cash account
+    // BatchPost both
+    // Cash balance = sum of both debit amounts
+}
+```
+
+---
+
+## P1 — Missing Service Wiring
+
+---
+
+### TASK-028 `[ ]` Wire account view-based query methods to SQLC
+
+**Priority:** P1
+**File:** `internal/core/finance/repository/accounts.go` (and concrete impl)
+
+**Problem:**
+Fifteen methods in `AccountService` delegate to repository methods that are declared in the interface but return stub data. The SQLC types (`db.VFinanceAccountsWithGroup`, `db.VChartOfAccountsComplete`) and all domain mappers (`mapSQLCAccountWithGroupsToDomain`, `mapSQLCChartOfAccountsCompleteToDomain`) are already written in `repository/mappers.go`. Only the bridge from SQLC call → mapper → return is missing.
+
+**Affected methods:**
+`GetAccountWithGroups`, `GetAccountWithGroupsByCode`, `ListAccountsWithGroups`, `SearchAccountsWithGroups`, `GetLeafAccountsOnly`, `GetCompleteChartOfAccounts`, `GetAccountForReporting`, `GetAccountsByStatementSection`, `GetAccountsByGroup`, `GetAccountsByHeader`, `GetTrialBalanceAccounts`, `GetAccountsWithBalances`, `GetCashFlowAccounts`, `GetAccountSummaryByGroup`, and the three unified `ListAccountsAndGroups` / `GetAccountHierarchyWithGroups` / `SearchAccountsAndGroups`.
+
+**Solution:**
+For each method: locate the matching SQLC function in `db/sqlc/`, call it with the appropriate filter parameters, map the result with the existing mapper, return. Follow the identical pattern already used in the working `GetByID`, `GetByCode`, `List` methods in `repository/accounts.go`.
+
+**Expected Outcome:**
+- Chart of accounts UI populates with real data
+- Trial balance report shows accounts grouped correctly
+- `GET /accounts?root_type=ASSET&is_group=false` returns leaf asset accounts
+
+**How to Test:**
+```go
+func TestListAccountsWithGroups_ReturnsGroupedData(t *testing.T) {
+    // Seed accounts with group assignments
+    // ListAccountsWithGroups → each account includes GroupCode, GroupName
+}
+```
+
+---
+
+### TASK-029 `[ ]` Add missing `TransactionRepository` interface methods
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/repository.go`, `internal/core/finance/repository/transaction.go`
+
+**Problem:**
+The service layer calls five repository methods that do not exist in the `TransactionRepository` interface, causing the service to use dead-code workarounds:
+- `Search(ctx, query, limit, offset)` — line 1070
+- `GetSummary(ctx, startDate, endDate)` — line 1111
+- `GetPendingApproval(ctx, entityID, limit, offset)` — line 1160
+- `GetRecurringDue(ctx, date)` — line 1191
+- `UpdateNextRecurringDate(ctx, id, nextDate)` — line 1289
+
+**Solution:**
+1. Add each signature to the `TransactionRepository` interface in `domain/repository.go`
+2. Add concrete stubs in `repository/transaction.go`
+3. Wire to SQLC queries (or implement SQL directly)
+4. Remove the dead-code comment blocks in `transaction_service.go`
+
+**Expected Outcome:**
+- `SearchTransactions` returns real results
+- `GetTransactionSummary` returns real totals for a date range
+- `GetPendingApprovalTransactions` returns real pending entries
+- Recurring transaction generation fires on the correct due dates
+
+**How to Test:**
+```go
+func TestSearchTransactions_ByDescription(t *testing.T) {
+    // Create txn with description "Rent payment"
+    // Search("Rent") → 1 result
+}
+
+func TestGetRecurringDue_ReturnsDueToday(t *testing.T) {
+    // Recurring txn with NextRecurringDate = today
+    // GetRecurringDue(today) → includes that transaction
+}
+```
+
+---
+
+### TASK-030 `[ ]` Extract real user ID in transaction numbering service
+
+**Priority:** P1
+**File:** `internal/core/finance/service/transaction_numbering_service.go:244`
+
+**Problem:**
+`ReserveTransactionNumber` records the reservation against `uuid.New()` — a random UUID — instead of the authenticated user who requested the number. Audit logs for number reservations are therefore useless for traceability.
+
+**Solution:**
+Replace `uuid.New()` with `shared.GetUserID(ctx)` (the same helper used throughout the service layer). If no user is in context (e.g. system-generated), use a designated system user UUID from settings constants.
+
+**Expected Outcome:**
+- `reserved_by` field on a number reservation matches the authenticated user
+- Audit log can trace who reserved (and potentially wasted) a transaction number
+
+**How to Test:**
+```go
+func TestReserveNumber_RecordsCorrectUser(t *testing.T) {
+    ctx := shared.WithUserID(context.Background(), knownUserID)
+    ref, _ := svc.ReserveTransactionNumber(ctx, entityID, "JE")
+    assert.Equal(t, knownUserID, ref.ReservedBy)
+}
+```
+
+---
+
+## P2 — Audit, Compliance & Correctness at Scale
+
+---
+
+### TASK-031 `[ ]` Persist exchange rates to database
+
+**Priority:** P2
+**File:** `internal/core/finance/service/exchange_rate_engine.go:374, 593`
+
+**Problem:**
+Exchange rates live only in an in-memory cache. On any server restart, all loaded rates are lost. `GetExchangeRate` falls back to a 1:1 estimated rate when the cache is empty (line 374), silently corrupting every multi-currency transaction posted after a restart. `UpdateExchangeRate` saves to cache only (line 593) so rates set by finance staff are not durable.
+
+**Solution:**
+1. Design a `finance_exchange_rates` table: `(tenant_id, from_currency, to_currency, rate, rate_type, effective_date, source, loaded_by, created_at)`
+2. Add `ExchangeRateRepository` interface to `domain/repository.go` with: `SaveRate`, `GetRateForDate(ctx, tenantID, from, to, date, rateType)`, `ListRates`
+3. In `GetExchangeRate` (line 374): on cache miss, query the repository before falling back to the 1:1 default
+4. In `UpdateExchangeRate` (line 593): persist to repository after updating the cache
+5. On service startup, optionally pre-warm the cache from the repository
+
+**Expected Outcome:**
+- Rates survive server restart
+- `GetExchangeRate` never silently uses 1:1 for a currency pair with a loaded rate
+- `EXCHANGE_RATE_NOT_FOUND` error is returned correctly when no rate exists (not a silently wrong 1:1)
+
+**How to Test:**
+```go
+func TestExchangeRate_SurvivesRestart(t *testing.T) {
+    // Save rate USD/KES 128.00
+    // Simulate restart (clear cache)
+    // GetExchangeRate("USD", "KES", today) → 128.00 (from DB)
+}
+```
+
+---
+
+### TASK-032 `[ ]` Add reversal history table and double-reverse guard
+
+**Priority:** P2
+**File:** `internal/core/finance/service/transaction_reversal_engine.go:452, 486`
+
+**Problem:**
+1. `HasAlreadyReversedOthers` (line 452) always returns `false` — a reversal transaction can itself be reversed, creating infinite reversal chains that corrupt the ledger.
+2. `GetReversalHistory` (line 486) returns a fabricated record with a random UUID — shown to finance staff in the audit UI, this data is completely wrong.
+
+**Solution:**
+1. Create `finance_reversal_history` table: `(id, original_transaction_id, reversal_transaction_id, reason, initiated_by, created_at)`
+2. In `ReverseTransaction`: insert a row to `finance_reversal_history` after successfully creating the reversal
+3. `HasAlreadyReversedOthers`: `SELECT EXISTS(SELECT 1 FROM finance_reversal_history WHERE reversal_transaction_id = $1)` — prevents a reversal from being reversed again
+4. `GetReversalHistory`: query the table for all reversals of a given original transaction
+
+**Expected Outcome:**
+- Reversing a reversal returns `CANNOT_REVERSE_REVERSAL` error
+- `GetReversalHistory` returns accurate timestamps, users, and linked IDs
+
+**How to Test:**
+```go
+func TestReverseOfReversal_Blocked(t *testing.T) {
+    // Post JE → reverse it (rev1 created)
+    // Reverse rev1 → CANNOT_REVERSE_REVERSAL error
+}
+
+func TestGetReversalHistory_ReturnsRealData(t *testing.T) {
+    // Post JE, reverse it
+    // GetReversalHistory(originalID) → 1 record with correct reversalID
+}
+```
+
+---
+
+### TASK-033 `[ ]` Persist approval workflow state and history
+
+**Priority:** P2
+**File:** `internal/core/finance/service/transaction_workflow_engine.go:499–500, 610–611, 677, 696, 716, 732, 753, 771, 833`
+
+**Problem:**
+The approval workflow engine has no persistence layer. Specifically:
+- Workflow records are never created in a DB table (line 499–500) — workflow state is lost on restart
+- Approval decisions (approve/reject/escalate) are not recorded in history (line 610–611)
+- Approval history and pending approval lists load nothing from DB (line 716, 732)
+- `ValidateApprovalAuthority` always returns `true` — any user can approve any transaction (line 771)
+- Escalation logic does nothing (line 753)
+- Next approvers are hardcoded, not loaded from configuration (line 833)
+- Information request/update is not implemented (line 677, 696)
+
+**Solution:**
+> **Decision point:** Determine whether workflow state lives in a custom `finance_workflow_records` table or entirely in Temporal (which already has its own durable state). If Temporal is chosen, several of these TODOs are addressed by the `ApprovalEscalationWorkflow` (TASK-015). Document the decision before implementing.
+
+If custom tables are chosen:
+1. `finance_workflow_records`: `(id, transaction_id, tenant_id, status, current_tier, config_snapshot, created_at, updated_at)`
+2. `finance_approval_history`: `(id, workflow_id, transaction_id, tier, action, performed_by, notes, created_at)`
+3. Wire `ValidateApprovalAuthority` to an approval configuration table or IAM permission check
+4. Wire `GetApprovalHistory` / `GetPendingApprovals` to the history table
+5. Implement escalation: mark tier as escalated, notify configured escalation recipient
+
+**Expected Outcome:**
+- Approval workflow state survives server restart
+- Finance manager can view full approval trail per transaction
+- Only authorized approvers can approve (IAM check)
+- Escalation fires after SLA breach (coordinate with Temporal `ApprovalEscalationWorkflow`)
+
+**How to Test:**
+```go
+func TestApprovalHistory_Persisted(t *testing.T) {
+    // Submit for approval → approve it
+    // GetApprovalHistory(txnID) → 1 record: approved by user X at time T
+}
+
+func TestUnauthorisedApproval_Blocked(t *testing.T) {
+    // User without finance.transactions.approve permission
+    // ApproveTransaction → PERMISSION_DENIED error
+}
+```
+
+---
+
+### TASK-034 `[ ]` Implement `GetTransitionHistory` from audit log
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/transaction_state_machine.go:261`
+
+**Problem:**
+`GetTransitionHistory()` returns an empty slice instead of querying the audit log. Finance staff cannot see the state change trail (Draft → Pending Approval → Approved → Posted) for a transaction.
+
+**Solution:**
+Once `AuditRepository` is implemented (verify current status), query it for all `TRANSACTION_STATUS_CHANGE` events for the given transaction ID, ordered by timestamp. Map audit entries to `StateTransition` structs.
+
+**Expected Outcome:**
+- `GetTransitionHistory(txnID)` returns each status change with actor, timestamp, and from/to status
+
+**How to Test:**
+```go
+func TestTransitionHistory_FullLifecycle(t *testing.T) {
+    // Draft → submit → approve → post
+    // GetTransitionHistory → 3 transitions in order
+}
+```
+
+---
+
+## P3 — Polish & Housekeeping
+
+---
+
+### TASK-035 `[ ]` Remove domain-layer uniqueness check TODOs
+
+**Priority:** P3
+**File:** `internal/core/finance/domain/validation.go:299, 318`
+
+**Problem:**
+Two commented-out `// TODO: Check uniqueness in repository` blocks in the pure domain validator suggest uniqueness should be checked in the domain layer. This is architecturally incorrect — domain validators must not depend on repositories. Both uniqueness checks already exist in the service layer (`ValidateAccountCode` in `account_service.go`, `IsTransactionNumberUnique` in `transaction_service.go`).
+
+**Solution:**
+Remove the TODO comments. Add a code comment explaining that uniqueness is a service-layer concern, not domain-validator concern, and reference the service methods that perform it.
+
+**Expected Outcome:**
+- No misleading TODOs in domain validation code
+- Clear architectural guidance for future developers
+
+---
+
+### TASK-036 `[ ]` Remove stale mapper TODO comment
+
+**Priority:** P3
+**File:** `internal/core/finance/repository/mappers.go:788`
+
+**Problem:**
+Comment says "TODO: These mapper functions will be implemented once SQLC generates the types." The mapper functions directly below it are already fully implemented and compiling. The comment is stale and misleading.
+
+**Solution:**
+Delete the comment line.
+
+**Expected Outcome:**
+- No misleading TODO in mappers file
+
+---
+
 ## Task Summary
 
-| ID | Task | Priority | Effort | Depends On |
-|----|------|----------|--------|------------|
-| TASK-001 | Fix `IsEditable()` contradiction | P0 | XS | — |
-| TASK-002 | Fix `RejectionReason` enum | P0 | XS | — |
-| TASK-003 | Remove duplicate `TransactionType` | P0 | S | — |
-| TASK-004 | `FiscalYear` + `AccountingPeriod` domain | P1 | L | — |
-| TASK-005 | `Currency` + `ExchangeRate` domain | P1 | L | — |
-| TASK-006 | `CostCenter` domain | P1 | M | — |
-| TASK-007 | `Budget` + `BudgetLine` domain | P1 | M | TASK-004, TASK-006 |
-| TASK-008 | `AccountStatus` state machine | P1 | M | — |
-| TASK-009 | Implement `GetTransactionWithEntries` | P1 | S | — |
-| TASK-010 | Document account grouping tiers | P1 | S | — |
-| TASK-011 | Implement `CreateAccount` fully | P1 | M | TASK-008 |
-| TASK-012 | Implement `PostTransaction` fully | P1 | L | TASK-004, TASK-005, TASK-007, TASK-009 |
-| TASK-013 | Implement `ReverseTransaction` fully | P1 | M | TASK-012 |
-| TASK-014 | Period validation middleware | P1 | S | TASK-004 |
-| TASK-015 | Enable Temporal integration | P1 | L | TASK-012, TASK-013 |
-| TASK-016 | `BankReconciliation` domain | P2 | L | TASK-004 |
-| TASK-017 | `PaymentRun` domain | P2 | M | — |
-| TASK-018 | Document `PARTIALLY_APPROVED` + `EXPIRED` | P2 | XS | TASK-015 |
-| TASK-019 | Add `CostCenterID` to `TransactionEntry` | P2 | XS | TASK-006 |
-| TASK-020 | Confirm `AccountFilter` completeness | P2 | S | — |
-| TASK-021 | Remove duplicate service method shims | P3 | S | — |
-| TASK-022 | `ValidationError` severity levels | P3 | S | — |
-| TASK-023 | Nested field paths in `ValidationError` | P3 | S | TASK-022 |
+| ID | Task | Priority | Effort | Depends On | Status |
+|----|------|----------|--------|------------|--------|
+| TASK-001 | Fix `IsEditable()` contradiction | P0 | XS | — | ✅ |
+| TASK-002 | Fix `RejectionReason` enum | P0 | XS | — | ✅ |
+| TASK-003 | Remove duplicate `TransactionType` | P0 | S | — | ✅ |
+| TASK-004 | `FiscalYear` + `AccountingPeriod` domain | P1 | L | — | ✅ |
+| TASK-005 | `Currency` + `ExchangeRate` domain | P1 | L | — | ✅ |
+| TASK-006 | `CostCenter` domain | P1 | M | — | ✅ |
+| TASK-007 | `Budget` + `BudgetLine` domain | P1 | M | TASK-004, TASK-006 | ✅ |
+| TASK-008 | `AccountStatus` state machine | P1 | M | — | ✅ |
+| TASK-009 | Implement `GetTransactionWithEntries` | P1 | S | — | ✅ |
+| TASK-010 | Document account grouping tiers | P1 | S | — | ⏭ |
+| TASK-011 | Implement `CreateAccount` fully | P1 | M | TASK-008 | ✅ |
+| TASK-012 | Implement `PostTransaction` fully | P1 | L | TASK-004, TASK-005, TASK-007, TASK-009 | ✅ |
+| TASK-013 | Implement `ReverseTransaction` fully | P1 | M | TASK-012 | ✅ |
+| TASK-014 | Period validation middleware | P1 | S | TASK-004 | ✅ |
+| TASK-015 | Enable Temporal integration | P1 | L | TASK-012, TASK-013 | ✅ |
+| TASK-016 | `BankReconciliation` domain | P2 | L | TASK-004 | ✅ |
+| TASK-017 | `PaymentRun` domain | P2 | M | — | ✅ |
+| TASK-018 | Document `PARTIALLY_APPROVED` + `EXPIRED` | P2 | XS | TASK-015 | ✅ |
+| TASK-019 | Add `CostCenterID` to `TransactionEntry` | P2 | XS | TASK-006 | ✅ |
+| TASK-020 | Confirm `AccountFilter` completeness | P2 | S | — | ✅ |
+| TASK-021 | Remove duplicate service method shims | P3 | S | — | ✅ |
+| TASK-022 | `ValidationError` severity levels | P3 | S | — | ✅ |
+| TASK-023 | Nested field paths in `ValidationError` | P3 | S | TASK-022 | ✅ |
+| TASK-024 | Fix `AccountBalance` struct + `MarkAsReversed` | P0 | XS | — | `[ ]` |
+| TASK-025 | Wire transaction repository stubs to SQLC | P0 | L | TASK-024 | `[ ]` |
+| TASK-026 | Wire account balance / trial balance from entries | P0 | M | TASK-025 | `[ ]` |
+| TASK-027 | Wire posting engine balance update | P0 | S | TASK-024, TASK-025, TASK-026 | `[ ]` |
+| TASK-028 | Wire account view-based query methods to SQLC | P1 | M | — | `[ ]` |
+| TASK-029 | Add missing `TransactionRepository` interface methods | P1 | S | — | `[ ]` |
+| TASK-030 | Extract real user ID in numbering service | P1 | XS | — | `[ ]` |
+| TASK-031 | Persist exchange rates to database | P2 | M | TASK-005 | `[ ]` |
+| TASK-032 | Reversal history table + double-reverse guard | P2 | M | TASK-025 | `[ ]` |
+| TASK-033 | Persist approval workflow state and history | P2 | L | TASK-015, TASK-025 | `[ ]` |
+| TASK-034 | Implement `GetTransitionHistory` from audit log | P2 | XS | TASK-025 | `[ ]` |
+| TASK-035 | Remove domain-layer uniqueness check TODOs | P3 | XS | — | `[ ]` |
+| TASK-036 | Remove stale mapper TODO comment | P3 | XS | — | `[ ]` |
 
 **Effort key:** XS < 2h · S = half-day · M = 1–2 days · L = 3–5 days
+
+**Implementation order:** TASK-024 → TASK-025 → TASK-026 → TASK-027 (Phase 1, unblock persistence) → TASK-028, TASK-029, TASK-030 (Phase 2) → TASK-031, TASK-032, TASK-033, TASK-034 (Phase 3) → TASK-035, TASK-036 (Phase 4)
