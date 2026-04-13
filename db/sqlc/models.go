@@ -580,6 +580,18 @@ type FinanceAccountValidationRule struct {
 	UpdatedBy                *uuid.UUID     `json:"updated_by"`
 }
 
+type FinanceApprovalHistory struct {
+	ID            uuid.UUID  `json:"id"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	WorkflowID    uuid.UUID  `json:"workflow_id"`
+	TransactionID uuid.UUID  `json:"transaction_id"`
+	Tier          int16      `json:"tier"`
+	Action        string     `json:"action"`
+	PerformedBy   *uuid.UUID `json:"performed_by"`
+	Notes         string     `json:"notes"`
+	CreatedAt     time.Time  `json:"created_at"`
+}
+
 type FinanceExchangeRate struct {
 	ID            uuid.UUID      `json:"id"`
 	TenantID      uuid.UUID      `json:"tenant_id"`
@@ -703,6 +715,18 @@ type FinanceTransactionEntry struct {
 	CreatedAt               time.Time      `json:"created_at"`
 	UpdatedAt               time.Time      `json:"updated_at"`
 	DeletedAt               sql.NullTime   `json:"deleted_at"`
+}
+
+type FinanceWorkflowRecord struct {
+	ID            uuid.UUID    `json:"id"`
+	TenantID      uuid.UUID    `json:"tenant_id"`
+	TransactionID uuid.UUID    `json:"transaction_id"`
+	Status        string       `json:"status"`
+	CurrentTier   int16        `json:"current_tier"`
+	InitiatedBy   *uuid.UUID   `json:"initiated_by"`
+	DueAt         sql.NullTime `json:"due_at"`
+	CreatedAt     time.Time    `json:"created_at"`
+	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
 // Closure table for efficient entity hierarchy queries. Stores all ancestor-descendant relationships with depth information. Enables fast retrieval of entity trees, subtrees, and hierarchy levels without recursive queries.

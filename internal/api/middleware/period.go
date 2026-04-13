@@ -91,7 +91,7 @@ func PeriodMiddleware(checker PeriodChecker, cfgOverrides ...PeriodMiddlewareCon
 		tenantID, ok := shared.GetTenantID(c.UserContext())
 		if !ok {
 			logger.WarnContext(c.UserContext(), "PeriodMiddleware: tenant_id missing from context")
-			return sendErrorResponse(c, fiber.StatusBadRequest, "tenant context is required")
+			return sendErrorResponse(c, "tenant context is required", fiber.StatusBadRequest, "")
 		}
 
 		// Determine the posting date — caller may override via header
@@ -99,8 +99,9 @@ func PeriodMiddleware(checker PeriodChecker, cfgOverrides ...PeriodMiddlewareCon
 		if raw := c.Get(cfg.DateHeader); raw != "" {
 			parsed, err := time.Parse("2006-01-02", raw)
 			if err != nil {
-				return sendErrorResponse(c, fiber.StatusBadRequest,
-					"invalid "+cfg.DateHeader+" header — expected YYYY-MM-DD format")
+				return sendErrorResponse(c,
+					"invalid "+cfg.DateHeader+" header - expected YYYY-MM-DD format",
+					fiber.StatusBadRequest, "")
 			}
 			postingDate = parsed.UTC()
 		}
@@ -114,22 +115,24 @@ func PeriodMiddleware(checker PeriodChecker, cfgOverrides ...PeriodMiddlewareCon
 					"posting_date": postingDate.Format("2006-01-02"),
 					"error":        err.Error(),
 				})
-			return sendErrorResponse(c, fiber.StatusUnprocessableEntity,
-				"no accounting period found for posting date "+postingDate.Format("2006-01-02"))
+			return sendErrorResponse(c,
+				"no accounting period found for posting date "+postingDate.Format("2006-01-02"),
+				fiber.StatusUnprocessableEntity, "")
 		}
 
 		// Reject if the period does not allow posting
 		if !period.Status.AllowsPosting() {
 			logger.WarnContext(c.UserContext(), "PeriodMiddleware: period is closed",
 				logger.Fields{
-					"tenant_id":    tenantID.String(),
-					"period_id":    period.ID.String(),
-					"period_name":  period.Name,
+					"tenant_id":     tenantID.String(),
+					"period_id":     period.ID.String(),
+					"period_name":   period.Name,
 					"period_status": string(period.Status),
 				})
-			return sendErrorResponse(c, fiber.StatusUnprocessableEntity,
+			return sendErrorResponse(c,
 				"accounting period '"+period.Name+"' is "+string(period.Status)+
-					" — no new transactions may be posted")
+					" - no new transactions may be posted",
+				fiber.StatusUnprocessableEntity, "")
 		}
 
 		// Make period available to downstream handlers

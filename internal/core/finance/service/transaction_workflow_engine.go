@@ -411,12 +411,14 @@ type NextAction struct {
 // transactionWorkflowEngine implements TransactionWorkflowEngine
 type transactionWorkflowEngine struct {
 	transactionRepository domain.TransactionRepository
+	approvalRepo          domain.ApprovalWorkflowRepository
 	tracing               tracing.Service
 }
 
 // TransactionWorkflowEngineDeps represents dependencies for the workflow engine
 type TransactionWorkflowEngineDeps struct {
 	TransactionRepository domain.TransactionRepository
+	ApprovalRepo          domain.ApprovalWorkflowRepository
 	Tracing               tracing.Service
 }
 
@@ -424,6 +426,7 @@ type TransactionWorkflowEngineDeps struct {
 func NewTransactionWorkflowEngine(deps TransactionWorkflowEngineDeps) TransactionWorkflowEngine {
 	return &transactionWorkflowEngine{
 		transactionRepository: deps.TransactionRepository,
+		approvalRepo:          deps.ApprovalRepo,
 		tracing:               deps.Tracing,
 	}
 }
@@ -496,8 +499,33 @@ func (e *transactionWorkflowEngine) SubmitForApproval(ctx context.Context, req S
 		return result, err
 	}
 
-	// 6. TODO: Create workflow record in database
-	// 7. TODO: Send notifications to approvers
+	// 6. Persist the workflow record so state survives restarts.
+	if e.approvalRepo != nil {
+		wfRec := &domain.WorkflowRecord{
+			TransactionID: req.TransactionID,
+			Status:        domain.ApprovalWorkflowInProgress,
+			CurrentTier:   1,
+			InitiatedBy:   req.SubmittedBy,
+			DueAt:         req.DueDate,
+		}
+		if err := e.approvalRepo.CreateWorkflow(ctx, wfRec); err != nil {
+			result.Errors = append(result.Errors,
+				fmt.Sprintf("Failed to persist workflow record: %v", err))
+		} else {
+			result.WorkflowID = wfRec.ID
+
+			// Record the submission event in approval history.
+			_ = e.approvalRepo.InsertApprovalHistory(ctx, &domain.ApprovalHistoryEntry{
+				WorkflowID:    wfRec.ID,
+				TransactionID: req.TransactionID,
+				Tier:          1,
+				Action:        domain.ApprovalActionSubmitted,
+				PerformedBy:   req.SubmittedBy,
+				Notes:         req.Comments,
+			})
+		}
+	}
+	// 7. TODO: Send notifications to approvers (Temporal / notification service)
 
 	result.Success = true
 	result.WorkflowStatus = WorkflowStatusInProgress
@@ -607,8 +635,36 @@ func (e *transactionWorkflowEngine) ApproveTransaction(ctx context.Context, req 
 		return result, err
 	}
 
-	// 7. TODO: Record approval in workflow history
-	// 8. TODO: Send notifications for next approvers or completion
+	// 7. Persist approval decision in workflow history.
+	if e.approvalRepo != nil {
+		action := domain.ApprovalActionApproved
+		switch req.ApprovalAction {
+		case ApprovalActionDelegate:
+			action = domain.ApprovalActionDelegated
+		case ApprovalActionReassign:
+			action = domain.ApprovalActionEscalated
+		}
+
+		wf, wfErr := e.approvalRepo.GetWorkflowByTransaction(ctx, req.TransactionID)
+		if wfErr == nil {
+			_ = e.approvalRepo.InsertApprovalHistory(ctx, &domain.ApprovalHistoryEntry{
+				WorkflowID:    wf.ID,
+				TransactionID: req.TransactionID,
+				Tier:          req.ApprovalLevel,
+				Action:        action,
+				PerformedBy:   req.ApprovedBy,
+				Notes:         req.ApprovalComments,
+			})
+
+			newStatus := domain.ApprovalWorkflowInProgress
+			if isComplete {
+				newStatus = domain.ApprovalWorkflowCompleted
+			}
+			_ = e.approvalRepo.UpdateWorkflowStatus(ctx, wf.ID, newStatus, req.ApprovalLevel)
+			result.ApprovalID = wf.ID
+		}
+	}
+	// 8. TODO: Send notifications for next approvers or completion (Temporal / notification service)
 
 	result.Success = true
 
@@ -651,6 +707,22 @@ func (e *transactionWorkflowEngine) RejectTransaction(ctx context.Context, req R
 	if err != nil {
 		result.Errors = append(result.Errors, fmt.Sprintf("Failed to update transaction: %v", err))
 		return result, err
+	}
+
+	// Persist rejection in workflow history.
+	if e.approvalRepo != nil {
+		wf, wfErr := e.approvalRepo.GetWorkflowByTransaction(ctx, req.TransactionID)
+		if wfErr == nil {
+			_ = e.approvalRepo.InsertApprovalHistory(ctx, &domain.ApprovalHistoryEntry{
+				WorkflowID:    wf.ID,
+				TransactionID: req.TransactionID,
+				Tier:          wf.CurrentTier,
+				Action:        domain.ApprovalActionRejected,
+				PerformedBy:   req.RejectedBy,
+				Notes:         req.RejectionComments,
+			})
+			_ = e.approvalRepo.UpdateWorkflowStatus(ctx, wf.ID, domain.ApprovalWorkflowRejected, wf.CurrentTier)
+		}
 	}
 
 	result.Success = true
@@ -705,7 +777,6 @@ func (e *transactionWorkflowEngine) GetApprovalHistory(ctx context.Context, tran
 
 	result := &ApprovalHistoryResult{
 		TransactionID:       transactionID,
-		WorkflowID:          uuid.New(), // Would be loaded from database
 		ApprovalHistory:     []ApprovalRecord{},
 		CurrentStatus:       WorkflowStatusPending,
 		CurrentLevel:        1,
@@ -713,7 +784,35 @@ func (e *transactionWorkflowEngine) GetApprovalHistory(ctx context.Context, tran
 		WorkflowDuration:    time.Duration(0),
 	}
 
-	// TODO: Implement approval history loading from database
+	if e.approvalRepo == nil {
+		return result, nil
+	}
+
+	wf, err := e.approvalRepo.GetWorkflowByTransaction(ctx, transactionID)
+	if err != nil {
+		// No workflow record yet — return empty history, not an error.
+		return result, nil
+	}
+	result.WorkflowID = wf.ID
+	result.CurrentLevel = wf.CurrentTier
+	result.CurrentStatus = toServiceWorkflowStatus(wf.Status)
+	result.WorkflowDuration = time.Since(wf.CreatedAt)
+
+	entries, err := e.approvalRepo.GetApprovalHistory(ctx, transactionID)
+	if err != nil {
+		return result, fmt.Errorf("get approval history: %w", err)
+	}
+	for _, entry := range entries {
+		result.ApprovalHistory = append(result.ApprovalHistory, ApprovalRecord{
+			ApprovalID:     entry.ID,
+			ApproverID:     entry.PerformedBy,
+			ApprovalLevel:  entry.Tier,
+			ApprovalAction: toServiceApprovalAction(entry.Action),
+			ApprovalStatus: toServiceApprovalStatus(entry.Action),
+			ApprovalDate:   entry.CreatedAt,
+			Comments:       entry.Notes,
+		})
+	}
 	return result, nil
 }
 
@@ -729,9 +828,46 @@ func (e *transactionWorkflowEngine) GetPendingApprovals(ctx context.Context, req
 		UrgentCount:      0,
 	}
 
-	// TODO: Implement pending approvals loading from database
-	// This would typically involve querying pending transactions and matching with user roles/permissions
+	if e.approvalRepo == nil {
+		return result, nil
+	}
 
+	userID := uuid.Nil
+	if req.UserID != nil {
+		userID = *req.UserID
+	}
+	records, err := e.approvalRepo.GetPendingByUser(ctx, userID, "")
+	if err != nil {
+		return result, fmt.Errorf("get pending approvals: %w", err)
+	}
+
+	now := time.Now()
+	for _, wf := range records {
+		txn, txErr := e.transactionRepository.GetByID(ctx, wf.TransactionID)
+		if txErr != nil {
+			continue // skip if transaction no longer accessible
+		}
+		isOverdue := wf.DueAt != nil && wf.DueAt.Before(now)
+		daysWaiting := int32(now.Sub(wf.CreatedAt).Hours() / 24)
+
+		pa := PendingApproval{
+			TransactionID:          wf.TransactionID,
+			TransactionNumber:      txn.TransactionNumber,
+			TransactionDescription: txn.Description,
+			Amount:                 txn.TotalDebitAmount.String(),
+			Currency:               txn.CurrencyCode,
+			SubmittedBy:            wf.InitiatedBy,
+			SubmittedAt:            wf.CreatedAt,
+			DueDate:                wf.DueAt,
+			IsOverdue:              isOverdue,
+			DaysWaiting:            daysWaiting,
+		}
+		result.PendingApprovals = append(result.PendingApprovals, pa)
+		result.TotalCount++
+		if isOverdue {
+			result.OverdueCount++
+		}
+	}
 	return result, nil
 }
 
@@ -834,4 +970,51 @@ func (e *transactionWorkflowEngine) determineWorkflowProgress(ctx context.Contex
 	var nextApprovers []ApproverInfo
 
 	return isComplete, nextLevel, nextApprovers
+}
+
+// ── domain ↔ service type mappers ────────────────────────────────────────────
+
+func toServiceWorkflowStatus(s domain.ApprovalWorkflowStatus) WorkflowStatus {
+	switch s {
+	case domain.ApprovalWorkflowPending:
+		return WorkflowStatusPending
+	case domain.ApprovalWorkflowInProgress:
+		return WorkflowStatusInProgress
+	case domain.ApprovalWorkflowCompleted:
+		return WorkflowStatusApproved
+	case domain.ApprovalWorkflowRejected:
+		return WorkflowStatusRejected
+	case domain.ApprovalWorkflowCancelled:
+		return WorkflowStatusCancelled
+	default:
+		return WorkflowStatusPending
+	}
+}
+
+func toServiceApprovalAction(a domain.ApprovalAction) ApprovalAction {
+	switch a {
+	case domain.ApprovalActionApproved:
+		return ApprovalActionApprove
+	case domain.ApprovalActionDelegated:
+		return ApprovalActionDelegate
+	case domain.ApprovalActionEscalated:
+		return ApprovalActionReassign
+	default:
+		return ApprovalActionApprove
+	}
+}
+
+func toServiceApprovalStatus(a domain.ApprovalAction) ApprovalStatus {
+	switch a {
+	case domain.ApprovalActionApproved:
+		return ApprovalStatusApproved
+	case domain.ApprovalActionRejected:
+		return ApprovalStatusRejected
+	case domain.ApprovalActionDelegated:
+		return ApprovalStatusDelegated
+	case domain.ApprovalActionEscalated:
+		return ApprovalStatusEscalated
+	default:
+		return ApprovalStatusPending
+	}
 }

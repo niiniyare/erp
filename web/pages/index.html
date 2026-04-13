@@ -1035,13 +1035,11 @@
   <script src="../sdk/charts.js"></script>
   <script src="../sdk/rest.js"></script>
   <script src="../utils/locale-en.js"></script>
-  <script src="../utils/schema-loader.js"></script>
   <script>
     (function () {
       var API_BASE = 'http://localhost:8080/';
 
       var amis = amisRequire('amis/embed');
-      var loader = new SchemaLoader('../schemas/');
       var currentInstance = null;
 
       // ── Theme System ──
@@ -1107,26 +1105,32 @@
         },
         {
           type: 'group',
-          id: 'basic-info',
-          label: 'Basic Information',
-          icon: 'fa-briefcase',
+          id: 'finance',
+          label: 'Finance',
+          icon: 'fa-calculator',
           expanded: false,
           items: [
-            {id: 'users', label: 'Users', hash: '#users'},
-            {id: 'table', label: 'Table', hash: '#table'},
-            {id: 'organizations', label: 'Tenants', hash: '#organizations'},
-            {id: 'settings', label: 'Settings', hash: '#settings'}
+            {id: 'finance/accounts', label: 'Chart of Accounts', hash: '#finance/accounts'},
+            {id: 'finance/transactions', label: 'Transactions', hash: '#finance/transactions'}
           ]
         },
         {
           type: 'group',
-          id: 'inventory',
-          label: 'Inventory',
-          icon: 'fa-warehouse',
+          id: 'admin',
+          label: 'Administration',
+          icon: 'fa-cogs',
           expanded: false,
           items: [
-            {id: 'products', label: 'Products', hash: '#products'}
+            {id: 'users', label: 'Users', hash: '#users'},
+            {id: 'organizations', label: 'Tenants', hash: '#organizations'}
           ]
+        },
+        {
+          type: 'item',
+          id: 'settings',
+          label: 'Settings',
+          icon: 'fa-sliders-h',
+          hash: '#settings'
         }
       ];
 
@@ -1380,9 +1384,12 @@
         contentEl.innerHTML = '<div class="loading"><i class="fa fa-spinner fa-spin"></i>&nbsp; Loading...</div>';
 
         try {
-          var schema = await loader.load('pages/' + route + '.json');
+          var res = await fetch('/schema/' + route, {headers: {'Accept': 'application/json'}});
+          if (!res.ok) throw new Error('Schema not found: ' + route);
+          var envelope = await res.json();
+          var schema = (envelope.status === 0 && envelope.data) ? envelope.data : envelope;
           contentEl.innerHTML = '';
-          currentInstance = amis.embed(contentEl, schema, {}, amisEnv);
+          currentInstance = amis.embed(contentEl, schema, {locale: 'en-US'}, amisEnv);
         } catch (error) {
           contentEl.innerHTML =
             '<div class="error-page">' +

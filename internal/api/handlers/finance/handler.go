@@ -275,7 +275,7 @@ func (h *FinanceHandler) CreateTransaction(c *fiber.Ctx) error {
 		return h.HandleError(c, err)
 	}
 
-	transaction, err := h.services.Transaction.Create(c.Context(), &req)
+	transaction, err := h.services.Transaction.CreateTransaction(c.Context(), req)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -303,7 +303,7 @@ func (h *FinanceHandler) GetTransaction(c *fiber.Ctx) error {
 			WithCategory(errors.CategoryValidation))
 	}
 
-	transaction, err := h.services.Transaction.GetByID(ctx, transactionUUID)
+	transaction, err := h.services.Transaction.GetTransactionByID(ctx, transactionUUID)
 	if err != nil {
 		return h.HandleError(c, err)
 	}
@@ -329,7 +329,7 @@ func (h *FinanceHandler) ListTransactions(c *fiber.Ctx) error {
 
 	filters.Offset = &offset
 	filters.Limit = &limit
-	transactions, err := h.services.Transaction.List(c.Context(), &filters)
+	transactions, err := h.services.Transaction.ListTransactions(c.Context(), &filters)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
@@ -569,6 +569,419 @@ func (h *FinanceHandler) recordSuccessMetrics(c *fiber.Ctx) {
 		"endpoint": c.Route().Path,
 		"status":   "success",
 	})
+}
+
+// ============================================================================
+// FISCAL YEAR ENDPOINTS
+// ============================================================================
+
+// CreateFiscalYear handles POST /api/v1/finance/fiscal-years
+func (h *FinanceHandler) CreateFiscalYear(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateFiscalYear")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		Name      string    `json:"name" validate:"required"`
+		StartDate time.Time `json:"start_date" validate:"required"`
+		EndDate   time.Time `json:"end_date" validate:"required"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	fy := &financeDomain.FiscalYear{
+		Name:      req.Name,
+		StartDate: req.StartDate,
+		EndDate:   req.EndDate,
+	}
+	created, err := h.services.Period.CreateFiscalYear(ctx, fy)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// ListFiscalYears handles GET /api/v1/finance/fiscal-years
+func (h *FinanceHandler) ListFiscalYears(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListFiscalYears")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	fys, err := h.services.Period.ListFiscalYears(ctx)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, fys)
+}
+
+// GetFiscalYear handles GET /api/v1/finance/fiscal-years/:id
+func (h *FinanceHandler) GetFiscalYear(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetFiscalYear")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid fiscal year ID").WithHTTPStatus(400))
+	}
+	fy, err := h.services.Period.GetFiscalYearByID(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, fy)
+}
+
+// ============================================================================
+// ACCOUNTING PERIOD ENDPOINTS
+// ============================================================================
+
+// CreatePeriod handles POST /api/v1/finance/fiscal-years/:id/periods
+func (h *FinanceHandler) CreatePeriod(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreatePeriod")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	fyID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid fiscal year ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		PeriodNumber int       `json:"period_number" validate:"required,min=1"`
+		Name         string    `json:"name" validate:"required"`
+		StartDate    time.Time `json:"start_date" validate:"required"`
+		EndDate      time.Time `json:"end_date" validate:"required"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	period := &financeDomain.AccountingPeriod{
+		FiscalYearID: fyID,
+		PeriodNumber: req.PeriodNumber,
+		Name:         req.Name,
+		StartDate:    req.StartDate,
+		EndDate:      req.EndDate,
+		Status:       financeDomain.PeriodStatusOpen,
+	}
+	created, err := h.services.Period.CreatePeriod(ctx, period)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// ListPeriods handles GET /api/v1/finance/fiscal-years/:id/periods
+func (h *FinanceHandler) ListPeriods(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListPeriods")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	fyID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid fiscal year ID").WithHTTPStatus(400))
+	}
+	periods, err := h.services.Period.ListPeriods(ctx, fyID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, periods)
+}
+
+// GetPeriod handles GET /api/v1/finance/periods/:id
+func (h *FinanceHandler) GetPeriod(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetPeriod")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid period ID").WithHTTPStatus(400))
+	}
+	period, err := h.services.Period.GetPeriodByID(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, period)
+}
+
+// GetCurrentPeriod handles GET /api/v1/finance/periods/current
+func (h *FinanceHandler) GetCurrentPeriod(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetCurrentPeriod")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	period, err := h.services.Period.GetCurrentPeriod(ctx)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, period)
+}
+
+// ChangePeriodStatus handles PATCH /api/v1/finance/periods/:id/status
+func (h *FinanceHandler) ChangePeriodStatus(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ChangePeriodStatus")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid period ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Status       string `json:"status" validate:"required"`
+		ChecksPassed bool   `json:"checks_passed"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	newStatus := financeDomain.PeriodStatus(req.Status)
+	if !newStatus.IsValid() {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_STATUS", "invalid period status").WithHTTPStatus(400))
+	}
+
+	// Extract user ID from context locals (set by auth middleware)
+	var byUserID uuid.UUID
+	if userIDStr, ok := c.Locals("user_id").(string); ok {
+		byUserID, _ = uuid.Parse(userIDStr)
+	}
+
+	period, err := h.services.Period.ChangePeriodStatus(ctx, id, newStatus, byUserID, req.ChecksPassed)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, period)
+}
+
+// ============================================================================
+// EXCHANGE RATE ENDPOINTS
+// ============================================================================
+
+// UpsertExchangeRate handles POST /api/v1/finance/exchange-rates
+func (h *FinanceHandler) UpsertExchangeRate(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UpsertExchangeRate")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var rate financeDomain.ExchangeRate
+	if err := h.ValidateRequest(c, &rate); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	created, err := h.services.ExchangeRate.UpsertRate(ctx, &rate)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetExchangeRate handles GET /api/v1/finance/exchange-rates
+// Query params: from, to, rate_type, date
+func (h *FinanceHandler) GetExchangeRate(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetExchangeRate")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	fromCurrency := c.Query("from")
+	toCurrency := c.Query("to")
+	if fromCurrency == "" || toCurrency == "" {
+		return h.HandleError(c, errors.NewBusinessError("MISSING_PARAMS", "from and to query parameters are required").WithHTTPStatus(400))
+	}
+
+	rateTypeStr := c.Query("rate_type", "SPOT")
+	rateType := financeDomain.RateType(rateTypeStr)
+	if !rateType.IsValid() {
+		rateType = financeDomain.RateTypeSpot
+	}
+
+	asOfDate := time.Now()
+	if dateStr := c.Query("date"); dateStr != "" {
+		if parsed, err := time.Parse("2006-01-02", dateStr); err == nil {
+			asOfDate = parsed
+		}
+	}
+
+	rate, err := h.services.ExchangeRate.GetRate(ctx, fromCurrency, toCurrency, rateType, asOfDate)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, rate)
+}
+
+// ListExchangeRates handles GET /api/v1/finance/exchange-rates/history
+// Query params: from, to, from_date, to_date, limit
+func (h *FinanceHandler) ListExchangeRates(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListExchangeRates")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	fromCurrency := c.Query("from")
+	toCurrency := c.Query("to")
+	if fromCurrency == "" || toCurrency == "" {
+		return h.HandleError(c, errors.NewBusinessError("MISSING_PARAMS", "from and to query parameters are required").WithHTTPStatus(400))
+	}
+
+	limit := c.QueryInt("limit", 100)
+	var fromDate, toDate *time.Time
+	if s := c.Query("from_date"); s != "" {
+		if t, err := time.Parse("2006-01-02", s); err == nil {
+			fromDate = &t
+		}
+	}
+	if s := c.Query("to_date"); s != "" {
+		if t, err := time.Parse("2006-01-02", s); err == nil {
+			toDate = &t
+		}
+	}
+
+	rates, err := h.services.ExchangeRate.ListRates(ctx, fromCurrency, toCurrency, fromDate, toDate, limit)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, rates)
+}
+
+// ============================================================================
+// CURRENCY ENDPOINTS
+// ============================================================================
+
+// CreateCurrency handles POST /api/v1/finance/currencies
+func (h *FinanceHandler) CreateCurrency(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateCurrency")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var currency financeDomain.Currency
+	if err := h.ValidateRequest(c, &currency); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	created, err := h.services.Currency.CreateCurrency(ctx, &currency)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// ListCurrencies handles GET /api/v1/finance/currencies
+func (h *FinanceHandler) ListCurrencies(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListCurrencies")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	activeOnly := c.QueryBool("active_only", false)
+	currencies, err := h.services.Currency.ListCurrencies(ctx, activeOnly)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, currencies)
+}
+
+// UpdateCurrency handles PUT /api/v1/finance/currencies/:id
+func (h *FinanceHandler) UpdateCurrency(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UpdateCurrency")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid currency ID").WithHTTPStatus(400))
+	}
+
+	var currency financeDomain.Currency
+	if err := h.ValidateRequest(c, &currency); err != nil {
+		return h.HandleError(c, err)
+	}
+	currency.ID = id
+
+	updated, err := h.services.Currency.UpdateCurrency(ctx, &currency)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, updated)
+}
+
+// ============================================================================
+// APPROVAL WORKFLOW ENDPOINTS
+// ============================================================================
+
+// SubmitTransaction handles POST /api/v1/finance/transactions/:id/submit
+func (h *FinanceHandler) SubmitTransaction(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.SubmitTransaction")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid transaction ID").WithHTTPStatus(400))
+	}
+
+	transaction, err := h.services.Transaction.PostTransaction(ctx, id, nil)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, transaction)
+}
+
+// ApproveTransaction handles POST /api/v1/finance/transactions/:id/approve
+func (h *FinanceHandler) ApproveTransaction(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ApproveTransaction")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid transaction ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Notes string `json:"notes"`
+	}
+	_ = c.BodyParser(&req)
+
+	transaction, err := h.services.Transaction.ApproveTransaction(ctx, id, req.Notes)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, transaction)
+}
+
+// RejectTransaction handles POST /api/v1/finance/transactions/:id/reject
+func (h *FinanceHandler) RejectTransaction(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.RejectTransaction")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid transaction ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Notes string `json:"notes"`
+	}
+	_ = c.BodyParser(&req)
+
+	transaction, err := h.services.Transaction.RejectTransaction(ctx, id, req.Notes)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, transaction)
 }
 
 // Custom validator registration

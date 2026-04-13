@@ -42,6 +42,7 @@ type TransactionService interface {
 type transactionService struct {
 	repo         domain.TransactionRepository
 	accountRepo  domain.AccountsRepository
+	periodRepo   domain.PeriodRepository   // nil → period check skipped in inline path
 	entryService TransactionEntryService
 	postPipeline *corePipeline.PipelineBuilder // nil → falls back to inline logic
 	tracing      tracing.Service
@@ -79,6 +80,7 @@ func NewTransactionServiceWithPipeline(
 	return &transactionService{
 		repo:         repo,
 		accountRepo:  accountRepo,
+		periodRepo:   periodRepo,
 		entryService: entryService,
 		postPipeline: financePipeline.NewPostTransactionPipeline(repo, accountRepo, periodRepo, txRunner),
 		tracing:      tracing,
@@ -645,6 +647,21 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 	if postingDate == nil {
 		now := time.Now()
 		postingDate = &now
+	}
+
+	// Period check — guard against posting into a closed or locked period.
+	if s.periodRepo != nil {
+		period, periodErr := s.periodRepo.GetPeriodForDate(ctx, transaction.TenantID, *postingDate)
+		if periodErr != nil {
+			return nil, fmt.Errorf("period lookup for %s: %w", postingDate.Format("2006-01-02"), domain.ErrPeriodNotFound)
+		}
+		if !period.Status.AllowsPosting() {
+			s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
+				"error_type": "period_closed",
+			})
+			return nil, errors.NewBusinessError("PERIOD_CLOSED",
+				fmt.Sprintf("accounting period %q is %s; no further postings allowed", period.Name, period.Status))
+		}
 	}
 
 	timer := s.metrics.Timer("transaction_posting_duration", metrics.Fields{

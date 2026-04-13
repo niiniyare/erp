@@ -2,194 +2,233 @@
 
 ## Go Schema Builder
 
-### Why a Typed Builder Package
+### Why a Builder Package
 
-Raw `map[string]any` chains are unreadable and have no compile-time checks. JSON string literals in Go source are worse. The `awo/web/schema` package provides typed Go structs that marshal to valid AMIS JSON.
+Raw `map[string]any` is unreadable and has no compile-time checks. The `amis` package provides a fluent Go API that marshals directly to valid AMIS JSON — no `.Build()` call needed when passing to Fiber's `c.JSON()`.
 
-```markdown
-WITHOUT builder (unreadable):
-  map[string]any{"type":"crud","api":"get:/api/v1/orders","columns":[]any{map[string]any{"name":"id"...}}}
-
-WITH builder (clear):
-  schema.CRUD{API: "get:/api/v1/orders", Columns: []schema.Column{{Name:"id", Label:"ID"}}}
 ```
+WITHOUT builder (unreadable):
+  map[string]any{"type":"crud","api":"get:/api/v1/orders","syncLocation":true,"columns":[]any{...}}
+
+WITH builder (clear intent):
+  amis.CRUD("get:/api/v1/orders").
+      Columns(amis.Column("id","ID"), amis.Column("status","Status")).
+      Toolbar(amis.CreateBtn("New Order", "post:/api/v1/orders", ...))
+```
+
+---
 
 ### Package Structure
 
 ```
-awo/web/schema/
-├── types.go         — All AMIS JSON types as Go structs
-├── builder.go       — Fluent helper constructors
-├── page.go          — Page / toolbar helpers
-├── crud.go          — CRUD builder helpers
-├── form.go          — Form builder helpers
-├── app.go           — App shell builder (for future Go-driven nav)
-├── accounting/
-│   ├── journal.go
-│   └── accounts.go
-├── purchasing/
-│   └── orders.go
-└── settings/
-    └── rules.go
+internal/web/
+├── amis/
+│   ├── builder.go     — Core types: M, A, Schema, Ctx, CtxUser, SchemaFn, base
+│   ├── page.go        — Page, Service, Grid, Panel, Tabs, Chart, Timeline, Descriptions, Alert, Tpl
+│   ├── crud.go        — CRUD, Column, EditBtn, ViewBtn, DeleteBtn, CreateBtn
+│   ├── form.go        — Form, Wizard, all field helpers, field modifiers
+│   └── app.go         — App shell builder + NavPage, NavLink, NavGroup
+├── registry/
+│   └── registry.go    — Register(path, fn) + Get(path)
+├── handler/
+│   └── schema.go      — SchemaHandler — one Fiber handler for all schemas
+└── pages/
+    └── dashboard/
+        └── schema.go  — Example: dashboard schema function
 ```
+
+---
 
 ### Core Types
 
 ```go
-// awo/web/schema/types.go
+// M is a schema map — alias for map[string]any
+type M = map[string]any
 
-type Schema map[string]any
+// A is a schema array — alias for []any
+type A = []any
 
-type Page struct {
-    Type     string `json:"type"`
-    Title    string `json:"title,omitempty"`
-    SubTitle string `json:"subTitle,omitempty"`
-    Data     any    `json:"data,omitempty"`
-    Toolbar  []any  `json:"toolbar,omitempty"`
-    Body     any    `json:"body"`
+// Schema is the root type every page function returns
+type Schema = M
+
+// Ctx carries request-scoped data into schema functions.
+// Schema functions are pure: same Ctx → same JSON.
+type Ctx struct {
+    Flags map[string]bool
+    User  CtxUser
+    Can   func(action, resource string) bool
 }
 
-type CRUDSchema struct {
-    Type          string   `json:"type"`
-    ID            string   `json:"id,omitempty"`
-    API           string   `json:"api"`
-    SyncLocation  bool     `json:"syncLocation"`
-    Filter        *Form    `json:"filter,omitempty"`
-    HeaderToolbar []any    `json:"headerToolbar,omitempty"`
-    Columns       []Column `json:"columns"`
-    BulkActions   []any    `json:"bulkActions,omitempty"`
-    FooterToolbar []any    `json:"footerToolbar,omitempty"`
-}
-
-type Column struct {
-    Name      string `json:"name"`
-    Label     string `json:"label"`
-    Type      string `json:"type,omitempty"`
-    Sortable  bool   `json:"sortable,omitempty"`
-    Prefix    string `json:"prefix,omitempty"`
-    ColorMap  any    `json:"colorMap,omitempty"`
-    Buttons   []any  `json:"buttons,omitempty"`
-    VisibleOn string `json:"visibleOn,omitempty"`
-    QuickEdit any    `json:"quickEdit,omitempty"`
-}
-
-type Form struct {
-    Type     string `json:"type"`
-    Title    string `json:"title,omitempty"`
-    API      string `json:"api,omitempty"`
-    InitAPI  string `json:"initApi,omitempty"`
-    Redirect string `json:"redirect,omitempty"`
-    Body     []any  `json:"body"`
-    Actions  []any  `json:"actions,omitempty"`
-    Mode     string `json:"mode,omitempty"`
-}
-
-type Button struct {
-    Type        string `json:"type"`
-    Label       string `json:"label"`
-    Level       string `json:"level,omitempty"`
-    ActionType  string `json:"actionType,omitempty"`
-    Link        string `json:"link,omitempty"`
-    API         string `json:"api,omitempty"`
-    ConfirmText string `json:"confirmText,omitempty"`
-    VisibleOn   string `json:"visibleOn,omitempty"`
-    DisabledOn  string `json:"disabledOn,omitempty"`
-    OnEvent     any    `json:"onEvent,omitempty"`
-    Dialog      any    `json:"dialog,omitempty"`
-    Drawer      any    `json:"drawer,omitempty"`
-}
+// SchemaFn is the signature every page builder function must satisfy.
+type SchemaFn func(ctx Ctx) Schema
 ```
 
-### Module Schema Example
+---
+
+### Writing a Page Schema
+
+Every page is a Go function with signature `func(ctx amis.Ctx) amis.Schema`.
 
 ```go
-// awo/web/schema/purchasing/orders.go
+// internal/web/pages/finance/invoices/schema.go
+package invoices
 
-func OrdersListPage(fl map[string]bool, perms Permissions) schema.Page {
-    return schema.Page{
-        Type:     "page",
-        Title:    "Purchase Orders",
-        SubTitle: "Manage supplier purchase orders",
-        Data: map[string]any{
-            "can_create":  perms.CanCreate,
-            "can_approve": perms.CanApprove,
-        },
-        Toolbar: []any{
-            schema.Button{
-                Type: "button", Label: "New Order",
-                Level: "primary", ActionType: "link",
-                Link: "/purchasing/orders/new",
-                VisibleOn: "${can_create}",
-            },
-        },
-        Body: schema.CRUDSchema{
-            Type:         "crud",
-            ID:           "po-list",
-            API:          "get:/api/v1/purchase-orders",
-            SyncLocation: true,
-            Columns:      orderColumns(fl),
-        },
-    }
+import (
+    "awo.so/internal/web/amis"
+    "awo.so/internal/web/registry"
+)
+
+func init() {
+    registry.Register("/finance/invoices", Schema)
 }
 
-func orderColumns(fl map[string]bool) []schema.Column {
-    cols := []schema.Column{
-        {Name: "reference",     Label: "Reference",  Sortable: true},
-        {Name: "supplier_name", Label: "Supplier",   Sortable: true},
-        {Name: "total",         Label: "Total",      Type: "number",
-         Prefix: "KES ", Sortable: true},
-        {Name: "status",        Label: "Status",     Type: "tag",
-         ColorMap: map[string]string{
-            "draft":     "default",
-            "submitted": "processing",
-            "confirmed": "success",
-            "cancelled": "error",
-         }},
-    }
-
-    // Feature-flag conditional column
-    if fl["manufacturing.mrp_enabled"] {
-        cols = append(cols, schema.Column{
-            Name: "mrp_order_id", Label: "MRP Order",
-            VisibleOn: "${mrp_order_id !== null}",
-        })
-    }
-
-    return cols
-}
-```
-
-### Schema Handler
-
-```go
-// awo/web/handlers/schema/purchasing.go
-
-func (h *SchemaHandlers) PurchasingOrders(c *fiber.Ctx) error {
-    fl   := middleware.ContextFlags(c)
-    user := middleware.ContextUser(c)
-
-    canCreate  := h.access.Can(c.Context(), user.ID, "create",  "purchase_orders")
-    canApprove := h.access.Can(c.Context(), user.ID, "approve", "purchase_orders")
-
-    page := purchasingschema.OrdersListPage(fl, purchasingschema.Permissions{
-        CanCreate:  canCreate,
-        CanApprove: canApprove,
-    })
-    return c.JSON(page)
-}
-```
-
-### Mixing Typed Structs and Maps
-
-For rarely used one-off schema constructs, `map[string]any` is fine inline. Do not create a typed struct for every AMIS component — only the ones used frequently across modules deserve a type.
-
-```go
-// A one-off inline map is fine for a simple inline alert
-body := map[string]any{
-    "type":  "alert",
-    "level": "info",
-    "body":  "This module is not enabled for your organisation.",
+func Schema(ctx amis.Ctx) amis.Schema {
+    return amis.Page("Invoices").
+        Data(amis.M{
+            "can_create": ctx.Can("create", "invoice"),
+        }).
+        Body(
+            amis.CRUD("get:/api/v1/finance/invoices").
+                Columns(
+                    amis.Column("number", "Invoice #").Sortable(),
+                    amis.Column("supplier", "Supplier"),
+                    amis.Column("amount", "Amount").Type("currency").Align("right"),
+                    amis.Column("status", "Status").Map(statusMap()),
+                    amis.Column("due_date", "Due").Type("date").Sortable(),
+                    amis.Column("", "").Buttons(
+                        amis.ViewBtn(detailDrawer()),
+                        amis.EditBtn("put:/api/v1/finance/invoices/${id}", editFields()...),
+                        amis.DeleteBtn("delete:/api/v1/finance/invoices/${id}"),
+                    ),
+                ).
+                Toolbar(
+                    amis.M{"visibleOn": "${can_create}",
+                        "type": "button", "label": "New Invoice",
+                        "level": "primary", "actionType": "dialog",
+                        "dialog": amis.M{"title": "New Invoice",
+                            "body": amis.Form("post:/api/v1/finance/invoices").
+                                Fields(editFields()...).Build(),
+                        },
+                    },
+                ).
+                Build(),
+        ).
+        Build()
 }
 ```
 
 ---
+
+### Registering Pages
+
+Pages self-register via `init()`. Import them blank in the route setup:
+
+```go
+// internal/api/handlers/routes.go (imports section)
+import (
+    _ "awo.so/internal/web/pages/dashboard"
+    _ "awo.so/internal/web/pages/finance/invoices"
+    _ "awo.so/internal/web/pages/finance/accounts"
+    // adding a new page = add one import line here
+)
+```
+
+No other changes needed in `web/`. The schema is automatically served at `/schema/finance/invoices`.
+
+---
+
+### Builder Reference
+
+#### Page builders (`amis/page.go`)
+
+| Function | AMIS type | Key methods |
+|---|---|---|
+| `Page(title)` | `page` | `.Body()`, `.Data()`, `.Toolbar()`, `.Aside()` |
+| `Service(api)` | `service` | `.Body()`, `.SchemaAPI()` |
+| `Grid(cols...)` | `grid` | `.Gap()` |
+| `Col(width, body)` | grid column | — (returns M) |
+| `Panel(title)` | `panel` | `.Body()`, `.Footer()`, `.ClassName()` |
+| `Tabs()` | `tabs` | `.Tab(title, body)`, `.Mode()` |
+| `Chart(api)` | `chart` | `.Config(M)`, `.Height()` — always transparent bg |
+| `Timeline(api)` | `timeline` | `.Items(...)` |
+| `Descriptions(title)` | `descriptions` | `.Item(label, name)`, `.Columns(n)` |
+| `Alert(level, body)` | `alert` | `.VisibleOn()` |
+| `Tpl(str)` | `tpl` | returns M directly |
+
+#### CRUD builders (`amis/crud.go`)
+
+| Function | Purpose |
+|---|---|
+| `CRUD(api)` | List/table — always has `syncLocation: true` |
+| `Column(name, label)` | `.Type()`, `.Align()`, `.Sortable()`, `.Tpl()`, `.Map()`, `.Buttons()` |
+| `CreateBtn(label, api, fields...)` | Toolbar create button → dialog |
+| `EditBtn(api, fields...)` | Row edit button → dialog |
+| `ViewBtn(body)` | Row view button → drawer |
+| `DeleteBtn(api)` | Row delete with confirmation |
+
+#### Form builders (`amis/form.go`)
+
+| Function | AMIS type |
+|---|---|
+| `Form(api)` | `form` |
+| `Wizard(api)` | `wizard` with `.Step()` and `.ReviewStep()` |
+| `TextField(name, label)` | `input-text` |
+| `NumberField(name, label)` | `input-number` |
+| `DateField(name, label)` | `input-date` |
+| `SelectField(name, label, opts...)` | `select` |
+| `SelectAPIField(name, label, api)` | `select` with API source |
+| `SwitchField(name, label)` | `switch` |
+| `FileField(name, label, api)` | `input-file` |
+| `HiddenField(name)` | `hidden` |
+
+Field modifiers (take a field M, return M):
+
+```go
+Required(field)               // marks required
+Optional(field)               // adds "(optional)" remark
+Placeholder(field, text)      // sets placeholder
+Default(field, val)           // sets default value
+VisibleOn(field, expr)        // conditional + clearValueOnHidden
+DisabledOn(field, expr)       // conditional disabled
+Validate(field, "isEmail")    // validation rule
+```
+
+#### App shell (`amis/app.go`)
+
+```go
+App("Awo ERP").
+    Logo("/public/logo.svg").
+    Header(Tpl("${tenant_name}"), M{"type": "theme-toggle"}).
+    Pages(
+        NavGroup("Finance", "fa fa-calculator",
+            NavLink("Invoices", "fa fa-file", "/finance/invoices", "/schema/finance/invoices"),
+            NavLink("Accounts", "fa fa-bank", "/finance/accounts", "/schema/finance/accounts"),
+        ),
+        NavLink("Dashboard", "fa fa-chart-line", "/dashboard", "/schema/dashboard"),
+    ).
+    Build()
+```
+
+---
+
+### How Schemas Reach the Browser
+
+```
+Browser hash changes to #finance/invoices
+  → index.html: fetch('/schema/finance/invoices')
+    → Fiber: GET /schema/finance/invoices → SchemaHandler.Handle()
+      → registry.Get("/finance/invoices") → invoices.Schema(ctx)
+        → returns amis.Schema (map[string]any)
+          → JSON: { status: 0, data: { type: "page", ... } }
+            → index.html: amis.embed(el, schema.data, {}, amisEnv)
+```
+
+---
+
+### Adding a New Page (Checklist)
+
+1. Create `internal/web/pages/<module>/<page>/schema.go`
+2. Write `func Schema(ctx amis.Ctx) amis.Schema { ... }`
+3. Add `registry.Register("/<module>/<page>", Schema)` in `init()`
+4. Add `_ "awo.so/internal/web/pages/<module>/<page>"` to routes.go imports
+5. Done — `/schema/<module>/<page>` is live. No changes to `web/`.

@@ -8,19 +8,20 @@ import (
 )
 
 // PeriodStatus tracks the lifecycle of an accounting period.
+// Values are lowercase to match the database CHECK constraint.
 type PeriodStatus string
 
 const (
-	PeriodStatusOpen       PeriodStatus = "OPEN"        // Accepting transactions
-	PeriodStatusSoftClosed PeriodStatus = "SOFT_CLOSED" // Closed to normal users; adjustments by finance managers only
-	PeriodStatusClosed     PeriodStatus = "CLOSED"      // Permanently closed; no further postings
-	PeriodStatusLocked     PeriodStatus = "LOCKED"      // Audit/year-end lock; read-only
+	PeriodStatusOpen       PeriodStatus = "open"        // Accepting transactions
+	PeriodStatusSoftClosed PeriodStatus = "soft_closed" // Finance managers only
+	PeriodStatusHardClosed PeriodStatus = "hard_closed" // All checklist items passed; nobody can post
+	PeriodStatusLocked     PeriodStatus = "locked"      // Audit/year-end lock; read-only, terminal
 )
 
 // IsValid returns true if the PeriodStatus is a recognised value.
 func (ps PeriodStatus) IsValid() bool {
 	switch ps {
-	case PeriodStatusOpen, PeriodStatusSoftClosed, PeriodStatusClosed, PeriodStatusLocked:
+	case PeriodStatusOpen, PeriodStatusSoftClosed, PeriodStatusHardClosed, PeriodStatusLocked:
 		return true
 	default:
 		return false
@@ -30,7 +31,9 @@ func (ps PeriodStatus) IsValid() bool {
 // String returns the string representation of PeriodStatus.
 func (ps PeriodStatus) String() string { return string(ps) }
 
-// AllowsPosting returns true when transactions can be posted to this period.
+// AllowsPosting returns true when normal users can post to this period.
+// SoftClosed is handled at the application layer (role check); the DB trigger
+// blocks only hard_closed and locked.
 func (ps PeriodStatus) AllowsPosting() bool {
 	return ps == PeriodStatusOpen
 }
@@ -51,9 +54,10 @@ type PeriodTransition struct {
 var AllowedPeriodTransitions = []PeriodTransition{
 	{PeriodStatusOpen, PeriodStatusSoftClosed, "finance.periods.soft_close"},
 	{PeriodStatusSoftClosed, PeriodStatusOpen, "finance.periods.reopen"},
-	{PeriodStatusSoftClosed, PeriodStatusClosed, "finance.periods.close"},
-	{PeriodStatusClosed, PeriodStatusLocked, "finance.periods.lock"},
-	// Closed → Open is intentionally absent; only locked periods can be appealed via support.
+	{PeriodStatusSoftClosed, PeriodStatusHardClosed, "finance.periods.hard_close"},
+	{PeriodStatusHardClosed, PeriodStatusOpen, "finance.periods.reopen"},
+	{PeriodStatusHardClosed, PeriodStatusLocked, "finance.periods.lock"},
+	// Locked → Open is intentionally absent; requires out-of-band support escalation.
 }
 
 // FiscalYear represents a tenant's fiscal year configuration.
@@ -61,10 +65,12 @@ type FiscalYear struct {
 	ID       uuid.UUID `json:"id"`
 	TenantID uuid.UUID `json:"tenant_id"`
 
-	Year      int       `json:"year"`       // Calendar year the FY starts in (e.g. 2025)
+	Name      string    `json:"name"`       // e.g. "FY2025"
+	Year      int       `json:"year"`       // Calendar year the FY starts in (derived from start_date)
 	StartDate time.Time `json:"start_date"` // Inclusive start of the fiscal year
 	EndDate   time.Time `json:"end_date"`   // Inclusive end of the fiscal year
-	IsClosed  bool      `json:"is_closed"`  // Whether the year-end close has been run
+	IsClosed  bool      `json:"is_closed"`  // All periods hard_closed or locked
+	IsLocked  bool      `json:"is_locked"`  // No transactions whatsoever; requires CFO+CEO to unlock
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -128,6 +134,56 @@ func (p *AccountingPeriod) TransitionTo(newStatus PeriodStatus) (PeriodTransitio
 		}
 	}
 	return PeriodTransition{}, fmt.Errorf("period transition from %s to %s is not allowed", p.Status, newStatus)
+}
+
+// SoftClose transitions Open → SoftClosed. Only finance_manager/cfo should call this.
+func (p *AccountingPeriod) SoftClose(by uuid.UUID, now time.Time) error {
+	if p.Status != PeriodStatusOpen {
+		return fmt.Errorf("period transition from %s to %s is not allowed", p.Status, PeriodStatusSoftClosed)
+	}
+	p.Status = PeriodStatusSoftClosed
+	p.ClosedAt = &now
+	p.ClosedBy = &by
+	return nil
+}
+
+// HardClose transitions SoftClosed → HardClosed. Requires all close checklist items to pass.
+func (p *AccountingPeriod) HardClose(by uuid.UUID, now time.Time, checksPassed bool) error {
+	if p.Status != PeriodStatusSoftClosed {
+		return fmt.Errorf("period must be soft_closed before hard-closing (current: %s)", p.Status)
+	}
+	if !checksPassed {
+		return fmt.Errorf("period close checklist has unresolved blocking items")
+	}
+	p.Status = PeriodStatusHardClosed
+	p.ClosedAt = &now
+	p.ClosedBy = &by
+	return nil
+}
+
+// Reopen transitions SoftClosed or HardClosed → Open. Locked periods cannot be reopened.
+func (p *AccountingPeriod) Reopen(by uuid.UUID, now time.Time) error {
+	if p.Status == PeriodStatusLocked {
+		return fmt.Errorf("locked period cannot be reopened via normal workflow")
+	}
+	if p.Status != PeriodStatusSoftClosed && p.Status != PeriodStatusHardClosed {
+		return fmt.Errorf("period is not closed (current: %s)", p.Status)
+	}
+	p.Status = PeriodStatusOpen
+	p.ClosedAt = nil
+	p.ClosedBy = nil
+	return nil
+}
+
+// Lock transitions HardClosed → Locked. CFO-only operation.
+func (p *AccountingPeriod) Lock(by uuid.UUID, now time.Time) error {
+	if p.Status != PeriodStatusHardClosed {
+		return fmt.Errorf("period must be hard_closed before locking (current: %s)", p.Status)
+	}
+	p.Status = PeriodStatusLocked
+	p.LockedAt = &now
+	p.LockedBy = &by
+	return nil
 }
 
 // Validate returns a slice of ValidationErrors for the AccountingPeriod.

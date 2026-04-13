@@ -287,6 +287,80 @@ type AuditEntry struct {
 	CreatedAt  time.Time  `json:"created_at"`
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Approval workflow persistence (TASK-033)
+// ────────────────────────────────────────────────────────────────────────────
+
+// ApprovalWorkflowStatus represents the lifecycle state of a finance approval workflow.
+type ApprovalWorkflowStatus string
+
+const (
+	ApprovalWorkflowPending    ApprovalWorkflowStatus = "pending"
+	ApprovalWorkflowInProgress ApprovalWorkflowStatus = "in_progress"
+	ApprovalWorkflowCompleted  ApprovalWorkflowStatus = "completed"
+	ApprovalWorkflowRejected   ApprovalWorkflowStatus = "rejected"
+	ApprovalWorkflowCancelled  ApprovalWorkflowStatus = "cancelled"
+)
+
+// WorkflowRecord is a persisted row in finance_workflow_records.
+type WorkflowRecord struct {
+	ID            uuid.UUID              `json:"id"`
+	TenantID      uuid.UUID              `json:"tenant_id"`
+	TransactionID uuid.UUID              `json:"transaction_id"`
+	Status        ApprovalWorkflowStatus `json:"status"`
+	CurrentTier   int32                  `json:"current_tier"`
+	InitiatedBy   uuid.UUID              `json:"initiated_by"`
+	DueAt         *time.Time             `json:"due_at,omitempty"`
+	CreatedAt     time.Time              `json:"created_at"`
+	UpdatedAt     time.Time              `json:"updated_at"`
+}
+
+// ApprovalAction represents an action taken on an approval workflow.
+type ApprovalAction string
+
+const (
+	ApprovalActionSubmitted ApprovalAction = "submitted"
+	ApprovalActionApproved  ApprovalAction = "approved"
+	ApprovalActionRejected  ApprovalAction = "rejected"
+	ApprovalActionEscalated ApprovalAction = "escalated"
+	ApprovalActionDelegated ApprovalAction = "delegated"
+)
+
+// ApprovalHistoryEntry is a persisted row in finance_approval_history.
+type ApprovalHistoryEntry struct {
+	ID            uuid.UUID      `json:"id"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	WorkflowID    uuid.UUID      `json:"workflow_id"`
+	TransactionID uuid.UUID      `json:"transaction_id"`
+	Tier          int32          `json:"tier"`
+	Action        ApprovalAction `json:"action"`
+	PerformedBy   uuid.UUID      `json:"performed_by"`
+	Notes         string         `json:"notes"`
+	CreatedAt     time.Time      `json:"created_at"`
+}
+
+// ApprovalWorkflowRepository persists and queries approval workflow state.
+type ApprovalWorkflowRepository interface {
+	// CreateWorkflow inserts a new workflow record when a transaction is submitted.
+	CreateWorkflow(ctx context.Context, rec *WorkflowRecord) error
+
+	// GetWorkflowByTransaction returns the active workflow for a transaction.
+	GetWorkflowByTransaction(ctx context.Context, transactionID uuid.UUID) (*WorkflowRecord, error)
+
+	// UpdateWorkflowStatus updates the status and current approval tier.
+	UpdateWorkflowStatus(ctx context.Context, workflowID uuid.UUID, status ApprovalWorkflowStatus, currentTier int32) error
+
+	// InsertApprovalHistory records a single approval decision.
+	InsertApprovalHistory(ctx context.Context, entry *ApprovalHistoryEntry) error
+
+	// GetApprovalHistory returns all approval decisions for a transaction, oldest first.
+	GetApprovalHistory(ctx context.Context, transactionID uuid.UUID) ([]*ApprovalHistoryEntry, error)
+
+	// GetPendingByUser returns all pending workflow records for the given user or role.
+	// role may be empty to match only by userID.
+	GetPendingByUser(ctx context.Context, userID uuid.UUID, role string) ([]*WorkflowRecord, error)
+}
+
 // Repository aggregation interfaces for dependency injection
 
 // RepositoryManager aggregates all repositories for easier dependency injection

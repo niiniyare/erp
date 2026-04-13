@@ -7,7 +7,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/shopspring/decimal"
 
 	db "awo.so/db/sqlc"
@@ -16,10 +15,8 @@ import (
 	"awo.so/internal/shared/tracing"
 )
 
-// exchangeRateRepository implements domain.ExchangeRateRepository.
-// It executes raw SQL inside the tenant-aware transaction provided by
-// db.TxStore.GetTx() — the table and SQLC typed helpers will be generated
-// after `make sqlc` is run against the migration in db/migration.
+// exchangeRateRepository implements domain.ExchangeRateRepository using raw SQL
+// inside tenant-aware transactions.
 type exchangeRateRepository struct {
 	store   db.Store
 	tracing tracing.Service
@@ -28,30 +25,6 @@ type exchangeRateRepository struct {
 // NewExchangeRateRepository returns a new ExchangeRateRepository.
 func NewExchangeRateRepository(store db.Store, tracing tracing.Service) domain.ExchangeRateRepository {
 	return &exchangeRateRepository{store: store, tracing: tracing}
-}
-
-// txFrom extracts the underlying pgx.Tx from the store inside a WithTenant closure.
-func txFrom(s db.Store) (pgx.Tx, error) {
-	txs, ok := s.(db.TxStore)
-	if !ok {
-		return nil, fmt.Errorf("exchange_rate_repository: store is not a TxStore (must be called inside WithTenant)")
-	}
-	return txs.GetTx(), nil
-}
-
-// decimalToNumeric converts a decimal.Decimal to pgtype.Numeric.
-func decimalToNumericER(d decimal.Decimal) pgtype.Numeric {
-	n := pgtype.Numeric{}
-	_ = n.Scan(d.String())
-	return n
-}
-
-// numericToDecimalER converts pgtype.Numeric to decimal.Decimal.
-func numericToDecimalER(n pgtype.Numeric) decimal.Decimal {
-	if !n.Valid {
-		return decimal.Zero
-	}
-	return pgTypeNumericToDecimal(n)
 }
 
 // Upsert inserts or updates a rate for (fromCurrency, toCurrency, effectiveDate, rateType).
@@ -91,7 +64,7 @@ RETURNING id, created_at`
 		row := tx.QueryRow(ctx, q,
 			rate.FromCurrency,
 			rate.ToCurrency,
-			decimalToNumericER(rate.Rate),
+			rate.Rate.String(),
 			string(rate.RateType),
 			rate.EffectiveDate,
 			rate.ExpiryDate,
@@ -136,7 +109,7 @@ LIMIT  1`
 			id         uuid.UUID
 			tid        uuid.UUID
 			from, to   string
-			rateNum    pgtype.Numeric
+			rateStr    string
 			rt, src    string
 			effDate    time.Time
 			expiryDate *time.Time
@@ -144,19 +117,20 @@ LIMIT  1`
 			createdBy  *uuid.UUID
 		)
 		row := tx.QueryRow(ctx, q, fromCurrency, toCurrency, string(rateType), asOfDate)
-		if err := row.Scan(&id, &tid, &from, &to, &rateNum, &rt, &effDate, &expiryDate, &src, &createdAt, &createdBy); err != nil {
+		if err := row.Scan(&id, &tid, &from, &to, &rateStr, &rt, &effDate, &expiryDate, &src, &createdAt, &createdBy); err != nil {
 			if err == pgx.ErrNoRows {
 				return domain.ErrExchangeRateNotFound
 			}
 			return fmt.Errorf("get exchange rate: %w", err)
 		}
 
+		rateVal, _ := decimal.NewFromString(rateStr)
 		er := &domain.ExchangeRate{
 			ID:            id,
 			TenantID:      tid,
 			FromCurrency:  from,
 			ToCurrency:    to,
-			Rate:          numericToDecimalER(rateNum),
+			Rate:          rateVal,
 			RateType:      domain.RateType(rt),
 			EffectiveDate: effDate,
 			ExpiryDate:    expiryDate,
@@ -216,22 +190,23 @@ LIMIT  $5`
 				id         uuid.UUID
 				tid        uuid.UUID
 				fc, tc     string
-				rateNum    pgtype.Numeric
+				rateStr    string
 				rt, src    string
 				effDate    time.Time
 				expiryDate *time.Time
 				createdAt  time.Time
 				createdBy  *uuid.UUID
 			)
-			if err := rows.Scan(&id, &tid, &fc, &tc, &rateNum, &rt, &effDate, &expiryDate, &src, &createdAt, &createdBy); err != nil {
+			if err := rows.Scan(&id, &tid, &fc, &tc, &rateStr, &rt, &effDate, &expiryDate, &src, &createdAt, &createdBy); err != nil {
 				return fmt.Errorf("scan exchange rate: %w", err)
 			}
+			rateVal, _ := decimal.NewFromString(rateStr)
 			er := &domain.ExchangeRate{
 				ID:            id,
 				TenantID:      tid,
 				FromCurrency:  fc,
 				ToCurrency:    tc,
-				Rate:          numericToDecimalER(rateNum),
+				Rate:          rateVal,
 				RateType:      domain.RateType(rt),
 				EffectiveDate: effDate,
 				ExpiryDate:    expiryDate,

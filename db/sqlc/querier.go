@@ -394,6 +394,7 @@ type Querier interface {
 	// Detect anomalous user behavior patterns
 	GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error)
 	GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error)
+	GetApprovalHistoryByTransaction(ctx context.Context, transactionID uuid.UUID) ([]*GetApprovalHistoryByTransactionRow, error)
 	GetAttributeDefinition(ctx context.Context, id uuid.UUID) (*AttributeDefinition, error)
 	GetAttributeDefinitionByName(ctx context.Context, name string) (*AttributeDefinition, error)
 	GetAttributeDefinitionsByIDs(ctx context.Context, dollar_1 []uuid.UUID) ([]*AttributeDefinition, error)
@@ -780,6 +781,9 @@ type Querier interface {
 	GetPasswordResetToken(ctx context.Context, tokenHash string) (*GetPasswordResetTokenRow, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	GetPendingApprovalTransactions(ctx context.Context, arg GetPendingApprovalTransactionsParams) ([]*FinanceTransaction, error)
+	// Returns all in-progress/pending workflow records.
+	// The caller filters by assigned user in the application layer (no FK to users table here).
+	GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error)
 	GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
@@ -936,12 +940,14 @@ type Querier interface {
 	GetValidationRulesByAccountType(ctx context.Context, accountType *string) ([]*FinanceAccountValidationRule, error)
 	// Get metadata about available views
 	GetViewMetadata(ctx context.Context) ([]*GetViewMetadataRow, error)
+	GetWorkflowByTransaction(ctx context.Context, transactionID uuid.UUID) (*GetWorkflowByTransactionRow, error)
 	Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error)
 	HardDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	HardDeletePolicy(ctx context.Context, id uuid.UUID) error
 	IncrementFailedLogins(ctx context.Context, id uuid.UUID) error
 	IncrementSequenceNumber(ctx context.Context, argUuid uuid.UUID) (int64, error)
 	InitializeUsageStats(ctx context.Context, tenantID uuid.UUID) (*TenantUsageStat, error)
+	InsertApprovalHistory(ctx context.Context, arg InsertApprovalHistoryParams) error
 	// =====================================================================
 	// FINANCE MODULE — REVERSAL HISTORY QUERIES
 	// Tracks every reversal event so that:
@@ -949,6 +955,10 @@ type Querier interface {
 	//   (b) A reversal transaction cannot itself be reversed (double-reversal guard)
 	// =====================================================================
 	InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error
+	// =====================================================================
+	// FINANCE MODULE — APPROVAL WORKFLOW QUERIES
+	// =====================================================================
+	InsertWorkflowRecord(ctx context.Context, arg InsertWorkflowRecordParams) error
 	InvalidateActionEvaluations(ctx context.Context, action string) error
 	InvalidateAllEvaluations(ctx context.Context) error
 	InvalidatePolicyEvaluations(ctx context.Context, dollar_1 []uuid.UUID) error
@@ -1260,6 +1270,7 @@ type Querier interface {
 	UpdateUserLastLogin(ctx context.Context, id uuid.UUID) error
 	UpdateUserNotificationPreferences(ctx context.Context, arg UpdateUserNotificationPreferencesParams) (*NotificationPreference, error)
 	UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error
+	UpdateWorkflowStatus(ctx context.Context, arg UpdateWorkflowStatusParams) error
 	UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error)
 	// =====================================================================
 	// FINANCE MODULE — EXCHANGE RATES QUERIES

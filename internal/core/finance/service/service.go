@@ -16,6 +16,9 @@ type Services struct {
 	Account          AccountService
 	Transaction      TransactionService
 	TransactionEntry TransactionEntryService
+	Period           PeriodService
+	ExchangeRate     ExchangeRateService
+	Currency         CurrencyService
 }
 
 // Dependencies contains the required dependencies to create finance services
@@ -24,6 +27,9 @@ type Dependencies struct {
 	AccountGroupRepo domain.AccountGroupRepository
 	TransactionRepo  domain.TransactionRepository
 	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
+	PeriodRepo       domain.PeriodRepository
+	ExchangeRateRepo domain.ExchangeRateRepository
+	CurrencyRepo     CurrencyRepository
 	Tracing            tracing.Service
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
@@ -60,10 +66,17 @@ func NewServices(deps Dependencies) *Services {
 		deps.FeatureFlagService,
 	)
 
+	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics)
+	exchangeRateService := NewExchangeRateService(deps.ExchangeRateRepo, deps.Tracing, deps.Metrics)
+	currencyService := NewCurrencyService(deps.CurrencyRepo, deps.Tracing, deps.Metrics)
+
 	return &Services{
 		Account:          accountService,
 		Transaction:      transactionService,
 		TransactionEntry: transactionEntryService,
+		Period:           periodService,
+		ExchangeRate:     exchangeRateService,
+		Currency:         currencyService,
 	}
 }
 

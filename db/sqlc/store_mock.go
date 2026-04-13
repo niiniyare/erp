@@ -1618,6 +1618,20 @@ func (mr *MockStoreMockRecorder) DeleteEntityConfiguration(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityConfiguration", reflect.TypeOf((*MockStore)(nil).DeleteEntityConfiguration), ctx, arg)
 }
 
+// DeleteExpiredExchangeRates mocks base method.
+func (m *MockStore) DeleteExpiredExchangeRates(ctx context.Context, expiryDate time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteExpiredExchangeRates", ctx, expiryDate)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteExpiredExchangeRates indicates an expected call of DeleteExpiredExchangeRates.
+func (mr *MockStoreMockRecorder) DeleteExpiredExchangeRates(ctx, expiryDate any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredExchangeRates", reflect.TypeOf((*MockStore)(nil).DeleteExpiredExchangeRates), ctx, expiryDate)
+}
+
 // DeleteFeatureFlag mocks base method.
 func (m *MockStore) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -2650,6 +2664,21 @@ func (m *MockStore) GetApplicablePolicies(ctx context.Context, arg GetApplicable
 func (mr *MockStoreMockRecorder) GetApplicablePolicies(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplicablePolicies", reflect.TypeOf((*MockStore)(nil).GetApplicablePolicies), ctx, arg)
+}
+
+// GetApprovalHistoryByTransaction mocks base method.
+func (m *MockStore) GetApprovalHistoryByTransaction(ctx context.Context, transactionID uuid.UUID) ([]*GetApprovalHistoryByTransactionRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApprovalHistoryByTransaction", ctx, transactionID)
+	ret0, _ := ret[0].([]*GetApprovalHistoryByTransactionRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetApprovalHistoryByTransaction indicates an expected call of GetApprovalHistoryByTransaction.
+func (mr *MockStoreMockRecorder) GetApprovalHistoryByTransaction(ctx, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApprovalHistoryByTransaction", reflect.TypeOf((*MockStore)(nil).GetApprovalHistoryByTransaction), ctx, transactionID)
 }
 
 // GetAttributeDefinition mocks base method.
@@ -3972,6 +4001,21 @@ func (mr *MockStoreMockRecorder) GetEventTypeDistribution(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventTypeDistribution", reflect.TypeOf((*MockStore)(nil).GetEventTypeDistribution), ctx, arg)
 }
 
+// GetExchangeRate mocks base method.
+func (m *MockStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExchangeRate", ctx, arg)
+	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExchangeRate indicates an expected call of GetExchangeRate.
+func (mr *MockStoreMockRecorder) GetExchangeRate(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRate", reflect.TypeOf((*MockStore)(nil).GetExchangeRate), ctx, arg)
+}
+
 // GetExpiredAccessRequests mocks base method.
 func (m *MockStore) GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
 	m.ctrl.T.Helper()
@@ -4587,6 +4631,21 @@ func (mr *MockStoreMockRecorder) GetPendingApprovalTransactions(ctx, arg any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingApprovalTransactions", reflect.TypeOf((*MockStore)(nil).GetPendingApprovalTransactions), ctx, arg)
 }
 
+// GetPendingWorkflowsByUser mocks base method.
+func (m *MockStore) GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx)
+	ret0, _ := ret[0].([]*GetPendingWorkflowsByUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingWorkflowsByUser indicates an expected call of GetPendingWorkflowsByUser.
+func (mr *MockStoreMockRecorder) GetPendingWorkflowsByUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockStore)(nil).GetPendingWorkflowsByUser), ctx)
+}
+
 // GetPeriodEndBalances mocks base method.
 func (m *MockStore) GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
@@ -4824,6 +4883,21 @@ func (m *MockStore) GetResourceEvaluationHistory(ctx context.Context, arg GetRes
 func (mr *MockStoreMockRecorder) GetResourceEvaluationHistory(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceEvaluationHistory", reflect.TypeOf((*MockStore)(nil).GetResourceEvaluationHistory), ctx, arg)
+}
+
+// GetReversalHistoryByOriginal mocks base method.
+func (m *MockStore) GetReversalHistoryByOriginal(ctx context.Context, originalTransactionID uuid.UUID) ([]*GetReversalHistoryByOriginalRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReversalHistoryByOriginal", ctx, originalTransactionID)
+	ret0, _ := ret[0].([]*GetReversalHistoryByOriginalRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReversalHistoryByOriginal indicates an expected call of GetReversalHistoryByOriginal.
+func (mr *MockStoreMockRecorder) GetReversalHistoryByOriginal(ctx, originalTransactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReversalHistoryByOriginal", reflect.TypeOf((*MockStore)(nil).GetReversalHistoryByOriginal), ctx, originalTransactionID)
 }
 
 // GetRootAccounts mocks base method.
@@ -6026,6 +6100,21 @@ func (mr *MockStoreMockRecorder) GetViewMetadata(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetViewMetadata", reflect.TypeOf((*MockStore)(nil).GetViewMetadata), ctx)
 }
 
+// GetWorkflowByTransaction mocks base method.
+func (m *MockStore) GetWorkflowByTransaction(ctx context.Context, transactionID uuid.UUID) (*GetWorkflowByTransactionRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkflowByTransaction", ctx, transactionID)
+	ret0, _ := ret[0].(*GetWorkflowByTransactionRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkflowByTransaction indicates an expected call of GetWorkflowByTransaction.
+func (mr *MockStoreMockRecorder) GetWorkflowByTransaction(ctx, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowByTransaction", reflect.TypeOf((*MockStore)(nil).GetWorkflowByTransaction), ctx, transactionID)
+}
+
 // Get_OrCreateEntityState mocks base method.
 func (m *MockStore) Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error) {
 	m.ctrl.T.Helper()
@@ -6125,6 +6214,48 @@ func (m *MockStore) InitializeUsageStats(ctx context.Context, tenantID uuid.UUID
 func (mr *MockStoreMockRecorder) InitializeUsageStats(ctx, tenantID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeUsageStats", reflect.TypeOf((*MockStore)(nil).InitializeUsageStats), ctx, tenantID)
+}
+
+// InsertApprovalHistory mocks base method.
+func (m *MockStore) InsertApprovalHistory(ctx context.Context, arg InsertApprovalHistoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertApprovalHistory", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertApprovalHistory indicates an expected call of InsertApprovalHistory.
+func (mr *MockStoreMockRecorder) InsertApprovalHistory(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertApprovalHistory", reflect.TypeOf((*MockStore)(nil).InsertApprovalHistory), ctx, arg)
+}
+
+// InsertReversalHistory mocks base method.
+func (m *MockStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertReversalHistory", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertReversalHistory indicates an expected call of InsertReversalHistory.
+func (mr *MockStoreMockRecorder) InsertReversalHistory(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertReversalHistory", reflect.TypeOf((*MockStore)(nil).InsertReversalHistory), ctx, arg)
+}
+
+// InsertWorkflowRecord mocks base method.
+func (m *MockStore) InsertWorkflowRecord(ctx context.Context, arg InsertWorkflowRecordParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertWorkflowRecord", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertWorkflowRecord indicates an expected call of InsertWorkflowRecord.
+func (mr *MockStoreMockRecorder) InsertWorkflowRecord(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertWorkflowRecord", reflect.TypeOf((*MockStore)(nil).InsertWorkflowRecord), ctx, arg)
 }
 
 // InvalidateActionEvaluations mocks base method.
@@ -6252,6 +6383,21 @@ func (m *MockStore) IsEntityAncestor(ctx context.Context, arg IsEntityAncestorPa
 func (mr *MockStoreMockRecorder) IsEntityAncestor(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEntityAncestor", reflect.TypeOf((*MockStore)(nil).IsEntityAncestor), ctx, arg)
+}
+
+// IsReversalTransaction mocks base method.
+func (m *MockStore) IsReversalTransaction(ctx context.Context, reversalTransactionID uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsReversalTransaction", ctx, reversalTransactionID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsReversalTransaction indicates an expected call of IsReversalTransaction.
+func (mr *MockStoreMockRecorder) IsReversalTransaction(ctx, reversalTransactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsReversalTransaction", reflect.TypeOf((*MockStore)(nil).IsReversalTransaction), ctx, reversalTransactionID)
 }
 
 // ListAPIKeys mocks base method.
@@ -6807,6 +6953,21 @@ func (m *MockStore) ListEntitySubtree(ctx context.Context, dollar_1 *string) ([]
 func (mr *MockStoreMockRecorder) ListEntitySubtree(ctx, dollar_1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitySubtree", reflect.TypeOf((*MockStore)(nil).ListEntitySubtree), ctx, dollar_1)
+}
+
+// ListExchangeRates mocks base method.
+func (m *MockStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExchangeRates", ctx, arg)
+	ret0, _ := ret[0].([]*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExchangeRates indicates an expected call of ListExchangeRates.
+func (mr *MockStoreMockRecorder) ListExchangeRates(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExchangeRates", reflect.TypeOf((*MockStore)(nil).ListExchangeRates), ctx, arg)
 }
 
 // ListExpiredActiveRoleNames mocks base method.
@@ -8707,6 +8868,20 @@ func (mr *MockStoreMockRecorder) UpdateUserPassword(ctx, arg any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockStore)(nil).UpdateUserPassword), ctx, arg)
 }
 
+// UpdateWorkflowStatus mocks base method.
+func (m *MockStore) UpdateWorkflowStatus(ctx context.Context, arg UpdateWorkflowStatusParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateWorkflowStatus", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
+func (mr *MockStoreMockRecorder) UpdateWorkflowStatus(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockStore)(nil).UpdateWorkflowStatus), ctx, arg)
+}
+
 // UpsertAccountBalance mocks base method.
 func (m *MockStore) UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
@@ -8720,6 +8895,21 @@ func (m *MockStore) UpsertAccountBalance(ctx context.Context, arg UpsertAccountB
 func (mr *MockStoreMockRecorder) UpsertAccountBalance(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAccountBalance", reflect.TypeOf((*MockStore)(nil).UpsertAccountBalance), ctx, arg)
+}
+
+// UpsertExchangeRate mocks base method.
+func (m *MockStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertExchangeRate", ctx, arg)
+	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertExchangeRate indicates an expected call of UpsertExchangeRate.
+func (mr *MockStoreMockRecorder) UpsertExchangeRate(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertExchangeRate", reflect.TypeOf((*MockStore)(nil).UpsertExchangeRate), ctx, arg)
 }
 
 // UpsertRoleAssignment mocks base method.
@@ -10624,6 +10814,20 @@ func (mr *MockTxStoreMockRecorder) DeleteEntityConfiguration(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteEntityConfiguration", reflect.TypeOf((*MockTxStore)(nil).DeleteEntityConfiguration), ctx, arg)
 }
 
+// DeleteExpiredExchangeRates mocks base method.
+func (m *MockTxStore) DeleteExpiredExchangeRates(ctx context.Context, expiryDate time.Time) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "DeleteExpiredExchangeRates", ctx, expiryDate)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// DeleteExpiredExchangeRates indicates an expected call of DeleteExpiredExchangeRates.
+func (mr *MockTxStoreMockRecorder) DeleteExpiredExchangeRates(ctx, expiryDate any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteExpiredExchangeRates", reflect.TypeOf((*MockTxStore)(nil).DeleteExpiredExchangeRates), ctx, expiryDate)
+}
+
 // DeleteFeatureFlag mocks base method.
 func (m *MockTxStore) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -11656,6 +11860,21 @@ func (m *MockTxStore) GetApplicablePolicies(ctx context.Context, arg GetApplicab
 func (mr *MockTxStoreMockRecorder) GetApplicablePolicies(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApplicablePolicies", reflect.TypeOf((*MockTxStore)(nil).GetApplicablePolicies), ctx, arg)
+}
+
+// GetApprovalHistoryByTransaction mocks base method.
+func (m *MockTxStore) GetApprovalHistoryByTransaction(ctx context.Context, transactionID uuid.UUID) ([]*GetApprovalHistoryByTransactionRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetApprovalHistoryByTransaction", ctx, transactionID)
+	ret0, _ := ret[0].([]*GetApprovalHistoryByTransactionRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetApprovalHistoryByTransaction indicates an expected call of GetApprovalHistoryByTransaction.
+func (mr *MockTxStoreMockRecorder) GetApprovalHistoryByTransaction(ctx, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetApprovalHistoryByTransaction", reflect.TypeOf((*MockTxStore)(nil).GetApprovalHistoryByTransaction), ctx, transactionID)
 }
 
 // GetAttributeDefinition mocks base method.
@@ -12978,6 +13197,21 @@ func (mr *MockTxStoreMockRecorder) GetEventTypeDistribution(ctx, arg any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetEventTypeDistribution", reflect.TypeOf((*MockTxStore)(nil).GetEventTypeDistribution), ctx, arg)
 }
 
+// GetExchangeRate mocks base method.
+func (m *MockTxStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetExchangeRate", ctx, arg)
+	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetExchangeRate indicates an expected call of GetExchangeRate.
+func (mr *MockTxStoreMockRecorder) GetExchangeRate(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetExchangeRate", reflect.TypeOf((*MockTxStore)(nil).GetExchangeRate), ctx, arg)
+}
+
 // GetExpiredAccessRequests mocks base method.
 func (m *MockTxStore) GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error) {
 	m.ctrl.T.Helper()
@@ -13593,6 +13827,21 @@ func (mr *MockTxStoreMockRecorder) GetPendingApprovalTransactions(ctx, arg any) 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingApprovalTransactions", reflect.TypeOf((*MockTxStore)(nil).GetPendingApprovalTransactions), ctx, arg)
 }
 
+// GetPendingWorkflowsByUser mocks base method.
+func (m *MockTxStore) GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx)
+	ret0, _ := ret[0].([]*GetPendingWorkflowsByUserRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetPendingWorkflowsByUser indicates an expected call of GetPendingWorkflowsByUser.
+func (mr *MockTxStoreMockRecorder) GetPendingWorkflowsByUser(ctx any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockTxStore)(nil).GetPendingWorkflowsByUser), ctx)
+}
+
 // GetPeriodEndBalances mocks base method.
 func (m *MockTxStore) GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
@@ -13830,6 +14079,21 @@ func (m *MockTxStore) GetResourceEvaluationHistory(ctx context.Context, arg GetR
 func (mr *MockTxStoreMockRecorder) GetResourceEvaluationHistory(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResourceEvaluationHistory", reflect.TypeOf((*MockTxStore)(nil).GetResourceEvaluationHistory), ctx, arg)
+}
+
+// GetReversalHistoryByOriginal mocks base method.
+func (m *MockTxStore) GetReversalHistoryByOriginal(ctx context.Context, originalTransactionID uuid.UUID) ([]*GetReversalHistoryByOriginalRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReversalHistoryByOriginal", ctx, originalTransactionID)
+	ret0, _ := ret[0].([]*GetReversalHistoryByOriginalRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetReversalHistoryByOriginal indicates an expected call of GetReversalHistoryByOriginal.
+func (mr *MockTxStoreMockRecorder) GetReversalHistoryByOriginal(ctx, originalTransactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReversalHistoryByOriginal", reflect.TypeOf((*MockTxStore)(nil).GetReversalHistoryByOriginal), ctx, originalTransactionID)
 }
 
 // GetRootAccounts mocks base method.
@@ -15046,6 +15310,21 @@ func (mr *MockTxStoreMockRecorder) GetViewMetadata(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetViewMetadata", reflect.TypeOf((*MockTxStore)(nil).GetViewMetadata), ctx)
 }
 
+// GetWorkflowByTransaction mocks base method.
+func (m *MockTxStore) GetWorkflowByTransaction(ctx context.Context, transactionID uuid.UUID) (*GetWorkflowByTransactionRow, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetWorkflowByTransaction", ctx, transactionID)
+	ret0, _ := ret[0].(*GetWorkflowByTransactionRow)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetWorkflowByTransaction indicates an expected call of GetWorkflowByTransaction.
+func (mr *MockTxStoreMockRecorder) GetWorkflowByTransaction(ctx, transactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetWorkflowByTransaction", reflect.TypeOf((*MockTxStore)(nil).GetWorkflowByTransaction), ctx, transactionID)
+}
+
 // Get_OrCreateEntityState mocks base method.
 func (m *MockTxStore) Get_OrCreateEntityState(ctx context.Context, arg Get_OrCreateEntityStateParams) (*Get_OrCreateEntityStateRow, error) {
 	m.ctrl.T.Helper()
@@ -15145,6 +15424,48 @@ func (m *MockTxStore) InitializeUsageStats(ctx context.Context, tenantID uuid.UU
 func (mr *MockTxStoreMockRecorder) InitializeUsageStats(ctx, tenantID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeUsageStats", reflect.TypeOf((*MockTxStore)(nil).InitializeUsageStats), ctx, tenantID)
+}
+
+// InsertApprovalHistory mocks base method.
+func (m *MockTxStore) InsertApprovalHistory(ctx context.Context, arg InsertApprovalHistoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertApprovalHistory", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertApprovalHistory indicates an expected call of InsertApprovalHistory.
+func (mr *MockTxStoreMockRecorder) InsertApprovalHistory(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertApprovalHistory", reflect.TypeOf((*MockTxStore)(nil).InsertApprovalHistory), ctx, arg)
+}
+
+// InsertReversalHistory mocks base method.
+func (m *MockTxStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertReversalHistory", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertReversalHistory indicates an expected call of InsertReversalHistory.
+func (mr *MockTxStoreMockRecorder) InsertReversalHistory(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertReversalHistory", reflect.TypeOf((*MockTxStore)(nil).InsertReversalHistory), ctx, arg)
+}
+
+// InsertWorkflowRecord mocks base method.
+func (m *MockTxStore) InsertWorkflowRecord(ctx context.Context, arg InsertWorkflowRecordParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "InsertWorkflowRecord", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// InsertWorkflowRecord indicates an expected call of InsertWorkflowRecord.
+func (mr *MockTxStoreMockRecorder) InsertWorkflowRecord(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InsertWorkflowRecord", reflect.TypeOf((*MockTxStore)(nil).InsertWorkflowRecord), ctx, arg)
 }
 
 // InvalidateActionEvaluations mocks base method.
@@ -15272,6 +15593,21 @@ func (m *MockTxStore) IsEntityAncestor(ctx context.Context, arg IsEntityAncestor
 func (mr *MockTxStoreMockRecorder) IsEntityAncestor(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsEntityAncestor", reflect.TypeOf((*MockTxStore)(nil).IsEntityAncestor), ctx, arg)
+}
+
+// IsReversalTransaction mocks base method.
+func (m *MockTxStore) IsReversalTransaction(ctx context.Context, reversalTransactionID uuid.UUID) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsReversalTransaction", ctx, reversalTransactionID)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// IsReversalTransaction indicates an expected call of IsReversalTransaction.
+func (mr *MockTxStoreMockRecorder) IsReversalTransaction(ctx, reversalTransactionID any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsReversalTransaction", reflect.TypeOf((*MockTxStore)(nil).IsReversalTransaction), ctx, reversalTransactionID)
 }
 
 // ListAPIKeys mocks base method.
@@ -15827,6 +16163,21 @@ func (m *MockTxStore) ListEntitySubtree(ctx context.Context, dollar_1 *string) (
 func (mr *MockTxStoreMockRecorder) ListEntitySubtree(ctx, dollar_1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListEntitySubtree", reflect.TypeOf((*MockTxStore)(nil).ListEntitySubtree), ctx, dollar_1)
+}
+
+// ListExchangeRates mocks base method.
+func (m *MockTxStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListExchangeRates", ctx, arg)
+	ret0, _ := ret[0].([]*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListExchangeRates indicates an expected call of ListExchangeRates.
+func (mr *MockTxStoreMockRecorder) ListExchangeRates(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListExchangeRates", reflect.TypeOf((*MockTxStore)(nil).ListExchangeRates), ctx, arg)
 }
 
 // ListExpiredActiveRoleNames mocks base method.
@@ -17741,6 +18092,20 @@ func (mr *MockTxStoreMockRecorder) UpdateUserPassword(ctx, arg any) *gomock.Call
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateUserPassword", reflect.TypeOf((*MockTxStore)(nil).UpdateUserPassword), ctx, arg)
 }
 
+// UpdateWorkflowStatus mocks base method.
+func (m *MockTxStore) UpdateWorkflowStatus(ctx context.Context, arg UpdateWorkflowStatusParams) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateWorkflowStatus", ctx, arg)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// UpdateWorkflowStatus indicates an expected call of UpdateWorkflowStatus.
+func (mr *MockTxStoreMockRecorder) UpdateWorkflowStatus(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateWorkflowStatus", reflect.TypeOf((*MockTxStore)(nil).UpdateWorkflowStatus), ctx, arg)
+}
+
 // UpsertAccountBalance mocks base method.
 func (m *MockTxStore) UpsertAccountBalance(ctx context.Context, arg UpsertAccountBalanceParams) (*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
@@ -17754,6 +18119,21 @@ func (m *MockTxStore) UpsertAccountBalance(ctx context.Context, arg UpsertAccoun
 func (mr *MockTxStoreMockRecorder) UpsertAccountBalance(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertAccountBalance", reflect.TypeOf((*MockTxStore)(nil).UpsertAccountBalance), ctx, arg)
+}
+
+// UpsertExchangeRate mocks base method.
+func (m *MockTxStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpsertExchangeRate", ctx, arg)
+	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpsertExchangeRate indicates an expected call of UpsertExchangeRate.
+func (mr *MockTxStoreMockRecorder) UpsertExchangeRate(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpsertExchangeRate", reflect.TypeOf((*MockTxStore)(nil).UpsertExchangeRate), ctx, arg)
 }
 
 // UpsertRoleAssignment mocks base method.

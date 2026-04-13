@@ -10,9 +10,10 @@ import (
 type contextKey string
 
 const (
-	TenantIDKey   contextKey = "tenant_id"
-	UserIDKey     contextKey = "user_id"
-	RequestCtxKey contextKey = "request_context"
+	TenantIDKey        contextKey = "tenant_id"
+	UserIDKey          contextKey = "user_id"
+	RequestCtxKey      contextKey = "request_context"
+	CapabilityContextKey contextKey = "capability_context"
 )
 
 // WithTenantID adds tenant ID to context
@@ -75,4 +76,15 @@ type CapabilityContext struct {
 	Modules     map[string]bool
 	Features    map[string]bool
 	Permissions map[string]bool
+}
+
+// WithCapabilityContext stores a CapabilityContext in the context.
+func WithCapabilityContext(ctx context.Context, cap CapabilityContext) context.Context {
+	return context.WithValue(ctx, CapabilityContextKey, cap)
+}
+
+// GetCapabilityContext retrieves a CapabilityContext from the context.
+func GetCapabilityContext(ctx context.Context) (CapabilityContext, bool) {
+	cap, ok := ctx.Value(CapabilityContextKey).(CapabilityContext)
+	return cap, ok
 }

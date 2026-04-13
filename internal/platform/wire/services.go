@@ -10,6 +10,7 @@ import (
 	"awo.so/internal/shared/tracing"
 
 	// Core services
+	financeRepo "awo.so/internal/core/finance/repository"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/tenant"
 
@@ -59,10 +60,26 @@ func NewTenantTemporalIntegration(
 // NewFinanceServices creates finance service collection
 func NewFinanceServices(
 	store db.Store,
-	logger logger.Logger,
-	metrics metrics.MetricsProvider,
+	cacheService cache.Service,
+	log logger.Logger,
+	met metrics.MetricsProvider,
 	tracer tracing.Service,
 ) *financeService.Services {
-	// TODO: Implement proper finance services
-	return nil
+	accountRepo := financeRepo.NewAccountsRepository(store, cacheService, tracer)
+	transactionRepo := financeRepo.NewTransactionRepository(store, tracer)
+	periodRepo := financeRepo.NewPeriodRepository(store, tracer)
+	exchangeRateRepo := financeRepo.NewExchangeRateRepository(store, tracer)
+	currencyRepo := financeRepo.NewCurrencyRepository(store, tracer)
+
+	_ = log // available for future use
+
+	return financeService.NewServices(financeService.Dependencies{
+		AccountRepo:      accountRepo,
+		TransactionRepo:  transactionRepo,
+		PeriodRepo:       periodRepo,
+		ExchangeRateRepo: exchangeRateRepo,
+		CurrencyRepo:     currencyRepo,
+		Tracing:          tracer,
+		Metrics:          met,
+	})
 }

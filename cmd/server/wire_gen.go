@@ -49,7 +49,7 @@ func InitializeApplication() (*Application, error) {
 	userService := wire.NewIdentityService(userRepository, authzService, cacheService, service, metricsProvider, configConfig, logger)
 	sessionRepository := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
 	sessionService := wire.NewSessionService(userService, authzService, sessionRepository, service, metricsProvider, logger, configConfig)
-	services := wire.NewFinanceServices(store, logger, metricsProvider, service)
+	services := wire.NewFinanceServices(store, cacheService, logger, metricsProvider, service)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v := wire.NewTenantMiddleware(tenantMiddlewareConfig)
 	routeSecurityManager := wire.NewRouteSecurityManager(logger, metricsProvider, service)

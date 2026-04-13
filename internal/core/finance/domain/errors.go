@@ -32,6 +32,10 @@ var (
 	ErrInvalidTransactionEntry        = errors.New("invalid transaction entry")
 	ErrInsufficientTransactionEntries = errors.New("transaction must have at least 2 entries")
 
+	// Period errors
+	ErrPeriodNotFound = errors.New("accounting period not found for date")
+	ErrPeriodClosed   = errors.New("accounting period is closed; no further postings allowed")
+
 	// Exchange rate errors
 	ErrExchangeRateNotFound = errors.New("exchange rate not found")
 

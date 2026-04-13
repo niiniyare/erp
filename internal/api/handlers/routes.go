@@ -11,6 +11,15 @@ import (
 	financeHandler "awo.so/internal/api/handlers/finance"
 	"awo.so/internal/api/handlers/health"
 	schemaHandler "awo.so/internal/api/handlers/schema"
+	webHandler "awo.so/internal/web/handler"
+	// Blank imports register page schemas into the registry via init().
+	// Add one line here per new page — nothing else changes.
+	_ "awo.so/internal/web/pages/dashboard"
+	_ "awo.so/internal/web/pages/users"
+	_ "awo.so/internal/web/pages/organizations"
+	_ "awo.so/internal/web/pages/finance/accounts"
+	_ "awo.so/internal/web/pages/finance/transactions"
+	_ "awo.so/internal/web/pages/settings"
 	tenantHandler "awo.so/internal/api/handlers/tenant"
 	uiHandler "awo.so/internal/api/handlers/ui"
 	userHandler "awo.so/internal/api/handlers/user"
@@ -351,6 +360,13 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 
 // registerUIRoutes registers UI routes with session-based security
 func (r *Router) registerUIRoutes(app *fiber.App) error {
+	// Dynamic page schemas — /schema/<route> returns AMIS page schema JSON.
+	// Requires auth but lives outside /api so the frontend URL stays clean.
+	pageSchemaHandler := webHandler.NewSchemaHandler()
+	schemaGroup := app.Group("/schema")
+	schemaGroup.Use(r.authenticateMiddleware())
+	schemaGroup.Get("/*", pageSchemaHandler.Handle)
+
 	// Configure static file serving first
 	app.Static("/static", "./web/static")
 
@@ -507,9 +523,41 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	// Transaction management endpoints — require finance.transactions.read
 	transactionsGroup := financeGroup.Group("/transactions")
 	transactionsGroup.Use(middlewarePkg.Authorize("finance.transactions.read"))
-	transactionsGroup.Post("/", handler.CreateTransaction) // POST /api/v1/finance/transactions - Create transaction
-	transactionsGroup.Get("/", handler.ListTransactions)   // GET /api/v1/finance/transactions - List transactions with filters
-	transactionsGroup.Get("/:id", handler.GetTransaction)  // GET /api/v1/finance/transactions/:id - Get transaction by ID
+	transactionsGroup.Post("/", handler.CreateTransaction)              // POST   /api/v1/finance/transactions
+	transactionsGroup.Get("/", handler.ListTransactions)                // GET    /api/v1/finance/transactions
+	transactionsGroup.Get("/:id", handler.GetTransaction)              // GET    /api/v1/finance/transactions/:id
+	transactionsGroup.Post("/:id/submit", handler.SubmitTransaction)   // POST   /api/v1/finance/transactions/:id/submit
+	transactionsGroup.Post("/:id/approve", handler.ApproveTransaction) // POST   /api/v1/finance/transactions/:id/approve
+	transactionsGroup.Post("/:id/reject", handler.RejectTransaction)   // POST   /api/v1/finance/transactions/:id/reject
+
+	// Fiscal year and period management
+	fiscalYearsGroup := financeGroup.Group("/fiscal-years")
+	fiscalYearsGroup.Use(middlewarePkg.Authorize("finance.periods.read"))
+	fiscalYearsGroup.Post("/", handler.CreateFiscalYear)                        // POST /api/v1/finance/fiscal-years
+	fiscalYearsGroup.Get("/", handler.ListFiscalYears)                          // GET  /api/v1/finance/fiscal-years
+	fiscalYearsGroup.Get("/:id", handler.GetFiscalYear)                         // GET  /api/v1/finance/fiscal-years/:id
+	fiscalYearsGroup.Post("/:id/periods", handler.CreatePeriod)                 // POST /api/v1/finance/fiscal-years/:id/periods
+	fiscalYearsGroup.Get("/:id/periods", handler.ListPeriods)                   // GET  /api/v1/finance/fiscal-years/:id/periods
+
+	periodsGroup := financeGroup.Group("/periods")
+	periodsGroup.Use(middlewarePkg.Authorize("finance.periods.read"))
+	periodsGroup.Get("/current", handler.GetCurrentPeriod)                      // GET   /api/v1/finance/periods/current
+	periodsGroup.Get("/:id", handler.GetPeriod)                                 // GET   /api/v1/finance/periods/:id
+	periodsGroup.Patch("/:id/status", handler.ChangePeriodStatus)               // PATCH /api/v1/finance/periods/:id/status
+
+	// Currency management
+	currenciesGroup := financeGroup.Group("/currencies")
+	currenciesGroup.Use(middlewarePkg.Authorize("finance.currencies.read"))
+	currenciesGroup.Post("/", handler.CreateCurrency)    // POST /api/v1/finance/currencies
+	currenciesGroup.Get("/", handler.ListCurrencies)     // GET  /api/v1/finance/currencies
+	currenciesGroup.Put("/:id", handler.UpdateCurrency)  // PUT  /api/v1/finance/currencies/:id
+
+	// Exchange rate management
+	ratesGroup := financeGroup.Group("/exchange-rates")
+	ratesGroup.Use(middlewarePkg.Authorize("finance.currencies.read"))
+	ratesGroup.Post("/", handler.UpsertExchangeRate)         // POST /api/v1/finance/exchange-rates (upsert)
+	ratesGroup.Get("/", handler.GetExchangeRate)             // GET  /api/v1/finance/exchange-rates?from=&to=&date=
+	ratesGroup.Get("/history", handler.ListExchangeRates)    // GET  /api/v1/finance/exchange-rates/history
 
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")

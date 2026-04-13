@@ -10,13 +10,37 @@ import (
 // TransactionStateMachine manages state transitions for transactions
 type TransactionStateMachine struct {
 	transaction *Transaction
+	history     []StateTransition
 }
 
 // NewTransactionStateMachine creates a new state machine for a transaction
 func NewTransactionStateMachine(transaction *Transaction) *TransactionStateMachine {
-	return &TransactionStateMachine{
-		transaction: transaction,
+	return &TransactionStateMachine{transaction: transaction}
+}
+
+// NewTransactionStateMachineWithHistory creates a state machine pre-loaded with
+// transition history derived from audit log entries.
+// Callers should pass all AuditEntry rows with EventType == "TRANSACTION_STATUS_CHANGE"
+// for the transaction, ordered by CreatedAt ascending.
+func NewTransactionStateMachineWithHistory(transaction *Transaction, entries []*AuditEntry) *TransactionStateMachine {
+	tsm := &TransactionStateMachine{transaction: transaction}
+	for _, e := range entries {
+		if e.EventType != "TRANSACTION_STATUS_CHANGE" {
+			continue
+		}
+		st := StateTransition{
+			TransitionBy: e.UserID,
+			TransitionAt: e.CreatedAt,
+		}
+		if e.OldValues != nil {
+			st.FromStatus = TransactionStatus(*e.OldValues)
+		}
+		if e.NewValues != nil {
+			st.ToStatus = TransactionStatus(*e.NewValues)
+		}
+		tsm.history = append(tsm.history, st)
 	}
+	return tsm
 }
 
 // StateTransition represents a state change operation
@@ -255,11 +279,14 @@ func (tsm *TransactionStateMachine) GetValidTransitions() []TransactionStatus {
 	return allowedTransitions
 }
 
-// GetTransitionHistory would return the history of transitions for this transaction
-// In a full implementation, this would query an audit log table
+// GetTransitionHistory returns the status transition history for this transaction.
+// Populate via NewTransactionStateMachineWithHistory when history is needed;
+// otherwise returns an empty slice (history not loaded).
 func (tsm *TransactionStateMachine) GetTransitionHistory() []StateTransition {
-	// TODO: Implement by querying audit log
-	return []StateTransition{}
+	if tsm.history == nil {
+		return []StateTransition{}
+	}
+	return tsm.history
 }
 
 // ValidateCurrentState validates that the transaction's current state is consistent
