@@ -580,6 +580,23 @@ type FinanceAccountValidationRule struct {
 	UpdatedBy                *uuid.UUID     `json:"updated_by"`
 }
 
+type FinanceAccountingPeriod struct {
+	ID           uuid.UUID    `json:"id"`
+	TenantID     uuid.UUID    `json:"tenant_id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	FiscalYearID uuid.UUID    `json:"fiscal_year_id"`
+	PeriodNumber int32        `json:"period_number"`
+	Name         string       `json:"name"`
+	StartDate    time.Time    `json:"start_date"`
+	EndDate      time.Time    `json:"end_date"`
+	Status       string       `json:"status"`
+	ClosedAt     sql.NullTime `json:"closed_at"`
+	ClosedBy     *uuid.UUID   `json:"closed_by"`
+	LockedAt     sql.NullTime `json:"locked_at"`
+	LockedBy     *uuid.UUID   `json:"locked_by"`
+}
+
 type FinanceApprovalHistory struct {
 	ID            uuid.UUID  `json:"id"`
 	TenantID      uuid.UUID  `json:"tenant_id"`
@@ -592,9 +609,26 @@ type FinanceApprovalHistory struct {
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
+type FinanceCurrency struct {
+	ID            uuid.UUID  `json:"id"`
+	TenantID      uuid.UUID  `json:"tenant_id"`
+	CreatedAt     time.Time  `json:"created_at"`
+	UpdatedAt     time.Time  `json:"updated_at"`
+	CreatedBy     *uuid.UUID `json:"created_by"`
+	UpdatedBy     *uuid.UUID `json:"updated_by"`
+	Code          string     `json:"code"`
+	Name          string     `json:"name"`
+	Symbol        string     `json:"symbol"`
+	DecimalPlaces int32      `json:"decimal_places"`
+	IsActive      bool       `json:"is_active"`
+	IsBase        bool       `json:"is_base"`
+}
+
 type FinanceExchangeRate struct {
 	ID            uuid.UUID      `json:"id"`
 	TenantID      uuid.UUID      `json:"tenant_id"`
+	CreatedAt     time.Time      `json:"created_at"`
+	CreatedBy     *uuid.UUID     `json:"created_by"`
 	FromCurrency  string         `json:"from_currency"`
 	ToCurrency    string         `json:"to_currency"`
 	Rate          pgtype.Numeric `json:"rate"`
@@ -602,8 +636,20 @@ type FinanceExchangeRate struct {
 	EffectiveDate time.Time      `json:"effective_date"`
 	ExpiryDate    time.Time      `json:"expiry_date"`
 	Source        string         `json:"source"`
-	CreatedAt     time.Time      `json:"created_at"`
-	CreatedBy     *uuid.UUID     `json:"created_by"`
+}
+
+type FinanceFiscalYear struct {
+	ID        uuid.UUID  `json:"id"`
+	TenantID  uuid.UUID  `json:"tenant_id"`
+	CreatedAt time.Time  `json:"created_at"`
+	UpdatedAt time.Time  `json:"updated_at"`
+	CreatedBy *uuid.UUID `json:"created_by"`
+	UpdatedBy *uuid.UUID `json:"updated_by"`
+	Name      string     `json:"name"`
+	StartDate time.Time  `json:"start_date"`
+	EndDate   time.Time  `json:"end_date"`
+	IsClosed  bool       `json:"is_closed"`
+	IsLocked  bool       `json:"is_locked"`
 }
 
 type FinanceReversalHistory struct {

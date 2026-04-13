@@ -984,6 +984,161 @@ func (h *FinanceHandler) RejectTransaction(c *fiber.Ctx) error {
 	return h.Success(c, transaction)
 }
 
+// ============================================================================
+// COST CENTER ENDPOINTS
+// ============================================================================
+
+// CreateCostCenter handles POST /api/v1/finance/cost-centers
+func (h *FinanceHandler) CreateCostCenter(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateCostCenter")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		Code             string  `json:"code" validate:"required"`
+		Name             string  `json:"name" validate:"required"`
+		Description      string  `json:"description"`
+		ParentID         *string `json:"parent_id"`
+		IsGroup          bool    `json:"is_group"`
+		IsDistributed    bool    `json:"is_distributed"`
+		AllocationMethod *string `json:"allocation_method"`
+		IsActive         bool    `json:"is_active"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	cc := &financeDomain.CostCenter{
+		Code:          req.Code,
+		Name:          req.Name,
+		Description:   req.Description,
+		IsGroup:       req.IsGroup,
+		IsDistributed: req.IsDistributed,
+		IsActive:      req.IsActive,
+	}
+	if req.ParentID != nil {
+		id, err := uuid.Parse(*req.ParentID)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid parent_id").WithHTTPStatus(400))
+		}
+		cc.ParentID = &id
+	}
+	if req.AllocationMethod != nil {
+		m := financeDomain.AllocationMethod(*req.AllocationMethod)
+		cc.AllocationMethod = &m
+	}
+
+	created, err := h.services.CostCenter.Create(ctx, cc)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetCostCenter handles GET /api/v1/finance/cost-centers/:id
+func (h *FinanceHandler) GetCostCenter(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetCostCenter")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid cost centre ID").WithHTTPStatus(400))
+	}
+	cc, err := h.services.CostCenter.GetByID(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, cc)
+}
+
+// ListCostCenters handles GET /api/v1/finance/cost-centers
+func (h *FinanceHandler) ListCostCenters(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListCostCenters")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	activeOnly := c.QueryBool("active_only", false)
+	ccs, err := h.services.CostCenter.List(ctx, activeOnly)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, ccs)
+}
+
+// UpdateCostCenter handles PUT /api/v1/finance/cost-centers/:id
+func (h *FinanceHandler) UpdateCostCenter(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UpdateCostCenter")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid cost centre ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Code             string  `json:"code" validate:"required"`
+		Name             string  `json:"name" validate:"required"`
+		Description      string  `json:"description"`
+		ParentID         *string `json:"parent_id"`
+		IsGroup          bool    `json:"is_group"`
+		IsDistributed    bool    `json:"is_distributed"`
+		AllocationMethod *string `json:"allocation_method"`
+		IsActive         bool    `json:"is_active"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	cc := &financeDomain.CostCenter{
+		ID:            id,
+		Code:          req.Code,
+		Name:          req.Name,
+		Description:   req.Description,
+		IsGroup:       req.IsGroup,
+		IsDistributed: req.IsDistributed,
+		IsActive:      req.IsActive,
+	}
+	if req.ParentID != nil {
+		pid, err := uuid.Parse(*req.ParentID)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid parent_id").WithHTTPStatus(400))
+		}
+		cc.ParentID = &pid
+	}
+	if req.AllocationMethod != nil {
+		m := financeDomain.AllocationMethod(*req.AllocationMethod)
+		cc.AllocationMethod = &m
+	}
+
+	updated, err := h.services.CostCenter.Update(ctx, cc)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, updated)
+}
+
+// DeleteCostCenter handles DELETE /api/v1/finance/cost-centers/:id
+func (h *FinanceHandler) DeleteCostCenter(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.DeleteCostCenter")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid cost centre ID").WithHTTPStatus(400))
+	}
+	if err := h.services.CostCenter.Delete(ctx, id); err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, fiber.Map{"deleted": true})
+}
+
 // Custom validator registration
 func registerCustomValidators(v *validator.Validate) {
 	v.RegisterValidation("uuid", func(fl validator.FieldLevel) bool {

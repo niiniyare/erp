@@ -4002,10 +4002,10 @@ func (mr *MockStoreMockRecorder) GetEventTypeDistribution(ctx, arg any) *gomock.
 }
 
 // GetExchangeRate mocks base method.
-func (m *MockStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error) {
+func (m *MockStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*GetExchangeRateRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRate", ctx, arg)
-	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret0, _ := ret[0].(*GetExchangeRateRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -6956,10 +6956,10 @@ func (mr *MockStoreMockRecorder) ListEntitySubtree(ctx, dollar_1 any) *gomock.Ca
 }
 
 // ListExchangeRates mocks base method.
-func (m *MockStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error) {
+func (m *MockStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*ListExchangeRatesRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListExchangeRates", ctx, arg)
-	ret0, _ := ret[0].([]*FinanceExchangeRate)
+	ret0, _ := ret[0].([]*ListExchangeRatesRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -8898,10 +8898,10 @@ func (mr *MockStoreMockRecorder) UpsertAccountBalance(ctx, arg any) *gomock.Call
 }
 
 // UpsertExchangeRate mocks base method.
-func (m *MockStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error) {
+func (m *MockStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*UpsertExchangeRateRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertExchangeRate", ctx, arg)
-	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret0, _ := ret[0].(*UpsertExchangeRateRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -13198,10 +13198,10 @@ func (mr *MockTxStoreMockRecorder) GetEventTypeDistribution(ctx, arg any) *gomoc
 }
 
 // GetExchangeRate mocks base method.
-func (m *MockTxStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error) {
+func (m *MockTxStore) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*GetExchangeRateRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetExchangeRate", ctx, arg)
-	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret0, _ := ret[0].(*GetExchangeRateRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -16166,10 +16166,10 @@ func (mr *MockTxStoreMockRecorder) ListEntitySubtree(ctx, dollar_1 any) *gomock.
 }
 
 // ListExchangeRates mocks base method.
-func (m *MockTxStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error) {
+func (m *MockTxStore) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*ListExchangeRatesRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ListExchangeRates", ctx, arg)
-	ret0, _ := ret[0].([]*FinanceExchangeRate)
+	ret0, _ := ret[0].([]*ListExchangeRatesRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -18122,10 +18122,10 @@ func (mr *MockTxStoreMockRecorder) UpsertAccountBalance(ctx, arg any) *gomock.Ca
 }
 
 // UpsertExchangeRate mocks base method.
-func (m *MockTxStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error) {
+func (m *MockTxStore) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*UpsertExchangeRateRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "UpsertExchangeRate", ctx, arg)
-	ret0, _ := ret[0].(*FinanceExchangeRate)
+	ret0, _ := ret[0].(*UpsertExchangeRateRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

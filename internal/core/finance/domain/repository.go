@@ -491,6 +491,20 @@ type ExchangeRateRepository interface {
 	DeleteExpired(ctx context.Context, cutoff time.Time) error
 }
 
+// BudgetRepository defines persistence for budget headers and line items.
+type BudgetRepository interface {
+	// Budget header operations
+	CreateBudget(ctx context.Context, b *Budget) error
+	GetBudgetByID(ctx context.Context, id uuid.UUID) (*Budget, error)
+	ListBudgets(ctx context.Context, tenantID uuid.UUID, fiscalYearID *uuid.UUID) ([]*Budget, error)
+	UpdateBudget(ctx context.Context, b *Budget) error
+
+	// Budget line item operations
+	CreateLineItems(ctx context.Context, lines []*BudgetLineItem) error
+	GetLineItems(ctx context.Context, budgetID uuid.UUID) ([]*BudgetLineItem, error)
+	DeleteLineItems(ctx context.Context, budgetID uuid.UUID) error
+}
+
 // NOTE: All repository implementations should:
 // 1. Enforce tenant isolation using current_tenant_id()
 // 2. Handle optimistic locking using version fields

@@ -559,6 +559,15 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	ratesGroup.Get("/", handler.GetExchangeRate)             // GET  /api/v1/finance/exchange-rates?from=&to=&date=
 	ratesGroup.Get("/history", handler.ListExchangeRates)    // GET  /api/v1/finance/exchange-rates/history
 
+	// Cost centre management
+	costCentersGroup := financeGroup.Group("/cost-centers")
+	costCentersGroup.Use(middlewarePkg.Authorize("finance.cost_centers.read"))
+	costCentersGroup.Post("/", handler.CreateCostCenter)       // POST   /api/v1/finance/cost-centers
+	costCentersGroup.Get("/", handler.ListCostCenters)         // GET    /api/v1/finance/cost-centers
+	costCentersGroup.Get("/:id", handler.GetCostCenter)        // GET    /api/v1/finance/cost-centers/:id
+	costCentersGroup.Put("/:id", handler.UpdateCostCenter)     // PUT    /api/v1/finance/cost-centers/:id
+	costCentersGroup.Delete("/:id", handler.DeleteCostCenter)  // DELETE /api/v1/finance/cost-centers/:id
+
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")
 	reportsGroup.Get("/trial-balance", handler.GetTrialBalance) // GET /api/v1/finance/reports/trial-balance - Trial balance report

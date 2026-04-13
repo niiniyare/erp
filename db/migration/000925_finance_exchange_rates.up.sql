@@ -13,6 +13,7 @@ CREATE TABLE finance_exchange_rates (
     expiry_date    DATE,
     source         TEXT          NOT NULL DEFAULT 'manual',
 
+
     PRIMARY KEY (id),
     UNIQUE (tenant_id, from_currency, to_currency, rate_type, effective_date)
 );

@@ -19,6 +19,7 @@ type Services struct {
 	Period           PeriodService
 	ExchangeRate     ExchangeRateService
 	Currency         CurrencyService
+	CostCenter       CostCenterService
 }
 
 // Dependencies contains the required dependencies to create finance services
@@ -30,6 +31,7 @@ type Dependencies struct {
 	PeriodRepo       domain.PeriodRepository
 	ExchangeRateRepo domain.ExchangeRateRepository
 	CurrencyRepo     CurrencyRepository
+	CostCenterRepo   domain.CostCenterRepository
 	Tracing            tracing.Service
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
@@ -69,6 +71,7 @@ func NewServices(deps Dependencies) *Services {
 	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics)
 	exchangeRateService := NewExchangeRateService(deps.ExchangeRateRepo, deps.Tracing, deps.Metrics)
 	currencyService := NewCurrencyService(deps.CurrencyRepo, deps.Tracing, deps.Metrics)
+	costCenterService := NewCostCenterService(deps.CostCenterRepo, deps.Tracing, deps.Metrics)
 
 	return &Services{
 		Account:          accountService,
@@ -77,6 +80,7 @@ func NewServices(deps Dependencies) *Services {
 		Period:           periodService,
 		ExchangeRate:     exchangeRateService,
 		Currency:         currencyService,
+		CostCenter:       costCenterService,
 	}
 }
 

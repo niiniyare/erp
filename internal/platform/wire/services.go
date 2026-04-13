@@ -70,6 +70,7 @@ func NewFinanceServices(
 	periodRepo := financeRepo.NewPeriodRepository(store, tracer)
 	exchangeRateRepo := financeRepo.NewExchangeRateRepository(store, tracer)
 	currencyRepo := financeRepo.NewCurrencyRepository(store, tracer)
+	costCenterRepo := financeRepo.NewCostCenterRepository(store, tracer)
 
 	_ = log // available for future use
 
@@ -79,6 +80,7 @@ func NewFinanceServices(
 		PeriodRepo:       periodRepo,
 		ExchangeRateRepo: exchangeRateRepo,
 		CurrencyRepo:     currencyRepo,
+		CostCenterRepo:   costCenterRepo,
 		Tracing:          tracer,
 		Metrics:          met,
 	})

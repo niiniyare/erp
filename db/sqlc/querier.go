@@ -678,7 +678,7 @@ type Querier interface {
 	// Get event type distribution for analysis
 	GetEventTypeDistribution(ctx context.Context, arg GetEventTypeDistributionParams) ([]*GetEventTypeDistributionRow, error)
 	// Returns the most recent rate for a pair on or before asOfDate.
-	GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error)
+	GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*GetExchangeRateRow, error)
 	GetExpiredAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	// Get failed access attempts within a time range
 	GetFailedAccessAttempts(ctx context.Context, arg GetFailedAccessAttemptsParams) ([]*GetFailedAccessAttemptsRow, error)
@@ -1038,7 +1038,7 @@ type Querier interface {
 	// Returns all entities within the subtree rooted at the given path prefix.
 	// Used by business repos for subtree-scoped data queries.
 	ListEntitySubtree(ctx context.Context, dollar_1 *string) ([]*ListEntitySubtreeRow, error)
-	ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error)
+	ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*ListExchangeRatesRow, error)
 	ListExpiredActiveRoleNames(ctx context.Context, arg ListExpiredActiveRoleNamesParams) ([]string, error)
 	ListFeatureFlags(ctx context.Context, arg ListFeatureFlagsParams) ([]*FeatureFlag, error)
 	ListFlagDefinitions(ctx context.Context, dollar_1 bool) ([]*FeatureFlagDefinition, error)
@@ -1278,7 +1278,7 @@ type Querier interface {
 	// Rate look-up uses on-date-or-before semantics (most recent rate
 	// on or before the requested date for each currency pair).
 	// =====================================================================
-	UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error)
+	UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*UpsertExchangeRateRow, error)
 	UpsertRoleAssignment(ctx context.Context, arg UpsertRoleAssignmentParams) error
 	UpsertSSOProvider(ctx context.Context, arg UpsertSSOProviderParams) (*SsoProvider, error)
 	// Enable or disable a flag for a specific tenant.

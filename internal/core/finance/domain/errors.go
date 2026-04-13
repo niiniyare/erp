@@ -39,6 +39,15 @@ var (
 	// Exchange rate errors
 	ErrExchangeRateNotFound = errors.New("exchange rate not found")
 
+	// Cost center errors
+	ErrCostCenterNotFound   = errors.New("cost centre not found")
+	ErrCostCenterCodeExists = errors.New("cost centre code already exists")
+
+	// Budget errors
+	ErrBudgetNotFound       = errors.New("budget not found")
+	ErrBudgetNotEditable    = errors.New("budget is not editable in its current status")
+	ErrBudgetAlreadyApproved = errors.New("budget is already approved")
+
 	// Validation errors
 	ErrInvalidCurrencyCode = errors.New("invalid currency code")
 	ErrInvalidExchangeRate = errors.New("invalid exchange rate")

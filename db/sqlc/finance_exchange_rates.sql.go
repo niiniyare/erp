@@ -51,15 +51,29 @@ type GetExchangeRateParams struct {
 	EffectiveDate time.Time `json:"effective_date"`
 }
 
+type GetExchangeRateRow struct {
+	ID            uuid.UUID      `json:"id"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	FromCurrency  string         `json:"from_currency"`
+	ToCurrency    string         `json:"to_currency"`
+	Rate          pgtype.Numeric `json:"rate"`
+	RateType      string         `json:"rate_type"`
+	EffectiveDate time.Time      `json:"effective_date"`
+	ExpiryDate    time.Time      `json:"expiry_date"`
+	Source        string         `json:"source"`
+	CreatedAt     time.Time      `json:"created_at"`
+	CreatedBy     *uuid.UUID     `json:"created_by"`
+}
+
 // Returns the most recent rate for a pair on or before asOfDate.
-func (q *Queries) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*FinanceExchangeRate, error) {
+func (q *Queries) GetExchangeRate(ctx context.Context, arg GetExchangeRateParams) (*GetExchangeRateRow, error) {
 	row := q.db.QueryRow(ctx, getExchangeRate,
 		arg.FromCurrency,
 		arg.ToCurrency,
 		arg.RateType,
 		arg.EffectiveDate,
 	)
-	var i FinanceExchangeRate
+	var i GetExchangeRateRow
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,
@@ -102,7 +116,21 @@ type ListExchangeRatesParams struct {
 	Limit        int32     `json:"limit"`
 }
 
-func (q *Queries) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*FinanceExchangeRate, error) {
+type ListExchangeRatesRow struct {
+	ID            uuid.UUID      `json:"id"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	FromCurrency  string         `json:"from_currency"`
+	ToCurrency    string         `json:"to_currency"`
+	Rate          pgtype.Numeric `json:"rate"`
+	RateType      string         `json:"rate_type"`
+	EffectiveDate time.Time      `json:"effective_date"`
+	ExpiryDate    time.Time      `json:"expiry_date"`
+	Source        string         `json:"source"`
+	CreatedAt     time.Time      `json:"created_at"`
+	CreatedBy     *uuid.UUID     `json:"created_by"`
+}
+
+func (q *Queries) ListExchangeRates(ctx context.Context, arg ListExchangeRatesParams) ([]*ListExchangeRatesRow, error) {
 	rows, err := q.db.Query(ctx, listExchangeRates,
 		arg.FromCurrency,
 		arg.ToCurrency,
@@ -114,9 +142,9 @@ func (q *Queries) ListExchangeRates(ctx context.Context, arg ListExchangeRatesPa
 		return nil, err
 	}
 	defer rows.Close()
-	items := []*FinanceExchangeRate{}
+	items := []*ListExchangeRatesRow{}
 	for rows.Next() {
-		var i FinanceExchangeRate
+		var i ListExchangeRatesRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.TenantID,
@@ -180,13 +208,27 @@ type UpsertExchangeRateParams struct {
 	CreatedBy     *uuid.UUID     `json:"created_by"`
 }
 
+type UpsertExchangeRateRow struct {
+	ID            uuid.UUID      `json:"id"`
+	TenantID      uuid.UUID      `json:"tenant_id"`
+	FromCurrency  string         `json:"from_currency"`
+	ToCurrency    string         `json:"to_currency"`
+	Rate          pgtype.Numeric `json:"rate"`
+	RateType      string         `json:"rate_type"`
+	EffectiveDate time.Time      `json:"effective_date"`
+	ExpiryDate    time.Time      `json:"expiry_date"`
+	Source        string         `json:"source"`
+	CreatedAt     time.Time      `json:"created_at"`
+	CreatedBy     *uuid.UUID     `json:"created_by"`
+}
+
 // =====================================================================
 // FINANCE MODULE — EXCHANGE RATES QUERIES
 // Tenant-isolated exchange rate persistence.
 // Rate look-up uses on-date-or-before semantics (most recent rate
 // on or before the requested date for each currency pair).
 // =====================================================================
-func (q *Queries) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*FinanceExchangeRate, error) {
+func (q *Queries) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRateParams) (*UpsertExchangeRateRow, error) {
 	row := q.db.QueryRow(ctx, upsertExchangeRate,
 		arg.FromCurrency,
 		arg.ToCurrency,
@@ -197,7 +239,7 @@ func (q *Queries) UpsertExchangeRate(ctx context.Context, arg UpsertExchangeRate
 		arg.Source,
 		arg.CreatedBy,
 	)
-	var i FinanceExchangeRate
+	var i UpsertExchangeRateRow
 	err := row.Scan(
 		&i.ID,
 		&i.TenantID,

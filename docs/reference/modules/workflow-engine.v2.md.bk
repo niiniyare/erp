@@ -439,7 +439,7 @@ CREATE TABLE workflow_instances (
     
     -- Progress Tracking
     steps_completed INTEGER DEFAULT 0,
-    total_steps INTEGER NOT NULL,  -- NOTE: approximate for parallel/loop workflows; actual executed steps may exceed this count
+    total_steps INTEGER NOT NULL,
     completion_percentage INTEGER DEFAULT 0,
     
     -- Timing Information
@@ -667,10 +667,9 @@ CREATE TABLE workflow_user_tasks (
     can_delegate BOOLEAN DEFAULT true,
     can_reassign BOOLEAN DEFAULT false,
     requires_comment BOOLEAN DEFAULT false,
-
+    
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),  -- Required: task status/assignment changes must be auditable
-
+    
     CONSTRAINT valid_task_status CHECK (
         status IN ('pending', 'in_progress', 'completed', 'cancelled', 'timeout', 'escalated')
     ),
@@ -747,7 +746,7 @@ CREATE TABLE workflow_triggers (
     event_name VARCHAR(100),  -- For event triggers
     schedule_expression VARCHAR(100),  -- For scheduled triggers (cron)
     webhook_path VARCHAR(255),  -- For webhook triggers
-    webhook_secret VARCHAR(255),  -- Store as HMAC-SHA256 hash (never plaintext); verify incoming requests with constant-time compare
+    webhook_secret VARCHAR(255),  -- For webhook authentication
     webhook_method VARCHAR(10) DEFAULT 'POST',  -- HTTP method
     
     -- Filtering Conditions
@@ -1059,11 +1058,6 @@ CREATE TRIGGER trigger_workflow_variables_updated_at
 
 CREATE TRIGGER trigger_workflow_action_definitions_updated_at
     BEFORE UPDATE ON workflow_action_definitions
-    FOR EACH ROW
-    EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER trigger_workflow_user_tasks_updated_at
-    BEFORE UPDATE ON workflow_user_tasks
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 ```
@@ -1547,83 +1541,34 @@ Validates data before allowing workflow to proceed.
 
 Branches workflow execution based on conditional logic.
 
-**Implementation:** condition steps are evaluated using `pkg/condition/builder.go` which wraps `expr-lang` (compiled, type-checked, sandboxed — no arbitrary code execution). JSONPath `$.` field paths in workflow definitions are stripped of the leading `$.` by the expression adapter (`engine/expression.go`) before being passed to the condition builder's `GetValue`, which uses dot-notation internally.
-
-**There is NO `javascript` expression type.** Use the structured `ConditionGroup`/`ConditionRule` format, or the `if` formula field (expr-lang) for power users.
-
-**Standard binary condition (single rule):**
-
 ```json
 {
   "type": "condition",
   "config": {
-    "rule": {
-      "id": "amount_check",
-      "left": { "type": "field", "field": "invoice.amount" },
-      "op": "greater",
-      "right": 10000
-    }
+    "condition": "$.amount > 10000 && $.status == 'pending'",
+    "expression_type": "simple"  // simple, complex, javascript
   },
   "on_true": "high_value_path",
   "on_false": "standard_path"
 }
 ```
 
-**Available operators** (from `pkg/condition/builder.go`):
-- `equal`, `not_equal`
-- `less`, `less_or_equal`, `greater`, `greater_or_equal`
-- `between`, `not_between`
-- `is_empty`, `is_not_empty`
-- `contains`, `not_contains`, `starts_with`, `ends_with`
-- `select_any_in`, `select_not_any_in`
-- `match_regexp` (bounded timeout, ReDoS-safe via `regexp2`)
+**Expression Types:**
 
-**Compound condition (ConditionGroup — AND/OR/NOT):**
-
-```json
-{
-  "type": "condition",
-  "config": {
-    "group": {
-      "id": "g1",
-      "conjunction": "and",
-      "children": [
-        {
-          "id": "r1",
-          "left": { "type": "field", "field": "invoice.amount" },
-          "op": "greater",
-          "right": 10000
-        },
-        {
-          "id": "r2",
-          "left": { "type": "field", "field": "entity.type" },
-          "op": "equal",
-          "right": "COMPANY"
-        }
-      ]
-    }
-  },
-  "on_true": "director_approval",
-  "on_false": "manager_approval"
-}
+**Simple** - Boolean expressions with basic operators:
+```javascript
+$.amount > 10000
+$.status == "pending"
+$.items.length > 0
+$.urgent == true
 ```
 
-**Power-user formula** (expr-lang, compiled and type-checked at template validation time):
-
-```json
-{
-  "type": "condition",
-  "config": {
-    "formula": "invoice.amount > 10000 && entity.type == 'COMPANY'"
-  },
-  "on_true": "director_approval",
-  "on_false": "manager_approval"
-}
+**Complex** - Multiple conditions with logical operators:
+```javascript
+($.amount > 10000 && $.entity.type == "COMPANY") || $.urgent == true
 ```
 
-> Note: field references in `formula` use dot-notation directly (no `$.` prefix). The formula is compiled once at validation and cached — runtime execution is fast.
-
-**Multi-way branching (evaluated top-to-bottom, first match wins):**
+**Multi-way Branching:**
 
 ```json
 {
@@ -1633,19 +1578,19 @@ Branches workflow execution based on conditional logic.
   "config": {
     "cases": [
       {
-        "formula": "invoice.amount < 1000",
+        "condition": "$.amount < 1000",
         "next_step": "auto_approve"
       },
       {
-        "formula": "invoice.amount >= 1000 && invoice.amount < 10000",
+        "condition": "$.amount >= 1000 && $.amount < 10000",
         "next_step": "manager_approval"
       },
       {
-        "formula": "invoice.amount >= 10000 && invoice.amount < 50000",
+        "condition": "$.amount >= 10000 && $.amount < 50000",
         "next_step": "director_approval"
       },
       {
-        "formula": "invoice.amount >= 50000",
+        "condition": "$.amount >= 50000",
         "next_step": "cfo_approval"
       }
     ],
@@ -2036,90 +1981,80 @@ Pauses workflow execution.
 }
 ```
 
-### Expression Language
+### Expression Language (JSONPath)
 
-The workflow engine uses two complementary expression mechanisms. Understanding where each applies prevents confusion:
+Workflows use **JSONPath** to access and manipulate data.
 
----
-
-#### 1. JSONPath — Data Access in Step Configs
-
-**Scope:** `field`, `params`, `recipients`, `output_mapping`, `entity_scope` fields inside step `config` objects.
-
-JSONPath `$.` prefixed paths select values from the live `WorkflowContext` at execution time.
+**Basic Access:**
 
 ```javascript
-// Access trigger/input data
+// Access input data
 $.invoice.amount
 $.invoice.vendor_id
 
-// Access variables set by previous steps
+// Access variables
 $.variables.approval_level
 
-// Access a specific step's output
-$.steps.validate_invoice.result
+// Access step outputs
+$.steps.validation.result
 
-// Access workflow execution context
+// Access workflow context
 $.context.user_id
 $.context.tenant_id
 $.context.entity_id
 ```
 
-**How it works internally:** `engine/expression.go` strips the `$.` prefix, then delegates to `pkg/condition/builder.go`'s `EvalContext.GetValue()`, which traverses the context data map using dot-notation. Complex JSONPath selectors (filters, wildcards `[*]`) are handled in the expression adapter layer.
+**Comparison Operators:**
 
----
-
-#### 2. Condition Builder — Logic Evaluation
-
-**Scope:** `condition` step `config.rule`, `config.group`, `config.formula`, and `config.cases[*].formula`.
-
-Uses `pkg/condition/builder.go` backed by `expr-lang` (compiled at template validation, cached, type-checked). **No arbitrary code execution — no JavaScript.**
-
-Field references inside formulas use dot-notation **without** the `$.` prefix:
-
-```go
-// In formula strings — dot notation, no $. prefix
-"invoice.amount > 10000"
-"entity.type == 'COMPANY' && invoice.status != 'cancelled'"
-"now.After(invoice.due_date)"   // 'now' is injected by EvalContext
+```javascript
+$.amount > 10000
+$.status == "pending"
+$.items.length > 0
+$.urgent == true
+$.approved_by != null
 ```
 
-**Available built-in functions** (registered on `EvalContext`):
+**Logical Operators:**
 
-| Category | Functions |
-|---|---|
-| Date/Time | `now` (variable), custom handlers via `RegisterFunction` |
-| String | handled via expr-lang operators |
-| Comparison | all `OperatorType` values from `pkg/condition/builder.go` |
+```javascript
+$.amount > 1000 && $.entity.type == "COMPANY"
+$.urgent == true || $.amount > 50000
+!($.status == "cancelled")
+```
 
-Custom functions are registered via `EvalContext.RegisterFunction(name, handler)` and available in all formula expressions.
+**Functions:**
 
----
+```javascript
+// Date/Time
+${NOW()}  // Current timestamp
+${DATE_ADD($.due_date, '7d')}  // Add 7 days
+${DATE_DIFF($.end_date, $.start_date, 'days')}
 
-#### 3. Template Strings — Display Text Interpolation
+// String
+${UPPER($.status)}
+${LOWER($.email)}
+${CONCAT($.first_name, ' ', $.last_name)}
+${SUBSTRING($.description, 0, 100)}
 
-**Scope:** `title`, `description`, `notification.data` fields in step configs.
+// Math
+${SUM($.items[*].amount)}
+${AVG($.ratings[*].score)}
+${MAX($.bids[*].price)}
+${MIN($.quotes[*].cost)}
 
-Uses `${variable}` syntax resolved at runtime from `WorkflowContext.Variables`:
+// Array
+${LENGTH($.items)}
+${CONTAINS($.tags, 'urgent')}
+${FILTER($.items, $.price > 100)}
+```
+
+**Template Strings:**
 
 ```javascript
 "Invoice ${invoice.invoice_number} from ${invoice.vendor_name}"
 "Amount: $${invoice.amount}"
-"Assigned to ${assignee_name} — due ${due_date}"
+"Due: ${FORMAT_DATE(invoice.due_date, 'YYYY-MM-DD')}"
 ```
-
-Uses dot-notation path resolution (same as condition builder) for nested paths like `${invoice.vendor.name}`.
-
----
-
-#### Summary: Which syntax where
-
-| Location | Syntax | Resolver |
-|---|---|---|
-| `config.params.*`, `config.field`, `config.entity_scope` | `$.invoice.amount` | JSONPath adapter → `GetValue` |
-| `config.rule`, `config.group` | ConditionRule/Group JSON | `pkg/condition/builder.go` Evaluator |
-| `config.formula`, `config.cases[*].formula` | `invoice.amount > 10000` | expr-lang via `evaluateFormula` |
-| `config.title`, `config.description`, notification `data` | `${invoice.amount}` | `resolveTemplate` string substitution |
 
 ### Validation Rules
 
@@ -2162,22 +2097,15 @@ Before execution, workflow definitions are validated:
 ```
 internal/
 ├── workflow/
-│   ├── domain/                       # ← Shared types imported by ALL sub-packages
-│   │   ├── types.go                  # StepDefinition, WorkflowDefinition, VariableDefinition
-│   │   ├── result.go                 # StepResult, WorkflowContext, TaskDecision
-│   │   └── errors.go                 # Sentinel errors (ErrUnauthorized, ErrMaxDelegation…)
-│   │   # IMPORTANT: engine/ and executors/ both import domain/ — never import each other.
-│   │   # This breaks the circular dependency: engine creates executors via constructor
-│   │   # injection using the StepExecutor interface defined in domain/.
 │   ├── engine/
 │   │   ├── engine.go                 # Core engine orchestration
 │   │   ├── validator.go              # Definition validation
-│   │   ├── expression.go             # JSONPath → dot-notation adapter (wraps pkg/condition)
+│   │   ├── expression.go             # JSONPath evaluation
 │   │   ├── registry.go               # Step executor registry
 │   │   └── assignment.go             # User task assignment
 │   ├── executors/
 │   │   ├── validation.go             # Validation step executor
-│   │   ├── condition.go              # Condition step executor (uses pkg/condition/builder.go)
+│   │   ├── condition.go              # Condition step executor
 │   │   ├── user_task.go              # User task executor
 │   │   ├── action.go                 # Action step executor
 │   │   ├── notification.go           # Notification executor
@@ -2444,13 +2372,7 @@ func (e *Engine) StartWorkflow(ctx context.Context, templateID uuid.UUID, input 
 			ID:                 instanceID,
 			TemplateID:         templateID,
 			TemporalWorkflowID: temporalWorkflowID,
-			// RACE CONDITION RISK: TemporalRunID is empty at create time and updated
-		// after Temporal confirms the start. If the process crashes between
-		// CreateWorkflowInstance and UpdateWorkflowInstance, the DB record has
-		// Status="pending" and no TemporalRunID. A reconciliation job must
-		// periodically query instances WHERE status='pending' AND temporal_run_id=''
-		// AND started_at < NOW()-interval '5 minutes', then either restart or mark failed.
-		TemporalRunID: "", // Will be updated after Temporal start
+			TemporalRunID:      "", // Will be updated after Temporal start
 			TriggerType:        "manual",
 			TriggeredBy:        sql.NullUUID{UUID: getUserIDFromContext(ctx), Valid: true},
 			TriggerData:        input,
@@ -2695,19 +2617,11 @@ type TaskDecision struct {
 	CompletedBy uuid.UUID              `json:"-"`
 }
 
-// ctxKey is a typed key to avoid context value shadowing across packages.
-// Use this instead of raw strings as context keys.
-type ctxKey string
-
-const (
-	ctxKeyUserID          ctxKey = "user_id"
-	ctxKeyStepExecutionID ctxKey = "step_execution_id"
-)
-
 // Helper to get user ID from context
 func getUserIDFromContext(ctx context.Context) uuid.UUID {
-	// Extract from your auth middleware using typed key (prevents shadowing)
-	userID, _ := ctx.Value(ctxKeyUserID).(uuid.UUID)
+	// Extract from your auth middleware
+	// This is a placeholder - implement based on your auth system
+	userID, _ := ctx.Value("user_id").(uuid.UUID)
 	return userID
 }
 ```
@@ -3251,15 +3165,12 @@ func (e *UserTaskExecutor) getAssignmentDescription(userID sql.NullUUID, role sq
 	return "Unassigned"
 }
 
-// Helper to get step execution ID from context.
-// Returns uuid.Nil and an error if not set — callers must handle this to avoid
-// orphaned step execution records with no parent instance.
-func getStepExecutionIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	id, ok := ctx.Value(ctxKeyStepExecutionID).(uuid.UUID)
-	if !ok || id == uuid.Nil {
-		return uuid.Nil, fmt.Errorf("step_execution_id not found in context")
+// Helper to get step execution ID from context
+func getStepExecutionIDFromContext(ctx context.Context) uuid.UUID {
+	if id, ok := ctx.Value("step_execution_id").(uuid.UUID); ok {
+		return id
 	}
-	return id, nil
+	return uuid.New()
 }
 
 // Helper to flatten nested map for template resolution
@@ -3522,8 +3433,7 @@ func executeUserTaskStep(
 		logger.Warn("Task timed out", "taskID", taskID, "timeout", timeout)
 
 		// Handle timeout based on configuration
-		// Use getString helper — direct cast panics if key is absent or wrong type
-		timeoutAction := getString(step.Config, "timeout_action", "cancel")
+		timeoutAction := step.Config["timeout_action"].(string)
 
 		switch timeoutAction {
 		case "escalate":
@@ -3568,22 +3478,8 @@ func executeUserTaskStep(
 	case "rejected":
 		nextStepID = step.OnRejected
 	case "delegated":
-		// Guard against delegation cycles or unbounded recursion.
-		// Each delegation increments the escalation_level stored in the task;
-		// the executor must check this before creating a new task and return
-		// an error (routing to on_failure) if it exceeds MaxDelegationDepth (3).
-		// Implementation note: pass current depth via wfContext.Variables["_delegation_depth"].
-		delegationDepth, _ := wfCtx.Variables["_delegation_depth"].(int)
-		const MaxDelegationDepth = 3
-		if delegationDepth >= MaxDelegationDepth {
-			return StepResult{
-				Success:    false,
-				NextStepID: step.OnFailure,
-				Error:      fmt.Errorf("max delegation depth (%d) reached", MaxDelegationDepth),
-			}, nil
-		}
-		wfCtx.Variables["_delegation_depth"] = delegationDepth + 1
-		return executeUserTaskStep(ctx, instanceID, step, wfCtx)
+		// Handle delegation - create new task with same config
+		return executeUserTaskStep(ctx, instanceID, step, wfContext)
 	default:
 		nextStepID = step.OnFailure
 	}
@@ -3840,10 +3736,6 @@ func findStep(steps []StepDefinition, stepID string) *StepDefinition {
 	return nil
 }
 
-// parseDuration is defined once in internal/workflow/domain/duration.go
-// and imported by both executors/ and temporal/ packages.
-// Do NOT redefine it here — this copy is shown for documentation only.
-// Canonical signature: func ParseDuration(s string) (time.Duration, error)
 func parseDuration(s string) (time.Duration, error) {
 	if strings.HasSuffix(s, "d") {
 		days, err := strconv.Atoi(strings.TrimSuffix(s, "d"))
@@ -6890,68 +6782,15 @@ if err := validator.Validate(&definition); err != nil {
 
 #### 3. Expression Injection Prevention
 
-**There is no JavaScript evaluation path.** The engine uses two safe mechanisms only:
-
-- `pkg/condition/builder.go` with `expr-lang` for condition/formula evaluation — compiled at validation time, type-checked, no I/O or side effects permitted
-- JSONPath adapter for field access — read-only, traverses in-memory map only
+**Never execute arbitrary code from expressions:**
 
 ```go
-// ❌ NEVER add a JavaScript / Lua / arbitrary eval path
-result := vm.RunScript(expression)
+// ❌ DANGEROUS - Don't evaluate as JavaScript
+result := vm.Run(expression)
 
-// ✅ Condition evaluation — sandboxed, compiled, no arbitrary code
-ok, err := evaluator.Evaluate(ctx, conditionGroup, evalCtx)
-
-// ✅ Field access — read-only JSONPath over in-memory context
-val, err := expressionEval.Evaluate("$.invoice.amount", wfCtx)
+// ✅ SAFE - Use sandboxed JSONPath evaluator
+result, err := expressionEval.Evaluate(expression, context)
 ```
-
-The `ConditionRule.If` and `ConditionGroup.If` formula fields use `expr-lang` which is compiled at template-save time. Formulas that fail type-checking are rejected before storage.
-
-#### 4. SSRF Protection for HTTP Action Steps
-
-HTTP action steps (`action_type: "http_request"`) can be configured to call external endpoints. Without controls, this allows internal service probing.
-
-**Required mitigations:**
-
-```go
-// action executor must validate endpoint before dispatch
-func validateHTTPEndpoint(endpoint string) error {
-    u, err := url.Parse(endpoint)
-    if err != nil {
-        return fmt.Errorf("invalid URL: %w", err)
-    }
-    // Block private/loopback ranges
-    ip := net.ParseIP(u.Hostname())
-    if ip != nil && (ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast()) {
-        return fmt.Errorf("SSRF: private/loopback addresses not allowed")
-    }
-    // Require allowlist — only pre-approved external domains
-    if !isAllowlisted(u.Hostname()) {
-        return fmt.Errorf("SSRF: host %s not in allowlist", u.Hostname())
-    }
-    return nil
-}
-```
-
-The `workflow_action_definitions.http_endpoint` field should be validated at **action definition creation time**, not only at execution time.
-
-#### 5. Webhook Secret Verification
-
-Incoming webhook requests must be verified using HMAC-SHA256:
-
-```go
-// Verify webhook signature (constant-time compare prevents timing attacks)
-func verifyWebhookSignature(payload []byte, signature string, storedHash string) bool {
-    // storedHash is HMAC-SHA256(secret, stored as hex) — never the raw secret
-    mac := hmac.New(sha256.New, []byte(storedHash))
-    mac.Write(payload)
-    expected := hex.EncodeToString(mac.Sum(nil))
-    return hmac.Equal([]byte(expected), []byte(signature))
-}
-```
-
-**Storage rule:** `workflow_triggers.webhook_secret` stores the HMAC key **hashed** (bcrypt or SHA-256 with salt). The raw secret is shown to the user once at creation and never stored recoverable.
 
 #### 4. Action Authorization
 
