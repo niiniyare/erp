@@ -44,9 +44,15 @@ var (
 	ErrCostCenterCodeExists = errors.New("cost centre code already exists")
 
 	// Budget errors
-	ErrBudgetNotFound       = errors.New("budget not found")
-	ErrBudgetNotEditable    = errors.New("budget is not editable in its current status")
+	ErrBudgetNotFound        = errors.New("budget not found")
+	ErrBudgetNotEditable     = errors.New("budget is not editable in its current status")
 	ErrBudgetAlreadyApproved = errors.New("budget is already approved")
+
+	// Tax errors
+	ErrTaxAuthorityNotFound = errors.New("tax authority not found")
+	ErrTaxAuthorityExists   = errors.New("tax authority code already exists")
+	ErrTaxCodeNotFound      = errors.New("tax code not found")
+	ErrTaxCodeExists        = errors.New("tax code already exists within tenant")
 
 	// Validation errors
 	ErrInvalidCurrencyCode = errors.New("invalid currency code")

@@ -559,6 +559,18 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	ratesGroup.Get("/", handler.GetExchangeRate)             // GET  /api/v1/finance/exchange-rates?from=&to=&date=
 	ratesGroup.Get("/history", handler.ListExchangeRates)    // GET  /api/v1/finance/exchange-rates/history
 
+	// Budget management
+	budgetsGroup := financeGroup.Group("/budgets")
+	budgetsGroup.Use(middlewarePkg.Authorize("finance.budgets.read"))
+	budgetsGroup.Post("/", handler.CreateBudget)                    // POST   /api/v1/finance/budgets
+	budgetsGroup.Get("/", handler.ListBudgets)                      // GET    /api/v1/finance/budgets?fiscal_year_id=
+	budgetsGroup.Get("/:id", handler.GetBudget)                     // GET    /api/v1/finance/budgets/:id
+	budgetsGroup.Get("/:id/lines", handler.GetBudgetLines)          // GET    /api/v1/finance/budgets/:id/lines
+	budgetsGroup.Post("/:id/submit", handler.SubmitBudget)          // POST   /api/v1/finance/budgets/:id/submit
+	budgetsGroup.Post("/:id/approve", handler.ApproveBudget)        // POST   /api/v1/finance/budgets/:id/approve
+	budgetsGroup.Post("/:id/reject", handler.RejectBudget)          // POST   /api/v1/finance/budgets/:id/reject
+	budgetsGroup.Post("/:id/close", handler.CloseBudget)            // POST   /api/v1/finance/budgets/:id/close
+
 	// Cost centre management
 	costCentersGroup := financeGroup.Group("/cost-centers")
 	costCentersGroup.Use(middlewarePkg.Authorize("finance.cost_centers.read"))
@@ -567,6 +579,22 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	costCentersGroup.Get("/:id", handler.GetCostCenter)        // GET    /api/v1/finance/cost-centers/:id
 	costCentersGroup.Put("/:id", handler.UpdateCostCenter)     // PUT    /api/v1/finance/cost-centers/:id
 	costCentersGroup.Delete("/:id", handler.DeleteCostCenter)  // DELETE /api/v1/finance/cost-centers/:id
+
+	// Tax authority and code management
+	taxGroup := financeGroup.Group("/tax")
+	taxGroup.Use(middlewarePkg.Authorize("finance.tax.read"))
+
+	taxAuthGroup := taxGroup.Group("/authorities")
+	taxAuthGroup.Post("/", handler.CreateTaxAuthority)       // POST   /api/v1/finance/tax/authorities
+	taxAuthGroup.Get("/", handler.ListTaxAuthorities)        // GET    /api/v1/finance/tax/authorities
+	taxAuthGroup.Get("/:id", handler.GetTaxAuthority)        // GET    /api/v1/finance/tax/authorities/:id
+	taxAuthGroup.Put("/:id", handler.UpdateTaxAuthority)     // PUT    /api/v1/finance/tax/authorities/:id
+
+	taxCodeGroup := taxGroup.Group("/codes")
+	taxCodeGroup.Post("/", handler.CreateTaxCode)            // POST   /api/v1/finance/tax/codes
+	taxCodeGroup.Get("/", handler.ListTaxCodes)              // GET    /api/v1/finance/tax/codes
+	taxCodeGroup.Get("/:id", handler.GetTaxCode)             // GET    /api/v1/finance/tax/codes/:id
+	taxCodeGroup.Put("/:id", handler.UpdateTaxCode)          // PUT    /api/v1/finance/tax/codes/:id
 
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")

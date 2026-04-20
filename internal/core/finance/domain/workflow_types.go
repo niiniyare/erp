@@ -13,11 +13,11 @@ type (
 	ReversalStatus        string
 	AccountCreationStatus string
 	AccountClosureStatus  string
-	ReconciliationStatus  string
-	AuditStatus           string
-	FraudDetectionStatus  string
-	ClosingStatus         string
-	StepStatus            string
+	// ReconciliationStatus  string
+	AuditStatus          string
+	FraudDetectionStatus string
+	ClosingStatus        string
+	StepStatus           string
 )
 
 const (

@@ -6,6 +6,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 
 	financeDomain "awo.so/internal/core/finance/domain"
@@ -985,6 +986,252 @@ func (h *FinanceHandler) RejectTransaction(c *fiber.Ctx) error {
 }
 
 // ============================================================================
+// BUDGET ENDPOINTS
+// ============================================================================
+
+// CreateBudget handles POST /api/v1/finance/budgets
+func (h *FinanceHandler) CreateBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		FiscalYearID string `json:"fiscal_year_id" validate:"required"`
+		Name         string `json:"name" validate:"required"`
+		Description  string `json:"description"`
+		BudgetType   string `json:"budget_type" validate:"required"`
+		CurrencyCode string `json:"currency_code" validate:"required"`
+		CostCenterID string `json:"cost_center_id"`
+		Lines        []struct {
+			AccountID    string  `json:"account_id" validate:"required"`
+			CostCenterID string  `json:"cost_center_id"`
+			PeriodID     string  `json:"period_id"`
+			Amount       float64 `json:"budgeted_amount"`
+			Notes        string  `json:"notes"`
+		} `json:"lines"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	fyID, err := uuid.Parse(req.FiscalYearID)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid fiscal_year_id").WithHTTPStatus(400))
+	}
+
+	budget := &financeDomain.Budget{
+		FiscalYearID: fyID,
+		Name:         req.Name,
+		BudgetType:   financeDomain.BudgetType(req.BudgetType),
+		CurrencyCode: req.CurrencyCode,
+		Status:       financeDomain.BudgetStatusDraft,
+		Version:      1,
+	}
+	if req.Description != "" {
+		budget.Description = &req.Description
+	}
+	if req.CostCenterID != "" {
+		ccID, err := uuid.Parse(req.CostCenterID)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid cost_center_id").WithHTTPStatus(400))
+		}
+		budget.CostCenterID = &ccID
+	}
+
+	// Map request lines to domain line items
+	var lines []*financeDomain.BudgetLineItem
+	for _, l := range req.Lines {
+		acctID, err := uuid.Parse(l.AccountID)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid account_id in line").WithHTTPStatus(400))
+		}
+		li := &financeDomain.BudgetLineItem{
+			AccountID:      acctID,
+			BudgetedAmount: decimalFromFloat(l.Amount),
+		}
+		if l.Notes != "" {
+			li.Notes = &l.Notes
+		}
+		if l.CostCenterID != "" {
+			ccID, err := uuid.Parse(l.CostCenterID)
+			if err != nil {
+				return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid cost_center_id in line").WithHTTPStatus(400))
+			}
+			li.CostCenterID = &ccID
+		}
+		if l.PeriodID != "" {
+			pID, err := uuid.Parse(l.PeriodID)
+			if err != nil {
+				return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid period_id in line").WithHTTPStatus(400))
+			}
+			li.PeriodID = &pID
+		}
+		lines = append(lines, li)
+	}
+
+	created, err := h.services.Budget.CreateBudget(ctx, budget, lines)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetBudget handles GET /api/v1/finance/budgets/:id
+func (h *FinanceHandler) GetBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+	budget, err := h.services.Budget.GetBudget(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budget)
+}
+
+// ListBudgets handles GET /api/v1/finance/budgets
+func (h *FinanceHandler) ListBudgets(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListBudgets")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var fiscalYearID *uuid.UUID
+	if s := c.Query("fiscal_year_id"); s != "" {
+		id, err := uuid.Parse(s)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid fiscal_year_id").WithHTTPStatus(400))
+		}
+		fiscalYearID = &id
+	}
+
+	budgets, err := h.services.Budget.ListBudgets(ctx, fiscalYearID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budgets)
+}
+
+// SubmitBudget handles POST /api/v1/finance/budgets/:id/submit
+func (h *FinanceHandler) SubmitBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.SubmitBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+
+	var byUserID uuid.UUID
+	if s, ok := c.Locals("user_id").(string); ok {
+		byUserID, _ = uuid.Parse(s)
+	}
+
+	budget, err := h.services.Budget.SubmitBudget(ctx, id, byUserID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budget)
+}
+
+// ApproveBudget handles POST /api/v1/finance/budgets/:id/approve
+func (h *FinanceHandler) ApproveBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ApproveBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+
+	var byUserID uuid.UUID
+	if s, ok := c.Locals("user_id").(string); ok {
+		byUserID, _ = uuid.Parse(s)
+	}
+
+	budget, err := h.services.Budget.ApproveBudget(ctx, id, byUserID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budget)
+}
+
+// RejectBudget handles POST /api/v1/finance/budgets/:id/reject
+func (h *FinanceHandler) RejectBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.RejectBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Note string `json:"note"`
+	}
+	_ = c.BodyParser(&req)
+
+	var byUserID uuid.UUID
+	if s, ok := c.Locals("user_id").(string); ok {
+		byUserID, _ = uuid.Parse(s)
+	}
+
+	budget, err := h.services.Budget.RejectBudget(ctx, id, byUserID, req.Note)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budget)
+}
+
+// CloseBudget handles POST /api/v1/finance/budgets/:id/close
+func (h *FinanceHandler) CloseBudget(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CloseBudget")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+
+	budget, err := h.services.Budget.CloseBudget(ctx, id)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, budget)
+}
+
+// GetBudgetLines handles GET /api/v1/finance/budgets/:id/lines
+func (h *FinanceHandler) GetBudgetLines(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetBudgetLines")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid budget ID").WithHTTPStatus(400))
+	}
+
+	lines, err := h.services.Budget.GetLineItems(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, lines)
+}
+
+// ============================================================================
 // COST CENTER ENDPOINTS
 // ============================================================================
 
@@ -1137,6 +1384,391 @@ func (h *FinanceHandler) DeleteCostCenter(c *fiber.Ctx) error {
 		return h.HandleError(c, err)
 	}
 	return h.Success(c, fiber.Map{"deleted": true})
+}
+
+// ============================================================================
+// TAX AUTHORITY ENDPOINTS
+// ============================================================================
+
+// CreateTaxAuthority handles POST /api/v1/finance/tax/authorities
+func (h *FinanceHandler) CreateTaxAuthority(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateTaxAuthority")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		AuthorityCode      string `json:"authority_code" validate:"required"`
+		AuthorityName      string `json:"authority_name" validate:"required"`
+		AuthorityType      string `json:"authority_type" validate:"required"`
+		CountryCode        string `json:"country_code" validate:"required"`
+		StateProvinceCode  string `json:"state_province_code"`
+		JurisdictionLevel  string `json:"jurisdiction_level"`
+		FilingFrequency    string `json:"filing_frequency"`
+		FilingDueDay       int    `json:"filing_due_day"`
+		PaymentDueDay      int    `json:"payment_due_day"`
+		SupportsEFiling    bool   `json:"supports_e_filing"`
+		EFilingEndpoint    string `json:"e_filing_endpoint"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	if req.JurisdictionLevel == "" {
+		req.JurisdictionLevel = "national"
+	}
+	if req.FilingFrequency == "" {
+		req.FilingFrequency = "monthly"
+	}
+	if req.FilingDueDay == 0 {
+		req.FilingDueDay = 20
+	}
+	if req.PaymentDueDay == 0 {
+		req.PaymentDueDay = 20
+	}
+
+	authority := &financeDomain.TaxAuthority{
+		AuthorityCode:     req.AuthorityCode,
+		AuthorityName:     req.AuthorityName,
+		AuthorityType:     financeDomain.TaxAuthorityType(req.AuthorityType),
+		CountryCode:       req.CountryCode,
+		StateProvinceCode: req.StateProvinceCode,
+		JurisdictionLevel: req.JurisdictionLevel,
+		FilingFrequency:   financeDomain.FilingFrequency(req.FilingFrequency),
+		FilingDueDay:      req.FilingDueDay,
+		PaymentDueDay:     req.PaymentDueDay,
+		SupportsEFiling:   req.SupportsEFiling,
+		EFilingEndpoint:   req.EFilingEndpoint,
+	}
+
+	created, err := h.services.Tax.CreateAuthority(ctx, authority)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetTaxAuthority handles GET /api/v1/finance/tax/authorities/:id
+func (h *FinanceHandler) GetTaxAuthority(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetTaxAuthority")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid tax authority ID").WithHTTPStatus(400))
+	}
+
+	authority, err := h.services.Tax.GetAuthority(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, authority)
+}
+
+// ListTaxAuthorities handles GET /api/v1/finance/tax/authorities
+func (h *FinanceHandler) ListTaxAuthorities(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListTaxAuthorities")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	activeOnly := c.QueryBool("active_only", false)
+	list, err := h.services.Tax.ListAuthorities(ctx, activeOnly)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, list)
+}
+
+// UpdateTaxAuthority handles PUT /api/v1/finance/tax/authorities/:id
+func (h *FinanceHandler) UpdateTaxAuthority(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UpdateTaxAuthority")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid tax authority ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		AuthorityName     string `json:"authority_name" validate:"required"`
+		AuthorityType     string `json:"authority_type" validate:"required"`
+		CountryCode       string `json:"country_code" validate:"required"`
+		StateProvinceCode string `json:"state_province_code"`
+		JurisdictionLevel string `json:"jurisdiction_level"`
+		FilingFrequency   string `json:"filing_frequency"`
+		FilingDueDay      int    `json:"filing_due_day"`
+		PaymentDueDay     int    `json:"payment_due_day"`
+		SupportsEFiling   bool   `json:"supports_e_filing"`
+		EFilingEndpoint   string `json:"e_filing_endpoint"`
+		IsActive          bool   `json:"is_active"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	userID, _ := c.Locals("user_id").(uuid.UUID)
+	authority := &financeDomain.TaxAuthority{
+		ID:                id,
+		AuthorityName:     req.AuthorityName,
+		AuthorityType:     financeDomain.TaxAuthorityType(req.AuthorityType),
+		CountryCode:       req.CountryCode,
+		StateProvinceCode: req.StateProvinceCode,
+		JurisdictionLevel: req.JurisdictionLevel,
+		FilingFrequency:   financeDomain.FilingFrequency(req.FilingFrequency),
+		FilingDueDay:      req.FilingDueDay,
+		PaymentDueDay:     req.PaymentDueDay,
+		SupportsEFiling:   req.SupportsEFiling,
+		EFilingEndpoint:   req.EFilingEndpoint,
+		IsActive:          req.IsActive,
+		UpdatedBy:         &userID,
+	}
+
+	updated, err := h.services.Tax.UpdateAuthority(ctx, authority)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, updated)
+}
+
+// ============================================================================
+// TAX CODE ENDPOINTS
+// ============================================================================
+
+// CreateTaxCode handles POST /api/v1/finance/tax/codes
+func (h *FinanceHandler) CreateTaxCode(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CreateTaxCode")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		Code              string  `json:"code" validate:"required"`
+		Name              string  `json:"name" validate:"required"`
+		Description       string  `json:"description"`
+		TaxType           string  `json:"tax_type" validate:"required"`
+		TaxCategory       string  `json:"tax_category"`
+		TaxAuthorityID    string  `json:"tax_authority_id" validate:"required"`
+		CalculationMethod string  `json:"calculation_method" validate:"required"`
+		TaxRate           float64 `json:"tax_rate"`
+		CompoundTax       bool    `json:"compound_tax"`
+		CascadeOrder      int     `json:"cascade_order"`
+		EffectiveDate     string  `json:"effective_date" validate:"required"`
+		ExpiryDate        *string `json:"expiry_date"`
+		ReportingCode     string  `json:"reporting_code"`
+		ReturnLineNumber  string  `json:"return_line_number"`
+		IsDefault         bool    `json:"is_default"`
+		Brackets          []struct {
+			BracketNumber       int     `json:"bracket_number"`
+			MinimumAmount       float64 `json:"minimum_amount"`
+			MaximumAmount       *float64 `json:"maximum_amount"`
+			TaxRate             float64 `json:"tax_rate"`
+			MarginalCalculation bool    `json:"marginal_calculation"`
+		} `json:"brackets"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	authorityID, err := uuid.Parse(req.TaxAuthorityID)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid tax_authority_id").WithHTTPStatus(400))
+	}
+
+	effectiveDate, err := time.Parse("2006-01-02", req.EffectiveDate)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "effective_date must be YYYY-MM-DD").WithHTTPStatus(400))
+	}
+
+	if req.TaxCategory == "" {
+		req.TaxCategory = "standard"
+	}
+
+	tc := &financeDomain.TaxCode{
+		Code:              req.Code,
+		Name:              req.Name,
+		Description:       req.Description,
+		TaxType:           financeDomain.TaxType(req.TaxType),
+		TaxCategory:       req.TaxCategory,
+		TaxAuthorityID:    authorityID,
+		CalculationMethod: financeDomain.TaxCalculationMethod(req.CalculationMethod),
+		TaxRate:           decimalFromFloat(req.TaxRate),
+		CompoundTax:       req.CompoundTax,
+		CascadeOrder:      req.CascadeOrder,
+		EffectiveDate:     effectiveDate,
+		ReportingCode:     req.ReportingCode,
+		ReturnLineNumber:  req.ReturnLineNumber,
+		IsDefault:         req.IsDefault,
+	}
+
+	if req.ExpiryDate != nil {
+		exp, err := time.Parse("2006-01-02", *req.ExpiryDate)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "expiry_date must be YYYY-MM-DD").WithHTTPStatus(400))
+		}
+		tc.ExpiryDate = &exp
+	}
+
+	var brackets []*financeDomain.TaxBracket
+	for _, b := range req.Brackets {
+		br := &financeDomain.TaxBracket{
+			BracketNumber:       b.BracketNumber,
+			MinimumAmount:       decimalFromFloat(b.MinimumAmount),
+			TaxRate:             decimalFromFloat(b.TaxRate),
+			MarginalCalculation: b.MarginalCalculation,
+		}
+		if b.MaximumAmount != nil {
+			d := decimalFromFloat(*b.MaximumAmount)
+			br.MaximumAmount = &d
+		}
+		brackets = append(brackets, br)
+	}
+
+	created, err := h.services.Tax.CreateTaxCode(ctx, tc, brackets)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetTaxCode handles GET /api/v1/finance/tax/codes/:id
+func (h *FinanceHandler) GetTaxCode(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetTaxCode")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid tax code ID").WithHTTPStatus(400))
+	}
+
+	tc, err := h.services.Tax.GetTaxCode(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, tc)
+}
+
+// ListTaxCodes handles GET /api/v1/finance/tax/codes
+func (h *FinanceHandler) ListTaxCodes(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListTaxCodes")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	activeOnly := c.QueryBool("active_only", false)
+	var taxType *financeDomain.TaxType
+	if tt := c.Query("tax_type"); tt != "" {
+		t := financeDomain.TaxType(tt)
+		taxType = &t
+	}
+
+	list, err := h.services.Tax.ListTaxCodes(ctx, taxType, activeOnly)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, list)
+}
+
+// UpdateTaxCode handles PUT /api/v1/finance/tax/codes/:id
+func (h *FinanceHandler) UpdateTaxCode(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UpdateTaxCode")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid tax code ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		Name              string  `json:"name" validate:"required"`
+		Description       string  `json:"description"`
+		TaxCategory       string  `json:"tax_category"`
+		CalculationMethod string  `json:"calculation_method" validate:"required"`
+		TaxRate           float64 `json:"tax_rate"`
+		CompoundTax       bool    `json:"compound_tax"`
+		CascadeOrder      int     `json:"cascade_order"`
+		EffectiveDate     string  `json:"effective_date" validate:"required"`
+		ExpiryDate        *string `json:"expiry_date"`
+		ReportingCode     string  `json:"reporting_code"`
+		ReturnLineNumber  string  `json:"return_line_number"`
+		IsActive          bool    `json:"is_active"`
+		IsDefault         bool    `json:"is_default"`
+		Brackets          []struct {
+			BracketNumber       int      `json:"bracket_number"`
+			MinimumAmount       float64  `json:"minimum_amount"`
+			MaximumAmount       *float64 `json:"maximum_amount"`
+			TaxRate             float64  `json:"tax_rate"`
+			MarginalCalculation bool     `json:"marginal_calculation"`
+		} `json:"brackets"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	effectiveDate, err := time.Parse("2006-01-02", req.EffectiveDate)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "effective_date must be YYYY-MM-DD").WithHTTPStatus(400))
+	}
+
+	userID, _ := c.Locals("user_id").(uuid.UUID)
+	tc := &financeDomain.TaxCode{
+		ID:                id,
+		Name:              req.Name,
+		Description:       req.Description,
+		TaxCategory:       req.TaxCategory,
+		CalculationMethod: financeDomain.TaxCalculationMethod(req.CalculationMethod),
+		TaxRate:           decimalFromFloat(req.TaxRate),
+		CompoundTax:       req.CompoundTax,
+		CascadeOrder:      req.CascadeOrder,
+		EffectiveDate:     effectiveDate,
+		ReportingCode:     req.ReportingCode,
+		ReturnLineNumber:  req.ReturnLineNumber,
+		IsActive:          req.IsActive,
+		IsDefault:         req.IsDefault,
+		UpdatedBy:         &userID,
+	}
+
+	if req.ExpiryDate != nil {
+		exp, err := time.Parse("2006-01-02", *req.ExpiryDate)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "expiry_date must be YYYY-MM-DD").WithHTTPStatus(400))
+		}
+		tc.ExpiryDate = &exp
+	}
+
+	var brackets []*financeDomain.TaxBracket
+	if req.Brackets != nil {
+		for _, b := range req.Brackets {
+			br := &financeDomain.TaxBracket{
+				BracketNumber:       b.BracketNumber,
+				MinimumAmount:       decimalFromFloat(b.MinimumAmount),
+				TaxRate:             decimalFromFloat(b.TaxRate),
+				MarginalCalculation: b.MarginalCalculation,
+			}
+			if b.MaximumAmount != nil {
+				d := decimalFromFloat(*b.MaximumAmount)
+				br.MaximumAmount = &d
+			}
+			brackets = append(brackets, br)
+		}
+	}
+
+	updated, err := h.services.Tax.UpdateTaxCode(ctx, tc, brackets)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, updated)
+}
+
+// decimalFromFloat converts a float64 to a decimal.Decimal.
+func decimalFromFloat(f float64) decimal.Decimal {
+	return decimal.NewFromFloat(f)
 }
 
 // Custom validator registration

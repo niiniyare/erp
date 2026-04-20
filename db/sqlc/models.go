@@ -609,6 +609,76 @@ type FinanceApprovalHistory struct {
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
+type FinanceBudget struct {
+	ID               uuid.UUID    `json:"id"`
+	TenantID         uuid.UUID    `json:"tenant_id"`
+	FiscalYearID     uuid.UUID    `json:"fiscal_year_id"`
+	Name             string       `json:"name"`
+	Description      *string      `json:"description"`
+	BudgetType       string       `json:"budget_type"`
+	Status           string       `json:"status"`
+	CurrencyCode     string       `json:"currency_code"`
+	CostCenterID     *uuid.UUID   `json:"cost_center_id"`
+	SubmittedAt      sql.NullTime `json:"submitted_at"`
+	SubmittedBy      *uuid.UUID   `json:"submitted_by"`
+	ApprovedAt       sql.NullTime `json:"approved_at"`
+	ApprovedBy       *uuid.UUID   `json:"approved_by"`
+	RejectedAt       sql.NullTime `json:"rejected_at"`
+	RejectedBy       *uuid.UUID   `json:"rejected_by"`
+	RejectNote       *string      `json:"reject_note"`
+	Version          int32        `json:"version"`
+	OriginalBudgetID *uuid.UUID   `json:"original_budget_id"`
+	CreatedAt        time.Time    `json:"created_at"`
+	UpdatedAt        time.Time    `json:"updated_at"`
+	CreatedBy        *uuid.UUID   `json:"created_by"`
+	UpdatedBy        *uuid.UUID   `json:"updated_by"`
+}
+
+type FinanceBudgetLineItem struct {
+	ID             uuid.UUID      `json:"id"`
+	BudgetID       uuid.UUID      `json:"budget_id"`
+	TenantID       uuid.UUID      `json:"tenant_id"`
+	AccountID      uuid.UUID      `json:"account_id"`
+	CostCenterID   *uuid.UUID     `json:"cost_center_id"`
+	PeriodID       *uuid.UUID     `json:"period_id"`
+	BudgetedAmount pgtype.Numeric `json:"budgeted_amount"`
+	ActualAmount   pgtype.Numeric `json:"actual_amount"`
+	Notes          *string        `json:"notes"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+	CreatedBy      *uuid.UUID     `json:"created_by"`
+	UpdatedBy      *uuid.UUID     `json:"updated_by"`
+}
+
+type FinanceCostCenter struct {
+	ID               uuid.UUID  `json:"id"`
+	TenantID         uuid.UUID  `json:"tenant_id"`
+	Code             string     `json:"code"`
+	Name             string     `json:"name"`
+	Description      *string    `json:"description"`
+	ParentID         *uuid.UUID `json:"parent_id"`
+	IsGroup          bool       `json:"is_group"`
+	IsDistributed    bool       `json:"is_distributed"`
+	AllocationMethod *string    `json:"allocation_method"`
+	IsActive         bool       `json:"is_active"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	CreatedBy        *uuid.UUID `json:"created_by"`
+	UpdatedBy        *uuid.UUID `json:"updated_by"`
+}
+
+type FinanceCostCenterAllocation struct {
+	ID             uuid.UUID      `json:"id"`
+	TenantID       uuid.UUID      `json:"tenant_id"`
+	SourceCenterID uuid.UUID      `json:"source_center_id"`
+	TargetCenterID uuid.UUID      `json:"target_center_id"`
+	Method         string         `json:"method"`
+	Percentage     pgtype.Numeric `json:"percentage"`
+	DriverValue    pgtype.Numeric `json:"driver_value"`
+	CreatedAt      time.Time      `json:"created_at"`
+	UpdatedAt      time.Time      `json:"updated_at"`
+}
+
 type FinanceCurrency struct {
 	ID            uuid.UUID  `json:"id"`
 	TenantID      uuid.UUID  `json:"tenant_id"`
@@ -660,6 +730,68 @@ type FinanceReversalHistory struct {
 	Reason                string     `json:"reason"`
 	ReversedBy            *uuid.UUID `json:"reversed_by"`
 	CreatedAt             time.Time  `json:"created_at"`
+}
+
+type FinanceTaxAuthority struct {
+	ID                uuid.UUID  `json:"id"`
+	TenantID          uuid.UUID  `json:"tenant_id"`
+	AuthorityCode     string     `json:"authority_code"`
+	AuthorityName     string     `json:"authority_name"`
+	AuthorityType     string     `json:"authority_type"`
+	CountryCode       string     `json:"country_code"`
+	StateProvinceCode *string    `json:"state_province_code"`
+	JurisdictionLevel string     `json:"jurisdiction_level"`
+	FilingFrequency   string     `json:"filing_frequency"`
+	FilingDueDay      int32      `json:"filing_due_day"`
+	PaymentDueDay     int32      `json:"payment_due_day"`
+	SupportsEFiling   bool       `json:"supports_e_filing"`
+	EFilingEndpoint   *string    `json:"e_filing_endpoint"`
+	IsActive          bool       `json:"is_active"`
+	CreatedAt         time.Time  `json:"created_at"`
+	UpdatedAt         time.Time  `json:"updated_at"`
+	CreatedBy         *uuid.UUID `json:"created_by"`
+	UpdatedBy         *uuid.UUID `json:"updated_by"`
+}
+
+type FinanceTaxBracket struct {
+	ID                  uuid.UUID      `json:"id"`
+	TaxCodeID           uuid.UUID      `json:"tax_code_id"`
+	BracketNumber       int32          `json:"bracket_number"`
+	MinimumAmount       pgtype.Numeric `json:"minimum_amount"`
+	MaximumAmount       pgtype.Numeric `json:"maximum_amount"`
+	TaxRate             pgtype.Numeric `json:"tax_rate"`
+	MarginalCalculation bool           `json:"marginal_calculation"`
+	CreatedAt           time.Time      `json:"created_at"`
+}
+
+type FinanceTaxCode struct {
+	ID                     uuid.UUID      `json:"id"`
+	TenantID               uuid.UUID      `json:"tenant_id"`
+	Code                   string         `json:"code"`
+	Name                   string         `json:"name"`
+	Description            *string        `json:"description"`
+	TaxType                string         `json:"tax_type"`
+	TaxCategory            string         `json:"tax_category"`
+	TaxAuthorityID         uuid.UUID      `json:"tax_authority_id"`
+	CalculationMethod      string         `json:"calculation_method"`
+	TaxRate                pgtype.Numeric `json:"tax_rate"`
+	CompoundTax            bool           `json:"compound_tax"`
+	CascadeOrder           int32          `json:"cascade_order"`
+	EffectiveDate          time.Time      `json:"effective_date"`
+	ExpiryDate             time.Time      `json:"expiry_date"`
+	MinimumAmount          pgtype.Numeric `json:"minimum_amount"`
+	MaximumAmount          pgtype.Numeric `json:"maximum_amount"`
+	TaxPayableAccountID    *uuid.UUID     `json:"tax_payable_account_id"`
+	TaxExpenseAccountID    *uuid.UUID     `json:"tax_expense_account_id"`
+	TaxReceivableAccountID *uuid.UUID     `json:"tax_receivable_account_id"`
+	ReportingCode          *string        `json:"reporting_code"`
+	ReturnLineNumber       *string        `json:"return_line_number"`
+	IsActive               bool           `json:"is_active"`
+	IsDefault              bool           `json:"is_default"`
+	CreatedAt              time.Time      `json:"created_at"`
+	UpdatedAt              time.Time      `json:"updated_at"`
+	CreatedBy              *uuid.UUID     `json:"created_by"`
+	UpdatedBy              *uuid.UUID     `json:"updated_by"`
 }
 
 // Header table for all financial transactions. Contains transaction metadata, approval workflow, and summary amounts.

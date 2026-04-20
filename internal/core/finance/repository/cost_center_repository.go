@@ -45,8 +45,8 @@ VALUES
 RETURNING id, created_at, updated_at`
 
 		var desc *string
-		if cc.Description != "" {
-			desc = &cc.Description
+		if *cc.Description != "" {
+			desc = cc.Description
 		}
 		var method *string
 		if cc.AllocationMethod != nil {

@@ -52,24 +52,24 @@ type AccountsRepository interface {
 	UpdateBalance(ctx context.Context, accountID uuid.UUID, balance AccountBalance) error
 
 	// Enhanced view-based operations
-	GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*AccountWithGroups, error)
-	GetAccountWithGroupsByCode(ctx context.Context, code string) (*AccountWithGroups, error)
-	ListAccountsWithGroups(ctx context.Context, filter *AccountFilter) ([]*AccountWithGroups, error)
-	SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*AccountWithGroups, error)
-	GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*AccountWithGroups, error)
+	// GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*AccountWithGroups, error)
+	// GetAccountWithGroupsByCode(ctx context.Context, code string) (*AccountWithGroups, error)
+	// ListAccountsWithGroups(ctx context.Context, filter *AccountFilter) ([]*AccountWithGroups, error)
+	// SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*AccountWithGroups, error)
+	// GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*AccountWithGroups, error)
 
 	// Complete chart of accounts operations
-	GetCompleteChartOfAccounts(ctx context.Context, filter *ChartOfAccountsFilter) ([]*ChartOfAccountsComplete, error)
-	GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*ChartOfAccountsComplete, error)
-	GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
-	GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
-	GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
-
-	// Financial reporting operations
-	GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*TrialBalanceSummary, error)
-	GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*ChartOfAccountsComplete, error)
-	GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*CashFlowAccount, error)
-	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroupSummary, error)
+	// GetCompleteChartOfAccounts(ctx context.Context, filter *ChartOfAccountsFilter) ([]*ChartOfAccountsComplete, error)
+	// // GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*ChartOfAccountsComplete, error)
+	// GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+	// GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+	// GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*ChartOfAccountsComplete, error)
+	//
+	// // Financial reporting operations
+	// GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*TrialBalanceSummary, error)
+	// GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*AccountGroupRepository, error)
+	// GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*CashFlowAccount, error)
+	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountBalance, error)
 
 	// Account Group operations (unified in AccountsRepository)
 	// Basic CRUD operations for account groups
@@ -186,31 +186,32 @@ type AuditRepository interface {
 
 // AccountFilter defines filtering options for chart of accounts queries.
 // All pointer fields are optional; nil means "no filter on this field".
-type AccountFilter struct {
-	TenantID    uuid.UUID  `json:"tenant_id"`
-	EntityID    *uuid.UUID `json:"entity_id,omitempty"`
-	RootType    *RootType  `json:"root_type,omitempty"`
-	AccountType *string    `json:"account_type,omitempty"` // e.g. "BANK", "CASH", "PAYABLE"
-	ParentID    *uuid.UUID `json:"parent_id,omitempty"`
-	ParentCode  *string    `json:"parent_code,omitempty"` // alternative to ParentID
-	IsActive    *bool      `json:"is_active,omitempty"`
-	IsGroup     *bool      `json:"is_group,omitempty"` // true = groups only, false = leaf only
-	// Query is a full-text search term matched against account code and name.
-	// SearchTerm is kept for backward compatibility and is equivalent to Query.
-	Query      string  `json:"query,omitempty"`
-	SearchTerm *string `json:"search_term,omitempty"`
-
-	// Pagination — Page/PerPage are preferred; Limit/Offset are kept for backward compat.
-	Page    int  `json:"page,omitempty"`
-	PerPage int  `json:"per_page,omitempty"`
-	Limit   *int `json:"limit,omitempty"`
-	Offset  *int `json:"offset,omitempty"`
-
-	// Sorting
-	SortBy    *string `json:"sort_by,omitempty"`
-	SortOrder *string `json:"sort_order,omitempty"` // ASC or DESC
-}
-
+//
+//	type AccountFilter struct {
+//		TenantID    uuid.UUID  `json:"tenant_id"`
+//		EntityID    *uuid.UUID `json:"entity_id,omitempty"`
+//		RootType    *RootType  `json:"root_type,omitempty"`
+//		AccountType *string    `json:"account_type,omitempty"` // e.g. "BANK", "CASH", "PAYABLE"
+//		ParentID    *uuid.UUID `json:"parent_id,omitempty"`
+//		ParentCode  *string    `json:"parent_code,omitempty"` // alternative to ParentID
+//		IsActive    *bool      `json:"is_active,omitempty"`
+//		IsGroup     *bool      `json:"is_group,omitempty"` // true = groups only, false = leaf only
+//		// Query is a full-text search term matched against account code and name.
+//		// SearchTerm is kept for backward compatibility and is equivalent to Query.
+//		Query      string  `json:"query,omitempty"`
+//		SearchTerm *string `json:"search_term,omitempty"`
+//
+//		// Pagination — Page/PerPage are preferred; Limit/Offset are kept for backward compat.
+//		Page    int  `json:"page,omitempty"`
+//		PerPage int  `json:"per_page,omitempty"`
+//		Limit   *int `json:"limit,omitempty"`
+//		Offset  *int `json:"offset,omitempty"`
+//
+//		// Sorting
+//		SortBy    *string `json:"sort_by,omitempty"`
+//		SortOrder *string `json:"sort_order,omitempty"` // ASC or DESC
+//	}
+//
 // TransactionFilter defines filtering options for transaction queries
 type TransactionFilter struct {
 	EntityID        *uuid.UUID         `json:"entity_id,omitempty"`
@@ -425,15 +426,15 @@ type AccountGroupRepository interface {
 // UnifiedAccountRepository defines operations for unified account/group queries
 type UnifiedAccountRepository interface {
 	// Unified hierarchy operations
-	ListAccountsAndGroups(ctx context.Context, filter *UnifiedFilter) ([]*AccountNode, error)
-	GetHierarchyWithGroups(ctx context.Context, entityID *uuid.UUID) ([]*AccountNode, error)
-	SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*AccountNode, error)
-	GetNodePath(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
+	ListAccountsAndGroups(ctx context.Context, filter *AccountGroupFilter) ([]*Accounts, error)
+	GetHierarchyWithGroups(ctx context.Context, entityID *uuid.UUID) ([]*Accounts, error)
+	SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*Accounts, error)
+	GetNodePath(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
 
 	// Tree operations
-	GetSubtree(ctx context.Context, rootID uuid.UUID, rootType AccountNodeType, maxDepth *int) ([]*AccountNode, error)
-	GetSiblings(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
-	GetNodeChildren(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*AccountNode, error)
+	GetSubtree(ctx context.Context, rootID uuid.UUID, rootType AccountNodeType, maxDepth *int) ([]*Accounts, error)
+	GetSiblings(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
+	GetNodeChildren(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
 }
 
 // Repository factory for creating repository instances
@@ -474,6 +475,7 @@ type CostCenterRepository interface {
 	List(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*CostCenter, error)
 	ValidateCode(ctx context.Context, tenantID uuid.UUID, code string, excludeID *uuid.UUID) error
 }
+
 // - NotificationRepository for system notifications
 // - CurrencyRepository for exchange rate management
 
@@ -503,6 +505,28 @@ type BudgetRepository interface {
 	CreateLineItems(ctx context.Context, lines []*BudgetLineItem) error
 	GetLineItems(ctx context.Context, budgetID uuid.UUID) ([]*BudgetLineItem, error)
 	DeleteLineItems(ctx context.Context, budgetID uuid.UUID) error
+}
+
+// TaxRepository defines persistence for tax authorities, codes, and brackets.
+type TaxRepository interface {
+	// Tax authority operations
+	CreateAuthority(ctx context.Context, a *TaxAuthority) error
+	GetAuthorityByID(ctx context.Context, id uuid.UUID) (*TaxAuthority, error)
+	GetAuthorityByCode(ctx context.Context, tenantID uuid.UUID, code string) (*TaxAuthority, error)
+	ListAuthorities(ctx context.Context, tenantID uuid.UUID, activeOnly bool) ([]*TaxAuthority, error)
+	UpdateAuthority(ctx context.Context, a *TaxAuthority) error
+
+	// Tax code operations
+	CreateTaxCode(ctx context.Context, tc *TaxCode) error
+	GetTaxCodeByID(ctx context.Context, id uuid.UUID) (*TaxCode, error)
+	GetTaxCodeByCode(ctx context.Context, tenantID uuid.UUID, code string) (*TaxCode, error)
+	ListTaxCodes(ctx context.Context, tenantID uuid.UUID, taxType *TaxType, activeOnly bool) ([]*TaxCode, error)
+	UpdateTaxCode(ctx context.Context, tc *TaxCode) error
+
+	// Tax bracket operations
+	CreateBrackets(ctx context.Context, taxCodeID uuid.UUID, brackets []*TaxBracket) error
+	GetBrackets(ctx context.Context, taxCodeID uuid.UUID) ([]*TaxBracket, error)
+	DeleteBrackets(ctx context.Context, taxCodeID uuid.UUID) error
 }
 
 // NOTE: All repository implementations should:

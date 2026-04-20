@@ -95,6 +95,7 @@ WHERE  tenant_id = current_tenant_id()
 
 		b := &domain.Budget{}
 		var budgetType, status string
+		var createdBy *uuid.UUID
 		err = tx.QueryRow(ctx, q, id).Scan(
 			&b.ID, &b.TenantID, &b.FiscalYearID,
 			&b.Name, &b.Description, &budgetType, &status, &b.CurrencyCode,
@@ -103,13 +104,16 @@ WHERE  tenant_id = current_tenant_id()
 			&b.ApprovedAt, &b.ApprovedBy,
 			&b.RejectedAt, &b.RejectedBy, &b.RejectNote,
 			&b.Version, &b.OriginalBudgetID,
-			&b.CreatedAt, &b.UpdatedAt, &b.CreatedBy, &b.UpdatedBy,
+			&b.CreatedAt, &b.UpdatedAt, &createdBy, &b.UpdatedBy,
 		)
 		if err == pgx.ErrNoRows {
 			return domain.ErrBudgetNotFound
 		}
 		if err != nil {
 			return fmt.Errorf("get budget by id: %w", err)
+		}
+		if createdBy != nil {
+			b.CreatedBy = *createdBy
 		}
 		b.BudgetType = domain.BudgetType(budgetType)
 		b.Status = domain.BudgetStatus(status)
@@ -155,6 +159,7 @@ WHERE  tenant_id = current_tenant_id()`)
 		for rows.Next() {
 			b := &domain.Budget{}
 			var budgetType, status string
+			var createdBy *uuid.UUID
 			if err := rows.Scan(
 				&b.ID, &b.TenantID, &b.FiscalYearID,
 				&b.Name, &b.Description, &budgetType, &status, &b.CurrencyCode,
@@ -163,9 +168,12 @@ WHERE  tenant_id = current_tenant_id()`)
 				&b.ApprovedAt, &b.ApprovedBy,
 				&b.RejectedAt, &b.RejectedBy, &b.RejectNote,
 				&b.Version, &b.OriginalBudgetID,
-				&b.CreatedAt, &b.UpdatedAt, &b.CreatedBy, &b.UpdatedBy,
+				&b.CreatedAt, &b.UpdatedAt, &createdBy, &b.UpdatedBy,
 			); err != nil {
 				return fmt.Errorf("scan budget: %w", err)
+			}
+			if createdBy != nil {
+				b.CreatedBy = *createdBy
 			}
 			b.BudgetType = domain.BudgetType(budgetType)
 			b.Status = domain.BudgetStatus(status)
@@ -306,13 +314,17 @@ ORDER  BY account_id, period_id`
 		for rows.Next() {
 			li := &domain.BudgetLineItem{}
 			var budgetedStr, actualStr string
+			var createdBy *uuid.UUID
 			if err := rows.Scan(
 				&li.ID, &li.BudgetID, &li.TenantID,
 				&li.AccountID, &li.CostCenterID, &li.PeriodID,
 				&budgetedStr, &actualStr, &li.Notes,
-				&li.CreatedAt, &li.UpdatedAt, &li.CreatedBy, &li.UpdatedBy,
+				&li.CreatedAt, &li.UpdatedAt, &createdBy, &li.UpdatedBy,
 			); err != nil {
 				return fmt.Errorf("scan budget line item: %w", err)
+			}
+			if createdBy != nil {
+				li.CreatedBy = *createdBy
 			}
 			if li.BudgetedAmount, err = decimal.NewFromString(budgetedStr); err != nil {
 				return fmt.Errorf("parse budgeted_amount: %w", err)

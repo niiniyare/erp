@@ -70,10 +70,10 @@ func (r *accountsRepository) CreateAccountGroup(ctx context.Context, accountGrou
 	}
 
 	// Use tenant-aware transaction for proper isolation
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Validate the account group
 		if err := accountGroup.Validate(); err != nil {
-			return err
+			return fmt.Errorf("%w", err)
 		}
 
 		// Map domain account group to SQLC parameters
@@ -203,7 +203,10 @@ func (r *accountsRepository) UpdateAccountGroup(ctx context.Context, id uuid.UUI
 	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
 		// Validate the account group
 		if err := accountGroup.Validate(); err != nil {
-			return err
+			if len(err) > 0 {
+				return domain.ValidationErrors(err)
+			}
+			return nil
 		}
 
 		// Map to update parameters
@@ -410,13 +413,9 @@ func (r *accountsRepository) GetGroupsByFinancialStatement(ctx context.Context, 
 	defer span.End()
 
 	// Get tenant ID from context
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
-		return nil, fmt.Errorf("tenant ID not found in context")
-	}
 
 	var accountGroups []*domain.AccountGroup
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Note: We need to update the generated SQLC query name
 		sqlcGroups, err := s.GetGroupsByStatementSection(ctx, db.GetGroupsByStatementSectionParams{
 			Column1:                   uuid.UUID{}, // This needs to be fixed in SQL query

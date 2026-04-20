@@ -23,6 +23,7 @@
 | **Phase 10: Tax Management & Compliance** | ⏳ Not Started | 0 / 68 (0%) | `[░░░░░░░░░░]` |
 | **Phase 11: Integration Testing** | ⏳ Not Started | 0 / 40 (0%) | `[░░░░░░░░░░]` |
 | **Phase 12: Performance Optimization** | ⏳ Not Started | 0 / 48 (0%) | `[░░░░░░░░░░]` |
+| **Gap Analysis Tasks** | 🔄 In Progress | 23 / 36 (64%) | `[██████░░░░]` |
 | **Overall Project** |  **In Progress** | **240 / 307 (78%)** | `[████████░░]` |
 
 ---
@@ -51,6 +52,18 @@
 - [**Post-Implementation**](#-post-implementation)
   - [Post-Implementation Support](#-post-implementation-support)
   - [Project Completion](#-project-completion)
+- [**Gap Analysis Tasks**](#-gap-analysis-tasks)
+  - [P0 — Correctness Bugs](#p0--correctness-bugs-fix-first)
+  - [P1 — Core Domain Models](#p1--core-domain-models-must-build-for-mvp)
+  - [P1 — Missing Service Implementations](#p1--missing-service-implementations)
+  - [P1 — Missing Infrastructure](#p1--missing-infrastructure)
+  - [P2 — Reconciliation & Payments](#p2--reconciliation--payments)
+  - [P2 — Discrepancies & Minor Fixes](#p2--discrepancies-to-clarify--minor-fixes)
+  - [P0 — Repository & Persistence Stubs](#p0--repository--persistence-stubs-blocking-correctness)
+  - [P1 — Missing Service Wiring](#p1--missing-service-wiring)
+  - [P2 — Audit, Compliance & Correctness at Scale](#p2--audit-compliance--correctness-at-scale)
+  - [P3 — Polish & Housekeeping](#p3--polish--housekeeping)
+  - [Task Summary Table](#task-summary)
 
 ---
 
@@ -1778,6 +1791,965 @@ Dr. Foreign Currency Account    10,000 (unrealized gain)
 This task list represents the complete implementation roadmap for the AWO ERP Financial Module. Each checkbox represents a concrete, measurable deliverable that contributes to the overall success of the project.
 
 **Document Control**
-- **Version**: 2.1
-- **Last Updated**: September 1, 2025 -  View-Based Query Capabilities Complete
+- **Version**: 3.0
+- **Last Updated**: April 2026 — Gap Analysis Tasks merged
 - **Status**: In Progress
+
+---
+
+##  Gap Analysis Tasks
+
+> Derived from gap analysis between `PRD.md` (business specification) and `internal/core/finance/` (current codebase).
+> Each task is self-contained: problem → solution → expected outcome → test plan.
+> Tasks are ordered by dependency — complete earlier tasks before later ones.
+
+---
+
+### Legend
+
+- `[ ]` Not started
+- `[~]` In progress
+- `[x]` Complete
+- **P0** — Blocks other work / correctness bug
+- **P1** — Core module feature, needed for MVP
+- **P2** — Important but not blocking
+- **P3** — Enhancement / polish
+
+---
+
+## P0 — Correctness Bugs (Fix First)
+
+---
+
+### TASK-001 `[x]` Fix `TransactionStatus` editability contradiction
+
+**Priority:** P0
+**File:** `internal/core/finance/domain/types.go:181`
+
+**Problem:**
+`TransactionStatus.IsEditable()` returns `true` for both `DRAFT` and `PENDING_APPROVAL`. The PRD (section 6, Transaction Lifecycle) explicitly states `PENDING_APPROVAL` is **not editable** — it is frozen awaiting an approver's decision. Allowing edits to a submitted-for-approval entry undermines the approval control entirely.
+
+**Solution:**
+Remove `TransactionStatusPendingApproval` from `IsEditable()`. Only `DRAFT` and `REJECTED` (after rejection, entry can be corrected and resubmitted) should be editable.
+
+```go
+func (ts TransactionStatus) IsEditable() bool {
+    switch ts {
+    case TransactionStatusDraft, TransactionStatusRejected:
+        return true
+    default:
+        return false
+    }
+}
+```
+
+**Expected Outcome:**
+- A transaction in `PENDING_APPROVAL` status returns `IsEditable() == false`
+- Service layer rejects update attempts on `PENDING_APPROVAL` transactions with `TRANSACTION_NOT_EDITABLE` error
+- `REJECTED` transactions can be corrected and resubmitted
+
+**How to Test:**
+```go
+func TestTransactionStatusEditability(t *testing.T) {
+    assert.True(t,  TransactionStatusDraft.IsEditable())
+    assert.True(t,  TransactionStatusRejected.IsEditable())
+    assert.False(t, TransactionStatusPendingApproval.IsEditable())
+    assert.False(t, TransactionStatusApproved.IsEditable())
+    assert.False(t, TransactionStatusPosted.IsEditable())
+    assert.False(t, TransactionStatusCancelled.IsEditable())
+    assert.False(t, TransactionStatusReversed.IsEditable())
+}
+```
+
+---
+
+### TASK-002 `[x]` Remove payment-processor codes from `RejectionReason`
+
+**Priority:** P0
+**File:** `internal/core/finance/domain/types.go:239`
+
+**Problem:**
+`RejectionReason` contains payment-gateway codes (`EXPIRED_CARD`, `INVALID_MERCHANT`, `FRAUD_SUSPECTED`, `DAILY_LIMIT_EXCEEDED`, `INSUFFICIENT_FUNDS`) that make no sense for a GL journal entry approval rejection. These codes will appear in the approval rejection UI for accountants rejecting a journal entry, which is misleading and unprofessional.
+
+**Solution:**
+Replace with accounting-specific rejection reasons:
+
+```go
+const (
+    RejectionReasonInsufficientSupportingDoc RejectionReason = "INSUFFICIENT_SUPPORTING_DOCUMENTATION"
+    RejectionReasonIncorrectAccount          RejectionReason = "INCORRECT_ACCOUNT_CODE"
+    RejectionReasonPeriodClosed              RejectionReason = "ACCOUNTING_PERIOD_CLOSED"
+    RejectionReasonAmountMismatch            RejectionReason = "AMOUNT_MISMATCH_WITH_SOURCE"
+    RejectionReasonDuplicateEntry            RejectionReason = "DUPLICATE_ENTRY"
+    RejectionReasonPolicyViolation           RejectionReason = "POLICY_VIOLATION"
+    RejectionReasonBudgetExceeded            RejectionReason = "BUDGET_EXCEEDED"
+    RejectionReasonUnauthorisedAccount       RejectionReason = "UNAUTHORISED_ACCOUNT_ACCESS"
+    RejectionReasonOther                     RejectionReason = "OTHER"
+)
+```
+
+**Expected Outcome:**
+- Finance staff rejecting a journal entry see contextually relevant rejection reasons
+- No payment-gateway terminology in the accounting UI
+- Existing `ValidReasons` slice updated to match
+
+**How to Test:**
+```go
+func TestRejectionReasonValidity(t *testing.T) {
+    assert.False(t, RejectionReason("EXPIRED_CARD").IsValid())
+    assert.False(t, RejectionReason("INVALID_MERCHANT").IsValid())
+    assert.False(t, RejectionReason("FRAUD_SUSPECTED").IsValid())
+    assert.True(t, RejectionReasonIncorrectAccount.IsValid())
+    assert.True(t, RejectionReasonDuplicateEntry.IsValid())
+    assert.True(t, RejectionReasonBudgetExceeded.IsValid())
+}
+```
+
+---
+
+### TASK-003 `[x]` Resolve duplicate `TransactionType` values
+
+**Priority:** P0
+**File:** `internal/core/finance/domain/types.go:108`
+
+**Problem:**
+`TransactionType` has both `JOURNAL` and `JOURNAL_ENTRY` as distinct constants but they mean the same thing. This creates ambiguity in reports and filters that will silently miss half the data.
+
+**Solution:**
+1. Determine canonical value (prefer `JOURNAL_ENTRY` — more explicit)
+2. Write a migration: `UPDATE transactions SET transaction_type = 'JOURNAL_ENTRY' WHERE transaction_type = 'JOURNAL'`
+3. Remove `TransactionTypeJournal` from the enum
+4. Update all code references
+
+**Expected Outcome:**
+- Single canonical type `JOURNAL_ENTRY` for manually created journal entries
+- `ParseTransactionType("JOURNAL")` returns an error (no longer valid)
+
+---
+
+## P1 — Core Domain Models (Must Build for MVP)
+
+---
+
+### TASK-004 `[x]` Create `FiscalYear` and `AccountingPeriod` domain models
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/period.go` (new file)
+
+**Problem:**
+The PRD's "Financial Period Management" section is fully documented but there is zero code for it. Nothing validates `Transaction.TransactionDate` against an open period, preventing month-end close enforcement.
+
+**Solution:**
+Create `domain/period.go` with `FiscalYear`, `PeriodStatus` enum (`OPEN`, `SOFT_CLOSED`, `HARD_CLOSED`, `LOCKED`), and `AccountingPeriod` structs. Add `PeriodRepository` interface and `PeriodService` with: `GetOpenPeriodForDate`, `ClosePeriod`, `ReopenPeriod`, `LockPeriod`. Wire period validation into `TransactionService.PostTransaction`.
+
+**Expected Outcome:**
+- Posting to a closed period returns `PERIOD_CLOSED` error
+- `SOFT_CLOSED` allows finance-role users to post but blocks others
+- `LOCKED` blocks everyone including CFO
+
+**How to Test:**
+```go
+func TestPeriodValidation(t *testing.T) {
+    open := &AccountingPeriod{Status: PeriodStatusOpen}
+    assert.True(t, open.CanPost())
+
+    closed := &AccountingPeriod{Status: PeriodStatusHardClosed}
+    assert.False(t, closed.CanPost())
+    assert.False(t, closed.CanFinancePost())
+
+    soft := &AccountingPeriod{Status: PeriodStatusSoftClosed}
+    assert.False(t, soft.CanPost())
+    assert.True(t, soft.CanFinancePost())
+}
+```
+
+---
+
+### TASK-005 `[x]` Create `Currency` and `ExchangeRate` domain models
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/currency.go` (new file)
+
+**Problem:**
+`Transaction` has `CurrencyCode` and `ExchangeRate` fields, but there is no `Currency` entity, no `ExchangeRate` table, and no service to load/validate rates. The PRD's entire "Multi-Currency Operations" section is unsupported.
+
+**Solution:**
+Create `domain/currency.go` with `Currency`, `RateType` enum (`SPOT`, `AVERAGE`, `HISTORICAL`, `BUDGET`), and `ExchangeRate` structs. Add `CurrencyRepository`, `ExchangeRateRepository` interfaces. Add `CurrencyService` with: `GetRate(from, to, date, rateType)`, `LoadRates`, `RevalueOpenBalances`. Wire into `TransactionService.PostTransaction` to compute `base_amount` on each entry.
+
+**Expected Outcome:**
+- Posting a USD transaction without a loaded rate returns `EXCHANGE_RATE_NOT_FOUND` error
+- Each `TransactionEntry` stores both FC amount and base currency equivalent
+
+---
+
+### TASK-006 `[x]` Create `CostCenter` domain model and wire into transaction entries
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/costcenter.go` (new file)
+
+**Problem:**
+`TransactionEntry` has no `CostCenterID` field despite the PRD requiring every expense entry to be tagged with a cost center. Without this, departmental P&L reports are impossible.
+
+**Solution:**
+Create `domain/costcenter.go` with `CostCenter` and `CostCenterAllocation` structs. Add `CostCenterID *uuid.UUID` to `TransactionEntry`. Add `CostCenterRepository`, `CostCenterService` with CRUD + `AllocateDistributed(periodID)`.
+
+**Expected Outcome:**
+- Every expense entry can be tagged with a cost center
+- Distributed cost centers auto-generate allocation journal entries on month-end
+
+**How to Test:**
+```go
+func TestCostCenterAllocation(t *testing.T) {
+    // Create IT dept (distributed): Sales 40%, Ops 30%, Admin 20%, R&D 10%
+    // Post 500,000 expense to IT dept
+    // Run AllocateDistributed(periodID)
+    // Verify 4 allocation entries: 200k, 150k, 100k, 50k
+    // Verify IT dept balance = 0 after allocation
+}
+```
+
+---
+
+### TASK-007 `[x]` Create `Budget` and `BudgetLine` domain models
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/budget.go` (new file)
+
+**Problem:**
+`Accounts.IsBudgetable` and `Accounts.BudgetVarianceThreshold` exist in the domain, but there is no `Budget` entity and no service to check budget availability at transaction posting time. The PRD's budget controls (soft warn, hard block) cannot function.
+
+**Solution:**
+Create `domain/budget.go` with `Budget`, `BudgetLine`, `BudgetStatus` and `BudgetControlType` enums. Add `BudgetService` with `CheckBudget(accountCode, costCenterID, periodID, amount)` returning `BudgetCheckResult`. Wire `CheckBudget` into `TransactionService.PostTransaction`.
+
+**Expected Outcome:**
+- Soft budget exceed: `HTTP 200` with `warnings: ["BUDGET_SOFT_EXCEEDED"]`
+- Hard budget exceed: `HTTP 422` with `error.code: "BUDGET_EXCEEDED"`
+
+---
+
+### TASK-008 `[x]` Document and enforce `AccountStatus` state machine
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/accounts.go`
+
+**Problem:**
+`AccountStatus` has 14 states in code but the PRD only acknowledges `ACTIVE` and `INACTIVE`. The `AllowedTransitions` array exists in the struct but transitions are not populated — accounts can jump to any state arbitrarily.
+
+**Solution:**
+Populate `AllowedTransitions` with the full valid state machine defining allowed transitions, required permissions, and terminal states. Add `CanTransitionTo(newStatus AccountStatus) bool` method.
+
+**Expected Outcome:**
+- Invalid status transitions return `INVALID_STATUS_TRANSITION` error
+- `AUDIT_LOCK` and `COMPLIANCE_HOLD` require elevated permissions
+
+---
+
+### TASK-009 `[x]` Implement `GetTransactionWithEntries`
+
+**Priority:** P1
+**File:** `internal/core/finance/service/transaction_service.go:36`
+
+**Problem:**
+`GetTransactionWithEntries` is commented out as TODO. This method is needed for posting validation, reversal creation, and full journal entry display in the UI.
+
+**Solution:**
+Implement the method and wire it into `PostTransaction` — call `GetTransactionWithEntries` and run `IsBalanced()` check before writing to GL.
+
+**Expected Outcome:**
+- Returns transaction header + all lines in a single call
+- `PostTransaction` validates balance using this method before committing
+
+---
+
+### TASK-010 `[x]` Document two-level account grouping (`AccountGroupID` + `AccountHeaderID`)
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/accounts.go`
+
+**Problem:**
+`Accounts` has both `AccountGroupID` and `AccountHeaderID`. The PRD only documents a single parent-child hierarchy. Two additional grouping layers are unexplained, leading to inconsistent data entry.
+
+**Solution:**
+Define and document the three-tier grouping model:
+```
+AccountHeader (top-level, e.g. "Current Assets")
+    └── AccountGroup (mid-level, e.g. "Cash & Cash Equivalents")
+            └── Account (leaf, e.g. "1120 - Checking Account - Main")
+```
+
+Add validation: an account cannot have `AccountGroupID` from a different `RootType` than the account.
+
+---
+
+## P1 — Missing Service Implementations
+
+---
+
+### TASK-011 `[x]` Implement `AccountService.CreateAccount` fully
+
+**Priority:** P1
+**File:** `internal/core/finance/service/account_service.go`
+
+**Problem:**
+Critical business rules from the PRD must be enforced in the service layer: unique code validation, parent root type consistency, leaf-account enforcement, materialized path generation, feature flag checks.
+
+**Solution:**
+Ensure `CreateAccount` enforces:
+1. `account_code` unique per tenant (call `ValidateAccountCode`)
+2. `root_type` matches parent's `root_type` if `parent_account_id` is set
+3. Account starts as `AccountStatusDraft` or `AccountStatusActive` per `AllowManualAccountCreation` flag
+4. `account_path` computed from parent's path + `/` + new code
+5. `normal_balance` auto-set from `GetNormalBalanceForRootType` if not provided
+6. `currency_code` defaults to tenant base currency
+
+**Expected Outcome:**
+- Duplicate account code → `DUPLICATE_ACCOUNT_CODE` error
+- Mismatched root type → `ROOT_TYPE_MISMATCH` error
+
+---
+
+### TASK-012 `[x]` Implement `TransactionService.PostTransaction` fully
+
+**Priority:** P1
+**File:** `internal/core/finance/service/transaction_service.go`
+
+**Problem:**
+`PostTransaction` requires a specific 7-step validation sequence (per PRD Rule Validation Execution Order) to prevent silent data corruption — unbalanced entries reaching the GL, or postings to closed periods.
+
+**Solution:**
+Implement the 7-step sequence: (1) load transaction with entries, (2) structural validation (`IsBalanced`, min 2 entries), (3) status check, (4) period check, (5) account validation per entry, (6) budget check, (7) atomic GL write.
+
+**Expected Outcome:**
+- Unbalanced transaction → `UNBALANCED_TRANSACTION` error, nothing posted
+- Closed period → `PERIOD_CLOSED` error, nothing posted
+- All validations pass → status `POSTED`, account balances updated atomically
+
+---
+
+### TASK-013 `[x]` Implement `TransactionService.ReverseTransaction` fully
+
+**Priority:** P1
+**File:** `internal/core/finance/service/transaction_service.go`
+
+**Problem:**
+A correct reversal must: create a mirror entry with all debits/credits swapped, link back to the original, post immediately, and mark the original as `REVERSED`. An incomplete implementation risks double-counting or orphaned reversals.
+
+**Solution:**
+Use `domain.Transaction.CreateReversalTransaction()` (already exists) then: (1) validate original is `POSTED`, (2) call `CreateReversalTransaction`, (3) save reversal, (4) post it via `PostTransaction`, (5) update original with `IsReversed = true`. Both operations in a single DB transaction.
+
+**Expected Outcome:**
+- Original marked `REVERSED` with link to reversal
+- Net GL effect = zero
+- Cannot reverse a transaction twice
+
+---
+
+## P1 — Missing Infrastructure
+
+---
+
+### TASK-014 `[x]` Add period validation middleware to transaction routes
+
+**Priority:** P1
+**File:** `internal/core/finance/` (handler/middleware layer)
+
+**Problem:**
+Even with period domain models built (TASK-004), period validation only helps if consistently enforced on every write path — not just in `PostTransaction`. A DRAFT transaction with a date in a locked period should warn on creation.
+
+**Solution:**
+Create a `PeriodGuard` middleware/helper:
+- On `CreateTransaction`: warn (not block) if date is in closed period
+- On `UpdateTransaction`: warn if changing date to a closed period
+- On `PostTransaction`: hard block if period is not open/soft-closed
+- On `ApproveTransaction`: soft check only
+
+**Expected Outcome:**
+- Create in closed period → `HTTP 201` with `warnings: ["PERIOD_SOFT_CLOSED"]`
+- Post in closed period → `HTTP 422` with `error.code: "PERIOD_CLOSED"`
+
+---
+
+### TASK-015 `[x]` Enable and implement Temporal integration
+
+**Priority:** P1
+**File:** `internal/core/finance/temporal_integration.go`
+
+**Problem:**
+`temporal_integration.go` is 265 lines of commented-out code. The finance module needs async workflows for recurring transaction generation, approval SLA escalation, scheduled report delivery, and period-end automation.
+
+**Solution:**
+Uncomment and complete `TemporalIntegration` struct. Register activity types: `GenerateRecurringTransactionActivity`, `PostTransactionActivity`, `EscalateApprovalActivity`, `ReversalActivity`. Register workflow types: `RecurringTransactionWorkflow`, `ApprovalEscalationWorkflow`, `PeriodEndWorkflow`.
+
+**Expected Outcome:**
+- `transaction.is_recurring = true` with `recurring_frequency = "MONTHLY"` → Temporal cron runs monthly
+- Approval pending > 8 hours → Finance Manager gets escalation notification
+- Month-end soft close triggers auto-depreciation entries
+
+---
+
+## P2 — Reconciliation & Payments
+
+---
+
+### TASK-016 `[x]` Create `BankReconciliation` domain model and service
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/reconciliation.go` (new file)
+
+**Problem:**
+`TransactionEntry.IsReconciled()` and `MarkReconciled()` methods exist, but there is no `BankReconciliation` entity to hold the workspace state, statement lines, or match results. Period-close checklist must verify all bank accounts have an approved reconciliation.
+
+**Solution:**
+Create domain model with `BankReconciliation`, `ReconciliationStatus` enum (`OPEN`, `IN_PROGRESS`, `BALANCED`, `UNDER_REVIEW`, `APPROVED`, `LOCKED`), and `StatementLine` structs. Add `ReconciliationService` with: `ImportStatement`, `RunAutoMatch`, `ConfirmMatch`, `SubmitForReview`, `Approve`. Wire: `PeriodService.HardClosePeriod` must check all bank accounts have `APPROVED` reconciliation.
+
+**Expected Outcome:**
+- Period cannot hard-close without all bank accounts reconciled
+- Reconciliation report exportable as PDF
+
+---
+
+### TASK-017 `[x]` Create `PaymentRun` domain model and service
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/payment_run.go` (new file)
+
+**Problem:**
+Bulk supplier payments (payment runs) are documented in the PRD's Cash Management section and the API spec, but there is no domain model. Without it, each AP invoice must be paid individually.
+
+**Solution:**
+Create `PaymentRun` and `PaymentRunLine` structs with `PaymentRunStatus` enum (`DRAFT`, `APPROVED`, `EXPORTED`, `CONFIRMED`, `POSTED`, `CANCELLED`). Implement bank file generation in formats: `equity_eft`, `kcb_rtgs`, `swift_mt101`.
+
+**Expected Outcome:**
+- Batch payment run created from due AP invoices
+- On confirmation, single GL entry: Dr AP (multiple) / Cr Bank
+- Payment run cannot be approved by its creator (SOD)
+
+---
+
+## P2 — Discrepancies to Clarify / Minor Fixes
+
+---
+
+### TASK-018 `[x]` Clarify `ApprovalStatus.PARTIALLY_APPROVED` and `EXPIRED` in PRD
+
+**Priority:** P2
+**File:** PRD + `internal/core/finance/domain/types.go`
+
+**Problem:**
+`PARTIALLY_APPROVED` and `EXPIRED` appear in the code's `ApprovalStatus` enum but are not documented anywhere in the PRD. Other developers won't know what triggers them or what happens when approval expires.
+
+**Solution:**
+1. Document both statuses in PRD Approval Workflows section:
+   - `PARTIALLY_APPROVED`: used in sequential multi-tier approval — tier N approved, still awaiting tier N+1
+   - `EXPIRED`: approval request not acted on within configured SLA — Temporal timer triggers this
+2. Define expiry flow: `EXPIRED` → transaction moves to `DRAFT` with notification to submitter
+3. Implement expiry logic in `ApprovalEscalationWorkflow` (TASK-015)
+
+---
+
+### TASK-019 `[x]` Add `CostCenterID` to `TransactionEntry`
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/transaction_entry.go`
+
+**Problem:**
+After TASK-006 creates the `CostCenter` model, `TransactionEntry` must reference it at the line level because a single journal entry may span multiple departments.
+
+**Solution:**
+Add `CostCenterID *uuid.UUID` to `TransactionEntry`. Update `CreateEntryRequest`. Add validation: if `cost_center_required_for_expenses` setting is enabled and `account.root_type == EXPENSE`, `CostCenterID` must not be nil.
+
+---
+
+### TASK-020 `[x]` Add `AccountFilter` — confirm `RootType` and `AccountType` filtering
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/accounts.go`
+
+**Problem:**
+`AccountService.ListAccounts` takes an `*domain.AccountFilter` but the filter struct was not fully reviewed. The API spec documents filtering by `root_type`, `account_type`, `is_active`, `is_group`, `parent_code`.
+
+**Solution:**
+Confirm (or add) to `AccountFilter`: `TenantID`, `EntityID`, `RootType`, `AccountType`, `IsActive`, `IsGroup`, `ParentCode`, `Query` (full-text search), `Page`, `PerPage`.
+
+---
+
+## P3 — Polish & Documentation
+
+---
+
+### TASK-021 `[x]` Remove backward-compatibility method duplicates from service interfaces
+
+**Priority:** P3
+**File:** `internal/core/finance/service/account_service.go`, `transaction_service.go`
+
+**Problem:**
+Both services have "Handler convenience methods (for backward compatibility)" that duplicate the main methods (`Create` → `CreateAccount`, `GetByID` → `GetAccountByID`, etc.). This doubles the interface surface area on a greenfield module.
+
+**Solution:**
+Remove the duplicate shim methods. Keep only the descriptive names. Update any callers.
+
+---
+
+### TASK-022 `[x]` Add severity levels to `ValidationError`
+
+**Priority:** P3
+**File:** `internal/core/finance/domain/types.go:338`
+
+**Problem:**
+There is a TODO comment: `// TODO: Add severity levels to ValidationError (ERROR, WARNING, INFO)`. The API spec returns `warnings` separate from `errors`, requiring the struct to carry severity.
+
+**Solution:**
+```go
+type ValidationSeverity string
+const (
+    ValidationSeverityInfo    ValidationSeverity = "INFO"
+    ValidationSeverityWarning ValidationSeverity = "WARNING"
+    ValidationSeverityError   ValidationSeverity = "ERROR"
+)
+
+type ValidationError struct {
+    Field    string             `json:"field"`
+    Message  string             `json:"message"`
+    Code     string             `json:"code"`
+    Severity ValidationSeverity `json:"severity"`
+}
+```
+Update API response builder to split `ValidationErrors` into `errors` and `warnings`.
+
+---
+
+### TASK-023 `[x]` Add `TransactionEntry` nested field path support
+
+**Priority:** P3
+**File:** `internal/core/finance/domain/types.go`
+
+**Problem:**
+`ValidationError.Field` stores flat field names like `"amount"`. For multi-line journal entry errors, the UI needs `"entries[1].amount"` to highlight the specific line.
+
+**Solution:**
+Add `FieldPath(parts ...string) string` helper. Update `TransactionEntry.Validate()` to pass the entry index so errors carry `entries[N].field_name`.
+
+---
+
+## P0 — Repository & Persistence Stubs (Blocking Correctness)
+
+---
+
+### TASK-024 `[ ]` Fix `AccountBalance` struct + add `MarkAsReversed` to repository
+
+**Priority:** P0
+**File:** `internal/core/finance/service/transaction_service.go:1341`, `internal/core/finance/domain/repository.go`
+
+**Problem:**
+Two silent failures in the reversal and posting paths:
+1. `updateAccountBalances` (line 1341) is wrapped in a dead-code block because `AccountBalance` struct fields used don't match the actual domain struct — balances are **never updated** after a post.
+2. `ReverseTransaction` calls `repo.MarkAsReversed` (line 785) via a commented-out block because the method doesn't exist in the `TransactionRepository` interface — a reversed transaction is **never flagged**, allowing double-reversal.
+
+**Solution:**
+1. Reconcile `AccountBalance` field references in `updateAccountBalances` against `domain.AccountBalance`; remove the dead-code wrapper so the method is actually called.
+2. Add `MarkAsReversed(ctx context.Context, id uuid.UUID, reversalID uuid.UUID, reason string) error` to `TransactionRepository` interface and provide a concrete stub in `repository/transaction.go`.
+3. Uncomment the `MarkAsReversed` call in `ReverseTransaction`.
+
+**Expected Outcome:**
+- Account balances change after every post
+- A reversed transaction cannot be reversed again (`IsReversed == true` check blocks it)
+
+**How to Test:**
+```go
+func TestPostUpdatesBalance(t *testing.T) {
+    // Post Dr Cash 50,000 / Cr Revenue 50,000
+    // Cash account balance decreases by 50,000
+    // Revenue account balance increases by 50,000
+}
+
+func TestDoubleReversal_Blocked(t *testing.T) {
+    // Reverse transaction → success, IsReversed = true
+    // Reverse same transaction again → ALREADY_REVERSED error
+}
+```
+
+---
+
+### TASK-025 `[ ]` Wire transaction repository stubs to real SQLC queries
+
+**Priority:** P0
+**File:** `internal/core/finance/repository/transaction.go:802–961`
+
+**Problem:**
+~20 stub methods in the concrete `TransactionRepository` return `nil` or zero values without touching the database. The affected methods include all entry CRUD, balance calculation, account-based listing, date-range listing, status retrieval, recurring transaction retrieval, reconciliation updates, bulk operations, archiving, and transaction number generation. Everything persisted by the service layer is silently lost.
+
+**Solution:**
+For each stub, find the matching SQLC-generated query in `db/sqlc/` and wire it through the existing mapper pattern already established in `repository/accounts.go`. Key methods in priority order:
+1. `CreateEntry` / `CreateEntries` — nothing works without these
+2. `GetEntryByID` / `GetEntriesByTransaction` / `GetEntriesByAccount`
+3. `UpdateEntry` / `DeleteEntry`
+4. `IsTransactionNumberUnique` / `GetNextTransactionNumber`
+5. `GetByStatus` / `GetByDateRange` / `GetByAccount`
+6. `CalculateAccountBalance` (SUM query on entries)
+7. `UpdateReconciliationStatus` / `GetUnreconciledEntries`
+8. `GetEntrySummary` / `GetAccountTransactionSummary`
+9. `CreateBulk` / `UpdateBulk` / `Archive` / `Restore`
+10. `ValidateAccountsExist`
+
+**Expected Outcome:**
+- Entries written by `CreateEntry` are retrievable via `GetEntriesByTransaction`
+- `CalculateAccountBalance` returns a real SUM from the entries table
+- `GetNextTransactionNumber` returns an incrementing, tenant-scoped sequence
+
+**How to Test:**
+```go
+func TestCreateAndRetrieveEntries(t *testing.T) {
+    // Create transaction + 2 entries
+    // GetEntriesByTransaction → 2 entries returned, amounts match
+}
+
+func TestTransactionNumberUniqueness(t *testing.T) {
+    // Create txn with number "JE-001"
+    // IsTransactionNumberUnique("JE-001") → false
+    // IsTransactionNumberUnique("JE-002") → true
+}
+```
+
+---
+
+### TASK-026 `[ ]` Wire account balance / trial balance queries from entries
+
+**Priority:** P0
+**File:** `internal/core/finance/repository/accounts.go:430, 452–453, 487–488, 515, 656`
+**Depends On:** TASK-025
+
+**Problem:**
+Five stubs in the accounts repository depend on reading from the transaction entries table:
+1. `CalculateAccountBalance` (line 487) — returns zero totals
+2. `GetTrialBalance` (line 515) — returns nothing
+3. `HasTransactions` (line 656) — always returns `false`; prevents "cannot delete account with entries" guard from firing
+4. `GetAccountPath` (line 430) — returns empty slice
+5. `ValidateHierarchy` (line 452) — no circular-reference detection
+
+**Solution:**
+- `CalculateAccountBalance`: `SELECT SUM(debit_amount), SUM(credit_amount) FROM finance_transaction_entries WHERE account_id = $1 AND tenant_id = $2 AND status = POSTED`
+- `GetTrialBalance`: GROUP BY `account_id`, JOIN to `accounts` for code/name
+- `HasTransactions`: `SELECT EXISTS(SELECT 1 FROM finance_transaction_entries WHERE account_id = $1)`
+- `GetAccountPath`: split `account_path` string on `/`, query accounts by code for each segment
+- `ValidateHierarchy`: walk `parent_account_id` chain, error if a cycle is detected
+
+**Expected Outcome:**
+- Trial balance report returns real debit/credit totals per account
+- Deleting an account with entries returns `ACCOUNT_HAS_TRANSACTIONS` error
+- `GetAccountPath` returns the full ancestor chain
+
+**How to Test:**
+```go
+func TestTrialBalance_MatchesPostedEntries(t *testing.T) {
+    // Post Dr Cash 100 / Cr Revenue 100
+    // GetTrialBalance → Cash debit total = 100, Revenue credit total = 100
+}
+
+func TestDeleteAccount_Blocked_WhenHasEntries(t *testing.T) {
+    // Post entry to account
+    // Delete account → ACCOUNT_HAS_TRANSACTIONS error
+}
+```
+
+---
+
+### TASK-027 `[ ]` Wire posting engine balance update
+
+**Priority:** P0
+**File:** `internal/core/finance/service/transaction_posting_engine.go:510, 574`
+**Depends On:** TASK-024, TASK-025, TASK-026
+
+**Problem:**
+`RecalculateBalances` (line 510) reads the current cached balance and returns it unchanged — it never recalculates from entries. `BatchPostTransactions` (line 574) skips the balance update step entirely. Account balances shown in reports never change after posting.
+
+**Solution:**
+1. In `RecalculateBalances`: call `accountRepo.CalculateAccountBalance(ctx, accountID)` for each affected account and then `accountRepo.UpdateBalance(ctx, accountID, newBalance)`.
+2. In `BatchPostTransactions`: collect all unique `account_id` values from all batched entries, aggregate the net debit/credit delta per account, then apply a single `UpdateBalance` per account.
+
+**Expected Outcome:**
+- After posting, `account.CurrentBalance` reflects the net of all posted entries
+- Batch posting correctly aggregates all entry movements before writing balances
+
+**How to Test:**
+```go
+func TestBatchPost_BalancesAggregated(t *testing.T) {
+    // Two transactions both debit Cash account
+    // BatchPost both
+    // Cash balance = sum of both debit amounts
+}
+```
+
+---
+
+## P1 — Missing Service Wiring
+
+---
+
+### TASK-028 `[ ]` Wire account view-based query methods to SQLC
+
+**Priority:** P1
+**File:** `internal/core/finance/repository/accounts.go`
+
+**Problem:**
+Fifteen methods in `AccountService` delegate to repository methods that are declared in the interface but return stub data. The SQLC types (`db.VFinanceAccountsWithGroup`, `db.VChartOfAccountsComplete`) and all domain mappers are already written in `repository/mappers.go`. Only the bridge from SQLC call → mapper → return is missing.
+
+**Affected methods:**
+`GetAccountWithGroups`, `GetAccountWithGroupsByCode`, `ListAccountsWithGroups`, `SearchAccountsWithGroups`, `GetLeafAccountsOnly`, `GetCompleteChartOfAccounts`, `GetAccountForReporting`, `GetAccountsByStatementSection`, `GetAccountsByGroup`, `GetAccountsByHeader`, `GetTrialBalanceAccounts`, `GetAccountsWithBalances`, `GetCashFlowAccounts`, `GetAccountSummaryByGroup`, `ListAccountsAndGroups`, `GetAccountHierarchyWithGroups`, `SearchAccountsAndGroups`.
+
+**Solution:**
+For each method: locate the matching SQLC function in `db/sqlc/`, call it with the appropriate filter parameters, map the result with the existing mapper, return. Follow the identical pattern already used in the working `GetByID`, `GetByCode`, `List` methods.
+
+**Expected Outcome:**
+- Chart of accounts UI populates with real data
+- `GET /accounts?root_type=ASSET&is_group=false` returns leaf asset accounts
+
+---
+
+### TASK-029 `[ ]` Add missing `TransactionRepository` interface methods
+
+**Priority:** P1
+**File:** `internal/core/finance/domain/repository.go`, `internal/core/finance/repository/transaction.go`
+
+**Problem:**
+The service layer calls five repository methods that do not exist in the `TransactionRepository` interface:
+- `Search(ctx, query, limit, offset)` — line 1070
+- `GetSummary(ctx, startDate, endDate)` — line 1111
+- `GetPendingApproval(ctx, entityID, limit, offset)` — line 1160
+- `GetRecurringDue(ctx, date)` — line 1191
+- `UpdateNextRecurringDate(ctx, id, nextDate)` — line 1289
+
+**Solution:**
+1. Add each signature to the `TransactionRepository` interface in `domain/repository.go`
+2. Add concrete stubs in `repository/transaction.go`
+3. Wire to SQLC queries (or implement SQL directly)
+4. Remove the dead-code comment blocks in `transaction_service.go`
+
+**Expected Outcome:**
+- `SearchTransactions` returns real results
+- `GetPendingApprovalTransactions` returns real pending entries
+- Recurring transaction generation fires on the correct due dates
+
+---
+
+### TASK-030 `[ ]` Extract real user ID in transaction numbering service
+
+**Priority:** P1
+**File:** `internal/core/finance/service/transaction_numbering_service.go:244`
+
+**Problem:**
+`ReserveTransactionNumber` records the reservation against `uuid.New()` — a random UUID — instead of the authenticated user. Audit logs for number reservations are useless for traceability.
+
+**Solution:**
+Replace `uuid.New()` with `shared.GetUserID(ctx)`. If no user is in context (system-generated), use a designated system user UUID from settings constants.
+
+**Expected Outcome:**
+- `reserved_by` field on a number reservation matches the authenticated user
+- Audit log can trace who reserved (and potentially wasted) a transaction number
+
+**How to Test:**
+```go
+func TestReserveNumber_RecordsCorrectUser(t *testing.T) {
+    ctx := shared.WithUserID(context.Background(), knownUserID)
+    ref, _ := svc.ReserveTransactionNumber(ctx, entityID, "JE")
+    assert.Equal(t, knownUserID, ref.ReservedBy)
+}
+```
+
+---
+
+## P2 — Audit, Compliance & Correctness at Scale
+
+---
+
+### TASK-031 `[ ]` Persist exchange rates to database
+
+**Priority:** P2
+**File:** `internal/core/finance/service/exchange_rate_engine.go:374, 593`
+
+**Problem:**
+Exchange rates live only in an in-memory cache. On any server restart, all loaded rates are lost. `GetExchangeRate` falls back to a **1:1 estimated rate** when the cache is empty (line 374), silently corrupting every multi-currency transaction posted after a restart.
+
+**Solution:**
+1. Design a `finance_exchange_rates` table: `(tenant_id, from_currency, to_currency, rate, rate_type, effective_date, source, loaded_by, created_at)`
+2. Add `ExchangeRateRepository` interface to `domain/repository.go` with: `SaveRate`, `GetRateForDate`, `ListRates`
+3. In `GetExchangeRate`: on cache miss, query the repository before falling back to 1:1 default
+4. In `UpdateExchangeRate`: persist to repository after updating the cache
+5. On service startup, pre-warm the cache from the repository
+
+**Expected Outcome:**
+- Rates survive server restart
+- `EXCHANGE_RATE_NOT_FOUND` error returned correctly when no rate exists (not silently wrong 1:1)
+
+**How to Test:**
+```go
+func TestExchangeRate_SurvivesRestart(t *testing.T) {
+    // Save rate USD/KES 128.00
+    // Simulate restart (clear cache)
+    // GetExchangeRate("USD", "KES", today) → 128.00 (from DB)
+}
+```
+
+---
+
+### TASK-032 `[ ]` Add reversal history table and double-reverse guard
+
+**Priority:** P2
+**File:** `internal/core/finance/service/transaction_reversal_engine.go:452, 486`
+
+**Problem:**
+1. `HasAlreadyReversedOthers` (line 452) always returns `false` — a reversal transaction can itself be reversed, creating infinite reversal chains that corrupt the ledger.
+2. `GetReversalHistory` (line 486) returns a fabricated record with a random UUID — completely wrong data shown in the audit UI.
+
+**Solution:**
+1. Create `finance_reversal_history` table: `(id, original_transaction_id, reversal_transaction_id, reason, initiated_by, created_at)`
+2. In `ReverseTransaction`: insert a row to `finance_reversal_history` after successfully creating the reversal
+3. `HasAlreadyReversedOthers`: `SELECT EXISTS(SELECT 1 FROM finance_reversal_history WHERE reversal_transaction_id = $1)` — prevents a reversal from being reversed again
+4. `GetReversalHistory`: query the table for all reversals of a given original transaction
+
+**Expected Outcome:**
+- Reversing a reversal returns `CANNOT_REVERSE_REVERSAL` error
+- `GetReversalHistory` returns accurate timestamps, users, and linked IDs
+
+**How to Test:**
+```go
+func TestReverseOfReversal_Blocked(t *testing.T) {
+    // Post JE → reverse it (rev1 created)
+    // Reverse rev1 → CANNOT_REVERSE_REVERSAL error
+}
+
+func TestGetReversalHistory_ReturnsRealData(t *testing.T) {
+    // Post JE, reverse it
+    // GetReversalHistory(originalID) → 1 record with correct reversalID
+}
+```
+
+---
+
+### TASK-033 `[ ]` Persist approval workflow state and history
+
+**Priority:** P2
+**File:** `internal/core/finance/service/transaction_workflow_engine.go:499–500, 610–611, 677, 696, 716, 732, 753, 771, 833`
+
+**Problem:**
+The approval workflow engine has no persistence layer:
+- Workflow records are never created in a DB table (line 499–500) — state is lost on restart
+- Approval decisions are not recorded in history (line 610–611)
+- `ValidateApprovalAuthority` always returns `true` — any user can approve any transaction (line 771)
+- Escalation logic does nothing (line 753)
+- Next approvers are hardcoded, not loaded from configuration (line 833)
+
+**Solution:**
+> **Decision point:** Determine whether workflow state lives in a custom `finance_workflow_records` table or entirely in Temporal (which has its own durable state). If Temporal is chosen, several of these TODOs are addressed by `ApprovalEscalationWorkflow` (TASK-015). Document the decision before implementing.
+
+If custom tables are chosen:
+1. `finance_workflow_records`: `(id, transaction_id, tenant_id, status, current_tier, config_snapshot, created_at, updated_at)`
+2. `finance_approval_history`: `(id, workflow_id, transaction_id, tier, action, performed_by, notes, created_at)`
+3. Wire `ValidateApprovalAuthority` to an approval configuration table or IAM permission check
+4. Wire `GetApprovalHistory` / `GetPendingApprovals` to the history table
+5. Implement escalation: mark tier as escalated, notify configured escalation recipient
+
+**Expected Outcome:**
+- Approval workflow state survives server restart
+- Only authorized approvers can approve (IAM check)
+- Escalation fires after SLA breach
+
+---
+
+### TASK-034 `[ ]` Implement `GetTransitionHistory` from audit log
+
+**Priority:** P2
+**File:** `internal/core/finance/domain/transaction_state_machine.go:261`
+
+**Problem:**
+`GetTransitionHistory()` returns an empty slice instead of querying the audit log. Finance staff cannot see the state change trail (Draft → Pending Approval → Approved → Posted) for a transaction.
+
+**Solution:**
+Once `AuditRepository` is implemented (verify current status), query it for all `TRANSACTION_STATUS_CHANGE` events for the given transaction ID, ordered by timestamp. Map audit entries to `StateTransition` structs.
+
+**Expected Outcome:**
+- `GetTransitionHistory(txnID)` returns each status change with actor, timestamp, and from/to status
+
+**How to Test:**
+```go
+func TestTransitionHistory_FullLifecycle(t *testing.T) {
+    // Draft → submit → approve → post
+    // GetTransitionHistory → 3 transitions in order
+}
+```
+
+---
+
+## P3 — Polish & Housekeeping
+
+---
+
+### TASK-035 `[ ]` Remove domain-layer uniqueness check TODOs
+
+**Priority:** P3
+**File:** `internal/core/finance/domain/validation.go:299, 318`
+
+**Problem:**
+Two commented-out `// TODO: Check uniqueness in repository` blocks in the pure domain validator suggest uniqueness should be checked in the domain layer. This is architecturally incorrect — domain validators must not depend on repositories. Both uniqueness checks already exist in the service layer.
+
+**Solution:**
+Remove the TODO comments. Add a code comment explaining that uniqueness is a service-layer concern, not domain-validator concern, and reference the service methods that perform it.
+
+---
+
+### TASK-036 `[ ]` Remove stale mapper TODO comment
+
+**Priority:** P3
+**File:** `internal/core/finance/repository/mappers.go:788`
+
+**Problem:**
+Comment says "TODO: These mapper functions will be implemented once SQLC generates the types." The mapper functions directly below it are already fully implemented and compiling. The comment is stale and misleading.
+
+**Solution:**
+Delete the comment line.
+
+---
+
+## Task Summary
+
+| ID | Task | Priority | Effort | Depends On | Status |
+|----|------|----------|--------|------------|--------|
+| TASK-001 | Fix `IsEditable()` contradiction | P0 | XS | — | ✅ |
+| TASK-002 | Fix `RejectionReason` enum | P0 | XS | — | ✅ |
+| TASK-003 | Remove duplicate `TransactionType` | P0 | S | — | ✅ |
+| TASK-004 | `FiscalYear` + `AccountingPeriod` domain | P1 | L | — | ✅ |
+| TASK-005 | `Currency` + `ExchangeRate` domain | P1 | L | — | ✅ |
+| TASK-006 | `CostCenter` domain | P1 | M | — | ✅ |
+| TASK-007 | `Budget` + `BudgetLine` domain | P1 | M | TASK-004, TASK-006 | ✅ |
+| TASK-008 | `AccountStatus` state machine | P1 | M | — | ✅ |
+| TASK-009 | Implement `GetTransactionWithEntries` | P1 | S | — | ✅ |
+| TASK-010 | Document account grouping tiers | P1 | S | — | ✅ |
+| TASK-011 | Implement `CreateAccount` fully | P1 | M | TASK-008 | ✅ |
+| TASK-012 | Implement `PostTransaction` fully | P1 | L | TASK-004, TASK-005, TASK-007, TASK-009 | ✅ |
+| TASK-013 | Implement `ReverseTransaction` fully | P1 | M | TASK-012 | ✅ |
+| TASK-014 | Period validation middleware | P1 | S | TASK-004 | ✅ |
+| TASK-015 | Enable Temporal integration | P1 | L | TASK-012, TASK-013 | ✅ |
+| TASK-016 | `BankReconciliation` domain | P2 | L | TASK-004 | ✅ |
+| TASK-017 | `PaymentRun` domain | P2 | M | — | ✅ |
+| TASK-018 | Document `PARTIALLY_APPROVED` + `EXPIRED` | P2 | XS | TASK-015 | ✅ |
+| TASK-019 | Add `CostCenterID` to `TransactionEntry` | P2 | XS | TASK-006 | ✅ |
+| TASK-020 | Confirm `AccountFilter` completeness | P2 | S | — | ✅ |
+| TASK-021 | Remove duplicate service method shims | P3 | S | — | ✅ |
+| TASK-022 | `ValidationError` severity levels | P3 | S | — | ✅ |
+| TASK-023 | Nested field paths in `ValidationError` | P3 | S | TASK-022 | ✅ |
+| TASK-024 | Fix `AccountBalance` struct + `MarkAsReversed` | P0 | XS | — | `[ ]` |
+| TASK-025 | Wire transaction repository stubs to SQLC | P0 | L | TASK-024 | `[ ]` |
+| TASK-026 | Wire account balance / trial balance from entries | P0 | M | TASK-025 | `[ ]` |
+| TASK-027 | Wire posting engine balance update | P0 | S | TASK-024, TASK-025, TASK-026 | `[ ]` |
+| TASK-028 | Wire account view-based query methods to SQLC | P1 | M | — | `[ ]` |
+| TASK-029 | Add missing `TransactionRepository` interface methods | P1 | S | — | `[ ]` |
+| TASK-030 | Extract real user ID in numbering service | P1 | XS | — | `[ ]` |
+| TASK-031 | Persist exchange rates to database | P2 | M | TASK-005 | `[ ]` |
+| TASK-032 | Reversal history table + double-reverse guard | P2 | M | TASK-025 | `[ ]` |
+| TASK-033 | Persist approval workflow state and history | P2 | L | TASK-015, TASK-025 | `[ ]` |
+| TASK-034 | Implement `GetTransitionHistory` from audit log | P2 | XS | TASK-025 | `[ ]` |
+| TASK-035 | Remove domain-layer uniqueness check TODOs | P3 | XS | — | `[ ]` |
+| TASK-036 | Remove stale mapper TODO comment | P3 | XS | — | `[ ]` |
+
+**Effort key:** XS < 2h · S = half-day · M = 1–2 days · L = 3–5 days
+
+**Implementation order:** TASK-024 → TASK-025 → TASK-026 → TASK-027 (Phase 1, unblock persistence) → TASK-028, TASK-029, TASK-030 (Phase 2) → TASK-031, TASK-032, TASK-033, TASK-034 (Phase 3) → TASK-035, TASK-036 (Phase 4)

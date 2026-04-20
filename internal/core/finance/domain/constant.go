@@ -371,31 +371,31 @@ var (
 	}
 )
 
-// Tax-related constants
-const (
-	// Standard tax types
-	TaxTypeVAT         = "VAT"
-	TaxTypeSalesTax    = "SALES_TAX"
-	TaxTypeWithholding = "WITHHOLDING"
-	TaxTypeExcise      = "EXCISE"
-	TaxTypeCustoms     = "CUSTOMS"
-
-	// Tax calculation methods
-	TaxCalculationInclusive = "INCLUSIVE"
-	TaxCalculationExclusive = "EXCLUSIVE"
-	TaxCalculationCompound  = "COMPOUND"
-
-	// Default tax rates (can be overridden per jurisdiction)
-	DefaultVATRate         = 16.0 // Kenya's standard VAT rate
-	DefaultWithholdingRate = 5.0  // Common withholding tax rate
-)
-
-// Account numbering schemes
-const (
-	NumberingSchemeManual    = "MANUAL"
-	NumberingSchemeAutomatic = "AUTOMATIC"
-	NumberingSchemeTemplate  = "TEMPLATE"
-)
+// // Tax-related constants
+// const (
+// 	// Standard tax types
+// 	TaxTypeVAT         = "VAT"
+// 	TaxTypeSalesTax    = "SALES_TAX"
+// 	TaxTypeWithholding = "WITHHOLDING"
+// 	TaxTypeExcise      = "EXCISE"
+// 	TaxTypeCustoms     = "CUSTOMS"
+//
+// 	// Tax calculation methods
+// 	TaxCalculationInclusive = "INCLUSIVE"
+// 	TaxCalculationExclusive = "EXCLUSIVE"
+// 	TaxCalculationCompound  = "COMPOUND"
+//
+// 	// Default tax rates (can be overridden per jurisdiction)
+// 	DefaultVATRate         = 16.0 // Kenya's standard VAT rate
+// 	DefaultWithholdingRate = 5.0  // Common withholding tax rate
+// )
+//
+// // Account numbering schemes
+// const (
+// 	NumberingSchemeManual    = "MANUAL"
+// 	NumberingSchemeAutomatic = "AUTOMATIC"
+// 	NumberingSchemeTemplate  = "TEMPLATE"
+// )
 
 // Account code patterns for different numbering schemes
 var (

@@ -447,7 +447,7 @@ func (v *BusinessRuleValidator) ValidateAccountHierarchy(account *Accounts, pare
 	}
 
 	// Business rule: Cannot create circular references
-	if parentAccount.IsDescendantOf(account.ID) {
+	if parentAccount.Path.IsDescendantOf(account.ID) {
 		errors = append(errors, ValidationError{
 			Field:   "parent_account_id",
 			Message: "Cannot create circular reference in account hierarchy",
