@@ -108,7 +108,7 @@ WHERE  tenant_id = current_tenant_id()
 			return fmt.Errorf("get cost centre by id: %w", err)
 		}
 		if desc != nil {
-			cc.Description = *desc
+			cc.Description = desc
 		}
 		if method != nil {
 			m := domain.AllocationMethod(*method)
@@ -155,7 +155,7 @@ WHERE  tenant_id = current_tenant_id()
 			return fmt.Errorf("get cost centre by code: %w", err)
 		}
 		if desc != nil {
-			cc.Description = *desc
+			cc.Description = desc
 		}
 		if method != nil {
 			m := domain.AllocationMethod(*method)
@@ -198,8 +198,8 @@ WHERE  tenant_id = current_tenant_id()
 RETURNING updated_at`
 
 		var desc *string
-		if cc.Description != "" {
-			desc = &cc.Description
+		if cc.Description != nil && *cc.Description != "" {
+			desc = cc.Description
 		}
 		var method *string
 		if cc.AllocationMethod != nil {
@@ -291,7 +291,7 @@ ORDER  BY code ASC`
 				return fmt.Errorf("scan cost centre: %w", err)
 			}
 			if desc != nil {
-				cc.Description = *desc
+				cc.Description = desc
 			}
 			if method != nil {
 				m := domain.AllocationMethod(*method)
@@ -330,10 +330,3 @@ WHERE  tenant_id = current_tenant_id()
 	})
 }
 
-// nullUUID2 converts a *uuid.UUID to nil if it is nil or zero.
-func nullUUID2(id *uuid.UUID) interface{} {
-	if id == nil || *id == uuid.Nil {
-		return nil
-	}
-	return *id
-}

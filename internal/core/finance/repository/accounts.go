@@ -474,7 +474,7 @@ func (r *accountsRepository) GetAccountBalance(ctx context.Context, accountID uu
 	ctx, span := r.tracing.StartSpan(ctx, "AccountsRepository.GetAccountBalance")
 	defer span.End()
 
-	account, err := r.GetByID(ctx, accountID)
+	_, err := r.GetByID(ctx, accountID)
 	if err != nil {
 		return nil, err
 	}

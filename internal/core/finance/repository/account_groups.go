@@ -72,8 +72,8 @@ func (r *accountsRepository) CreateAccountGroup(ctx context.Context, accountGrou
 	// Use tenant-aware transaction for proper isolation
 	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Validate the account group
-		if err := accountGroup.Validate(); err != nil {
-			return fmt.Errorf("%w", err)
+		if errs := accountGroup.Validate(); len(errs) > 0 {
+			return fmt.Errorf("account group validation failed: %v", errs)
 		}
 
 		// Map domain account group to SQLC parameters

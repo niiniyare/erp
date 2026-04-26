@@ -446,11 +446,3 @@ RETURNING updated_at`
 	})
 }
 
-// nullUUID converts a uuid.UUID to nil if it is zero, otherwise returns a pointer copy.
-// Used to pass optional UUID FK columns.
-func nullUUID(id uuid.UUID) interface{} {
-	if id == uuid.Nil {
-		return nil
-	}
-	return id
-}
