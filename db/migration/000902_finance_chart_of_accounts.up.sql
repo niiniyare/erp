@@ -47,7 +47,9 @@ CREATE TABLE finance_accounts (
   -- Financial attributes
   normal_balance              VARCHAR(10)   NOT NULL CHECK (normal_balance IN ('DEBIT', 'CREDIT')),
   is_control_account          BOOLEAN       NOT NULL DEFAULT false,
+  has_children                BOOLEAN       NOT NULL DEFAULT false,
   control_account_id          UUID          REFERENCES finance_accounts(id),
+  
   -- Currency and localization
   currency_code               CHAR(3)       DEFAULT 'USD',
   is_multi_currency           BOOLEAN       DEFAULT false,
@@ -56,6 +58,7 @@ CREATE TABLE finance_accounts (
   is_active                   BOOLEAN       NOT NULL DEFAULT TRUE,
   is_system_account           BOOLEAN       NOT NULL DEFAULT false,
   allow_manual_entries        BOOLEAN       NOT NULL DEFAULT TRUE,
+  is_leaf                     BOOLEAN       GENERATED ALWAYS AS (NOT has_children) STORED,
   require_reference           BOOLEAN       NOT NULL DEFAULT false,
   -- Balance tracking
   current_balance             DECIMAL(15,2) DEFAULT 0.00,

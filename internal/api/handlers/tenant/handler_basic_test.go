@@ -72,7 +72,7 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 		Tracer: mockTracer,
 		Logger: mockLogger,
 	})
-	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer)
+	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer, nil)
 
 	// Create Fiber app
 	app := fiber.New()
@@ -166,7 +166,7 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 
 	// Create service with mocks
 	service := tenant.NewService(tenant.Dependencies{Store: nil, Cache: mockCache, Tracer: mockTracer, Logger: mockLogger})
-	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer)
+	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer, nil)
 
 	// Create Fiber app
 	app := fiber.New()

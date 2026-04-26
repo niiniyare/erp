@@ -48,26 +48,40 @@ func (r *accountsRepository) mapDomainAccountGroupToCreateParams(accountGroup *d
 		displayFormat = "CUSTOM"
 	}
 
+	// Convert Description string → *string (nullable DB column)
+	var groupDescription *string
+	if accountGroup.Description != "" {
+		d := accountGroup.Description
+		groupDescription = &d
+	}
+
+	// Convert GroupCategory string → *string
+	var groupCategory *string
+	if accountGroup.GroupCategory != "" {
+		gc := accountGroup.GroupCategory
+		groupCategory = &gc
+	}
+
 	return db.CreateAccountGroupParams{
 		EntityID:                  accountGroup.EntityID,
 		GroupCode:                 accountGroup.GroupCode,
 		GroupName:                 accountGroup.GroupName,
-		GroupDescription:          accountGroup.Description,
+		GroupDescription:          groupDescription,
 		ParentGroupID:             accountGroup.ParentGroupID,
 		GroupLevel:                groupLevel,
 		GroupPath:                 &groupPath,
-		RootType:                  accountGroup.GroupType, // Using GroupType as RootType for now
-		GroupCategory:             &accountGroup.GroupType,
+		RootType:                  string(accountGroup.RootType),
+		GroupCategory:             groupCategory,
 		FinancialStatementSection: accountGroup.FinancialStatementSection,
 		ConsolidationMethod:       consolidationMethod,
-		CashFlowCategory:          cashFlowCategory,
-		StatementOrder:            func() *int32 { v := int32(accountGroup.DisplayOrder); return &v }(),
-		DisplayFormat:             &displayFormat,
-		IndentLevel:               func() *int32 { v := int32(accountGroup.IndentLevel); return &v }(),
-		ShowTotals:                &accountGroup.ShowTotals,
-		BoldDisplay:               &accountGroup.BoldDisplay,
-		IsActive:                  accountGroup.IsActive,
-		CreatedBy:                 nil, // Will be set by context in database
+		CashFlowCategory:    cashFlowCategory,
+		StatementOrder:      func() *int32 { v := int32(accountGroup.DisplayOrder); return &v }(),
+		DisplayFormat:       &displayFormat,
+		IndentLevel:         func() *int32 { v := int32(accountGroup.IndentLevel); return &v }(),
+		ShowTotals:          &accountGroup.ShowTotals,
+		BoldDisplay:         &accountGroup.BoldDisplay,
+		IsActive:            accountGroup.IsActive,
+		CreatedBy:           nil, // Will be set by context in database
 	}, nil
 }
 
@@ -88,11 +102,17 @@ func (r *accountsRepository) mapDomainAccountGroupToUpdateParams(id uuid.UUID, a
 		cashFlowCategory = &category
 	}
 
+	var updGroupDescription *string
+	if accountGroup.Description != "" {
+		d := accountGroup.Description
+		updGroupDescription = &d
+	}
+
 	return db.UpdateAccountGroupParams{
 		GroupID:                   id,
 		EntityID:                  nil, // Allow cross-entity updates within tenant
 		GroupName:                 &accountGroup.GroupName,
-		GroupDescription:          accountGroup.Description,
+		GroupDescription:          updGroupDescription,
 		ParentGroupID:             accountGroup.ParentGroupID,
 		FinancialStatementSection: accountGroup.FinancialStatementSection,
 		ConsolidationMethod:       consolidationMethod,
@@ -114,12 +134,12 @@ func (r *accountsRepository) mapSQLCAccountGroupToDomain(sqlcGroup *db.FinanceAc
 	domainGroup.EntityID = sqlcGroup.EntityID
 	domainGroup.GroupCode = sqlcGroup.GroupCode
 	domainGroup.GroupName = sqlcGroup.GroupName
-	domainGroup.Description = sqlcGroup.GroupDescription
+	if sqlcGroup.GroupDescription != nil {
+		domainGroup.Description = *sqlcGroup.GroupDescription
+	}
+	domainGroup.RootType = domain.RootType(sqlcGroup.RootType)
 	if sqlcGroup.GroupCategory != nil {
-		domainGroup.GroupType = *sqlcGroup.GroupCategory
-	} else {
-		// Fallback to root type if group category is nil
-		domainGroup.GroupType = sqlcGroup.RootType
+		domainGroup.GroupCategory = *sqlcGroup.GroupCategory
 	}
 	domainGroup.ParentGroupID = sqlcGroup.ParentGroupID
 	domainGroup.FinancialStatementSection = sqlcGroup.FinancialStatementSection

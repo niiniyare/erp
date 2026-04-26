@@ -98,6 +98,15 @@ type Budget struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	CreatedBy uuid.UUID  `json:"created_by"`
 	UpdatedBy *uuid.UUID `json:"updated_by,omitempty"`
+
+	// Lines is populated on read; not stored on the budget row itself.
+	Lines []*BudgetLineItem `json:"lines,omitempty"`
+}
+
+// CanClose returns true when the budget is in a state that allows it to be closed.
+// Only APPROVED and REVISED budgets may be closed.
+func (b *Budget) CanClose() bool {
+	return b.Status == BudgetStatusApproved || b.Status == BudgetStatusRevised
 }
 
 // Validate returns ValidationErrors for the Budget header.

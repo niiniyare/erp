@@ -596,6 +596,19 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	taxCodeGroup.Get("/:id", handler.GetTaxCode)             // GET    /api/v1/finance/tax/codes/:id
 	taxCodeGroup.Put("/:id", handler.UpdateTaxCode)          // PUT    /api/v1/finance/tax/codes/:id
 
+	// Bank reconciliation
+	reconGroup := financeGroup.Group("/reconciliation")
+	reconGroup.Use(middlewarePkg.Authorize("finance.reconciliation.read"))
+
+	statementsGroup := reconGroup.Group("/statements")
+	statementsGroup.Post("/", handler.ImportBankStatement)                                // POST   /api/v1/finance/reconciliation/statements
+	statementsGroup.Get("/", handler.ListBankStatements)                                  // GET    /api/v1/finance/reconciliation/statements
+	statementsGroup.Get("/:id", handler.GetBankStatement)                                 // GET    /api/v1/finance/reconciliation/statements/:id
+	statementsGroup.Get("/:id/lines", handler.ListStatementLines)                         // GET    /api/v1/finance/reconciliation/statements/:id/lines
+	statementsGroup.Post("/:id/lines/:line_id/match", handler.MatchStatementLine)         // POST   /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+	statementsGroup.Delete("/:id/lines/:line_id/match", handler.UnmatchStatementLine)     // DELETE /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+	statementsGroup.Post("/:id/complete", handler.CompleteReconciliation)                 // POST   /api/v1/finance/reconciliation/statements/:id/complete
+
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")
 	reportsGroup.Get("/trial-balance", handler.GetTrialBalance) // GET /api/v1/finance/reports/trial-balance - Trial balance report

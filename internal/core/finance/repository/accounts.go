@@ -64,7 +64,9 @@ func (r *accountsRepository) Create(ctx context.Context, account *domain.Account
 		account.ID = sqlcAccount.ID
 		account.TenantID = sqlcAccount.TenantID
 		account.AccountLevel = sqlcAccount.AccountLevel
-		account.AccountPath = sqlcAccount.AccountPath
+		if sqlcAccount.AccountPath != nil {
+			account.Path = domain.MaterialisedPath(*sqlcAccount.AccountPath)
+		}
 		account.CreatedAt = sqlcAccount.CreatedAt
 		account.UpdatedAt = sqlcAccount.UpdatedAt
 
@@ -423,12 +425,12 @@ func (r *accountsRepository) GetAccountPath(ctx context.Context, accountID uuid.
 		return nil, err
 	}
 
-	if account.AccountPath == nil || *account.AccountPath == "" {
+	if account.Path == "" {
 		return []domain.Accounts{*account}, nil
 	}
 
 	// "/code1/code2/code3/" → ["code1", "code2", "code3"]
-	codes := strings.Split(strings.Trim(*account.AccountPath, "/"), "/")
+	codes := strings.Split(strings.Trim(string(account.Path), "/"), "/")
 	path := make([]domain.Accounts, 0, len(codes))
 	for _, code := range codes {
 		if code == "" {
@@ -506,7 +508,6 @@ func (r *accountsRepository) GetAccountBalance(ctx context.Context, accountID uu
 
 	return &domain.AccountBalance{
 		AccountID:    accountID,
-		Account:      *account,
 		TotalDebits:  totalDebits,
 		TotalCredits: totalCredits,
 		NetBalance:   netBalance,
@@ -559,16 +560,14 @@ func (r *accountsRepository) GetTrialBalance(ctx context.Context, entityID *uuid
 		entries = make([]*domain.TrialBalanceEntry, 0, len(rows))
 		for _, row := range rows {
 			entries = append(entries, &domain.TrialBalanceEntry{
-				Account: domain.Accounts{
-					ID:            row.AccountID,
-					AccountCode:   row.AccountCode,
-					AccountName:   row.AccountName,
-					RootType:      mapSQLCRootTypeToDomain(row.RootType),
-					NormalBalance: domain.NormalBalance(row.NormalBalance),
-				},
-				TotalDebits:  pgTypeNumericToDecimal(row.PeriodDebits),
-				TotalCredits: pgTypeNumericToDecimal(row.PeriodCredits),
-				NetBalance:   pgTypeNumericToDecimal(row.ClosingBalance),
+				AccountID:     row.AccountID,
+				AccountCode:   row.AccountCode,
+				AccountName:   row.AccountName,
+				RootType:      mapSQLCRootTypeToDomain(row.RootType),
+				NormalBalance: domain.NormalBalance(row.NormalBalance),
+				TotalDebits:   pgTypeNumericToDecimal(row.PeriodDebits),
+				TotalCredits:  pgTypeNumericToDecimal(row.PeriodCredits),
+				NetBalance:    pgTypeNumericToDecimal(row.ClosingBalance),
 			})
 		}
 		return nil
@@ -1445,4 +1444,20 @@ func getStringValue(s *string) string {
 		return ""
 	}
 	return *s
+}
+
+func Ptr[T any](v T) *T {
+	return &v
+}
+
+func ValueOrDefault[T any](ptr *T) T {
+	var zero T
+	if ptr != nil {
+		return *ptr
+	}
+	return zero
+}
+
+func StringPtr(s string) *string {
+	return &s
 }

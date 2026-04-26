@@ -13,11 +13,10 @@ type (
 	ReversalStatus        string
 	AccountCreationStatus string
 	AccountClosureStatus  string
-	// ReconciliationStatus  string
-	AuditStatus          string
-	FraudDetectionStatus string
-	ClosingStatus        string
-	StepStatus           string
+	AuditStatus           string
+	FraudDetectionStatus  string
+	ClosingStatus         string
+	StepStatus            string
 )
 
 const (
@@ -73,7 +72,7 @@ const (
 	StepStatusSkipped   StepStatus = "skipped"
 )
 
-// Transaction Approval Workflow Types
+// TransactionApprovalWorkflowInput is a 	 Transaction Approval Workflow Types
 type TransactionApprovalWorkflowInput struct {
 	TransactionID uuid.UUID       `json:"transaction_id"`
 	SubmittedBy   string          `json:"submitted_by"`
@@ -95,7 +94,6 @@ type TransactionApprovalWorkflowResult struct {
 	Error            string         `json:"error,omitempty"`
 }
 
-// Transaction Processing Workflow Types
 type TransactionProcessingWorkflowInput struct {
 	TransactionID uuid.UUID `json:"transaction_id"`
 }
@@ -110,7 +108,6 @@ type TransactionProcessingWorkflowResult struct {
 	Error            string           `json:"error,omitempty"`
 }
 
-// Transaction Reversal Workflow Types
 type TransactionReversalWorkflowInput struct {
 	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
 	ReversalReason        string    `json:"reversal_reason"`
@@ -128,7 +125,6 @@ type TransactionReversalWorkflowResult struct {
 	Error                 string         `json:"error,omitempty"`
 }
 
-// Bulk Transaction Workflow Types
 type BulkTransactionWorkflowInput struct {
 	BatchID        string      `json:"batch_id"`
 	TransactionIDs []uuid.UUID `json:"transaction_ids"`
@@ -147,7 +143,6 @@ type BulkTransactionWorkflowResult struct {
 	Duration               time.Duration                                  `json:"duration"`
 }
 
-// Account Creation Workflow Types
 type AccountCreationWorkflowInput struct {
 	AccountCode        string   `json:"account_code"`
 	AccountName        string   `json:"account_name"`
@@ -173,7 +168,6 @@ type AccountCreationWorkflowResult struct {
 	Error            string                `json:"error,omitempty"`
 }
 
-// Account Closure Workflow Types
 type AccountClosureWorkflowInput struct {
 	AccountID     uuid.UUID `json:"account_id"`
 	ClosureReason string    `json:"closure_reason"`
@@ -191,7 +185,6 @@ type AccountClosureWorkflowResult struct {
 	Error         string               `json:"error,omitempty"`
 }
 
-// Account Reconciliation Workflow Types
 type AccountReconciliationWorkflowInput struct {
 	AccountID            uuid.UUID `json:"account_id"`
 	ReconciliationPeriod string    `json:"reconciliation_period"`
@@ -214,7 +207,6 @@ type AccountReconciliationWorkflowResult struct {
 	Error           string               `json:"error,omitempty"`
 }
 
-// Compliance Audit Workflow Types
 type ComplianceAuditWorkflowInput struct {
 	AuditType              string    `json:"audit_type"`
 	AuditPeriod            string    `json:"audit_period"`
@@ -242,7 +234,6 @@ type ComplianceAuditWorkflowResult struct {
 	Error           string                `json:"error,omitempty"`
 }
 
-// Fraud Detection Workflow Types
 type FraudDetectionWorkflowInput struct {
 	DetectionType     string                 `json:"detection_type"`
 	DetectionRules    []string               `json:"detection_rules"`
@@ -271,7 +262,6 @@ type FraudDetectionWorkflowResult struct {
 	Error                string               `json:"error,omitempty"`
 }
 
-// Month-End and Year-End Closing Workflow Types
 type MonthEndClosingWorkflowInput struct {
 	ClosingPeriod          string    `json:"closing_period"`
 	TenantID               uuid.UUID `json:"tenant_id"`
@@ -322,7 +312,6 @@ type YearEndClosingWorkflowResult struct {
 	Error               string                       `json:"error,omitempty"`
 }
 
-// Supporting types for workflow activities
 type ClosingStepResult struct {
 	StepName         string     `json:"step_name"`
 	Status           StepStatus `json:"status"`
@@ -339,7 +328,7 @@ type ComplianceViolation struct {
 	Severity      string          `json:"severity"`
 	TransactionID uuid.UUID       `json:"transaction_id,omitempty"`
 	AccountID     uuid.UUID       `json:"account_id,omitempty"`
-	Amount        decimal.Decimal `json:"amount,omitempty"`
+	Amount        decimal.Decimal `json:"amount"`
 	DetectedAt    time.Time       `json:"detected_at"`
 }
 
@@ -351,7 +340,7 @@ type FraudAlert struct {
 	RiskFactors   []string         `json:"risk_factors"`
 	Status        FraudAlertStatus `json:"status"`
 	DetectedAt    time.Time        `json:"detected_at"`
-	ReviewedAt    time.Time        `json:"reviewed_at,omitempty"`
+	ReviewedAt    time.Time        `json:"reviewed_at"`
 	ReviewedBy    string           `json:"reviewed_by,omitempty"`
 }
 
@@ -416,7 +405,6 @@ type ArchiveSettings struct {
 	IncludeAttachments bool          `json:"include_attachments"`
 }
 
-// Signal types for approval workflows
 type ApprovalSignal struct {
 	ApproverID string    `json:"approver_id"`
 	Comment    string    `json:"comment,omitempty"`
@@ -429,7 +417,6 @@ type RejectionSignal struct {
 	Timestamp  time.Time `json:"timestamp"`
 }
 
-// Additional supporting input/result types referenced in workflows
 type TransactionValidationInput struct {
 	TransactionID  uuid.UUID      `json:"transaction_id"`
 	ValidationType ValidationType `json:"validation_type"`
@@ -467,7 +454,6 @@ type ApprovalProcessResult struct {
 	Comments   []string       `json:"comments,omitempty"`
 }
 
-// Placeholder types for activities - these would be expanded as activities are implemented
 type DoubleEntryValidationInput struct {
 	TransactionID uuid.UUID `json:"transaction_id"`
 }
@@ -498,5 +484,5 @@ type ApprovalNotificationInput struct {
 	Comments      []string       `json:"comments,omitempty"`
 }
 
-// Add more activity input/result types as needed...
+// TODO: Add more activity input/result types as needed...
 // This file can be expanded as more workflow activities are implemented

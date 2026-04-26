@@ -11,7 +11,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// ValidationError represents a single validation error
 // ValidationResult holds the result of a validation operation
 type ValidationResult struct {
 	IsValid bool              `json:"is_valid"`

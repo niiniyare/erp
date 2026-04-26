@@ -73,19 +73,21 @@ func NewFinanceServices(
 	costCenterRepo := financeRepo.NewCostCenterRepository(store, tracer)
 	budgetRepo := financeRepo.NewBudgetRepository(store, tracer)
 	taxRepo := financeRepo.NewTaxRepository(store, tracer)
+	reconciliationRepo := financeRepo.NewReconciliationRepository(store, tracer)
 
 	_ = log // available for future use
 
 	return financeService.NewServices(financeService.Dependencies{
-		AccountRepo:      accountRepo,
-		TransactionRepo:  transactionRepo,
-		PeriodRepo:       periodRepo,
-		ExchangeRateRepo: exchangeRateRepo,
-		CurrencyRepo:     currencyRepo,
-		CostCenterRepo:   costCenterRepo,
-		BudgetRepo:       budgetRepo,
-		TaxRepo:          taxRepo,
-		Tracing:          tracer,
-		Metrics:          met,
+		AccountRepo:        accountRepo,
+		TransactionRepo:    transactionRepo,
+		PeriodRepo:         periodRepo,
+		ExchangeRateRepo:   exchangeRateRepo,
+		CurrencyRepo:       currencyRepo,
+		CostCenterRepo:     costCenterRepo,
+		BudgetRepo:         budgetRepo,
+		TaxRepo:            taxRepo,
+		ReconciliationRepo: reconciliationRepo,
+		Tracing:            tracer,
+		Metrics:            met,
 	})
 }

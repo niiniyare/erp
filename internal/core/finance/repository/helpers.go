@@ -3,6 +3,7 @@ package repository
 import (
 	"fmt"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 
 	db "awo.so/db/sqlc"
@@ -17,4 +18,19 @@ func txFrom(s db.Store) (pgx.Tx, error) {
 		return nil, fmt.Errorf("finance repository: store is not a TxStore — must be called inside a WithTenant callback")
 	}
 	return ts.GetTx(), nil
+}
+
+// nullUUID converts a non-pointer UUID to *uuid.UUID for use as a nullable
+// SQL parameter. uuid.Nil is returned as nil (SQL NULL).
+func nullUUID(id uuid.UUID) *uuid.UUID {
+	if id == uuid.Nil {
+		return nil
+	}
+	return &id
+}
+
+// nullUUID2 is an identity pass-through for *uuid.UUID: a nil pointer becomes
+// SQL NULL and a non-nil pointer passes the UUID value through unchanged.
+func nullUUID2(id *uuid.UUID) *uuid.UUID {
+	return id
 }

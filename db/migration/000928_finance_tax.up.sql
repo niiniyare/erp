@@ -7,17 +7,15 @@ CREATE TABLE IF NOT EXISTS finance_tax_authorities (
     authority_code   VARCHAR(20)  NOT NULL,
     authority_name   VARCHAR(255) NOT NULL,
     authority_type   VARCHAR(20)  NOT NULL
-                         CHECK (authority_type IN ('federal','state','local','municipal','vat','customs')),
-
+                     CHECK (authority_type IN ('FEDERAL','STATE','LOCAL','MUNICIPAL','VAT','CUSTOMS')),
     -- Jurisdiction
     country_code          CHAR(2)      NOT NULL,
     state_province_code   VARCHAR(10),
-    jurisdiction_level    VARCHAR(20)  NOT NULL DEFAULT 'national',
+    jurisdiction_level    VARCHAR(20)  NOT NULL DEFAULT 'NATIONAL',
 
     -- Filing rules
-    filing_frequency VARCHAR(20)  NOT NULL DEFAULT 'monthly'
-                         CHECK (filing_frequency IN ('weekly','monthly','quarterly','annual')),
-    filing_due_day   INT          NOT NULL DEFAULT 20,
+    filing_frequency VARCHAR(20)  NOT NULL DEFAULT 'MONTHLY'
+                         CHECK (filing_frequency IN ('WEEKLY','MONTHLY','QUARTERLY','ANNUAL')),    filing_due_day   INT          NOT NULL DEFAULT 20,
     payment_due_day  INT          NOT NULL DEFAULT 20,
 
     -- E-filing
@@ -38,6 +36,8 @@ CREATE INDEX idx_finance_tax_authorities_tenant  ON finance_tax_authorities(tena
 CREATE INDEX idx_finance_tax_authorities_country ON finance_tax_authorities(country_code);
 
 ALTER TABLE finance_tax_authorities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE finance_tax_authorities FORCE ROW LEVEL SECURITY;
+
 
 CREATE POLICY finance_tax_authorities_tenant_isolation
     ON finance_tax_authorities

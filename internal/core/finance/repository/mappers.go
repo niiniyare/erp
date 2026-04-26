@@ -282,9 +282,14 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceAccount) (*domain.Accounts, e
 		AccountName:                 sqlcAccount.AccountName,
 		AccountDescription:          sqlcAccount.AccountDescription,
 		ParentAccountID:             sqlcAccount.ParentAccountID,
-		AccountLevel:                sqlcAccount.AccountLevel,
-		AccountPath:                 sqlcAccount.AccountPath,
-		RootType:                    rootType,
+		AccountLevel: sqlcAccount.AccountLevel,
+		Path: func() domain.MaterialisedPath {
+			if sqlcAccount.AccountPath != nil {
+				return domain.MaterialisedPath(*sqlcAccount.AccountPath)
+			}
+			return ""
+		}(),
+		RootType: rootType,
 		AccountType:                 sqlcAccount.AccountType,
 		AccountSubtype:              sqlcAccount.AccountSubtype,
 		NormalBalance:               normalBalance,

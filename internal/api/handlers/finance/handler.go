@@ -1244,7 +1244,7 @@ func (h *FinanceHandler) CreateCostCenter(c *fiber.Ctx) error {
 	var req struct {
 		Code             string  `json:"code" validate:"required"`
 		Name             string  `json:"name" validate:"required"`
-		Description      string  `json:"description"`
+		Description      *string `json:"description"`
 		ParentID         *string `json:"parent_id"`
 		IsGroup          bool    `json:"is_group"`
 		IsDistributed    bool    `json:"is_distributed"`
@@ -1329,7 +1329,7 @@ func (h *FinanceHandler) UpdateCostCenter(c *fiber.Ctx) error {
 	var req struct {
 		Code             string  `json:"code" validate:"required"`
 		Name             string  `json:"name" validate:"required"`
-		Description      string  `json:"description"`
+		Description      *string `json:"description"`
 		ParentID         *string `json:"parent_id"`
 		IsGroup          bool    `json:"is_group"`
 		IsDistributed    bool    `json:"is_distributed"`
@@ -1764,6 +1764,234 @@ func (h *FinanceHandler) UpdateTaxCode(c *fiber.Ctx) error {
 		return h.HandleError(c, err)
 	}
 	return h.Success(c, updated)
+}
+
+// ============================================================================
+// BANK RECONCILIATION ENDPOINTS
+// ============================================================================
+
+// ImportBankStatement handles POST /api/v1/finance/reconciliation/statements
+func (h *FinanceHandler) ImportBankStatement(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ImportBankStatement")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var req struct {
+		AccountID          string  `json:"account_id" validate:"required"`
+		StatementReference string  `json:"statement_reference" validate:"required"`
+		StatementDate      string  `json:"statement_date" validate:"required"`
+		StartDate          string  `json:"start_date" validate:"required"`
+		CurrencyCode       string  `json:"currency_code" validate:"required"`
+		OpeningBalance     float64 `json:"opening_balance"`
+		ClosingBalance     float64 `json:"closing_balance"`
+		Lines              []struct {
+			TransactionDate string  `json:"transaction_date" validate:"required"`
+			ValueDate       *string `json:"value_date"`
+			Description     string  `json:"description" validate:"required"`
+			Reference       *string `json:"reference"`
+			DebitAmount     float64 `json:"debit_amount"`
+			CreditAmount    float64 `json:"credit_amount"`
+			Balance         float64 `json:"balance"`
+		} `json:"lines"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+
+	accountID, err := uuid.Parse(req.AccountID)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid account_id").WithHTTPStatus(400))
+	}
+	stmtDate, err := time.Parse("2006-01-02", req.StatementDate)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "statement_date must be YYYY-MM-DD").WithHTTPStatus(400))
+	}
+	startDate, err := time.Parse("2006-01-02", req.StartDate)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "start_date must be YYYY-MM-DD").WithHTTPStatus(400))
+	}
+
+	userID, _ := c.Locals("user_id").(uuid.UUID)
+	stmt := &financeDomain.BankStatement{
+		AccountID:          accountID,
+		StatementReference: req.StatementReference,
+		StatementDate:      stmtDate,
+		StartDate:          startDate,
+		CurrencyCode:       req.CurrencyCode,
+		OpeningBalance:     decimalFromFloat(req.OpeningBalance),
+		ClosingBalance:     decimalFromFloat(req.ClosingBalance),
+		CreatedBy:          userID,
+	}
+
+	var lines []*financeDomain.BankStatementLine
+	for _, l := range req.Lines {
+		txDate, err := time.Parse("2006-01-02", l.TransactionDate)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "line transaction_date must be YYYY-MM-DD").WithHTTPStatus(400))
+		}
+		li := &financeDomain.BankStatementLine{
+			TransactionDate: txDate,
+			Description:     l.Description,
+			Reference:       l.Reference,
+			DebitAmount:     decimalFromFloat(l.DebitAmount),
+			CreditAmount:    decimalFromFloat(l.CreditAmount),
+			Balance:         decimalFromFloat(l.Balance),
+		}
+		if l.ValueDate != nil {
+			vd, err := time.Parse("2006-01-02", *l.ValueDate)
+			if err != nil {
+				return h.HandleError(c, errors.NewBusinessError("INVALID_DATE", "line value_date must be YYYY-MM-DD").WithHTTPStatus(400))
+			}
+			li.ValueDate = &vd
+		}
+		lines = append(lines, li)
+	}
+
+	created, err := h.services.Reconciliation.ImportStatement(ctx, stmt, lines)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Created(c, created)
+}
+
+// GetBankStatement handles GET /api/v1/finance/reconciliation/statements/:id
+func (h *FinanceHandler) GetBankStatement(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.GetBankStatement")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid statement ID").WithHTTPStatus(400))
+	}
+
+	stmt, err := h.services.Reconciliation.GetStatement(ctx, id)
+	if err != nil {
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, stmt)
+}
+
+// ListBankStatements handles GET /api/v1/finance/reconciliation/statements
+func (h *FinanceHandler) ListBankStatements(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListBankStatements")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	var accountID *uuid.UUID
+	if raw := c.Query("account_id"); raw != "" {
+		id, err := uuid.Parse(raw)
+		if err != nil {
+			return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid account_id").WithHTTPStatus(400))
+		}
+		accountID = &id
+	}
+
+	list, err := h.services.Reconciliation.ListStatements(ctx, accountID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, list)
+}
+
+// ListStatementLines handles GET /api/v1/finance/reconciliation/statements/:id/lines
+func (h *FinanceHandler) ListStatementLines(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.ListStatementLines")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid statement ID").WithHTTPStatus(400))
+	}
+
+	unmatchedOnly := c.QueryBool("unmatched_only", false)
+	lines, err := h.services.Reconciliation.ListLines(ctx, id, unmatchedOnly)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, lines)
+}
+
+// MatchStatementLine handles POST /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+func (h *FinanceHandler) MatchStatementLine(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.MatchStatementLine")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	statementID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid statement ID").WithHTTPStatus(400))
+	}
+	lineID, err := uuid.Parse(c.Params("line_id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid line ID").WithHTTPStatus(400))
+	}
+
+	var req struct {
+		EntryID string `json:"entry_id" validate:"required"`
+	}
+	if err := h.ValidateRequest(c, &req); err != nil {
+		return h.HandleError(c, err)
+	}
+	entryID, err := uuid.Parse(req.EntryID)
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid entry_id").WithHTTPStatus(400))
+	}
+
+	userID, _ := c.Locals("user_id").(uuid.UUID)
+	stmt, err := h.services.Reconciliation.MatchLine(ctx, statementID, lineID, entryID, userID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, stmt)
+}
+
+// UnmatchStatementLine handles DELETE /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+func (h *FinanceHandler) UnmatchStatementLine(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.UnmatchStatementLine")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	statementID, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid statement ID").WithHTTPStatus(400))
+	}
+	lineID, err := uuid.Parse(c.Params("line_id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid line ID").WithHTTPStatus(400))
+	}
+
+	stmt, err := h.services.Reconciliation.UnmatchLine(ctx, statementID, lineID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, stmt)
+}
+
+// CompleteReconciliation handles POST /api/v1/finance/reconciliation/statements/:id/complete
+func (h *FinanceHandler) CompleteReconciliation(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "finance.CompleteReconciliation")
+	defer span.End()
+	c.SetUserContext(ctx)
+
+	id, err := uuid.Parse(c.Params("id"))
+	if err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_ID", "invalid statement ID").WithHTTPStatus(400))
+	}
+
+	userID, _ := c.Locals("user_id").(uuid.UUID)
+	stmt, err := h.services.Reconciliation.CompleteReconciliation(ctx, id, userID)
+	if err != nil {
+		span.RecordError(err)
+		return h.HandleError(c, err)
+	}
+	return h.Success(c, stmt)
 }
 
 // decimalFromFloat converts a float64 to a decimal.Decimal.

@@ -51,6 +51,7 @@ type AccountsRepository interface {
 	HasTransactions(ctx context.Context, accountID uuid.UUID) (bool, error)
 	UpdateBalance(ctx context.Context, accountID uuid.UUID, balance AccountBalance) error
 
+	// FIXME:
 	// Enhanced view-based operations
 	// GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*AccountWithGroups, error)
 	// GetAccountWithGroupsByCode(ctx context.Context, code string) (*AccountWithGroups, error)
@@ -69,7 +70,7 @@ type AccountsRepository interface {
 	// GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*TrialBalanceSummary, error)
 	// GetAccountsWithBalances(ctx context.Context, filter *BalanceFilter) ([]*AccountGroupRepository, error)
 	// GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*CashFlowAccount, error)
-	GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountBalance, error)
+	// GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*AccountGroup, error)
 
 	// Account Group operations (unified in AccountsRepository)
 	// Basic CRUD operations for account groups
@@ -429,12 +430,12 @@ type UnifiedAccountRepository interface {
 	ListAccountsAndGroups(ctx context.Context, filter *AccountGroupFilter) ([]*Accounts, error)
 	GetHierarchyWithGroups(ctx context.Context, entityID *uuid.UUID) ([]*Accounts, error)
 	SearchAccountsAndGroups(ctx context.Context, query string, limit int) ([]*Accounts, error)
-	GetNodePath(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
+	GetNodePath(ctx context.Context, nodeID uuid.UUID, isGroup bool) ([]*Accounts, error)
 
 	// Tree operations
-	GetSubtree(ctx context.Context, rootID uuid.UUID, rootType AccountNodeType, maxDepth *int) ([]*Accounts, error)
-	GetSiblings(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
-	GetNodeChildren(ctx context.Context, nodeID uuid.UUID, nodeType AccountNodeType) ([]*Accounts, error)
+	GetSubtree(ctx context.Context, rootID uuid.UUID, isGroup bool, maxDepth *int) ([]*Accounts, error)
+	GetSiblings(ctx context.Context, nodeID uuid.UUID, isGroup bool) ([]*Accounts, error)
+	GetNodeChildren(ctx context.Context, nodeID uuid.UUID, isGroup bool) ([]*Accounts, error)
 }
 
 // Repository factory for creating repository instances
@@ -505,6 +506,25 @@ type BudgetRepository interface {
 	CreateLineItems(ctx context.Context, lines []*BudgetLineItem) error
 	GetLineItems(ctx context.Context, budgetID uuid.UUID) ([]*BudgetLineItem, error)
 	DeleteLineItems(ctx context.Context, budgetID uuid.UUID) error
+}
+
+// ReconciliationRepository defines persistence for bank statements and statement lines.
+type ReconciliationRepository interface {
+	// Statement header operations
+	CreateStatement(ctx context.Context, s *BankStatement) error
+	GetStatementByID(ctx context.Context, id uuid.UUID) (*BankStatement, error)
+	ListStatements(ctx context.Context, tenantID uuid.UUID, accountID *uuid.UUID) ([]*BankStatement, error)
+	UpdateStatement(ctx context.Context, s *BankStatement) error
+
+	// Statement line operations
+	CreateLines(ctx context.Context, lines []*BankStatementLine) error
+	GetLine(ctx context.Context, lineID uuid.UUID) (*BankStatementLine, error)
+	ListLines(ctx context.Context, statementID uuid.UUID, unmatchedOnly bool) ([]*BankStatementLine, error)
+	MatchLine(ctx context.Context, lineID, entryID uuid.UUID, byUserID uuid.UUID) error
+	UnmatchLine(ctx context.Context, lineID uuid.UUID) error
+
+	// Reconciliation completion
+	CompleteReconciliation(ctx context.Context, statementID uuid.UUID, byUserID uuid.UUID) error
 }
 
 // TaxRepository defines persistence for tax authorities, codes, and brackets.

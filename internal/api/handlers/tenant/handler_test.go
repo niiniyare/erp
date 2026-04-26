@@ -75,6 +75,7 @@ func (suite *TenantHandlerTestSuite) SetupTest() {
 		suite.mockLogger,
 		suite.mockMetrics,
 		suite.mockTracer,
+		nil,
 	)
 
 	// Setup test data
@@ -930,7 +931,7 @@ func BenchmarkTenantHandler_Create(b *testing.B) {
 	// For now, using nil service (tests will fail)
 	var tenantService tenant.Service
 
-	NewTenantHandler(tenantService, mockLogger, mockMetrics, mockTracer)
+	NewTenantHandler(tenantService, mockLogger, mockMetrics, mockTracer, nil)
 	app := fiber.New()
 	// TODO: setupTenantRoutes implementation
 	// setupTenantRoutes(app, handler)
@@ -974,7 +975,7 @@ func BenchmarkTenantHandler_List(b *testing.B) {
 	// For now, using nil service (tests will fail)
 	var tenantService tenant.Service
 
-	NewTenantHandler(tenantService, mockLogger, mockMetrics, mockTracer)
+	NewTenantHandler(tenantService, mockLogger, mockMetrics, mockTracer, nil)
 	app := fiber.New()
 
 	// TODO: setupTenantRoutes implementation

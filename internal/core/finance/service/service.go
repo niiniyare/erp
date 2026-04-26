@@ -22,6 +22,7 @@ type Services struct {
 	CostCenter       CostCenterService
 	Budget           BudgetService
 	Tax              TaxService
+	Reconciliation   ReconciliationService
 }
 
 // Dependencies contains the required dependencies to create finance services
@@ -33,9 +34,10 @@ type Dependencies struct {
 	PeriodRepo       domain.PeriodRepository
 	ExchangeRateRepo domain.ExchangeRateRepository
 	CurrencyRepo     CurrencyRepository
-	CostCenterRepo   domain.CostCenterRepository
-	BudgetRepo       domain.BudgetRepository
-	TaxRepo          domain.TaxRepository
+	CostCenterRepo      domain.CostCenterRepository
+	BudgetRepo          domain.BudgetRepository
+	TaxRepo             domain.TaxRepository
+	ReconciliationRepo  domain.ReconciliationRepository
 	Tracing            tracing.Service
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
@@ -78,6 +80,7 @@ func NewServices(deps Dependencies) *Services {
 	costCenterService := NewCostCenterService(deps.CostCenterRepo, deps.Tracing, deps.Metrics)
 	budgetService := NewBudgetService(deps.BudgetRepo, deps.Tracing, deps.Metrics)
 	taxService := NewTaxService(deps.TaxRepo, deps.Tracing, deps.Metrics)
+	reconciliationService := NewReconciliationService(deps.ReconciliationRepo, deps.Tracing, deps.Metrics)
 
 	return &Services{
 		Account:          accountService,
@@ -89,6 +92,7 @@ func NewServices(deps Dependencies) *Services {
 		CostCenter:       costCenterService,
 		Budget:           budgetService,
 		Tax:              taxService,
+		Reconciliation:   reconciliationService,
 	}
 }
 

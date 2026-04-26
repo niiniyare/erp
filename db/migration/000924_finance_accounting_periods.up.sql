@@ -9,8 +9,8 @@ CREATE TABLE finance_accounting_periods (
     name            TEXT        NOT NULL,  -- e.g. "Jan 2025"
     start_date      DATE        NOT NULL,
     end_date        DATE        NOT NULL,
-    status          TEXT        NOT NULL DEFAULT 'open'
-                        CHECK (status IN ('open', 'soft_closed', 'hard_closed', 'locked')),
+    status          TEXT        NOT NULL DEFAULT 'OPEN'
+                        CHECK (status IN ('OPEN', 'SOFT_CLOSED', 'HARD_CLOSED', 'LOCKED')),
     closed_at       TIMESTAMPTZ,
     closed_by       UUID        REFERENCES users(id),
     locked_at       TIMESTAMPTZ,
@@ -27,7 +27,7 @@ CREATE INDEX idx_finance_periods_tenant      ON finance_accounting_periods (tena
 CREATE INDEX idx_finance_periods_fiscal_year ON finance_accounting_periods (tenant_id, fiscal_year_id);
 CREATE INDEX idx_finance_periods_date        ON finance_accounting_periods (tenant_id, start_date, end_date);
 CREATE INDEX idx_finance_periods_open        ON finance_accounting_periods (tenant_id, status)
-    WHERE status = 'open';
+    WHERE status = 'OPEN';
 
 ALTER TABLE finance_accounting_periods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE finance_accounting_periods FORCE  ROW LEVEL SECURITY;

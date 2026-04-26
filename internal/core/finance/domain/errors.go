@@ -54,6 +54,13 @@ var (
 	ErrTaxCodeNotFound      = errors.New("tax code not found")
 	ErrTaxCodeExists        = errors.New("tax code already exists within tenant")
 
+	// Bank reconciliation errors
+	ErrStatementNotFound      = errors.New("bank statement not found")
+	ErrStatementAlreadyClosed = errors.New("bank statement is already completed")
+	ErrLineNotFound           = errors.New("bank statement line not found")
+	ErrLineAlreadyMatched     = errors.New("statement line is already matched to a journal entry")
+	ErrEntryAlreadyReconciled = errors.New("journal entry is already reconciled")
+
 	// Validation errors
 	ErrInvalidCurrencyCode = errors.New("invalid currency code")
 	ErrInvalidExchangeRate = errors.New("invalid exchange rate")

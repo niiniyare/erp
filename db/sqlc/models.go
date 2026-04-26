@@ -470,6 +470,7 @@ type FinanceAccount struct {
 	// Normal balance type — DEBIT for assets/expenses, CREDIT for liabilities/equity/revenue.
 	NormalBalance               string         `json:"normal_balance"`
 	IsControlAccount            bool           `json:"is_control_account"`
+	HasChildren                 bool           `json:"has_children"`
 	ControlAccountID            *uuid.UUID     `json:"control_account_id"`
 	CurrencyCode                *string        `json:"currency_code"`
 	IsMultiCurrency             *bool          `json:"is_multi_currency"`
@@ -477,6 +478,7 @@ type FinanceAccount struct {
 	IsActive                    bool           `json:"is_active"`
 	IsSystemAccount             bool           `json:"is_system_account"`
 	AllowManualEntries          bool           `json:"allow_manual_entries"`
+	IsLeaf                      *bool          `json:"is_leaf"`
 	RequireReference            bool           `json:"require_reference"`
 	CurrentBalance              pgtype.Numeric `json:"current_balance"`
 	YtdBalance                  pgtype.Numeric `json:"ytd_balance"`
@@ -495,7 +497,6 @@ type FinanceAccount struct {
 	DeletedAt                   sql.NullTime   `json:"deleted_at"`
 	CreatedBy                   *uuid.UUID     `json:"created_by"`
 	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
-	HasChildren                 *bool          `json:"has_children"`
 	IsLeafAccount               *bool          `json:"is_leaf_account"`
 }
 
@@ -607,6 +608,44 @@ type FinanceApprovalHistory struct {
 	PerformedBy   *uuid.UUID `json:"performed_by"`
 	Notes         string     `json:"notes"`
 	CreatedAt     time.Time  `json:"created_at"`
+}
+
+type FinanceBankStatement struct {
+	ID                 uuid.UUID      `json:"id"`
+	TenantID           uuid.UUID      `json:"tenant_id"`
+	AccountID          uuid.UUID      `json:"account_id"`
+	StatementReference string         `json:"statement_reference"`
+	StatementDate      time.Time      `json:"statement_date"`
+	StartDate          time.Time      `json:"start_date"`
+	CurrencyCode       string         `json:"currency_code"`
+	OpeningBalance     pgtype.Numeric `json:"opening_balance"`
+	ClosingBalance     pgtype.Numeric `json:"closing_balance"`
+	Status             string         `json:"status"`
+	MatchedCount       int32          `json:"matched_count"`
+	UnmatchedCount     int32          `json:"unmatched_count"`
+	DifferenceAmount   pgtype.Numeric `json:"difference_amount"`
+	CreatedAt          time.Time      `json:"created_at"`
+	UpdatedAt          time.Time      `json:"updated_at"`
+	CreatedBy          *uuid.UUID     `json:"created_by"`
+	UpdatedBy          *uuid.UUID     `json:"updated_by"`
+}
+
+type FinanceBankStatementLine struct {
+	ID              uuid.UUID      `json:"id"`
+	StatementID     uuid.UUID      `json:"statement_id"`
+	TenantID        uuid.UUID      `json:"tenant_id"`
+	TransactionDate time.Time      `json:"transaction_date"`
+	ValueDate       time.Time      `json:"value_date"`
+	Description     string         `json:"description"`
+	Reference       *string        `json:"reference"`
+	DebitAmount     pgtype.Numeric `json:"debit_amount"`
+	CreditAmount    pgtype.Numeric `json:"credit_amount"`
+	Balance         pgtype.Numeric `json:"balance"`
+	IsReconciled    bool           `json:"is_reconciled"`
+	ReconciledAt    sql.NullTime   `json:"reconciled_at"`
+	ReconciledBy    *uuid.UUID     `json:"reconciled_by"`
+	MatchedEntryID  *uuid.UUID     `json:"matched_entry_id"`
+	CreatedAt       time.Time      `json:"created_at"`
 }
 
 type FinanceBudget struct {

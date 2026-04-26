@@ -385,7 +385,7 @@ func (e *TransactionEntry) ValidateBusinessRules(account *Accounts) []Validation
 
 	// Validate account allows the entry type (manual vs system)
 	if !account.AllowManualEntries {
-		// This validation would need context about whether this is a manual entry
+		// FIXME: This validation would need context about whether this is a manual entry
 		// For now, we'll skip this check as it requires transaction context
 	}
 

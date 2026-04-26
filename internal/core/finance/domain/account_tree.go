@@ -27,9 +27,9 @@ import (
 // It is assembled by the ChartOfAccountsQueryHandler from Account and
 // ReportingGroup data. It must never be stored or passed to write-side services.
 //
-// The NodeType discriminator indicates which embedded data block is populated:
-//   - NodeTypeAccount → AccountData is populated; GroupData is nil.
-//   - NodeTypeGroup   → GroupData is populated; AccountData is nil.
+// IsGroup discriminates the payload:
+//   - IsGroup == false → AccountData is populated; GroupData is nil.
+//   - IsGroup == true  → GroupData is populated; AccountData is nil.
 type AccountTreeNode struct {
 	// Common identity fields
 	ID       uuid.UUID  `json:"id"`
@@ -39,8 +39,8 @@ type AccountTreeNode struct {
 	Name     string     `json:"name"`
 	IsActive bool       `json:"is_active"`
 
-	// NodeType discriminates the payload.
-	NodeType AccountNodeType `json:"node_type"`
+	// IsGroup is true when this node represents an AccountGroup; false for an Account.
+	IsGroup bool `json:"is_group"`
 
 	// Hierarchy metadata — always populated regardless of node type.
 	ParentID    *uuid.UUID       `json:"parent_id,omitempty"`
@@ -49,10 +49,10 @@ type AccountTreeNode struct {
 	HasChildren bool             `json:"has_children"`
 	ChildCount  int              `json:"child_count"`
 
-	// AccountData is populated when NodeType == NodeTypeAccount.
+	// AccountData is populated when IsGroup == false.
 	AccountData *AccountNodeData `json:"account,omitempty"`
 
-	// GroupData is populated when NodeType == NodeTypeGroup.
+	// GroupData is populated when IsGroup == true.
 	GroupData *GroupNodeData `json:"group,omitempty"`
 
 	// Audit timestamps
@@ -61,14 +61,6 @@ type AccountTreeNode struct {
 	CreatedBy uuid.UUID  `json:"created_by"`
 	UpdatedBy *uuid.UUID `json:"updated_by,omitempty"`
 }
-
-// AccountNodeType mirrors domain constants — re-exported for query layer use.
-type AccountNodeType = string
-
-const (
-	NodeTypeAccount AccountNodeType = "ACCOUNT"
-	NodeTypeGroup   AccountNodeType = "GROUP"
-)
 
 // AccountNodeData carries account-specific projection fields.
 // These are derived from the Account entity and cached balance tables.
@@ -202,7 +194,7 @@ type ChartOfAccountsView struct {
 type TreeFilter struct {
 	EntityID          *uuid.UUID        `json:"entity_id,omitempty"`
 	ReportingSchemeID *uuid.UUID        `json:"reporting_scheme_id,omitempty"`
-	NodeTypes         []AccountNodeType `json:"node_types,omitempty"` // nil = both
+	IsGroup           *bool             `json:"is_group,omitempty"` // nil = both accounts and groups
 	ParentID          *uuid.UUID        `json:"parent_id,omitempty"`
 	IsActive          *bool             `json:"is_active,omitempty"`
 	SearchQuery       *string           `json:"search_query,omitempty"`

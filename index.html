@@ -4,2141 +4,2307 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Awo ERP — Modern Business Management for East Africa</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Epilogue:wght@300;400;500&display=swap"
-    rel="stylesheet">
+  <title>Feature Flags UI</title>
   <style>
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0
-    }
-
-    :root {
-      --am: #E8A032;
-      --aml: #F4C060;
-      --amd: #7A4E0F;
-      --amdim: rgba(232, 160, 50, .1);
-      --tl: #1FA88A;
-      --bg: #080807;
-      --bgs: #0f0f0d;
-      --bgc: #141410;
-      --bgh: #1a1a15;
-      --br: rgba(232, 160, 50, .11);
-      --brl: rgba(232, 160, 50, .22);
-      --tx: #F0EDE4;
-      --txm: #A8A49A;
-      --txd: #5E5C56;
-      --fh: 'Syne', sans-serif;
-      --fb: 'Epilogue', sans-serif
-    }
-
-    html {
-      scroll-behavior: smooth
-    }
-
     body {
-      background: var(--bg);
-      color: var(--tx);
-      font-family: var(--fb);
-      font-size: 16px;
-      line-height: 1.7;
-      overflow-x: hidden;
-      width: 100%;
-      max-width: 100vw
+      font-family: Arial, sans-serif;
+      background: #f5f7fb;
+      margin: 0;
+      padding: 20px;
     }
 
-    body::after {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 9999;
-      opacity: .026;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-      background-size: 128px
+    .container {
+      max-width: 900px;
+      margin: auto;
     }
 
-    /* NAV */
-    nav {
-      position: fixed;
-      top: 0;
-      inset-inline: 0;
-      z-index: 800;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .8rem clamp(.9rem, 4vw, 2.5rem);
-      background: rgba(8, 8, 7, .82);
-      backdrop-filter: blur(18px);
-      border-bottom: .5px solid var(--br);
-      gap: .75rem
-    }
-
-    .nav-logo {
-      display: flex;
-      align-items: center;
-      gap: .45rem;
-      text-decoration: none;
-      font-family: var(--fh);
-      font-size: 1rem;
-      font-weight: 800;
-      letter-spacing: -.03em;
-      color: var(--tx);
-      flex-shrink: 0;
-      min-width: 0
-    }
-
-    .lm {
-      width: 24px;
-      height: 24px;
-      background: var(--am);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0
-    }
-
-    .lm svg {
-      width: 12px;
-      height: 12px
-    }
-
-    .nav-links {
-      display: flex;
-      gap: 1.5rem;
-      list-style: none;
-      margin: 0 auto
-    }
-
-    .nav-links a {
-      font-size: .75rem;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--txd);
-      text-decoration: none;
-      transition: color .2s;
-      position: relative;
-      white-space: nowrap
-    }
-
-    .nav-links a::after {
-      content: '';
-      position: absolute;
-      bottom: -3px;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: var(--am);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform .25s
-    }
-
-    .nav-links a:hover {
-      color: var(--tx)
-    }
-
-    .nav-links a:hover::after {
-      transform: scaleX(1)
-    }
-
-    .nav-cta {
-      font-family: var(--fh);
-      font-size: .72rem;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--bg);
-      background: var(--am);
-      border: none;
-      padding: .45rem 1rem;
-      border-radius: 3px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background .2s, transform .15s;
-      white-space: nowrap;
-      flex-shrink: 0;
-      display: inline-block
-    }
-
-    .nav-cta:hover {
-      background: var(--aml);
-      transform: translateY(-1px)
-    }
-
-    @media(max-width:600px) {
-      .nav-links {
-        display: none
-      }
-    }
-
-    /* TICKER */
-    .tkw {
-      position: fixed;
-      top: 47px;
-      inset-inline: 0;
-      z-index: 700;
-      overflow: hidden;
-      border-bottom: .5px solid var(--br);
-      background: rgba(8, 8, 7, .65);
-      backdrop-filter: blur(10px);
-      padding: .38rem 0;
-      white-space: nowrap
-    }
-
-    .tkt {
-      display: inline-block;
-      animation: tick 38s linear infinite
-    }
-
-    @keyframes tick {
-      0% {
-        transform: translateX(0)
-      }
-
-      100% {
-        transform: translateX(-50%)
-      }
-    }
-
-    .ti {
-      display: inline-block;
-      margin: 0 1.75rem;
-      font-size: .6rem;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-      color: var(--txd)
-    }
-
-    .ti b {
-      color: var(--am);
-      margin-right: .3rem;
-      font-weight: 400
-    }
-
-    /* HERO */
-    .hero {
-      min-height: 100svh;
-      display: flex;
-      align-items: center;
-      padding: clamp(6rem, 18vw, 9.5rem) clamp(.9rem, 5vw, 3.5rem) clamp(2.5rem, 5vw, 4rem);
-      position: relative;
-      overflow: hidden
-    }
-
-    .orb1 {
-      position: absolute;
-      width: min(65vw, 580px);
-      height: min(65vw, 580px);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(232, 160, 50, .065) 0%, transparent 70%);
-      top: -12%;
-      right: -8%;
-      pointer-events: none;
-      animation: ob1 9s ease-in-out infinite
-    }
-
-    .orb2 {
-      position: absolute;
-      width: min(45vw, 380px);
-      height: min(45vw, 380px);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(31, 168, 138, .05) 0%, transparent 70%);
-      bottom: -8%;
-      left: -6%;
-      pointer-events: none;
-      animation: ob2 11s ease-in-out infinite
-    }
-
-    @keyframes ob1 {
-
-      0%,
-      100% {
-        transform: translate(0, 0) scale(1)
-      }
-
-      50% {
-        transform: translate(-25px, 18px) scale(1.04)
-      }
-    }
-
-    @keyframes ob2 {
-
-      0%,
-      100% {
-        transform: translate(0, 0)
-      }
-
-      50% {
-        transform: translate(18px, -18px)
-      }
-    }
-
-    .hgrid {
-      position: absolute;
-      inset: 0;
-      pointer-events: none;
-      background-image: linear-gradient(rgba(232, 160, 50, .022) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(232, 160, 50, .022) 1px, transparent 1px);
-      background-size: 52px 52px;
-      mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, black, transparent)
-    }
-
-    .hero-in {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto
-    }
-
-    .hero-wrap {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 2.5rem;
-      align-items: center
-    }
-
-    @media(min-width:860px) {
-      .hero-wrap {
-        grid-template-columns: 1.15fr .85fr
-      }
-    }
-
-    .hbadge {
-      display: inline-flex;
-      align-items: center;
-      gap: .45rem;
-      font-size: .65rem;
-      letter-spacing: .13em;
-      text-transform: uppercase;
-      color: var(--am);
-      border: .5px solid var(--brl);
-      padding: .28rem .8rem;
-      border-radius: 100px;
-      margin-bottom: clamp(.9rem, 2vw, 1.4rem);
-      animation: fi .7s ease both
-    }
-
-    .hbadge::before {
-      content: '';
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: var(--am);
-      flex-shrink: 0;
-      animation: pulse 2s ease-in-out infinite
-    }
-
-    @keyframes pulse {
-
-      0%,
-      100% {
-        opacity: 1
-      }
-
-      50% {
-        opacity: .3
-      }
-    }
-
-    @keyframes fi {
-      from {
-        opacity: 0;
-        transform: translateY(8px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    h1.hh {
-      font-family: var(--fh);
-      font-size: clamp(2.4rem, 6.5vw, 5rem);
-      font-weight: 800;
-      line-height: 1.02;
-      letter-spacing: -.04em;
-      color: var(--tx);
-      margin-bottom: 1.1rem;
-      animation: fi .85s .1s ease both;
-      word-break: break-word;
-      hyphens: auto
-    }
-
-    h1.hh em {
-      font-style: normal;
-      color: var(--am)
-    }
-
-    .hsub {
-      font-size: clamp(.85rem, 2vw, 1rem);
-      font-weight: 300;
-      color: var(--txm);
-      line-height: 1.75;
-      margin-bottom: 1.75rem;
-      animation: fi .85s .18s ease both
-    }
-
-    .hacts {
-      display: flex;
-      flex-wrap: wrap;
-      gap: .75rem;
-      align-items: center;
-      animation: fi .85s .26s ease both
-    }
-
-    .btnp {
-      font-family: var(--fh);
-      font-size: .78rem;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--bg);
-      background: var(--am);
-      border: none;
-      padding: .75rem 1.6rem;
-      border-radius: 3px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: background .2s, transform .15s, box-shadow .2s;
-      display: inline-block
-    }
-
-    .btnp:hover {
-      background: var(--aml);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(232, 160, 50, .22)
-    }
-
-    .btng {
-      font-size: .82rem;
-      color: var(--txd);
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: .35rem;
-      transition: color .2s
-    }
-
-    .btng::after {
-      content: '↓';
-      transition: transform .2s
-    }
-
-    .btng:hover {
-      color: var(--tx)
-    }
-
-    .btng:hover::after {
-      transform: translateY(3px)
-    }
-
-    .hstats {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0;
-      margin-top: clamp(1.75rem, 4vw, 3rem);
-      border: .5px solid var(--br);
-      border-radius: 7px;
-      overflow: hidden;
-      animation: fi .85s .38s ease both
-    }
-
-    .hs {
-      flex: 1;
-      min-width: 100px;
-      padding: .9rem 1.1rem;
-      border-right: .5px solid var(--br);
-      position: relative;
-      overflow: hidden;
-      transition: background .25s
-    }
-
-    .hs:last-child {
-      border-right: none
-    }
-
-    .hs::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--am);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform .3s
-    }
-
-    .hs:hover {
-      background: var(--bgc)
-    }
-
-    .hs:hover::before {
-      transform: scaleX(1)
-    }
-
-    .hsn {
-      font-family: var(--fh);
-      font-size: clamp(1.2rem, 2.5vw, 1.8rem);
-      font-weight: 800;
-      letter-spacing: -.04em;
-      color: var(--am);
-      line-height: 1
-    }
-
-    .hsl {
-      font-size: .68rem;
-      color: var(--txd);
-      margin-top: .18rem;
-      line-height: 1.4
-    }
-
-    /* Gauge visual */
-    .varea {
-      display: none
-    }
-
-    @media(min-width:860px) {
-      .varea {
-        display: flex;
-        align-items: center;
-        justify-content: center
-      }
-    }
-
-    .gc {
-      position: relative;
-      width: 280px;
-      height: 280px
-    }
-
-    .gr {
-      position: absolute;
-      inset: 0;
-      border-radius: 50%;
-      border: .5px solid var(--br)
-    }
-
-    .gr2 {
-      position: absolute;
-      inset: 18px;
-      border-radius: 50%;
-      border: .5px solid rgba(232, 160, 50, .05)
-    }
-
-    .gcen {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center
-    }
-
-    .gv {
-      font-family: var(--fh);
-      font-size: 2.2rem;
-      font-weight: 800;
-      color: var(--am);
-      letter-spacing: -.05em;
-      line-height: 1
-    }
-
-    .gl2 {
-      font-size: .6rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--txd);
-      margin-top: .18rem
-    }
-
-    .fcrd {
-      position: absolute;
-      background: var(--bgc);
-      border: .5px solid var(--br);
-      border-radius: 7px;
-      padding: .55rem .8rem;
-      animation: flt 4s ease-in-out infinite
-    }
-
-    .fcrd:nth-child(1) {
-      top: -8%;
-      right: -18%;
-      animation-delay: 0s
-    }
-
-    .fcrd:nth-child(2) {
-      bottom: 4%;
-      left: -18%;
-      animation-delay: 1.6s
-    }
-
-    @keyframes flt {
-
-      0%,
-      100% {
-        transform: translateY(0)
-      }
-
-      50% {
-        transform: translateY(-7px)
-      }
-    }
-
-    .fcl {
-      font-size: .58rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--txd);
-      margin-bottom: .12rem
-    }
-
-    .fcv {
-      font-family: var(--fh);
-      font-weight: 700;
-      font-size: .88rem;
-      color: var(--tx)
-    }
-
-    .fcv.g {
-      color: #4BC49A
-    }
-
-    .fcv.a {
-      color: var(--am)
-    }
-
-    /* COUNTER STRIP */
-    .cstrip {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      border-top: .5px solid var(--br);
-      border-bottom: .5px solid var(--br)
-    }
-
-    .csi {
-      padding: clamp(1.1rem, 2.5vw, 1.8rem) clamp(.75rem, 2vw, 1.75rem);
-      border-right: .5px solid var(--br);
-      position: relative;
-      overflow: hidden;
-      transition: background .25s
-    }
-
-    .csi:last-child {
-      border-right: none
-    }
-
-    .csi:hover {
-      background: var(--bgc)
-    }
-
-    .csi::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 0;
-      height: 1px;
-      background: var(--am);
-      transition: width .4s
-    }
-
-    .csi:hover::after {
-      width: 100%
-    }
-
-    .csin {
-      font-family: var(--fh);
-      font-size: clamp(1.6rem, 3.5vw, 2.6rem);
-      font-weight: 800;
-      letter-spacing: -.05em;
-      color: var(--tx);
-      line-height: 1
-    }
-
-    .csin span {
-      color: var(--am)
-    }
-
-    .csil {
-      font-size: .72rem;
-      color: var(--txd);
-      margin-top: .25rem;
-      line-height: 1.45
-    }
-
-    /* SECTION */
-    .sec {
-      padding: clamp(3rem, 6vw, 5.5rem) clamp(.9rem, 5vw, 3.5rem);
-      max-width: 1100px;
-      margin: 0 auto;
-      width: 100%
-    }
-
-    .ey {
-      font-size: .65rem;
-      font-weight: 500;
-      letter-spacing: .14em;
-      text-transform: uppercase;
-      color: var(--am);
-      margin-bottom: .55rem
-    }
-
-    .sh {
-      font-family: var(--fh);
-      font-size: clamp(1.7rem, 3.8vw, 2.8rem);
-      font-weight: 800;
-      letter-spacing: -.035em;
-      line-height: 1.1;
-      color: var(--tx);
-      margin-bottom: .9rem
-    }
-
-    .ss {
-      font-size: .92rem;
-      font-weight: 300;
-      color: var(--txm);
-      line-height: 1.75
-    }
-
-    .divl {
-      height: .5px;
-      background: linear-gradient(90deg, transparent, var(--brl), transparent);
-      margin: 0 clamp(.9rem, 5vw, 3.5rem)
-    }
-
-    /* PROBLEM */
-    .strip {
-      border-top: .5px solid var(--br);
-      border-bottom: .5px solid var(--br);
-      background: var(--bgs)
-    }
-
-    .stin {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: clamp(2.5rem, 5vw, 4.5rem) clamp(.9rem, 5vw, 3.5rem)
-    }
-
-    .pgrid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: clamp(2rem, 5vw, 4rem)
-    }
-
-    @media(min-width:700px) {
-      .pgrid {
-        grid-template-columns: 4fr 6fr
-      }
-    }
-
-    .scol {
-      display: flex;
-      flex-direction: column;
-      gap: 1.5rem
-    }
-
-    .stn {
-      font-family: var(--fh);
-      font-size: clamp(2.2rem, 4vw, 2.8rem);
-      font-weight: 800;
-      letter-spacing: -.05em;
-      color: var(--am);
-      line-height: 1
-    }
-
-    .std {
-      font-size: .78rem;
-      color: var(--txd);
-      margin-top: .18rem;
-      line-height: 1.5
-    }
-
-    .plist {
-      list-style: none;
-      display: flex;
-      flex-direction: column;
-      gap: .7rem;
-      margin-top: 1.25rem
-    }
-
-    .plist li {
-      display: flex;
-      align-items: baseline;
-      gap: .7rem;
-      font-size: .88rem;
-      font-weight: 300;
-      color: var(--txm);
-      line-height: 1.6
-    }
-
-    .plist li::before {
-      content: '—';
-      color: var(--amd);
-      flex-shrink: 0
-    }
-
-    /* INDUSTRY TABS */
-    .itabs {
-      display: flex;
-      gap: 1px;
-      background: var(--br);
-      border-radius: 7px;
-      overflow: hidden;
-      margin: 2.25rem 0 1.75rem;
-      border: .5px solid var(--br);
-      flex-wrap: wrap
-    }
-
-    .itab {
-      flex: 1;
-      min-width: 100px;
-      padding: .7rem .5rem;
-      font-family: var(--fh);
-      font-size: .72rem;
-      font-weight: 700;
-      letter-spacing: .04em;
-      text-transform: uppercase;
-      color: var(--txd);
-      background: var(--bgc);
-      border: none;
-      cursor: pointer;
-      transition: all .2s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: .3rem;
-      position: relative;
-      overflow: hidden
-    }
-
-    .itab::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: var(--am);
-      transform: scaleX(0);
-      transition: transform .25s
-    }
-
-    .itab.on {
-      color: var(--am);
-      background: var(--bgh)
-    }
-
-    .itab.on::after {
-      transform: scaleX(1)
-    }
-
-    .itab:hover:not(.on) {
-      color: var(--txm);
-      background: var(--bgh)
-    }
-
-    .itab svg {
-      width: 16px;
-      height: 16px;
-      stroke: currentColor;
-      fill: none;
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round
-    }
-
-    .ipanel {
-      display: none;
-      animation: pi .3s ease
-    }
-
-    .ipanel.on {
-      display: block
-    }
-
-    @keyframes pi {
-      from {
-        opacity: 0;
-        transform: translateY(10px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    /* Module grid */
-    .mgrid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-      gap: 1px;
-      background: var(--br);
-      border: .5px solid var(--br);
-      border-radius: 9px;
-      overflow: hidden
-    }
-
-    .mc {
-      background: var(--bgc);
-      padding: clamp(1.25rem, 2.5vw, 1.75rem);
-      position: relative;
-      overflow: hidden;
-      transition: background .25s
-    }
-
-    .mc::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1.5px;
-      background: var(--am);
-      transform: scaleX(0);
-      transform-origin: left;
-      transition: transform .3s
-    }
-
-    .mc:hover {
-      background: var(--bgh)
-    }
-
-    .mc:hover::before {
-      transform: scaleX(1)
-    }
-
-    .mci {
-      width: 38px;
-      height: 38px;
-      border-radius: 7px;
-      background: var(--amdim);
-      border: .5px solid var(--brl);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 1.1rem;
-      transition: background .25s, transform .2s
-    }
-
-    .mc:hover .mci {
-      background: rgba(232, 160, 50, .18);
-      transform: scale(1.06)
-    }
-
-    .mci svg {
-      width: 17px;
-      height: 17px;
-      stroke: var(--am);
-      fill: none;
-      stroke-width: 1.5;
-      stroke-linecap: round;
-      stroke-linejoin: round
-    }
-
-    .mct {
-      font-family: var(--fh);
-      font-size: .92rem;
-      font-weight: 700;
-      color: var(--tx);
-      margin-bottom: .35rem;
-      letter-spacing: -.01em
-    }
-
-    .mcd {
-      font-size: .81rem;
-      font-weight: 300;
-      color: var(--txd);
-      line-height: 1.6
-    }
-
-    .mtag {
-      display: inline-block;
-      margin-top: .85rem;
-      font-size: .6rem;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      color: var(--tl);
-      border: .5px solid rgba(31, 168, 138, .25);
-      padding: .2rem .55rem;
-      border-radius: 100px
-    }
-
-    /* HOW */
-    .hwrap {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: clamp(2rem, 5vw, 4.5rem);
-      align-items: start
-    }
-
-    @media(min-width:700px) {
-      .hwrap {
-        grid-template-columns: 1fr 1fr
-      }
-    }
-
-    .steps {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      margin-top: 1.75rem
-    }
-
-    .step {
-      display: grid;
-      grid-template-columns: 2.4rem 1fr;
-      gap: .9rem;
-      padding-bottom: 1.85rem;
-      position: relative
-    }
-
-    .step:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 1.15rem;
-      top: 2.6rem;
-      bottom: 0;
-      width: 1px;
-      background: var(--brl)
-    }
-
-    .snum {
-      width: 2.4rem;
-      height: 2.4rem;
-      border-radius: 50%;
-      border: .5px solid var(--brl);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--fh);
-      font-size: .72rem;
-      font-weight: 700;
-      color: var(--am);
-      background: rgba(232, 160, 50, .06);
-      flex-shrink: 0;
-      transition: background .2s, transform .2s
-    }
-
-    .step:hover .snum {
-      background: rgba(232, 160, 50, .16);
-      transform: scale(1.06)
-    }
-
-    .stitle {
-      font-family: var(--fh);
-      font-size: .9rem;
-      font-weight: 700;
-      color: var(--tx);
-      margin-bottom: .28rem
-    }
-
-    .sdesc {
-      font-size: .82rem;
-      font-weight: 300;
-      color: var(--txd);
-      line-height: 1.65
-    }
-
-    code {
-      font-size: .78rem;
-      color: var(--am);
-      background: rgba(232, 160, 50, .09);
-      padding: 1px 5px;
-      border-radius: 3px
-    }
-
-    /* Code panel */
-    .cpanel {
-      background: #0a0a08;
-      border: .5px solid var(--br);
-      border-radius: 9px;
-      overflow: hidden;
-      transition: border-color .3s
-    }
-
-    .cpanel:hover {
-      border-color: var(--brl)
-    }
-
-    .cph {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: .7rem 1rem;
-      border-bottom: .5px solid var(--br);
-      background: rgba(232, 160, 50, .025)
-    }
-
-    .dots {
-      display: flex;
-      gap: 4px
-    }
-
-    .dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, .08)
-    }
-
-    .cfn {
-      font-size: .65rem;
-      letter-spacing: .06em;
-      color: var(--txd);
-      font-family: monospace
-    }
-
-    .cpb {
-      padding: 1.1rem 1rem;
-      font-family: monospace;
-      font-size: .72rem;
-      line-height: 1.75;
-      overflow-x: auto
-    }
-
-    .ck {
-      color: #E8A032
-    }
-
-    .cs2 {
-      color: #4BC49A
-    }
-
-    .cn {
-      color: #78B8F0
-    }
-
-    .ccm {
-      color: #3A3A32;
-      font-style: italic
-    }
-
-    .cp {
-      color: #5A5A52
-    }
-
-    .cb {
-      color: #C47AE8
-    }
-
-    /* MARKET */
-    .mktg {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 1px;
-      background: var(--br);
-      border: .5px solid var(--br);
-      border-radius: 9px;
-      overflow: hidden;
-      margin-top: 2.25rem
-    }
-
-    .mcard {
-      background: var(--bgc);
-      padding: clamp(1.25rem, 2.5vw, 1.75rem);
-      position: relative;
-      overflow: hidden;
-      transition: background .25s
-    }
-
-    .mcard:hover {
-      background: var(--bgh)
-    }
-
-    .mcard.feat {
-      grid-column: 1/-1;
-      background: var(--bgs)
-    }
-
-    .mcard.feat::before {
-      content: '';
-      display: block;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, var(--am), transparent);
-      margin-bottom: 1.5rem
-    }
-
-    .mey {
-      font-size: .62rem;
-      letter-spacing: .1em;
-      text-transform: uppercase;
-      color: var(--am);
-      margin-bottom: .55rem
-    }
-
-    .mcard h3 {
-      font-family: var(--fh);
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--tx);
-      margin-bottom: .55rem;
-      letter-spacing: -.02em
-    }
-
-    .mcard p {
-      font-size: .84rem;
-      font-weight: 300;
-      color: var(--txd);
-      line-height: 1.65
-    }
-
-    .mfrow {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-      gap: 1.25rem;
-      margin-top: 1.25rem
-    }
-
-    .mfn {
-      font-family: var(--fh);
-      font-size: 1.5rem;
-      font-weight: 800;
-      color: var(--tx);
-      letter-spacing: -.04em;
-      line-height: 1
-    }
-
-    .mfl {
-      font-size: .7rem;
-      color: var(--txd);
-      margin-top: .22rem;
-      line-height: 1.4
-    }
-
-    /* CTA */
-    .ctasec {
-      padding: clamp(3.5rem, 7vw, 7rem) clamp(.9rem, 5vw, 3.5rem);
+    h1 {
       text-align: center;
-      position: relative;
-      overflow: hidden
     }
 
-    .ctag {
-      position: absolute;
-      width: min(85vw, 640px);
-      height: 280px;
-      border-radius: 50%;
-      background: radial-gradient(ellipse, rgba(232, 160, 50, .065) 0%, transparent 70%);
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      pointer-events: none
-    }
-
-    .ctasec h2 {
-      font-family: var(--fh);
-      font-size: clamp(1.9rem, 4.5vw, 3.5rem);
-      font-weight: 800;
-      letter-spacing: -.04em;
-      line-height: 1.1;
-      color: var(--tx);
-      margin-bottom: .9rem;
-      position: relative;
-      z-index: 1
-    }
-
-    .ctasec h2 em {
-      font-style: normal;
-      color: var(--am)
-    }
-
-    .ctasec p {
-      font-size: .92rem;
-      font-weight: 300;
-      color: var(--txm);
-      margin-bottom: 1.75rem;
-      position: relative;
-      z-index: 1
-    }
-
-    .ctacts {
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: .75rem;
-      position: relative;
-      z-index: 1
-    }
-
-    .btno {
-      font-family: var(--fh);
-      font-size: .76rem;
-      font-weight: 700;
-      letter-spacing: .05em;
-      text-transform: uppercase;
-      color: var(--txd);
-      background: transparent;
-      border: .5px solid rgba(255, 255, 255, .14);
-      padding: .75rem 1.6rem;
-      border-radius: 3px;
-      cursor: pointer;
-      text-decoration: none;
-      transition: border-color .2s, color .2s, transform .15s;
-      display: inline-block
-    }
-
-    .btno:hover {
-      border-color: rgba(255, 255, 255, .32);
-      color: var(--tx);
-      transform: translateY(-1px)
-    }
-
-    /* FOOTER */
-    footer {
-      border-top: .5px solid var(--br);
-      padding: 1.75rem clamp(.9rem, 5vw, 3.5rem);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
       justify-content: space-between;
-      gap: 1rem
-    }
-
-    .flogo {
-      display: flex;
       align-items: center;
-      gap: .4rem;
-      text-decoration: none;
-      font-family: var(--fh);
-      font-size: .9rem;
-      font-weight: 800;
-      color: var(--txd);
-      letter-spacing: -.02em
     }
 
-    .flogo .lm {
-      width: 19px;
-      height: 19px;
-      border-radius: 3px
+    .feature-info {
+      max-width: 70%;
     }
 
-    .fcopy {
-      font-size: .72rem;
-      color: var(--txd)
+    .feature-name {
+      font-weight: bold;
+      font-size: 16px;
     }
 
-    .flinks {
-      display: flex;
-      gap: 1.25rem;
-      list-style: none
+    .feature-desc {
+      font-size: 13px;
+      color: #666;
     }
 
-    .flinks a {
-      font-size: .72rem;
-      color: var(--txd);
-      text-decoration: none;
-      transition: color .2s
+    .toggle {
+      position: relative;
+      width: 50px;
+      height: 26px;
     }
 
-    .flinks a:hover {
-      color: var(--tx)
+    .toggle input {
+      display: none;
     }
 
-    /* REVEAL */
-    .r {
-      opacity: 0;
-      transform: translateY(18px);
-      transition: opacity .55s ease, transform .55s ease
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      border-radius: 26px;
+      transition: 0.3s;
     }
 
-    .r.v {
-      opacity: 1;
-      transform: translateY(0)
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 3px;
+      bottom: 3px;
+      background-color: white;
+      border-radius: 50%;
+      transition: 0.3s;
     }
 
-    .r.d1 {
-      transition-delay: .08s
+    input:checked+.slider {
+      background-color: #4CAF50;
     }
 
-    .r.d2 {
-      transition-delay: .15s
+    input:checked+.slider:before {
+      transform: translateX(24px);
     }
 
-    .r.d3 {
-      transition-delay: .22s
-    }
-
-    .r.d4 {
-      transition-delay: .3s
-    }
-
-    .r.d5 {
-      transition-delay: .38s
-    }
-
-    .r.sl {
-      transform: translateX(-18px)
-    }
-
-    .r.sr {
-      transform: translateX(18px)
-    }
-
-    .r.sl.v,
-    .r.sr.v {
-      transform: translateX(0)
+    .save-btn {
+      display: block;
+      margin: 20px auto;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      background: #4CAF50;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
     }
   </style>
 </head>
 
 <body>
+  <div class="container">
+    <h1>Feature Flags</h1>
+    <div id="features"></div>
 
-  <!-- NAV -->
-  <nav>
-    <a href="#" class="nav-logo">
-      <div class="lm">
-        <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6.5 1L11 3.5V9L6.5 12L2 9V3.5L6.5 1Z" stroke="#080807" stroke-width="1.4" stroke-linejoin="round" />
-          <path d="M6.5 4.5V8.5M4.5 6.5H8.5" stroke="#080807" stroke-width="1.4" stroke-linecap="round" />
-        </svg>
-      </div>
-      Awo ERP
-    </a>
-    <ul class="nav-links">
-      <li><a href="#industries">Industries</a></li>
-      <li><a href="#how">Architecture</a></li>
-      <li><a href="#market">Market</a></li>
-    </ul>
-    <a href="#cta" class="nav-cta">Demo</a>
-  </nav>
+    <button class="save-btn" onclick="saveFeatures()">Save Changes</button>
 
-  <!-- TICKER -->
-  <div class="tkw">
-    <div class="tkt">
-      <span class="ti"><b>●</b>Petroleum Retail</span>
-      <span class="ti"><b>●</b>Restaurant &amp; Hospitality</span>
-      <span class="ti"><b>●</b>General Retail</span>
-      <span class="ti"><b>●</b>Aviation Fuelling</span>
-      <span class="ti"><b>●</b>Wetstock Reconciliation</span>
-      <span class="ti"><b>●</b>Fleet Card Billing</span>
-      <span class="ti"><b>●</b>Shift Management</span>
-      <span class="ti"><b>●</b>EPRA · KRA · KCAA Compliance</span>
-      <span class="ti"><b>●</b>Schema-Driven UI</span>
-      <span class="ti"><b>●</b>Go · Fiber · Baidu amis</span>
-      <span class="ti"><b>●</b>Petroleum Retail</span>
-      <span class="ti"><b>●</b>Restaurant &amp; Hospitality</span>
-      <span class="ti"><b>●</b>General Retail</span>
-      <span class="ti"><b>●</b>Aviation Fuelling</span>
-      <span class="ti"><b>●</b>Wetstock Reconciliation</span>
-      <span class="ti"><b>●</b>Fleet Card Billing</span>
-      <span class="ti"><b>●</b>Shift Management</span>
-      <span class="ti"><b>●</b>EPRA · KRA · KCAA Compliance</span>
-      <span class="ti"><b>●</b>Schema-Driven UI</span>
-      <span class="ti"><b>●</b>Go · Fiber · Baidu amis</span>
-    </div>
   </div>
-
-  <!-- HERO -->
-  <div class="hero">
-    <div class="orb1"></div>
-    <div class="orb2"></div>
-    <div class="hgrid"></div>
-    <div class="hero-in">
-      <div class="hero-wrap">
-        <div>
-          <div class="hbadge">One ERP · Any Industry · East Africa</div>
-          <h1 class="hh">Run your business.<br><em>Every process.</em><br>One platform.</h1>
-          <p class="hsub">Awo ERP is a schema-driven business management platform for East African enterprises — with
-            deep vertical modules for petroleum retail, hospitality, general retail, and aviation.</p>
-          <div class="hacts">
-            <a href="#cta" class="btnp">Request a Demo</a>
-            <a href="#industries" class="btng">Explore industries</a>
-          </div>
-          <div class="hstats r d1">
-            <div class="hs">
-              <div class="hsn" id="hs0">4</div>
-              <div class="hsl">Industry verticals</div>
-            </div>
-            <div class="hs">
-              <div class="hsn" id="hs1">24+</div>
-              <div class="hsl">Modules</div>
-            </div>
-            <div class="hs">
-              <div class="hsn" id="hs2">0%</div>
-              <div class="hsl">Frontend work to add a doctype</div>
-            </div>
-            <div class="hs">
-              <div class="hsn" id="hs3">6 hrs</div>
-              <div class="hsl">Saved on reconciliation daily</div>
-            </div>
-          </div>
-        </div>
-        <div class="varea">
-          <div class="gc">
-            <div class="gr"></div>
-            <div class="gr2"></div>
-            <svg width="280" height="280" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg"
-              style="position:absolute;inset:0">
-              <g stroke="rgba(232,160,50,.14)" stroke-width=".8">
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(0,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(30,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(60,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(90,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(120,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(150,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(180,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(210,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(240,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(270,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(300,140,140)" />
-                <line x1="140" y1="10" x2="140" y2="24" transform="rotate(330,140,140)" />
-              </g>
-              <circle cx="140" cy="140" r="100" fill="none" stroke="rgba(232,160,50,.05)" stroke-width="5" />
-              <circle cx="140" cy="140" r="100" fill="none" stroke="url(#ag)" stroke-width="5" stroke-dasharray="628"
-                stroke-dashoffset="157" stroke-linecap="round" transform="rotate(-90,140,140)">
-                <animate attributeName="stroke-dashoffset" from="628" to="157" dur="2.2s" fill="freeze"
-                  calcMode="spline" keySplines="0.4 0 0.2 1" />
-              </circle>
-              <g>
-                <line x1="140" y1="140" x2="140" y2="50" stroke="var(--am)" stroke-width="1.8" stroke-linecap="round" />
-                <circle cx="140" cy="140" r="4" fill="var(--am)" />
-                <circle cx="140" cy="140" r="7" fill="none" stroke="rgba(232,160,50,.28)" stroke-width="1" />
-                <animateTransform attributeName="transform" type="rotate" from="-90 140 140" to="195 140 140" dur="2.2s"
-                  fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" />
-              </g>
-              <defs>
-                <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0">
-                  <stop offset="0%" stop-color="#7A4E0F" />
-                  <stop offset="100%" stop-color="#E8A032" />
-                </linearGradient>
-              </defs>
-            </svg>
-            <div class="gcen">
-              <div class="gv">98.4%</div>
-              <div class="gl2">Reconciliation</div>
-            </div>
-            <div class="fcrd">
-              <div class="fcl">Today's volume</div>
-              <div class="fcv g">42,180 L</div>
-            </div>
-            <div class="fcrd">
-              <div class="fcl">Shift variance</div>
-              <div class="fcv a">−0.3%</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- COUNTER STRIP -->
-  <div class="cstrip">
-    <div class="csi r">
-      <div class="csin"><span class="cnt" data-target="3000" data-sfx="+">0</span></div>
-      <div class="csil">Licensed fuel outlets in Kenya</div>
-    </div>
-    <div class="csi r d1">
-      <div class="csin"><span class="cnt" data-target="3" data-sfx="–7%">0</span></div>
-      <div class="csil">Avg. unmanaged wetstock loss</div>
-    </div>
-    <div class="csi r d2">
-      <div class="csin"><span class="cnt" data-target="6" data-sfx=" hrs">0</span></div>
-      <div class="csil">Daily reconciliation time eliminated</div>
-    </div>
-    <div class="csi r d3">
-      <div class="csin"><span class="cnt" data-target="0" data-sfx=" deploys">0</span></div>
-      <div class="csil">Frontend deploys to add a doctype</div>
-    </div>
-  </div>
-
-  <!-- PROBLEM -->
-  <div class="strip">
-    <div class="stin">
-      <div class="pgrid">
-        <div class="scol r sl">
-          <div>
-            <div class="stn">3–7%</div>
-            <div class="std">Wetstock loss at unmanaged stations</div>
-          </div>
-          <div>
-            <div class="stn">6 hrs</div>
-            <div class="std">Daily manager time on manual reconciliation</div>
-          </div>
-          <div>
-            <div class="stn">1 system</div>
-            <div class="std">That connects forecourt, kitchen, till, and bowser</div>
-          </div>
-        </div>
-        <div class="r sr d2">
-          <div class="ey">The Problem</div>
-          <h2 class="sh">Generic software wasn't built for an East African operation.</h2>
-          <ul class="plist">
-            <li>QuickBooks and ERPNext can't track per-pump meter readings or model dip charts against delivery volumes
-            </li>
-            <li>Restaurant POS systems don't connect to stock, suppliers, or accounting in real time</li>
-            <li>Retail chains run disconnected branches with no consolidated stock view or pricing control</li>
-            <li>Aviation fuellers face bowser reconciliation and into-plane records no standard ERP supports</li>
-            <li>EPRA, KEBS, and KRA compliance requires manual document assembly before every audit</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INDUSTRIES -->
-  <div class="sec" id="industries">
-    <div class="ey r">Industry Verticals</div>
-    <h2 class="sh r d1">One ERP engine.<br>Four deep verticals.</h2>
-    <p class="ss r d2">Each vertical is purpose-built — not adapted from a generic package. Select an industry below.
-    </p>
-
-    <div class="itabs r d3" role="tablist">
-      <button class="itab on" data-tab="petro" role="tab">
-        <svg viewBox="0 0 24 24">
-          <path d="M3 22V10l9-8 9 8v12" />
-          <path d="M9 22V12h6v10" />
-        </svg>
-        Petroleum
-      </button>
-      <button class="itab" data-tab="resto" role="tab">
-        <svg viewBox="0 0 24 24">
-          <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
-          <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" />
-          <line x1="6" y1="1" x2="6" y2="4" />
-          <line x1="10" y1="1" x2="10" y2="4" />
-          <line x1="14" y1="1" x2="14" y2="4" />
-        </svg>
-        Restaurant
-      </button>
-      <button class="itab" data-tab="retail" role="tab">
-        <svg viewBox="0 0 24 24">
-          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-          <line x1="3" y1="6" x2="21" y2="6" />
-          <path d="M16 10a4 4 0 0 1-8 0" />
-        </svg>
-        Retail
-      </button>
-      <button class="itab" data-tab="avi" role="tab">
-        <svg viewBox="0 0 24 24">
-          <path
-            d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-        </svg>
-        Aviation
-      </button>
-    </div>
-
-    <div class="ipanel on" id="p-petro">
-      <div class="mgrid">
-        <div class="mc r">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <rect x="3" y="3" width="7" height="7" rx="1" />
-              <rect x="14" y="3" width="7" height="7" rx="1" />
-              <rect x="3" y="14" width="7" height="7" rx="1" />
-              <circle cx="17.5" cy="17.5" r="3" />
-            </svg></div>
-          <div class="mct">Forecourt Management</div>
-          <div class="mcd">Per-pump meter readings, shift open/close totals and live throughput by fuel grade. Every
-            litre attributed to a nozzle, shift, and attendant.</div>
-          <div class="mtag">Real-time</div>
-        </div>
-        <div class="mc r d1">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M12 2C8 2 4 5 4 9c0 5 8 13 8 13s8-8 8-13c0-4-4-7-8-7z" />
-              <circle cx="12" cy="9" r="2.5" />
-            </svg></div>
-          <div class="mct">Wetstock Reconciliation</div>
-          <div class="mcd">Auto variance from dip readings, delivery manifests and meter sales. Flags discrepancies
-            above threshold and generates EPRA wetstock registers.</div>
-          <div class="mtag">EPRA Compliant</div>
-        </div>
-        <div class="mc r d2">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20M6 15h4M14 15h4" />
-            </svg></div>
-          <div class="mct">Fleet Card Management</div>
-          <div class="mcd">Issue cards to corporate clients, set volume and grade limits per vehicle, track drawdowns
-            and auto-generate invoices on your billing cycle.</div>
-          <div class="mtag">Corporate Billing</div>
-        </div>
-        <div class="mc r d3">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg></div>
-          <div class="mct">Shift Management</div>
-          <div class="mcd">Structured open/close workflows with cashier-level cash events, card sales and variance
-            sign-off. Immutable shift report feeds directly into the GL.</div>
-          <div class="mtag">Audit Trail</div>
-        </div>
-        <div class="mc r d4">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg></div>
-          <div class="mct">EPRA &amp; Environmental Compliance</div>
-          <div class="mcd">Tank calibration schedules, spill logs, cathodic protection records and inspection checklists
-            maintained automatically.</div>
-          <div class="mtag">EPRA / NEMA</div>
-        </div>
-        <div class="mc r d5">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="9" y1="13" x2="15" y2="13" />
-              <line x1="9" y1="17" x2="15" y2="17" />
-            </svg></div>
-          <div class="mct">Financial Reporting</div>
-          <div class="mcd">Petroleum Chart of Accounts with GL posting from every shift and invoice. KRA-ready VAT
-            returns and management accounts — no accountant overtime.</div>
-          <div class="mtag">KRA Ready</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ipanel" id="p-resto">
-      <div class="mgrid">
-        <div class="mc r">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M3 11l19-9-9 19-2-8-8-2z" />
-            </svg></div>
-          <div class="mct">Table &amp; Order Management</div>
-          <div class="mcd">Floor plan view, per-table order tracking, modifier support and KDS routing — front of house
-            to kitchen in real time.</div>
-          <div class="mtag">Live KDS</div>
-        </div>
-        <div class="mc r d1">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg></div>
-          <div class="mct">Recipe &amp; Menu Costing</div>
-          <div class="mcd">Define recipes to the gram. Auto-deduct stock on every cover, track theoretical vs actual
-            food cost variance and flag wastage in real time.</div>
-          <div class="mtag">Food Cost</div>
-        </div>
-        <div class="mc r d2">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg></div>
-          <div class="mct">POS &amp; Settlements</div>
-          <div class="mcd">Multi-tender POS with M-Pesa, card and cash split, service charge rules and VAT-inclusive
-            pricing out of the box.</div>
-          <div class="mtag">M-Pesa Native</div>
-        </div>
-        <div class="mc r d3">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg></div>
-          <div class="mct">Supplier &amp; Purchasing</div>
-          <div class="mcd">Issue POs, receive goods, auto-update stock and three-way match supplier invoices before GL
-            posting — end to end.</div>
-          <div class="mtag">3-Way Match</div>
-        </div>
-        <div class="mc r d4">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg></div>
-          <div class="mct">Shift &amp; Staff</div>
-          <div class="mcd">Server shift reports, tip pooling rules, void and discount authorisation workflows and
-            per-shift P&amp;L.</div>
-          <div class="mtag">Shift Reports</div>
-        </div>
-        <div class="mc r d5">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg></div>
-          <div class="mct">Reservations &amp; Covers</div>
-          <div class="mcd">Online and walk-in reservation tracking, cover counts per session and waitlist management
-            synced with live table status.</div>
-          <div class="mtag">Guest Management</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ipanel" id="p-retail">
-      <div class="mgrid">
-        <div class="mc r">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-              <line x1="3" y1="6" x2="21" y2="6" />
-              <path d="M16 10a4 4 0 0 1-8 0" />
-            </svg></div>
-          <div class="mct">Multi-Branch Inventory</div>
-          <div class="mcd">Real-time stock across all locations. Inter-branch transfers, minimum stock alerts and
-            consolidated purchasing from a single HQ view.</div>
-          <div class="mtag">Multi-Location</div>
-        </div>
-        <div class="mc r d1">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg></div>
-          <div class="mct">POS &amp; Cash Management</div>
-          <div class="mcd">Barcode scanning, mixed-tender checkout, M-Pesa and card integration, float management and
-            daily Z-report. Works offline.</div>
-          <div class="mtag">Offline-Ready</div>
-        </div>
-        <div class="mc r d2">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M20 12V22H4V12" />
-              <path d="M22 7H2v5h20V7z" />
-              <path d="M12 22V7" />
-            </svg></div>
-          <div class="mct">Promotions &amp; Pricing</div>
-          <div class="mcd">Time-bound price rules, customer tier discounts, bundle offers and promotion performance
-            reporting across all branches from one place.</div>
-          <div class="mtag">Dynamic Pricing</div>
-        </div>
-        <div class="mc r d3">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-            </svg></div>
-          <div class="mct">Customer &amp; Loyalty</div>
-          <div class="mcd">Customer profiles, purchase history, point accumulation rules and redemption workflows
-            integrated with the POS at checkout.</div>
-          <div class="mtag">Loyalty Engine</div>
-        </div>
-        <div class="mc r d4">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
-            </svg></div>
-          <div class="mct">Sales Analytics</div>
-          <div class="mcd">Per-SKU sell-through rates, branch performance comparisons, ABC analysis and GP% reporting —
-            no CSV exports required.</div>
-          <div class="mtag">Live Dashboards</div>
-        </div>
-        <div class="mc r d5">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M5 12h14M12 5l7 7-7 7" />
-            </svg></div>
-          <div class="mct">Supplier &amp; Procurement</div>
-          <div class="mcd">POs, GRNs, supplier performance tracking and landed cost allocation against received stock —
-            closing the full procurement loop.</div>
-          <div class="mtag">Full Cycle</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="ipanel" id="p-avi">
-      <div class="mgrid">
-        <div class="mc r">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path
-                d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" />
-            </svg></div>
-          <div class="mct">Into-Plane Fuelling Records</div>
-          <div class="mcd">Per-aircraft records: registration, density, uplift volume, pre/post dip and sign-off by
-            authorised refueller — ICAO-aligned.</div>
-          <div class="mtag">ICAO-Aligned</div>
-        </div>
-        <div class="mc r d1">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M12 2C8 2 4 5 4 9c0 5 8 13 8 13s8-8 8-13c0-4-4-7-8-7z" />
-              <circle cx="12" cy="9" r="2.5" />
-            </svg></div>
-          <div class="mct">Bowser Reconciliation</div>
-          <div class="mcd">Truck/bowser load-out vs delivery reconciliation with density-compensated volume calculations
-            and automatic variance flagging per mission.</div>
-          <div class="mtag">Volume Corrected</div>
-        </div>
-        <div class="mc r d2">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <rect x="2" y="5" width="20" height="14" rx="2" />
-              <path d="M2 10h20M6 15h4M14 15h4" />
-            </svg></div>
-          <div class="mct">Airline Invoicing</div>
-          <div class="mcd">Auto-generate per-flight invoices for airline accounts based on uplift records.
-            Multi-currency, fuel surcharges and tier pricing supported.</div>
-          <div class="mtag">Multi-Currency</div>
-        </div>
-        <div class="mc r d3">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-            </svg></div>
-          <div class="mct">Quality Control &amp; Lab</div>
-          <div class="mcd">Density checks, appearance and water detection records per delivery and bowser load.
-            Automatic hold alerts for out-of-spec product.</div>
-          <div class="mtag">Quality Hold</div>
-        </div>
-        <div class="mc r d4">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
-            </svg></div>
-          <div class="mct">KCAA Regulatory Log</div>
-          <div class="mcd">All refuelling logs required by the Kenya Civil Aviation Authority — searchable, exportable
-            and version-controlled for every audit.</div>
-          <div class="mtag">KCAA</div>
-        </div>
-        <div class="mc r d5">
-          <div class="mci"><svg viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="9" />
-              <path d="M12 7v5l3 3" />
-            </svg></div>
-          <div class="mct">Shift &amp; Hydrant Ops</div>
-          <div class="mcd">Operator shift management across hydrant pit and bowser operations with immutable handover
-            records and real-time volume accountability.</div>
-          <div class="mtag">Ops Handover</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="divl"></div>
-
-  <!-- HOW IT WORKS -->
-  <div class="strip" id="how">
-    <div class="stin">
-      <div class="hwrap">
-        <div>
-          <div class="ey r">Architecture</div>
-          <h2 class="sh r d1">Zero frontend work<br>to add any new<br>document type.</h2>
-          <p class="ss r d2">A Go backend developer can add a new form, list view, or workflow in minutes — without a
-            single React sprint, design handoff, or frontend deployment.</p>
-          <div class="steps">
-            <div class="step r d1">
-              <div class="snum">01</div>
-              <div>
-                <div class="stitle">Write a JSON schema on the backend</div>
-                <div class="sdesc">Define fields, validations, relationships and actions as a structured file. No HTML,
-                  no CSS, no TypeScript.</div>
-              </div>
-            </div>
-            <div class="step r d2">
-              <div class="snum">02</div>
-              <div>
-                <div class="stitle">Baidu amis renders the interface</div>
-                <div class="sdesc">The Go/Fiber server serves the schema to the amis engine. Forms, lists, filters and
-                  action buttons appear instantly.</div>
-              </div>
-            </div>
-            <div class="step r d3">
-              <div class="snum">03</div>
-              <div>
-                <div class="stitle">Permissions resolve per tenant</div>
-                <div class="sdesc">A typed <code>Permissions</code> struct seeds every page. <code>visibleOn</code>
-                  expressions gate fields without extra API calls.</div>
-              </div>
-            </div>
-            <div class="step r d4">
-              <div class="snum">04</div>
-              <div>
-                <div class="stitle">CSS theming injected server-side</div>
-                <div class="sdesc">Multi-tenant branding at the Go layer — one codebase, per-dealer white-labelling
-                  across East Africa.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="r d2">
-          <div class="cpanel">
-            <div class="cph">
-              <div class="dots">
-                <div class="dot"></div>
-                <div class="dot"></div>
-                <div class="dot"></div>
-              </div>
-              <span class="cfn">schemas/dip_reading.json</span>
-              <span style="font-size:.6rem;color:var(--am);letter-spacing:.06em">SCHEMA</span>
-            </div>
-            <div class="cpb">
-              <pre style="font-family:inherit"><span class="cp">{</span>
-                <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"form"</span><span
-                  class="cp">,</span>
-                <span class="ck">"title"</span><span class="cp">:</span> <span class="cs2">"Tank Dip
-                  Reading"</span><span class="cp">,</span>
-                <span class="ck">"api"</span><span class="cp">:</span> <span
-                  class="cs2">"/api/v1/dip-readings"</span><span class="cp">,</span>
-                <span class="ccm">// renders automatically — no React needed</span>
-                <span class="ck">"body"</span><span class="cp">: [</span>
-                <span class="cp">{</span>
-                <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"select"</span><span
-                  class="cp">,</span>
-                <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"tank_id"</span><span
-                  class="cp">,</span>
-                <span class="ck">"label"</span><span class="cp">:</span> <span class="cs2">"Tank"</span><span
-                  class="cp">,</span>
-                <span class="ck">"required"</span><span class="cp">:</span> <span class="cb">true</span><span
-                  class="cp">,</span>
-                <span class="ck">"source"</span><span class="cp">:</span> <span
-                  class="cs2">"/api/v1/tanks?active=true"</span>
-                <span class="cp">},</span>
-                <span class="cp">{</span>
-                <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"number"</span><span
-                  class="cp">,</span>
-                <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"dip_mm"</span><span
-                  class="cp">,</span>
-                <span class="ck">"label"</span><span class="cp">:</span> <span class="cs2">"Dip (mm)"</span><span
-                  class="cp">,</span>
-                <span class="ck">"min"</span><span class="cp">:</span> <span class="cn">0</span><span
-                  class="cp">,</span> <span class="ck">"max"</span><span class="cp">:</span> <span
-                  class="cn">2400</span>
-                <span class="cp">},</span>
-                <span class="cp">{</span>
-                <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"formula"</span><span
-                  class="cp">,</span>
-                <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"volume_litres"</span><span
-                  class="cp">,</span>
-                <span class="ck">"value"</span><span class="cp">:</span> <span
-                  class="cs2">"${calibration_lookup(tank_id,dip_mm)}"</span><span class="cp">,</span>
-                <span class="ck">"readOnly"</span><span class="cp">:</span> <span class="cb">true</span>
-                <span class="cp">}</span>
-                <span class="cp">],</span>
-                <span class="ck">"visibleOn"</span><span class="cp">:</span> <span
-                  class="cs2">"${permissions.dip.create}"</span>
-                <span class="cp">}</span>
-              </pre>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- MARKET -->
-  <div class="sec" id="market">
-    <div class="ey r">Market Fit</div>
-    <h2 class="sh r d1">Built for East Africa,<br>precisely.</h2>
-    <div class="mktg">
-      <div class="mcard feat r">
-        <div class="mey">Market Context</div>
-        <h3>East Africa's businesses are growing fast — and running on spreadsheets.</h3>
-        <p>Kenya has 3,000+ licensed fuel outlets, thousands of restaurants and hundreds of retail chains — most without
-          integrated software. Awo ERP is built to change that, with modules that speak the language of each business
-          type.</p>
-        <div class="mfrow">
-          <div>
-            <div class="mfn">3,000+</div>
-            <div class="mfl">Licensed fuel outlets in Kenya</div>
-          </div>
-          <div>
-            <div class="mfn">~KSH 2B</div>
-            <div class="mfl">Daily retail fuel value</div>
-          </div>
-          <div>
-            <div class="mfn">EPRA</div>
-            <div class="mfl">Regulatory compliance built in</div>
-          </div>
-          <div>
-            <div class="mfn">KRA</div>
-            <div class="mfl">VAT &amp; tax reporting built in</div>
-          </div>
-        </div>
-      </div>
-      <div class="mcard r d1">
-        <div class="mey">Independent Operators</div>
-        <h3>1–5 site businesses</h3>
-        <p>Owners who need to stop relying on their manager's word and start trusting their data. Shift reports,
-          variance alerts and cash reconciliation give them eyes on the business remotely.</p>
-      </div>
-      <div class="mcard r d2">
-        <div class="mey">Multi-site Networks</div>
-        <h3>Regional chains &amp; franchises</h3>
-        <p>Groups operating across Kenya, Uganda and Tanzania who need consolidated reporting, consistent processes and
-          white-labelled interfaces per site — all on one codebase.</p>
-      </div>
-    </div>
-  </div>
-
-  <div class="divl"></div>
-
-  <!-- CTA -->
-  <div class="ctasec" id="cta">
-    <div class="ctag"></div>
-    <h2 class="r">Start with better<br>data — <em>today.</em></h2>
-    <p class="r d1">See Awo ERP on a real dataset from your industry. No slideware, no generic demos.</p>
-    <div class="ctacts r d2">
-      <a href="mailto:hello@awoerp.com" class="btnp">Request a Demo</a>
-      <a href="#industries" class="btno">Explore Modules</a>
-    </div>
-  </div>
-
-  <!-- FOOTER -->
-  <footer>
-    <a href="#" class="flogo">
-      <div class="lm">
-        <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M6.5 1L11 3.5V9L6.5 12L2 9V3.5L6.5 1Z" stroke="#080807" stroke-width="1.4" stroke-linejoin="round" />
-          <path d="M6.5 4.5V8.5M4.5 6.5H8.5" stroke="#080807" stroke-width="1.4" stroke-linecap="round" />
-        </svg>
-      </div>
-      Awo ERP
-    </a>
-    <span class="fcopy">© 2025 Awo ERP · Built for East African enterprise</span>
-    <ul class="flinks">
-      <li><a href="#">Privacy</a></li>
-      <li><a href="#">Contact</a></li>
-      <li><a href="#">Docs</a></li>
-    </ul>
-  </footer>
-
   <script>
-    // Scroll reveal
-    const ro = new IntersectionObserver(es => {
-      es.forEach(e => {if (e.isIntersecting) {e.target.classList.add('v'); ro.unobserve(e.target);} });
-    }, {threshold: 0.08, rootMargin: '0px 0px -24px 0px'});
-    document.querySelectorAll('.r').forEach(el => ro.observe(el));
-
-    // Industry tabs
-    document.querySelectorAll('.itab').forEach(tab => {
-      tab.addEventListener('click', () => {
-        document.querySelectorAll('.itab').forEach(t => t.classList.remove('on'));
-        document.querySelectorAll('.ipanel').forEach(p => p.classList.remove('on'));
-        tab.classList.add('on');
-        const panel = document.getElementById('p-' + tab.dataset.tab);
-        if (panel) {
-          panel.classList.add('on');
-          panel.querySelectorAll('.r').forEach(el => {
-            el.classList.remove('v');
-            setTimeout(() => ro.observe(el), 20);
-          });
-        }
-      });
-    });
-
-    // Counter animation
-    function animCount(el) {
-      const tgt = +el.dataset.target;
-      const sfx = el.dataset.sfx || '';
-      const dur = 1800;
-      const t0 = performance.now();
-      (function tick(now) {
-        const p = Math.min((now - t0) / dur, 1);
-        const e = 1 - Math.pow(1 - p, 3);
-        el.textContent = Math.round(tgt * e) + sfx;
-        if (p < 1) requestAnimationFrame(tick);
-      })(performance.now());
-    }
-    const co = new IntersectionObserver(es => {
-      es.forEach(e => {if (e.isIntersecting) {animCount(e.target); co.unobserve(e.target);} });
-    }, {threshold: 0.5});
-    document.querySelectorAll('.cnt').forEach(el => co.observe(el));
-
-    // Hero stats animate on load
-    const hdata = [
-      {id: 'hs0', target: 4, sfx: ''},
-      {id: 'hs1', target: 24, sfx: '+'},
-      {id: 'hs2', target: 0, sfx: '%'},
-      {id: 'hs3', target: 6, sfx: ' hrs'}
+    const featureFlags = [
+      {key: 'fuel_pump_management', name: 'Fuel Pump Management', desc: 'Manage pumps and nozzle readings', enabled: true},
+      {key: 'tank_management', name: 'Tank Management', desc: 'Track tank dips and stock levels', enabled: true},
+      {key: 'shift_management', name: 'Shift Management', desc: 'Manage attendant shifts', enabled: false},
+      {key: 'travel_booking', name: 'Travel Booking', desc: 'Airline reservations and ticketing', enabled: false},
+      {key: 'advanced_reports', name: 'Advanced Reports', desc: 'Access detailed analytics and reports', enabled: true}
     ];
-    window.addEventListener('load', () => {
-      hdata.forEach((d, i) => {
-        const el = document.getElementById(d.id);
-        if (!el) return;
-        el.dataset.target = d.target;
-        el.dataset.sfx = d.sfx;
-        setTimeout(() => animCount(el), 700 + i * 100);
+
+    const container = document.getElementById('features');
+
+    function renderFeatures() {
+      container.innerHTML = '';
+      featureFlags.forEach((feature, index) => {
+        const card = document.createElement('div');
+        card.className = 'card';
+
+        card.innerHTML = `
+          <div class="feature-info">
+            <div class="feature-name">${feature.name}</div>
+            <div class="feature-desc">${feature.desc}</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" ${feature.enabled ? 'checked' : ''} onchange="toggleFeature(${index})">
+            <span class="slider"></span>
+          </label>
+        `;
+
+        container.appendChild(card);
       });
-    });
+    }
+
+    function toggleFeature(index) {
+      featureFlags[index].enabled = !featureFlags[index].enabled;
+    }
+
+    function saveFeatures() {
+      console.log('Saving features:', featureFlags);
+      alert('Feature flags saved! (Check console)');
+
+      // Example API call
+      // fetch('/api/tenant/features', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(featureFlags)
+      // });
+    }
+
+    renderFeatures();
   </script>
 </body>
 
 </html>
+<!-- <!DOCTYPE html> -->
+<!-- <html lang="en"> -->
+<!---->
+<!-- <head> -->
+<!--   <meta charset="UTF-8"> -->
+<!--   <meta name="viewport" content="width=device-width, initial-scale=1.0"> -->
+<!--   <title>Awo ERP — Modern Business Management for East Africa</title> -->
+<!--   <link rel="preconnect" href="https://fonts.googleapis.com"> -->
+<!--   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
+<!--   <link -->
+<!--     href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Epilogue:wght@300;400;500&display=swap" -->
+<!--     rel="stylesheet"> -->
+<!--   <style> -->
+<!--     *, -->
+<!--     *::before, -->
+<!--     *::after { -->
+<!--       box-sizing: border-box; -->
+<!--       margin: 0; -->
+<!--       padding: 0 -->
+<!--     } -->
+<!---->
+<!--     :root { -->
+<!--       --am: #E8A032; -->
+<!--       --aml: #F4C060; -->
+<!--       --amd: #7A4E0F; -->
+<!--       --amdim: rgba(232, 160, 50, .1); -->
+<!--       --tl: #1FA88A; -->
+<!--       --bg: #080807; -->
+<!--       --bgs: #0f0f0d; -->
+<!--       --bgc: #141410; -->
+<!--       --bgh: #1a1a15; -->
+<!--       --br: rgba(232, 160, 50, .11); -->
+<!--       --brl: rgba(232, 160, 50, .22); -->
+<!--       --tx: #F0EDE4; -->
+<!--       --txm: #A8A49A; -->
+<!--       --txd: #5E5C56; -->
+<!--       --fh: 'Syne', sans-serif; -->
+<!--       --fb: 'Epilogue', sans-serif -->
+<!--     } -->
+<!---->
+<!--     html { -->
+<!--       scroll-behavior: smooth -->
+<!--     } -->
+<!---->
+<!--     body { -->
+<!--       background: var(--bg); -->
+<!--       color: var(--tx); -->
+<!--       font-family: var(--fb); -->
+<!--       font-size: 16px; -->
+<!--       line-height: 1.7; -->
+<!--       overflow-x: hidden; -->
+<!--       width: 100%; -->
+<!--       max-width: 100vw -->
+<!--     } -->
+<!---->
+<!--     body::after { -->
+<!--       content: ''; -->
+<!--       position: fixed; -->
+<!--       inset: 0; -->
+<!--       pointer-events: none; -->
+<!--       z-index: 9999; -->
+<!--       opacity: .026; -->
+<!--       background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"); -->
+<!--       background-size: 128px -->
+<!--     } -->
+<!---->
+<!--     /* NAV */ -->
+<!--     nav { -->
+<!--       position: fixed; -->
+<!--       top: 0; -->
+<!--       inset-inline: 0; -->
+<!--       z-index: 800; -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       justify-content: space-between; -->
+<!--       padding: .8rem clamp(.9rem, 4vw, 2.5rem); -->
+<!--       background: rgba(8, 8, 7, .82); -->
+<!--       backdrop-filter: blur(18px); -->
+<!--       border-bottom: .5px solid var(--br); -->
+<!--       gap: .75rem -->
+<!--     } -->
+<!---->
+<!--     .nav-logo { -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       gap: .45rem; -->
+<!--       text-decoration: none; -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: 1rem; -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.03em; -->
+<!--       color: var(--tx); -->
+<!--       flex-shrink: 0; -->
+<!--       min-width: 0 -->
+<!--     } -->
+<!---->
+<!--     .lm { -->
+<!--       width: 24px; -->
+<!--       height: 24px; -->
+<!--       background: var(--am); -->
+<!--       border-radius: 4px; -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       justify-content: center; -->
+<!--       flex-shrink: 0 -->
+<!--     } -->
+<!---->
+<!--     .lm svg { -->
+<!--       width: 12px; -->
+<!--       height: 12px -->
+<!--     } -->
+<!---->
+<!--     .nav-links { -->
+<!--       display: flex; -->
+<!--       gap: 1.5rem; -->
+<!--       list-style: none; -->
+<!--       margin: 0 auto -->
+<!--     } -->
+<!---->
+<!--     .nav-links a { -->
+<!--       font-size: .75rem; -->
+<!--       letter-spacing: .05em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd); -->
+<!--       text-decoration: none; -->
+<!--       transition: color .2s; -->
+<!--       position: relative; -->
+<!--       white-space: nowrap -->
+<!--     } -->
+<!---->
+<!--     .nav-links a::after { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       bottom: -3px; -->
+<!--       left: 0; -->
+<!--       right: 0; -->
+<!--       height: 1px; -->
+<!--       background: var(--am); -->
+<!--       transform: scaleX(0); -->
+<!--       transform-origin: left; -->
+<!--       transition: transform .25s -->
+<!--     } -->
+<!---->
+<!--     .nav-links a:hover { -->
+<!--       color: var(--tx) -->
+<!--     } -->
+<!---->
+<!--     .nav-links a:hover::after { -->
+<!--       transform: scaleX(1) -->
+<!--     } -->
+<!---->
+<!--     .nav-cta { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .72rem; -->
+<!--       font-weight: 700; -->
+<!--       letter-spacing: .05em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--bg); -->
+<!--       background: var(--am); -->
+<!--       border: none; -->
+<!--       padding: .45rem 1rem; -->
+<!--       border-radius: 3px; -->
+<!--       cursor: pointer; -->
+<!--       text-decoration: none; -->
+<!--       transition: background .2s, transform .15s; -->
+<!--       white-space: nowrap; -->
+<!--       flex-shrink: 0; -->
+<!--       display: inline-block -->
+<!--     } -->
+<!---->
+<!--     .nav-cta:hover { -->
+<!--       background: var(--aml); -->
+<!--       transform: translateY(-1px) -->
+<!--     } -->
+<!---->
+<!--     @media(max-width:600px) { -->
+<!--       .nav-links { -->
+<!--         display: none -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     /* TICKER */ -->
+<!--     .tkw { -->
+<!--       position: fixed; -->
+<!--       top: 47px; -->
+<!--       inset-inline: 0; -->
+<!--       z-index: 700; -->
+<!--       overflow: hidden; -->
+<!--       border-bottom: .5px solid var(--br); -->
+<!--       background: rgba(8, 8, 7, .65); -->
+<!--       backdrop-filter: blur(10px); -->
+<!--       padding: .38rem 0; -->
+<!--       white-space: nowrap -->
+<!--     } -->
+<!---->
+<!--     .tkt { -->
+<!--       display: inline-block; -->
+<!--       animation: tick 38s linear infinite -->
+<!--     } -->
+<!---->
+<!--     @keyframes tick { -->
+<!--       0% { -->
+<!--         transform: translateX(0) -->
+<!--       } -->
+<!---->
+<!--       100% { -->
+<!--         transform: translateX(-50%) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .ti { -->
+<!--       display: inline-block; -->
+<!--       margin: 0 1.75rem; -->
+<!--       font-size: .6rem; -->
+<!--       letter-spacing: .13em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd) -->
+<!--     } -->
+<!---->
+<!--     .ti b { -->
+<!--       color: var(--am); -->
+<!--       margin-right: .3rem; -->
+<!--       font-weight: 400 -->
+<!--     } -->
+<!---->
+<!--     /* HERO */ -->
+<!--     .hero { -->
+<!--       min-height: 100svh; -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       padding: clamp(6rem, 18vw, 9.5rem) clamp(.9rem, 5vw, 3.5rem) clamp(2.5rem, 5vw, 4rem); -->
+<!--       position: relative; -->
+<!--       overflow: hidden -->
+<!--     } -->
+<!---->
+<!--     .orb1 { -->
+<!--       position: absolute; -->
+<!--       width: min(65vw, 580px); -->
+<!--       height: min(65vw, 580px); -->
+<!--       border-radius: 50%; -->
+<!--       background: radial-gradient(circle, rgba(232, 160, 50, .065) 0%, transparent 70%); -->
+<!--       top: -12%; -->
+<!--       right: -8%; -->
+<!--       pointer-events: none; -->
+<!--       animation: ob1 9s ease-in-out infinite -->
+<!--     } -->
+<!---->
+<!--     .orb2 { -->
+<!--       position: absolute; -->
+<!--       width: min(45vw, 380px); -->
+<!--       height: min(45vw, 380px); -->
+<!--       border-radius: 50%; -->
+<!--       background: radial-gradient(circle, rgba(31, 168, 138, .05) 0%, transparent 70%); -->
+<!--       bottom: -8%; -->
+<!--       left: -6%; -->
+<!--       pointer-events: none; -->
+<!--       animation: ob2 11s ease-in-out infinite -->
+<!--     } -->
+<!---->
+<!--     @keyframes ob1 { -->
+<!---->
+<!--       0%, -->
+<!--       100% { -->
+<!--         transform: translate(0, 0) scale(1) -->
+<!--       } -->
+<!---->
+<!--       50% { -->
+<!--         transform: translate(-25px, 18px) scale(1.04) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     @keyframes ob2 { -->
+<!---->
+<!--       0%, -->
+<!--       100% { -->
+<!--         transform: translate(0, 0) -->
+<!--       } -->
+<!---->
+<!--       50% { -->
+<!--         transform: translate(18px, -18px) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .hgrid { -->
+<!--       position: absolute; -->
+<!--       inset: 0; -->
+<!--       pointer-events: none; -->
+<!--       background-image: linear-gradient(rgba(232, 160, 50, .022) 1px, transparent 1px), -->
+<!--         linear-gradient(90deg, rgba(232, 160, 50, .022) 1px, transparent 1px); -->
+<!--       background-size: 52px 52px; -->
+<!--       mask-image: radial-gradient(ellipse 80% 65% at 50% 40%, black, transparent) -->
+<!--     } -->
+<!---->
+<!--     .hero-in { -->
+<!--       position: relative; -->
+<!--       z-index: 1; -->
+<!--       width: 100%; -->
+<!--       max-width: 1100px; -->
+<!--       margin: 0 auto -->
+<!--     } -->
+<!---->
+<!--     .hero-wrap { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: 1fr; -->
+<!--       gap: 2.5rem; -->
+<!--       align-items: center -->
+<!--     } -->
+<!---->
+<!--     @media(min-width:860px) { -->
+<!--       .hero-wrap { -->
+<!--         grid-template-columns: 1.15fr .85fr -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .hbadge { -->
+<!--       display: inline-flex; -->
+<!--       align-items: center; -->
+<!--       gap: .45rem; -->
+<!--       font-size: .65rem; -->
+<!--       letter-spacing: .13em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--am); -->
+<!--       border: .5px solid var(--brl); -->
+<!--       padding: .28rem .8rem; -->
+<!--       border-radius: 100px; -->
+<!--       margin-bottom: clamp(.9rem, 2vw, 1.4rem); -->
+<!--       animation: fi .7s ease both -->
+<!--     } -->
+<!---->
+<!--     .hbadge::before { -->
+<!--       content: ''; -->
+<!--       width: 5px; -->
+<!--       height: 5px; -->
+<!--       border-radius: 50%; -->
+<!--       background: var(--am); -->
+<!--       flex-shrink: 0; -->
+<!--       animation: pulse 2s ease-in-out infinite -->
+<!--     } -->
+<!---->
+<!--     @keyframes pulse { -->
+<!---->
+<!--       0%, -->
+<!--       100% { -->
+<!--         opacity: 1 -->
+<!--       } -->
+<!---->
+<!--       50% { -->
+<!--         opacity: .3 -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     @keyframes fi { -->
+<!--       from { -->
+<!--         opacity: 0; -->
+<!--         transform: translateY(8px) -->
+<!--       } -->
+<!---->
+<!--       to { -->
+<!--         opacity: 1; -->
+<!--         transform: translateY(0) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     h1.hh { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(2.4rem, 6.5vw, 5rem); -->
+<!--       font-weight: 800; -->
+<!--       line-height: 1.02; -->
+<!--       letter-spacing: -.04em; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: 1.1rem; -->
+<!--       animation: fi .85s .1s ease both; -->
+<!--       word-break: break-word; -->
+<!--       hyphens: auto -->
+<!--     } -->
+<!---->
+<!--     h1.hh em { -->
+<!--       font-style: normal; -->
+<!--       color: var(--am) -->
+<!--     } -->
+<!---->
+<!--     .hsub { -->
+<!--       font-size: clamp(.85rem, 2vw, 1rem); -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txm); -->
+<!--       line-height: 1.75; -->
+<!--       margin-bottom: 1.75rem; -->
+<!--       animation: fi .85s .18s ease both -->
+<!--     } -->
+<!---->
+<!--     .hacts { -->
+<!--       display: flex; -->
+<!--       flex-wrap: wrap; -->
+<!--       gap: .75rem; -->
+<!--       align-items: center; -->
+<!--       animation: fi .85s .26s ease both -->
+<!--     } -->
+<!---->
+<!--     .btnp { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .78rem; -->
+<!--       font-weight: 700; -->
+<!--       letter-spacing: .05em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--bg); -->
+<!--       background: var(--am); -->
+<!--       border: none; -->
+<!--       padding: .75rem 1.6rem; -->
+<!--       border-radius: 3px; -->
+<!--       cursor: pointer; -->
+<!--       text-decoration: none; -->
+<!--       transition: background .2s, transform .15s, box-shadow .2s; -->
+<!--       display: inline-block -->
+<!--     } -->
+<!---->
+<!--     .btnp:hover { -->
+<!--       background: var(--aml); -->
+<!--       transform: translateY(-2px); -->
+<!--       box-shadow: 0 8px 24px rgba(232, 160, 50, .22) -->
+<!--     } -->
+<!---->
+<!--     .btng { -->
+<!--       font-size: .82rem; -->
+<!--       color: var(--txd); -->
+<!--       text-decoration: none; -->
+<!--       display: inline-flex; -->
+<!--       align-items: center; -->
+<!--       gap: .35rem; -->
+<!--       transition: color .2s -->
+<!--     } -->
+<!---->
+<!--     .btng::after { -->
+<!--       content: '↓'; -->
+<!--       transition: transform .2s -->
+<!--     } -->
+<!---->
+<!--     .btng:hover { -->
+<!--       color: var(--tx) -->
+<!--     } -->
+<!---->
+<!--     .btng:hover::after { -->
+<!--       transform: translateY(3px) -->
+<!--     } -->
+<!---->
+<!--     .hstats { -->
+<!--       display: flex; -->
+<!--       flex-wrap: wrap; -->
+<!--       gap: 0; -->
+<!--       margin-top: clamp(1.75rem, 4vw, 3rem); -->
+<!--       border: .5px solid var(--br); -->
+<!--       border-radius: 7px; -->
+<!--       overflow: hidden; -->
+<!--       animation: fi .85s .38s ease both -->
+<!--     } -->
+<!---->
+<!--     .hs { -->
+<!--       flex: 1; -->
+<!--       min-width: 100px; -->
+<!--       padding: .9rem 1.1rem; -->
+<!--       border-right: .5px solid var(--br); -->
+<!--       position: relative; -->
+<!--       overflow: hidden; -->
+<!--       transition: background .25s -->
+<!--     } -->
+<!---->
+<!--     .hs:last-child { -->
+<!--       border-right: none -->
+<!--     } -->
+<!---->
+<!--     .hs::before { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       top: 0; -->
+<!--       left: 0; -->
+<!--       right: 0; -->
+<!--       height: 2px; -->
+<!--       background: var(--am); -->
+<!--       transform: scaleX(0); -->
+<!--       transform-origin: left; -->
+<!--       transition: transform .3s -->
+<!--     } -->
+<!---->
+<!--     .hs:hover { -->
+<!--       background: var(--bgc) -->
+<!--     } -->
+<!---->
+<!--     .hs:hover::before { -->
+<!--       transform: scaleX(1) -->
+<!--     } -->
+<!---->
+<!--     .hsn { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(1.2rem, 2.5vw, 1.8rem); -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.04em; -->
+<!--       color: var(--am); -->
+<!--       line-height: 1 -->
+<!--     } -->
+<!---->
+<!--     .hsl { -->
+<!--       font-size: .68rem; -->
+<!--       color: var(--txd); -->
+<!--       margin-top: .18rem; -->
+<!--       line-height: 1.4 -->
+<!--     } -->
+<!---->
+<!--     /* Gauge visual */ -->
+<!--     .varea { -->
+<!--       display: none -->
+<!--     } -->
+<!---->
+<!--     @media(min-width:860px) { -->
+<!--       .varea { -->
+<!--         display: flex; -->
+<!--         align-items: center; -->
+<!--         justify-content: center -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .gc { -->
+<!--       position: relative; -->
+<!--       width: 280px; -->
+<!--       height: 280px -->
+<!--     } -->
+<!---->
+<!--     .gr { -->
+<!--       position: absolute; -->
+<!--       inset: 0; -->
+<!--       border-radius: 50%; -->
+<!--       border: .5px solid var(--br) -->
+<!--     } -->
+<!---->
+<!--     .gr2 { -->
+<!--       position: absolute; -->
+<!--       inset: 18px; -->
+<!--       border-radius: 50%; -->
+<!--       border: .5px solid rgba(232, 160, 50, .05) -->
+<!--     } -->
+<!---->
+<!--     .gcen { -->
+<!--       position: absolute; -->
+<!--       top: 50%; -->
+<!--       left: 50%; -->
+<!--       transform: translate(-50%, -50%); -->
+<!--       text-align: center -->
+<!--     } -->
+<!---->
+<!--     .gv { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: 2.2rem; -->
+<!--       font-weight: 800; -->
+<!--       color: var(--am); -->
+<!--       letter-spacing: -.05em; -->
+<!--       line-height: 1 -->
+<!--     } -->
+<!---->
+<!--     .gl2 { -->
+<!--       font-size: .6rem; -->
+<!--       letter-spacing: .1em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd); -->
+<!--       margin-top: .18rem -->
+<!--     } -->
+<!---->
+<!--     .fcrd { -->
+<!--       position: absolute; -->
+<!--       background: var(--bgc); -->
+<!--       border: .5px solid var(--br); -->
+<!--       border-radius: 7px; -->
+<!--       padding: .55rem .8rem; -->
+<!--       animation: flt 4s ease-in-out infinite -->
+<!--     } -->
+<!---->
+<!--     .fcrd:nth-child(1) { -->
+<!--       top: -8%; -->
+<!--       right: -18%; -->
+<!--       animation-delay: 0s -->
+<!--     } -->
+<!---->
+<!--     .fcrd:nth-child(2) { -->
+<!--       bottom: 4%; -->
+<!--       left: -18%; -->
+<!--       animation-delay: 1.6s -->
+<!--     } -->
+<!---->
+<!--     @keyframes flt { -->
+<!---->
+<!--       0%, -->
+<!--       100% { -->
+<!--         transform: translateY(0) -->
+<!--       } -->
+<!---->
+<!--       50% { -->
+<!--         transform: translateY(-7px) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .fcl { -->
+<!--       font-size: .58rem; -->
+<!--       letter-spacing: .08em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd); -->
+<!--       margin-bottom: .12rem -->
+<!--     } -->
+<!---->
+<!--     .fcv { -->
+<!--       font-family: var(--fh); -->
+<!--       font-weight: 700; -->
+<!--       font-size: .88rem; -->
+<!--       color: var(--tx) -->
+<!--     } -->
+<!---->
+<!--     .fcv.g { -->
+<!--       color: #4BC49A -->
+<!--     } -->
+<!---->
+<!--     .fcv.a { -->
+<!--       color: var(--am) -->
+<!--     } -->
+<!---->
+<!--     /* COUNTER STRIP */ -->
+<!--     .cstrip { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); -->
+<!--       border-top: .5px solid var(--br); -->
+<!--       border-bottom: .5px solid var(--br) -->
+<!--     } -->
+<!---->
+<!--     .csi { -->
+<!--       padding: clamp(1.1rem, 2.5vw, 1.8rem) clamp(.75rem, 2vw, 1.75rem); -->
+<!--       border-right: .5px solid var(--br); -->
+<!--       position: relative; -->
+<!--       overflow: hidden; -->
+<!--       transition: background .25s -->
+<!--     } -->
+<!---->
+<!--     .csi:last-child { -->
+<!--       border-right: none -->
+<!--     } -->
+<!---->
+<!--     .csi:hover { -->
+<!--       background: var(--bgc) -->
+<!--     } -->
+<!---->
+<!--     .csi::after { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       bottom: 0; -->
+<!--       left: 0; -->
+<!--       width: 0; -->
+<!--       height: 1px; -->
+<!--       background: var(--am); -->
+<!--       transition: width .4s -->
+<!--     } -->
+<!---->
+<!--     .csi:hover::after { -->
+<!--       width: 100% -->
+<!--     } -->
+<!---->
+<!--     .csin { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(1.6rem, 3.5vw, 2.6rem); -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.05em; -->
+<!--       color: var(--tx); -->
+<!--       line-height: 1 -->
+<!--     } -->
+<!---->
+<!--     .csin span { -->
+<!--       color: var(--am) -->
+<!--     } -->
+<!---->
+<!--     .csil { -->
+<!--       font-size: .72rem; -->
+<!--       color: var(--txd); -->
+<!--       margin-top: .25rem; -->
+<!--       line-height: 1.45 -->
+<!--     } -->
+<!---->
+<!--     /* SECTION */ -->
+<!--     .sec { -->
+<!--       padding: clamp(3rem, 6vw, 5.5rem) clamp(.9rem, 5vw, 3.5rem); -->
+<!--       max-width: 1100px; -->
+<!--       margin: 0 auto; -->
+<!--       width: 100% -->
+<!--     } -->
+<!---->
+<!--     .ey { -->
+<!--       font-size: .65rem; -->
+<!--       font-weight: 500; -->
+<!--       letter-spacing: .14em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--am); -->
+<!--       margin-bottom: .55rem -->
+<!--     } -->
+<!---->
+<!--     .sh { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(1.7rem, 3.8vw, 2.8rem); -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.035em; -->
+<!--       line-height: 1.1; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: .9rem -->
+<!--     } -->
+<!---->
+<!--     .ss { -->
+<!--       font-size: .92rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txm); -->
+<!--       line-height: 1.75 -->
+<!--     } -->
+<!---->
+<!--     .divl { -->
+<!--       height: .5px; -->
+<!--       background: linear-gradient(90deg, transparent, var(--brl), transparent); -->
+<!--       margin: 0 clamp(.9rem, 5vw, 3.5rem) -->
+<!--     } -->
+<!---->
+<!--     /* PROBLEM */ -->
+<!--     .strip { -->
+<!--       border-top: .5px solid var(--br); -->
+<!--       border-bottom: .5px solid var(--br); -->
+<!--       background: var(--bgs) -->
+<!--     } -->
+<!---->
+<!--     .stin { -->
+<!--       max-width: 1100px; -->
+<!--       margin: 0 auto; -->
+<!--       padding: clamp(2.5rem, 5vw, 4.5rem) clamp(.9rem, 5vw, 3.5rem) -->
+<!--     } -->
+<!---->
+<!--     .pgrid { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: 1fr; -->
+<!--       gap: clamp(2rem, 5vw, 4rem) -->
+<!--     } -->
+<!---->
+<!--     @media(min-width:700px) { -->
+<!--       .pgrid { -->
+<!--         grid-template-columns: 4fr 6fr -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .scol { -->
+<!--       display: flex; -->
+<!--       flex-direction: column; -->
+<!--       gap: 1.5rem -->
+<!--     } -->
+<!---->
+<!--     .stn { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(2.2rem, 4vw, 2.8rem); -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.05em; -->
+<!--       color: var(--am); -->
+<!--       line-height: 1 -->
+<!--     } -->
+<!---->
+<!--     .std { -->
+<!--       font-size: .78rem; -->
+<!--       color: var(--txd); -->
+<!--       margin-top: .18rem; -->
+<!--       line-height: 1.5 -->
+<!--     } -->
+<!---->
+<!--     .plist { -->
+<!--       list-style: none; -->
+<!--       display: flex; -->
+<!--       flex-direction: column; -->
+<!--       gap: .7rem; -->
+<!--       margin-top: 1.25rem -->
+<!--     } -->
+<!---->
+<!--     .plist li { -->
+<!--       display: flex; -->
+<!--       align-items: baseline; -->
+<!--       gap: .7rem; -->
+<!--       font-size: .88rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txm); -->
+<!--       line-height: 1.6 -->
+<!--     } -->
+<!---->
+<!--     .plist li::before { -->
+<!--       content: '—'; -->
+<!--       color: var(--amd); -->
+<!--       flex-shrink: 0 -->
+<!--     } -->
+<!---->
+<!--     /* INDUSTRY TABS */ -->
+<!--     .itabs { -->
+<!--       display: flex; -->
+<!--       gap: 1px; -->
+<!--       background: var(--br); -->
+<!--       border-radius: 7px; -->
+<!--       overflow: hidden; -->
+<!--       margin: 2.25rem 0 1.75rem; -->
+<!--       border: .5px solid var(--br); -->
+<!--       flex-wrap: wrap -->
+<!--     } -->
+<!---->
+<!--     .itab { -->
+<!--       flex: 1; -->
+<!--       min-width: 100px; -->
+<!--       padding: .7rem .5rem; -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .72rem; -->
+<!--       font-weight: 700; -->
+<!--       letter-spacing: .04em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd); -->
+<!--       background: var(--bgc); -->
+<!--       border: none; -->
+<!--       cursor: pointer; -->
+<!--       transition: all .2s; -->
+<!--       display: flex; -->
+<!--       flex-direction: column; -->
+<!--       align-items: center; -->
+<!--       gap: .3rem; -->
+<!--       position: relative; -->
+<!--       overflow: hidden -->
+<!--     } -->
+<!---->
+<!--     .itab::after { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       bottom: 0; -->
+<!--       left: 0; -->
+<!--       right: 0; -->
+<!--       height: 2px; -->
+<!--       background: var(--am); -->
+<!--       transform: scaleX(0); -->
+<!--       transition: transform .25s -->
+<!--     } -->
+<!---->
+<!--     .itab.on { -->
+<!--       color: var(--am); -->
+<!--       background: var(--bgh) -->
+<!--     } -->
+<!---->
+<!--     .itab.on::after { -->
+<!--       transform: scaleX(1) -->
+<!--     } -->
+<!---->
+<!--     .itab:hover:not(.on) { -->
+<!--       color: var(--txm); -->
+<!--       background: var(--bgh) -->
+<!--     } -->
+<!---->
+<!--     .itab svg { -->
+<!--       width: 16px; -->
+<!--       height: 16px; -->
+<!--       stroke: currentColor; -->
+<!--       fill: none; -->
+<!--       stroke-width: 1.5; -->
+<!--       stroke-linecap: round; -->
+<!--       stroke-linejoin: round -->
+<!--     } -->
+<!---->
+<!--     .ipanel { -->
+<!--       display: none; -->
+<!--       animation: pi .3s ease -->
+<!--     } -->
+<!---->
+<!--     .ipanel.on { -->
+<!--       display: block -->
+<!--     } -->
+<!---->
+<!--     @keyframes pi { -->
+<!--       from { -->
+<!--         opacity: 0; -->
+<!--         transform: translateY(10px) -->
+<!--       } -->
+<!---->
+<!--       to { -->
+<!--         opacity: 1; -->
+<!--         transform: translateY(0) -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     /* Module grid */ -->
+<!--     .mgrid { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); -->
+<!--       gap: 1px; -->
+<!--       background: var(--br); -->
+<!--       border: .5px solid var(--br); -->
+<!--       border-radius: 9px; -->
+<!--       overflow: hidden -->
+<!--     } -->
+<!---->
+<!--     .mc { -->
+<!--       background: var(--bgc); -->
+<!--       padding: clamp(1.25rem, 2.5vw, 1.75rem); -->
+<!--       position: relative; -->
+<!--       overflow: hidden; -->
+<!--       transition: background .25s -->
+<!--     } -->
+<!---->
+<!--     .mc::before { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       top: 0; -->
+<!--       left: 0; -->
+<!--       right: 0; -->
+<!--       height: 1.5px; -->
+<!--       background: var(--am); -->
+<!--       transform: scaleX(0); -->
+<!--       transform-origin: left; -->
+<!--       transition: transform .3s -->
+<!--     } -->
+<!---->
+<!--     .mc:hover { -->
+<!--       background: var(--bgh) -->
+<!--     } -->
+<!---->
+<!--     .mc:hover::before { -->
+<!--       transform: scaleX(1) -->
+<!--     } -->
+<!---->
+<!--     .mci { -->
+<!--       width: 38px; -->
+<!--       height: 38px; -->
+<!--       border-radius: 7px; -->
+<!--       background: var(--amdim); -->
+<!--       border: .5px solid var(--brl); -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       justify-content: center; -->
+<!--       margin-bottom: 1.1rem; -->
+<!--       transition: background .25s, transform .2s -->
+<!--     } -->
+<!---->
+<!--     .mc:hover .mci { -->
+<!--       background: rgba(232, 160, 50, .18); -->
+<!--       transform: scale(1.06) -->
+<!--     } -->
+<!---->
+<!--     .mci svg { -->
+<!--       width: 17px; -->
+<!--       height: 17px; -->
+<!--       stroke: var(--am); -->
+<!--       fill: none; -->
+<!--       stroke-width: 1.5; -->
+<!--       stroke-linecap: round; -->
+<!--       stroke-linejoin: round -->
+<!--     } -->
+<!---->
+<!--     .mct { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .92rem; -->
+<!--       font-weight: 700; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: .35rem; -->
+<!--       letter-spacing: -.01em -->
+<!--     } -->
+<!---->
+<!--     .mcd { -->
+<!--       font-size: .81rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txd); -->
+<!--       line-height: 1.6 -->
+<!--     } -->
+<!---->
+<!--     .mtag { -->
+<!--       display: inline-block; -->
+<!--       margin-top: .85rem; -->
+<!--       font-size: .6rem; -->
+<!--       letter-spacing: .08em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--tl); -->
+<!--       border: .5px solid rgba(31, 168, 138, .25); -->
+<!--       padding: .2rem .55rem; -->
+<!--       border-radius: 100px -->
+<!--     } -->
+<!---->
+<!--     /* HOW */ -->
+<!--     .hwrap { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: 1fr; -->
+<!--       gap: clamp(2rem, 5vw, 4.5rem); -->
+<!--       align-items: start -->
+<!--     } -->
+<!---->
+<!--     @media(min-width:700px) { -->
+<!--       .hwrap { -->
+<!--         grid-template-columns: 1fr 1fr -->
+<!--       } -->
+<!--     } -->
+<!---->
+<!--     .steps { -->
+<!--       display: flex; -->
+<!--       flex-direction: column; -->
+<!--       gap: 0; -->
+<!--       margin-top: 1.75rem -->
+<!--     } -->
+<!---->
+<!--     .step { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: 2.4rem 1fr; -->
+<!--       gap: .9rem; -->
+<!--       padding-bottom: 1.85rem; -->
+<!--       position: relative -->
+<!--     } -->
+<!---->
+<!--     .step:not(:last-child)::after { -->
+<!--       content: ''; -->
+<!--       position: absolute; -->
+<!--       left: 1.15rem; -->
+<!--       top: 2.6rem; -->
+<!--       bottom: 0; -->
+<!--       width: 1px; -->
+<!--       background: var(--brl) -->
+<!--     } -->
+<!---->
+<!--     .snum { -->
+<!--       width: 2.4rem; -->
+<!--       height: 2.4rem; -->
+<!--       border-radius: 50%; -->
+<!--       border: .5px solid var(--brl); -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       justify-content: center; -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .72rem; -->
+<!--       font-weight: 700; -->
+<!--       color: var(--am); -->
+<!--       background: rgba(232, 160, 50, .06); -->
+<!--       flex-shrink: 0; -->
+<!--       transition: background .2s, transform .2s -->
+<!--     } -->
+<!---->
+<!--     .step:hover .snum { -->
+<!--       background: rgba(232, 160, 50, .16); -->
+<!--       transform: scale(1.06) -->
+<!--     } -->
+<!---->
+<!--     .stitle { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .9rem; -->
+<!--       font-weight: 700; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: .28rem -->
+<!--     } -->
+<!---->
+<!--     .sdesc { -->
+<!--       font-size: .82rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txd); -->
+<!--       line-height: 1.65 -->
+<!--     } -->
+<!---->
+<!--     code { -->
+<!--       font-size: .78rem; -->
+<!--       color: var(--am); -->
+<!--       background: rgba(232, 160, 50, .09); -->
+<!--       padding: 1px 5px; -->
+<!--       border-radius: 3px -->
+<!--     } -->
+<!---->
+<!--     /* Code panel */ -->
+<!--     .cpanel { -->
+<!--       background: #0a0a08; -->
+<!--       border: .5px solid var(--br); -->
+<!--       border-radius: 9px; -->
+<!--       overflow: hidden; -->
+<!--       transition: border-color .3s -->
+<!--     } -->
+<!---->
+<!--     .cpanel:hover { -->
+<!--       border-color: var(--brl) -->
+<!--     } -->
+<!---->
+<!--     .cph { -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       justify-content: space-between; -->
+<!--       padding: .7rem 1rem; -->
+<!--       border-bottom: .5px solid var(--br); -->
+<!--       background: rgba(232, 160, 50, .025) -->
+<!--     } -->
+<!---->
+<!--     .dots { -->
+<!--       display: flex; -->
+<!--       gap: 4px -->
+<!--     } -->
+<!---->
+<!--     .dot { -->
+<!--       width: 8px; -->
+<!--       height: 8px; -->
+<!--       border-radius: 50%; -->
+<!--       background: rgba(255, 255, 255, .08) -->
+<!--     } -->
+<!---->
+<!--     .cfn { -->
+<!--       font-size: .65rem; -->
+<!--       letter-spacing: .06em; -->
+<!--       color: var(--txd); -->
+<!--       font-family: monospace -->
+<!--     } -->
+<!---->
+<!--     .cpb { -->
+<!--       padding: 1.1rem 1rem; -->
+<!--       font-family: monospace; -->
+<!--       font-size: .72rem; -->
+<!--       line-height: 1.75; -->
+<!--       overflow-x: auto -->
+<!--     } -->
+<!---->
+<!--     .ck { -->
+<!--       color: #E8A032 -->
+<!--     } -->
+<!---->
+<!--     .cs2 { -->
+<!--       color: #4BC49A -->
+<!--     } -->
+<!---->
+<!--     .cn { -->
+<!--       color: #78B8F0 -->
+<!--     } -->
+<!---->
+<!--     .ccm { -->
+<!--       color: #3A3A32; -->
+<!--       font-style: italic -->
+<!--     } -->
+<!---->
+<!--     .cp { -->
+<!--       color: #5A5A52 -->
+<!--     } -->
+<!---->
+<!--     .cb { -->
+<!--       color: #C47AE8 -->
+<!--     } -->
+<!---->
+<!--     /* MARKET */ -->
+<!--     .mktg { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); -->
+<!--       gap: 1px; -->
+<!--       background: var(--br); -->
+<!--       border: .5px solid var(--br); -->
+<!--       border-radius: 9px; -->
+<!--       overflow: hidden; -->
+<!--       margin-top: 2.25rem -->
+<!--     } -->
+<!---->
+<!--     .mcard { -->
+<!--       background: var(--bgc); -->
+<!--       padding: clamp(1.25rem, 2.5vw, 1.75rem); -->
+<!--       position: relative; -->
+<!--       overflow: hidden; -->
+<!--       transition: background .25s -->
+<!--     } -->
+<!---->
+<!--     .mcard:hover { -->
+<!--       background: var(--bgh) -->
+<!--     } -->
+<!---->
+<!--     .mcard.feat { -->
+<!--       grid-column: 1/-1; -->
+<!--       background: var(--bgs) -->
+<!--     } -->
+<!---->
+<!--     .mcard.feat::before { -->
+<!--       content: ''; -->
+<!--       display: block; -->
+<!--       height: 1px; -->
+<!--       background: linear-gradient(90deg, transparent, var(--am), transparent); -->
+<!--       margin-bottom: 1.5rem -->
+<!--     } -->
+<!---->
+<!--     .mey { -->
+<!--       font-size: .62rem; -->
+<!--       letter-spacing: .1em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--am); -->
+<!--       margin-bottom: .55rem -->
+<!--     } -->
+<!---->
+<!--     .mcard h3 { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: 1rem; -->
+<!--       font-weight: 700; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: .55rem; -->
+<!--       letter-spacing: -.02em -->
+<!--     } -->
+<!---->
+<!--     .mcard p { -->
+<!--       font-size: .84rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txd); -->
+<!--       line-height: 1.65 -->
+<!--     } -->
+<!---->
+<!--     .mfrow { -->
+<!--       display: grid; -->
+<!--       grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); -->
+<!--       gap: 1.25rem; -->
+<!--       margin-top: 1.25rem -->
+<!--     } -->
+<!---->
+<!--     .mfn { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: 1.5rem; -->
+<!--       font-weight: 800; -->
+<!--       color: var(--tx); -->
+<!--       letter-spacing: -.04em; -->
+<!--       line-height: 1 -->
+<!--     } -->
+<!---->
+<!--     .mfl { -->
+<!--       font-size: .7rem; -->
+<!--       color: var(--txd); -->
+<!--       margin-top: .22rem; -->
+<!--       line-height: 1.4 -->
+<!--     } -->
+<!---->
+<!--     /* CTA */ -->
+<!--     .ctasec { -->
+<!--       padding: clamp(3.5rem, 7vw, 7rem) clamp(.9rem, 5vw, 3.5rem); -->
+<!--       text-align: center; -->
+<!--       position: relative; -->
+<!--       overflow: hidden -->
+<!--     } -->
+<!---->
+<!--     .ctag { -->
+<!--       position: absolute; -->
+<!--       width: min(85vw, 640px); -->
+<!--       height: 280px; -->
+<!--       border-radius: 50%; -->
+<!--       background: radial-gradient(ellipse, rgba(232, 160, 50, .065) 0%, transparent 70%); -->
+<!--       top: 50%; -->
+<!--       left: 50%; -->
+<!--       transform: translate(-50%, -50%); -->
+<!--       pointer-events: none -->
+<!--     } -->
+<!---->
+<!--     .ctasec h2 { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: clamp(1.9rem, 4.5vw, 3.5rem); -->
+<!--       font-weight: 800; -->
+<!--       letter-spacing: -.04em; -->
+<!--       line-height: 1.1; -->
+<!--       color: var(--tx); -->
+<!--       margin-bottom: .9rem; -->
+<!--       position: relative; -->
+<!--       z-index: 1 -->
+<!--     } -->
+<!---->
+<!--     .ctasec h2 em { -->
+<!--       font-style: normal; -->
+<!--       color: var(--am) -->
+<!--     } -->
+<!---->
+<!--     .ctasec p { -->
+<!--       font-size: .92rem; -->
+<!--       font-weight: 300; -->
+<!--       color: var(--txm); -->
+<!--       margin-bottom: 1.75rem; -->
+<!--       position: relative; -->
+<!--       z-index: 1 -->
+<!--     } -->
+<!---->
+<!--     .ctacts { -->
+<!--       display: flex; -->
+<!--       flex-wrap: wrap; -->
+<!--       justify-content: center; -->
+<!--       gap: .75rem; -->
+<!--       position: relative; -->
+<!--       z-index: 1 -->
+<!--     } -->
+<!---->
+<!--     .btno { -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .76rem; -->
+<!--       font-weight: 700; -->
+<!--       letter-spacing: .05em; -->
+<!--       text-transform: uppercase; -->
+<!--       color: var(--txd); -->
+<!--       background: transparent; -->
+<!--       border: .5px solid rgba(255, 255, 255, .14); -->
+<!--       padding: .75rem 1.6rem; -->
+<!--       border-radius: 3px; -->
+<!--       cursor: pointer; -->
+<!--       text-decoration: none; -->
+<!--       transition: border-color .2s, color .2s, transform .15s; -->
+<!--       display: inline-block -->
+<!--     } -->
+<!---->
+<!--     .btno:hover { -->
+<!--       border-color: rgba(255, 255, 255, .32); -->
+<!--       color: var(--tx); -->
+<!--       transform: translateY(-1px) -->
+<!--     } -->
+<!---->
+<!--     /* FOOTER */ -->
+<!--     footer { -->
+<!--       border-top: .5px solid var(--br); -->
+<!--       padding: 1.75rem clamp(.9rem, 5vw, 3.5rem); -->
+<!--       display: flex; -->
+<!--       flex-wrap: wrap; -->
+<!--       align-items: center; -->
+<!--       justify-content: space-between; -->
+<!--       gap: 1rem -->
+<!--     } -->
+<!---->
+<!--     .flogo { -->
+<!--       display: flex; -->
+<!--       align-items: center; -->
+<!--       gap: .4rem; -->
+<!--       text-decoration: none; -->
+<!--       font-family: var(--fh); -->
+<!--       font-size: .9rem; -->
+<!--       font-weight: 800; -->
+<!--       color: var(--txd); -->
+<!--       letter-spacing: -.02em -->
+<!--     } -->
+<!---->
+<!--     .flogo .lm { -->
+<!--       width: 19px; -->
+<!--       height: 19px; -->
+<!--       border-radius: 3px -->
+<!--     } -->
+<!---->
+<!--     .fcopy { -->
+<!--       font-size: .72rem; -->
+<!--       color: var(--txd) -->
+<!--     } -->
+<!---->
+<!--     .flinks { -->
+<!--       display: flex; -->
+<!--       gap: 1.25rem; -->
+<!--       list-style: none -->
+<!--     } -->
+<!---->
+<!--     .flinks a { -->
+<!--       font-size: .72rem; -->
+<!--       color: var(--txd); -->
+<!--       text-decoration: none; -->
+<!--       transition: color .2s -->
+<!--     } -->
+<!---->
+<!--     .flinks a:hover { -->
+<!--       color: var(--tx) -->
+<!--     } -->
+<!---->
+<!--     /* REVEAL */ -->
+<!--     .r { -->
+<!--       opacity: 0; -->
+<!--       transform: translateY(18px); -->
+<!--       transition: opacity .55s ease, transform .55s ease -->
+<!--     } -->
+<!---->
+<!--     .r.v { -->
+<!--       opacity: 1; -->
+<!--       transform: translateY(0) -->
+<!--     } -->
+<!---->
+<!--     .r.d1 { -->
+<!--       transition-delay: .08s -->
+<!--     } -->
+<!---->
+<!--     .r.d2 { -->
+<!--       transition-delay: .15s -->
+<!--     } -->
+<!---->
+<!--     .r.d3 { -->
+<!--       transition-delay: .22s -->
+<!--     } -->
+<!---->
+<!--     .r.d4 { -->
+<!--       transition-delay: .3s -->
+<!--     } -->
+<!---->
+<!--     .r.d5 { -->
+<!--       transition-delay: .38s -->
+<!--     } -->
+<!---->
+<!--     .r.sl { -->
+<!--       transform: translateX(-18px) -->
+<!--     } -->
+<!---->
+<!--     .r.sr { -->
+<!--       transform: translateX(18px) -->
+<!--     } -->
+<!---->
+<!--     .r.sl.v, -->
+<!--     .r.sr.v { -->
+<!--       transform: translateX(0) -->
+<!--     } -->
+<!--   </style> -->
+<!-- </head> -->
+<!---->
+<!-- <body> -->
+<!---->
+<!--   <!-- NAV --> -->
+<!--   <nav> -->
+<!--     <a href="#" class="nav-logo"> -->
+<!--       <div class="lm"> -->
+<!--         <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"> -->
+<!--           <path d="M6.5 1L11 3.5V9L6.5 12L2 9V3.5L6.5 1Z" stroke="#080807" stroke-width="1.4" stroke-linejoin="round" /> -->
+<!--           <path d="M6.5 4.5V8.5M4.5 6.5H8.5" stroke="#080807" stroke-width="1.4" stroke-linecap="round" /> -->
+<!--         </svg> -->
+<!--       </div> -->
+<!--       Awo ERP -->
+<!--     </a> -->
+<!--     <ul class="nav-links"> -->
+<!--       <li><a href="#industries">Industries</a></li> -->
+<!--       <li><a href="#how">Architecture</a></li> -->
+<!--       <li><a href="#market">Market</a></li> -->
+<!--     </ul> -->
+<!--     <a href="#cta" class="nav-cta">Demo</a> -->
+<!--   </nav> -->
+<!---->
+<!--   <!-- TICKER --> -->
+<!--   <div class="tkw"> -->
+<!--     <div class="tkt"> -->
+<!--       <span class="ti"><b>●</b>Petroleum Retail</span> -->
+<!--       <span class="ti"><b>●</b>Restaurant &amp; Hospitality</span> -->
+<!--       <span class="ti"><b>●</b>General Retail</span> -->
+<!--       <span class="ti"><b>●</b>Aviation Fuelling</span> -->
+<!--       <span class="ti"><b>●</b>Wetstock Reconciliation</span> -->
+<!--       <span class="ti"><b>●</b>Fleet Card Billing</span> -->
+<!--       <span class="ti"><b>●</b>Shift Management</span> -->
+<!--       <span class="ti"><b>●</b>EPRA · KRA · KCAA Compliance</span> -->
+<!--       <span class="ti"><b>●</b>Schema-Driven UI</span> -->
+<!--       <span class="ti"><b>●</b>Go · Fiber · Baidu amis</span> -->
+<!--       <span class="ti"><b>●</b>Petroleum Retail</span> -->
+<!--       <span class="ti"><b>●</b>Restaurant &amp; Hospitality</span> -->
+<!--       <span class="ti"><b>●</b>General Retail</span> -->
+<!--       <span class="ti"><b>●</b>Aviation Fuelling</span> -->
+<!--       <span class="ti"><b>●</b>Wetstock Reconciliation</span> -->
+<!--       <span class="ti"><b>●</b>Fleet Card Billing</span> -->
+<!--       <span class="ti"><b>●</b>Shift Management</span> -->
+<!--       <span class="ti"><b>●</b>EPRA · KRA · KCAA Compliance</span> -->
+<!--       <span class="ti"><b>●</b>Schema-Driven UI</span> -->
+<!--       <span class="ti"><b>●</b>Go · Fiber · Baidu amis</span> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- HERO --> -->
+<!--   <div class="hero"> -->
+<!--     <div class="orb1"></div> -->
+<!--     <div class="orb2"></div> -->
+<!--     <div class="hgrid"></div> -->
+<!--     <div class="hero-in"> -->
+<!--       <div class="hero-wrap"> -->
+<!--         <div> -->
+<!--           <div class="hbadge">One ERP · Any Industry · East Africa</div> -->
+<!--           <h1 class="hh">Run your business.<br><em>Every process.</em><br>One platform.</h1> -->
+<!--           <p class="hsub">Awo ERP is a schema-driven business management platform for East African enterprises — with -->
+<!--             deep vertical modules for petroleum retail, hospitality, general retail, and aviation.</p> -->
+<!--           <div class="hacts"> -->
+<!--             <a href="#cta" class="btnp">Request a Demo</a> -->
+<!--             <a href="#industries" class="btng">Explore industries</a> -->
+<!--           </div> -->
+<!--           <div class="hstats r d1"> -->
+<!--             <div class="hs"> -->
+<!--               <div class="hsn" id="hs0">4</div> -->
+<!--               <div class="hsl">Industry verticals</div> -->
+<!--             </div> -->
+<!--             <div class="hs"> -->
+<!--               <div class="hsn" id="hs1">24+</div> -->
+<!--               <div class="hsl">Modules</div> -->
+<!--             </div> -->
+<!--             <div class="hs"> -->
+<!--               <div class="hsn" id="hs2">0%</div> -->
+<!--               <div class="hsl">Frontend work to add a doctype</div> -->
+<!--             </div> -->
+<!--             <div class="hs"> -->
+<!--               <div class="hsn" id="hs3">6 hrs</div> -->
+<!--               <div class="hsl">Saved on reconciliation daily</div> -->
+<!--             </div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--         <div class="varea"> -->
+<!--           <div class="gc"> -->
+<!--             <div class="gr"></div> -->
+<!--             <div class="gr2"></div> -->
+<!--             <svg width="280" height="280" viewBox="0 0 280 280" xmlns="http://www.w3.org/2000/svg" -->
+<!--               style="position:absolute;inset:0"> -->
+<!--               <g stroke="rgba(232,160,50,.14)" stroke-width=".8"> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(0,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(30,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(60,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(90,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(120,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(150,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(180,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(210,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(240,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(270,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(300,140,140)" /> -->
+<!--                 <line x1="140" y1="10" x2="140" y2="24" transform="rotate(330,140,140)" /> -->
+<!--               </g> -->
+<!--               <circle cx="140" cy="140" r="100" fill="none" stroke="rgba(232,160,50,.05)" stroke-width="5" /> -->
+<!--               <circle cx="140" cy="140" r="100" fill="none" stroke="url(#ag)" stroke-width="5" stroke-dasharray="628" -->
+<!--                 stroke-dashoffset="157" stroke-linecap="round" transform="rotate(-90,140,140)"> -->
+<!--                 <animate attributeName="stroke-dashoffset" from="628" to="157" dur="2.2s" fill="freeze" -->
+<!--                   calcMode="spline" keySplines="0.4 0 0.2 1" /> -->
+<!--               </circle> -->
+<!--               <g> -->
+<!--                 <line x1="140" y1="140" x2="140" y2="50" stroke="var(--am)" stroke-width="1.8" stroke-linecap="round" /> -->
+<!--                 <circle cx="140" cy="140" r="4" fill="var(--am)" /> -->
+<!--                 <circle cx="140" cy="140" r="7" fill="none" stroke="rgba(232,160,50,.28)" stroke-width="1" /> -->
+<!--                 <animateTransform attributeName="transform" type="rotate" from="-90 140 140" to="195 140 140" dur="2.2s" -->
+<!--                   fill="freeze" calcMode="spline" keySplines="0.4 0 0.2 1" /> -->
+<!--               </g> -->
+<!--               <defs> -->
+<!--                 <linearGradient id="ag" x1="0" y1="0" x2="1" y2="0"> -->
+<!--                   <stop offset="0%" stop-color="#7A4E0F" /> -->
+<!--                   <stop offset="100%" stop-color="#E8A032" /> -->
+<!--                 </linearGradient> -->
+<!--               </defs> -->
+<!--             </svg> -->
+<!--             <div class="gcen"> -->
+<!--               <div class="gv">98.4%</div> -->
+<!--               <div class="gl2">Reconciliation</div> -->
+<!--             </div> -->
+<!--             <div class="fcrd"> -->
+<!--               <div class="fcl">Today's volume</div> -->
+<!--               <div class="fcv g">42,180 L</div> -->
+<!--             </div> -->
+<!--             <div class="fcrd"> -->
+<!--               <div class="fcl">Shift variance</div> -->
+<!--               <div class="fcv a">−0.3%</div> -->
+<!--             </div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- COUNTER STRIP --> -->
+<!--   <div class="cstrip"> -->
+<!--     <div class="csi r"> -->
+<!--       <div class="csin"><span class="cnt" data-target="3000" data-sfx="+">0</span></div> -->
+<!--       <div class="csil">Licensed fuel outlets in Kenya</div> -->
+<!--     </div> -->
+<!--     <div class="csi r d1"> -->
+<!--       <div class="csin"><span class="cnt" data-target="3" data-sfx="–7%">0</span></div> -->
+<!--       <div class="csil">Avg. unmanaged wetstock loss</div> -->
+<!--     </div> -->
+<!--     <div class="csi r d2"> -->
+<!--       <div class="csin"><span class="cnt" data-target="6" data-sfx=" hrs">0</span></div> -->
+<!--       <div class="csil">Daily reconciliation time eliminated</div> -->
+<!--     </div> -->
+<!--     <div class="csi r d3"> -->
+<!--       <div class="csin"><span class="cnt" data-target="0" data-sfx=" deploys">0</span></div> -->
+<!--       <div class="csil">Frontend deploys to add a doctype</div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- PROBLEM --> -->
+<!--   <div class="strip"> -->
+<!--     <div class="stin"> -->
+<!--       <div class="pgrid"> -->
+<!--         <div class="scol r sl"> -->
+<!--           <div> -->
+<!--             <div class="stn">3–7%</div> -->
+<!--             <div class="std">Wetstock loss at unmanaged stations</div> -->
+<!--           </div> -->
+<!--           <div> -->
+<!--             <div class="stn">6 hrs</div> -->
+<!--             <div class="std">Daily manager time on manual reconciliation</div> -->
+<!--           </div> -->
+<!--           <div> -->
+<!--             <div class="stn">1 system</div> -->
+<!--             <div class="std">That connects forecourt, kitchen, till, and bowser</div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--         <div class="r sr d2"> -->
+<!--           <div class="ey">The Problem</div> -->
+<!--           <h2 class="sh">Generic software wasn't built for an East African operation.</h2> -->
+<!--           <ul class="plist"> -->
+<!--             <li>QuickBooks and ERPNext can't track per-pump meter readings or model dip charts against delivery volumes -->
+<!--             </li> -->
+<!--             <li>Restaurant POS systems don't connect to stock, suppliers, or accounting in real time</li> -->
+<!--             <li>Retail chains run disconnected branches with no consolidated stock view or pricing control</li> -->
+<!--             <li>Aviation fuellers face bowser reconciliation and into-plane records no standard ERP supports</li> -->
+<!--             <li>EPRA, KEBS, and KRA compliance requires manual document assembly before every audit</li> -->
+<!--           </ul> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- INDUSTRIES --> -->
+<!--   <div class="sec" id="industries"> -->
+<!--     <div class="ey r">Industry Verticals</div> -->
+<!--     <h2 class="sh r d1">One ERP engine.<br>Four deep verticals.</h2> -->
+<!--     <p class="ss r d2">Each vertical is purpose-built — not adapted from a generic package. Select an industry below. -->
+<!--     </p> -->
+<!---->
+<!--     <div class="itabs r d3" role="tablist"> -->
+<!--       <button class="itab on" data-tab="petro" role="tab"> -->
+<!--         <svg viewBox="0 0 24 24"> -->
+<!--           <path d="M3 22V10l9-8 9 8v12" /> -->
+<!--           <path d="M9 22V12h6v10" /> -->
+<!--         </svg> -->
+<!--         Petroleum -->
+<!--       </button> -->
+<!--       <button class="itab" data-tab="resto" role="tab"> -->
+<!--         <svg viewBox="0 0 24 24"> -->
+<!--           <path d="M18 8h1a4 4 0 0 1 0 8h-1" /> -->
+<!--           <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" /> -->
+<!--           <line x1="6" y1="1" x2="6" y2="4" /> -->
+<!--           <line x1="10" y1="1" x2="10" y2="4" /> -->
+<!--           <line x1="14" y1="1" x2="14" y2="4" /> -->
+<!--         </svg> -->
+<!--         Restaurant -->
+<!--       </button> -->
+<!--       <button class="itab" data-tab="retail" role="tab"> -->
+<!--         <svg viewBox="0 0 24 24"> -->
+<!--           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /> -->
+<!--           <line x1="3" y1="6" x2="21" y2="6" /> -->
+<!--           <path d="M16 10a4 4 0 0 1-8 0" /> -->
+<!--         </svg> -->
+<!--         Retail -->
+<!--       </button> -->
+<!--       <button class="itab" data-tab="avi" role="tab"> -->
+<!--         <svg viewBox="0 0 24 24"> -->
+<!--           <path -->
+<!--             d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" /> -->
+<!--         </svg> -->
+<!--         Aviation -->
+<!--       </button> -->
+<!--     </div> -->
+<!---->
+<!--     <div class="ipanel on" id="p-petro"> -->
+<!--       <div class="mgrid"> -->
+<!--         <div class="mc r"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <rect x="3" y="3" width="7" height="7" rx="1" /> -->
+<!--               <rect x="14" y="3" width="7" height="7" rx="1" /> -->
+<!--               <rect x="3" y="14" width="7" height="7" rx="1" /> -->
+<!--               <circle cx="17.5" cy="17.5" r="3" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Forecourt Management</div> -->
+<!--           <div class="mcd">Per-pump meter readings, shift open/close totals and live throughput by fuel grade. Every -->
+<!--             litre attributed to a nozzle, shift, and attendant.</div> -->
+<!--           <div class="mtag">Real-time</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d1"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M12 2C8 2 4 5 4 9c0 5 8 13 8 13s8-8 8-13c0-4-4-7-8-7z" /> -->
+<!--               <circle cx="12" cy="9" r="2.5" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Wetstock Reconciliation</div> -->
+<!--           <div class="mcd">Auto variance from dip readings, delivery manifests and meter sales. Flags discrepancies -->
+<!--             above threshold and generates EPRA wetstock registers.</div> -->
+<!--           <div class="mtag">EPRA Compliant</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d2"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <rect x="2" y="5" width="20" height="14" rx="2" /> -->
+<!--               <path d="M2 10h20M6 15h4M14 15h4" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Fleet Card Management</div> -->
+<!--           <div class="mcd">Issue cards to corporate clients, set volume and grade limits per vehicle, track drawdowns -->
+<!--             and auto-generate invoices on your billing cycle.</div> -->
+<!--           <div class="mtag">Corporate Billing</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d3"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <circle cx="12" cy="12" r="9" /> -->
+<!--               <path d="M12 7v5l3 3" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Shift Management</div> -->
+<!--           <div class="mcd">Structured open/close workflows with cashier-level cash events, card sales and variance -->
+<!--             sign-off. Immutable shift report feeds directly into the GL.</div> -->
+<!--           <div class="mtag">Audit Trail</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d4"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M12 20h9" /> -->
+<!--               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">EPRA &amp; Environmental Compliance</div> -->
+<!--           <div class="mcd">Tank calibration schedules, spill logs, cathodic protection records and inspection checklists -->
+<!--             maintained automatically.</div> -->
+<!--           <div class="mtag">EPRA / NEMA</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d5"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /> -->
+<!--               <polyline points="14 2 14 8 20 8" /> -->
+<!--               <line x1="9" y1="13" x2="15" y2="13" /> -->
+<!--               <line x1="9" y1="17" x2="15" y2="17" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Financial Reporting</div> -->
+<!--           <div class="mcd">Petroleum Chart of Accounts with GL posting from every shift and invoice. KRA-ready VAT -->
+<!--             returns and management accounts — no accountant overtime.</div> -->
+<!--           <div class="mtag">KRA Ready</div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!---->
+<!--     <div class="ipanel" id="p-resto"> -->
+<!--       <div class="mgrid"> -->
+<!--         <div class="mc r"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M3 11l19-9-9 19-2-8-8-2z" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Table &amp; Order Management</div> -->
+<!--           <div class="mcd">Floor plan view, per-table order tracking, modifier support and KDS routing — front of house -->
+<!--             to kitchen in real time.</div> -->
+<!--           <div class="mtag">Live KDS</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d1"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /> -->
+<!--               <line x1="3" y1="6" x2="21" y2="6" /> -->
+<!--               <path d="M16 10a4 4 0 0 1-8 0" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Recipe &amp; Menu Costing</div> -->
+<!--           <div class="mcd">Define recipes to the gram. Auto-deduct stock on every cover, track theoretical vs actual -->
+<!--             food cost variance and flag wastage in real time.</div> -->
+<!--           <div class="mtag">Food Cost</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d2"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <rect x="2" y="3" width="20" height="14" rx="2" /> -->
+<!--               <path d="M8 21h8M12 17v4" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">POS &amp; Settlements</div> -->
+<!--           <div class="mcd">Multi-tender POS with M-Pesa, card and cash split, service charge rules and VAT-inclusive -->
+<!--             pricing out of the box.</div> -->
+<!--           <div class="mtag">M-Pesa Native</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d3"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M5 12h14M12 5l7 7-7 7" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Supplier &amp; Purchasing</div> -->
+<!--           <div class="mcd">Issue POs, receive goods, auto-update stock and three-way match supplier invoices before GL -->
+<!--             posting — end to end.</div> -->
+<!--           <div class="mtag">3-Way Match</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d4"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <circle cx="12" cy="12" r="9" /> -->
+<!--               <path d="M12 7v5l3 3" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Shift &amp; Staff</div> -->
+<!--           <div class="mcd">Server shift reports, tip pooling rules, void and discount authorisation workflows and -->
+<!--             per-shift P&amp;L.</div> -->
+<!--           <div class="mtag">Shift Reports</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d5"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Reservations &amp; Covers</div> -->
+<!--           <div class="mcd">Online and walk-in reservation tracking, cover counts per session and waitlist management -->
+<!--             synced with live table status.</div> -->
+<!--           <div class="mtag">Guest Management</div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!---->
+<!--     <div class="ipanel" id="p-retail"> -->
+<!--       <div class="mgrid"> -->
+<!--         <div class="mc r"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" /> -->
+<!--               <line x1="3" y1="6" x2="21" y2="6" /> -->
+<!--               <path d="M16 10a4 4 0 0 1-8 0" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Multi-Branch Inventory</div> -->
+<!--           <div class="mcd">Real-time stock across all locations. Inter-branch transfers, minimum stock alerts and -->
+<!--             consolidated purchasing from a single HQ view.</div> -->
+<!--           <div class="mtag">Multi-Location</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d1"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <rect x="2" y="3" width="20" height="14" rx="2" /> -->
+<!--               <path d="M8 21h8M12 17v4" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">POS &amp; Cash Management</div> -->
+<!--           <div class="mcd">Barcode scanning, mixed-tender checkout, M-Pesa and card integration, float management and -->
+<!--             daily Z-report. Works offline.</div> -->
+<!--           <div class="mtag">Offline-Ready</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d2"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M20 12V22H4V12" /> -->
+<!--               <path d="M22 7H2v5h20V7z" /> -->
+<!--               <path d="M12 22V7" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Promotions &amp; Pricing</div> -->
+<!--           <div class="mcd">Time-bound price rules, customer tier discounts, bundle offers and promotion performance -->
+<!--             reporting across all branches from one place.</div> -->
+<!--           <div class="mtag">Dynamic Pricing</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d3"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /> -->
+<!--               <circle cx="9" cy="7" r="4" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Customer &amp; Loyalty</div> -->
+<!--           <div class="mcd">Customer profiles, purchase history, point accumulation rules and redemption workflows -->
+<!--             integrated with the POS at checkout.</div> -->
+<!--           <div class="mtag">Loyalty Engine</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d4"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Sales Analytics</div> -->
+<!--           <div class="mcd">Per-SKU sell-through rates, branch performance comparisons, ABC analysis and GP% reporting — -->
+<!--             no CSV exports required.</div> -->
+<!--           <div class="mtag">Live Dashboards</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d5"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M5 12h14M12 5l7 7-7 7" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Supplier &amp; Procurement</div> -->
+<!--           <div class="mcd">POs, GRNs, supplier performance tracking and landed cost allocation against received stock — -->
+<!--             closing the full procurement loop.</div> -->
+<!--           <div class="mtag">Full Cycle</div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!---->
+<!--     <div class="ipanel" id="p-avi"> -->
+<!--       <div class="mgrid"> -->
+<!--         <div class="mc r"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path -->
+<!--                 d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Into-Plane Fuelling Records</div> -->
+<!--           <div class="mcd">Per-aircraft records: registration, density, uplift volume, pre/post dip and sign-off by -->
+<!--             authorised refueller — ICAO-aligned.</div> -->
+<!--           <div class="mtag">ICAO-Aligned</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d1"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M12 2C8 2 4 5 4 9c0 5 8 13 8 13s8-8 8-13c0-4-4-7-8-7z" /> -->
+<!--               <circle cx="12" cy="9" r="2.5" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Bowser Reconciliation</div> -->
+<!--           <div class="mcd">Truck/bowser load-out vs delivery reconciliation with density-compensated volume calculations -->
+<!--             and automatic variance flagging per mission.</div> -->
+<!--           <div class="mtag">Volume Corrected</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d2"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <rect x="2" y="5" width="20" height="14" rx="2" /> -->
+<!--               <path d="M2 10h20M6 15h4M14 15h4" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Airline Invoicing</div> -->
+<!--           <div class="mcd">Auto-generate per-flight invoices for airline accounts based on uplift records. -->
+<!--             Multi-currency, fuel surcharges and tier pricing supported.</div> -->
+<!--           <div class="mtag">Multi-Currency</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d3"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /> -->
+<!--               <polyline points="14 2 14 8 20 8" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Quality Control &amp; Lab</div> -->
+<!--           <div class="mcd">Density checks, appearance and water detection records per delivery and bowser load. -->
+<!--             Automatic hold alerts for out-of-spec product.</div> -->
+<!--           <div class="mtag">Quality Hold</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d4"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <path d="M12 20h9" /> -->
+<!--               <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">KCAA Regulatory Log</div> -->
+<!--           <div class="mcd">All refuelling logs required by the Kenya Civil Aviation Authority — searchable, exportable -->
+<!--             and version-controlled for every audit.</div> -->
+<!--           <div class="mtag">KCAA</div> -->
+<!--         </div> -->
+<!--         <div class="mc r d5"> -->
+<!--           <div class="mci"><svg viewBox="0 0 24 24"> -->
+<!--               <circle cx="12" cy="12" r="9" /> -->
+<!--               <path d="M12 7v5l3 3" /> -->
+<!--             </svg></div> -->
+<!--           <div class="mct">Shift &amp; Hydrant Ops</div> -->
+<!--           <div class="mcd">Operator shift management across hydrant pit and bowser operations with immutable handover -->
+<!--             records and real-time volume accountability.</div> -->
+<!--           <div class="mtag">Ops Handover</div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <div class="divl"></div> -->
+<!---->
+<!--   <!-- HOW IT WORKS --> -->
+<!--   <div class="strip" id="how"> -->
+<!--     <div class="stin"> -->
+<!--       <div class="hwrap"> -->
+<!--         <div> -->
+<!--           <div class="ey r">Architecture</div> -->
+<!--           <h2 class="sh r d1">Zero frontend work<br>to add any new<br>document type.</h2> -->
+<!--           <p class="ss r d2">A Go backend developer can add a new form, list view, or workflow in minutes — without a -->
+<!--             single React sprint, design handoff, or frontend deployment.</p> -->
+<!--           <div class="steps"> -->
+<!--             <div class="step r d1"> -->
+<!--               <div class="snum">01</div> -->
+<!--               <div> -->
+<!--                 <div class="stitle">Write a JSON schema on the backend</div> -->
+<!--                 <div class="sdesc">Define fields, validations, relationships and actions as a structured file. No HTML, -->
+<!--                   no CSS, no TypeScript.</div> -->
+<!--               </div> -->
+<!--             </div> -->
+<!--             <div class="step r d2"> -->
+<!--               <div class="snum">02</div> -->
+<!--               <div> -->
+<!--                 <div class="stitle">Baidu amis renders the interface</div> -->
+<!--                 <div class="sdesc">The Go/Fiber server serves the schema to the amis engine. Forms, lists, filters and -->
+<!--                   action buttons appear instantly.</div> -->
+<!--               </div> -->
+<!--             </div> -->
+<!--             <div class="step r d3"> -->
+<!--               <div class="snum">03</div> -->
+<!--               <div> -->
+<!--                 <div class="stitle">Permissions resolve per tenant</div> -->
+<!--                 <div class="sdesc">A typed <code>Permissions</code> struct seeds every page. <code>visibleOn</code> -->
+<!--                   expressions gate fields without extra API calls.</div> -->
+<!--               </div> -->
+<!--             </div> -->
+<!--             <div class="step r d4"> -->
+<!--               <div class="snum">04</div> -->
+<!--               <div> -->
+<!--                 <div class="stitle">CSS theming injected server-side</div> -->
+<!--                 <div class="sdesc">Multi-tenant branding at the Go layer — one codebase, per-dealer white-labelling -->
+<!--                   across East Africa.</div> -->
+<!--               </div> -->
+<!--             </div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--         <div class="r d2"> -->
+<!--           <div class="cpanel"> -->
+<!--             <div class="cph"> -->
+<!--               <div class="dots"> -->
+<!--                 <div class="dot"></div> -->
+<!--                 <div class="dot"></div> -->
+<!--                 <div class="dot"></div> -->
+<!--               </div> -->
+<!--               <span class="cfn">schemas/dip_reading.json</span> -->
+<!--               <span style="font-size:.6rem;color:var(--am);letter-spacing:.06em">SCHEMA</span> -->
+<!--             </div> -->
+<!--             <div class="cpb"> -->
+<!--               <pre style="font-family:inherit"><span class="cp">{</span> -->
+<!--                 <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"form"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"title"</span><span class="cp">:</span> <span class="cs2">"Tank Dip -->
+<!--                   Reading"</span><span class="cp">,</span> -->
+<!--                 <span class="ck">"api"</span><span class="cp">:</span> <span -->
+<!--                   class="cs2">"/api/v1/dip-readings"</span><span class="cp">,</span> -->
+<!--                 <span class="ccm">// renders automatically — no React needed</span> -->
+<!--                 <span class="ck">"body"</span><span class="cp">: [</span> -->
+<!--                 <span class="cp">{</span> -->
+<!--                 <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"select"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"tank_id"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"label"</span><span class="cp">:</span> <span class="cs2">"Tank"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"required"</span><span class="cp">:</span> <span class="cb">true</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"source"</span><span class="cp">:</span> <span -->
+<!--                   class="cs2">"/api/v1/tanks?active=true"</span> -->
+<!--                 <span class="cp">},</span> -->
+<!--                 <span class="cp">{</span> -->
+<!--                 <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"number"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"dip_mm"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"label"</span><span class="cp">:</span> <span class="cs2">"Dip (mm)"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"min"</span><span class="cp">:</span> <span class="cn">0</span><span -->
+<!--                   class="cp">,</span> <span class="ck">"max"</span><span class="cp">:</span> <span -->
+<!--                   class="cn">2400</span> -->
+<!--                 <span class="cp">},</span> -->
+<!--                 <span class="cp">{</span> -->
+<!--                 <span class="ck">"type"</span><span class="cp">:</span> <span class="cs2">"formula"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"name"</span><span class="cp">:</span> <span class="cs2">"volume_litres"</span><span -->
+<!--                   class="cp">,</span> -->
+<!--                 <span class="ck">"value"</span><span class="cp">:</span> <span -->
+<!--                   class="cs2">"${calibration_lookup(tank_id,dip_mm)}"</span><span class="cp">,</span> -->
+<!--                 <span class="ck">"readOnly"</span><span class="cp">:</span> <span class="cb">true</span> -->
+<!--                 <span class="cp">}</span> -->
+<!--                 <span class="cp">],</span> -->
+<!--                 <span class="ck">"visibleOn"</span><span class="cp">:</span> <span -->
+<!--                   class="cs2">"${permissions.dip.create}"</span> -->
+<!--                 <span class="cp">}</span> -->
+<!--               </pre> -->
+<!--             </div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- MARKET --> -->
+<!--   <div class="sec" id="market"> -->
+<!--     <div class="ey r">Market Fit</div> -->
+<!--     <h2 class="sh r d1">Built for East Africa,<br>precisely.</h2> -->
+<!--     <div class="mktg"> -->
+<!--       <div class="mcard feat r"> -->
+<!--         <div class="mey">Market Context</div> -->
+<!--         <h3>East Africa's businesses are growing fast — and running on spreadsheets.</h3> -->
+<!--         <p>Kenya has 3,000+ licensed fuel outlets, thousands of restaurants and hundreds of retail chains — most without -->
+<!--           integrated software. Awo ERP is built to change that, with modules that speak the language of each business -->
+<!--           type.</p> -->
+<!--         <div class="mfrow"> -->
+<!--           <div> -->
+<!--             <div class="mfn">3,000+</div> -->
+<!--             <div class="mfl">Licensed fuel outlets in Kenya</div> -->
+<!--           </div> -->
+<!--           <div> -->
+<!--             <div class="mfn">~KSH 2B</div> -->
+<!--             <div class="mfl">Daily retail fuel value</div> -->
+<!--           </div> -->
+<!--           <div> -->
+<!--             <div class="mfn">EPRA</div> -->
+<!--             <div class="mfl">Regulatory compliance built in</div> -->
+<!--           </div> -->
+<!--           <div> -->
+<!--             <div class="mfn">KRA</div> -->
+<!--             <div class="mfl">VAT &amp; tax reporting built in</div> -->
+<!--           </div> -->
+<!--         </div> -->
+<!--       </div> -->
+<!--       <div class="mcard r d1"> -->
+<!--         <div class="mey">Independent Operators</div> -->
+<!--         <h3>1–5 site businesses</h3> -->
+<!--         <p>Owners who need to stop relying on their manager's word and start trusting their data. Shift reports, -->
+<!--           variance alerts and cash reconciliation give them eyes on the business remotely.</p> -->
+<!--       </div> -->
+<!--       <div class="mcard r d2"> -->
+<!--         <div class="mey">Multi-site Networks</div> -->
+<!--         <h3>Regional chains &amp; franchises</h3> -->
+<!--         <p>Groups operating across Kenya, Uganda and Tanzania who need consolidated reporting, consistent processes and -->
+<!--           white-labelled interfaces per site — all on one codebase.</p> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <div class="divl"></div> -->
+<!---->
+<!--   <!-- CTA --> -->
+<!--   <div class="ctasec" id="cta"> -->
+<!--     <div class="ctag"></div> -->
+<!--     <h2 class="r">Start with better<br>data — <em>today.</em></h2> -->
+<!--     <p class="r d1">See Awo ERP on a real dataset from your industry. No slideware, no generic demos.</p> -->
+<!--     <div class="ctacts r d2"> -->
+<!--       <a href="mailto:hello@awoerp.com" class="btnp">Request a Demo</a> -->
+<!--       <a href="#industries" class="btno">Explore Modules</a> -->
+<!--     </div> -->
+<!--   </div> -->
+<!---->
+<!--   <!-- FOOTER --> -->
+<!--   <footer> -->
+<!--     <a href="#" class="flogo"> -->
+<!--       <div class="lm"> -->
+<!--         <svg viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"> -->
+<!--           <path d="M6.5 1L11 3.5V9L6.5 12L2 9V3.5L6.5 1Z" stroke="#080807" stroke-width="1.4" stroke-linejoin="round" /> -->
+<!--           <path d="M6.5 4.5V8.5M4.5 6.5H8.5" stroke="#080807" stroke-width="1.4" stroke-linecap="round" /> -->
+<!--         </svg> -->
+<!--       </div> -->
+<!--       Awo ERP -->
+<!--     </a> -->
+<!--     <span class="fcopy">© 2025 Awo ERP · Built for East African enterprise</span> -->
+<!--     <ul class="flinks"> -->
+<!--       <li><a href="#">Privacy</a></li> -->
+<!--       <li><a href="#">Contact</a></li> -->
+<!--       <li><a href="#">Docs</a></li> -->
+<!--     </ul> -->
+<!--   </footer> -->
+<!---->
+<!--   <script> -->
+<!--     // Scroll reveal -->
+<!--     const ro = new IntersectionObserver(es => { -->
+<!--       es.forEach(e => {if (e.isIntersecting) {e.target.classList.add('v'); ro.unobserve(e.target);} }); -->
+<!--     }, {threshold: 0.08, rootMargin: '0px 0px -24px 0px'}); -->
+<!--     document.querySelectorAll('.r').forEach(el => ro.observe(el)); -->
+<!---->
+<!--     // Industry tabs -->
+<!--     document.querySelectorAll('.itab').forEach(tab => { -->
+<!--       tab.addEventListener('click', () => { -->
+<!--         document.querySelectorAll('.itab').forEach(t => t.classList.remove('on')); -->
+<!--         document.querySelectorAll('.ipanel').forEach(p => p.classList.remove('on')); -->
+<!--         tab.classList.add('on'); -->
+<!--         const panel = document.getElementById('p-' + tab.dataset.tab); -->
+<!--         if (panel) { -->
+<!--           panel.classList.add('on'); -->
+<!--           panel.querySelectorAll('.r').forEach(el => { -->
+<!--             el.classList.remove('v'); -->
+<!--             setTimeout(() => ro.observe(el), 20); -->
+<!--           }); -->
+<!--         } -->
+<!--       }); -->
+<!--     }); -->
+<!---->
+<!--     // Counter animation -->
+<!--     function animCount(el) { -->
+<!--       const tgt = +el.dataset.target; -->
+<!--       const sfx = el.dataset.sfx || ''; -->
+<!--       const dur = 1800; -->
+<!--       const t0 = performance.now(); -->
+<!--       (function tick(now) { -->
+<!--         const p = Math.min((now - t0) / dur, 1); -->
+<!--         const e = 1 - Math.pow(1 - p, 3); -->
+<!--         el.textContent = Math.round(tgt * e) + sfx; -->
+<!--         if (p < 1) requestAnimationFrame(tick); -->
+<!--       })(performance.now()); -->
+<!--     } -->
+<!--     const co = new IntersectionObserver(es => { -->
+<!--       es.forEach(e => {if (e.isIntersecting) {animCount(e.target); co.unobserve(e.target);} }); -->
+<!--     }, {threshold: 0.5}); -->
+<!--     document.querySelectorAll('.cnt').forEach(el => co.observe(el)); -->
+<!---->
+<!--     // Hero stats animate on load -->
+<!--     const hdata = [ -->
+<!--       {id: 'hs0', target: 4, sfx: ''}, -->
+<!--       {id: 'hs1', target: 24, sfx: '+'}, -->
+<!--       {id: 'hs2', target: 0, sfx: '%'}, -->
+<!--       {id: 'hs3', target: 6, sfx: ' hrs'} -->
+<!--     ]; -->
+<!--     window.addEventListener('load', () => { -->
+<!--       hdata.forEach((d, i) => { -->
+<!--         const el = document.getElementById(d.id); -->
+<!--         if (!el) return; -->
+<!--         el.dataset.target = d.target; -->
+<!--         el.dataset.sfx = d.sfx; -->
+<!--         setTimeout(() => animCount(el), 700 + i * 100); -->
+<!--       }); -->
+<!--     }); -->
+<!--   </script> -->
+<!-- </body> -->
+<!---->
+<!-- </html> -->

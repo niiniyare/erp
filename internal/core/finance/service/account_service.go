@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/core/iam"
@@ -14,6 +13,7 @@ import (
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -232,7 +232,7 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 	}
 
 	// Parent validation: root type consistency + path / level derivation.
-	var accountPath *string
+	var accountPath domain.MaterialisedPath
 	var accountLevel int32 = 0
 
 	if req.ParentAccountID != nil {
@@ -257,18 +257,12 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 				fmt.Sprintf("account root_type %q does not match parent root_type %q", req.RootType, parentAccount.RootType))
 		}
 
-		// Derive materialized path: parent_path + code + "/"
-		parentPath := "/" + parentAccount.AccountCode + "/"
-		if parentAccount.AccountPath != nil && *parentAccount.AccountPath != "" {
-			parentPath = *parentAccount.AccountPath
-		}
-		p := parentPath + req.AccountCode + "/"
-		accountPath = &p
+		// Derive materialised path: parent's path extended with parent's ID.
+		accountPath = parentAccount.Path.Append(parentAccount.ID)
 		accountLevel = parentAccount.AccountLevel + 1
 	} else {
-		// Root-level account: path is just the code.
-		p := "/" + req.AccountCode + "/"
-		accountPath = &p
+		// Root-level account: empty path is the root sentinel.
+		accountPath = domain.MaterialisedPath("")
 	}
 
 	// Auto-set normal balance from root type when caller did not provide one.
@@ -288,9 +282,9 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		AccountName:                 req.AccountName,
 		AccountDescription:          req.AccountDescription,
 		ParentAccountID:             req.ParentAccountID,
-		AccountPath:                 accountPath,
+		Path:                        accountPath,
 		AccountLevel:                accountLevel,
-		IsLeafAccount:               true, // new accounts start as leaves; flipped when a child is created
+		HasChildren:                 false,
 		Status:                      domain.AccountStatusDraft,
 		RootType:                    req.RootType,
 		AccountType:                 req.AccountType,
@@ -304,8 +298,6 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 		IsActive:                    req.IsActive,
 		AllowManualEntries:          req.AllowManualEntries,
 		RequireReference:            req.RequireReference,
-		FinancialStatementLine:      req.FinancialStatementLine,
-		ReportOrder:                 req.ReportOrder,
 		IsBudgetable:                req.IsBudgetable,
 		BudgetVarianceThreshold:     req.BudgetVarianceThreshold,
 		AccountAttributes:           req.AccountAttributes,
@@ -466,20 +458,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 		return nil, errors.NewBusinessError("VALIDATION_ERROR", "Account update validation failed")
 	}
 
-	if req.AccountCode != nil && *req.AccountCode != existingAccount.AccountCode {
-		if err := s.accountRepo.ValidateAccountCode(ctx, *req.AccountCode, &id); err != nil {
-			s.metrics.IncrementCounter("account_update_errors", metrics.Fields{
-				"error_type": "duplicate_code",
-			})
-
-			logger.WarnContext(ctx, "Account code already exists",
-				logger.Fields{"account_code": *req.AccountCode})
-
-			return nil, err
-		}
-		existingAccount.AccountCode = *req.AccountCode
-	}
-
 	if req.AccountName != nil {
 		existingAccount.AccountName = *req.AccountName
 	}
@@ -500,12 +478,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 	}
 	if req.RequireReference != nil {
 		existingAccount.RequireReference = *req.RequireReference
-	}
-	if req.FinancialStatementLine != nil {
-		existingAccount.FinancialStatementLine = req.FinancialStatementLine
-	}
-	if req.ReportOrder != nil {
-		existingAccount.ReportOrder = *req.ReportOrder
 	}
 	if req.IsBudgetable != nil {
 		existingAccount.IsBudgetable = *req.IsBudgetable
@@ -978,317 +950,89 @@ func (s *accountService) UpdateAccountBalance(ctx context.Context, accountID uui
 
 // Enhanced view-based operations
 func (s *accountService) GetAccountWithGroups(ctx context.Context, id uuid.UUID) (*domain.AccountWithGroups, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("account.id", id.String()),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting account with groups by ID",
-		logger.Fields{"account_id": id.String()})
-
-	// TODO: Implement repository method GetAccountWithGroups
-	// This should use the GetAccountWithGroupsByID query
-	account, err := s.accountRepo.GetAccountWithGroups(ctx, id)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get account with groups",
-			logger.Fields{
-				"account_id": id.String(),
-				"error":      err.Error(),
-			})
-		return nil, fmt.Errorf("failed to get account with groups: %w", err)
-	}
-
-	logger.DebugContext(ctx, "Account with groups retrieved successfully",
-		logger.Fields{
-			"account_id":   account.ID.String(),
-			"account_code": account.AccountCode,
-			"group_name":   getStringValue(account.GroupName),
-		})
-
-	return account, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountWithGroups not yet implemented")
 }
 
 func (s *accountService) GetAccountWithGroupsByCode(ctx context.Context, code string) (*domain.AccountWithGroups, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups_by_code",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("account.code", code),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_account_with_groups_by_code")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting account with groups by code",
-		logger.Fields{"account_code": code})
-
-	// TODO: Implement repository method GetAccountWithGroupsByCode
-	account, err := s.accountRepo.GetAccountWithGroupsByCode(ctx, code)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get account with groups by code",
-			logger.Fields{
-				"account_code": code,
-				"error":        err.Error(),
-			})
-		return nil, fmt.Errorf("failed to get account with groups by code: %w", err)
-	}
-
-	return account, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountWithGroupsByCode not yet implemented")
 }
 
 func (s *accountService) ListAccountsWithGroups(ctx context.Context, filter *domain.AccountFilter) ([]*domain.AccountWithGroups, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.list_accounts_with_groups",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.list_accounts_with_groups")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Listing accounts with groups")
-
-	if filter.Limit == nil || *filter.Limit <= 0 {
-		limit := 50
-		filter.Limit = &limit
-	}
-
-	if *filter.Limit > 1000 {
-		limit := 1000
-		filter.Limit = &limit
-	}
-
-	// TODO: Implement repository method ListAccountsWithGroups
-	accounts, err := s.accountRepo.ListAccountsWithGroups(ctx, filter)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to list accounts with groups",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to list accounts with groups: %w", err)
-	}
-
-	logger.DebugContext(ctx, "Accounts with groups listed successfully",
-		logger.Fields{"count": len(accounts)})
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "ListAccountsWithGroups not yet implemented")
 }
 
 func (s *accountService) SearchAccountsWithGroups(ctx context.Context, query string, limit int) ([]*domain.AccountWithGroups, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.search_accounts_with_groups",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("search.query", query),
-			attribute.Int("search.limit", limit),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.search_accounts_with_groups")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Searching accounts with groups",
-		logger.Fields{"query": query, "limit": limit})
-
-	if limit <= 0 {
-		limit = 50
-	}
-	if limit > 200 {
-		limit = 200
-	}
-
-	// TODO: Implement repository method SearchAccountsWithGroups
-	accounts, err := s.accountRepo.SearchAccountsWithGroups(ctx, query, limit)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to search accounts with groups",
-			logger.Fields{"query": query, "error": err.Error()})
-		return nil, fmt.Errorf("failed to search accounts with groups: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "SearchAccountsWithGroups not yet implemented")
 }
 
 func (s *accountService) GetLeafAccountsOnly(ctx context.Context, rootType *string) ([]*domain.AccountWithGroups, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_leaf_accounts_only",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_leaf_accounts_only")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting leaf accounts only",
-		logger.Fields{"root_type": getStringValue(rootType)})
-
-	// TODO: Implement repository method GetLeafAccountsOnly
-	accounts, err := s.accountRepo.GetLeafAccountsOnly(ctx, rootType)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get leaf accounts",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to get leaf accounts: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetLeafAccountsOnly not yet implemented")
 }
 
 // Complete chart of accounts operations
 func (s *accountService) GetCompleteChartOfAccounts(ctx context.Context, filter *domain.ChartOfAccountsFilter) ([]*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_complete_chart_of_accounts",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_complete_chart_of_accounts")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting complete chart of accounts")
-
-	if err := filter.Validate(); err != nil && len(err) > 0 {
-		logger.WarnContext(ctx, "Invalid chart of accounts filter",
-			logger.Fields{"errors": len(err)})
-		return nil, fmt.Errorf("invalid filter: %v", err)
-	}
-
-	if filter.Limit == nil || *filter.Limit <= 0 {
-		limit := 100
-		filter.Limit = &limit
-	}
-
-	// TODO: Implement repository method GetCompleteChartOfAccounts
-	accounts, err := s.accountRepo.GetCompleteChartOfAccounts(ctx, filter)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get complete chart of accounts",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to get complete chart of accounts: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetCompleteChartOfAccounts not yet implemented")
 }
 
 func (s *accountService) GetAccountForReporting(ctx context.Context, accountID uuid.UUID) (*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_for_reporting",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("account.id", accountID.String()),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_account_for_reporting")
 	defer span.End()
-
-	// TODO: Implement repository method GetAccountForReporting
-	account, err := s.accountRepo.GetAccountForReporting(ctx, accountID)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get account for reporting",
-			logger.Fields{"account_id": accountID.String(), "error": err.Error()})
-		return nil, fmt.Errorf("failed to get account for reporting: %w", err)
-	}
-
-	return account, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountForReporting not yet implemented")
 }
 
 func (s *accountService) GetAccountsByStatementSection(ctx context.Context, section string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_statement_section",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("statement.section", section),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_statement_section")
 	defer span.End()
-
-	// TODO: Implement repository method GetAccountsByStatementSection
-	accounts, err := s.accountRepo.GetAccountsByStatementSection(ctx, section, entityID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get accounts by statement section: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountsByStatementSection not yet implemented")
 }
 
 func (s *accountService) GetAccountsByGroup(ctx context.Context, groupCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_group",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("group.code", groupCode),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_group")
 	defer span.End()
-
-	// TODO: Implement repository method GetAccountsByGroup
-	accounts, err := s.accountRepo.GetAccountsByGroup(ctx, groupCode, entityID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get accounts by group: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountsByGroup not yet implemented")
 }
 
 func (s *accountService) GetAccountsByHeader(ctx context.Context, headerCode string, entityID *uuid.UUID) ([]*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_header",
-		tracing.WithSpanKind(tracing.SpanKindInternal),
-		tracing.WithAttributes(
-			attribute.String("header.code", headerCode),
-		))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_by_header")
 	defer span.End()
-
-	// TODO: Implement repository method GetAccountsByHeader
-	accounts, err := s.accountRepo.GetAccountsByHeader(ctx, headerCode, entityID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get accounts by header: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountsByHeader not yet implemented")
 }
 
 // Financial reporting operations
 func (s *accountService) GetTrialBalanceAccounts(ctx context.Context, entityID *uuid.UUID, nonZeroOnly bool) ([]*domain.TrialBalanceSummary, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_trial_balance_accounts",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_trial_balance_accounts")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting trial balance accounts",
-		logger.Fields{"non_zero_only": nonZeroOnly})
-
-	// TODO: Implement repository method GetTrialBalanceAccounts
-	accounts, err := s.accountRepo.GetTrialBalanceAccounts(ctx, entityID, nonZeroOnly)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get trial balance accounts",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to get trial balance accounts: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetTrialBalanceAccounts not yet implemented")
 }
 
 func (s *accountService) GetAccountsWithBalances(ctx context.Context, filter *domain.BalanceFilter) ([]*domain.ChartOfAccountsComplete, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_with_balances",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_accounts_with_balances")
 	defer span.End()
-
-	if err := filter.Validate(); err != nil && len(err) > 0 {
-		logger.WarnContext(ctx, "Invalid balance filter",
-			logger.Fields{"errors": len(err)})
-		return nil, fmt.Errorf("invalid filter: %v", err)
-	}
-
-	// TODO: Implement repository method GetAccountsWithBalances
-	accounts, err := s.accountRepo.GetAccountsWithBalances(ctx, filter)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get accounts with balances: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountsWithBalances not yet implemented")
 }
 
 func (s *accountService) GetCashFlowAccounts(ctx context.Context, entityID *uuid.UUID) ([]*domain.CashFlowAccount, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_cash_flow_accounts",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_cash_flow_accounts")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting cash flow accounts")
-
-	// TODO: Implement repository method GetCashFlowAccounts
-	accounts, err := s.accountRepo.GetCashFlowAccounts(ctx, entityID)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get cash flow accounts",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to get cash flow accounts: %w", err)
-	}
-
-	return accounts, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetCashFlowAccounts not yet implemented")
 }
 
 func (s *accountService) GetAccountSummaryByGroup(ctx context.Context, entityID *uuid.UUID) ([]*domain.AccountGroupSummary, error) {
-	ctx, span := s.tracing.StartSpan(ctx, "account_service.get_account_summary_by_group",
-		tracing.WithSpanKind(tracing.SpanKindInternal))
+	_, span := s.tracing.StartSpan(ctx, "account_service.get_account_summary_by_group")
 	defer span.End()
-
-	logger.DebugContext(ctx, "Getting account summary by group")
-
-	// TODO: Implement repository method GetAccountSummaryByGroup
-	summary, err := s.accountRepo.GetAccountSummaryByGroup(ctx, entityID)
-	if err != nil {
-		logger.ErrorContext(ctx, "Failed to get account summary by group",
-			logger.Fields{"error": err.Error()})
-		return nil, fmt.Errorf("failed to get account summary by group: %w", err)
-	}
-
-	return summary, nil
+	return nil, errors.NewBusinessError("NOT_IMPLEMENTED", "GetAccountSummaryByGroup not yet implemented")
 }
 
 // Helper functions
@@ -1367,7 +1111,6 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 		tracing.WithAttributes(
 			attribute.String("group.code", req.GroupCode),
 			attribute.String("group.name", req.GroupName),
-			attribute.String("group.type", req.GroupType),
 		))
 	defer span.End()
 
@@ -1375,7 +1118,6 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 		logger.Fields{
 			"group_code": req.GroupCode,
 			"group_name": req.GroupName,
-			"group_type": req.GroupType,
 		})
 
 	// TODO(authz): enforce finance.account_groups.create via iam.Service.Enforce() once
@@ -1402,33 +1144,30 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 
 	// Create account group entity
 	group := &domain.AccountGroup{
-		ID:                        uuid.New(),
-		EntityID:                  req.EntityID,
-		GroupCode:                 req.GroupCode,
-		GroupName:                 req.GroupName,
-		Description:               req.Description,
-		GroupType:                 req.GroupType,
-		ParentGroupID:             req.ParentGroupID,
-		FinancialStatementSection: req.FinancialStatementSection,
-		ConsolidationMethod:       req.ConsolidationMethod,
-		CashFlowCategory:          req.CashFlowCategory,
-		DisplayOrder:              req.DisplayOrder,
-		IsSystemDefined:           false, // User-created groups are not system defined
-		IsActive:                  true,
-		IsHeader:                  req.IsHeader,
-		ShowTotals:                req.ShowTotals,
-		IndentLevel:               req.IndentLevel,
-		BoldDisplay:               req.BoldDisplay,
-		CreatedAt:                 time.Now(),
-		UpdatedAt:                 time.Now(),
-		CreatedBy:                 userID,
-		UpdatedBy:                 userID,
-		Version:                   1,
+		ID:                  uuid.New(),
+		EntityID:            req.EntityID,
+		GroupCode:           req.GroupCode,
+		GroupName:           req.GroupName,
+		Description:         req.Description,
+		ParentGroupID:       req.ParentGroupID,
+		ConsolidationMethod: req.ConsolidationMethod,
+		CashFlowCategory:    req.CashFlowCategory,
+		DisplayOrder:        req.DisplayOrder,
+		IsSystemDefined:     false, // User-created groups are not system defined
+		IsActive:            true,
+		IsHeader:            req.IsHeader,
+		ShowTotals:          req.ShowTotals,
+		IndentLevel:         req.IndentLevel,
+		BoldDisplay:         req.BoldDisplay,
+		CreatedAt:           time.Now(),
+		UpdatedAt:           time.Now(),
+		CreatedBy:           userID,
+		UpdatedBy:           userID,
 	}
 
 	// Validate business rules
-	if err := group.Validate(); err != nil {
-		return nil, fmt.Errorf("account group validation failed: %w", err)
+	if errs := group.Validate(); len(errs) > 0 {
+		return nil, fmt.Errorf("account group validation failed: %s", errs[0].Message)
 	}
 
 	// Create in repository
@@ -1550,17 +1289,11 @@ func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, r
 		existingGroup.GroupName = *req.GroupName
 	}
 	if req.Description != nil {
-		existingGroup.Description = req.Description
+		existingGroup.Description = *req.Description
 	}
-	if req.GroupType != nil {
-		existingGroup.GroupType = *req.GroupType
-	}
-	if req.ParentGroupID != nil {
-		existingGroup.ParentGroupID = req.ParentGroupID
-	}
-	if req.FinancialStatementSection != nil {
-		existingGroup.FinancialStatementSection = req.FinancialStatementSection
-	}
+	// if req.StatementSection != nil {
+	// 	// 	existingGroup.StatementSection = req.StatementSection
+	// 	}
 	if req.ConsolidationMethod != nil {
 		existingGroup.ConsolidationMethod = req.ConsolidationMethod
 	}
@@ -1590,11 +1323,10 @@ func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, r
 	userID, _ := shared.GetUserID(ctx)
 	existingGroup.UpdatedAt = time.Now()
 	existingGroup.UpdatedBy = userID
-	existingGroup.Version++
 
 	// Validate business rules
-	if err := existingGroup.Validate(); err != nil {
-		return nil, fmt.Errorf("account group validation failed: %w", err)
+	if errs := existingGroup.Validate(); len(errs) > 0 {
+		return nil, fmt.Errorf("account group validation failed: %s", errs[0].Message)
 	}
 
 	// Update in repository
