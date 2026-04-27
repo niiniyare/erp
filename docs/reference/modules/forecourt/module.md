@@ -1,12 +1,5 @@
 # Awo ERP — Forecourt & POS Module Specification
 
-**Version:** 3.0.0
-**Status:** Draft
-**Module Code:** `forecourt`
-**Owner:** Platform Architecture Team
-**Last Updated:** 2024-11-15
-
----
 
 ## Table of Contents
 

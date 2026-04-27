@@ -790,7 +790,7 @@ Then:
   - TransactionNumber is set (non-empty)
   - No entries posted yet (status remains DRAFT)
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestCreateTransaction_MinimalValid`
+- [x] **Status:** Done — `transaction_service_test.go:TestCreateTransaction_MinimalValid`
 
 #### Test Case: CreateTransaction — transaction number is unique per tenant
 ```
@@ -804,7 +804,7 @@ Then:
   - Format follows configured prefix pattern (e.g., "JE-2025-00001")
   - No two transactions share the same number
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestCreateTransaction_UniqueNumbers`
+- [x] **Status:** Done — `transaction_service_test.go:TestCreateTransaction_DuplicateNumber`
 
 #### Test Case: CreateTransaction — requires at least 2 entries
 ```
@@ -818,7 +818,7 @@ Then:
   - No transaction row created
 Note: Double-entry accounting requires minimum 2 lines.
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestCreateTransaction_TooFewEntries`
+- [x] **Status:** Done — `transaction_service_test.go:TestCreateTransaction_TooFewEntries`
 
 ---
 
@@ -842,7 +842,7 @@ Then:
   - Account 4100 balance updated (credit side)
   - Audit log entry created
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_BalancedSuccess`
+- [x] **Status:** Done — `transaction_service_test.go:TestPostTransaction_BalancedSuccess`
 
 #### Test Case: PostTransaction — unbalanced transaction rejected
 ```
@@ -860,7 +860,7 @@ Then:
   - Account balances are NOT updated
   - No partial write occurs
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_Unbalanced`
+- [x] **Status:** Done — `transaction_service_test.go:TestPostTransaction_Unbalanced`
 
 #### Test Case: PostTransaction — requires approval when flag enabled
 ```
@@ -877,7 +877,7 @@ Then:
   - Status remains DRAFT
 Note: Bypassing approval defeats the financial control entirely.
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_ApprovalRequired`
+- [~] **Status:** Deferred — `postTransactionInline` allows DRAFT regardless of `ApprovalRequired`; `CanBePosted()` exists but isn't called in the inline path. Test blocked until service enforces the flag.
 
 #### Test Case: PostTransaction — already-posted transaction rejected
 ```
@@ -891,7 +891,7 @@ Then:
   - Account balances are NOT modified a second time
   - Idempotency is critical for payment integrity
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_AlreadyPosted`
+- [x] **Status:** Done — `transaction_service_test.go:TestPostTransaction_AlreadyPosted`
 
 #### Test Case: PostTransaction — posting to closed period blocked
 ```
@@ -907,7 +907,7 @@ Then:
   - Transaction remains APPROVED (not POSTED)
   - No GL entries written
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_ClosedPeriod`
+- [~] **Status:** Deferred — closed-period check only runs when `periodRepo != nil`; `NewTransactionService` (used in tests) doesn't accept a period repo. Test blocked until wiring is available.
 
 #### Test Case: PostTransaction — inactive account in entries blocked
 ```
@@ -920,7 +920,7 @@ Then:
   - Returns ACCOUNT_INACTIVE error referencing "9998"
   - Nothing posted
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_InactiveAccount`
+- [x] **Status:** Done — `transaction_service_test.go:TestPostTransaction_InactiveAccount`
 
 #### Test Case: PostTransaction — non-leaf (control) account in entries blocked
 ```
@@ -933,7 +933,7 @@ Then:
   - Returns ACCOUNT_IS_CONTROL error
   - Posting to control accounts corrupts sub-account aggregations
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_ControlAccount`
+- [~] **Status:** Deferred — `CanAcceptManualEntries()` is only checked for `TransactionTypeManual`; JOURNAL_ENTRY type skips the control-account check. Test blocked until service enforces for all types.
 
 #### Test Case: PostTransaction — atomic: balance update is all-or-nothing
 ```
@@ -947,7 +947,7 @@ Then:
   - First two accounts' balances are rolled back
   - No partial state exists in the database
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestPostTransaction_AtomicRollback`
+- [~] **Status:** Deferred — atomicity/rollback requires real DB transactions; not testable with mocks.
 
 ---
 
@@ -971,7 +971,7 @@ Then:
   - Reversal transaction.ReversalOfTransactionID = originalID
   - Net GL effect across both transactions = zero
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_MirrorEntries`
+- [x] **Status:** Done — `transaction_service_test.go:TestReverseTransaction_MirrorEntries`
 
 #### Test Case: ReverseTransaction — net effect on GL is zero
 ```
@@ -1002,7 +1002,7 @@ Then: Returns TRANSACTION_NOT_POSTED error
 Given: Transaction in POSTED status
 Then: Reversal succeeds
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_RequiresPosted`
+- [x] **Status:** Done — `transaction_service_test.go:TestReverseTransaction_RequiresPosted_Draft` + `_Approved`
 
 #### Test Case: ReverseTransaction — double reversal is blocked
 ```
@@ -1015,7 +1015,7 @@ Then:
   - Returns TRANSACTION_ALREADY_REVERSED error
   - No new reversal transaction created
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_AlreadyReversed`
+- [x] **Status:** Done — `transaction_service_test.go:TestReverseTransaction_AlreadyReversed`
 
 #### Test Case: ReverseTransaction — reversal itself cannot be reversed
 ```
@@ -1029,7 +1029,7 @@ Then:
   - finance_reversal_history confirms JE-002 is a reversal transaction
   - No JE-003 is created
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_CannotReverseReversal`
+- [~] **Status:** Deferred — service doesn't check whether a transaction IS itself a reversal before allowing another reversal. Test blocked until service enforces this.
 
 #### Test Case: ReverseTransaction — both operations are in one DB transaction
 ```
@@ -1042,7 +1042,7 @@ Then:
   - No orphaned reversal transaction exists
   - Original remains POSTED and reversible
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_AtomicRollback`
+- [~] **Status:** Deferred — atomicity/rollback requires real DB transactions; not testable with mocks.
 
 ---
 
@@ -1061,7 +1061,7 @@ Then:
   - ApprovedBy = approverID
   - ApprovedAt is set to now
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestApproveTransaction_Success`
+- [x] **Status:** Done — `transaction_service_test.go:TestApproveTransaction_PendingApproval_Succeeds` + `TestApproveTransaction_NotPending_ReturnsError`
 
 #### Test Case: ApproveTransaction — submitter cannot approve their own transaction (SOD)
 ```
@@ -1075,7 +1075,7 @@ Then:
   - Status remains PENDING_APPROVAL
 Note: Segregation of duties is a core internal control requirement.
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestApproveTransaction_SOD`
+- [~] **Status:** Deferred — `ApproveTransaction` doesn't compare submitter ID vs approver ID. Test blocked until SOD check is added to the service.
 
 #### Test Case: RejectTransaction — records reason and returns to editable state
 ```
@@ -1109,7 +1109,7 @@ Then:
   - Entries are ordered by line_number ASC
   - Each entry has AccountCode, Amount, DebitAmount, CreditAmount populated
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestGetTransactionWithEntries_FullData`
+- [x] **Status:** Done — `transaction_service_test.go:TestGetTransactionWithEntries_Success`
 
 #### Test Case: GetTransactionWithEntries — IsBalanced() returns correct result
 ```
@@ -1122,7 +1122,7 @@ Then: Returns true
 Given: Intentionally unbalanced (seeded directly in DB for testing)
 Then: Returns false
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestGetTransactionWithEntries_IsBalanced`
+- [x] **Status:** Done — `transaction_service_test.go:TestGetTransactionWithEntries_IsBalanced`
 
 ---
 
@@ -1140,7 +1140,7 @@ Then:
   - "Salary March" is excluded
   - Case-insensitive search
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestSearchTransactions_ByDescription`
+- [~] **Status:** Stub tested — `transaction_service_test.go:TestSearchTransactions_CurrentBehavior` asserts empty result; update when Search is implemented in repo.
 
 #### Test Case: SearchTransactions — scoped to tenant
 ```
@@ -1153,7 +1153,7 @@ Then:
   - Returns only Tenant-A's transactions
   - Tenant-B results never appear
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestSearchTransactions_TenantScoped`
+- [~] **Status:** Deferred — stub path returns empty; tenant scoping test deferred until Search repo method is implemented.
 
 ---
 
@@ -1173,7 +1173,7 @@ Then:
   - Returns FISCAL_YEAR_OVERLAP error
   - No new fiscal year created
 ```
-- [ ] **Status:** Pending — `period_service_test.go:TestFiscalYear_NoOverlap`
+- [x] **Status:** Done — `period_service_test.go:TestFiscalYear_OverlapRejectedByRepository`
 
 #### Test Case: FiscalYear — end date must be after start date
 ```
@@ -1186,7 +1186,7 @@ Then:
   - Returns INVALID_DATE_RANGE error
   - end_date > start_date is enforced
 ```
-- [ ] **Status:** Pending — `period_service_test.go:TestFiscalYear_DateRangeValidation`
+- [x] **Status:** Done — `period_service_test.go:TestFiscalYear_DateRangeValidation_EndBeforeStart` + `_EqualDates` + `_ValidRange`
 
 ---
 
@@ -1233,7 +1233,7 @@ Then: Returns Jan 2025 period
 When: GetOpenPeriodForDate(Feb 15, 2025)
 Then: Returns nil (period is closed)
 ```
-- [ ] **Status:** Pending — `period_service_test.go:TestGetOpenPeriodForDate`
+- [x] **Status:** Partial — `period_service_test.go:TestGetCurrentPeriod_ReturnsOpenPeriod` + `TestGetCurrentPeriod_HardClosedPeriodNotUsable`. Full date-scoped variant deferred (no `GetOpenPeriodForDate` on service interface).
 
 ---
 
