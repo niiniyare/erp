@@ -88,7 +88,7 @@ Then:
   - CANCELLED        → false
   - REVERSED         → false
 ```
-- [ ] **Status:** Pending — `types_test.go:TestTransactionStatusEditability`
+- [x] **Status:** Done — `domain/types_test.go:TestTransactionStatusEditability`
 
 #### Test Case: IsEditable — PENDING_APPROVAL is explicitly false
 ```
@@ -103,7 +103,7 @@ Then:
   - This is a correctness invariant; if it ever returns true, approval
     controls are bypassed (a P0 regression)
 ```
-- [ ] **Status:** Pending — `types_test.go:TestPendingApproval_NotEditable`
+- [x] **Status:** Done — `domain/types_test.go:TestPendingApproval_NotEditable`
 
 #### Test Case: TransactionStatus state transitions — valid paths
 ```
@@ -126,7 +126,7 @@ And these are ILLEGAL:
   CANCELLED        → APPROVED
   POSTED           → PENDING_APPROVAL
 ```
-- [ ] **Status:** Pending — `types_test.go:TestTransactionStatusTransitions`
+- [x] **Status:** Done — `domain/types_test.go:TestTransactionStatusTransitions`
 
 #### Test Case: TransactionType — no duplicate JOURNAL values
 ```
@@ -141,7 +141,7 @@ Then:
   - ParseTransactionType("JOURNAL") returns an error
   - ParseTransactionType("JOURNAL_ENTRY") succeeds
 ```
-- [ ] **Status:** Pending — `types_test.go:TestTransactionType_NoDuplicate`
+- [x] **Status:** Done — `domain/types_test.go:TestTransactionType_NoDuplicate`
 
 ---
 
@@ -173,7 +173,7 @@ Then:
     - "INSUFFICIENT_FUNDS"
     - "" (empty string)
 ```
-- [ ] **Status:** Pending — `types_test.go:TestRejectionReasonValidity`
+- [x] **Status:** Done — `domain/types_test.go:TestRejectionReasonValidity`
 
 ---
 
@@ -195,7 +195,7 @@ Then:
 Note: These are fundamental accounting invariants. Wrong values here corrupt
       all balance calculations downstream.
 ```
-- [ ] **Status:** Pending — `types_test.go:TestNormalBalance_PerRootType`
+- [x] **Status:** Done — `domain/types_test.go:TestNormalBalance_PerRootType`
 
 #### Test Case: RootType.IsValid() rejects unknown values
 ```
@@ -206,7 +206,7 @@ Given: rootType = "CONTRA_ASSET" or "DEFERRED" or ""
 When: Calling rootType.IsValid()
 Then: Returns false for all non-canonical values
 ```
-- [ ] **Status:** Pending — `types_test.go:TestRootType_InvalidValues`
+- [x] **Status:** Done — `domain/types_test.go:TestRootType_InvalidValues`
 
 ---
 
@@ -229,7 +229,7 @@ Then:
   - ARCHIVED          → false  (must close first)
   - PENDING_APPROVAL  → false  (already approved/active)
 ```
-- [ ] **Status:** Pending — `types_test.go:TestAccountStatus_TransitionsFromActive`
+- [x] **Status:** Done — `domain/types_test.go:TestAccountStatus_TransitionsFromActive`
 
 #### Test Case: CanTransitionTo — re-activation paths
 ```
@@ -245,7 +245,7 @@ Then:
   - CLOSED          → ACTIVE: false  (closed is terminal — cannot reopen)
   - ARCHIVED        → ACTIVE: false  (terminal)
 ```
-- [ ] **Status:** Pending — `types_test.go:TestAccountStatus_ReactivationPaths`
+- [x] **Status:** Done — `domain/types_test.go:TestAccountStatus_ReactivationPaths`
 
 #### Test Case: CanTransitionTo — CLOSED is a terminal state
 ```
@@ -258,7 +258,7 @@ Then:
   - Only ARCHIVED is reachable
   - All other transitions return false
 ```
-- [ ] **Status:** Pending — `types_test.go:TestAccountStatus_ClosedIsTerminal`
+- [x] **Status:** Done — `domain/types_test.go:TestAccountStatus_ClosedIsTerminal`
 
 ---
 
@@ -278,7 +278,7 @@ Then:
   - HasErrors([WARNING only]) → false
   - HasErrors([ERROR only])   → true
 ```
-- [ ] **Status:** Pending — `validation_test.go:TestValidationSeverity`
+- [x] **Status:** Done — `domain/validation_test.go:TestValidationSeverity_Constants` + `TestValidationError_IsBlocker` + `TestValidationError_EffectiveSeverity_DefaultsToError`
 
 #### Test Case: Nested field paths use entries[N].field format
 ```
@@ -292,7 +292,7 @@ Then:
   - NOT "account_code" (flat — unusable for UI highlighting)
   - errors[0].Code == "INVALID_ACCOUNT_CODE"
 ```
-- [ ] **Status:** Pending — `validation_test.go:TestNestedFieldPath`
+- [x] **Status:** Done — `domain/validation_test.go:TestNestedFieldPath`
 
 #### Test Case: ValidationResult.Merge combines two results correctly
 ```
@@ -308,7 +308,7 @@ Then:
   - IsValid() == false (there are ERROR-severity items)
   - Errors from result2 are appended, not replacing result1
 ```
-- [ ] **Status:** Pending — `validation_test.go:TestValidationResult_Merge`
+- [x] **Status:** Done — `domain/validation_test.go:TestValidationResult_Merge` + `TestValidationResult_Merge_IntoValidResult` + `TestValidationResult_Merge_EmptyDoesNotInvalidate`
 
 ---
 
@@ -329,7 +329,7 @@ Then:
   - REVISED   → false  (creates a new version)
   - CLOSED    → false
 ```
-- [ ] **Status:** Pending — `types_test.go:TestBudgetStatus_Editability`
+- [x] **Status:** Done — `domain/types_test.go:TestBudgetStatus_Editability`
 
 #### Test Case: BudgetLineItem.IsOverBudget detects exceedance correctly
 ```
@@ -343,7 +343,7 @@ Test Data:
   - ActualAmount = 100,001 → IsOverBudget() == true
   - ActualAmount = 0       → IsOverBudget() == false
 ```
-- [ ] **Status:** Pending — `domain_test.go:TestBudgetLineItem_IsOverBudget`
+- [x] **Status:** Done — `domain/types_test.go:TestBudgetLineItem_IsOverBudget`
 
 #### Test Case: BudgetLineItem.ExceedsVarianceThreshold uses percentage correctly
 ```
@@ -362,7 +362,7 @@ Given:
 Then:
   - Returns true  (12% exceeds 10% threshold)
 ```
-- [ ] **Status:** Pending — `domain_test.go:TestBudgetLineItem_VarianceThreshold`
+- [x] **Status:** Done — `domain/types_test.go:TestBudgetLineItem_VarianceThreshold`
 
 ---
 
@@ -987,7 +987,7 @@ Then:
   - Rent balance returns to its pre-transaction value
   - The net of original + reversal = 0 for all affected accounts
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestReverseTransaction_NetZeroGL`
+- [~] **Status:** Deferred — net-zero GL verification requires real account balances updated by the posting engine; not testable with repo mocks.
 
 #### Test Case: ReverseTransaction — only POSTED transactions can be reversed
 ```
@@ -1090,7 +1090,7 @@ Then:
   - IsEditable() == true (REJECTED is editable)
   - Submitter is notified
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestRejectTransaction_RecordsReason`
+- [x] **Status:** Done — `service/transaction_service_test.go:TestRejectTransaction_PendingApproval_Succeeds` + `TestRejectTransaction_NotPending_ReturnsError`
 
 ---
 
@@ -1205,7 +1205,7 @@ Then:
   - HARD_CLOSED → false
   - LOCKED      → false
 ```
-- [ ] **Status:** Pending — `period_test.go:TestAccountingPeriod_CanPost`
+- [x] **Status:** Done — `domain/period_test.go:TestAccountingPeriod_CanPost`
 
 #### Test Case: AccountingPeriod.CanFinancePost() — finance role gate
 ```
@@ -1220,7 +1220,7 @@ Then:
   - HARD_CLOSED → false
   - LOCKED      → false  (even CFO cannot post to locked period)
 ```
-- [ ] **Status:** Pending — `period_test.go:TestAccountingPeriod_CanFinancePost`
+- [x] **Status:** Done — `domain/period_test.go:TestAccountingPeriod_CanFinancePost`
 
 #### Test Case: PeriodService.GetOpenPeriodForDate — finds correct period
 ```
@@ -2081,7 +2081,7 @@ Then:
   - finance_transaction_entries table is NOT modified
   - finance_transactions status is NOT changed
 ```
-- [ ] **Status:** Pending — `transaction_service_test.go:TestDoubleEntry_BalanceEnforced`
+- [x] **Status:** Done — covered by `service/transaction_service_test.go:TestPostTransaction_Unbalanced`
 
 #### Test Case: Decimal precision — no rounding errors accumulate
 ```
@@ -2097,7 +2097,7 @@ Then:
 Note: Using float64 for financial calculations is a critical bug that causes
       cents to accumulate into material discrepancies.
 ```
-- [ ] **Status:** Pending — `domain_test.go:TestDecimalPrecision_NoFloatError`
+- [x] **Status:** Done — `domain/validation_test.go:TestDecimalPrecision_NoFloatError`
 
 #### Test Case: Foreign currency balance = sum of base-currency equivalents
 ```

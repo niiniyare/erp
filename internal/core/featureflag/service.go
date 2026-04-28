@@ -9,45 +9,87 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/tenant"
 	"awo.so/internal/shared/convert"
+	"github.com/google/uuid"
 )
 
-// Servicedefines the business logic interface for feature flags
+// Service defines the business logic interface for feature flags.
+// It exposes three groups of operations:
+//   - CRUD management of flag definitions
+//   - Runtime evaluation of flags against an evaluation context
+//   - Analytics helpers (stats, search, type filtering)
 type Service interface {
-	// Feature Flag Management
+	// --- Feature Flag Management ---
+
+	// CreateFeatureFlag creates a new flag scoped to the caller's tenant.
 	CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error)
+
+	// GetFeatureFlag retrieves a flag by its unique name within the current tenant.
 	GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag, error)
+
+	// GetFeatureFlagByID retrieves a flag by its UUID within the current tenant.
 	GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error)
+
+	// UpdateFeatureFlag applies a partial update to an existing flag.
+	// Only non-nil fields in the request are written.
 	UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *UpdateFeatureFlagRequest) (*FeatureFlag, error)
+
+	// DeleteFeatureFlag permanently removes a flag and emits an audit event.
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
+
+	// ListFeatureFlags returns a paginated list of flags, optionally filtered by type.
 	ListFeatureFlags(ctx context.Context, request *ListFeatureFlagsRequest) (*ListFeatureFlagsResponse, error)
 
-	// Flag Evaluation
+	// --- Flag Evaluation ---
+
+	// EvaluateFlag resolves the effective value of a single flag for the given
+	// evaluation context (user, attributes, etc.).
 	EvaluateFlag(ctx context.Context, name string, evalCtx *EvaluationContext) (*EvaluationResult, error)
+
+	// EvaluateFlags resolves multiple flags in one call, returning per-flag
+	// results and a map of any per-flag errors.
 	EvaluateFlags(ctx context.Context, names []string, evalCtx *EvaluationContext) (*BulkEvaluationResponse, error)
+
+	// IsEnabled is a convenience wrapper around EvaluateFlag that returns only
+	// the boolean enabled/disabled state.
 	IsEnabled(ctx context.Context, name string, evalCtx *EvaluationContext) (bool, error)
 
-	// Analytics and Monitoring
+	// --- Analytics and Monitoring ---
+
+	// GetFlagStats returns aggregate counts/metrics across all flags for the tenant.
 	GetFlagStats(ctx context.Context) (*FlagStats, error)
+
+	// SearchFlags performs a full-text search over flag names/descriptions.
 	SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error)
+
+	// GetFlagsByType returns all flags that match the given flag type string
+	// (e.g. FlagTypeBoolean, FlagTypeString, …).
 	GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error)
 }
 
-// ServiceImpl implements the Service interface
+// service is the concrete implementation of Service.
+// It wires together persistence, tenant isolation, auditing, and real-time
+// WebSocket notifications.
 type service struct {
 	repository       Repository
 	tenantService    tenant.Service
 	store            db.Store
 	auditService     audit.Service
-	webSocketService WebSocketService // Add WebSocket service for real-time updates
+	webSocketService WebSocketService // optional; nil-checked before use
 }
 
-// NewServicecreates a new simple feature flag service
-func NewService(repository Repository, tenantService tenant.Service, store db.Store, auditService audit.Service, webSocketService WebSocketService) Service {
+// NewService constructs a service with all required dependencies injected.
+// webSocketService may be nil; real-time notifications are skipped when absent.
+func NewService(
+	repository Repository,
+	tenantService tenant.Service,
+	store db.Store,
+	auditService audit.Service,
+	webSocketService WebSocketService,
+) Service {
 	return &service{
 		repository:       repository,
 		tenantService:    tenantService,
@@ -57,28 +99,39 @@ func NewService(repository Repository, tenantService tenant.Service, store db.St
 	}
 }
 
-// Request/Response types
+// ListFeatureFlagsRequest carries pagination and optional filtering parameters
+// for ListFeatureFlags.
 type ListFeatureFlagsRequest struct {
-	Page     int     `json:"page" validate:"min=1"`
+	Page     int     `json:"page"      validate:"min=1"`
 	PageSize int     `json:"page_size" validate:"min=1,max=100"`
-	FlagType *string `json:"flag_type,omitempty"`
+	FlagType *string `json:"flag_type,omitempty"` // nil means "all types"
 }
 
+// ListFeatureFlagsResponse wraps a page of flags together with the pagination
+// metadata needed by callers to implement "next page" logic.
 type ListFeatureFlagsResponse struct {
 	FeatureFlags []*FeatureFlag `json:"feature_flags"`
-	Total        int64          `json:"total"`
+	Total        int64          `json:"total"` // total flags matching the filter (not just this page)
 	Page         int            `json:"page"`
 	PageSize     int            `json:"page_size"`
 }
 
-// CreateFeatureFlag creates a new feature flag with tenant context validation
+// CreateFeatureFlag creates a new feature flag scoped to the current tenant.
+//
+// It enforces:
+//   - A valid tenant context must exist in ctx.
+//   - The flag name must be unique within the tenant.
+//   - The flag type must be one of the known FlagType constants.
+//
+// On success it emits an audit event and asynchronously notifies WebSocket
+// subscribers of the new flag.
 func (s *service) CreateFeatureFlag(ctx context.Context, request *CreateFeatureFlagRequest) (*FeatureFlag, error) {
-	// Validate tenant context exists
+	// Ensure the caller is operating within a valid tenant scope.
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Check for duplicate name
+	// Reject duplicate names early to surface a clear error before hitting the DB.
 	existing, err := s.repository.GetFeatureFlagByName(ctx, request.Name)
 	if err != nil && err != ErrFeatureFlagNotFound {
 		return nil, fmt.Errorf("failed to check existing flag: %w", err)
@@ -87,29 +140,27 @@ func (s *service) CreateFeatureFlag(ctx context.Context, request *CreateFeatureF
 		return nil, ErrFeatureFlagAlreadyExists
 	}
 
-	// Validate flag type
+	// Guard against unsupported flag types before persisting.
 	switch request.FlagType {
 	case FlagTypeBoolean, FlagTypeString, FlagTypeNumber, FlagTypeJSON:
-		// Valid types
+		// valid — fall through
 	default:
 		return nil, fmt.Errorf("invalid flag type: %s", request.FlagType)
 	}
 
-	// Create the flag
 	flag, err := s.repository.CreateFeatureFlag(ctx, request)
 	if err != nil {
 		return nil, err
 	}
 
-	// Audit the creation
 	s.auditFlagCreated(ctx, flag, request)
 
-	// Send WebSocket notification for flag creation
+	// Notify connected WebSocket clients asynchronously so we don't block the
+	// HTTP response on broadcast latency.
 	if s.webSocketService != nil {
-		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
-		if tenant != nil {
+		if t, _ := s.tenantService.GetCurrentTenant(ctx); t != nil {
 			go func() {
-				s.webSocketService.NotifyFlagCreated(context.Background(), tenant.ID, flag)
+				s.webSocketService.NotifyFlagCreated(context.Background(), t.ID, flag)
 			}()
 		}
 	}
@@ -117,7 +168,7 @@ func (s *service) CreateFeatureFlag(ctx context.Context, request *CreateFeatureF
 	return flag, nil
 }
 
-// GetFeatureFlag retrieves a feature flag by name with tenant context
+// GetFeatureFlag retrieves a feature flag by name, enforcing tenant isolation.
 func (s *service) GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -126,7 +177,7 @@ func (s *service) GetFeatureFlag(ctx context.Context, name string) (*FeatureFlag
 	return s.repository.GetFeatureFlagByName(ctx, name)
 }
 
-// GetFeatureFlagByID retrieves a feature flag by ID with tenant context
+// GetFeatureFlagByID retrieves a feature flag by UUID, enforcing tenant isolation.
 func (s *service) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -135,13 +186,22 @@ func (s *service) GetFeatureFlagByID(ctx context.Context, id uuid.UUID) (*Featur
 	return s.repository.GetFeatureFlagByID(ctx, id)
 }
 
-// UpdateFeatureFlag updates a feature flag with tenant context validation
+// UpdateFeatureFlag applies a partial update to the flag identified by id.
+//
+// Side-effects (all best-effort, non-blocking):
+//   - Audit event is recorded.
+//   - All active sessions for the tenant are invalidated so clients receive
+//     the updated flag configuration on their next login.
+//   - WebSocket subscribers are notified with a typed change event whose
+//     changeType reflects whether the flag was enabled, disabled, had its
+//     rollout percentage changed, or had some other configuration updated.
 func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *UpdateFeatureFlagRequest) (*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Get existing flag for comparison
+	// Fetch the pre-update snapshot so we can diff old vs. new values in the
+	// WebSocket change event and audit log.
 	oldFlag, err := s.repository.GetFeatureFlagByID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -152,41 +212,38 @@ func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *
 		return nil, err
 	}
 
-	// Audit the update
 	s.auditFlagUpdated(ctx, flag, request)
 
-	// Invalidate all active sessions for this tenant so users receive fresh
-	// flags on their next login. Best-effort: failure does not block the update.
+	// Invalidate sessions so every tenant user picks up fresh flag values on
+	// next login. Failure here is non-fatal — the flag update itself succeeded.
 	if t, _ := s.tenantService.GetCurrentTenant(ctx); t != nil {
 		_ = s.store.InvalidateSessionsByTenant(ctx, t.ID)
 	}
 
-	// Send WebSocket notification for flag change
+	// Build and broadcast the change event asynchronously.
 	if s.webSocketService != nil {
-		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
-		if tenant != nil {
+		if t, _ := s.tenantService.GetCurrentTenant(ctx); t != nil {
 			go func() {
-				// Determine change type based on what was updated
+				// Determine the semantic change type and capture old/new values
+				// for the event payload.
 				changeType := "update_config"
 				var oldValue any = oldFlag.DefaultValue
 				var newValue any = flag.DefaultValue
 
-				if request.DefaultValue != nil {
-					if *request.DefaultValue != oldFlag.DefaultValue {
-						if *request.DefaultValue {
-							changeType = "enable"
-						} else {
-							changeType = "disable"
-						}
+				if request.DefaultValue != nil && *request.DefaultValue != oldFlag.DefaultValue {
+					// The enabled/disabled state flipped — use a more specific label.
+					if *request.DefaultValue {
+						changeType = "enable"
+					} else {
+						changeType = "disable"
 					}
 				}
 
-				if request.RolloutPercentage != nil {
-					if *request.RolloutPercentage != *oldFlag.RolloutPercentage {
-						changeType = "update_rollout"
-						oldValue = oldFlag.RolloutPercentage
-						newValue = flag.RolloutPercentage
-					}
+				if request.RolloutPercentage != nil &&
+					*request.RolloutPercentage != *oldFlag.RolloutPercentage {
+					changeType = "update_rollout"
+					oldValue = oldFlag.RolloutPercentage
+					newValue = flag.RolloutPercentage
 				}
 
 				event := &FeatureFlagChangeEvent{
@@ -195,11 +252,11 @@ func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *
 					ChangeType: changeType,
 					OldValue:   oldValue,
 					NewValue:   newValue,
-					ChangedBy:  uuid.Nil, // Could extract from context
+					ChangedBy:  uuid.Nil, // TODO: extract actor from context
 					AppliedAt:  time.Now(),
 				}
 
-				s.webSocketService.NotifyFlagChange(context.Background(), tenant.ID, event)
+				s.webSocketService.NotifyFlagChange(context.Background(), t.ID, event)
 			}()
 		}
 	}
@@ -207,33 +264,31 @@ func (s *service) UpdateFeatureFlag(ctx context.Context, id uuid.UUID, request *
 	return flag, nil
 }
 
-// DeleteFeatureFlag deletes a feature flag with tenant context validation
+// DeleteFeatureFlag permanently removes the flag identified by id.
+// It records a HIGH-severity audit event and asynchronously notifies WebSocket
+// subscribers so dashboards can remove the flag from their view.
 func (s *service) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Check if flag exists and get it for audit logging
+	// Fetch first so we have the flag's metadata available for auditing even
+	// after the row is gone.
 	flag, err := s.repository.GetFeatureFlagByID(ctx, id)
 	if err != nil {
 		return err
 	}
 
-	// Delete the flag
-	err = s.repository.DeleteFeatureFlag(ctx, id)
-	if err != nil {
+	if err = s.repository.DeleteFeatureFlag(ctx, id); err != nil {
 		return err
 	}
 
-	// Audit the deletion
 	s.auditFlagDeleted(ctx, flag)
 
-	// Send WebSocket notification for flag deletion
 	if s.webSocketService != nil {
-		tenant, _ := s.tenantService.GetCurrentTenant(ctx)
-		if tenant != nil {
+		if t, _ := s.tenantService.GetCurrentTenant(ctx); t != nil {
 			go func() {
-				s.webSocketService.NotifyFlagDeleted(context.Background(), tenant.ID, flag.Name)
+				s.webSocketService.NotifyFlagDeleted(context.Background(), t.ID, flag.Name)
 			}()
 		}
 	}
@@ -241,13 +296,17 @@ func (s *service) DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// ListFeatureFlags lists feature flags with tenant context
+// ListFeatureFlags returns a paginated list of flags for the current tenant.
+//
+// Page and PageSize are clamped to safe defaults if missing or out of range.
+// NOTE: Total currently reflects only the count of flags in this page, not the
+// true table total. A dedicated COUNT query should be added when needed.
 func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlagsRequest) (*ListFeatureFlagsResponse, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Set defaults
+	// Apply safe defaults / clamp bounds.
 	if request.Page < 1 {
 		request.Page = 1
 	}
@@ -260,6 +319,7 @@ func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlag
 
 	offset := (request.Page - 1) * request.PageSize
 
+	// The repository layer expects int32; convert with overflow protection.
 	limit, err := convert.IntToInt32(request.PageSize)
 	if err != nil {
 		return nil, fmt.Errorf("invalid page size: %w", err)
@@ -279,8 +339,8 @@ func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlag
 		return nil, err
 	}
 
-	// For total count, we would need a separate count query
-	// This is simplified for now
+	// TODO: replace with a proper COUNT query so Total reflects the full
+	// result set, not just the current page size.
 	total := int64(len(flags))
 
 	response := &ListFeatureFlagsResponse{
@@ -290,23 +350,25 @@ func (s *service) ListFeatureFlags(ctx context.Context, request *ListFeatureFlag
 		PageSize:     request.PageSize,
 	}
 
-	// Audit the listing
 	s.auditFlagListed(ctx, request, response)
 
 	return response, nil
 }
 
-// EvaluateFlag evaluates a single feature flag with tenant context
+// EvaluateFlag resolves the effective value of the named flag for evalCtx.
+//
+// If the flag does not exist, a safe "disabled" default is returned rather than
+// an error, so callers can treat unknown flags as off without extra nil-checks.
 func (s *service) EvaluateFlag(ctx context.Context, name string, evalCtx *EvaluationContext) (*EvaluationResult, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
 	}
 
-	// Get the flag
 	flag, err := s.repository.GetFeatureFlagByName(ctx, name)
 	if err != nil {
 		if err == ErrFeatureFlagNotFound {
-			// Return default disabled result for non-existent flags
+			// Graceful degradation: treat missing flags as disabled so callers
+			// don't need to special-case the "flag doesn't exist yet" scenario.
 			return &EvaluationResult{
 				FlagName: name,
 				Value:    false,
@@ -323,16 +385,17 @@ func (s *service) EvaluateFlag(ctx context.Context, name string, evalCtx *Evalua
 		return nil, err
 	}
 
-	// Simple evaluation logic
 	result := s.evaluateSimpleFlag(flag, evalCtx)
 
-	// Audit the evaluation
 	s.auditFlagEvaluated(ctx, flag, evalCtx, result)
 
 	return result, nil
 }
 
-// EvaluateFlags evaluates multiple feature flags with tenant context
+// EvaluateFlags resolves multiple flags in a single call.
+//
+// Each flag is evaluated independently; a failure on one flag populates the
+// Errors map but does not abort evaluation of the remaining flags.
 func (s *service) EvaluateFlags(ctx context.Context, names []string, evalCtx *EvaluationContext) (*BulkEvaluationResponse, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -354,6 +417,8 @@ func (s *service) EvaluateFlags(ctx context.Context, names []string, evalCtx *Ev
 		Results: results,
 	}
 
+	// Only attach the errors map when there is at least one failure to keep
+	// the JSON response clean in the happy path.
 	if len(errors) > 0 {
 		response.Errors = errors
 	}
@@ -361,7 +426,8 @@ func (s *service) EvaluateFlags(ctx context.Context, names []string, evalCtx *Ev
 	return response, nil
 }
 
-// IsEnabled checks if a feature flag is enabled with tenant context
+// IsEnabled is a thin convenience wrapper that returns only the boolean
+// Enabled field from EvaluateFlag, useful for simple feature gates.
 func (s *service) IsEnabled(ctx context.Context, name string, evalCtx *EvaluationContext) (bool, error) {
 	result, err := s.EvaluateFlag(ctx, name, evalCtx)
 	if err != nil {
@@ -370,7 +436,8 @@ func (s *service) IsEnabled(ctx context.Context, name string, evalCtx *Evaluatio
 	return result.Enabled, nil
 }
 
-// GetFlagStats retrieves feature flag statistics with tenant context
+// GetFlagStats returns aggregate statistics (total count, enabled count, etc.)
+// for all flags in the current tenant.
 func (s *service) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -379,7 +446,8 @@ func (s *service) GetFlagStats(ctx context.Context) (*FlagStats, error) {
 	return s.repository.GetFlagStats(ctx)
 }
 
-// SearchFlags searches feature flags with tenant context
+// SearchFlags performs a full-text search over flag names and descriptions
+// within the current tenant.
 func (s *service) SearchFlags(ctx context.Context, query string, limit, offset int32) ([]*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -390,13 +458,13 @@ func (s *service) SearchFlags(ctx context.Context, query string, limit, offset i
 		return nil, err
 	}
 
-	// Audit the search
 	s.auditFlagSearched(ctx, query, limit, offset, results)
 
 	return results, nil
 }
 
-// GetFlagsByType retrieves flags by type with tenant context
+// GetFlagsByType returns all flags whose type matches flagType (e.g.
+// FlagTypeBoolean) within the current tenant.
 func (s *service) GetFlagsByType(ctx context.Context, flagType string) ([]*FeatureFlag, error) {
 	if err := s.tenantService.ValidateCurrentTenant(ctx); err != nil {
 		return nil, fmt.Errorf("invalid tenant context: %w", err)
@@ -405,30 +473,38 @@ func (s *service) GetFlagsByType(ctx context.Context, flagType string) ([]*Featu
 	return s.repository.GetFlagsByType(ctx, flagType)
 }
 
-// evaluateSimpleFlag performs basic flag evaluation
+// evaluateSimpleFlag implements the core flag evaluation algorithm.
+//
+// Evaluation order:
+//  1. If a rollout percentage is configured, hash the flag name + user ID into
+//     a 0-99 bucket and enable the flag only for buckets below the threshold.
+//  2. Otherwise, return the flag's DefaultValue.
+//
+// This is intentionally simple; a rules-engine layer can be added later without
+// changing the Service interface.
 func (s *service) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *EvaluationContext) *EvaluationResult {
 	now := time.Now()
 
-	// Basic evaluation logic
 	var enabled bool
 	var reason EvaluationReason
 	var value any
 
-	// Check rollout percentage if present
 	if flag.RolloutPercentage != nil && *flag.RolloutPercentage > 0 {
-		// Simple hash-based rollout
+		// Deterministic hash-based bucketing: the same user always lands in the
+		// same bucket, giving a stable rollout experience.
 		hash := s.calculateSimpleHash(flag.Name, evalCtx.UserID)
 		if hash < int(*flag.RolloutPercentage) {
 			enabled = flag.DefaultValue
 			reason = ReasonPercentRollout
 			value = flag.DefaultValue
 		} else {
+			// User is outside the rollout window — treat as disabled.
 			enabled = false
 			reason = ReasonPercentRollout
 			value = false
 		}
 	} else {
-		// Use default value
+		// No rollout configured; use the flag's default value directly.
 		enabled = flag.DefaultValue
 		reason = ReasonDefaultValue
 		value = flag.DefaultValue
@@ -442,13 +518,20 @@ func (s *service) evaluateSimpleFlag(flag *FeatureFlag, evalCtx *EvaluationConte
 		Metadata: ResultMetadata{
 			EvaluatedAt:   now,
 			CacheHit:      false,
-			EvaluationMs:  1.0, // Simple timing
+			EvaluationMs:  1.0, // placeholder; replace with real timing if needed
 			ConfigVersion: "1.0",
 		},
 	}
 }
 
-// calculateSimpleHash calculates a simple hash for rollout distribution
+// calculateSimpleHash hashes a flag name + user ID to a stable integer in [0, 99].
+//
+// The hash is computed with a basic polynomial rolling hash (multiplier 31) and
+// then normalised to the [0, 99] range. Anonymous users (nil userID) fall back
+// to the literal string "anonymous" so they are consistently bucketed together.
+//
+// NOTE: This is intentionally simple. For production-grade distribution
+// consider using a cryptographic hash such as FNV-1a or xxHash.
 func (s *service) calculateSimpleHash(flagName string, userID *uuid.UUID) int {
 	var input string
 	if userID != nil {
@@ -457,17 +540,20 @@ func (s *service) calculateSimpleHash(flagName string, userID *uuid.UUID) int {
 		input = flagName + ":anonymous"
 	}
 
-	// Simple hash calculation
 	hash := 0
 	for _, char := range input {
 		hash = hash*31 + int(char)
 	}
 
-	// Return value between 0-99
+	// Use double-modulo to handle negative hash values from integer overflow.
 	return (hash%100 + 100) % 100
 }
 
-// Audit Event Types
+// ---------------------------------------------------------------------------
+// Audit event type, category, and severity constants
+// ---------------------------------------------------------------------------
+
+// Audit event type identifiers — stored verbatim in the audit log.
 const (
 	AuditEventFeatureFlagCreated   = "feature_flag_created"
 	AuditEventFeatureFlagUpdated   = "feature_flag_updated"
@@ -477,14 +563,15 @@ const (
 	AuditEventFeatureFlagSearched  = "feature_flag_searched"
 )
 
-// Audit Event Categories
+// Audit category labels group related events for filtering in the audit UI.
 const (
 	AuditCategoryFeatureManagement = "FEATURE_MANAGEMENT"
 	AuditCategoryAccess            = "ACCESS"
 	AuditCategoryAdmin             = "ADMIN"
 )
 
-// Audit Severity Levels
+// Audit severity levels follow a standard INFO → WARN → HIGH → CRITICAL ladder.
+// Deletions are HIGH; value/rollout changes are WARN; reads are INFO.
 const (
 	AuditSeverityInfo     = "INFO"
 	AuditSeverityWarn     = "WARN"
@@ -492,7 +579,8 @@ const (
 	AuditSeverityCritical = "CRITICAL"
 )
 
-// auditFlagCreated logs flag creation event
+// auditFlagCreated emits an INFO-level audit event recording the full initial
+// state of the newly created flag.
 func (s *service) auditFlagCreated(ctx context.Context, flag *FeatureFlag, request *CreateFeatureFlagRequest) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":            flag.ID.String(),
@@ -519,7 +607,9 @@ func (s *service) auditFlagCreated(ctx context.Context, flag *FeatureFlag, reque
 	})
 }
 
-// auditFlagUpdated logs flag update event
+// auditFlagUpdated emits an audit event for a flag update.
+// Severity is escalated to WARN when the DefaultValue or RolloutPercentage
+// changes, as these directly affect end-user behaviour.
 func (s *service) auditFlagUpdated(ctx context.Context, flag *FeatureFlag, request *UpdateFeatureFlagRequest) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":        flag.ID.String(),
@@ -531,7 +621,7 @@ func (s *service) auditFlagUpdated(ctx context.Context, flag *FeatureFlag, reque
 
 	severity := AuditSeverityInfo
 	if request.DefaultValue != nil || request.RolloutPercentage != nil {
-		severity = AuditSeverityWarn // Value changes are more significant
+		severity = AuditSeverityWarn // behavioural changes warrant a warning
 	}
 
 	decision := "UPDATED"
@@ -548,7 +638,9 @@ func (s *service) auditFlagUpdated(ctx context.Context, flag *FeatureFlag, reque
 	})
 }
 
-// auditFlagDeleted logs flag deletion event
+// auditFlagDeleted emits a HIGH-severity audit event.
+// Deletions are irreversible, so they receive elevated severity to ensure they
+// surface prominently in compliance and security reviews.
 func (s *service) auditFlagDeleted(ctx context.Context, flag *FeatureFlag) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_id":    flag.ID.String(),
@@ -564,7 +656,7 @@ func (s *service) auditFlagDeleted(ctx context.Context, flag *FeatureFlag) {
 	s.auditService.CreateAuditEvent(ctx, audit.CreateAuditEventRequest{
 		EventType:     AuditEventFeatureFlagDeleted,
 		EventCategory: AuditCategoryFeatureManagement,
-		Severity:      AuditSeverityHigh, // Deletions are high severity
+		Severity:      AuditSeverityHigh,
 		EntityID:      &flagEntityID,
 		Decision:      &decision,
 		Reason:        &reason,
@@ -572,7 +664,9 @@ func (s *service) auditFlagDeleted(ctx context.Context, flag *FeatureFlag) {
 	})
 }
 
-// auditFlagEvaluated logs flag evaluation event
+// auditFlagEvaluated records every flag resolution, including the evaluation
+// context and result metadata (cache hit, evaluation latency).
+// These events feed into usage analytics and debugging workflows.
 func (s *service) auditFlagEvaluated(ctx context.Context, flag *FeatureFlag, evalCtx *EvaluationContext, result *EvaluationResult) {
 	contextData, _ := json.Marshal(map[string]any{
 		"flag_name":          flag.Name,
@@ -587,6 +681,7 @@ func (s *service) auditFlagEvaluated(ctx context.Context, flag *FeatureFlag, eva
 		"cache_hit":          result.Metadata.CacheHit,
 	})
 
+	// Encode the boolean outcome in the decision string for easy log filtering.
 	decision := fmt.Sprintf("EVALUATED_%t", result.Enabled)
 	reason := fmt.Sprintf("Feature flag '%s' evaluated: %v", flag.Name, result.Value)
 	flagEntityID := flag.ID
@@ -601,7 +696,8 @@ func (s *service) auditFlagEvaluated(ctx context.Context, flag *FeatureFlag, eva
 	})
 }
 
-// auditFlagListed logs flag listing event
+// auditFlagListed records pagination parameters and result counts for every
+// list operation, supporting access-pattern analysis.
 func (s *service) auditFlagListed(ctx context.Context, request *ListFeatureFlagsRequest, response *ListFeatureFlagsResponse) {
 	contextData, _ := json.Marshal(map[string]any{
 		"page":      request.Page,
@@ -623,7 +719,9 @@ func (s *service) auditFlagListed(ctx context.Context, request *ListFeatureFlags
 	})
 }
 
-// auditFlagSearched logs flag search event
+// auditFlagSearched records search queries alongside result counts so
+// operators can track which flags are most frequently searched and detect
+// potential scraping attempts.
 func (s *service) auditFlagSearched(ctx context.Context, query string, limit, offset int32, results []*FeatureFlag) {
 	contextData, _ := json.Marshal(map[string]any{
 		"query":         query,
@@ -645,7 +743,9 @@ func (s *service) auditFlagSearched(ctx context.Context, query string, limit, of
 	})
 }
 
-// getUpdatedFields returns a list of fields that were updated
+// getUpdatedFields inspects an UpdateFeatureFlagRequest and returns the names
+// of fields that were explicitly set (i.e. non-nil). Used to populate the
+// "updated_fields" key in audit events for easier change-tracking.
 func (s *service) getUpdatedFields(request *UpdateFeatureFlagRequest) []string {
 	var fields []string
 	if request.Description != nil {
