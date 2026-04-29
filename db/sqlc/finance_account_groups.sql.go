@@ -138,7 +138,7 @@ type CreateAccountGroupParams struct {
 	ShowTotals                *bool      `json:"show_totals"`
 	BoldDisplay               *bool      `json:"bold_display"`
 	IsActive                  bool       `json:"is_active"`
-	CreatedBy                 *uuid.UUID `json:"created_by"`
+	CreatedBy                 uuid.UUID  `json:"created_by"`
 }
 
 // Create a new account group with proper entity isolation

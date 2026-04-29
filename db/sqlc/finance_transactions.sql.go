@@ -419,8 +419,8 @@ VALUES
     $3,
     $4,
     $5,
-    'USD',
-    $6
+    $6,
+    $7
   )
 RETURNING
   id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
@@ -432,6 +432,7 @@ type CreateTransactionWithDefaultsParams struct {
 	TransactionType   string     `json:"transaction_type"`
 	TransactionDate   time.Time  `json:"transaction_date"`
 	Description       string     `json:"description"`
+	CurrencyCode      string     `json:"currency_code"`
 	CreatedBy         uuid.UUID  `json:"created_by"`
 }
 
@@ -442,6 +443,7 @@ func (q *Queries) CreateTransactionWithDefaults(ctx context.Context, arg CreateT
 		arg.TransactionType,
 		arg.TransactionDate,
 		arg.Description,
+		arg.CurrencyCode,
 		arg.CreatedBy,
 	)
 	var i FinanceTransaction
@@ -778,7 +780,7 @@ func (q *Queries) GetRecurringTransactionsDue(ctx context.Context, dueDate time.
 
 const getTransactionActivity = `-- name: GetTransactionActivity :many
 SELECT
-  DATE(created_at) AS activity_date,
+  transaction_date AS activity_date,
   COUNT(*) AS transaction_count,
   SUM(total_debit_amount) AS daily_total_debit,
   SUM(total_credit_amount) AS daily_total_credit
@@ -787,10 +789,10 @@ FROM
 WHERE
   tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND created_at >= $1
-  AND created_at <= $2
+  AND transaction_date >= $1
+  AND transaction_date <= $2
 GROUP BY
-  DATE(created_at)
+  transaction_date
 ORDER BY
   activity_date DESC
 `
@@ -807,6 +809,8 @@ type GetTransactionActivityRow struct {
 	DailyTotalCredit int64     `json:"daily_total_credit"`
 }
 
+// Use transaction_date (economic date) not created_at (row creation time).
+// Backdated entries must appear in the correct period's activity report.
 func (q *Queries) GetTransactionActivity(ctx context.Context, arg GetTransactionActivityParams) ([]*GetTransactionActivityRow, error) {
 	rows, err := q.db.Query(ctx, getTransactionActivity, arg.DateFrom, arg.DateTo)
 	if err != nil {

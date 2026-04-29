@@ -56,12 +56,14 @@ func (q *Queries) GetReversalHistoryByOriginal(ctx context.Context, originalTran
 	return items, nil
 }
 
-const insertReversalHistory = `-- name: InsertReversalHistory :exec
+const insertReversalHistory = `-- name: InsertReversalHistory :one
 
 INSERT INTO finance_reversal_history
   (tenant_id, original_transaction_id, reversal_transaction_id, reason, reversed_by)
 VALUES
   (current_tenant_id(), $1, $2, $3, $4)
+ON CONFLICT (tenant_id, original_transaction_id) DO NOTHING
+RETURNING TRUE AS inserted
 `
 
 type InsertReversalHistoryParams struct {
@@ -79,14 +81,19 @@ type InsertReversalHistoryParams struct {
 //	(b) A reversal transaction cannot itself be reversed (double-reversal guard)
 //
 // =====================================================================
-func (q *Queries) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error {
-	_, err := q.db.Exec(ctx, insertReversalHistory,
+// Atomically guard against double-reversal using the UNIQUE(tenant_id, original_transaction_id)
+// constraint. Returns inserted=true on success, inserted=false when a reversal already exists.
+// Callers MUST check inserted; false means a concurrent reversal already claimed this transaction.
+func (q *Queries) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) (bool, error) {
+	row := q.db.QueryRow(ctx, insertReversalHistory,
 		arg.OriginalTransactionID,
 		arg.ReversalTransactionID,
 		arg.Reason,
 		arg.ReversedBy,
 	)
-	return err
+	var inserted bool
+	err := row.Scan(&inserted)
+	return inserted, err
 }
 
 const isReversalTransaction = `-- name: IsReversalTransaction :one

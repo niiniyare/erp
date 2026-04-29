@@ -216,17 +216,54 @@ func (q *Queries) DeactivateAccountValidationRule(ctx context.Context, arg Deact
 	return &i, err
 }
 
-const deleteAccountValidationRule = `-- name: DeleteAccountValidationRule :exec
-DELETE FROM
+const deleteAccountValidationRule = `-- name: DeleteAccountValidationRule :one
+UPDATE
   finance_account_validation_rules
+SET
+  is_active  = FALSE,
+  updated_at = NOW(),
+  updated_by = $2
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+RETURNING
+  id, tenant_id, rule_name, rule_description, account_type, root_type, account_pattern, min_amount, max_amount, required_reference, allowed_transaction_types, required_cost_center, is_active, rule_severity, custom_validation_function, validation_parameters, created_at, updated_at, created_by, updated_by
 `
 
-func (q *Queries) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAccountValidationRule, id)
-	return err
+type DeleteAccountValidationRuleParams struct {
+	ID        uuid.UUID  `json:"id"`
+	UpdatedBy *uuid.UUID `json:"updated_by"`
+}
+
+// Soft-delete: deactivate instead of hard delete to preserve audit trail.
+// Validation rules are tenant configuration; hard DELETE destroys the history
+// of which rules were active when a posting was allowed.
+func (q *Queries) DeleteAccountValidationRule(ctx context.Context, arg DeleteAccountValidationRuleParams) (*FinanceAccountValidationRule, error) {
+	row := q.db.QueryRow(ctx, deleteAccountValidationRule, arg.ID, arg.UpdatedBy)
+	var i FinanceAccountValidationRule
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.RuleName,
+		&i.RuleDescription,
+		&i.AccountType,
+		&i.RootType,
+		&i.AccountPattern,
+		&i.MinAmount,
+		&i.MaxAmount,
+		&i.RequiredReference,
+		&i.AllowedTransactionTypes,
+		&i.RequiredCostCenter,
+		&i.IsActive,
+		&i.RuleSeverity,
+		&i.CustomValidationFunction,
+		&i.ValidationParameters,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.CreatedBy,
+		&i.UpdatedBy,
+	)
+	return &i, err
 }
 
 const getAccountValidationRule = `-- name: GetAccountValidationRule :one

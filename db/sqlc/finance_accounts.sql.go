@@ -334,7 +334,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -415,7 +415,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND is_active = TRUE
   AND (
@@ -694,7 +694,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND group_code IS NOT NULL
 GROUP BY
@@ -1114,7 +1114,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND group_code = $2
   AND is_active = TRUE
@@ -1188,7 +1188,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND header_code = $2
   AND is_active = TRUE
@@ -1262,7 +1262,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND statement_section = $2
   AND include_in_reports = TRUE
@@ -1425,7 +1425,7 @@ type GetAccountsForFinancialStatementsRow struct {
 	CreatedAt                   time.Time      `json:"created_at"`
 	UpdatedAt                   time.Time      `json:"updated_at"`
 	DeletedAt                   sql.NullTime   `json:"deleted_at"`
-	CreatedBy                   *uuid.UUID     `json:"created_by"`
+	CreatedBy                   uuid.UUID      `json:"created_by"`
 	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
 	IsLeafAccount               *bool          `json:"is_leaf_account"`
 	CalculatedBalance           interface{}    `json:"calculated_balance"`
@@ -1601,7 +1601,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND entries_last_30_days > 0
   AND (
@@ -1665,7 +1665,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND cash_flow_classification IS NOT NULL
   AND is_active = TRUE
@@ -1728,7 +1728,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -1916,7 +1916,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND is_leaf_account = TRUE
   AND is_active = TRUE
@@ -2077,7 +2077,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND entries_last_30_days = 0
   AND current_balance != 0
@@ -2146,7 +2146,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND is_active = TRUE
   AND include_in_reports = TRUE
@@ -2417,7 +2417,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -2655,7 +2655,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     account_code ILIKE '%' || $2 || '%'
@@ -2977,23 +2977,33 @@ func (q *Queries) UpdateAccountCurrentBalance(ctx context.Context, arg UpdateAcc
 }
 
 const validateAccountHierarchy = `-- name: ValidateAccountHierarchy :one
-SELECT
-  CASE
-    WHEN EXISTS(
-      SELECT
-        1
-      FROM
-        finance_accounts
-      WHERE
-        parent_account_id = $1
-        AND id = $1
-    ) THEN false -- Self reference check
-    ELSE TRUE
-  END AS is_valid_hierarchy
+WITH RECURSIVE ancestors AS (
+  -- Start from the proposed parent and walk up the tree
+  SELECT id, parent_account_id
+  FROM   finance_accounts fa1
+  WHERE  fa1.id         = $2
+    AND  tenant_id  = current_tenant_id()
+  UNION ALL
+  SELECT fa.id, fa.parent_account_id
+  FROM   finance_accounts fa
+  JOIN   ancestors a ON fa.id = a.parent_account_id
+  WHERE  fa.tenant_id = current_tenant_id()
+)
+SELECT NOT EXISTS (
+  SELECT 1 FROM ancestors WHERE fa1.id = $1
+) AS is_valid_hierarchy
 `
 
-func (q *Queries) ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error) {
-	row := q.db.QueryRow(ctx, validateAccountHierarchy, parentAccountID)
+type ValidateAccountHierarchyParams struct {
+	AccountID       uuid.UUID  `json:"account_id"`
+	ParentAccountID *uuid.UUID `json:"parent_account_id"`
+}
+
+// Detects cycles in the account hierarchy using a recursive ancestor walk.
+// Returns false if setting parent_account_id on account_id would create a cycle
+// (including direct self-reference and indirect A→B→C→A loops).
+func (q *Queries) ValidateAccountHierarchy(ctx context.Context, arg ValidateAccountHierarchyParams) (bool, error) {
+	row := q.db.QueryRow(ctx, validateAccountHierarchy, arg.AccountID, arg.ParentAccountID)
 	var is_valid_hierarchy bool
 	err := row.Scan(&is_valid_hierarchy)
 	return is_valid_hierarchy, err

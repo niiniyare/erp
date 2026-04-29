@@ -21,7 +21,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -119,6 +119,7 @@ WITH RECURSIVE account_hierarchy AS (
   SELECT
     coa.account_id, coa.tenant_id, coa.account_code, coa.account_name, coa.account_description, coa.root_type, coa.account_type, coa.account_subtype, coa.account_category, coa.normal_balance, coa.current_balance, coa.is_active, coa.is_leaf_account, coa.parent_account_id, coa.account_level, coa.account_path, coa.group_id, coa.group_code, coa.group_name, coa.group_category, coa.group_path, coa.header_id, coa.header_code, coa.header_name, coa.financial_statement_section, coa.header_order, coa.display_order, coa.statement_section, coa.cash_flow_classification, coa.include_in_reports,
     1 AS hierarchy_level,
+    FALSE AS truncated,
     coa.account_code::text AS full_path,
     coa.account_name::text AS full_name
   FROM
@@ -128,14 +129,14 @@ WITH RECURSIVE account_hierarchy AS (
     AND coa.tenant_id = current_tenant_id()
     AND (
       $3::uuid IS NULL
-      OR coa.tenant_id = current_tenant_id()
+      OR coa.entity_id = $3::uuid
     )
-  UNION
-  ALL
-  -- Child accounts
+  UNION ALL
+  -- Child accounts; mark rows at depth limit so callers can detect truncation
   SELECT
     coa.account_id, coa.tenant_id, coa.account_code, coa.account_name, coa.account_description, coa.root_type, coa.account_type, coa.account_subtype, coa.account_category, coa.normal_balance, coa.current_balance, coa.is_active, coa.is_leaf_account, coa.parent_account_id, coa.account_level, coa.account_path, coa.group_id, coa.group_code, coa.group_name, coa.group_category, coa.group_path, coa.header_id, coa.header_code, coa.header_name, coa.financial_statement_section, coa.header_order, coa.display_order, coa.statement_section, coa.cash_flow_classification, coa.include_in_reports,
     ah.hierarchy_level + 1,
+    (ah.hierarchy_level + 1 >= 20) AS truncated,
     (ah.full_path || '.' || coa.account_code)::text,
     (ah.full_name || ' > ' || coa.account_name)::text
   FROM
@@ -143,10 +144,10 @@ WITH RECURSIVE account_hierarchy AS (
     JOIN account_hierarchy ah ON coa.parent_account_id = ah.account_id
   WHERE
     coa.tenant_id = current_tenant_id()
-    AND ah.hierarchy_level < 10 -- Prevent infinite recursion
+    AND ah.hierarchy_level < 20  -- Raised from 10; flag truncation instead of silently dropping
 )
 SELECT
-  account_id, tenant_id, account_code, account_name, account_description, root_type, account_type, account_subtype, account_category, normal_balance, current_balance, is_active, is_leaf_account, parent_account_id, account_level, account_path, group_id, group_code, group_name, group_category, group_path, header_id, header_code, header_name, financial_statement_section, header_order, display_order, statement_section, cash_flow_classification, include_in_reports, hierarchy_level, full_path, full_name
+  account_id, tenant_id, account_code, account_name, account_description, root_type, account_type, account_subtype, account_category, normal_balance, current_balance, is_active, is_leaf_account, parent_account_id, account_level, account_path, group_id, group_code, group_name, group_category, group_path, header_id, header_code, header_name, financial_statement_section, header_order, display_order, statement_section, cash_flow_classification, include_in_reports, hierarchy_level, truncated, full_path, full_name
 FROM
   account_hierarchy
 WHERE
@@ -203,6 +204,7 @@ type GetAccountHierarchyCompleteRow struct {
 	CashFlowClassification    *string        `json:"cash_flow_classification"`
 	IncludeInReports          *bool          `json:"include_in_reports"`
 	HierarchyLevel            int32          `json:"hierarchy_level"`
+	Truncated                 bool           `json:"truncated"`
 	FullPath                  string         `json:"full_path"`
 	FullName                  string         `json:"full_name"`
 }
@@ -251,6 +253,7 @@ func (q *Queries) GetAccountHierarchyComplete(ctx context.Context, arg GetAccoun
 			&i.CashFlowClassification,
 			&i.IncludeInReports,
 			&i.HierarchyLevel,
+			&i.Truncated,
 			&i.FullPath,
 			&i.FullName,
 		); err != nil {
@@ -321,7 +324,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND financial_statement_section = $2
   AND show_in_reports = TRUE
@@ -398,7 +401,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND include_in_reports = TRUE
   AND is_active = TRUE

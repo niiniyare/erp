@@ -495,7 +495,7 @@ type FinanceAccount struct {
 	CreatedAt                   time.Time      `json:"created_at"`
 	UpdatedAt                   time.Time      `json:"updated_at"`
 	DeletedAt                   sql.NullTime   `json:"deleted_at"`
-	CreatedBy                   *uuid.UUID     `json:"created_by"`
+	CreatedBy                   uuid.UUID      `json:"created_by"`
 	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
 	IsLeafAccount               *bool          `json:"is_leaf_account"`
 }
@@ -515,6 +515,8 @@ type FinanceAccountBalance struct {
 	FiscalPeriod   int32          `json:"fiscal_period"`
 	CreatedAt      time.Time      `json:"created_at"`
 	CreatedBy      *uuid.UUID     `json:"created_by"`
+	DeletedAt      sql.NullTime   `json:"deleted_at"`
+	DeletedBy      *uuid.UUID     `json:"deleted_by"`
 }
 
 // Account groups and headers for organizing chart of accounts into logical reporting structures.
@@ -553,7 +555,7 @@ type FinanceAccountGroup struct {
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             time.Time    `json:"updated_at"`
 	DeletedAt             sql.NullTime `json:"deleted_at"`
-	CreatedBy             *uuid.UUID   `json:"created_by"`
+	CreatedBy             uuid.UUID    `json:"created_by"`
 	UpdatedBy             *uuid.UUID   `json:"updated_by"`
 }
 
@@ -917,6 +919,7 @@ type FinanceTransactionEntry struct {
 	Description      string         `json:"description"`
 	Reference        *string        `json:"reference"`
 	CostCenter       *string        `json:"cost_center"`
+	CostCenterID     *uuid.UUID     `json:"cost_center_id"`
 	Department       *string        `json:"department"`
 	ProjectID        *uuid.UUID     `json:"project_id"`
 	OriginalCurrency *string        `json:"original_currency"`

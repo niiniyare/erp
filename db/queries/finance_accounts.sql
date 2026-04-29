@@ -521,8 +521,8 @@ ORDER BY
 WITH RECURSIVE ancestors AS (
   -- Start from the proposed parent and walk up the tree
   SELECT id, parent_account_id
-  FROM   finance_accounts
-  WHERE  id         = sqlc.narg('parent_account_id')
+  FROM   finance_accounts fa1
+  WHERE  fa1.id         = sqlc.narg('parent_account_id')
     AND  tenant_id  = current_tenant_id()
   UNION ALL
   SELECT fa.id, fa.parent_account_id
@@ -531,7 +531,7 @@ WITH RECURSIVE ancestors AS (
   WHERE  fa.tenant_id = current_tenant_id()
 )
 SELECT NOT EXISTS (
-  SELECT 1 FROM ancestors WHERE id = sqlc.arg('account_id')
+  SELECT 1 FROM ancestors WHERE fa1.id = sqlc.arg('account_id')
 ) AS is_valid_hierarchy;
 
 -- =====================================================================

@@ -242,8 +242,12 @@ type Querier interface {
 	DeactivateConfigurationTemplate(ctx context.Context, templateID uuid.UUID) error
 	DeactivateRoleAssignment(ctx context.Context, arg DeactivateRoleAssignmentParams) error
 	DeactivateSSOProvider(ctx context.Context, provider string) error
-	DeleteAccountBalance(ctx context.Context, id uuid.UUID) error
-	DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error
+	// Soft-delete: period-end balance snapshots are audit evidence; hard DELETE is prohibited.
+	DeleteAccountBalance(ctx context.Context, arg DeleteAccountBalanceParams) (*FinanceAccountBalance, error)
+	// Soft-delete: deactivate instead of hard delete to preserve audit trail.
+	// Validation rules are tenant configuration; hard DELETE destroys the history
+	// of which rules were active when a posting was allowed.
+	DeleteAccountValidationRule(ctx context.Context, arg DeleteAccountValidationRuleParams) (*FinanceAccountValidationRule, error)
 	DeleteAction(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
 	DeleteAttributeValue(ctx context.Context, arg DeleteAttributeValueParams) error
@@ -360,6 +364,9 @@ type Querier interface {
 	// =====================================================================
 	GetAccountUtilizationStats(ctx context.Context, entityID *uuid.UUID) ([]*GetAccountUtilizationStatsRow, error)
 	GetAccountValidationRule(ctx context.Context, id uuid.UUID) (*FinanceAccountValidationRule, error)
+	// Prefix-safe subtree fetch: anchors match at the start of the path segment
+	// so account_code "1000" never matches "10001" or "21000".
+	// Pattern: exact match OR path starts with "code." (child separator).
 	GetAccountWithChildren(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error)
 	// =====================================================================
 	// FINANCE MODULE - ENHANCED QUERIES USING VIEWS (NON-DUPLICATE)
@@ -784,9 +791,10 @@ type Querier interface {
 	GetPasswordResetToken(ctx context.Context, tokenHash string) (*GetPasswordResetTokenRow, error)
 	GetPendingAccessRequests(ctx context.Context) ([]*AccessRequest, error)
 	GetPendingApprovalTransactions(ctx context.Context, arg GetPendingApprovalTransactionsParams) ([]*FinanceTransaction, error)
-	// Returns all in-progress/pending workflow records.
-	// The caller filters by assigned user in the application layer (no FK to users table here).
-	GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error)
+	// Returns pending/in-progress workflow records initiated by a specific user.
+	// Filter pushed to SQL to avoid full-tenant fetch on every dashboard load.
+	// Paginated: callers must supply limit/offset.
+	GetPendingWorkflowsByUser(ctx context.Context, arg GetPendingWorkflowsByUserParams) ([]*GetPendingWorkflowsByUserRow, error)
 	GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBalancesParams) ([]*FinanceAccountBalance, error)
 	GetPersonByID(ctx context.Context, id uuid.UUID) (*Person, error)
 	GetPoliciesByEntityID(ctx context.Context, entityID *uuid.UUID) ([]*Policy, error)
@@ -895,6 +903,8 @@ type Querier interface {
 	GetTenantsByTimezone(ctx context.Context) ([]*GetTenantsByTimezoneRow, error)
 	GetTenantsCreatedInDateRange(ctx context.Context, arg GetTenantsCreatedInDateRangeParams) ([]*Tenant, error)
 	GetTopAccountsByBalance(ctx context.Context, arg GetTopAccountsByBalanceParams) ([]*GetTopAccountsByBalanceRow, error)
+	// Use transaction_date (economic date) not created_at (row creation time).
+	// Backdated entries must appear in the correct period's activity report.
 	GetTransactionActivity(ctx context.Context, arg GetTransactionActivityParams) ([]*GetTransactionActivityRow, error)
 	GetTransactionByID(ctx context.Context, transactionID uuid.UUID) (*FinanceTransaction, error)
 	GetTransactionByNumber(ctx context.Context, transactionNumber string) (*FinanceTransaction, error)
@@ -907,6 +917,9 @@ type Querier interface {
 	GetTransactionSummary(ctx context.Context, arg GetTransactionSummaryParams) ([]*VFinanceTransactionSummary, error)
 	GetTransactionSummaryByPeriod(ctx context.Context, arg GetTransactionSummaryByPeriodParams) ([]*GetTransactionSummaryByPeriodRow, error)
 	GetTransactionWithEntries(ctx context.Context, transactionID uuid.UUID) ([]*GetTransactionWithEntriesRow, error)
+	// account_codes is a comma-separated list (e.g. "1000,2000,3100").
+	// Use word-boundary anchors via regex to avoid "1000" matching "10001":
+	//   match at string start, after a comma, or as exact full string.
 	GetTransactionsByAccount(ctx context.Context, arg GetTransactionsByAccountParams) ([]*VFinanceTransactionSummary, error)
 	GetTransactionsByAttachment(ctx context.Context, attachmentID []string) ([]*FinanceTransaction, error)
 	GetTransactionsByAttribute(ctx context.Context, arg GetTransactionsByAttributeParams) ([]*FinanceTransaction, error)
@@ -957,7 +970,10 @@ type Querier interface {
 	//   (a) GetReversalHistory returns accurate data rather than fabricated UUIDs
 	//   (b) A reversal transaction cannot itself be reversed (double-reversal guard)
 	// =====================================================================
-	InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error
+	// Atomically guard against double-reversal using the UNIQUE(tenant_id, original_transaction_id)
+	// constraint. Returns inserted=true on success, inserted=false when a reversal already exists.
+	// Callers MUST check inserted; false means a concurrent reversal already claimed this transaction.
+	InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) (bool, error)
 	// =====================================================================
 	// FINANCE MODULE — APPROVAL WORKFLOW QUERIES
 	// =====================================================================
@@ -1066,6 +1082,8 @@ type Querier interface {
 	ListUsers(ctx context.Context, arg ListUsersParams) ([]*User, error)
 	ListVisibleEntities(ctx context.Context) ([]*Entity, error)
 	LockAccount(ctx context.Context, arg LockAccountParams) error
+	// Only entries belonging to POSTED transactions may be reconciled.
+	// Reconciling entries from DRAFT/CANCELLED transactions corrupts reconciliation reports.
 	MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReconciledParams) error
 	MarkPasswordResetTokenUsed(ctx context.Context, tokenHash string) error
 	// =====================================================================
@@ -1298,7 +1316,10 @@ type Querier interface {
 	UserHasRole(ctx context.Context, arg UserHasRoleParams) (bool, error)
 	// Validate if account group code is unique within entity/tenant
 	ValidateAccountGroupCode(ctx context.Context, arg ValidateAccountGroupCodeParams) (bool, error)
-	ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error)
+	// Detects cycles in the account hierarchy using a recursive ancestor walk.
+	// Returns false if setting parent_account_id on account_id would create a cycle
+	// (including direct self-reference and indirect A→B→C→A loops).
+	ValidateAccountHierarchy(ctx context.Context, arg ValidateAccountHierarchyParams) (bool, error)
 	ValidateCurrentTenant(ctx context.Context) error
 	// =====================================================================
 	// 1. ENTITY VALIDATION AND INTEGRITY CHECKS

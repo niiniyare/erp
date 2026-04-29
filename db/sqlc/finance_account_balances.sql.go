@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -20,6 +21,7 @@ FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -99,7 +101,7 @@ VALUES
     $10
   )
 RETURNING
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
 type CreateAccountBalanceParams struct {
@@ -143,31 +145,64 @@ func (q *Queries) CreateAccountBalance(ctx context.Context, arg CreateAccountBal
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
 
-const deleteAccountBalance = `-- name: DeleteAccountBalance :exec
-DELETE FROM
+const deleteAccountBalance = `-- name: DeleteAccountBalance :one
+UPDATE
   finance_account_balances
+SET
+  deleted_at = NOW(),
+  deleted_by = $2
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
-func (q *Queries) DeleteAccountBalance(ctx context.Context, id uuid.UUID) error {
-	_, err := q.db.Exec(ctx, deleteAccountBalance, id)
-	return err
+type DeleteAccountBalanceParams struct {
+	ID        uuid.UUID  `json:"id"`
+	DeletedBy *uuid.UUID `json:"deleted_by"`
+}
+
+// Soft-delete: period-end balance snapshots are audit evidence; hard DELETE is prohibited.
+func (q *Queries) DeleteAccountBalance(ctx context.Context, arg DeleteAccountBalanceParams) (*FinanceAccountBalance, error) {
+	row := q.db.QueryRow(ctx, deleteAccountBalance, arg.ID, arg.DeletedBy)
+	var i FinanceAccountBalance
+	err := row.Scan(
+		&i.ID,
+		&i.TenantID,
+		&i.AccountID,
+		&i.EntityID,
+		&i.BalanceDate,
+		&i.OpeningBalance,
+		&i.ClosingBalance,
+		&i.PeriodDebits,
+		&i.PeriodCredits,
+		&i.FiscalYear,
+		&i.FiscalPeriod,
+		&i.CreatedAt,
+		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
+	)
+	return &i, err
 }
 
 const getAccountBalance = `-- name: GetAccountBalance :one
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 `
 
 func (q *Queries) GetAccountBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error) {
@@ -187,19 +222,22 @@ func (q *Queries) GetAccountBalance(ctx context.Context, id uuid.UUID) (*Finance
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
 
 const getAccountBalanceByDate = `-- name: GetAccountBalanceByDate :one
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   account_id = $1
   AND balance_date = $2
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 ORDER BY
   created_at DESC
 LIMIT
@@ -228,18 +266,21 @@ func (q *Queries) GetAccountBalanceByDate(ctx context.Context, arg GetAccountBal
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
 
 const getAccountBalanceHistory = `-- name: GetAccountBalanceHistory :many
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $2::uuid IS NULL
     OR entity_id = $2
@@ -298,6 +339,8 @@ func (q *Queries) GetAccountBalanceHistory(ctx context.Context, arg GetAccountBa
 			&i.FiscalPeriod,
 			&i.CreatedAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -321,6 +364,7 @@ FROM
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $2::uuid IS NULL
     OR entity_id = $2
@@ -378,7 +422,7 @@ func (q *Queries) GetBalanceTrend(ctx context.Context, arg GetBalanceTrendParams
 
 const getBalancesByFiscalPeriod = `-- name: GetBalancesByFiscalPeriod :many
 SELECT
-  fab.id, fab.tenant_id, fab.account_id, fab.entity_id, fab.balance_date, fab.opening_balance, fab.closing_balance, fab.period_debits, fab.period_credits, fab.fiscal_year, fab.fiscal_period, fab.created_at, fab.created_by,
+  fab.id, fab.tenant_id, fab.account_id, fab.entity_id, fab.balance_date, fab.opening_balance, fab.closing_balance, fab.period_debits, fab.period_credits, fab.fiscal_year, fab.fiscal_period, fab.created_at, fab.created_by, fab.deleted_at, fab.deleted_by,
   fa.account_code,
   fa.account_name,
   fa.root_type,
@@ -388,6 +432,7 @@ FROM
   JOIN finance_accounts fa ON fab.account_id = fa.id
 WHERE
   fab.tenant_id = current_tenant_id()
+  AND fab.deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR fab.entity_id = $1
@@ -423,6 +468,8 @@ type GetBalancesByFiscalPeriodRow struct {
 	FiscalPeriod   int32          `json:"fiscal_period"`
 	CreatedAt      time.Time      `json:"created_at"`
 	CreatedBy      *uuid.UUID     `json:"created_by"`
+	DeletedAt      sql.NullTime   `json:"deleted_at"`
+	DeletedBy      *uuid.UUID     `json:"deleted_by"`
 	AccountCode    string         `json:"account_code"`
 	AccountName    string         `json:"account_name"`
 	RootType       string         `json:"root_type"`
@@ -457,6 +504,8 @@ func (q *Queries) GetBalancesByFiscalPeriod(ctx context.Context, arg GetBalances
 			&i.FiscalPeriod,
 			&i.CreatedAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
 			&i.AccountCode,
 			&i.AccountName,
 			&i.RootType,
@@ -474,11 +523,12 @@ func (q *Queries) GetBalancesByFiscalPeriod(ctx context.Context, arg GetBalances
 
 const getBalancesByYear = `-- name: GetBalancesByYear :many
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -519,6 +569,8 @@ func (q *Queries) GetBalancesByYear(ctx context.Context, arg GetBalancesByYearPa
 			&i.FiscalPeriod,
 			&i.CreatedAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -545,6 +597,7 @@ FROM
   JOIN finance_accounts fa ON fab.account_id = fa.id
 WHERE
   fab.tenant_id = current_tenant_id()
+  AND fab.deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR fab.entity_id = $1
@@ -602,12 +655,13 @@ func (q *Queries) GetBalancesForTrialBalance(ctx context.Context, arg GetBalance
 
 const getLatestAccountBalance = `-- name: GetLatestAccountBalance :one
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 ORDER BY
   balance_date DESC,
   created_at DESC
@@ -632,17 +686,20 @@ func (q *Queries) GetLatestAccountBalance(ctx context.Context, accountID uuid.UU
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
 
 const getPeriodEndBalances = `-- name: GetPeriodEndBalances :many
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -698,6 +755,8 @@ func (q *Queries) GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBala
 			&i.FiscalPeriod,
 			&i.CreatedAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -711,11 +770,12 @@ func (q *Queries) GetPeriodEndBalances(ctx context.Context, arg GetPeriodEndBala
 
 const listAccountBalances = `-- name: ListAccountBalances :many
 SELECT
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -790,6 +850,8 @@ func (q *Queries) ListAccountBalances(ctx context.Context, arg ListAccountBalanc
 			&i.FiscalPeriod,
 			&i.CreatedAt,
 			&i.CreatedBy,
+			&i.DeletedAt,
+			&i.DeletedBy,
 		); err != nil {
 			return nil, err
 		}
@@ -809,8 +871,9 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
 func (q *Queries) RecalculateClosingBalance(ctx context.Context, id uuid.UUID) (*FinanceAccountBalance, error) {
@@ -830,6 +893,8 @@ func (q *Queries) RecalculateClosingBalance(ctx context.Context, id uuid.UUID) (
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
@@ -845,8 +910,9 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
 type UpdateAccountBalanceParams struct {
@@ -880,6 +946,8 @@ func (q *Queries) UpdateAccountBalance(ctx context.Context, arg UpdateAccountBal
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
@@ -894,8 +962,9 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
 type UpdatePeriodDebitsCreditsParams struct {
@@ -921,6 +990,8 @@ func (q *Queries) UpdatePeriodDebitsCredits(ctx context.Context, arg UpdatePerio
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }
@@ -961,7 +1032,7 @@ SET
   period_credits = EXCLUDED.period_credits,
   closing_balance = EXCLUDED.closing_balance
 RETURNING
-  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by
+  id, tenant_id, account_id, entity_id, balance_date, opening_balance, closing_balance, period_debits, period_credits, fiscal_year, fiscal_period, created_at, created_by, deleted_at, deleted_by
 `
 
 type UpsertAccountBalanceParams struct {
@@ -1005,6 +1076,8 @@ func (q *Queries) UpsertAccountBalance(ctx context.Context, arg UpsertAccountBal
 		&i.FiscalPeriod,
 		&i.CreatedAt,
 		&i.CreatedBy,
+		&i.DeletedAt,
+		&i.DeletedBy,
 	)
 	return &i, err
 }

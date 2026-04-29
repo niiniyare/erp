@@ -22,7 +22,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::decimal IS NULL
@@ -133,7 +133,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND LEVEL <= $2
   AND (
@@ -310,21 +310,27 @@ WHERE
   h.tenant_id = current_tenant_id()
   AND (
     h.id = $1
-    OR h.full_path LIKE '%' || (
-      SELECT
-        account_code
-      FROM
-        finance_accounts
-      WHERE
-        id = $1
-        AND tenant_id = current_tenant_id()
-    ) || '%'
+    OR h.full_path LIKE (
+      SELECT account_code
+      FROM   finance_accounts
+      WHERE  id        = $1
+        AND  tenant_id = current_tenant_id()
+    ) || '.%'
+    OR h.full_path = (
+      SELECT account_code
+      FROM   finance_accounts
+      WHERE  id        = $1
+        AND  tenant_id = current_tenant_id()
+    )
   )
 ORDER BY
   h.LEVEL,
   h.account_code
 `
 
+// Prefix-safe subtree fetch: anchors match at the start of the path segment
+// so account_code "1000" never matches "10001" or "21000".
+// Pattern: exact match OR path starts with "code." (child separator).
 func (q *Queries) GetAccountWithChildren(ctx context.Context, accountID uuid.UUID) ([]*VFinanceAccountsHierarchy, error) {
 	rows, err := q.db.Query(ctx, getAccountWithChildren, accountID)
 	if err != nil {
@@ -450,7 +456,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND entries_last_30_days > 0
 ORDER BY
@@ -497,7 +503,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND statement_section = 'Balance Sheet'
 ORDER BY
@@ -548,7 +554,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -612,7 +618,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -695,7 +701,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::text IS NULL
@@ -767,7 +773,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND entries_last_30_days >= $2
 ORDER BY
@@ -834,7 +840,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND entries_last_30_days = 0
   AND (
@@ -895,7 +901,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND statement_section = 'Income Statement'
 ORDER BY
@@ -946,7 +952,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND LEVEL = 1
   AND (
@@ -1011,7 +1017,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND is_active = TRUE
   AND current_balance != 0
@@ -1078,7 +1084,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND (
     $2::date IS NULL
@@ -1161,9 +1167,14 @@ WHERE
   ts.tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR ts.tenant_id = current_tenant_id()
+    OR ts.entity_id = $1::uuid
   )
-  AND ts.account_codes LIKE '%' || $2 || '%'
+  AND (
+    ts.account_codes = $2
+    OR ts.account_codes LIKE $2 || ',%'
+    OR ts.account_codes LIKE '%,' || $2 || ',%'
+    OR ts.account_codes LIKE '%,' || $2
+  )
   AND (
     $3::date IS NULL
     OR ts.transaction_date >= $3
@@ -1178,11 +1189,15 @@ ORDER BY
 
 type GetTransactionsByAccountParams struct {
 	EntityID    *uuid.UUID `json:"entity_id"`
-	AccountCode *string    `json:"account_code"`
+	AccountCode []byte     `json:"account_code"`
 	FromDate    time.Time  `json:"from_date"`
 	ToDate      time.Time  `json:"to_date"`
 }
 
+// account_codes is a comma-separated list (e.g. "1000,2000,3100").
+// Use word-boundary anchors via regex to avoid "1000" matching "10001":
+//
+//	match at string start, after a comma, or as exact full string.
 func (q *Queries) GetTransactionsByAccount(ctx context.Context, arg GetTransactionsByAccountParams) ([]*VFinanceTransactionSummary, error) {
 	rows, err := q.db.Query(ctx, getTransactionsByAccount,
 		arg.EntityID,
@@ -1231,7 +1246,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     $1::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = $1::uuid
   )
   AND all_entries_reconciled = false
   AND transaction_status = 'POSTED'

@@ -64,10 +64,19 @@ func (q *Queries) GetApprovalHistoryByTransaction(ctx context.Context, transacti
 const getPendingWorkflowsByUser = `-- name: GetPendingWorkflowsByUser :many
 SELECT id, transaction_id, status, current_tier, initiated_by, due_at, created_at, updated_at
 FROM   finance_workflow_records
-WHERE  tenant_id = current_tenant_id()
-  AND  status    IN ('pending', 'in_progress')
+WHERE  tenant_id    = current_tenant_id()
+  AND  status       IN ('pending', 'in_progress')
+  AND  initiated_by = $1
 ORDER  BY created_at ASC
+LIMIT  $2
+OFFSET $3
 `
+
+type GetPendingWorkflowsByUserParams struct {
+	InitiatedBy *uuid.UUID `json:"initiated_by"`
+	Limit       int32      `json:"limit"`
+	Offset      int32      `json:"offset"`
+}
 
 type GetPendingWorkflowsByUserRow struct {
 	ID            uuid.UUID    `json:"id"`
@@ -80,10 +89,11 @@ type GetPendingWorkflowsByUserRow struct {
 	UpdatedAt     time.Time    `json:"updated_at"`
 }
 
-// Returns all in-progress/pending workflow records.
-// The caller filters by assigned user in the application layer (no FK to users table here).
-func (q *Queries) GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error) {
-	rows, err := q.db.Query(ctx, getPendingWorkflowsByUser)
+// Returns pending/in-progress workflow records initiated by a specific user.
+// Filter pushed to SQL to avoid full-tenant fetch on every dashboard load.
+// Paginated: callers must supply limit/offset.
+func (q *Queries) GetPendingWorkflowsByUser(ctx context.Context, arg GetPendingWorkflowsByUserParams) ([]*GetPendingWorkflowsByUserRow, error) {
+	rows, err := q.db.Query(ctx, getPendingWorkflowsByUser, arg.InitiatedBy, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}

@@ -105,7 +105,7 @@ WHERE
 ORDER BY
   effective_date DESC
 LIMIT  $5
-OFFSET 0
+OFFSET $6
 `
 
 type ListExchangeRatesParams struct {
@@ -114,6 +114,7 @@ type ListExchangeRatesParams struct {
 	Column3      time.Time `json:"column_3"`
 	Column4      time.Time `json:"column_4"`
 	Limit        int32     `json:"limit"`
+	Offset       int32     `json:"offset"`
 }
 
 type ListExchangeRatesRow struct {
@@ -137,6 +138,7 @@ func (q *Queries) ListExchangeRates(ctx context.Context, arg ListExchangeRatesPa
 		arg.Column3,
 		arg.Column4,
 		arg.Limit,
+		arg.Offset,
 	)
 	if err != nil {
 		return nil, err
