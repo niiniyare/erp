@@ -59,6 +59,8 @@ func NewServices(deps Dependencies) *Services {
 	transactionService := NewTransactionService(
 		deps.TransactionRepo,
 		deps.AccountRepo,
+		deps.PeriodRepo,
+		nil, // reversalHistoryRepo: optional, skips reversal-of-reversal check when nil
 		transactionEntryService,
 		deps.Tracing,
 		deps.Metrics,

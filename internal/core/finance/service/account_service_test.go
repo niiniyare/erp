@@ -86,6 +86,22 @@ func (m *mockAccountsRepo) UpdateBalance(ctx context.Context, accountID uuid.UUI
 	return m.Called(ctx, accountID, balance).Error(0)
 }
 
+func (m *mockAccountsRepo) List(ctx context.Context, filter *domain.AccountFilter) ([]*domain.Accounts, error) {
+	args := m.Called(ctx, filter)
+	if v, ok := args.Get(0).([]*domain.Accounts); ok {
+		return v, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+func (m *mockAccountsRepo) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) {
+	args := m.Called(ctx, rootID)
+	if v, ok := args.Get(0).([]*domain.Accounts); ok {
+		return v, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 // ============================================================================
 // Mock AccountGroupRepository — none of the tested methods call it;
 // embedding is sufficient.
@@ -482,4 +498,119 @@ func (s *AccountServiceSuite) TestDeleteAccount_HasChildren() {
 
 	err := s.svc.DeleteAccount(s.ctx, accountID)
 	s.req.Error(err, "HAS_CHILDREN must block deletion before Delete is called")
+}
+
+// ============================================================================
+// FIN-ACC-005: CreateAccount — currency defaults to DefaultBaseCurrency
+// ============================================================================
+
+func (s *AccountServiceSuite) TestCreateAccount_DefaultCurrency() {
+	req := s.validCreateReq() // CurrencyCode is nil
+
+	created := s.newAccount(req.AccountCode, req.AccountName)
+	defCurrency := domain.DefaultBaseCurrency
+	created.CurrencyCode = &defCurrency
+
+	s.featureSvc.On("IsEnabled", s.ctx, "enhanced_account_validation", mock.Anything).
+		Return(false, nil).Once()
+	s.repo.On("ValidateAccountCode", s.ctx, req.AccountCode, (*uuid.UUID)(nil)).
+		Return(nil).Once()
+	// Verify the service sets CurrencyCode before calling Create.
+	s.repo.On("Create", s.ctx, mock.MatchedBy(func(a *domain.Accounts) bool {
+		return a.CurrencyCode != nil && *a.CurrencyCode == domain.DefaultBaseCurrency
+	})).Return(nil).Once()
+	s.repo.On("GetByCode", s.ctx, (*uuid.UUID)(nil), req.AccountCode).
+		Return(created, nil).Once()
+
+	result, err := s.svc.CreateAccount(s.ctx, req)
+	s.req.NoError(err)
+	s.req.NotNil(result)
+	s.req.NotNil(result.CurrencyCode, "currency must be set on the returned account")
+	s.req.Equal(domain.DefaultBaseCurrency, *result.CurrencyCode)
+}
+
+// ============================================================================
+// FIN-ACC-004: CreateAccount — path is derived from parent
+// ============================================================================
+
+func (s *AccountServiceSuite) TestCreateAccount_PathFromParent() {
+	parentID := uuid.New()
+	req := s.validCreateReq()
+	req.ParentAccountID = &parentID
+
+	parent := s.newAccount("10010000", "Current Assets")
+	parent.ID = parentID
+	parent.IsActive = true
+	parent.RootType = domain.RootTypeAsset
+	parent.AccountLevel = 1
+	parent.Path = domain.MaterialisedPath("") // root sentinel
+
+	created := s.newAccount(req.AccountCode, req.AccountName)
+	created.ParentAccountID = &parentID
+	created.AccountLevel = 2
+
+	s.featureSvc.On("IsEnabled", s.ctx, "enhanced_account_validation", mock.Anything).
+		Return(false, nil).Once()
+	s.repo.On("ValidateAccountCode", s.ctx, req.AccountCode, (*uuid.UUID)(nil)).
+		Return(nil).Once()
+	s.repo.On("GetByID", s.ctx, parentID).Return(parent, nil).Once()
+	s.repo.On("Create", s.ctx, mock.MatchedBy(func(a *domain.Accounts) bool {
+		return a.ParentAccountID != nil && *a.ParentAccountID == parentID && a.AccountLevel == 2
+	})).Return(nil).Once()
+	s.repo.On("GetByCode", s.ctx, (*uuid.UUID)(nil), req.AccountCode).
+		Return(created, nil).Once()
+
+	result, err := s.svc.CreateAccount(s.ctx, req)
+	s.req.NoError(err)
+	s.req.NotNil(result)
+	s.req.NotNil(result.ParentAccountID)
+	s.req.Equal(parentID, *result.ParentAccountID)
+}
+
+// ============================================================================
+// FIN-ACC-040: ListAccounts — filter is passed through to repository
+// ============================================================================
+
+func (s *AccountServiceSuite) TestListAccounts_FilterByRootType() {
+	rt := domain.RootTypeAsset
+	filter := &domain.AccountFilter{RootType: &rt}
+
+	accounts := []*domain.Accounts{
+		s.newAccount("10010101", "Cash"),
+		s.newAccount("10020101", "Bank"),
+		s.newAccount("10030101", "AR"),
+	}
+
+	s.featureSvc.On("IsEnabled", s.ctx, "enhanced_account_listing", mock.Anything).
+		Return(false, nil).Once()
+	s.repo.On("List", s.ctx, mock.Anything).Return(accounts, nil).Once()
+
+	result, err := s.svc.ListAccounts(s.ctx, filter)
+	s.req.NoError(err)
+	s.req.Len(result, 3)
+	for _, a := range result {
+		s.req.Equal(domain.RootTypeAsset, a.RootType)
+	}
+}
+
+// ============================================================================
+// FIN-ACC-050: GetAccountHierarchy — returns full subtree from repository
+// ============================================================================
+
+func (s *AccountServiceSuite) TestGetAccountHierarchy_FullSubtree() {
+	rootID := uuid.New()
+	hierarchy := []*domain.Accounts{
+		s.newAccount("10000000", "Assets"),
+		s.newAccount("10010000", "Current Assets"),
+		s.newAccount("10010100", "Cash & Equivalents"),
+		s.newAccount("10010101", "Petty Cash"),
+		s.newAccount("10010102", "Main Account"),
+		s.newAccount("10020000", "Non-Current Assets"),
+	}
+
+	s.repo.On("GetAccountHierarchy", s.ctx, rootID).Return(hierarchy, nil).Once()
+
+	result, err := s.svc.GetAccountHierarchy(s.ctx, rootID)
+	s.req.NoError(err)
+	s.req.Len(result, 6, "all 6 nodes in the subtree must be returned")
 }

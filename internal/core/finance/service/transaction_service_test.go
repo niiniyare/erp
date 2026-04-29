@@ -226,6 +226,31 @@ func (m *mockTransactionRepo) GetNextTransactionNumber(ctx context.Context, enti
 // mockAccountsRepo is defined in account_service_test.go (same package).
 
 // ============================================================================
+// Mock ReversalHistoryRepository
+// ============================================================================
+
+type mockReversalHistoryRepo struct {
+	mock.Mock
+}
+
+func (m *mockReversalHistoryRepo) Insert(ctx context.Context, rec *domain.ReversalHistoryRecord) error {
+	return m.Called(ctx, rec).Error(0)
+}
+
+func (m *mockReversalHistoryRepo) IsReversal(ctx context.Context, transactionID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, transactionID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockReversalHistoryRepo) GetByOriginal(ctx context.Context, originalTransactionID uuid.UUID) ([]*domain.ReversalHistoryRecord, error) {
+	args := m.Called(ctx, originalTransactionID)
+	if v, ok := args.Get(0).([]*domain.ReversalHistoryRecord); ok {
+		return v, args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
+// ============================================================================
 // Mock TransactionEntryService
 // ============================================================================
 
@@ -348,6 +373,8 @@ func (s *TransactionServiceSuite) SetupTest() {
 	s.svc = service.NewTransactionService(
 		s.repo,
 		s.accountRepo,
+		nil, // periodRepo — nil keeps existing tests unaffected; wire per-test for FIN-TXN-014
+		nil, // reversalHistoryRepo — nil keeps existing tests unaffected; wire per-test for FIN-TXN-024
 		s.entrySvc,
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
@@ -957,4 +984,129 @@ func (s *TransactionServiceSuite) TestSearchTransactions_CurrentBehavior() {
 	s.req.NoError(err)
 	s.req.NotNil(results)
 	s.req.Empty(results)
+}
+
+// ============================================================================
+// FIN-TXN-014: PostTransaction — posting to a closed period is blocked
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestPostTransaction_ClosedPeriod() {
+	txn := s.newApprovedTxn()
+	acct1ID := uuid.New()
+	acct2ID := uuid.New()
+	entries := s.balancedEntries(txn.ID, acct1ID, acct2ID)
+
+	periodRepo := new(mockPeriodRepo)
+	closedPeriod := &domain.AccountingPeriod{
+		ID:       uuid.New(),
+		TenantID: s.tenantID,
+		Name:     "January 2025",
+		Status:   domain.PeriodStatusHardClosed,
+	}
+
+	// Build a local service with a wired periodRepo.
+	localRepo := new(mockTransactionRepo)
+	localAcctRepo := new(mockAccountsRepo)
+	localEntrySvc := new(mockEntryService)
+	svc := service.NewTransactionService(
+		localRepo,
+		localAcctRepo,
+		periodRepo,
+		nil,
+		localEntrySvc,
+		tracing.NewNoOpService(),
+		metrics.NewNoOpMetricsProvider(),
+	)
+
+	localRepo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)
+	localEntrySvc.On("GetEntriesByTransactionID", s.ctx, txn.ID).Return(entries, nil)
+	localAcctRepo.On("GetByID", s.ctx, acct1ID).Return(activeAccount(acct1ID), nil)
+	localAcctRepo.On("GetByID", s.ctx, acct2ID).Return(activeAccount(acct2ID), nil)
+	periodRepo.On("GetPeriodForDate", s.ctx, s.tenantID, mock.AnythingOfType("time.Time")).
+		Return(closedPeriod, nil)
+
+	result, err := svc.PostTransaction(s.ctx, txn.ID, nil)
+	s.req.Error(err, "posting to HARD_CLOSED period must return an error")
+	s.req.Nil(result)
+
+	localRepo.AssertExpectations(s.T())
+	localAcctRepo.AssertExpectations(s.T())
+	localEntrySvc.AssertExpectations(s.T())
+	periodRepo.AssertExpectations(s.T())
+}
+
+// ============================================================================
+// FIN-TXN-024: ReverseTransaction — reversal of a reversal is blocked
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestReverseTransaction_CannotReverseReversal() {
+	txn := s.newPostedTxn()
+	txn.IsReversed = false // not yet reversed — but it IS itself a reversal
+
+	reversalHistoryRepo := new(mockReversalHistoryRepo)
+
+	localRepo := new(mockTransactionRepo)
+	svc := service.NewTransactionService(
+		localRepo,
+		new(mockAccountsRepo),
+		nil,
+		reversalHistoryRepo,
+		new(mockEntryService),
+		tracing.NewNoOpService(),
+		metrics.NewNoOpMetricsProvider(),
+	)
+
+	localRepo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)
+	reversalHistoryRepo.On("IsReversal", s.ctx, txn.ID).Return(true, nil)
+
+	result, err := svc.ReverseTransaction(s.ctx, txn.ID, "correcting error")
+	s.req.Error(err, "reversing a reversal transaction must return an error")
+	s.req.Nil(result)
+
+	localRepo.AssertExpectations(s.T())
+	reversalHistoryRepo.AssertExpectations(s.T())
+}
+
+// ============================================================================
+// FIN-TXN-031: ApproveTransaction — SOD: submitter cannot approve own transaction
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestApproveTransaction_SODViolation() {
+	txn := s.newDraftTxn()
+	txn.TransactionStatus = domain.TransactionStatusPendingApproval
+	txn.ApprovalRequired = true
+	txn.ApprovalStatus = domain.ApprovalStatusPending
+
+	// Set the caller's user ID to the same as the transaction's creator.
+	ctx := shared.WithUserID(s.ctx, txn.CreatedBy)
+
+	s.repo.On("GetByID", ctx, txn.ID).Return(txn, nil)
+	// repo.Approve must NOT be called.
+
+	result, err := s.svc.ApproveTransaction(ctx, txn.ID, "self-approving")
+	s.req.Error(err, "self-approval must be rejected")
+	s.req.Nil(result)
+}
+
+func (s *TransactionServiceSuite) TestApproveTransaction_DifferentApproverAllowed() {
+	txn := s.newDraftTxn()
+	txn.TransactionStatus = domain.TransactionStatusPendingApproval
+	txn.ApprovalRequired = true
+	txn.ApprovalStatus = domain.ApprovalStatusPending
+
+	approverID := uuid.New() // different from txn.CreatedBy
+	ctx := shared.WithUserID(s.ctx, approverID)
+
+	approvedTxn := *txn
+	approvedTxn.TransactionStatus = domain.TransactionStatusApproved
+	approvedTxn.ApprovalStatus = domain.ApprovalStatusApproved
+
+	s.repo.On("GetByID", ctx, txn.ID).Return(txn, nil).Once()
+	s.repo.On("Approve", ctx, txn.ID, approverID, mock.AnythingOfType("time.Time"), mock.Anything).Return(nil)
+	s.repo.On("GetByID", ctx, txn.ID).Return(&approvedTxn, nil).Once()
+
+	result, err := s.svc.ApproveTransaction(ctx, txn.ID, "looks good")
+	s.req.NoError(err)
+	s.req.NotNil(result)
+	s.req.Equal(domain.TransactionStatusApproved, result.TransactionStatus)
 }

@@ -10,6 +10,7 @@ import (
 	"awo.so/internal/core/finance/domain"
 	financePipeline "awo.so/internal/core/finance/pipeline"
 	corePipeline "awo.so/internal/pipeline"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
@@ -40,28 +41,33 @@ type TransactionService interface {
 }
 
 type transactionService struct {
-	repo         domain.TransactionRepository
-	accountRepo  domain.AccountsRepository
-	periodRepo   domain.PeriodRepository   // nil → period check skipped in inline path
-	entryService TransactionEntryService
-	postPipeline *corePipeline.PipelineBuilder // nil → falls back to inline logic
-	tracing      tracing.Service
-	metrics      metrics.MetricsProvider
+	repo                domain.TransactionRepository
+	accountRepo         domain.AccountsRepository
+	periodRepo          domain.PeriodRepository          // nil → period check skipped in inline path
+	reversalHistoryRepo domain.ReversalHistoryRepository // nil → reversal-of-reversal check skipped
+	entryService        TransactionEntryService
+	postPipeline        *corePipeline.PipelineBuilder // nil → falls back to inline logic
+	tracing             tracing.Service
+	metrics             metrics.MetricsProvider
 }
 
 func NewTransactionService(
 	repo domain.TransactionRepository,
 	accountRepo domain.AccountsRepository,
+	periodRepo domain.PeriodRepository,
+	reversalHistoryRepo domain.ReversalHistoryRepository,
 	entryService TransactionEntryService,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) TransactionService {
 	return &transactionService{
-		repo:         repo,
-		accountRepo:  accountRepo,
-		entryService: entryService,
-		tracing:      tracing,
-		metrics:      metrics,
+		repo:                repo,
+		accountRepo:         accountRepo,
+		periodRepo:          periodRepo,
+		reversalHistoryRepo: reversalHistoryRepo,
+		entryService:        entryService,
+		tracing:             tracing,
+		metrics:             metrics,
 	}
 }
 
@@ -78,13 +84,14 @@ func NewTransactionServiceWithPipeline(
 	metrics metrics.MetricsProvider,
 ) TransactionService {
 	return &transactionService{
-		repo:         repo,
-		accountRepo:  accountRepo,
-		periodRepo:   periodRepo,
-		entryService: entryService,
-		postPipeline: financePipeline.NewPostTransactionPipeline(repo, accountRepo, periodRepo, txRunner),
-		tracing:      tracing,
-		metrics:      metrics,
+		repo:                repo,
+		accountRepo:         accountRepo,
+		periodRepo:          periodRepo,
+		reversalHistoryRepo: nil, // pipeline path; inject via setter if needed
+		entryService:        entryService,
+		postPipeline:        financePipeline.NewPostTransactionPipeline(repo, accountRepo, periodRepo, txRunner),
+		tracing:             tracing,
+		metrics:             metrics,
 	}
 }
 
@@ -752,6 +759,23 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		return nil, errors.NewBusinessError("already_reversed", "Transaction is already reversed")
 	}
 
+	// FIN-TXN-024: a reversal transaction must not itself be reversed.
+	if s.reversalHistoryRepo != nil {
+		isReversal, rhErr := s.reversalHistoryRepo.IsReversal(ctx, id)
+		if rhErr != nil {
+			return nil, fmt.Errorf("reversal history check failed: %w", rhErr)
+		}
+		if isReversal {
+			s.metrics.IncrementCounter("transaction_reversal_errors", metrics.Fields{
+				"error_type": "cannot_reverse_reversal",
+			})
+			return nil, errors.NewBusinessError("CANNOT_REVERSE_REVERSAL",
+				domain.ErrCannotReverseReversal.Error()).
+				WithHTTPStatus(http.StatusUnprocessableEntity).
+				WithCategory(errors.CategoryBusiness)
+		}
+	}
+
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction entries: %w", err)
@@ -852,13 +876,30 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 		return nil, errors.NewBusinessError("invalid_status", "Transaction is not pending approval")
 	}
 
+	// FIN-TXN-031: segregation of duties — submitter cannot approve their own transaction.
+	approverID, hasApprover := shared.GetUserID(ctx)
+	if hasApprover && approverID == transaction.CreatedBy {
+		s.metrics.IncrementCounter("transaction_approval_errors", metrics.Fields{
+			"error_type": "sod_violation",
+		})
+		return nil, errors.NewBusinessError("SOD_VIOLATION",
+			"approver cannot be the same as the transaction submitter").
+			WithHTTPStatus(http.StatusForbidden).
+			WithCategory(errors.CategorySecurity)
+	}
+
+	// Use the caller's ID as approvedBy; fall back to CreatedBy for system-initiated approvals.
+	if !hasApprover {
+		approverID = transaction.CreatedBy
+	}
+
 	timer := s.metrics.Timer("transaction_approval_duration", metrics.Fields{
 		"transaction_type": string(transaction.TransactionType),
 	})
 
 	approvedAt := time.Now()
 	notesPtr := &notes
-	err = s.repo.Approve(ctx, id, transaction.CreatedBy, approvedAt, notesPtr)
+	err = s.repo.Approve(ctx, id, approverID, approvedAt, notesPtr)
 	duration := timer.Stop()
 
 	if err != nil {
