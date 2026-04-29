@@ -60,9 +60,9 @@ CREATE TABLE finance_accounts (
   allow_manual_entries        BOOLEAN       NOT NULL DEFAULT TRUE,
   is_leaf                     BOOLEAN       GENERATED ALWAYS AS (NOT has_children) STORED,
   require_reference           BOOLEAN       NOT NULL DEFAULT false,
-  -- Balance tracking
-  current_balance             DECIMAL(15,2) DEFAULT 0.00,
-  ytd_balance                 DECIMAL(15,2) DEFAULT 0.00,
+  -- Balance tracking — DECIMAL(19,4): supports 3-dp currencies (KWD/IQD/OMR)
+  current_balance             DECIMAL(19,4) DEFAULT 0.0000,
+  ytd_balance                 DECIMAL(19,4) DEFAULT 0.0000,
   last_transaction_date       DATE,
   -- Reporting and analysis
   financial_statement_line    VARCHAR(100),
@@ -83,7 +83,7 @@ CREATE TABLE finance_accounts (
   created_at                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   deleted_at                  TIMESTAMPTZ,
-  created_by                  UUID          REFERENCES users(id),
+  created_by                  UUID          NOT NULL REFERENCES users(id),
   updated_by                  UUID          REFERENCES users(id),
   -- Unique constraints
   UNIQUE (tenant_id, account_code),

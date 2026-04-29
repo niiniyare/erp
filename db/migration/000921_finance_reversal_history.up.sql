@@ -7,10 +7,11 @@
 CREATE TABLE IF NOT EXISTS finance_reversal_history (
     id                      UUID        NOT NULL DEFAULT gen_random_uuid(),
     tenant_id               UUID        NOT NULL REFERENCES tenants(id),
-    original_transaction_id UUID        NOT NULL,
-    reversal_transaction_id UUID        NOT NULL,
-    reason                  TEXT        NOT NULL DEFAULT '',
-    reversed_by             UUID,
+    original_transaction_id UUID        NOT NULL REFERENCES finance_transactions(id) ON DELETE RESTRICT,
+    reversal_transaction_id UUID        NOT NULL REFERENCES finance_transactions(id) ON DELETE RESTRICT,
+    -- reason must be non-empty; blank strings are meaningless for audit trails.
+    reason                  TEXT        NOT NULL CHECK (length(trim(reason)) > 0),
+    reversed_by             UUID        REFERENCES users(id),
     created_at              TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
     PRIMARY KEY (id),

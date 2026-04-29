@@ -143,38 +143,54 @@ WHERE
   );
 
 -- name: UpdateTransactionEntry :one
+-- Guards: only DRAFT or REJECTED parent transactions allow entry mutation.
+-- This prevents retroactive changes to POSTED/APPROVED/PENDING_APPROVAL journals.
+UPDATE
+  finance_transaction_entries te
+SET
+  account_id = COALESCE(sqlc.narg('account_id'), te.account_id),
+  debit_amount = COALESCE(sqlc.narg('debit_amount'), te.debit_amount),
+  credit_amount = COALESCE(sqlc.narg('credit_amount'), te.credit_amount),
+  description = COALESCE(sqlc.narg('description'), te.description),
+  reference = COALESCE(sqlc.narg('reference'), te.reference),
+  cost_center = COALESCE(sqlc.narg('cost_center'), te.cost_center),
+  department = COALESCE(sqlc.narg('department'), te.department),
+  project_id = COALESCE(sqlc.narg('project_id'), te.project_id),
+  tax_code = COALESCE(sqlc.narg('tax_code'), te.tax_code),
+  tax_rate = COALESCE(sqlc.narg('tax_rate'), te.tax_rate),
+  tax_amount = COALESCE(sqlc.narg('tax_amount'), te.tax_amount),
+  updated_at = NOW()
+FROM
+  finance_transactions t
+WHERE
+  te.id = sqlc.arg('id')
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  AND t.id = te.transaction_id
+  AND t.transaction_status IN ('DRAFT', 'REJECTED')
+RETURNING
+  te.*;
+
+-- name: DeleteTransactionEntry :exec
+-- Soft-delete only; hard DELETE of journal entries is prohibited.
+-- The application layer must verify the parent transaction is DRAFT/REJECTED before calling this.
 UPDATE
   finance_transaction_entries
 SET
-  account_id = COALESCE(sqlc.narg('account_id'), account_id),
-  debit_amount = COALESCE(sqlc.narg('debit_amount'), debit_amount),
-  credit_amount = COALESCE(sqlc.narg('credit_amount'), credit_amount),
-  description = COALESCE(sqlc.narg('description'), description),
-  reference = COALESCE(sqlc.narg('reference'), reference),
-  cost_center = COALESCE(sqlc.narg('cost_center'), cost_center),
-  department = COALESCE(sqlc.narg('department'), department),
-  project_id = COALESCE(sqlc.narg('project_id'), project_id),
-  tax_code = COALESCE(sqlc.narg('tax_code'), tax_code),
-  tax_rate = COALESCE(sqlc.narg('tax_rate'), tax_rate),
-  tax_amount = COALESCE(sqlc.narg('tax_amount'), tax_amount),
+  deleted_at = NOW(),
   updated_at = NOW()
 WHERE
   id = sqlc.arg('id')
   AND tenant_id = current_tenant_id()
-  AND deleted_at IS NULL
-RETURNING
-  *;
-
--- name: DeleteTransactionEntry :exec
-DELETE FROM
-  finance_transaction_entries
-WHERE
-  id = sqlc.arg('id')
-  AND tenant_id = current_tenant_id();
+  AND deleted_at IS NULL;
 
 -- name: DeleteTransactionEntries :exec
-DELETE FROM
+-- Soft-delete all entries for a transaction. Only safe to call on non-POSTED transactions.
+UPDATE
   finance_transaction_entries
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
 WHERE
   transaction_id = sqlc.arg('transaction_id')
   AND tenant_id = current_tenant_id();
@@ -296,7 +312,9 @@ SELECT
   te.tax_code,
   te.tax_rate,
   COUNT(*) AS entry_count,
-  SUM(te.debit_amount + te.credit_amount) AS taxable_amount,
+  -- GREATEST(debit, credit): each entry line has only one non-zero side by constraint.
+  -- Summing both would double-count; using GREATEST gives the correct taxable line amount.
+  SUM(GREATEST(te.debit_amount, te.credit_amount)) AS taxable_amount,
   SUM(te.tax_amount) AS total_tax
 FROM
   finance_transaction_entries te
@@ -439,14 +457,20 @@ ORDER BY
   a.account_code ASC;
 
 -- name: MarkEntriesReconciled :exec
+-- Only entries belonging to POSTED transactions may be reconciled.
+-- Reconciling entries from DRAFT/CANCELLED transactions corrupts reconciliation reports.
 UPDATE
-  finance_transaction_entries
+  finance_transaction_entries te
 SET
   reconciled = TRUE,
   reconciled_date = sqlc.arg('reconciled_date'),
   reconciliation_reference = sqlc.narg('reconciliation_reference'),
   updated_at = NOW()
+FROM
+  finance_transactions t
 WHERE
-  id = ANY(sqlc.arg('entry_ids')::uuid [])
-  AND tenant_id = current_tenant_id()
-  AND deleted_at IS NULL;
+  te.id = ANY(sqlc.arg('entry_ids')::uuid [])
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  AND t.id = te.transaction_id
+  AND t.transaction_status = 'POSTED';

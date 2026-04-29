@@ -178,7 +178,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('root_type')::text IS NULL
@@ -452,7 +452,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     account_code ILIKE '%' || sqlc.arg('search_term') || '%'
@@ -515,19 +515,24 @@ ORDER BY
   account_code ASC;
 
 -- name: ValidateAccountHierarchy :one
-SELECT
-  CASE
-    WHEN EXISTS(
-      SELECT
-        1
-      FROM
-        finance_accounts
-      WHERE
-        parent_account_id = sqlc.narg('parent_account_id')
-        AND id = sqlc.narg('parent_account_id')
-    ) THEN false -- Self reference check
-    ELSE TRUE
-  END AS is_valid_hierarchy;
+-- Detects cycles in the account hierarchy using a recursive ancestor walk.
+-- Returns false if setting parent_account_id on account_id would create a cycle
+-- (including direct self-reference and indirect A→B→C→A loops).
+WITH RECURSIVE ancestors AS (
+  -- Start from the proposed parent and walk up the tree
+  SELECT id, parent_account_id
+  FROM   finance_accounts
+  WHERE  id         = sqlc.narg('parent_account_id')
+    AND  tenant_id  = current_tenant_id()
+  UNION ALL
+  SELECT fa.id, fa.parent_account_id
+  FROM   finance_accounts fa
+  JOIN   ancestors a ON fa.id = a.parent_account_id
+  WHERE  fa.tenant_id = current_tenant_id()
+)
+SELECT NOT EXISTS (
+  SELECT 1 FROM ancestors WHERE id = sqlc.arg('account_id')
+) AS is_valid_hierarchy;
 
 -- =====================================================================
 -- ENHANCED QUERIES USING v_chart_of_accounts_complete VIEW
@@ -542,7 +547,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('statement_section')::text IS NULL
@@ -584,7 +589,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND statement_section = sqlc.arg('statement_section')
   AND include_in_reports = TRUE
@@ -609,7 +614,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND is_active = TRUE
   AND include_in_reports = TRUE
@@ -633,7 +638,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND group_code = sqlc.arg('group_code')
   AND is_active = TRUE
@@ -650,7 +655,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND header_code = sqlc.arg('header_code')
   AND is_active = TRUE
@@ -674,7 +679,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND is_active = TRUE
   AND (
@@ -701,7 +706,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND is_leaf_account = TRUE
   AND is_active = TRUE
@@ -727,7 +732,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND cash_flow_classification IS NOT NULL
   AND is_active = TRUE
@@ -768,7 +773,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND group_code IS NOT NULL
 GROUP BY
@@ -832,7 +837,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND entries_last_30_days > 0
   AND (
@@ -856,7 +861,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND entries_last_30_days = 0
   AND current_balance != 0
@@ -889,7 +894,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('activity_level')::text IS NULL

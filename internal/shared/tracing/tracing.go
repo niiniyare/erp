@@ -265,7 +265,7 @@ func DefaultConfig() Config {
 		Environment:        getEnv("ENVIRONMENT", "development"),
 		Endpoint:           getEnv("OTEL_ENDPOINT", "localhost:4317"),
 		Protocol:           Protocol(getEnv("OTEL_PROTOCOL", string(ProtocolGRPC))),
-		Insecure:           getEnv("OTEL_INSECURE", "true") == "true",
+		Insecure:           getEnv("OTEL_INSECURE", "false") == "true",
 		SamplingRate:       1.0,
 		Enabled:            getEnv("TRACING_ENABLED", "true") == "true",
 		BatchTimeout:       5 * time.Second,

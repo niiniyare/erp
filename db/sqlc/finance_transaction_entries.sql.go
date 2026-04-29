@@ -176,26 +176,36 @@ func (q *Queries) CreateTransactionEntry(ctx context.Context, arg CreateTransact
 }
 
 const deleteTransactionEntries = `-- name: DeleteTransactionEntries :exec
-DELETE FROM
+UPDATE
   finance_transaction_entries
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
 WHERE
   transaction_id = $1
   AND tenant_id = current_tenant_id()
 `
 
+// Soft-delete all entries for a transaction. Only safe to call on non-POSTED transactions.
 func (q *Queries) DeleteTransactionEntries(ctx context.Context, transactionID uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteTransactionEntries, transactionID)
 	return err
 }
 
 const deleteTransactionEntry = `-- name: DeleteTransactionEntry :exec
-DELETE FROM
+UPDATE
   finance_transaction_entries
+SET
+  deleted_at = NOW(),
+  updated_at = NOW()
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 `
 
+// Soft-delete only; hard DELETE of journal entries is prohibited.
+// The application layer must verify the parent transaction is DRAFT/REJECTED before calling this.
 func (q *Queries) DeleteTransactionEntry(ctx context.Context, id uuid.UUID) error {
 	_, err := q.db.Exec(ctx, deleteTransactionEntry, id)
 	return err
@@ -1275,26 +1285,30 @@ func (q *Queries) MarkEntriesReconciled(ctx context.Context, arg MarkEntriesReco
 
 const updateTransactionEntry = `-- name: UpdateTransactionEntry :one
 UPDATE
-  finance_transaction_entries
+  finance_transaction_entries te
 SET
-  account_id = COALESCE($1, account_id),
-  debit_amount = COALESCE($2, debit_amount),
-  credit_amount = COALESCE($3, credit_amount),
-  description = COALESCE($4, description),
-  reference = COALESCE($5, reference),
-  cost_center = COALESCE($6, cost_center),
-  department = COALESCE($7, department),
-  project_id = COALESCE($8, project_id),
-  tax_code = COALESCE($9, tax_code),
-  tax_rate = COALESCE($10, tax_rate),
-  tax_amount = COALESCE($11, tax_amount),
+  account_id = COALESCE($1, te.account_id),
+  debit_amount = COALESCE($2, te.debit_amount),
+  credit_amount = COALESCE($3, te.credit_amount),
+  description = COALESCE($4, te.description),
+  reference = COALESCE($5, te.reference),
+  cost_center = COALESCE($6, te.cost_center),
+  department = COALESCE($7, te.department),
+  project_id = COALESCE($8, te.project_id),
+  tax_code = COALESCE($9, te.tax_code),
+  tax_rate = COALESCE($10, te.tax_rate),
+  tax_amount = COALESCE($11, te.tax_amount),
   updated_at = NOW()
+FROM
+  finance_transactions t
 WHERE
-  id = $12
-  AND tenant_id = current_tenant_id()
-  AND deleted_at IS NULL
+  te.id = $12
+  AND te.tenant_id = current_tenant_id()
+  AND te.deleted_at IS NULL
+  AND t.id = te.transaction_id
+  AND t.transaction_status IN ('DRAFT', 'REJECTED')
 RETURNING
-  id, tenant_id, entity_id, transaction_id, entry_number, account_id, debit_amount, credit_amount, description, reference, cost_center, department, project_id, original_currency, original_amount, exchange_rate, tax_code, tax_rate, tax_amount, reconciled, reconciled_date, reconciliation_reference, created_at, updated_at, deleted_at
+  te.id, te.tenant_id, te.entity_id, te.transaction_id, te.entry_number, te.account_id, te.debit_amount, te.credit_amount, te.description, te.reference, te.cost_center, te.department, te.project_id, te.original_currency, te.original_amount, te.exchange_rate, te.tax_code, te.tax_rate, te.tax_amount, te.reconciled, te.reconciled_date, te.reconciliation_reference, te.created_at, te.updated_at, te.deleted_at
 `
 
 type UpdateTransactionEntryParams struct {
@@ -1312,6 +1326,8 @@ type UpdateTransactionEntryParams struct {
 	ID           uuid.UUID      `json:"id"`
 }
 
+// Guards: only DRAFT or REJECTED parent transactions allow entry mutation.
+// This prevents retroactive changes to POSTED/APPROVED/PENDING_APPROVAL journals.
 func (q *Queries) UpdateTransactionEntry(ctx context.Context, arg UpdateTransactionEntryParams) (*FinanceTransactionEntry, error) {
 	row := q.db.QueryRow(ctx, updateTransactionEntry,
 		arg.AccountID,

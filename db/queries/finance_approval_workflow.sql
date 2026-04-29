@@ -37,10 +37,14 @@ WHERE  tenant_id      = current_tenant_id()
 ORDER  BY created_at ASC;
 
 -- name: GetPendingWorkflowsByUser :many
--- Returns all in-progress/pending workflow records.
--- The caller filters by assigned user in the application layer (no FK to users table here).
+-- Returns pending/in-progress workflow records initiated by a specific user.
+-- Filter pushed to SQL to avoid full-tenant fetch on every dashboard load.
+-- Paginated: callers must supply limit/offset.
 SELECT id, transaction_id, status, current_tier, initiated_by, due_at, created_at, updated_at
 FROM   finance_workflow_records
-WHERE  tenant_id = current_tenant_id()
-  AND  status    IN ('pending', 'in_progress')
-ORDER  BY created_at ASC;
+WHERE  tenant_id    = current_tenant_id()
+  AND  status       IN ('pending', 'in_progress')
+  AND  initiated_by = $1
+ORDER  BY created_at ASC
+LIMIT  $2
+OFFSET $3;

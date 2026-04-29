@@ -152,6 +152,18 @@ type TransactionRepository interface {
 	GetNextTransactionNumber(ctx context.Context, entityID *uuid.UUID, transactionType TransactionType) (string, error)
 }
 
+// TxRunner wraps a unit of work in a database transaction.
+// The supplied fn receives a child context that carries the transaction;
+// all repository calls made with that context will participate in the same tx.
+// Commit is automatic on nil return; rollback on any error.
+//
+// Implementations live in the infrastructure layer (e.g. pgx pool).
+// This interface is defined here so the domain/service layer can depend on it
+// without importing driver packages.
+type TxRunner interface {
+	RunInTx(ctx context.Context, fn func(ctx context.Context) error) error
+}
+
 // ReversalHistoryRecord is the persisted record of a single reversal event.
 type ReversalHistoryRecord struct {
 	ID                    uuid.UUID `json:"id"`

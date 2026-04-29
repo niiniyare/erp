@@ -57,7 +57,7 @@ CREATE TABLE finance_account_groups (
   created_at                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at                  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   deleted_at                  TIMESTAMPTZ,
-  created_by                  UUID          REFERENCES users(id),
+  created_by                  UUID          NOT NULL REFERENCES users(id),
   updated_by                  UUID          REFERENCES users(id),
   -- Constraints
   CONSTRAINT chk_group_parent_not_self CHECK (id != parent_group_id),

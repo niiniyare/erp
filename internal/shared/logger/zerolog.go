@@ -60,8 +60,11 @@ func (z *zerologLogger) Error(msg string, fields ...Fields) {
 	event.Msg(msg)
 }
 
+// Fatal logs at ERROR level with a "fatal=true" field.
+// It does NOT call os.Exit — domain and service code must not terminate the process.
+// Reserve process-termination for main() startup failures only.
 func (z *zerologLogger) Fatal(msg string, fields ...Fields) {
-	event := z.logger.Fatal()
+	event := z.logger.Error().Bool("fatal", true)
 	z.addFields(event, fields...)
 	event.Msg(msg)
 }

@@ -22,6 +22,10 @@ const (
 	TransactionTypeInvoice      TransactionType = "INVOICE"
 	TransactionTypePayment      TransactionType = "PAYMENT"
 	TransactionTypePurchase     TransactionType = "PURCHASE"
+	// TransactionTypeReversal identifies system-generated reversal transactions.
+	// Using a distinct type ensures reversals can be unambiguously identified in
+	// reports and audit queries without relying on naming conventions.
+	TransactionTypeReversal TransactionType = "REVERSAL"
 )
 
 // IsValid validates if the TransactionType is one of the defined constants
@@ -30,7 +34,8 @@ func (tt TransactionType) IsValid() bool {
 	case TransactionTypeManual, TransactionTypeSystem, TransactionTypeImported,
 		TransactionTypeRecurring, TransactionTypeAdjustment, TransactionTypeClosing,
 		TransactionTypeJournalEntry, TransactionTypeOpening,
-		TransactionTypeInvoice, TransactionTypePayment, TransactionTypePurchase:
+		TransactionTypeInvoice, TransactionTypePayment, TransactionTypePurchase,
+		TransactionTypeReversal:
 		return true
 	default:
 		return false
@@ -215,32 +220,15 @@ func (r RejectionReason) String() string {
 	return string(r)
 }
 
-// ParseRejectionReason converts a string to a valid RejectionReason
-// Returns an error if the string is not a valid reason
-func (r RejectionReason) ParseRejectionReason(s string) (RejectionReason, error) {
+// ParseRejectionReason converts a string to a valid RejectionReason.
+// Package-level function — the receiver form was nonsensical (receiver unused).
+func ParseRejectionReason(s string) (RejectionReason, error) {
 	rr := RejectionReason(s)
 	if !rr.IsValid() {
 		return "", fmt.Errorf("invalid rejection reason: %s", s)
 	}
 	return rr, nil
 }
-
-//
-// GetNormalBalanceForRootType returns the normal balance for a root type
-// This follows standard accounting principles:
-// - Assets and Expenses have debit normal balance
-// - Liabilities, Equity, and Revenue have credit normal balance
-// func GetNormalBalanceForRootType(rootType RootType) NormalBalance {
-// 	switch rootType {
-// 	case RootTypeAsset, RootTypeExpense:
-// 		return NormalBalanceDebit
-// 	case RootTypeLiability, RootTypeEquity, RootTypeRevenue:
-// 		return NormalBalanceCredit
-// 	default:
-// 		// NOTE: Default to debit for unknown types, but this should be validated
-// 		return NormalBalanceDebit
-// 	}
-// }
 
 // ValidationSeverity classifies how serious a validation finding is.
 type ValidationSeverity string

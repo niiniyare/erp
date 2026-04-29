@@ -31,7 +31,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('root_type')::text IS NULL
@@ -66,7 +66,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND financial_statement_section = sqlc.arg('statement_section')
   AND show_in_reports = TRUE
@@ -84,6 +84,7 @@ WITH RECURSIVE account_hierarchy AS (
   SELECT
     coa.*,
     1 AS hierarchy_level,
+    FALSE AS truncated,
     coa.account_code::text AS full_path,
     coa.account_name::text AS full_name
   FROM
@@ -93,14 +94,14 @@ WITH RECURSIVE account_hierarchy AS (
     AND coa.tenant_id = current_tenant_id()
     AND (
       sqlc.narg('entity_id')::uuid IS NULL
-      OR coa.tenant_id = current_tenant_id()
+      OR coa.entity_id = sqlc.narg('entity_id')::uuid
     )
-  UNION
-  ALL
-  -- Child accounts
+  UNION ALL
+  -- Child accounts; mark rows at depth limit so callers can detect truncation
   SELECT
     coa.*,
     ah.hierarchy_level + 1,
+    (ah.hierarchy_level + 1 >= 20) AS truncated,
     (ah.full_path || '.' || coa.account_code)::text,
     (ah.full_name || ' > ' || coa.account_name)::text
   FROM
@@ -108,7 +109,7 @@ WITH RECURSIVE account_hierarchy AS (
     JOIN account_hierarchy ah ON coa.parent_account_id = ah.account_id
   WHERE
     coa.tenant_id = current_tenant_id()
-    AND ah.hierarchy_level < 10 -- Prevent infinite recursion
+    AND ah.hierarchy_level < 20  -- Raised from 10; flag truncation instead of silently dropping
 )
 SELECT
   *
@@ -146,7 +147,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND include_in_reports = TRUE
   AND is_active = TRUE

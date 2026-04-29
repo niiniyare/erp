@@ -37,7 +37,8 @@ FROM
   finance_account_balances
 WHERE
   id = $1
-  AND tenant_id = current_tenant_id();
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL;
 
 -- name: GetAccountBalanceByDate :one
 SELECT
@@ -48,6 +49,7 @@ WHERE
   account_id = $1
   AND balance_date = $2
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 ORDER BY
   created_at DESC
 LIMIT
@@ -61,6 +63,7 @@ FROM
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 ORDER BY
   balance_date DESC,
   created_at DESC
@@ -78,15 +81,23 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
   *;
 
--- name: DeleteAccountBalance :exec
-DELETE FROM
+-- name: DeleteAccountBalance :one
+-- Soft-delete: period-end balance snapshots are audit evidence; hard DELETE is prohibited.
+UPDATE
   finance_account_balances
+SET
+  deleted_at = NOW(),
+  deleted_by = $2
 WHERE
   id = $1
-  AND tenant_id = current_tenant_id();
+  AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
+RETURNING
+  *;
 
 -- name: ListAccountBalances :many
 SELECT
@@ -95,6 +106,7 @@ FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -132,6 +144,7 @@ FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -165,6 +178,7 @@ FROM
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $2::uuid IS NULL
     OR entity_id = $2
@@ -190,6 +204,7 @@ FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -216,6 +231,7 @@ FROM
   finance_account_balances
 WHERE
   tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR entity_id = $1
@@ -277,6 +293,7 @@ FROM
   JOIN finance_accounts fa ON fab.account_id = fa.id
 WHERE
   fab.tenant_id = current_tenant_id()
+  AND fab.deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR fab.entity_id = $1
@@ -302,6 +319,7 @@ FROM
 WHERE
   account_id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
   AND (
     $2::uuid IS NULL
     OR entity_id = $2
@@ -320,6 +338,7 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
   *;
 
@@ -331,6 +350,7 @@ SET
 WHERE
   id = $1
   AND tenant_id = current_tenant_id()
+  AND deleted_at IS NULL
 RETURNING
   *;
 
@@ -349,6 +369,7 @@ FROM
   JOIN finance_accounts fa ON fab.account_id = fa.id
 WHERE
   fab.tenant_id = current_tenant_id()
+  AND fab.deleted_at IS NULL
   AND (
     $1::uuid IS NULL
     OR fab.entity_id = $1

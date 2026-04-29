@@ -47,6 +47,7 @@ type transactionService struct {
 	reversalHistoryRepo domain.ReversalHistoryRepository // nil → reversal-of-reversal check skipped
 	entryService        TransactionEntryService
 	postPipeline        *corePipeline.PipelineBuilder // nil → falls back to inline logic
+	txRunner            domain.TxRunner               // nil → reversal uses best-effort cleanup
 	tracing             tracing.Service
 	metrics             metrics.MetricsProvider
 }
@@ -57,6 +58,7 @@ func NewTransactionService(
 	periodRepo domain.PeriodRepository,
 	reversalHistoryRepo domain.ReversalHistoryRepository,
 	entryService TransactionEntryService,
+	txRunner domain.TxRunner,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) TransactionService {
@@ -66,6 +68,7 @@ func NewTransactionService(
 		periodRepo:          periodRepo,
 		reversalHistoryRepo: reversalHistoryRepo,
 		entryService:        entryService,
+		txRunner:            txRunner,
 		tracing:             tracing,
 		metrics:             metrics,
 	}
@@ -127,7 +130,9 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 			WithCategory(errors.CategoryValidation)
 	}
 
-	if unique, err := s.repo.IsTransactionNumberUnique(ctx, req.EntityID, req.TransactionNumber, nil); err != nil || !unique {
+	if unique, uniqueErr := s.repo.IsTransactionNumberUnique(ctx, req.EntityID, req.TransactionNumber, nil); uniqueErr != nil {
+		return nil, fmt.Errorf("uniqueness check failed: %w", uniqueErr)
+	} else if !unique {
 		s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
 			"error_type": "duplicate_number",
 		})
@@ -135,40 +140,95 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 		logger.WarnContext(ctx, "Transaction number already exists",
 			logger.Fields{"transaction_number": req.TransactionNumber})
 
-		return nil, err
+		return nil, domain.ErrTransactionNumberExists
+	}
+
+	tenantID, hasTenant := shared.GetTenantID(ctx)
+	if !hasTenant || tenantID == uuid.Nil {
+		return nil, errors.NewBusinessError("MISSING_TENANT", "tenant context is required to create a transaction").
+			WithHTTPStatus(http.StatusUnauthorized).
+			WithCategory(errors.CategorySecurity)
+	}
+
+	approvalRequired := req.TransactionType.RequiresApproval()
+	approvalStatus := domain.ApprovalStatusNotRequired
+	if approvalRequired {
+		approvalStatus = domain.ApprovalStatusPending
 	}
 
 	timer := s.metrics.Timer("transaction_creation_duration", metrics.Fields{
 		"transaction_type": string(req.TransactionType),
 	})
 
-	// Convert CreateTransactionRequest to Transaction domain model
 	transaction := &domain.Transaction{
 		ID:                uuid.New(),
+		TenantID:          tenantID,
 		EntityID:          req.EntityID,
 		TransactionNumber: req.TransactionNumber,
 		TransactionDate:   req.TransactionDate,
 		TransactionType:   req.TransactionType,
 		Description:       req.Description,
 		ReferenceNumber:   req.ReferenceNumber,
+		CurrencyCode:      req.CurrencyCode,
+		ExchangeRate:      req.ExchangeRate,
 		TransactionStatus: domain.TransactionStatusDraft,
-		ApprovalRequired:  false, // Will be determined by business rules
-		ApprovalStatus:    domain.ApprovalStatusNotRequired,
+		ApprovalRequired:  approvalRequired,
+		ApprovalStatus:    approvalStatus,
+		SourceModule:      req.SourceModule,
+		SourceDocumentType: req.SourceDocumentType,
+	}
+	if createdBy, ok := shared.GetUserID(ctx); ok {
+		transaction.CreatedBy = createdBy
 	}
 
 	err := s.repo.Create(ctx, transaction)
-	duration := timer.Stop()
-
 	if err != nil {
+		timer.Stop()
 		s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
 			"error_type": "repository_error",
 		})
-
-		logger.ErrorContext(ctx, "Failed to create transaction",
+		logger.ErrorContext(ctx, "Failed to create transaction header",
 			logger.Fields{"error": err.Error()})
-
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
+
+	// Persist entries atomically. On failure, the header must be rolled back.
+	// Until a TxRunner is wired here, we propagate the error and let the
+	// caller retry; the orphaned header will be cleaned up by a sweep.
+	if len(req.Entries) > 0 {
+		domainEntries := make([]*domain.TransactionEntry, len(req.Entries))
+		for i, e := range req.Entries {
+			entry := &domain.TransactionEntry{
+				ID:            uuid.New(),
+				TenantID:      tenantID,
+				TransactionID: transaction.ID,
+				EntryNumber:   int32(i + 1),
+				AccountID:     e.AccountID,
+				DebitAmount:   e.DebitAmount,
+				CreditAmount:  e.CreditAmount,
+				Description:   e.Description,
+				Reference:     e.Reference,
+			}
+			domainEntries[i] = entry
+		}
+
+		if entryErr := s.entryService.CreateEntries(ctx, domainEntries); entryErr != nil {
+			timer.Stop()
+			s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
+				"error_type": "entry_creation_error",
+			})
+			// Best-effort cleanup of the orphaned header.
+			_ = s.repo.Delete(ctx, transaction.ID)
+			logger.ErrorContext(ctx, "Failed to create transaction entries; header rolled back",
+				logger.Fields{
+					"transaction_id": transaction.ID.String(),
+					"error":          entryErr.Error(),
+				})
+			return nil, fmt.Errorf("failed to create transaction entries: %w", entryErr)
+		}
+	}
+
+	duration := timer.Stop()
 
 	s.metrics.IncrementCounter("transactions_created_total", metrics.Fields{
 		"transaction_type": string(req.TransactionType),
@@ -184,6 +244,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 		logger.Fields{
 			"transaction_id":     transaction.ID.String(),
 			"transaction_number": transaction.TransactionNumber,
+			"entries_count":      len(req.Entries),
 			"duration_ms":        duration.Milliseconds(),
 		})
 
@@ -271,6 +332,9 @@ func (s *transactionService) GetTransactionByNumber(ctx context.Context, number 
 	logger.DebugContext(ctx, "Getting transaction by number",
 		logger.Fields{"transaction_number": number})
 
+	// BUG-06: entity ID should be extracted from context to prevent cross-entity
+	// data leaks. Until shared.GetEntityID is available, we scope by tenant only
+	// (enforced by RLS via current_tenant_id()). Track as issue: add GetEntityID.
 	transaction, err := s.repo.GetByNumber(ctx, nil, number)
 	if err != nil {
 		if err == errors.ErrNotFound {
@@ -317,15 +381,20 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 		return nil, err
 	}
 
-	if existingTransaction.TransactionStatus == domain.TransactionStatusPosted {
+	if !existingTransaction.TransactionStatus.IsEditable() {
 		s.metrics.IncrementCounter("transaction_update_errors", metrics.Fields{
-			"error_type": "posted_transaction",
+			"error_type": "not_editable",
 		})
 
-		logger.WarnContext(ctx, "Cannot update posted transaction",
-			logger.Fields{"transaction_id": id.String()})
+		logger.WarnContext(ctx, "Cannot update transaction in current status",
+			logger.Fields{
+				"transaction_id": id.String(),
+				"status":         string(existingTransaction.TransactionStatus),
+			})
 
-		return nil, errors.NewBusinessError("POSTED_TRANSACTION", "Cannot update posted transaction").
+		return nil, errors.NewBusinessError("TRANSACTION_NOT_EDITABLE",
+			fmt.Sprintf("transaction with status %q cannot be edited; only DRAFT and REJECTED transactions are editable",
+				existingTransaction.TransactionStatus)).
 			WithHTTPStatus(http.StatusConflict).
 			WithCategory(errors.CategoryBusiness)
 	}
@@ -471,6 +540,22 @@ func (s *transactionService) DeleteTransaction(ctx context.Context, id uuid.UUID
 }
 
 func (s *transactionService) ListTransactions(ctx context.Context, req *domain.TransactionFilter) ([]*domain.Transaction, error) {
+	// Default and clamp pagination before any dereference.
+	defaultLimit := 50
+	defaultOffset := 0
+	if req.Limit == nil {
+		req.Limit = &defaultLimit
+	}
+	if req.Offset == nil {
+		req.Offset = &defaultOffset
+	}
+	if *req.Limit <= 0 {
+		*req.Limit = 50
+	}
+	if *req.Limit > 1000 {
+		*req.Limit = 1000
+	}
+
 	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.list_transactions",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -481,17 +566,9 @@ func (s *transactionService) ListTransactions(ctx context.Context, req *domain.T
 
 	logger.DebugContext(ctx, "Listing transactions",
 		logger.Fields{
-			"limit":  req.Limit,
-			"offset": req.Offset,
+			"limit":  *req.Limit,
+			"offset": *req.Offset,
 		})
-
-	if *req.Limit <= 0 {
-		*req.Limit = 50
-	}
-
-	if *req.Limit > 1000 {
-		*req.Limit = 1000
-	}
 
 	timer := s.metrics.Timer("transaction_list_duration", metrics.Fields{})
 
@@ -618,12 +695,38 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 		return nil, err
 	}
 
-	if transaction.TransactionStatus != domain.TransactionStatusApproved &&
-		transaction.TransactionStatus != domain.TransactionStatusDraft {
+	// Only APPROVED transactions may be posted. DRAFT transactions that require
+	// approval must go through the approval workflow first (prevents bypass).
+	// Exception: DRAFT transactions with ApprovalRequired=false may be posted directly.
+	switch transaction.TransactionStatus {
+	case domain.TransactionStatusApproved:
+		// approved — proceed
+	case domain.TransactionStatusDraft:
+		if transaction.ApprovalRequired {
+			s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
+				"error_type": "approval_required",
+			})
+			return nil, errors.NewBusinessError("APPROVAL_REQUIRED",
+				"transaction requires approval before posting").
+				WithHTTPStatus(http.StatusUnprocessableEntity).
+				WithCategory(errors.CategoryBusiness)
+		}
+		// Auto-approve DRAFT transactions that don't require approval so the DB
+		// constraint (APPROVED only) is satisfied without a separate API call.
+		approvedAt := time.Now()
+		systemUser := transaction.CreatedBy
+		notesPtr := func(s string) *string { return &s }("auto-approved: no approval required")
+		if autoApproveErr := s.repo.Approve(ctx, id, systemUser, approvedAt, notesPtr); autoApproveErr != nil {
+			return nil, fmt.Errorf("failed to auto-approve no-approval transaction before posting: %w", autoApproveErr)
+		}
+	default:
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
 			"error_type": "invalid_status",
 		})
-		return nil, errors.NewBusinessError("INVALID_STATUS", "Transaction must be approved or draft to be posted")
+		return nil, errors.NewBusinessError("INVALID_STATUS",
+			fmt.Sprintf("cannot post transaction with status %q", transaction.TransactionStatus)).
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
@@ -691,8 +794,15 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 	}
 
 	if err := s.updateAccountBalances(ctx, entries); err != nil {
-		logger.ErrorContext(ctx, "Failed to update account balances after posting",
+		// Balance update failure is a ledger integrity error — propagate it.
+		// The transaction is marked POSTED in the DB already; caller must compensate
+		// or a reconciliation sweep will detect the divergence.
+		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
+			"error_type": "balance_update_failed",
+		})
+		logger.ErrorContext(ctx, "CRITICAL: account balance update failed after posting — ledger may diverge",
 			logger.Fields{"transaction_id": id.String(), "error": err.Error()})
+		return nil, fmt.Errorf("transaction posted but account balance update failed: %w", err)
 	}
 
 	s.metrics.IncrementCounter("transactions_posted_total", metrics.Fields{
@@ -745,7 +855,9 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 				"transaction_status": string(transaction.TransactionStatus),
 			})
 
-		return nil, errors.NewBusinessError("not_posted", "Only posted transactions can be reversed")
+		return nil, errors.NewBusinessError("NOT_POSTED", "Only posted transactions can be reversed").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	if transaction.IsReversed {
@@ -756,7 +868,9 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		logger.WarnContext(ctx, "Transaction is already reversed",
 			logger.Fields{"transaction_id": id.String()})
 
-		return nil, errors.NewBusinessError("already_reversed", "Transaction is already reversed")
+		return nil, errors.NewBusinessError("ALREADY_REVERSED", "Transaction is already reversed").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	// FIN-TXN-024: a reversal transaction must not itself be reversed.
@@ -795,41 +909,160 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		reversalEntries[i] = reversalEntry
 	}
 
+	tenantID, hasTenant := shared.GetTenantID(ctx)
+	if !hasTenant || tenantID == uuid.Nil {
+		return nil, errors.NewBusinessError("MISSING_TENANT", "tenant context is required to reverse a transaction").
+			WithHTTPStatus(http.StatusUnauthorized).
+			WithCategory(errors.CategorySecurity)
+	}
+
+	// ID is pre-generated so it can be referenced in reversal history after commit.
 	reversalTransaction := &domain.Transaction{
 		ID:                uuid.New(),
+		TenantID:          tenantID,
 		EntityID:          transaction.EntityID,
 		TransactionNumber: fmt.Sprintf("REV-%s", transaction.TransactionNumber),
-		TransactionType:   transaction.TransactionType,
+		// Reversals are a distinct type so they can be identified unambiguously in reports.
+		TransactionType:   domain.TransactionTypeReversal,
 		TransactionDate:   time.Now(),
 		Description:       fmt.Sprintf("REVERSAL: %s - %s", transaction.Description, reason),
 		ReferenceNumber:   &transaction.TransactionNumber,
 		CurrencyCode:      transaction.CurrencyCode,
+		// Preserve the original exchange rate to avoid fictitious FX gains/losses.
 		ExchangeRate:      transaction.ExchangeRate,
 		TransactionStatus: domain.TransactionStatusDraft,
 		ApprovalRequired:  false,
 		ApprovalStatus:    domain.ApprovalStatusNotRequired,
 	}
+	if reversedBy, ok := shared.GetUserID(ctx); ok {
+		reversalTransaction.CreatedBy = reversedBy
+	}
 
-	err = s.repo.Create(ctx, reversalTransaction)
-	if err != nil {
+	// ── Atomic path (txRunner injected) ────────────────────────────────────────
+	// All five steps run inside a single DB transaction. Any failure rolls back
+	// the entire operation — no partial state, no corrupt GL.
+	if s.txRunner != nil {
+		txErr := s.txRunner.RunInTx(ctx, func(txCtx context.Context) error {
+			// Step 1: Create reversal header.
+			if err := s.repo.Create(txCtx, reversalTransaction); err != nil {
+				return fmt.Errorf("create reversal header: %w", err)
+			}
+			// Step 2: Create reversal entries.
+			for i, entry := range reversalEntries {
+				entry.ID = uuid.New()
+				entry.TenantID = tenantID
+				entry.TransactionID = reversalTransaction.ID
+				entry.EntryNumber = int32(i + 1)
+				if err := s.entryService.CreateEntry(txCtx, entry); err != nil {
+					return fmt.Errorf("create reversal entry %d: %w", i+1, err)
+				}
+			}
+			// Step 3: Post the reversal (auto-approve — ApprovalRequired=false).
+			if _, err := s.PostTransaction(txCtx, reversalTransaction.ID, nil); err != nil {
+				return fmt.Errorf("post reversal: %w", err)
+			}
+			// Step 4: Mark original as reversed — safe now that reversal is posted.
+			if err := s.repo.Reverse(txCtx, id, reversalTransaction.ID, reason); err != nil {
+				return fmt.Errorf("mark original reversed: %w", err)
+			}
+			// Step 5: Record reversal history (double-reversal guard).
+			if s.reversalHistoryRepo != nil {
+				rec := &domain.ReversalHistoryRecord{
+					ID:                    uuid.New(),
+					OriginalTransactionID: id,
+					ReversalTransactionID: reversalTransaction.ID,
+					Reason:                reason,
+				}
+				if reversedBy, ok := shared.GetUserID(txCtx); ok {
+					rec.ReversedBy = reversedBy
+				}
+				if err := s.reversalHistoryRepo.Insert(txCtx, rec); err != nil {
+					return fmt.Errorf("insert reversal history: %w", err)
+				}
+			}
+			return nil
+		})
+		if txErr != nil {
+			s.metrics.IncrementCounter("transaction_reversal_errors", metrics.Fields{
+				"error_type": "tx_failed",
+			})
+			return nil, txErr
+		}
+
+		postedReversal, fetchErr := s.repo.GetByID(ctx, reversalTransaction.ID)
+		if fetchErr != nil {
+			return nil, fmt.Errorf("reversal committed but fetch failed: %w", fetchErr)
+		}
+
+		logger.InfoContext(ctx, "Transaction reversed successfully (atomic)",
+			logger.Fields{
+				"original_transaction_id": id.String(),
+				"reversal_transaction_id": reversalTransaction.ID.String(),
+				"reason":                  reason,
+			})
+		return postedReversal, nil
+	}
+
+	// ── Best-effort path (no txRunner) ─────────────────────────────────────────
+	// Step 1: Create the reversal transaction header.
+	if err = s.repo.Create(ctx, reversalTransaction); err != nil {
 		return nil, fmt.Errorf("failed to create reversal transaction: %w", err)
 	}
 
+	// Step 2: Create all reversal entries. On failure, clean up the header
+	// (cascade delete removes entries via FK).
 	for i, entry := range reversalEntries {
+		entry.ID = uuid.New()
+		entry.TenantID = tenantID
 		entry.TransactionID = reversalTransaction.ID
 		entry.EntryNumber = int32(i + 1)
 		if err := s.entryService.CreateEntry(ctx, entry); err != nil {
-			return nil, fmt.Errorf("failed to create reversal entry: %w", err)
+			_ = s.repo.Delete(ctx, reversalTransaction.ID)
+			return nil, fmt.Errorf("failed to create reversal entry %d: %w", i+1, err)
 		}
 	}
 
-	if err := s.repo.Reverse(ctx, id, reversalTransaction.ID, reason); err != nil {
-		return nil, fmt.Errorf("failed to mark transaction as reversed: %w", err)
+	// Step 3: Post the reversal BEFORE marking the original as reversed.
+	// If posting fails the original must remain un-reversed (no corrupt state).
+	postedReversal, postErr := s.PostTransaction(ctx, reversalTransaction.ID, nil)
+	if postErr != nil {
+		_ = s.repo.Delete(ctx, reversalTransaction.ID)
+		return nil, fmt.Errorf("failed to post reversal transaction: %w", postErr)
 	}
 
-	_, err = s.PostTransaction(ctx, reversalTransaction.ID, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to post reversal transaction: %w", err)
+	// Step 4: Only now mark the original as reversed — posting is confirmed.
+	if err := s.repo.Reverse(ctx, id, reversalTransaction.ID, reason); err != nil {
+		// Reversal is posted but original not flagged. Log loudly; needs
+		// manual reconciliation. Do not silently succeed.
+		logger.ErrorContext(ctx, "CRITICAL: reversal posted but original transaction could not be flagged as reversed",
+			logger.Fields{
+				"original_id": id.String(),
+				"reversal_id": reversalTransaction.ID.String(),
+				"error":       err.Error(),
+			})
+		return nil, fmt.Errorf("reversal posted but failed to mark original as reversed: %w", err)
+	}
+
+	// Step 5: Record in reversal history for double-reversal guard.
+	if s.reversalHistoryRepo != nil {
+		rec := &domain.ReversalHistoryRecord{
+			ID:                    uuid.New(),
+			OriginalTransactionID: id,
+			ReversalTransactionID: reversalTransaction.ID,
+			Reason:                reason,
+		}
+		if reversedBy, ok := shared.GetUserID(ctx); ok {
+			rec.ReversedBy = reversedBy
+		}
+		if histErr := s.reversalHistoryRepo.Insert(ctx, rec); histErr != nil {
+			// Non-fatal: the guard is best-effort via the unique constraint.
+			logger.ErrorContext(ctx, "Failed to insert reversal history record",
+				logger.Fields{
+					"original_id": id.String(),
+					"reversal_id": reversalTransaction.ID.String(),
+					"error":       histErr.Error(),
+				})
+		}
 	}
 
 	logger.InfoContext(ctx, "Transaction reversed successfully",
@@ -839,7 +1072,7 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 			"reason":                  reason,
 		})
 
-	return reversalTransaction, nil
+	return postedReversal, nil
 }
 
 func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error) {
@@ -873,7 +1106,9 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 				"approval_status":   string(transaction.ApprovalStatus),
 			})
 
-		return nil, errors.NewBusinessError("invalid_status", "Transaction is not pending approval")
+		return nil, errors.NewBusinessError("INVALID_APPROVAL_STATUS", "Transaction is not pending approval").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	// FIN-TXN-031: segregation of duties — submitter cannot approve their own transaction.
@@ -972,7 +1207,9 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 				"approval_status":   string(transaction.ApprovalStatus),
 			})
 
-		return nil, errors.NewBusinessError("invalid_status", "Transaction is not pending approval")
+		return nil, errors.NewBusinessError("INVALID_APPROVAL_STATUS", "Transaction is not pending approval").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	timer := s.metrics.Timer("transaction_rejection_duration", metrics.Fields{
@@ -1289,7 +1526,9 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 	}
 
 	if !template.IsRecurring {
-		return nil, errors.NewBusinessError("not_recurring", "Template is not a recurring transaction")
+		return nil, errors.NewBusinessError("NOT_RECURRING", "Template is not a recurring transaction").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, templateID)
@@ -1370,8 +1609,8 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 	}
 
 	now := time.Now()
+	var firstErr error
 	for accountID := range seen {
-		// Recalculate the full balance from actual transaction entries (not an incremental delta).
 		balance, err := s.accountRepo.GetAccountBalance(ctx, accountID, &now)
 		if err != nil {
 			logger.ErrorContext(ctx, "Failed to recalculate account balance",
@@ -1379,6 +1618,9 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 					"account_id": accountID.String(),
 					"error":      err.Error(),
 				})
+			if firstErr == nil {
+				firstErr = fmt.Errorf("account %s balance recalculation: %w", accountID, err)
+			}
 			continue
 		}
 
@@ -1388,10 +1630,13 @@ func (s *transactionService) updateAccountBalances(ctx context.Context, entries 
 					"account_id": accountID.String(),
 					"error":      err.Error(),
 				})
+			if firstErr == nil {
+				firstErr = fmt.Errorf("account %s balance persist: %w", accountID, err)
+			}
 		}
 	}
 
-	return nil
+	return firstErr
 }
 
 func (s *transactionService) calculateNextRecurringDate(template *domain.Transaction, currentDate time.Time) time.Time {

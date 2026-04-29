@@ -11,7 +11,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('statement_section')::text IS NULL
@@ -31,7 +31,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND statement_section = 'Balance Sheet'
 ORDER BY
@@ -47,7 +47,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND statement_section = 'Income Statement'
 ORDER BY
@@ -63,7 +63,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('statement_section')::text IS NULL
@@ -104,7 +104,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('root_type')::text IS NULL
@@ -154,7 +154,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND LEVEL <= sqlc.arg('max_level')
   AND (
@@ -173,7 +173,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND LEVEL = 1
   AND (
@@ -195,6 +195,9 @@ ORDER BY
   account_code;
 
 -- name: GetAccountWithChildren :many
+-- Prefix-safe subtree fetch: anchors match at the start of the path segment
+-- so account_code "1000" never matches "10001" or "21000".
+-- Pattern: exact match OR path starts with "code." (child separator).
 SELECT
   *
 FROM
@@ -203,15 +206,18 @@ WHERE
   h.tenant_id = current_tenant_id()
   AND (
     h.id = sqlc.arg('account_id')
-    OR h.full_path LIKE '%' || (
-      SELECT
-        account_code
-      FROM
-        finance_accounts
-      WHERE
-        id = sqlc.arg('account_id')
-        AND tenant_id = current_tenant_id()
-    ) || '%'
+    OR h.full_path LIKE (
+      SELECT account_code
+      FROM   finance_accounts
+      WHERE  id        = sqlc.arg('account_id')
+        AND  tenant_id = current_tenant_id()
+    ) || '.%'
+    OR h.full_path = (
+      SELECT account_code
+      FROM   finance_accounts
+      WHERE  id        = sqlc.arg('account_id')
+        AND  tenant_id = current_tenant_id()
+    )
   )
 ORDER BY
   h.LEVEL,
@@ -229,7 +235,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('min_balance')::decimal IS NULL
@@ -252,7 +258,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND entries_last_30_days > 0
 ORDER BY
@@ -272,7 +278,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND entries_last_30_days = 0
   AND (
@@ -298,7 +304,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND entries_last_30_days >= sqlc.arg('min_entries')
 ORDER BY
@@ -317,7 +323,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND (
     sqlc.narg('from_date')::date IS NULL
@@ -346,7 +352,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND all_entries_reconciled = false
   AND transaction_status = 'POSTED'
@@ -354,6 +360,9 @@ ORDER BY
   transaction_date ASC;
 
 -- name: GetTransactionsByAccount :many
+-- account_codes is a comma-separated list (e.g. "1000,2000,3100").
+-- Use word-boundary anchors via regex to avoid "1000" matching "10001":
+--   match at string start, after a comma, or as exact full string.
 SELECT
   ts.*
 FROM
@@ -362,9 +371,14 @@ WHERE
   ts.tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR ts.tenant_id = current_tenant_id()
+    OR ts.entity_id = sqlc.narg('entity_id')::uuid
   )
-  AND ts.account_codes LIKE '%' || sqlc.arg('account_code') || '%'
+  AND (
+    ts.account_codes = sqlc.arg('account_code')
+    OR ts.account_codes LIKE sqlc.arg('account_code') || ',%'
+    OR ts.account_codes LIKE '%,' || sqlc.arg('account_code') || ',%'
+    OR ts.account_codes LIKE '%,' || sqlc.arg('account_code')
+  )
   AND (
     sqlc.narg('from_date')::date IS NULL
     OR ts.transaction_date >= sqlc.narg('from_date')
@@ -432,7 +446,7 @@ WHERE
   tenant_id = current_tenant_id()
   AND (
     sqlc.narg('entity_id')::uuid IS NULL
-    OR tenant_id = current_tenant_id()
+    OR entity_id = sqlc.narg('entity_id')::uuid
   )
   AND is_active = TRUE
   AND current_balance != 0

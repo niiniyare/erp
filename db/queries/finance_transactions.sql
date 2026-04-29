@@ -218,6 +218,10 @@ RETURNING
   *;
 
 -- name: PostTransaction :one
+-- Only APPROVED transactions may be posted at the DB level.
+-- DRAFT transactions that have approval_required=false are first transitioned to
+-- APPROVED by the service layer before calling this query.
+-- This prevents the approval workflow from being bypassed by direct DB access.
 UPDATE
   finance_transactions
 SET
@@ -230,7 +234,7 @@ SET
 WHERE
   id = sqlc.arg('transaction_id')
   AND tenant_id = current_tenant_id()
-  AND transaction_status IN ('APPROVED', 'DRAFT')
+  AND transaction_status = 'APPROVED'
   AND deleted_at IS NULL
 RETURNING
   *;
@@ -653,7 +657,7 @@ VALUES
     sqlc.arg('transaction_type'),
     sqlc.arg('transaction_date'),
     sqlc.arg('description'),
-    'USD',
+    sqlc.arg('currency_code'),
     sqlc.arg('created_by')
   )
 RETURNING
@@ -674,8 +678,10 @@ LIMIT
   sqlc.arg('limit_count');
 
 -- name: GetTransactionActivity :many
+-- Use transaction_date (economic date) not created_at (row creation time).
+-- Backdated entries must appear in the correct period's activity report.
 SELECT
-  DATE(created_at) AS activity_date,
+  transaction_date AS activity_date,
   COUNT(*) AS transaction_count,
   SUM(total_debit_amount) AS daily_total_debit,
   SUM(total_credit_amount) AS daily_total_credit
@@ -684,9 +690,9 @@ FROM
 WHERE
   tenant_id = current_tenant_id()
   AND deleted_at IS NULL
-  AND created_at >= sqlc.arg('date_from')
-  AND created_at <= sqlc.arg('date_to')
+  AND transaction_date >= sqlc.arg('date_from')
+  AND transaction_date <= sqlc.arg('date_to')
 GROUP BY
-  DATE(created_at)
+  transaction_date
 ORDER BY
   activity_date DESC;

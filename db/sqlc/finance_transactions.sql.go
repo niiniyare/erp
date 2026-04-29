@@ -1931,7 +1931,7 @@ SET
 WHERE
   id = $3
   AND tenant_id = current_tenant_id()
-  AND transaction_status IN ('APPROVED', 'DRAFT')
+  AND transaction_status = 'APPROVED'
   AND deleted_at IS NULL
 RETURNING
   id, tenant_id, entity_id, transaction_number, transaction_type, transaction_status, transaction_date, posting_date, due_date, description, reference_number, external_reference, memo, currency_code, exchange_rate, total_debit_amount, total_credit_amount, source_module, source_document_type, source_document_id, batch_id, approval_required, approval_status, approved_by, approved_at, approval_notes, is_recurring, recurring_frequency, next_recurring_date, is_reversed, reversed_by_transaction_id, reversal_reason, version, validation_status, validation_errors, transaction_attributes, attachment_ids, tags, created_at, updated_at, deleted_at, created_by, updated_by, posted_by, posted_at
@@ -1943,6 +1943,10 @@ type PostTransactionParams struct {
 	TransactionID uuid.UUID  `json:"transaction_id"`
 }
 
+// Only APPROVED transactions may be posted at the DB level.
+// DRAFT transactions that have approval_required=false are first transitioned to
+// APPROVED by the service layer before calling this query.
+// This prevents the approval workflow from being bypassed by direct DB access.
 func (q *Queries) PostTransaction(ctx context.Context, arg PostTransactionParams) (*FinanceTransaction, error) {
 	row := q.db.QueryRow(ctx, postTransaction, arg.PostingDate, arg.PostedBy, arg.TransactionID)
 	var i FinanceTransaction

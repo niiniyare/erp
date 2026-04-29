@@ -265,7 +265,10 @@ type Querier interface {
 	// Removes tenant override — setting reverts to default_value.
 	DeleteTenantSetting(ctx context.Context, arg DeleteTenantSettingParams) error
 	DeleteTenantUsageStats(ctx context.Context, periodStart time.Time) error
+	// Soft-delete all entries for a transaction. Only safe to call on non-POSTED transactions.
 	DeleteTransactionEntries(ctx context.Context, transactionID uuid.UUID) error
+	// Soft-delete only; hard DELETE of journal entries is prohibited.
+	// The application layer must verify the parent transaction is DRAFT/REJECTED before calling this.
 	DeleteTransactionEntry(ctx context.Context, id uuid.UUID) error
 	// =====================================================================
 	//  MAINTENANCE & CLEANUP QUERIES
@@ -1069,6 +1072,10 @@ type Querier interface {
 	// 3. HIERARCHY BULK OPERATIONS
 	// =====================================================================
 	MoveEntityToNewParent(ctx context.Context, arg MoveEntityToNewParentParams) error
+	// Only APPROVED transactions may be posted at the DB level.
+	// DRAFT transactions that have approval_required=false are first transitioned to
+	// APPROVED by the service layer before calling this query.
+	// This prevents the approval workflow from being bypassed by direct DB access.
 	PostTransaction(ctx context.Context, arg PostTransactionParams) (*FinanceTransaction, error)
 	ProvisionTenant(ctx context.Context, arg ProvisionTenantParams) (uuid.UUID, error)
 	RebuildHierarchyPaths(ctx context.Context) error
@@ -1261,6 +1268,8 @@ type Querier interface {
 	UpdateTenantUsageStats(ctx context.Context, arg UpdateTenantUsageStatsParams) (*TenantUsageStat, error)
 	UpdateTransaction(ctx context.Context, arg UpdateTransactionParams) (*FinanceTransaction, error)
 	UpdateTransactionAttributes(ctx context.Context, arg UpdateTransactionAttributesParams) error
+	// Guards: only DRAFT or REJECTED parent transactions allow entry mutation.
+	// This prevents retroactive changes to POSTED/APPROVED/PENDING_APPROVAL journals.
 	UpdateTransactionEntry(ctx context.Context, arg UpdateTransactionEntryParams) (*FinanceTransactionEntry, error)
 	// =====================================================================
 	// NEW QUERIES FOR ENHANCED FUNCTIONALITY

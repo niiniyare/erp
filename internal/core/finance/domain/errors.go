@@ -28,6 +28,8 @@ var (
 	ErrTransactionNotPosted           = errors.New("transaction not posted")
 	ErrTransactionAlreadyReversed     = errors.New("transaction already reversed")
 	ErrTransactionNotRequireApproval  = errors.New("transaction does not require approval")
+	ErrTransactionCancelled           = errors.New("transaction is cancelled")
+	ErrTransactionNotEditable         = errors.New("transaction cannot be edited in its current status")
 	ErrUnbalancedTransaction          = errors.New("transaction debits do not equal credits")
 	ErrInvalidTransactionEntry        = errors.New("invalid transaction entry")
 	ErrInsufficientTransactionEntries = errors.New("transaction must have at least 2 entries")

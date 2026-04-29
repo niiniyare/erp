@@ -17,7 +17,8 @@ CREATE TABLE finance_accounting_periods (
     locked_by       UUID        REFERENCES users(id),
 
     PRIMARY KEY (id),
-    UNIQUE (tenant_id, id),
+    -- NOTE: UNIQUE(tenant_id, id) removed — id is already globally unique (PK);
+    -- the composite unique added index bloat with zero correctness benefit.
     UNIQUE (tenant_id, fiscal_year_id, period_number),
     UNIQUE (tenant_id, fiscal_year_id, start_date),
     CONSTRAINT chk_period_dates CHECK (end_date > start_date)
@@ -38,6 +39,10 @@ CREATE POLICY finance_accounting_periods_app_all ON finance_accounting_periods F
 
 CREATE POLICY finance_accounting_periods_ro_select ON finance_accounting_periods FOR SELECT TO readonly_role
     USING (tenant_id = current_tenant_id());
+
+-- admin_role: full access without tenant restriction (needed for period close/reopen operations)
+CREATE POLICY finance_accounting_periods_admin_all ON finance_accounting_periods FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);
 
 -- Currencies table (ISO 4217 currencies supported by the tenant)
 CREATE TABLE finance_currencies (
@@ -70,3 +75,7 @@ CREATE POLICY finance_currencies_app_all ON finance_currencies FOR ALL TO applic
 
 CREATE POLICY finance_currencies_ro_select ON finance_currencies FOR SELECT TO readonly_role
     USING (tenant_id = current_tenant_id());
+
+-- admin_role: full access needed for currency management operations
+CREATE POLICY finance_currencies_admin_all ON finance_currencies FOR ALL TO admin_role
+    USING (TRUE) WITH CHECK (TRUE);

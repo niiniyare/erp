@@ -65,7 +65,7 @@ WHERE
 ORDER BY
   effective_date DESC
 LIMIT  $5
-OFFSET 0;
+OFFSET $6;
 
 -- name: DeleteExpiredExchangeRates :exec
 DELETE FROM finance_exchange_rates

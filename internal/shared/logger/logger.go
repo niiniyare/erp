@@ -104,8 +104,8 @@ func DefaultConfig() Config {
 		Type:        ZerologLogger,
 		Level:       InfoLevel,
 		Output:      os.Stdout,
-		Format:      "console",
-		Development: true,
+		Format:      "json",
+		Development: false,
 		ServiceName: "app",
 		Version:     "1.0.0",
 	}

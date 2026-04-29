@@ -4,7 +4,7 @@
 -- Header table for all financial transactions. Stores transaction metadata, approval workflow,
 -- and debit/credit summary amounts. Individual journal lines are stored in
 -- finance_transaction_entries (000905).
--- transaction_type IN ('MANUAL','SYSTEM','IMPORTED','RECURRING','ADJUSTMENT','CLOSING').
+-- transaction_type IN ('MANUAL','SYSTEM','IMPORTED','RECURRING','ADJUSTMENT','CLOSING','REVERSAL','JOURNAL_ENTRY','OPENING','INVOICE','PAYMENT','PURCHASE').
 -- transaction_status IN ('DRAFT','PENDING_APPROVAL','APPROVED','POSTED','CANCELLED','REVERSED').
 -- approval_status IN ('NOT_REQUIRED','PENDING','APPROVED','REJECTED').
 -- recurring_frequency IN ('DAILY','WEEKLY','MONTHLY','QUARTERLY','YEARLY') or NULL.
@@ -21,7 +21,8 @@ CREATE TABLE finance_transactions (
   transaction_number          VARCHAR(50)   NOT NULL,
   transaction_type            VARCHAR(30)   NOT NULL CHECK (
     transaction_type IN (
-      'MANUAL', 'SYSTEM', 'IMPORTED', 'RECURRING', 'ADJUSTMENT', 'CLOSING'
+      'MANUAL', 'SYSTEM', 'IMPORTED', 'RECURRING', 'ADJUSTMENT', 'CLOSING',
+      'REVERSAL', 'JOURNAL_ENTRY', 'OPENING', 'INVOICE', 'PAYMENT', 'PURCHASE'
     )
   ),
   transaction_status          VARCHAR(20)   NOT NULL DEFAULT 'DRAFT' CHECK (

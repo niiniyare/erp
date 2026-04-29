@@ -18,24 +18,25 @@ CREATE TABLE finance_transaction_entries (
   entry_number                INTEGER       NOT NULL,      -- Sequential line number within the transaction
   -- Account relationship
   account_id                  UUID          NOT NULL REFERENCES finance_accounts(id) ON DELETE RESTRICT,
-  -- Entry amounts
-  debit_amount                DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Must be 0 if credit_amount > 0
-  credit_amount               DECIMAL(15,2) NOT NULL DEFAULT 0.00, -- Must be 0 if debit_amount > 0
+  -- Entry amounts — DECIMAL(19,4) supports KWD/IQD/OMR (3 dp) and high-value transactions
+  debit_amount                DECIMAL(19,4) NOT NULL DEFAULT 0.0000, -- Must be 0 if credit_amount > 0
+  credit_amount               DECIMAL(19,4) NOT NULL DEFAULT 0.0000, -- Must be 0 if debit_amount > 0
   -- Entry details
   description                 TEXT          NOT NULL,
   reference                   VARCHAR(100),
   -- Dimensional analysis
   cost_center                 VARCHAR(20),
+  cost_center_id              UUID,         -- Preferred FK reference; cost_center kept for compat
   department                  VARCHAR(50),
-  project_id                  UUID,
+  project_id                  UUID,         -- TODO: add FK REFERENCES finance_projects(id) when projects table exists
   -- Multi-currency support
   original_currency           CHAR(3),
-  original_amount             DECIMAL(15,2),               -- Amount in original currency before conversion
+  original_amount             DECIMAL(19,4),               -- Amount in original currency before conversion
   exchange_rate               DECIMAL(18,8),
   -- Tax information
   tax_code                    VARCHAR(20),
-  tax_rate                    DECIMAL(5,2),
-  tax_amount                  DECIMAL(15,2),
+  tax_rate                    DECIMAL(5,4),  -- 4dp supports rates like 7.5000%
+  tax_amount                  DECIMAL(19,4),
   -- Reconciliation
   reconciled                  BOOLEAN       DEFAULT false,
   reconciled_date             DATE,

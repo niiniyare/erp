@@ -52,12 +52,21 @@ WHERE
 RETURNING
   *;
 
--- name: DeleteAccountValidationRule :exec
-DELETE FROM
+-- name: DeleteAccountValidationRule :one
+-- Soft-delete: deactivate instead of hard delete to preserve audit trail.
+-- Validation rules are tenant configuration; hard DELETE destroys the history
+-- of which rules were active when a posting was allowed.
+UPDATE
   finance_account_validation_rules
+SET
+  is_active  = FALSE,
+  updated_at = NOW(),
+  updated_by = $2
 WHERE
   id = $1
-  AND tenant_id = current_tenant_id();
+  AND tenant_id = current_tenant_id()
+RETURNING
+  *;
 
 -- name: ListAccountValidationRules :many
 SELECT

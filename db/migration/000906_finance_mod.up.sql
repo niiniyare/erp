@@ -73,7 +73,19 @@ COMMENT ON VIEW v_finance_accounts_with_groups IS
 
 
 -- Financial statement structure view
+-- Uses live entry-computed balances (not cached current_balance) to prevent divergence.
 CREATE VIEW v_financial_statement_structure AS
+WITH account_live_balances AS (
+    SELECT
+        te.account_id,
+        SUM(te.debit_amount - te.credit_amount) AS live_balance
+    FROM finance_transaction_entries te
+    JOIN finance_transactions t ON te.transaction_id = t.id
+    WHERE te.deleted_at IS NULL
+      AND t.transaction_status = 'POSTED'
+      AND t.deleted_at IS NULL
+    GROUP BY te.account_id
+)
 SELECT
     -- Group identification
     g.id,
@@ -87,18 +99,19 @@ SELECT
     g.parent_group_id,
     g.show_in_summary,
     g.group_path,
-    
+
     -- Account statistics
     COUNT(a.id) AS account_count,
     SUM(
         CASE WHEN a.is_active = TRUE THEN 1 ELSE 0 END
     ) AS active_account_count,
-    COALESCE(SUM(a.current_balance), 0) AS group_balance
-    
+    COALESCE(SUM(COALESCE(lb.live_balance, 0)), 0) AS group_balance
+
 FROM finance_account_groups g
     LEFT JOIN finance_accounts a ON (
         a.account_group_id = g.id OR a.account_header_id = g.id
     ) AND a.deleted_at IS NULL
+    LEFT JOIN account_live_balances lb ON a.id = lb.account_id
 WHERE g.deleted_at IS NULL
 GROUP BY
     g.id, g.tenant_id, g.group_code, g.group_name, g.root_type,
@@ -118,7 +131,7 @@ COMMENT ON VIEW v_financial_statement_structure IS
 -- =====================================================================
 
 -- Function to create standard account groups for new tenants
-CREATE OR REPLACE FUNCTION create_standard_account_groups(p_tenant_id UUID)
+CREATE OR REPLACE FUNCTION create_standard_account_groups(p_tenant_id UUID, p_created_by UUID)
 RETURNS VOID AS $$
 DECLARE
     v_assets_id UUID;
@@ -130,63 +143,63 @@ BEGIN
     -- Create root level groups (Level 1)
     INSERT INTO finance_account_groups (
         tenant_id, group_code, group_name, root_type,
-        financial_statement_section, statement_order, is_system_group
+        financial_statement_section, statement_order, is_system_group, created_by
     ) VALUES
-        (p_tenant_id, 'ASSETS', 'Assets', 'ASSET', 'Balance Sheet', 100, TRUE),
-        (p_tenant_id, 'LIABILITIES', 'Liabilities', 'LIABILITY', 'Balance Sheet', 200, TRUE),
-        (p_tenant_id, 'EQUITY', 'Equity', 'EQUITY', 'Balance Sheet', 300, TRUE),
-        (p_tenant_id, 'REVENUE', 'Revenue', 'REVENUE', 'Income Statement', 400, TRUE),
-        (p_tenant_id, 'EXPENSES', 'Expenses', 'EXPENSE', 'Income Statement', 500, TRUE);
+        (p_tenant_id, 'ASSETS', 'Assets', 'ASSET', 'Balance Sheet', 100, TRUE, p_created_by),
+        (p_tenant_id, 'LIABILITIES', 'Liabilities', 'LIABILITY', 'Balance Sheet', 200, TRUE, p_created_by),
+        (p_tenant_id, 'EQUITY', 'Equity', 'EQUITY', 'Balance Sheet', 300, TRUE, p_created_by),
+        (p_tenant_id, 'REVENUE', 'Revenue', 'REVENUE', 'Income Statement', 400, TRUE, p_created_by),
+        (p_tenant_id, 'EXPENSES', 'Expenses', 'EXPENSE', 'Income Statement', 500, TRUE, p_created_by);
 
     -- Get root group IDs for hierarchy creation
-    SELECT id INTO v_assets_id 
-    FROM finance_account_groups 
+    SELECT id INTO v_assets_id
+    FROM finance_account_groups
     WHERE tenant_id = p_tenant_id AND group_code = 'ASSETS';
-    
-    SELECT id INTO v_liabilities_id 
-    FROM finance_account_groups 
+
+    SELECT id INTO v_liabilities_id
+    FROM finance_account_groups
     WHERE tenant_id = p_tenant_id AND group_code = 'LIABILITIES';
-    
-    SELECT id INTO v_expenses_id 
-    FROM finance_account_groups 
+
+    SELECT id INTO v_expenses_id
+    FROM finance_account_groups
     WHERE tenant_id = p_tenant_id AND group_code = 'EXPENSES';
 
     -- Create Asset sub-groups (Level 2)
     INSERT INTO finance_account_groups (
         tenant_id, group_code, group_name, root_type, parent_group_id,
         group_category, financial_statement_section, statement_order,
-        group_level, is_system_group
+        group_level, is_system_group, created_by
     ) VALUES
         (p_tenant_id, 'CURRENT_ASSETS', 'Current Assets', 'ASSET', v_assets_id,
-         'CURRENT_ASSETS', 'Balance Sheet', 110, 2, TRUE),
+         'CURRENT_ASSETS', 'Balance Sheet', 110, 2, TRUE, p_created_by),
         (p_tenant_id, 'FIXED_ASSETS', 'Fixed Assets', 'ASSET', v_assets_id,
-         'FIXED_ASSETS', 'Balance Sheet', 120, 2, TRUE),
+         'FIXED_ASSETS', 'Balance Sheet', 120, 2, TRUE, p_created_by),
         (p_tenant_id, 'OTHER_ASSETS', 'Other Assets', 'ASSET', v_assets_id,
-         'OTHER_ASSETS', 'Balance Sheet', 130, 2, TRUE);
+         'OTHER_ASSETS', 'Balance Sheet', 130, 2, TRUE, p_created_by);
 
     -- Create Liability sub-groups (Level 2)
     INSERT INTO finance_account_groups (
         tenant_id, group_code, group_name, root_type, parent_group_id,
         group_category, financial_statement_section, statement_order,
-        group_level, is_system_group
+        group_level, is_system_group, created_by
     ) VALUES
         (p_tenant_id, 'CURRENT_LIABILITIES', 'Current Liabilities', 'LIABILITY', v_liabilities_id,
-         'CURRENT_LIABILITIES', 'Balance Sheet', 210, 2, TRUE),
+         'CURRENT_LIABILITIES', 'Balance Sheet', 210, 2, TRUE, p_created_by),
         (p_tenant_id, 'LONG_TERM_LIABILITIES', 'Long-term Liabilities', 'LIABILITY', v_liabilities_id,
-         'LONG_TERM_LIABILITIES', 'Balance Sheet', 220, 2, TRUE);
+         'LONG_TERM_LIABILITIES', 'Balance Sheet', 220, 2, TRUE, p_created_by);
 
     -- Create Expense sub-groups (Level 2)
     INSERT INTO finance_account_groups (
         tenant_id, group_code, group_name, root_type, parent_group_id,
         group_category, financial_statement_section, statement_order,
-        group_level, is_system_group
+        group_level, is_system_group, created_by
     ) VALUES
         (p_tenant_id, 'OPERATING_EXPENSES', 'Operating Expenses', 'EXPENSE', v_expenses_id,
-         'OPERATING_EXPENSES', 'Income Statement', 510, 2, TRUE),
+         'OPERATING_EXPENSES', 'Income Statement', 510, 2, TRUE, p_created_by),
         (p_tenant_id, 'ADMINISTRATIVE_EXPENSES', 'Administrative Expenses', 'EXPENSE', v_expenses_id,
-         'ADMINISTRATIVE_EXPENSES', 'Income Statement', 520, 2, TRUE),
+         'ADMINISTRATIVE_EXPENSES', 'Income Statement', 520, 2, TRUE, p_created_by),
         (p_tenant_id, 'FINANCIAL_EXPENSES', 'Financial Expenses', 'EXPENSE', v_expenses_id,
-         'FINANCIAL_EXPENSES', 'Income Statement', 530, 2, TRUE);
+         'FINANCIAL_EXPENSES', 'Income Statement', 530, 2, TRUE, p_created_by);
 
 END;
 $$ LANGUAGE plpgsql;
@@ -322,8 +335,24 @@ COMMENT ON VIEW v_chart_of_accounts_complete IS
 
 
 -- Financial statement builder view with aggregations
+-- Balances are computed live from POSTED transaction entries (not the denormalized
+-- current_balance cache on finance_accounts) to prevent stale-cache divergence.
 CREATE VIEW v_financial_statement_builder AS
-WITH grouped_balances AS (
+WITH account_live_balances AS (
+    -- Net balance per account from all POSTED entries.
+    -- Formula: debit - credit gives positive values for debit-normal accounts
+    -- (assets/expenses) and negative for credit-normal accounts (liabilities/equity/revenue).
+    SELECT
+        te.account_id,
+        SUM(te.debit_amount - te.credit_amount) AS live_balance
+    FROM finance_transaction_entries te
+    JOIN finance_transactions t ON te.transaction_id = t.id
+    WHERE te.deleted_at IS NULL
+      AND t.transaction_status = 'POSTED'
+      AND t.deleted_at IS NULL
+    GROUP BY te.account_id
+),
+grouped_balances AS (
     SELECT
         coa.tenant_id,
         coa.statement_section,
@@ -336,11 +365,12 @@ WITH grouped_balances AS (
         coa.group_name,
         coa.group_category,
         COUNT(coa.account_id) AS account_count,
-        SUM(coa.current_balance) AS group_balance,
+        SUM(COALESCE(lb.live_balance, 0)) AS group_balance,
         SUM(
-            CASE WHEN coa.is_active THEN coa.current_balance ELSE 0 END
+            CASE WHEN coa.is_active THEN COALESCE(lb.live_balance, 0) ELSE 0 END
         ) AS active_balance
     FROM v_chart_of_accounts_complete coa
+    LEFT JOIN account_live_balances lb ON coa.account_id = lb.account_id
     WHERE coa.include_in_reports = TRUE
     GROUP BY
         coa.tenant_id, coa.statement_section, coa.header_id, coa.header_code,

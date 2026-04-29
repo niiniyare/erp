@@ -6,6 +6,7 @@ package service
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/google/uuid"
@@ -399,6 +400,12 @@ func (s *transactionEntryService) UpdateEntry(ctx context.Context, id uuid.UUID,
 		return nil, fmt.Errorf("failed to update entry: %w", err)
 	}
 
+	// Re-fetch to return the post-update state, not the stale pre-update value.
+	updatedEntry, fetchErr := s.repo.GetEntryByID(ctx, id)
+	if fetchErr != nil {
+		return nil, fmt.Errorf("entry updated but re-fetch failed: %w", fetchErr)
+	}
+
 	s.metrics.IncrementCounter("entries_updated_total", metrics.Fields{
 		"status": "success",
 	})
@@ -408,11 +415,11 @@ func (s *transactionEntryService) UpdateEntry(ctx context.Context, id uuid.UUID,
 
 	logger.InfoContext(ctx, "Entry updated successfully",
 		logger.Fields{
-			"entry_id":    existingEntry.ID.String(),
+			"entry_id":    updatedEntry.ID.String(),
 			"duration_ms": duration.Milliseconds(),
 		})
 
-	return existingEntry, nil
+	return updatedEntry, nil
 }
 
 func (s *transactionEntryService) DeleteEntry(ctx context.Context, id uuid.UUID) error {
@@ -444,7 +451,40 @@ func (s *transactionEntryService) DeleteEntry(ctx context.Context, id uuid.UUID)
 		logger.WarnContext(ctx, "Cannot delete reconciled entry",
 			logger.Fields{"entry_id": id.String()})
 
-		return errors.NewBusinessError("BUSINESS_RULE_ERROR", "Cannot delete reconciled entry")
+		return errors.NewBusinessError("RECONCILED_ENTRY", "Cannot delete reconciled entry").
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
+	}
+
+	// Guard: deleting an entry from a POSTED transaction corrupts the general ledger.
+	parentTxn, err := s.repo.GetByID(ctx, entry.TransactionID)
+	if err != nil {
+		logger.ErrorContext(ctx, "Failed to fetch parent transaction for entry deletion guard",
+			logger.Fields{
+				"entry_id":       id.String(),
+				"transaction_id": entry.TransactionID.String(),
+				"error":          err.Error(),
+			})
+		return fmt.Errorf("failed to verify parent transaction status: %w", err)
+	}
+	if parentTxn.TransactionStatus == domain.TransactionStatusPosted ||
+		parentTxn.TransactionStatus == domain.TransactionStatusReversed {
+		s.metrics.IncrementCounter("entry_deletion_errors", metrics.Fields{
+			"error_type": "posted_transaction",
+		})
+
+		logger.WarnContext(ctx, "Cannot delete entry from posted/reversed transaction",
+			logger.Fields{
+				"entry_id":       id.String(),
+				"transaction_id": entry.TransactionID.String(),
+				"status":         string(parentTxn.TransactionStatus),
+			})
+
+		return errors.NewBusinessError("ENTRY_IMMUTABLE",
+			fmt.Sprintf("entries on %q transactions cannot be deleted; reverse the transaction instead",
+				parentTxn.TransactionStatus)).
+			WithHTTPStatus(http.StatusUnprocessableEntity).
+			WithCategory(errors.CategoryBusiness)
 	}
 
 	timer := s.metrics.Timer("entry_deletion_duration", metrics.Fields{})

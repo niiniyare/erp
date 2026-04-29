@@ -6,11 +6,13 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -370,11 +372,12 @@ type OTelProvider struct {
 }
 
 func NewOTelProvider(namespace, subsystem string) (*OTelProvider, error) {
-	// Note: In a real implementation, you would get the meter from your OTel setup
-	// meter := otel.Meter(namespace)
-
+	meterName := namespace
+	if subsystem != "" {
+		meterName = namespace + "/" + subsystem
+	}
 	return &OTelProvider{
-		// meter:      meter,
+		meter:      otel.GetMeterProvider().Meter(meterName),
 		counters:   make(map[string]metric.Int64Counter),
 		gauges:     make(map[string]metric.Float64Gauge),
 		histograms: make(map[string]metric.Float64Histogram),
@@ -664,6 +667,7 @@ func extractLabelKeys(labels Fields) []string {
 	for k := range labels {
 		keys = append(keys, k)
 	}
+	sort.Strings(keys)
 	return keys
 }
 

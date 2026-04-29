@@ -1,5 +1,6 @@
-// Package services provides financial services and utilities //for enterprise-grade accounting and financial management systems. // //It includes modules for: //- Accounts Receivable (AR) management: invoice processing, payment tracking, and aging reports //- Accounts Payable (AP) management: vendor payments, expense tracking, and payment scheduling //- Foreign exchange operations: real-time currency conversion, rate management, and gain/loss calculations //- Financial reporting: balance sheets, income statements, cash flow statements, and regulatory compliance //- General ledger maintenance: journal entries, chart of accounts, and trial balance //- Audit trail management: transaction logging and compliance documentation // //The package is designed to meet professional accounting standards (GAAP/IFRS) //and provides robust error handling, data validation, and security features //suitable for production financial systems. package finance
-
+// Package service provides the application-layer services for the finance module.
+// It implements double-entry bookkeeping, account management, period control,
+// approval workflows, and multi-currency support to GAAP/IFRS standards.
 package service
 
 import (
@@ -30,7 +31,6 @@ type Dependencies struct {
 	AccountRepo      domain.AccountsRepository
 	AccountGroupRepo domain.AccountGroupRepository
 	TransactionRepo  domain.TransactionRepository
-	// TransactionEntryRepo domain.TransactionRepository // TODO: Create separate entry repository
 	PeriodRepo       domain.PeriodRepository
 	ExchangeRateRepo domain.ExchangeRateRepository
 	CurrencyRepo     CurrencyRepository
@@ -38,6 +38,10 @@ type Dependencies struct {
 	BudgetRepo          domain.BudgetRepository
 	TaxRepo             domain.TaxRepository
 	ReconciliationRepo  domain.ReconciliationRepository
+	// TxRunner enables atomic multi-step operations (e.g. ReverseTransaction).
+	// Provided by the infrastructure wiring layer (pgx pool adapter).
+	// nil → reversal uses best-effort cleanup on failure.
+	TxRunner           domain.TxRunner
 	Tracing            tracing.Service
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
@@ -46,22 +50,24 @@ type Dependencies struct {
 
 // NewServices creates a new instance of finance services with all dependencies
 func NewServices(deps Dependencies) *Services {
-	// Create TransactionEntry service first as Transaction service depends on it
+	// Create TransactionEntry service first as Transaction service depends on it.
+	// Entry methods (CreateEntry, GetEntriesByTransaction, etc.) are part of
+	// TransactionRepository until a dedicated entry repository is extracted.
 	transactionEntryService := NewTransactionEntryService(
-		// deps.TransactionEntryRepo,
-		nil,
+		deps.TransactionRepo,
 		deps.AccountRepo,
 		deps.Tracing,
 		deps.Metrics,
 	)
 
-	// Create Transaction service with entry service dependency
+	// Create Transaction service with entry service dependency.
 	transactionService := NewTransactionService(
 		deps.TransactionRepo,
 		deps.AccountRepo,
 		deps.PeriodRepo,
 		nil, // reversalHistoryRepo: optional, skips reversal-of-reversal check when nil
 		transactionEntryService,
+		deps.TxRunner, // nil OK — falls back to best-effort cleanup on reversal failure
 		deps.Tracing,
 		deps.Metrics,
 	)
@@ -107,10 +113,6 @@ func (d Dependencies) Validate() error {
 	if d.TransactionRepo == nil {
 		return errors.NewBusinessError("MISSING_DEPENDENCY", "Transaction repository is required")
 	}
-
-	// if d.TransactionEntryRepo == nil {
-	// 	return errors.NewBusinessError("MISSING_DEPENDENCY", "Transaction entry repository is required")
-	// }
 
 	if d.Tracing == nil {
 		return errors.NewBusinessError("MISSING_DEPENDENCY", "Tracing service is required")

@@ -1,62 +1,47 @@
--- Function to update account balances after transaction posting
-CREATE
-OR REPLACE FUNCTION update_account_balances_after_posting() RETURNS TRIGGER AS
-$$
-DECLARE
-entry_rec RECORD;
-
-account_rec RECORD;
-
+-- Function to update account balances after transaction posting.
+-- Uses a single batched UPDATE to eliminate the N+1 loop and SELECT FOR UPDATE
+-- on each affected account row to prevent lost-update races under concurrent postings.
+CREATE OR REPLACE FUNCTION update_account_balances_after_posting() RETURNS TRIGGER AS $$
 BEGIN
--- Only process when transaction status changes to POSTED
-IF NEW.transaction_status = 'POSTED'
-AND (
-  OLD.transaction_status IS NULL
-  OR OLD.transaction_status != 'POSTED'
-) THEN
--- Update account balances for each entry
-FOR entry_rec IN
-SELECT
-  account_id,
-  SUM(debit_amount) AS total_debits,
-  SUM(credit_amount) AS total_credits
-FROM
-  finance_transaction_entries
-WHERE
-  transaction_id = NEW.id
-GROUP BY
-  account_id LOOP
-  -- Get account normal balance type
-SELECT
-  normal_balance INTO account_rec
-FROM
-  finance_accounts
-WHERE
-  id = entry_rec.account_id;
+  -- Only process when transaction status transitions to POSTED.
+  IF NEW.transaction_status = 'POSTED'
+     AND (OLD.transaction_status IS NULL OR OLD.transaction_status <> 'POSTED')
+  THEN
+    -- Lock all affected account rows before updating to prevent concurrent races.
+    PERFORM id FROM finance_accounts
+    WHERE id IN (
+      SELECT DISTINCT account_id
+      FROM finance_transaction_entries
+      WHERE transaction_id = NEW.id AND deleted_at IS NULL
+    )
+    FOR UPDATE;
 
--- Update account balance based on normal balance type
-UPDATE
-  finance_accounts
-SET
-  current_balance = CASE
-    WHEN account_rec.normal_balance = 'DEBIT' THEN current_balance + entry_rec.total_debits - entry_rec.total_credits
-    ELSE current_balance + entry_rec.total_credits - entry_rec.total_debits
-  END,
-  last_transaction_date = NEW.transaction_date,
-  updated_at = NOW()
-WHERE
-  id = entry_rec.account_id;
+    -- Single batched UPDATE: aggregate all entry deltas per account in one pass,
+    -- eliminating the N+1 loop that caused sequential locking and performance issues.
+    UPDATE finance_accounts a
+    SET
+      current_balance = a.current_balance + CASE
+        WHEN a.normal_balance = 'DEBIT' THEN e.total_debits - e.total_credits
+        ELSE e.total_credits - e.total_debits
+      END,
+      last_transaction_date = NEW.transaction_date,
+      updated_at = NOW()
+    FROM (
+      SELECT
+        account_id,
+        SUM(debit_amount)  AS total_debits,
+        SUM(credit_amount) AS total_credits
+      FROM finance_transaction_entries
+      WHERE transaction_id = NEW.id
+        AND deleted_at IS NULL
+      GROUP BY account_id
+    ) e
+    WHERE a.id = e.account_id;
+  END IF;
 
-END LOOP;
-
-END IF;
-
-RETURN NEW;
-
+  RETURN NEW;
 END;
-
-$$
-LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;
 
 CREATE TRIGGER trigger_update_account_balances
 AFTER
