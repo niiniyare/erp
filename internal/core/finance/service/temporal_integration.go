@@ -12,6 +12,7 @@ import (
 
 	"awo.so/internal/core/finance/domain"
 	platformTemporal "awo.so/internal/platform/temporal"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
 )
 
@@ -136,9 +137,13 @@ func (a *financeActivities) EscalateApprovalActivity(ctx context.Context, input 
 			"elapsed":        time.Since(input.SubmittedAt).String(),
 		})
 
+	// Inject system identity so RejectTransaction's auth + SOD guards pass.
+	// This rejection is system-initiated (SLA timer), not a human approver action.
+	sysCtx := shared.WithUserID(ctx, shared.SystemUserID)
+
 	// Reject the transaction with a system-generated SLA-expiry reason.
 	// RejectTransaction moves the transaction back to DRAFT status.
-	_, err := a.txnService.RejectTransaction(ctx, input.TransactionID, "Approval SLA expired — transaction automatically rejected and returned to DRAFT")
+	_, err := a.txnService.RejectTransaction(sysCtx, input.TransactionID, domain.RejectionReasonExpired, "Approval SLA expired — transaction automatically rejected and returned to DRAFT")
 	if err != nil {
 		return fmt.Errorf("EscalateApprovalActivity: reject: %w", err)
 	}

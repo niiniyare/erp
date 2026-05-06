@@ -31,7 +31,7 @@ type TransactionService interface {
 	PostTransaction(ctx context.Context, id uuid.UUID, postingDate *time.Time) (*domain.Transaction, error)
 	ReverseTransaction(ctx context.Context, id uuid.UUID, reason string) (*domain.Transaction, error)
 	ApproveTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error)
-	RejectTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error)
+	RejectTransaction(ctx context.Context, id uuid.UUID, reason domain.RejectionReason, notes string) (*domain.Transaction, error)
 	ValidateTransaction(ctx context.Context, transaction *domain.Transaction, entries []*domain.TransactionEntry) ([]domain.ValidationError, error)
 	SearchTransactions(ctx context.Context, query string, limit int, offset int) ([]*domain.Transaction, error)
 	GetTransactionSummary(ctx context.Context, startDate, endDate time.Time) (*domain.TransactionSummary, error)
@@ -692,6 +692,26 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 		return nil, err
 	}
 
+	// Tenant isolation: ensure the loaded transaction belongs to the caller's tenant.
+	// Without this, a crafted request could post another tenant's transaction.
+	if callerTenantID, ok := shared.GetTenantID(ctx); ok && callerTenantID != uuid.Nil {
+		if transaction.TenantID != callerTenantID {
+			s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
+				"error_type": "tenant_mismatch",
+			})
+			logger.ErrorContext(ctx, "SECURITY: PostTransaction tenant mismatch — possible cross-tenant access attempt",
+				logger.Fields{
+					"transaction_id":      id.String(),
+					"transaction_tenant":  transaction.TenantID.String(),
+					"caller_tenant":       callerTenantID.String(),
+				})
+			return nil, errors.NewBusinessError("TENANT_MISMATCH",
+				"transaction does not belong to the caller's tenant").
+				WithHTTPStatus(http.StatusForbidden).
+				WithCategory(errors.CategorySecurity)
+		}
+	}
+
 	// Only APPROVED transactions may be posted. DRAFT transactions that require
 	// approval must go through the approval workflow first (prevents bypass).
 	// Exception: DRAFT transactions with ApprovalRequired=false may be posted directly.
@@ -1172,7 +1192,7 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 	return approvedTransaction, nil
 }
 
-func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID, notes string) (*domain.Transaction, error) {
+func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID, reason domain.RejectionReason, notes string) (*domain.Transaction, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.reject_transaction",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
 		tracing.WithAttributes(
@@ -1182,9 +1202,18 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 
 	logger.InfoContext(ctx, "Starting transaction rejection",
 		logger.Fields{
-			"transaction_id": id.String(),
-			"notes":          notes,
+			"transaction_id":   id.String(),
+			"rejection_reason": string(reason),
+			"notes":            notes,
 		})
+
+	// Validate rejection reason before any DB work.
+	if !reason.IsValid() {
+		return nil, errors.NewBusinessError("INVALID_REJECTION_REASON",
+			fmt.Sprintf("rejection reason %q is not valid", reason)).
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
+	}
 
 	transaction, err := s.repo.GetByID(ctx, id)
 	if err != nil {
@@ -1208,14 +1237,31 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 			WithCategory(errors.CategoryBusiness)
 	}
 
+	// FIN-TXN-035: rejector must be identified; submitter cannot reject their own transaction.
+	rejectorID, hasRejector := shared.GetUserID(ctx)
+	if !hasRejector || rejectorID == uuid.Nil {
+		return nil, errors.NewBusinessError("MISSING_REJECTOR",
+			"authenticated user identity is required to reject a transaction").
+			WithHTTPStatus(http.StatusUnauthorized).
+			WithCategory(errors.CategorySecurity)
+	}
+	if rejectorID == transaction.CreatedBy {
+		s.metrics.IncrementCounter("transaction_rejection_errors", metrics.Fields{
+			"error_type": "sod_violation",
+		})
+		return nil, errors.NewBusinessError("SOD_VIOLATION",
+			"rejector cannot be the same as the transaction submitter").
+			WithHTTPStatus(http.StatusForbidden).
+			WithCategory(errors.CategorySecurity)
+	}
+
 	timer := s.metrics.Timer("transaction_rejection_duration", metrics.Fields{
 		"transaction_type": string(transaction.TransactionType),
 	})
 
 	rejectedAt := time.Now()
 	notesPtr := &notes
-	rejectionReason := domain.RejectionReasonOther
-	err = s.repo.Reject(ctx, id, transaction.CreatedBy, rejectedAt, rejectionReason, notesPtr)
+	err = s.repo.Reject(ctx, id, rejectorID, rejectedAt, reason, notesPtr)
 	duration := timer.Stop()
 
 	if err != nil {

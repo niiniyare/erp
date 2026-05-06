@@ -637,20 +637,36 @@ func (s *transactionEntryService) ReconcileEntries(ctx context.Context, entryIDs
 	for _, entryID := range entryIDs {
 		entry, err := s.repo.GetEntryByID(ctx, entryID)
 		if err != nil {
-			logger.WarnContext(ctx, "Entry not found for reconciliation",
-				logger.Fields{"entry_id": entryID.String()})
-			continue
+			// Not-found during reconciliation is an error, not a skip.
+			// Silently continuing would report success when entries are missing.
+			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+				"error_type": "entry_not_found",
+			})
+			logger.ErrorContext(ctx, "Entry not found during reconciliation — aborting batch",
+				logger.Fields{
+					"entry_id":           entryID.String(),
+					"reconciliation_ref": reconciliationRef,
+					"error":              err.Error(),
+				})
+			return fmt.Errorf("reconciliation aborted: entry %s not found: %w", entryID.String(), err)
 		}
 
 		if entry.Reconciled {
-			logger.WarnContext(ctx, "Entry already reconciled",
-				logger.Fields{"entry_id": entryID.String()})
+			// Already reconciled is idempotent — skip without error.
+			logger.WarnContext(ctx, "Entry already reconciled — skipping",
+				logger.Fields{
+					"entry_id":                entryID.String(),
+					"existing_reconcile_ref":  fmt.Sprintf("%v", entry.ReconciliationReference),
+				})
 			continue
 		}
 
 		entry.MarkReconciled(reconciliationRef)
 
 		if err := s.repo.UpdateReconciliationStatus(ctx, entryID, true, entry.ReconciledDate, &reconciliationRef); err != nil {
+			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+				"error_type": "update_failed",
+			})
 			logger.ErrorContext(ctx, "Failed to mark entry as reconciled",
 				logger.Fields{
 					"entry_id": entryID.String(),
@@ -692,13 +708,21 @@ func (s *transactionEntryService) UnreconcileEntries(ctx context.Context, entryI
 	for _, entryID := range entryIDs {
 		entry, err := s.repo.GetEntryByID(ctx, entryID)
 		if err != nil {
-			logger.WarnContext(ctx, "Entry not found for unreconciliation",
-				logger.Fields{"entry_id": entryID.String()})
-			continue
+			// Not-found is an error — caller may have wrong IDs.
+			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+				"error_type": "entry_not_found_on_unreconcile",
+			})
+			logger.ErrorContext(ctx, "Entry not found during unreconciliation — aborting batch",
+				logger.Fields{
+					"entry_id": entryID.String(),
+					"error":    err.Error(),
+				})
+			return fmt.Errorf("unreconciliation aborted: entry %s not found: %w", entryID.String(), err)
 		}
 
 		if !entry.Reconciled {
-			logger.WarnContext(ctx, "Entry not reconciled",
+			// Not reconciled — idempotent skip.
+			logger.WarnContext(ctx, "Entry not reconciled — skipping unreconcile",
 				logger.Fields{"entry_id": entryID.String()})
 			continue
 		}

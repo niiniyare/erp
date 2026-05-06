@@ -193,6 +193,7 @@ const (
 	RejectionReasonCurrencyMismatch     RejectionReason = "CURRENCY_MISMATCH"     // Transaction currency inconsistent with account currency
 	RejectionReasonPolicyViolation      RejectionReason = "POLICY_VIOLATION"      // Violates a company policy (e.g. segregation of duties)
 	RejectionReasonOther                RejectionReason = "OTHER"                 // Catch-all; rejector must supply a note
+	RejectionReasonExpired              RejectionReason = "EXPIRED"               // Approval SLA exceeded; auto-rejected by Temporal workflow
 )
 
 // ValidReasons contains all supported rejection reasons for validation
@@ -208,6 +209,7 @@ var ValidReasons = []RejectionReason{
 	RejectionReasonCurrencyMismatch,
 	RejectionReasonPolicyViolation,
 	RejectionReasonOther,
+	RejectionReasonExpired,
 }
 
 // IsValid checks if the rejection reason is supported

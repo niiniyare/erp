@@ -7,6 +7,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// SystemUserID is a well-known sentinel UUID used when the system itself
+// performs an action on behalf of an automated workflow (e.g. Temporal SLA
+// expiry, scheduled job). It is never a real user account.
+// Value: 00000000-0000-0000-0000-000000000001
+var SystemUserID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
 type contextKey string
 
 const (

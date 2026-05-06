@@ -460,10 +460,11 @@ func (s *TransactionServiceSuite) balancedEntries(txnID, acct1ID, acct2ID uuid.U
 // activeAccount builds a minimal active Accounts record.
 func activeAccount(id uuid.UUID) *domain.Accounts {
 	return &domain.Accounts{
-		ID:       id,
-		IsActive: true,
-		Status:   domain.AccountStatusActive,
-		RootType: domain.RootTypeAsset,
+		ID:                 id,
+		IsActive:           true,
+		Status:             domain.AccountStatusActive,
+		RootType:           domain.RootTypeAsset,
+		AllowManualEntries: true,
 	}
 }
 
@@ -725,26 +726,31 @@ func (s *TransactionServiceSuite) TestRejectTransaction_NotPending_ReturnsError(
 
 	s.repo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)
 
-	result, err := s.svc.RejectTransaction(s.ctx, txn.ID, "reject notes")
+	result, err := s.svc.RejectTransaction(s.ctx, txn.ID, domain.RejectionReasonOther, "reject notes")
 	s.req.Error(err)
 	s.req.Nil(result)
 }
 
 func (s *TransactionServiceSuite) TestRejectTransaction_PendingApproval_Succeeds() {
+	approverID := uuid.New()
+	ctx := shared.WithUserID(s.ctx, approverID)
+
 	txn := s.newDraftTxn()
 	txn.TransactionStatus = domain.TransactionStatusPendingApproval
 	txn.ApprovalRequired = true
 	txn.ApprovalStatus = domain.ApprovalStatusPending
+	// ensure approver != submitter (SOD)
+	txn.CreatedBy = uuid.New()
 
 	rejectedTxn := *txn
 	rejectedTxn.TransactionStatus = domain.TransactionStatusRejected
 	rejectedTxn.ApprovalStatus = domain.ApprovalStatusRejected
 
-	s.repo.On("GetByID", s.ctx, txn.ID).Return(txn, nil).Once()
-	s.repo.On("Reject", s.ctx, txn.ID, txn.CreatedBy, mock.AnythingOfType("time.Time"), domain.RejectionReasonOther, mock.Anything).Return(nil)
-	s.repo.On("GetByID", s.ctx, txn.ID).Return(&rejectedTxn, nil).Once()
+	s.repo.On("GetByID", mock.Anything, txn.ID).Return(txn, nil).Once()
+	s.repo.On("Reject", mock.Anything, txn.ID, approverID, mock.AnythingOfType("time.Time"), domain.RejectionReasonOther, mock.Anything).Return(nil)
+	s.repo.On("GetByID", mock.Anything, txn.ID).Return(&rejectedTxn, nil).Once()
 
-	result, err := s.svc.RejectTransaction(s.ctx, txn.ID, "incorrect account")
+	result, err := s.svc.RejectTransaction(ctx, txn.ID, domain.RejectionReasonOther, "incorrect account")
 	s.req.NoError(err)
 	s.req.NotNil(result)
 	s.req.Equal(domain.TransactionStatusRejected, result.TransactionStatus)

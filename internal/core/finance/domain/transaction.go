@@ -535,11 +535,8 @@ func (t *Transaction) ValidateBusinessRules(accounts map[uuid.UUID]*Accounts) []
 		}
 	}
 
-	// Validate posting date is within open accounting period
-	if t.PostingDate != nil {
-		// TODO: Add accounting period validation
-		// This would require access to accounting period configuration
-	}
+	// Note: accounting period validation (open/closed) is enforced at the service layer
+	// where PeriodRepository is available. Domain cannot enforce it without infrastructure.
 
 	return errors
 }
@@ -555,7 +552,7 @@ func (t *Transaction) CreateReversalTransaction(reason string, createdBy uuid.UU
 		TenantID:          t.TenantID,
 		EntityID:          t.EntityID,
 		TransactionNumber: fmt.Sprintf("REV-%s", t.TransactionNumber),
-		TransactionType:   TransactionTypeAdjustment,
+		TransactionType:   TransactionTypeReversal, // must be REVERSAL so double-reversal guard fires
 		TransactionStatus: TransactionStatusDraft,
 		TransactionDate:   time.Now(),
 		Description:       fmt.Sprintf("Reversal of %s - %s", t.TransactionNumber, reason),
