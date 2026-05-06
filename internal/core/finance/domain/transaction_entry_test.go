@@ -381,3 +381,110 @@ func (s *TransactionEntrySuite) TestIsReconciled_AfterUnmark_False() {
 	e.UnmarkReconciled()
 	s.req.False(e.IsReconciled())
 }
+
+// ============================================================================
+// CurrencyMinorUnits
+// ============================================================================
+
+func (s *TransactionEntrySuite) TestCurrencyMinorUnits_KnownZeroDP() {
+	s.req.Equal(0, domain.CurrencyMinorUnits("JPY"))
+	s.req.Equal(0, domain.CurrencyMinorUnits("jpy")) // case-insensitive
+}
+
+func (s *TransactionEntrySuite) TestCurrencyMinorUnits_KnownThreeDP() {
+	s.req.Equal(3, domain.CurrencyMinorUnits("KWD"))
+	s.req.Equal(3, domain.CurrencyMinorUnits("IQD"))
+	s.req.Equal(3, domain.CurrencyMinorUnits("OMR"))
+}
+
+func (s *TransactionEntrySuite) TestCurrencyMinorUnits_KnownFourDP() {
+	s.req.Equal(4, domain.CurrencyMinorUnits("CLF"))
+}
+
+func (s *TransactionEntrySuite) TestCurrencyMinorUnits_DefaultTwoDP() {
+	s.req.Equal(2, domain.CurrencyMinorUnits("USD"))
+	s.req.Equal(2, domain.CurrencyMinorUnits("EUR"))
+	s.req.Equal(2, domain.CurrencyMinorUnits("KES"))
+	s.req.Equal(2, domain.CurrencyMinorUnits("XYZ")) // unknown defaults to 2
+}
+
+// ============================================================================
+// CurrencyConversionTolerance
+// ============================================================================
+
+func (s *TransactionEntrySuite) TestCurrencyConversionTolerance_JPY() {
+	// 0 dp → tolerance = 0.5 × 10^0 = 0.5
+	tol := domain.CurrencyConversionTolerance("JPY")
+	s.req.True(tol.Equal(decimal.NewFromFloat(0.5)), "JPY tolerance must be 0.5")
+}
+
+func (s *TransactionEntrySuite) TestCurrencyConversionTolerance_USD() {
+	// 2 dp → tolerance = 0.5 × 10^-2 = 0.005
+	tol := domain.CurrencyConversionTolerance("USD")
+	s.req.True(tol.Equal(decimal.NewFromFloat(0.005)), "USD tolerance must be 0.005")
+}
+
+func (s *TransactionEntrySuite) TestCurrencyConversionTolerance_KWD() {
+	// 3 dp → tolerance = 0.5 × 10^-3 = 0.0005
+	tol := domain.CurrencyConversionTolerance("KWD")
+	s.req.True(tol.Equal(decimal.NewFromFloat(0.0005)), "KWD tolerance must be 0.0005")
+}
+
+// ============================================================================
+// ValidateAmountConsistency — currency-aware tolerance (BUG-04)
+// ============================================================================
+
+func (s *TransactionEntrySuite) TestValidateAmountConsistency_JPY_SmallDiff_NoError() {
+	// JPY 0dp: tolerance = 0.5; difference 0.4 → pass
+	e := s.debitEntry(1000)
+	curr := "JPY"
+	e.OriginalCurrency = &curr
+	e.OriginalAmount = decimal.NewFromFloat(999.6) // effective after rate 1.0 = 999.6, debit = 1000 → diff 0.4
+	e.ExchangeRate = decimal.NewFromInt(1)
+	s.req.Empty(e.ValidateAmountConsistency(), "diff 0.4 within JPY tolerance 0.5")
+}
+
+func (s *TransactionEntrySuite) TestValidateAmountConsistency_JPY_LargeDiff_Error() {
+	// JPY 0dp: tolerance = 0.5; difference 0.6 → fail
+	e := s.debitEntry(1000)
+	curr := "JPY"
+	e.OriginalCurrency = &curr
+	e.OriginalAmount = decimal.NewFromFloat(999.4) // rate 1.0 → expected 999.4, got 1000 → diff 0.6
+	e.ExchangeRate = decimal.NewFromInt(1)
+	errs := e.ValidateAmountConsistency()
+	found := false
+	for _, err := range errs {
+		if err.Code == "CURRENCY_CONVERSION_MISMATCH" {
+			found = true
+		}
+	}
+	s.req.True(found, "diff 0.6 exceeds JPY tolerance 0.5 — must error")
+}
+
+func (s *TransactionEntrySuite) TestValidateAmountConsistency_KWD_SmallDiff_NoError() {
+	// KWD 3dp: tolerance = 0.0005; difference 0.0004 → pass
+	e := s.debitEntry(1000)
+	curr := "KWD"
+	e.OriginalCurrency = &curr
+	e.OriginalAmount = decimal.NewFromFloat(999.9996) // rate 1.0 → expected 999.9996, got 1000 → diff 0.0004
+	e.ExchangeRate = decimal.NewFromInt(1)
+	s.req.Empty(e.ValidateAmountConsistency(), "diff 0.0004 within KWD tolerance 0.0005")
+}
+
+func (s *TransactionEntrySuite) TestValidateAmountConsistency_KWD_LargeDiff_Error() {
+	// KWD 3dp: tolerance = 0.0005; difference 0.0006 → fail
+	// Old flat 0.01 tolerance would have passed this — regression test for BUG-04
+	e := s.debitEntry(1000)
+	curr := "KWD"
+	e.OriginalCurrency = &curr
+	e.OriginalAmount = decimal.NewFromFloat(999.9994) // rate 1.0 → expected 999.9994, got 1000 → diff 0.0006
+	e.ExchangeRate = decimal.NewFromInt(1)
+	errs := e.ValidateAmountConsistency()
+	found := false
+	for _, err := range errs {
+		if err.Code == "CURRENCY_CONVERSION_MISMATCH" {
+			found = true
+		}
+	}
+	s.req.True(found, "diff 0.0006 exceeds KWD tolerance 0.0005 — must error (BUG-04 regression)")
+}

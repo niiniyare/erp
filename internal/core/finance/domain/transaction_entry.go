@@ -292,7 +292,9 @@ func (e *TransactionEntry) CalculateConvertedAmount() decimal.Decimal {
 	return e.OriginalAmount.Mul(e.ExchangeRate)
 }
 
-// ValidateAmountConsistency validates that converted amounts are consistent
+// ValidateAmountConsistency validates that converted amounts are consistent.
+// Tolerance is currency-aware: half a minor unit of the original currency
+// (e.g. 0.005 for USD/2dp, 0.0005 for KWD/3dp, 0.5 for JPY/0dp).
 func (e *TransactionEntry) ValidateAmountConsistency() []ValidationError {
 	var errors []ValidationError
 
@@ -300,13 +302,15 @@ func (e *TransactionEntry) ValidateAmountConsistency() []ValidationError {
 		expectedAmount := e.CalculateConvertedAmount()
 		actualAmount := e.GetEffectiveAmount()
 
-		// Allow for small rounding differences (0.01)
-		tolerance := decimal.NewFromFloat(0.01)
+		tolerance := CurrencyConversionTolerance(*e.OriginalCurrency)
 		if expectedAmount.Sub(actualAmount).Abs().GreaterThan(tolerance) {
 			errors = append(errors, ValidationError{
-				Field:   "amount",
-				Message: fmt.Sprintf("Converted amount (%s) does not match expected amount (%s)", actualAmount, expectedAmount),
-				Code:    "CURRENCY_CONVERSION_MISMATCH",
+				Field: "amount",
+				Message: fmt.Sprintf(
+					"Converted amount (%s) does not match expected amount (%s); tolerance for %s is %s",
+					actualAmount, expectedAmount, *e.OriginalCurrency, tolerance,
+				),
+				Code: "CURRENCY_CONVERSION_MISMATCH",
 			})
 		}
 	}
@@ -383,10 +387,13 @@ func (e *TransactionEntry) ValidateBusinessRules(account *Accounts) []Validation
 		})
 	}
 
-	// Validate account allows the entry type (manual vs system)
+	// Validate account allows manual entries
 	if !account.AllowManualEntries {
-		// FIXME: This validation would need context about whether this is a manual entry
-		// For now, we'll skip this check as it requires transaction context
+		errors = append(errors, ValidationError{
+			Field:   "account_id",
+			Message: "Account does not allow manual journal entries",
+			Code:    "MANUAL_ENTRY_NOT_ALLOWED",
+		})
 	}
 
 	// Validate currency consistency
@@ -537,10 +544,27 @@ func (e *TransactionEntry) GetDimensionalAnalysis() map[string]any {
 	return dimensions
 }
 
-// TODO: Add support for entry-level attachments and supporting documents
-// TODO: Implement entry templates for common entry patterns
-// TODO: Add support for entry-level approval workflow for high-value entries
-// TODO: Implement automated entry matching for bank reconciliation
-// NOTE: Consider adding entry-level tags for enhanced categorization and reporting
-// NOTE: Future enhancement: Add support for entry-level analytics and AI-powered categorization
-// NOTE: Consider implementing entry-level audit trail with detailed change history
+// -// TODO: Add support for entry-level attachments and supporting
+// -documents
+// -// TODO: Implement entry templates for common entry patterns
+// -// TODO: Add support for entry-level approval workflow for high-value
+// - entries
+// -// TODO: Implement automated entry matching for bank reconciliation
+// -// NOTE: Consider adding entry-level tags for enhanced categorization
+// - and reporting
+// -// NOTE: Future enhancement: Add support for entry-level analytics
+// -and AI-powered categorization
+// -// NOTE: Consider implementing entry-level audit trail with detailed
+// -change history546
+// -// TODO: Add support for entry-level attachments and supporting
+// -documents
+// -// TODO: Implement entry templates for common entry patterns
+// -// TODO: Add support for entry-level approval workflow for high-value
+// - entries
+// -// TODO: Implement automated entry matching for bank reconciliation
+// -// NOTE: Consider adding entry-level tags for enhanced categorization
+// - and reporting
+// -// NOTE: Future enhancement: Add support for entry-level analytics
+// -and AI-powered categorization
+// -// NOTE: Consider implementing entry-level audit trail with detailed
+// -change history

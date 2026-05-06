@@ -10,9 +10,10 @@ import (
 type contextKey string
 
 const (
-	TenantIDKey        contextKey = "tenant_id"
-	UserIDKey          contextKey = "user_id"
-	RequestCtxKey      contextKey = "request_context"
+	TenantIDKey          contextKey = "tenant_id"
+	UserIDKey            contextKey = "user_id"
+	EntityIDKey          contextKey = "entity_id"
+	RequestCtxKey        contextKey = "request_context"
 	CapabilityContextKey contextKey = "capability_context"
 )
 
@@ -28,6 +29,33 @@ func GetTenantID(ctx context.Context) (uuid.UUID, bool) {
 		return uuid.Nil, false
 	}
 	return tenantID, true
+}
+
+// WithEntityID adds entity (legal entity / business unit) ID to context.
+// Entity scoping is used to prevent cross-entity data leaks within a tenant.
+func WithEntityID(ctx context.Context, entityID uuid.UUID) context.Context {
+	return context.WithValue(ctx, EntityIDKey, entityID)
+}
+
+// GetEntityID retrieves entity ID from context.
+// Returns (uuid.Nil, false) when no entity has been set — callers should treat
+// this as "no entity scoping" (tenant-wide) rather than an error.
+func GetEntityID(ctx context.Context) (uuid.UUID, bool) {
+	entityID, ok := ctx.Value(EntityIDKey).(uuid.UUID)
+	if !ok || entityID == uuid.Nil {
+		return uuid.Nil, false
+	}
+	return entityID, true
+}
+
+// GetEntityIDPtr returns a pointer to the entity ID from context, or nil if absent.
+// Useful for repository calls that accept *uuid.UUID for optional entity scoping.
+func GetEntityIDPtr(ctx context.Context) *uuid.UUID {
+	entityID, ok := GetEntityID(ctx)
+	if !ok {
+		return nil
+	}
+	return &entityID
 }
 
 // WithUserID adds user ID to context

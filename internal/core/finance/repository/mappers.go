@@ -222,7 +222,7 @@ func mapDomainAccountToSQLCCreate(req *domain.CreateAccountRequest) (db.CreateAc
 		IsBudgetable:            &req.IsBudgetable,
 		BudgetVarianceThreshold: budgetVarianceThreshold,
 		AccountAttributes:       attributes,
-		// CreatedBy not in CreateAccountRequest, will be nil
+		// TODO:CreatedBy not in CreateAccountRequest, will be nil
 		// Version not in CreateAccountRequest, will be nil
 	}, nil
 }
@@ -281,21 +281,21 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceAccount) (*domain.Accounts, e
 	}
 
 	return &domain.Accounts{
-		ID:                          sqlcAccount.ID,
-		TenantID:                    sqlcAccount.TenantID,
-		EntityID:                    sqlcAccount.EntityID,
-		AccountCode:                 sqlcAccount.AccountCode,
-		AccountName:                 sqlcAccount.AccountName,
-		AccountDescription:          sqlcAccount.AccountDescription,
-		ParentAccountID:             sqlcAccount.ParentAccountID,
-		AccountLevel: sqlcAccount.AccountLevel,
+		ID:                 sqlcAccount.ID,
+		TenantID:           sqlcAccount.TenantID,
+		EntityID:           sqlcAccount.EntityID,
+		AccountCode:        sqlcAccount.AccountCode,
+		AccountName:        sqlcAccount.AccountName,
+		AccountDescription: sqlcAccount.AccountDescription,
+		ParentAccountID:    sqlcAccount.ParentAccountID,
+		AccountLevel:       sqlcAccount.AccountLevel,
 		Path: func() domain.MaterialisedPath {
 			if sqlcAccount.AccountPath != nil {
 				return domain.MaterialisedPath(*sqlcAccount.AccountPath)
 			}
 			return ""
 		}(),
-		RootType: rootType,
+		RootType:                    rootType,
 		AccountType:                 sqlcAccount.AccountType,
 		AccountSubtype:              sqlcAccount.AccountSubtype,
 		NormalBalance:               normalBalance,
@@ -319,7 +319,7 @@ func mapSQLCAccountToDomain(sqlcAccount *db.FinanceAccount) (*domain.Accounts, e
 		CreatedAt:                   sqlcAccount.CreatedAt,
 		UpdatedAt:                   sqlcAccount.UpdatedAt,
 		DeletedAt:                   nullTimeToPointer(sqlcAccount.DeletedAt),
-		CreatedBy:                   getUUIDValue(sqlcAccount.CreatedBy),
+		CreatedBy:                   sqlcAccount.CreatedBy,
 		UpdatedBy:                   sqlcAccount.UpdatedBy,
 	}, nil
 }
@@ -992,4 +992,3 @@ func nullStringToPointer(ns pgtype.Text) *string {
 	}
 	return &ns.String
 }
-

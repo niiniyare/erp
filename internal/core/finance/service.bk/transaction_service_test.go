@@ -250,6 +250,8 @@ func (m *mockReversalHistoryRepo) GetByOriginal(ctx context.Context, originalTra
 	return nil, args.Error(1)
 }
 
+// mockPeriodRepo is defined in period_service_test.go (same package).
+
 // ============================================================================
 // Mock TransactionEntryService
 // ============================================================================
@@ -376,6 +378,7 @@ func (s *TransactionServiceSuite) SetupTest() {
 		nil, // periodRepo — nil keeps existing tests unaffected; wire per-test for FIN-TXN-014
 		nil, // reversalHistoryRepo — nil keeps existing tests unaffected; wire per-test for FIN-TXN-024
 		s.entrySvc,
+		nil, // txRunner — nil uses best-effort cleanup path
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
 	)
@@ -490,6 +493,8 @@ func (s *TransactionServiceSuite) TestCreateTransaction_MinimalValid() {
 	s.repo.On("IsTransactionNumberUnique", s.ctx, req.EntityID, req.TransactionNumber, (*uuid.UUID)(nil)).
 		Return(true, nil)
 	s.repo.On("Create", s.ctx, mock.AnythingOfType("*domain.Transaction")).
+		Return(nil)
+	s.entrySvc.On("CreateEntries", s.ctx, mock.AnythingOfType("[]*domain.TransactionEntry")).
 		Return(nil)
 
 	result, err := s.svc.CreateTransaction(s.ctx, req)
@@ -919,6 +924,8 @@ func (s *TransactionServiceSuite) TestReverseTransaction_MirrorEntries() {
 	// Step 6: PostTransaction(reversalTransaction.ID) → postTransactionInline
 	//   6a: fetch reversal header (DRAFT)
 	s.repo.On("GetByID", s.ctx, mock.Anything).Return(draftReversal, nil).Once()
+	//   6a2: auto-approve DRAFT reversal (ApprovalRequired=false) before posting
+	s.repo.On("Approve", s.ctx, mock.Anything, mock.Anything, mock.AnythingOfType("time.Time"), mock.Anything).Return(nil).Once()
 	//   6b: fetch reversal entries for validation
 	s.entrySvc.On("GetEntriesByTransactionID", s.ctx, mock.Anything).Return(revEntries, nil).Once()
 	//   6c: validate each entry's account
@@ -1014,6 +1021,7 @@ func (s *TransactionServiceSuite) TestPostTransaction_ClosedPeriod() {
 		periodRepo,
 		nil,
 		localEntrySvc,
+		nil, // txRunner
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
 	)
@@ -1052,6 +1060,7 @@ func (s *TransactionServiceSuite) TestReverseTransaction_CannotReverseReversal()
 		nil,
 		reversalHistoryRepo,
 		new(mockEntryService),
+		nil, // txRunner
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
 	)
@@ -1109,4 +1118,73 @@ func (s *TransactionServiceSuite) TestApproveTransaction_DifferentApproverAllowe
 	s.req.NoError(err)
 	s.req.NotNil(result)
 	s.req.Equal(domain.TransactionStatusApproved, result.TransactionStatus)
+}
+
+// ============================================================================
+// FIN-TXN-050: ListTransactions — nil Limit and Offset must not panic
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestListTransactions_NilLimitOffset_NoPanic() {
+	filter := &domain.TransactionFilter{
+		Limit:  nil,
+		Offset: nil,
+	}
+
+	s.repo.On("List", s.ctx, filter).Return([]*domain.Transaction{}, nil)
+
+	result, err := s.svc.ListTransactions(s.ctx, filter)
+	s.req.NoError(err, "nil Limit/Offset must not panic and must return no error")
+	s.req.NotNil(result)
+}
+
+// ============================================================================
+// FIN-TXN-051: ListTransactions — zero Limit is clamped to default
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestListTransactions_ZeroLimitClamped() {
+	zero := 0
+	filter := &domain.TransactionFilter{
+		Limit:  &zero,
+		Offset: nil,
+	}
+
+	// After clamping, Limit becomes 50 — the mock must accept the mutated filter.
+	s.repo.On("List", s.ctx, filter).Return([]*domain.Transaction{}, nil)
+
+	result, err := s.svc.ListTransactions(s.ctx, filter)
+	s.req.NoError(err)
+	s.req.NotNil(result)
+	s.req.Equal(50, *filter.Limit, "zero limit must be clamped to 50")
+}
+
+// ============================================================================
+// FIN-TXN-052: ReverseTransaction — entry creation failure leaves no partial state
+// ============================================================================
+
+func (s *TransactionServiceSuite) TestReverseTransaction_EntryCreationFailure_NoPartialState() {
+	origTxn := s.newPostedTxn()
+	origTxn.IsReversed = false
+	acct1ID := uuid.New()
+	acct2ID := uuid.New()
+
+	origEntries := s.balancedEntries(origTxn.ID, acct1ID, acct2ID)
+	createErr := errors.New("DB write timeout")
+
+	// Step 1: load original
+	s.repo.On("GetByID", s.ctx, origTxn.ID).Return(origTxn, nil).Once()
+	// Step 2: fetch entries to clone
+	s.entrySvc.On("GetEntriesByTransactionID", s.ctx, origTxn.ID).Return(origEntries, nil).Once()
+	// Step 3: persist reversal header succeeds
+	s.repo.On("Create", s.ctx, mock.AnythingOfType("*domain.Transaction")).Return(nil).Once()
+	// Step 4: first entry succeeds, second fails
+	s.entrySvc.On("CreateEntry", s.ctx, mock.AnythingOfType("*domain.TransactionEntry")).Return(nil).Once()
+	s.entrySvc.On("CreateEntry", s.ctx, mock.AnythingOfType("*domain.TransactionEntry")).Return(createErr).Once()
+	// Best-effort cleanup: header deletion after entry failure
+	s.repo.On("Delete", s.ctx, mock.Anything).Return(nil).Once()
+
+	result, err := s.svc.ReverseTransaction(s.ctx, origTxn.ID, "correcting error")
+	s.req.Error(err, "entry creation failure must propagate as error")
+	s.req.Nil(result)
+	// Original must NOT be marked reversed — Reverse() must not have been called
+	s.repo.AssertNotCalled(s.T(), "Reverse", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }

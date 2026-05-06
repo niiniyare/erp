@@ -74,14 +74,14 @@ func (r *accountsRepository) mapDomainAccountGroupToCreateParams(accountGroup *d
 		GroupCategory:             groupCategory,
 		FinancialStatementSection: accountGroup.FinancialStatementSection,
 		ConsolidationMethod:       consolidationMethod,
-		CashFlowCategory:    cashFlowCategory,
-		StatementOrder:      func() *int32 { v := int32(accountGroup.DisplayOrder); return &v }(),
-		DisplayFormat:       &displayFormat,
-		IndentLevel:         func() *int32 { v := int32(accountGroup.IndentLevel); return &v }(),
-		ShowTotals:          &accountGroup.ShowTotals,
-		BoldDisplay:         &accountGroup.BoldDisplay,
-		IsActive:            accountGroup.IsActive,
-		CreatedBy:           nil, // Will be set by context in database
+		CashFlowCategory:          cashFlowCategory,
+		StatementOrder:            func() *int32 { v := int32(accountGroup.DisplayOrder); return &v }(),
+		DisplayFormat:             &displayFormat,
+		IndentLevel:               func() *int32 { v := int32(accountGroup.IndentLevel); return &v }(),
+		ShowTotals:                &accountGroup.ShowTotals,
+		BoldDisplay:               &accountGroup.BoldDisplay,
+		IsActive:                  accountGroup.IsActive,
+		CreatedBy:                 uuid.Nil, // FIXME: // Will be set by context in database
 	}, nil
 }
 
@@ -172,8 +172,8 @@ func (r *accountsRepository) mapSQLCAccountGroupToDomain(sqlcGroup *db.FinanceAc
 	// Audit fields
 	domainGroup.CreatedAt = sqlcGroup.CreatedAt
 	domainGroup.UpdatedAt = sqlcGroup.UpdatedAt
-	if sqlcGroup.CreatedBy != nil {
-		domainGroup.CreatedBy = *sqlcGroup.CreatedBy
+	if sqlcGroup.CreatedBy != uuid.Nil {
+		domainGroup.CreatedBy = sqlcGroup.CreatedBy
 	}
 	if sqlcGroup.UpdatedBy != nil {
 		domainGroup.UpdatedBy = *sqlcGroup.UpdatedBy

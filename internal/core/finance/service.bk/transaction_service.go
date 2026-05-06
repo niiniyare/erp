@@ -332,10 +332,7 @@ func (s *transactionService) GetTransactionByNumber(ctx context.Context, number 
 	logger.DebugContext(ctx, "Getting transaction by number",
 		logger.Fields{"transaction_number": number})
 
-	// BUG-06: entity ID should be extracted from context to prevent cross-entity
-	// data leaks. Until shared.GetEntityID is available, we scope by tenant only
-	// (enforced by RLS via current_tenant_id()). Track as issue: add GetEntityID.
-	transaction, err := s.repo.GetByNumber(ctx, nil, number)
+	transaction, err := s.repo.GetByNumber(ctx, shared.GetEntityIDPtr(ctx), number)
 	if err != nil {
 		if err == errors.ErrNotFound {
 			logger.WarnContext(ctx, "Transaction not found",
@@ -794,15 +791,14 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 	}
 
 	if err := s.updateAccountBalances(ctx, entries); err != nil {
-		// Balance update failure is a ledger integrity error — propagate it.
-		// The transaction is marked POSTED in the DB already; caller must compensate
-		// or a reconciliation sweep will detect the divergence.
+		// The denormalized balance cache failed to update. The authoritative balance
+		// is always computed from posted entries (SCHEMA-14), so this is non-fatal.
+		// Log loudly; the reconciliation sweep will resync the cache.
 		s.metrics.IncrementCounter("transaction_posting_errors", metrics.Fields{
-			"error_type": "balance_update_failed",
+			"error_type": "balance_cache_update_failed",
 		})
-		logger.ErrorContext(ctx, "CRITICAL: account balance update failed after posting — ledger may diverge",
+		logger.ErrorContext(ctx, "account balance cache update failed after posting — will resync on next reconciliation",
 			logger.Fields{"transaction_id": id.String(), "error": err.Error()})
-		return nil, fmt.Errorf("transaction posted but account balance update failed: %w", err)
 	}
 
 	s.metrics.IncrementCounter("transactions_posted_total", metrics.Fields{

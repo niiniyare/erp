@@ -9,12 +9,12 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -357,7 +357,7 @@ func (s *transactionEntryService) UpdateEntry(ctx context.Context, id uuid.UUID,
 	logger.InfoContext(ctx, "Starting entry update",
 		logger.Fields{"entry_id": id.String()})
 
-	existingEntry, err := s.repo.GetEntryByID(ctx, id)
+	_, err := s.repo.GetEntryByID(ctx, id)
 	if err != nil {
 		logger.ErrorContext(ctx, "Entry not found for update",
 			logger.Fields{

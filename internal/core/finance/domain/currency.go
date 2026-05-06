@@ -73,6 +73,42 @@ func (c *Currency) Validate() []ValidationError {
 	return errs
 }
 
+// currencyMinorUnits maps ISO 4217 codes to their number of decimal places.
+// Currencies absent from this map default to 2 (the most common minor-unit exponent).
+//
+// Sources: ISO 4217 amendment 173 (2024-10).
+var currencyMinorUnits = map[string]int{
+	// Zero decimal places
+	"BIF": 0, "CLP": 0, "DJF": 0, "GNF": 0, "IDR": 0,
+	"ISK": 0, "JPY": 0, "KMF": 0, "KRW": 0, "PYG": 0,
+	"RWF": 0, "UGX": 0, "VND": 0, "VUV": 0, "XAF": 0,
+	"XOF": 0, "XPF": 0,
+	// Three decimal places (Middle-Eastern high-precision currencies)
+	"BHD": 3, "IQD": 3, "JOD": 3, "KWD": 3, "LYD": 3,
+	"OMR": 3, "TND": 3,
+	// Four decimal places
+	"CLF": 4, "UYW": 4,
+}
+
+// CurrencyMinorUnits returns the number of decimal places (minor-unit exponent)
+// for the given ISO 4217 currency code. Defaults to 2 for unknown codes.
+func CurrencyMinorUnits(code string) int {
+	if dp, ok := currencyMinorUnits[strings.ToUpper(code)]; ok {
+		return dp
+	}
+	return 2 // most common: USD, EUR, GBP, KES, …
+}
+
+// CurrencyConversionTolerance returns the maximum acceptable rounding difference
+// when converting amounts between currencies. Equals half a minor unit of the
+// given currency — e.g. 0.005 for USD (2 dp), 0.0005 for KWD (3 dp), 0.5 for JPY (0 dp).
+func CurrencyConversionTolerance(code string) decimal.Decimal {
+	dp := CurrencyMinorUnits(code)
+	// tolerance = 0.5 × 10^(-dp)
+	divisor := decimal.New(1, int32(dp)) // 10^dp
+	return decimal.NewFromFloat(0.5).Div(divisor)
+}
+
 // ExchangeRate records the rate between two currencies at a point in time.
 type ExchangeRate struct {
 	ID           uuid.UUID `json:"id"`
