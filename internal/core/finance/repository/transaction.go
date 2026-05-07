@@ -15,6 +15,7 @@ import (
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
 
@@ -22,21 +23,26 @@ type transactionRepository struct {
 	store   db.Store
 	tracing tracing.Service
 	logger  logger.Logger
+	metrics metrics.MetricsProvider
 }
 
-func NewTransactionRepository(store db.Store, tracing tracing.Service, log logger.Logger) domain.TransactionRepository {
+func NewTransactionRepository(store db.Store, tracer tracing.Service, log logger.Logger, met metrics.MetricsProvider) domain.TransactionRepository {
+	initFinanceRepoMetrics(met)
 	return &transactionRepository{
 		store:   store,
-		tracing: tracing,
+		tracing: tracer,
 		logger:  log,
+		metrics: met,
 	}
 }
 
 // Basic CRUD Operations
 
-func (r *transactionRepository) Create(ctx context.Context, transaction *domain.Transaction) error {
+func (r *transactionRepository) Create(ctx context.Context, transaction *domain.Transaction) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Create")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Create", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -93,9 +99,11 @@ func (r *transactionRepository) Create(ctx context.Context, transaction *domain.
 	})
 }
 
-func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
+func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (_ *domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByID")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetByID", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -103,7 +111,7 @@ func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*dom
 	}
 
 	var transaction *domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcTransaction, err := s.GetTransactionByID(ctx, id)
 		if err != nil {
 			if err == db.ErrNoRows {
@@ -122,9 +130,11 @@ func (r *transactionRepository) GetByID(ctx context.Context, id uuid.UUID) (*dom
 	return transaction, nil
 }
 
-func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.UUID, transactionNumber string) (*domain.Transaction, error) {
+func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.UUID, transactionNumber string) (_ *domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByNumber")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetByNumber", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -132,7 +142,7 @@ func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.
 	}
 
 	var transaction *domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcTransaction, err := s.GetTransactionByNumber(ctx, transactionNumber)
 		if err != nil {
 			if err == db.ErrNoRows {
@@ -151,9 +161,11 @@ func (r *transactionRepository) GetByNumber(ctx context.Context, entityID *uuid.
 	return transaction, nil
 }
 
-func (r *transactionRepository) Update(ctx context.Context, transaction *domain.Transaction) error {
+func (r *transactionRepository) Update(ctx context.Context, transaction *domain.Transaction) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Update")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Update", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -193,9 +205,11 @@ func (r *transactionRepository) Update(ctx context.Context, transaction *domain.
 	})
 }
 
-func (r *transactionRepository) Delete(ctx context.Context, id uuid.UUID) error {
+func (r *transactionRepository) Delete(ctx context.Context, id uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Delete")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Delete", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant and user ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -232,9 +246,11 @@ func (r *transactionRepository) Delete(ctx context.Context, id uuid.UUID) error 
 
 // List and Filter Operations
 
-func (r *transactionRepository) List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
+func (r *transactionRepository) List(ctx context.Context, filter *domain.TransactionFilter) (_ []*domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.List")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "List", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -242,7 +258,7 @@ func (r *transactionRepository) List(ctx context.Context, filter *domain.Transac
 	}
 
 	var transactions []*domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map domain filter to SQLC parameters
 		var limitCount, offsetCount int32
 		if filter.Limit != nil {
@@ -312,9 +328,11 @@ func (r *transactionRepository) List(ctx context.Context, filter *domain.Transac
 	return transactions, err
 }
 
-func (r *transactionRepository) Count(ctx context.Context, filter *domain.TransactionFilter) (int64, error) {
+func (r *transactionRepository) Count(ctx context.Context, filter *domain.TransactionFilter) (_ int64, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Count")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Count", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	_, ok := shared.GetTenantID(ctx)
@@ -323,7 +341,7 @@ func (r *transactionRepository) Count(ctx context.Context, filter *domain.Transa
 	}
 
 	var count int64
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Map basic filter parameters for count
 		params := db.CountTransactionsParams{}
 
@@ -360,9 +378,11 @@ func (r *transactionRepository) Count(ctx context.Context, filter *domain.Transa
 
 // Status Operations - these are critical business operations requiring proper transaction handling
 
-func (r *transactionRepository) PostTransaction(ctx context.Context, id uuid.UUID) error {
+func (r *transactionRepository) PostTransaction(ctx context.Context, id uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Post")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "PostTransaction", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant and user ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -387,9 +407,11 @@ func (r *transactionRepository) PostTransaction(ctx context.Context, id uuid.UUI
 	})
 }
 
-func (r *transactionRepository) ApproveTransaction(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) error {
+func (r *transactionRepository) ApproveTransaction(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Approve")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "ApproveTransaction", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -413,9 +435,11 @@ func (r *transactionRepository) ApproveTransaction(ctx context.Context, transact
 	})
 }
 
-func (r *transactionRepository) RejectTransaction(ctx context.Context, id uuid.UUID, notes *string) error {
+func (r *transactionRepository) RejectTransaction(ctx context.Context, id uuid.UUID, notes *string) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Reject")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "RejectTransaction", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant and user ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -444,9 +468,11 @@ func (r *transactionRepository) RejectTransaction(ctx context.Context, id uuid.U
 	})
 }
 
-func (r *transactionRepository) ReverseTransaction(ctx context.Context, id uuid.UUID, reversalTransactionID uuid.UUID, reason string) error {
+func (r *transactionRepository) ReverseTransaction(ctx context.Context, id uuid.UUID, reversalTransactionID uuid.UUID, reason string) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Reverse")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "ReverseTransaction", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant and user ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -474,9 +500,11 @@ func (r *transactionRepository) ReverseTransaction(ctx context.Context, id uuid.
 
 // Validation and Balance Operations
 
-func (r *transactionRepository) ValidateBalance(ctx context.Context, id uuid.UUID) (bool, error) {
+func (r *transactionRepository) ValidateBalance(ctx context.Context, id uuid.UUID) (_ bool, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.ValidateBalance")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "ValidateBalance", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	_, ok := shared.GetTenantID(ctx)
@@ -485,7 +513,7 @@ func (r *transactionRepository) ValidateBalance(ctx context.Context, id uuid.UUI
 	}
 
 	var isBalanced bool
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		result, err := s.ValidateTransactionBalance(ctx, id)
 		if err != nil {
 			return r.mapDatabaseError(err, "validate_transaction_balance")
@@ -497,9 +525,11 @@ func (r *transactionRepository) ValidateBalance(ctx context.Context, id uuid.UUI
 	return isBalanced, err
 }
 
-func (r *transactionRepository) GetWithEntries(ctx context.Context, id uuid.UUID) (*domain.TransactionWithEntries, error) {
+func (r *transactionRepository) GetWithEntries(ctx context.Context, id uuid.UUID) (_ *domain.TransactionWithEntries, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetWithEntries")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetWithEntries", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -507,7 +537,7 @@ func (r *transactionRepository) GetWithEntries(ctx context.Context, id uuid.UUID
 	}
 
 	var transactionWithEntries *domain.TransactionWithEntries
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		// Execute SQLC query to get transaction with entries
 		results, err := s.GetTransactionWithEntries(ctx, id)
 		if err != nil {
@@ -564,9 +594,11 @@ func (r *transactionRepository) GetWithEntries(ctx context.Context, id uuid.UUID
 
 // Specialized Queries
 
-func (r *transactionRepository) GetByBatch(ctx context.Context, batchID uuid.UUID) ([]*domain.Transaction, error) {
+func (r *transactionRepository) GetByBatch(ctx context.Context, batchID uuid.UUID) (_ []*domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetByBatch")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetByBatch", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -574,7 +606,7 @@ func (r *transactionRepository) GetByBatch(ctx context.Context, batchID uuid.UUI
 	}
 
 	var transactions []*domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcTransactions, err := s.GetTransactionsByBatch(ctx, &batchID)
 		if err != nil {
 			return r.mapDatabaseError(err, "get_transactions_by_batch")
@@ -594,9 +626,11 @@ func (r *transactionRepository) GetByBatch(ctx context.Context, batchID uuid.UUI
 	return transactions, err
 }
 
-func (r *transactionRepository) GetPendingApprovalTransactions(ctx context.Context, limit, offset int32) ([]*domain.Transaction, error) {
+func (r *transactionRepository) GetPendingApprovalTransactions(ctx context.Context, limit, offset int32) (_ []*domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetPendingApproval")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetPendingApprovalTransactions", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -604,7 +638,7 @@ func (r *transactionRepository) GetPendingApprovalTransactions(ctx context.Conte
 	}
 
 	var transactions []*domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcTransactions, err := s.GetPendingApprovalTransactions(ctx, db.GetPendingApprovalTransactionsParams{
 			LimitCount:  limit,
 			OffsetCount: offset,
@@ -627,9 +661,11 @@ func (r *transactionRepository) GetPendingApprovalTransactions(ctx context.Conte
 	return transactions, err
 }
 
-func (r *transactionRepository) Search(ctx context.Context, query string, limit, offset int32) ([]*domain.Transaction, error) {
+func (r *transactionRepository) Search(ctx context.Context, query string, limit, offset int32) (_ []*domain.Transaction, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Search")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Search", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -637,7 +673,7 @@ func (r *transactionRepository) Search(ctx context.Context, query string, limit,
 	}
 
 	var transactions []*domain.Transaction
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		sqlcTransactions, err := s.SearchTransactions(ctx, db.SearchTransactionsParams{
 			SearchTerm:  &query,
 			LimitCount:  limit,
@@ -777,9 +813,11 @@ func (r *transactionRepository) mapSQLCTransactionRowToDomain(row *db.GetTransac
 }
 
 // CalculateAccountBalance calculates the balance for an account as of a specific date
-func (r *transactionRepository) CalculateAccountBalance(ctx context.Context, accountID uuid.UUID, asOfDate *time.Time) (decimal.Decimal, error) {
+func (r *transactionRepository) CalculateAccountBalance(ctx context.Context, accountID uuid.UUID, asOfDate *time.Time) (_ decimal.Decimal, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.CalculateAccountBalance")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CalculateAccountBalance", "transaction", start, err, r.logger, r.metrics) }()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {
@@ -792,7 +830,7 @@ func (r *transactionRepository) CalculateAccountBalance(ctx context.Context, acc
 	}
 
 	var balance decimal.Decimal
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		row, err := s.GetAccountTransactionBalance(ctx, db.GetAccountTransactionBalanceParams{
 			AccountID: accountID,
 			AsOfDate:  date,
@@ -849,9 +887,11 @@ func mapSQLCEntryToDomain(e *db.FinanceTransactionEntry) domain.TransactionEntry
 
 // ── Entry CRUD ────────────────────────────────────────────────────────────────
 
-func (r *transactionRepository) CreateEntry(ctx context.Context, entry *domain.TransactionEntry) error {
+func (r *transactionRepository) CreateEntry(ctx context.Context, entry *domain.TransactionEntry) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.CreateEntry")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CreateEntry", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -889,16 +929,18 @@ func (r *transactionRepository) CreateEntries(ctx context.Context, entries []*do
 	return nil
 }
 
-func (r *transactionRepository) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
+func (r *transactionRepository) GetEntryByID(ctx context.Context, id uuid.UUID) (_ *domain.TransactionEntry, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntryByID")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetEntryByID", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var entry *domain.TransactionEntry
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		row, err := s.GetTransactionEntryByID(ctx, id)
 		if err != nil {
 			return r.mapDatabaseError(err, "get_entry_by_id")
@@ -910,16 +952,18 @@ func (r *transactionRepository) GetEntryByID(ctx context.Context, id uuid.UUID) 
 	return entry, err
 }
 
-func (r *transactionRepository) GetEntriesByTransaction(ctx context.Context, transactionID uuid.UUID) ([]domain.TransactionEntry, error) {
+func (r *transactionRepository) GetEntriesByTransaction(ctx context.Context, transactionID uuid.UUID) (_ []domain.TransactionEntry, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntriesByTransaction")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetEntriesByTransaction", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var entries []domain.TransactionEntry
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		rows, err := s.ListTransactionEntries(ctx, transactionID)
 		if err != nil {
 			return r.mapDatabaseError(err, "get_entries_by_transaction")
@@ -933,9 +977,11 @@ func (r *transactionRepository) GetEntriesByTransaction(ctx context.Context, tra
 	return entries, err
 }
 
-func (r *transactionRepository) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.EntryFilter) ([]domain.TransactionEntry, error) {
+func (r *transactionRepository) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.EntryFilter) (_ []domain.TransactionEntry, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetEntriesByAccount")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetEntriesByAccount", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
@@ -961,7 +1007,7 @@ func (r *transactionRepository) GetEntriesByAccount(ctx context.Context, account
 	}
 
 	var entries []domain.TransactionEntry
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		rows, err := s.GetAccountEntries(ctx, db.GetAccountEntriesParams{
 			AccountID:         accountID,
 			DateFrom:          from,
@@ -1001,9 +1047,11 @@ func (r *transactionRepository) UpdateEntry(ctx context.Context, entry *domain.T
 	return fmt.Errorf("transaction entries are immutable — reverse and repost to correct")
 }
 
-func (r *transactionRepository) DeleteEntry(ctx context.Context, id uuid.UUID) error {
+func (r *transactionRepository) DeleteEntry(ctx context.Context, id uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.DeleteEntry")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "DeleteEntry", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -1014,9 +1062,11 @@ func (r *transactionRepository) DeleteEntry(ctx context.Context, id uuid.UUID) e
 	})
 }
 
-func (r *transactionRepository) SearchEntries(ctx context.Context, query string, filters *domain.EntryFilter, limit int, offset int) ([]*domain.TransactionEntry, error) {
+func (r *transactionRepository) SearchEntries(ctx context.Context, query string, filters *domain.EntryFilter, limit int, offset int) (_ []*domain.TransactionEntry, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.SearchEntries")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "SearchEntries", "transaction", start, err, r.logger, r.metrics) }()
 
 	// No dedicated full-text SQLC query for entries exists yet.
 	// Fall back: if a specific account is requested, delegate to GetEntriesByAccount
@@ -1049,9 +1099,11 @@ func (r *transactionRepository) SearchEntries(ctx context.Context, query string,
 	return nil, fmt.Errorf("SearchEntries: provide an account_id filter for entry search (global full-text search requires a dedicated SQLC query)")
 }
 
-func (r *transactionRepository) UpdateReconciliationStatus(ctx context.Context, entryID uuid.UUID, reconciled bool, reconciledDate *time.Time, reconciliationRef *string) error {
+func (r *transactionRepository) UpdateReconciliationStatus(ctx context.Context, entryID uuid.UUID, reconciled bool, reconciledDate *time.Time, reconciliationRef *string) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.UpdateReconciliationStatus")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UpdateReconciliationStatus", "transaction", start, err, r.logger, r.metrics) }()
 
 	if !reconciled {
 		// Unreconcile path: no direct SQLC query — tracked in TASK-029.
@@ -1211,9 +1263,11 @@ func (r *transactionRepository) Reverse(ctx context.Context, originalID, reversa
 
 // ── Uniqueness / validation ───────────────────────────────────────────────────
 
-func (r *transactionRepository) IsTransactionNumberUnique(ctx context.Context, entityID *uuid.UUID, transactionNumber string, excludeID *uuid.UUID) (bool, error) {
+func (r *transactionRepository) IsTransactionNumberUnique(ctx context.Context, entityID *uuid.UUID, transactionNumber string, excludeID *uuid.UUID) (_ bool, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.IsTransactionNumberUnique")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "IsTransactionNumberUnique", "transaction", start, err, r.logger, r.metrics) }()
 
 	_, ok := shared.GetTenantID(ctx)
 	if !ok {
@@ -1221,7 +1275,7 @@ func (r *transactionRepository) IsTransactionNumberUnique(ctx context.Context, e
 	}
 
 	var unique bool
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		existing, err := s.GetTransactionByNumber(ctx, transactionNumber)
 		if err != nil {
 			// Not found → unique
@@ -1239,9 +1293,11 @@ func (r *transactionRepository) ValidateTransaction(ctx context.Context, transac
 	return transaction.Validate(), nil
 }
 
-func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.TransactionSummary, error) {
+func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filter *domain.TransactionFilter) (_ []*domain.TransactionSummary, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetTransactionSummary")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetTransactionSummary", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
@@ -1259,7 +1315,7 @@ func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filte
 	}
 
 	var summaries []*domain.TransactionSummary
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		rows, err := s.GetTransactionSummaryByPeriod(ctx, db.GetTransactionSummaryByPeriodParams{
 			DateFrom: dateFrom,
 			DateTo:   dateTo,
@@ -1282,9 +1338,11 @@ func (r *transactionRepository) GetTransactionSummary(ctx context.Context, filte
 	return summaries, err
 }
 
-func (r *transactionRepository) UpdateNextRecurringDate(ctx context.Context, transactionID uuid.UUID, nextDate time.Time) error {
+func (r *transactionRepository) UpdateNextRecurringDate(ctx context.Context, transactionID uuid.UUID, nextDate time.Time) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.UpdateNextRecurringDate")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UpdateNextRecurringDate", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -1318,9 +1376,11 @@ func (r *transactionRepository) BulkUpdate(ctx context.Context, transactions []*
 	return nil
 }
 
-func (r *transactionRepository) Archive(ctx context.Context, transactionID uuid.UUID, archivedBy uuid.UUID, archivedAt time.Time) error {
+func (r *transactionRepository) Archive(ctx context.Context, transactionID uuid.UUID, archivedBy uuid.UUID, archivedAt time.Time) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.Archive")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "Archive", "transaction", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")

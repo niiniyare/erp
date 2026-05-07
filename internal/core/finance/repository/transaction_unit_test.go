@@ -35,7 +35,7 @@ func (s *TransactionRepositoryUnitTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
 	s.mockTracer = tracing.NewMockService(s.ctrl)
-	s.repo = NewTransactionRepository(s.mockStore, s.mockTracer, nil)
+	s.repo = NewTransactionRepository(s.mockStore, s.mockTracer, nil, nil)
 	s.tenantID = uuid.New()
 	s.ctx = shared.WithTenantID(context.Background(), s.tenantID)
 }

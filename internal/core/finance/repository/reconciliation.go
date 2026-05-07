@@ -14,6 +14,7 @@ import (
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
 
@@ -21,18 +22,22 @@ type reconciliationRepository struct {
 	store   db.Store
 	tracing tracing.Service
 	logger  logger.Logger
+	metrics metrics.MetricsProvider
 }
 
 // NewReconciliationRepository returns a new domain.ReconciliationRepository.
-func NewReconciliationRepository(store db.Store, tracing tracing.Service, log logger.Logger) domain.ReconciliationRepository {
-	return &reconciliationRepository{store: store, tracing: tracing, logger: log}
+func NewReconciliationRepository(store db.Store, tracer tracing.Service, log logger.Logger, met metrics.MetricsProvider) domain.ReconciliationRepository {
+	initFinanceRepoMetrics(met)
+	return &reconciliationRepository{store: store, tracing: tracer, logger: log, metrics: met}
 }
 
 // ── Bank Statement ────────────────────────────────────────────────────────────
 
-func (r *reconciliationRepository) CreateStatement(ctx context.Context, s *domain.BankStatement) error {
+func (r *reconciliationRepository) CreateStatement(ctx context.Context, s *domain.BankStatement) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.CreateStatement")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CreateStatement", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -72,13 +77,16 @@ RETURNING id, created_at, updated_at`
 func (r *reconciliationRepository) GetStatementByID(ctx context.Context, id uuid.UUID) (*domain.BankStatement, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.GetStatementByID")
 	defer span.End()
+	start := time.Now()
+	var err error
+	defer func() { observeOp(ctx, "GetStatementByID", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.BankStatement
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -108,6 +116,9 @@ WHERE  tenant_id = current_tenant_id()
 func (r *reconciliationRepository) ListStatements(ctx context.Context, tenantID uuid.UUID, accountID *uuid.UUID) ([]*domain.BankStatement, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.ListStatements")
 	defer span.End()
+	start := time.Now()
+	var err error
+	defer func() { observeOp(ctx, "ListStatements", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	// Validate that the explicit tenantID matches the context tenant to prevent
 	// cross-tenant queries if callers accidentally pass the wrong tenant.
@@ -120,7 +131,7 @@ func (r *reconciliationRepository) ListStatements(ctx context.Context, tenantID 
 	}
 
 	var results []*domain.BankStatement
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -160,9 +171,11 @@ WHERE  tenant_id = current_tenant_id()`)
 	return results, err
 }
 
-func (r *reconciliationRepository) UpdateStatement(ctx context.Context, s *domain.BankStatement) error {
+func (r *reconciliationRepository) UpdateStatement(ctx context.Context, s *domain.BankStatement) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.UpdateStatement")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UpdateStatement", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -198,9 +211,11 @@ RETURNING updated_at`
 
 // ── Statement Lines ────────────────────────────────────────────────────────────
 
-func (r *reconciliationRepository) CreateLines(ctx context.Context, lines []*domain.BankStatementLine) error {
+func (r *reconciliationRepository) CreateLines(ctx context.Context, lines []*domain.BankStatementLine) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.CreateLines")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CreateLines", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if len(lines) == 0 {
 		return nil
@@ -244,13 +259,16 @@ RETURNING id, created_at`
 func (r *reconciliationRepository) GetLine(ctx context.Context, lineID uuid.UUID) (*domain.BankStatementLine, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.GetLine")
 	defer span.End()
+	start := time.Now()
+	var err error
+	defer func() { observeOp(ctx, "GetLine", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.BankStatementLine
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -279,13 +297,16 @@ WHERE  tenant_id = current_tenant_id()
 func (r *reconciliationRepository) ListLines(ctx context.Context, statementID uuid.UUID, unmatchedOnly bool) ([]*domain.BankStatementLine, error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.ListLines")
 	defer span.End()
+	start := time.Now()
+	var err error
+	defer func() { observeOp(ctx, "ListLines", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var results []*domain.BankStatementLine
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -322,9 +343,11 @@ WHERE  tenant_id    = current_tenant_id()
 	return results, err
 }
 
-func (r *reconciliationRepository) MatchLine(ctx context.Context, lineID, entryID uuid.UUID, byUserID uuid.UUID) error {
+func (r *reconciliationRepository) MatchLine(ctx context.Context, lineID, entryID uuid.UUID, byUserID uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.MatchLine")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "MatchLine", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	tenantID, ok := shared.GetTenantID(ctx)
 	if !ok {
@@ -358,9 +381,11 @@ WHERE  tenant_id     = current_tenant_id()
 	})
 }
 
-func (r *reconciliationRepository) UnmatchLine(ctx context.Context, lineID uuid.UUID) error {
+func (r *reconciliationRepository) UnmatchLine(ctx context.Context, lineID uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.UnmatchLine")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UnmatchLine", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -385,9 +410,11 @@ WHERE  tenant_id = current_tenant_id()
 
 // CompleteReconciliation marks the statement COMPLETED and stamps all matched
 // finance_transaction_entries rows as reconciled.
-func (r *reconciliationRepository) CompleteReconciliation(ctx context.Context, statementID uuid.UUID, byUserID uuid.UUID) error {
+func (r *reconciliationRepository) CompleteReconciliation(ctx context.Context, statementID uuid.UUID, byUserID uuid.UUID) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.CompleteReconciliation")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CompleteReconciliation", "reconciliation", start, err, r.logger, r.metrics) }()
 
 	tenantID, ok := shared.GetTenantID(ctx)
 	if !ok {

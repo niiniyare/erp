@@ -66,14 +66,14 @@ func NewFinanceServices(
 	tracer tracing.Service,
 ) *financeService.Services {
 	accountRepo := financeRepo.NewAccountsRepository(store, cacheService, tracer)
-	transactionRepo := financeRepo.NewTransactionRepository(store, tracer, log)
-	periodRepo := financeRepo.NewPeriodRepository(store, tracer, log)
+	transactionRepo := financeRepo.NewTransactionRepository(store, tracer, log, met)
+	periodRepo := financeRepo.NewPeriodRepository(store, tracer, log, met, cacheService)
 	exchangeRateRepo := financeRepo.NewExchangeRateRepository(store, tracer)
 	currencyRepo := financeRepo.NewCurrencyRepository(store, tracer)
 	costCenterRepo := financeRepo.NewCostCenterRepository(store, tracer)
 	budgetRepo := financeRepo.NewBudgetRepository(store, tracer)
 	taxRepo := financeRepo.NewTaxRepository(store, tracer)
-	reconciliationRepo := financeRepo.NewReconciliationRepository(store, tracer, log)
+	reconciliationRepo := financeRepo.NewReconciliationRepository(store, tracer, log, met)
 
 	return financeService.NewServices(financeService.Dependencies{
 		AccountRepo:        accountRepo,

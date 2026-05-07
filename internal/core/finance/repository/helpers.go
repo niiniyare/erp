@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -8,6 +9,9 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	db "awo.so/db/sqlc"
+	"awo.so/internal/shared"
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 )
 
 // txFrom extracts the underlying pgx.Tx from a db.Store that has been wrapped
@@ -34,6 +38,70 @@ func nullUUID(id uuid.UUID) *uuid.UUID {
 // SQL NULL and a non-nil pointer passes the UUID value through unchanged.
 func nullUUID2(id *uuid.UUID) *uuid.UUID {
 	return id
+}
+
+// ── Observability helpers ─────────────────────────────────────────────────────
+
+// observeOp records operation duration (histogram) and error count (counter)
+// for a finance repository method. It also logs errors with structured context.
+//
+// Usage pattern (named return + defer):
+//
+//	func (r *fooRepository) Op(ctx context.Context) (_ T, err error) {
+//	    start := time.Now()
+//	    defer func() { observeOp(ctx, "Op", "foo", start, err, r.logger, r.metrics) }()
+//	    ...
+//	}
+func observeOp(ctx context.Context, op, repo string, start time.Time, err error, log logger.Logger, met metrics.MetricsProvider) {
+	if err != nil && log != nil {
+		tenantID, _ := shared.GetTenantID(ctx)
+		log.ErrorContext(ctx, "repository operation failed", logger.Fields{
+			"repository": repo,
+			"operation":  op,
+			"tenant_id":  tenantID.String(),
+			"error":      err.Error(),
+		})
+	}
+	if met == nil {
+		return
+	}
+	status := "success"
+	if err != nil {
+		status = "error"
+	}
+	met.ObserveHistogram("finance_repo_op_duration_seconds",
+		time.Since(start).Seconds(),
+		metrics.Fields{
+			"operation":  op,
+			"repository": repo,
+			"status":     status,
+		})
+	if err != nil {
+		met.IncrementCounter("finance_repo_errors_total",
+			metrics.Fields{
+				"operation":  op,
+				"repository": repo,
+			})
+	}
+}
+
+// initFinanceRepoMetrics registers the shared metric descriptors for finance
+// repositories. Safe to call multiple times — the MetricsProvider deduplicates.
+func initFinanceRepoMetrics(met metrics.MetricsProvider) {
+	if met == nil {
+		return
+	}
+	met.Histogram(
+		"finance_repo_op_duration_seconds",
+		"Finance repository operation duration in seconds",
+		[]float64{0.001, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0},
+		"operation", "repository", "status",
+	)
+	met.Counter(
+		"finance_repo_errors_total",
+		"Finance repository error total",
+		"operation", "repository",
+	)
 }
 
 // zeroTimeToNil converts a time.Time value to a *time.Time pointer.

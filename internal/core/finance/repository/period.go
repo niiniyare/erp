@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -10,8 +11,10 @@ import (
 
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/finance/domain"
+	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
 
@@ -19,18 +22,29 @@ type periodRepository struct {
 	store   db.Store
 	tracing tracing.Service
 	logger  logger.Logger
+	metrics metrics.MetricsProvider
+	cache   cache.Service
 }
 
 // NewPeriodRepository returns a new PeriodRepository.
-func NewPeriodRepository(store db.Store, tracing tracing.Service, log logger.Logger) domain.PeriodRepository {
-	return &periodRepository{store: store, tracing: tracing, logger: log}
+func NewPeriodRepository(store db.Store, tracer tracing.Service, log logger.Logger, met metrics.MetricsProvider, cacheService cache.Service) domain.PeriodRepository {
+	initFinanceRepoMetrics(met)
+	return &periodRepository{
+		store:   store,
+		tracing: tracer,
+		logger:  log,
+		metrics: met,
+		cache:   cacheService,
+	}
 }
 
 // ── FiscalYear ───────────────────────────────────────────────────────────────
 
-func (r *periodRepository) CreateFiscalYear(ctx context.Context, fy *domain.FiscalYear) error {
+func (r *periodRepository) CreateFiscalYear(ctx context.Context, fy *domain.FiscalYear) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.CreateFiscalYear")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CreateFiscalYear", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -59,16 +73,18 @@ RETURNING id, created_at, updated_at`
 	})
 }
 
-func (r *periodRepository) GetFiscalYearByID(ctx context.Context, id uuid.UUID) (*domain.FiscalYear, error) {
+func (r *periodRepository) GetFiscalYearByID(ctx context.Context, id uuid.UUID) (_ *domain.FiscalYear, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetFiscalYearByID")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetFiscalYearByID", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.FiscalYear
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -105,12 +121,23 @@ WHERE  tenant_id = current_tenant_id()
 	return result, err
 }
 
-func (r *periodRepository) GetFiscalYearByYear(ctx context.Context, tenantID uuid.UUID, year int) (*domain.FiscalYear, error) {
+func (r *periodRepository) GetFiscalYearByYear(ctx context.Context, tenantID uuid.UUID, year int) (_ *domain.FiscalYear, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetFiscalYearByYear")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetFiscalYearByYear", "period", start, err, r.logger, r.metrics) }()
+
+	// Cache check — fiscal years are immutable after creation.
+	cacheKey := "fiscal_year:year:" + strconv.Itoa(year)
+	if r.cache != nil {
+		var cached domain.FiscalYear
+		if cErr := r.cache.GetMemory(ctx, cacheKey, &cached); cErr == nil {
+			return &cached, nil
+		}
+	}
 
 	var result *domain.FiscalYear
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -145,15 +172,21 @@ LIMIT  1`
 		result = fy
 		return nil
 	})
+	// Populate cache on successful fetch — 30 min TTL; fiscal years are stable.
+	if err == nil && result != nil && r.cache != nil {
+		_ = r.cache.SetMemory(ctx, cacheKey, result, 30*time.Minute)
+	}
 	return result, err
 }
 
-func (r *periodRepository) ListFiscalYears(ctx context.Context, tenantID uuid.UUID) ([]*domain.FiscalYear, error) {
+func (r *periodRepository) ListFiscalYears(ctx context.Context, tenantID uuid.UUID) (_ []*domain.FiscalYear, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.ListFiscalYears")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "ListFiscalYears", "period", start, err, r.logger, r.metrics) }()
 
 	var results []*domain.FiscalYear
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -194,15 +227,17 @@ ORDER  BY start_date DESC`
 	return results, err
 }
 
-func (r *periodRepository) UpdateFiscalYear(ctx context.Context, fy *domain.FiscalYear) error {
+func (r *periodRepository) UpdateFiscalYear(ctx context.Context, fy *domain.FiscalYear) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.UpdateFiscalYear")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UpdateFiscalYear", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -230,13 +265,21 @@ RETURNING updated_at`
 			updatedBy,
 		).Scan(&fy.UpdatedAt)
 	})
+	// Invalidate fiscal-year cache on successful update.
+	if err == nil && r.cache != nil {
+		cacheKey := "fiscal_year:year:" + strconv.Itoa(fy.StartDate.Year())
+		_ = r.cache.DeleteMemory(ctx, cacheKey)
+	}
+	return err
 }
 
 // ── AccountingPeriod ─────────────────────────────────────────────────────────
 
-func (r *periodRepository) CreatePeriod(ctx context.Context, period *domain.AccountingPeriod) error {
+func (r *periodRepository) CreatePeriod(ctx context.Context, period *domain.AccountingPeriod) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.CreatePeriod")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "CreatePeriod", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
@@ -265,16 +308,18 @@ RETURNING id, created_at, updated_at`
 	})
 }
 
-func (r *periodRepository) GetPeriodByID(ctx context.Context, id uuid.UUID) (*domain.AccountingPeriod, error) {
+func (r *periodRepository) GetPeriodByID(ctx context.Context, id uuid.UUID) (_ *domain.AccountingPeriod, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetPeriodByID")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetPeriodByID", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.AccountingPeriod
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -311,12 +356,23 @@ WHERE  tenant_id = current_tenant_id()
 	return result, err
 }
 
-func (r *periodRepository) GetPeriodForDate(ctx context.Context, tenantID uuid.UUID, date time.Time) (*domain.AccountingPeriod, error) {
+func (r *periodRepository) GetPeriodForDate(ctx context.Context, tenantID uuid.UUID, date time.Time) (_ *domain.AccountingPeriod, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetPeriodForDate")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "GetPeriodForDate", "period", start, err, r.logger, r.metrics) }()
+
+	// Cache check — called on every transaction post; short TTL prevents stale reads.
+	cacheKey := "period:date:" + date.Format("2006-01-02")
+	if r.cache != nil {
+		var cached domain.AccountingPeriod
+		if cErr := r.cache.GetMemory(ctx, cacheKey, &cached); cErr == nil {
+			return &cached, nil
+		}
+	}
 
 	var result *domain.AccountingPeriod
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -352,6 +408,10 @@ LIMIT  1`
 		result = p
 		return nil
 	})
+	// Populate cache on hit — 5 min TTL; short enough to pick up period changes.
+	if err == nil && result != nil && r.cache != nil {
+		_ = r.cache.SetMemory(ctx, cacheKey, result, 5*time.Minute)
+	}
 	return result, err
 }
 
@@ -359,12 +419,14 @@ func (r *periodRepository) GetCurrentPeriod(ctx context.Context, tenantID uuid.U
 	return r.GetPeriodForDate(ctx, tenantID, time.Now())
 }
 
-func (r *periodRepository) ListPeriods(ctx context.Context, tenantID, fiscalYearID uuid.UUID) ([]*domain.AccountingPeriod, error) {
+func (r *periodRepository) ListPeriods(ctx context.Context, tenantID, fiscalYearID uuid.UUID) (_ []*domain.AccountingPeriod, err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.ListPeriods")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "ListPeriods", "period", start, err, r.logger, r.metrics) }()
 
 	var results []*domain.AccountingPeriod
-	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -406,15 +468,17 @@ ORDER  BY period_number ASC`
 	return results, err
 }
 
-func (r *periodRepository) UpdatePeriod(ctx context.Context, period *domain.AccountingPeriod) error {
+func (r *periodRepository) UpdatePeriod(ctx context.Context, period *domain.AccountingPeriod) (err error) {
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.UpdatePeriod")
 	defer span.End()
+	start := time.Now()
+	defer func() { observeOp(ctx, "UpdatePeriod", "period", start, err, r.logger, r.metrics) }()
 
 	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
+	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -440,5 +504,12 @@ RETURNING updated_at`
 			period.LockedBy,
 		).Scan(&period.UpdatedAt)
 	})
+	// Invalidate period-for-date cache entries spanning this period's dates.
+	// Simplest safe approach: delete the cached entry for each date in the range.
+	// For now, invalidate StartDate and EndDate keys (callers typically use these).
+	if err == nil && r.cache != nil {
+		_ = r.cache.DeleteMemory(ctx, "period:date:"+period.StartDate.Format("2006-01-02"))
+		_ = r.cache.DeleteMemory(ctx, "period:date:"+period.EndDate.Format("2006-01-02"))
+	}
+	return err
 }
-

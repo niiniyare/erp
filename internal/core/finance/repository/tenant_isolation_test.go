@@ -35,7 +35,7 @@ func runInCallback(inner db.Store) func(context.Context, func(context.Context, d
 }
 
 func newRepo(store db.Store) domain.TransactionRepository {
-	return repository.NewTransactionRepository(store, tracing.NewNoOpService(), nil)
+	return repository.NewTransactionRepository(store, tracing.NewNoOpService(), nil, nil)
 }
 
 // ─── FIN-REPO-010: no tenant in context → reject before DB touch ──────────────
