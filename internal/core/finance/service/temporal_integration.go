@@ -87,19 +87,35 @@ type PostTransactionActivityInput struct {
 	PostingDate   *time.Time `json:"posting_date,omitempty"`
 }
 
+// temporalCorrelationFields extracts Temporal activity info (attempt, workflow/activity ID)
+// for structured log correlation. Operators can use these to correlate log lines to
+// a specific Temporal workflow execution and distinguish first-attempt from retry.
+func temporalCorrelationFields(ctx context.Context) logger.Fields {
+	info := activity.GetInfo(ctx)
+	return logger.Fields{
+		"temporal_workflow_id":  info.WorkflowExecution.ID,
+		"temporal_run_id":       info.WorkflowExecution.RunID,
+		"temporal_activity_id":  info.ActivityID,
+		"temporal_attempt":      info.Attempt,
+		"temporal_task_queue":   info.TaskQueue,
+	}
+}
+
 // PostTransactionActivity wraps TransactionService.PostTransaction for use as a
 // Temporal activity. It inherits the configured retry policy from the workflow.
 func (a *financeActivities) PostTransactionActivity(ctx context.Context, input PostTransactionActivityInput) error {
-	logger.InfoContext(ctx, "PostTransactionActivity started",
-		logger.Fields{"transaction_id": input.TransactionID.String()})
+	corr := temporalCorrelationFields(ctx)
+	corr["transaction_id"] = input.TransactionID.String()
+	logger.InfoContext(ctx, "PostTransactionActivity started", corr)
 
 	_, err := a.txnService.PostTransaction(ctx, input.TransactionID, input.PostingDate)
 	if err != nil {
+		corr["error"] = err.Error()
+		logger.ErrorContext(ctx, "PostTransactionActivity failed", corr)
 		return businessErrorToTemporal(fmt.Errorf("PostTransactionActivity: %w", err))
 	}
 
-	logger.InfoContext(ctx, "PostTransactionActivity completed",
-		logger.Fields{"transaction_id": input.TransactionID.String()})
+	logger.InfoContext(ctx, "PostTransactionActivity completed", corr)
 	return nil
 }
 
@@ -114,26 +130,29 @@ type GenerateRecurringTransactionInput struct {
 func (a *financeActivities) GenerateRecurringTransactionActivity(ctx context.Context, input GenerateRecurringTransactionInput) (uuid.UUID, error) {
 	activity.RecordHeartbeat(ctx, "generating")
 
-	logger.InfoContext(ctx, "GenerateRecurringTransactionActivity started",
-		logger.Fields{
-			"template_id":     input.TemplateTransactionID.String(),
-			"generation_date": input.GenerationDate.Format("2006-01-02"),
-		})
+	corr := temporalCorrelationFields(ctx)
+	corr["template_id"] = input.TemplateTransactionID.String()
+	corr["generation_date"] = input.GenerationDate.Format("2006-01-02")
+	logger.InfoContext(ctx, "GenerateRecurringTransactionActivity started", corr)
 
 	newTxn, err := a.txnService.CreateRecurringTransaction(ctx, input.TemplateTransactionID, input.GenerationDate)
 	if err != nil {
+		corr["error"] = err.Error()
+		logger.ErrorContext(ctx, "GenerateRecurringTransactionActivity: create failed", corr)
 		return uuid.Nil, businessErrorToTemporal(fmt.Errorf("GenerateRecurringTransactionActivity: create: %w", err))
 	}
 
 	activity.RecordHeartbeat(ctx, "posting")
+	corr["new_transaction_id"] = newTxn.ID.String()
 
 	generationDate := input.GenerationDate
 	if _, err := a.txnService.PostTransaction(ctx, newTxn.ID, &generationDate); err != nil {
+		corr["error"] = err.Error()
+		logger.ErrorContext(ctx, "GenerateRecurringTransactionActivity: post failed", corr)
 		return newTxn.ID, businessErrorToTemporal(fmt.Errorf("GenerateRecurringTransactionActivity: post: %w", err))
 	}
 
-	logger.InfoContext(ctx, "GenerateRecurringTransactionActivity completed",
-		logger.Fields{"new_transaction_id": newTxn.ID.String()})
+	logger.InfoContext(ctx, "GenerateRecurringTransactionActivity completed", corr)
 
 	return newTxn.ID, nil
 }
@@ -151,12 +170,11 @@ type EscalateApprovalInput struct {
 // to DRAFT, then records a structured log entry (the actual notification channel
 // — email, Slack, etc. — is owned by the notification service).
 func (a *financeActivities) EscalateApprovalActivity(ctx context.Context, input EscalateApprovalInput) error {
-	logger.InfoContext(ctx, "EscalateApprovalActivity: SLA lapsed — rejecting approval",
-		logger.Fields{
-			"transaction_id": input.TransactionID.String(),
-			"submitted_at":   input.SubmittedAt.Format(time.RFC3339),
-			"elapsed":        time.Since(input.SubmittedAt).String(),
-		})
+	corr := temporalCorrelationFields(ctx)
+	corr["transaction_id"] = input.TransactionID.String()
+	corr["submitted_at"] = input.SubmittedAt.Format(time.RFC3339)
+	corr["elapsed"] = time.Since(input.SubmittedAt).String()
+	logger.InfoContext(ctx, "EscalateApprovalActivity: SLA lapsed — rejecting approval", corr)
 
 	// Inject system identity so RejectTransaction's auth + SOD guards pass.
 	// This rejection is system-initiated (SLA timer), not a human approver action.
@@ -166,11 +184,12 @@ func (a *financeActivities) EscalateApprovalActivity(ctx context.Context, input 
 	// RejectTransaction moves the transaction back to DRAFT status.
 	_, err := a.txnService.RejectTransaction(sysCtx, input.TransactionID, domain.RejectionReasonExpired, "Approval SLA expired — transaction automatically rejected and returned to DRAFT")
 	if err != nil {
+		corr["error"] = err.Error()
+		logger.ErrorContext(ctx, "EscalateApprovalActivity: reject failed", corr)
 		return businessErrorToTemporal(fmt.Errorf("EscalateApprovalActivity: reject: %w", err))
 	}
 
-	logger.InfoContext(ctx, "EscalateApprovalActivity completed — transaction returned to DRAFT",
-		logger.Fields{"transaction_id": input.TransactionID.String()})
+	logger.InfoContext(ctx, "EscalateApprovalActivity completed — transaction returned to DRAFT", corr)
 
 	return nil
 }
@@ -186,22 +205,20 @@ type ReversalActivityInput struct {
 func (a *financeActivities) ReversalActivity(ctx context.Context, input ReversalActivityInput) (uuid.UUID, error) {
 	activity.RecordHeartbeat(ctx, "reversing")
 
-	logger.InfoContext(ctx, "ReversalActivity started",
-		logger.Fields{
-			"transaction_id": input.TransactionID.String(),
-			"reason":         input.Reason,
-		})
+	corr := temporalCorrelationFields(ctx)
+	corr["transaction_id"] = input.TransactionID.String()
+	corr["reason"] = input.Reason
+	logger.InfoContext(ctx, "ReversalActivity started", corr)
 
 	reversal, err := a.txnService.ReverseTransaction(ctx, input.TransactionID, input.Reason)
 	if err != nil {
+		corr["error"] = err.Error()
+		logger.ErrorContext(ctx, "ReversalActivity failed", corr)
 		return uuid.Nil, businessErrorToTemporal(fmt.Errorf("ReversalActivity: %w", err))
 	}
 
-	logger.InfoContext(ctx, "ReversalActivity completed",
-		logger.Fields{
-			"original_id": input.TransactionID.String(),
-			"reversal_id": reversal.ID.String(),
-		})
+	corr["reversal_id"] = reversal.ID.String()
+	logger.InfoContext(ctx, "ReversalActivity completed", corr)
 
 	return reversal.ID, nil
 }

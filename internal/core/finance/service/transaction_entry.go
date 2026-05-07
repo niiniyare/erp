@@ -37,6 +37,7 @@ type TransactionEntryService interface {
 type transactionEntryService struct {
 	repo        domain.TransactionRepository
 	accountRepo domain.AccountsRepository
+	txRunner    domain.TxRunner // nil → best-effort (reconciliation is non-atomic)
 	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 }
@@ -50,6 +51,25 @@ func NewTransactionEntryService(
 	return &transactionEntryService{
 		repo:        repo,
 		accountRepo: accountRepo,
+		tracing:     tracing,
+		metrics:     metrics,
+	}
+}
+
+// NewTransactionEntryServiceWithTxRunner creates a TransactionEntryService with
+// atomic reconciliation support. Reconcile/Unreconcile batches run inside a single
+// DB transaction — crash mid-batch rolls back all changes.
+func NewTransactionEntryServiceWithTxRunner(
+	repo domain.TransactionRepository,
+	accountRepo domain.AccountsRepository,
+	txRunner domain.TxRunner,
+	tracing tracing.Service,
+	metrics metrics.MetricsProvider,
+) TransactionEntryService {
+	return &transactionEntryService{
+		repo:        repo,
+		accountRepo: accountRepo,
+		txRunner:    txRunner,
 		tracing:     tracing,
 		metrics:     metrics,
 	}
@@ -634,46 +654,78 @@ func (s *transactionEntryService) ReconcileEntries(ctx context.Context, entryIDs
 		return errors.NewBusinessError("VALIDATION_ERROR", "No entries provided for reconciliation")
 	}
 
-	for _, entryID := range entryIDs {
-		entry, err := s.repo.GetEntryByID(ctx, entryID)
-		if err != nil {
-			// Not-found during reconciliation is an error, not a skip.
-			// Silently continuing would report success when entries are missing.
-			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
-				"error_type": "entry_not_found",
-			})
-			logger.ErrorContext(ctx, "Entry not found during reconciliation — aborting batch",
-				logger.Fields{
-					"entry_id":           entryID.String(),
-					"reconciliation_ref": reconciliationRef,
-					"error":              err.Error(),
+	// reconcileAll contains the core reconciliation loop shared by both paths.
+	reconcileAll := func(execCtx context.Context) error {
+		for _, entryID := range entryIDs {
+			entry, err := s.repo.GetEntryByID(execCtx, entryID)
+			if err != nil {
+				// Not-found during reconciliation is an error, not a skip.
+				// Silently continuing would report success when entries are missing.
+				s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+					"error_type": "entry_not_found",
 				})
-			return fmt.Errorf("reconciliation aborted: entry %s not found: %w", entryID.String(), err)
-		}
+				logger.ErrorContext(execCtx, "Entry not found during reconciliation — aborting batch",
+					logger.Fields{
+						"entry_id":           entryID.String(),
+						"reconciliation_ref": reconciliationRef,
+						"error":              err.Error(),
+					})
+				return fmt.Errorf("reconciliation aborted: entry %s not found: %w", entryID.String(), err)
+			}
 
-		if entry.Reconciled {
-			// Already reconciled is idempotent — skip without error.
-			logger.WarnContext(ctx, "Entry already reconciled — skipping",
-				logger.Fields{
-					"entry_id":                entryID.String(),
-					"existing_reconcile_ref":  fmt.Sprintf("%v", entry.ReconciliationReference),
+			if entry.Reconciled {
+				// Detect ref mismatch: same entry reconciled with a DIFFERENT reference.
+				// This indicates overlapping reconciliation jobs or operator error.
+				if entry.ReconciliationReference != nil && *entry.ReconciliationReference != reconciliationRef {
+					s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+						"error_type": "ref_mismatch",
+					})
+					logger.ErrorContext(execCtx, "RECONCILIATION MISMATCH: entry already reconciled under different reference — possible duplicate reconciliation job",
+						logger.Fields{
+							"entry_id":     entryID.String(),
+							"existing_ref": *entry.ReconciliationReference,
+							"incoming_ref": reconciliationRef,
+						})
+					return fmt.Errorf("reconciliation ref mismatch for entry %s: already reconciled under %q, incoming %q",
+						entryID, *entry.ReconciliationReference, reconciliationRef)
+				}
+				// Same ref — idempotent skip (safe retry).
+				logger.WarnContext(execCtx, "Entry already reconciled under same reference — skipping (idempotent)",
+					logger.Fields{
+						"entry_id":           entryID.String(),
+						"reconciliation_ref": reconciliationRef,
+					})
+				continue
+			}
+
+			entry.MarkReconciled(reconciliationRef)
+
+			if err := s.repo.UpdateReconciliationStatus(execCtx, entryID, true, entry.ReconciledDate, &reconciliationRef); err != nil {
+				s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+					"error_type": "update_failed",
 				})
-			continue
+				logger.ErrorContext(execCtx, "Failed to mark entry as reconciled",
+					logger.Fields{
+						"entry_id": entryID.String(),
+						"error":    err.Error(),
+					})
+				return fmt.Errorf("failed to reconcile entry %s: %w", entryID.String(), err)
+			}
 		}
+		return nil
+	}
 
-		entry.MarkReconciled(reconciliationRef)
-
-		if err := s.repo.UpdateReconciliationStatus(ctx, entryID, true, entry.ReconciledDate, &reconciliationRef); err != nil {
-			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
-				"error_type": "update_failed",
-			})
-			logger.ErrorContext(ctx, "Failed to mark entry as reconciled",
-				logger.Fields{
-					"entry_id": entryID.String(),
-					"error":    err.Error(),
-				})
-			return fmt.Errorf("failed to reconcile entry %s: %w", entryID.String(), err)
-		}
+	// ── Atomic path: all-or-nothing via TxRunner ────────────────────────────
+	// Without atomicity a crash mid-batch leaves some entries reconciled and
+	// others not — a partial state that is invisible to callers reporting success.
+	var runErr error
+	if s.txRunner != nil {
+		runErr = s.txRunner.RunInTx(ctx, reconcileAll)
+	} else {
+		runErr = reconcileAll(ctx)
+	}
+	if runErr != nil {
+		return runErr
 	}
 
 	s.metrics.IncrementCounter("entries_reconciled_total", metrics.Fields{
@@ -705,38 +757,51 @@ func (s *transactionEntryService) UnreconcileEntries(ctx context.Context, entryI
 		return errors.NewBusinessError("VALIDATION_ERROR", "No entries provided for unreconciliation")
 	}
 
-	for _, entryID := range entryIDs {
-		entry, err := s.repo.GetEntryByID(ctx, entryID)
-		if err != nil {
-			// Not-found is an error — caller may have wrong IDs.
-			s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
-				"error_type": "entry_not_found_on_unreconcile",
-			})
-			logger.ErrorContext(ctx, "Entry not found during unreconciliation — aborting batch",
-				logger.Fields{
-					"entry_id": entryID.String(),
-					"error":    err.Error(),
+	unreconcileAll := func(execCtx context.Context) error {
+		for _, entryID := range entryIDs {
+			entry, err := s.repo.GetEntryByID(execCtx, entryID)
+			if err != nil {
+				// Not-found is an error — caller may have wrong IDs.
+				s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+					"error_type": "entry_not_found_on_unreconcile",
 				})
-			return fmt.Errorf("unreconciliation aborted: entry %s not found: %w", entryID.String(), err)
-		}
+				logger.ErrorContext(execCtx, "Entry not found during unreconciliation — aborting batch",
+					logger.Fields{
+						"entry_id": entryID.String(),
+						"error":    err.Error(),
+					})
+				return fmt.Errorf("unreconciliation aborted: entry %s not found: %w", entryID.String(), err)
+			}
 
-		if !entry.Reconciled {
-			// Not reconciled — idempotent skip.
-			logger.WarnContext(ctx, "Entry not reconciled — skipping unreconcile",
-				logger.Fields{"entry_id": entryID.String()})
-			continue
-		}
+			if !entry.Reconciled {
+				// Not reconciled — idempotent skip.
+				logger.WarnContext(execCtx, "Entry not reconciled — skipping unreconcile",
+					logger.Fields{"entry_id": entryID.String()})
+				continue
+			}
 
-		entry.UnmarkReconciled()
+			entry.UnmarkReconciled()
 
-		if err := s.repo.UpdateReconciliationStatus(ctx, entryID, false, nil, nil); err != nil {
-			logger.ErrorContext(ctx, "Failed to mark entry as unreconciled",
-				logger.Fields{
-					"entry_id": entryID.String(),
-					"error":    err.Error(),
-				})
-			return fmt.Errorf("failed to unreconcile entry %s: %w", entryID.String(), err)
+			if err := s.repo.UpdateReconciliationStatus(execCtx, entryID, false, nil, nil); err != nil {
+				logger.ErrorContext(execCtx, "Failed to mark entry as unreconciled",
+					logger.Fields{
+						"entry_id": entryID.String(),
+						"error":    err.Error(),
+					})
+				return fmt.Errorf("failed to unreconcile entry %s: %w", entryID.String(), err)
+			}
 		}
+		return nil
+	}
+
+	var runErr error
+	if s.txRunner != nil {
+		runErr = s.txRunner.RunInTx(ctx, unreconcileAll)
+	} else {
+		runErr = unreconcileAll(ctx)
+	}
+	if runErr != nil {
+		return runErr
 	}
 
 	s.metrics.IncrementCounter("entries_unreconciled_total", metrics.Fields{

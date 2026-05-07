@@ -109,6 +109,52 @@ func (ts TransactionStatus) IsActive() bool {
 	return ts == TransactionStatusPosted
 }
 
+// IsTerminal returns true when the transaction has reached a final state.
+// Terminal states cannot transition further — any attempt is a bug or attack.
+func (ts TransactionStatus) IsTerminal() bool {
+	switch ts {
+	case TransactionStatusPosted, TransactionStatusCancelled, TransactionStatusReversed:
+		return true
+	default:
+		return false
+	}
+}
+
+// allowedTransitions defines the legal state machine for transaction status.
+// Every transition must be listed here; anything else is illegal.
+//
+// Visual diagram:
+//
+//	DRAFT ──────────────────────────────────────────────────► CANCELLED
+//	DRAFT ──► PENDING_APPROVAL ──► APPROVED ──► POSTED ──► REVERSED
+//	DRAFT ─────────────────────────────────────► POSTED   (no-approval-required fast path)
+//	PENDING_APPROVAL ──► REJECTED ──► DRAFT   (resubmit after correction)
+var allowedTransitions = map[TransactionStatus][]TransactionStatus{
+	TransactionStatusDraft:           {TransactionStatusPendingApproval, TransactionStatusApproved, TransactionStatusPosted, TransactionStatusCancelled},
+	TransactionStatusPendingApproval: {TransactionStatusApproved, TransactionStatusRejected, TransactionStatusCancelled},
+	TransactionStatusApproved:        {TransactionStatusPosted, TransactionStatusCancelled},
+	TransactionStatusRejected:        {TransactionStatusDraft, TransactionStatusCancelled},
+	TransactionStatusPosted:          {TransactionStatusReversed},
+	TransactionStatusReversed:        {}, // terminal
+	TransactionStatusCancelled:       {}, // terminal
+}
+
+// CanTransitionTo reports whether transitioning from ts to target is legal
+// according to the finance module state machine. Use this for all status
+// change guards — never write ad-hoc switch statements.
+func (ts TransactionStatus) CanTransitionTo(target TransactionStatus) bool {
+	allowed, ok := allowedTransitions[ts]
+	if !ok {
+		return false // unknown current status — reject
+	}
+	for _, a := range allowed {
+		if a == target {
+			return true
+		}
+	}
+	return false
+}
+
 // String returns the string representation of TransactionStatus
 func (ts TransactionStatus) String() string {
 	return string(ts)

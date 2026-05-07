@@ -764,6 +764,20 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 		}
 	}
 
+	// Idempotency guard: if already POSTED return existing record immediately.
+	// Temporal retries the PostTransactionActivity after a worker restart even if
+	// the previous attempt committed. Without this guard the retry would fail with
+	// INVALID_STATUS (a non-retryable BusinessError), causing the workflow to fail
+	// for an operation that actually succeeded.
+	if transaction.TransactionStatus == domain.TransactionStatusPosted {
+		s.metrics.IncrementCounter("transaction_posting_duplicate_total", metrics.Fields{
+			"transaction_type": string(transaction.TransactionType),
+		})
+		logger.InfoContext(ctx, "PostTransaction: idempotent retry — transaction already posted",
+			logger.Fields{"transaction_id": id.String()})
+		return transaction, nil
+	}
+
 	// Only APPROVED transactions may be posted. DRAFT transactions that require
 	// approval must go through the approval workflow first (prevents bypass).
 	// Exception: DRAFT transactions with ApprovalRequired=false may be posted directly.
@@ -1160,6 +1174,18 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 	transaction, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Idempotency: if already APPROVED return existing record.
+	// Prevents Temporal retry failure when the activity succeeded but the worker
+	// restarted before Temporal could record the completion.
+	if transaction.ApprovalStatus == domain.ApprovalStatusApproved {
+		s.metrics.IncrementCounter("transaction_approval_duplicate_total", metrics.Fields{
+			"transaction_type": string(transaction.TransactionType),
+		})
+		logger.InfoContext(ctx, "ApproveTransaction: idempotent retry — already approved",
+			logger.Fields{"transaction_id": id.String()})
+		return transaction, nil
 	}
 
 	if !transaction.ApprovalRequired || transaction.ApprovalStatus != domain.ApprovalStatusPending {
@@ -1640,6 +1666,28 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 		return nil, errors.NewBusinessError("NOT_RECURRING", "Template is not a recurring transaction").
 			WithHTTPStatus(http.StatusUnprocessableEntity).
 			WithCategory(errors.CategoryBusiness)
+	}
+
+	// ── Idempotency: check for an existing generated transaction ──────────────
+	// GenerateRecurringTransactionActivity may be retried by Temporal after a
+	// worker crash. Without this guard, each retry creates a duplicate transaction
+	// — a silent ledger corruption. The transaction number is a deterministic
+	// content-addressed key: "{template_number}-{YYYYMMDD}".
+	generatedNumber := fmt.Sprintf("%s-%s", template.TransactionNumber, date.Format("20060102"))
+	existing, lookupErr := s.repo.GetByNumber(ctx, template.EntityID, generatedNumber)
+	if lookupErr == nil && existing != nil {
+		// Already generated — idempotent success. Log so operators can see retries.
+		s.metrics.IncrementCounter("recurring_generation_duplicate_total", metrics.Fields{
+			"template_id": templateID.String(),
+		})
+		logger.WarnContext(ctx, "CreateRecurringTransaction: idempotent retry — transaction already generated",
+			logger.Fields{
+				"template_id":        templateID.String(),
+				"generated_number":   generatedNumber,
+				"existing_tx_id":     existing.ID.String(),
+				"transaction_date":   date.Format("2006-01-02"),
+			})
+		return existing, nil
 	}
 
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, templateID)

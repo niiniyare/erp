@@ -609,7 +609,9 @@ func (s *TransactionServiceSuite) TestPostTransaction_Unbalanced() {
 }
 
 // ============================================================================
-// FIN-TXN-013: PostTransaction — already-posted transaction is rejected
+// FIN-TXN-013: PostTransaction — already-posted transaction is idempotent
+// Temporal retries the activity after a worker restart; returning the existing
+// posted transaction (instead of an error) prevents spurious workflow failures.
 // ============================================================================
 
 func (s *TransactionServiceSuite) TestPostTransaction_AlreadyPosted() {
@@ -618,8 +620,9 @@ func (s *TransactionServiceSuite) TestPostTransaction_AlreadyPosted() {
 	s.repo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)
 
 	result, err := s.svc.PostTransaction(s.ctx, txn.ID, nil)
-	s.req.Error(err, "posting an already-POSTED transaction must return an error")
-	s.req.Nil(result)
+	s.req.NoError(err, "posting an already-POSTED transaction must succeed (idempotent retry)")
+	s.req.NotNil(result)
+	s.req.Equal(domain.TransactionStatusPosted, result.TransactionStatus)
 }
 
 // ============================================================================
