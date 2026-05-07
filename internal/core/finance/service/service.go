@@ -4,6 +4,7 @@
 package service
 
 import (
+	"awo.so/internal/core/audit"
 	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/core/iam"
@@ -46,6 +47,9 @@ type Dependencies struct {
 	Metrics            metrics.MetricsProvider
 	IAMService         iam.Service
 	FeatureFlagService featureflag.Service
+	// AuditService is the single audit sink for all finance mutations.
+	// nil → audit calls are silently skipped (safe for tests that don't need audit).
+	AuditService       audit.Service
 }
 
 // NewServices creates a new instance of finance services with all dependencies
@@ -70,6 +74,7 @@ func NewServices(deps Dependencies) *Services {
 		deps.TxRunner, // nil OK — falls back to best-effort cleanup on reversal failure
 		deps.Tracing,
 		deps.Metrics,
+		deps.AuditService,
 	)
 
 	// Create Account service with account group repository
@@ -82,13 +87,13 @@ func NewServices(deps Dependencies) *Services {
 		deps.FeatureFlagService,
 	)
 
-	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics)
+	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, deps.AuditService)
 	exchangeRateService := NewExchangeRateService(deps.ExchangeRateRepo, deps.Tracing, deps.Metrics)
 	currencyService := NewCurrencyService(deps.CurrencyRepo, deps.Tracing, deps.Metrics)
 	costCenterService := NewCostCenterService(deps.CostCenterRepo, deps.Tracing, deps.Metrics)
 	budgetService := NewBudgetService(deps.BudgetRepo, deps.Tracing, deps.Metrics)
 	taxService := NewTaxService(deps.TaxRepo, deps.Tracing, deps.Metrics)
-	reconciliationService := NewReconciliationService(deps.ReconciliationRepo, deps.Tracing, deps.Metrics)
+	reconciliationService := NewReconciliationService(deps.ReconciliationRepo, deps.Tracing, deps.Metrics, deps.AuditService)
 
 	return &Services{
 		Account:          accountService,

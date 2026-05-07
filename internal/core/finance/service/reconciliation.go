@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"awo.so/internal/core/audit"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/metrics"
@@ -33,9 +34,10 @@ type ReconciliationService interface {
 }
 
 type reconciliationService struct {
-	repo    domain.ReconciliationRepository
-	tracing tracing.Service
-	metrics metrics.MetricsProvider
+	repo     domain.ReconciliationRepository
+	tracing  tracing.Service
+	metrics  metrics.MetricsProvider
+	auditSvc audit.Service // nil → audit skipped
 }
 
 // NewReconciliationService creates a new ReconciliationService.
@@ -43,8 +45,9 @@ func NewReconciliationService(
 	repo domain.ReconciliationRepository,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
+	auditSvc audit.Service,
 ) ReconciliationService {
-	return &reconciliationService{repo: repo, tracing: tracing, metrics: metrics}
+	return &reconciliationService{repo: repo, tracing: tracing, metrics: metrics, auditSvc: auditSvc}
 }
 
 func (s *reconciliationService) ImportStatement(ctx context.Context, stmt *domain.BankStatement, lines []*domain.BankStatementLine) (*domain.BankStatement, error) {
@@ -83,6 +86,18 @@ func (s *reconciliationService) ImportStatement(ctx context.Context, stmt *domai
 	}
 
 	s.metrics.IncrementCounter("bank_statement_imported_total", metrics.Fields{})
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeStmtImported,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		ResourceID:    uuidPtr(stmt.ID),
+		Context: auditCtx(map[string]any{
+			"statement_id": stmt.ID.String(),
+			"lines_count":  len(lines),
+			"account_id":   stmt.AccountID.String(),
+		}),
+	})
 	return stmt, nil
 }
 
@@ -154,6 +169,18 @@ func (s *reconciliationService) MatchLine(ctx context.Context, statementID, line
 		span.RecordError(updateErr)
 	}
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        &byUserID,
+		EventType:     auditTypeLineMatched,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		ResourceID:    uuidPtr(statementID),
+		Context: auditCtx(map[string]any{
+			"statement_id": statementID.String(),
+			"line_id":      lineID.String(),
+			"entry_id":     entryID.String(),
+		}),
+	})
 	return stmt, nil
 }
 
@@ -184,6 +211,17 @@ func (s *reconciliationService) UnmatchLine(ctx context.Context, statementID, li
 		span.RecordError(updateErr)
 	}
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeLineUnmatched,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		ResourceID:    uuidPtr(statementID),
+		Context: auditCtx(map[string]any{
+			"statement_id": statementID.String(),
+			"line_id":      lineID.String(),
+		}),
+	})
 	return stmt, nil
 }
 
@@ -230,6 +268,19 @@ func (s *reconciliationService) CompleteReconciliation(ctx context.Context, stat
 	stmt.UpdatedAt = time.Now()
 
 	s.metrics.IncrementCounter("reconciliation_completed_total", metrics.Fields{})
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        &byUserID,
+		EventType:     auditTypeReconciled,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityMedium,
+		ResourceID:    uuidPtr(statementID),
+		Context: auditCtx(map[string]any{
+			"statement_id":      statementID.String(),
+			"matched_count":     stmt.MatchedCount,
+			"unmatched_count":   stmt.UnmatchedCount,
+			"difference_amount": stmt.DifferenceAmount.String(),
+		}),
+	})
 	return stmt, nil
 }
 

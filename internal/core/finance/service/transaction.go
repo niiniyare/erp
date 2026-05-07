@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"awo.so/internal/core/audit"
 	"awo.so/internal/core/finance/domain"
 	financePipeline "awo.so/internal/core/finance/pipeline"
 	corePipeline "awo.so/internal/pipeline"
@@ -50,6 +51,7 @@ type transactionService struct {
 	txRunner            domain.TxRunner               // nil → reversal uses best-effort cleanup
 	tracing             tracing.Service
 	metrics             metrics.MetricsProvider
+	auditSvc            audit.Service // nil → audit skipped (safe for tests)
 }
 
 func NewTransactionService(
@@ -61,6 +63,7 @@ func NewTransactionService(
 	txRunner domain.TxRunner,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
+	auditSvc audit.Service,
 ) TransactionService {
 	return &transactionService{
 		repo:                repo,
@@ -71,6 +74,7 @@ func NewTransactionService(
 		txRunner:            txRunner,
 		tracing:             tracing,
 		metrics:             metrics,
+		auditSvc:            auditSvc,
 	}
 }
 
@@ -281,6 +285,20 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 				"entries_count":      len(domainEntries),
 				"duration_ms":        duration.Milliseconds(),
 			})
+		fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+			UserID:        auditUserID(ctx),
+			EventType:     auditTypeTxnCreated,
+			EventCategory: auditCategoryFinance,
+			Severity:      auditSeverityInfo,
+			EntityID:      derefUUIDPtr(transaction.EntityID),
+			ResourceID:    uuidPtr(transaction.ID),
+			Context: auditCtx(map[string]any{
+				"transaction_id":     transaction.ID.String(),
+				"transaction_number": transaction.TransactionNumber,
+				"transaction_type":   string(transaction.TransactionType),
+				"entries_count":      len(domainEntries),
+			}),
+		})
 		return transaction, nil
 	}
 
@@ -334,6 +352,20 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnCreated,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		EntityID:      derefUUIDPtr(transaction.EntityID),
+		ResourceID:    uuidPtr(transaction.ID),
+		Context: auditCtx(map[string]any{
+			"transaction_id":     transaction.ID.String(),
+			"transaction_number": transaction.TransactionNumber,
+			"transaction_type":   string(transaction.TransactionType),
+			"entries_count":      len(req.Entries),
+		}),
+	})
 	return transaction, nil
 }
 
@@ -795,6 +827,19 @@ func (s *transactionService) postTransactionViaPipeline(ctx context.Context, id 
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnPosted,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		EntityID:      derefUUIDPtr(postedTransaction.EntityID),
+		ResourceID:    uuidPtr(postedTransaction.ID),
+		Context: auditCtx(map[string]any{
+			"transaction_id":     postedTransaction.ID.String(),
+			"transaction_number": postedTransaction.TransactionNumber,
+			"posting_date":       pd.Format("2006-01-02"),
+		}),
+	})
 	return postedTransaction, nil
 }
 
@@ -965,6 +1010,19 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnPosted,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		EntityID:      derefUUIDPtr(postedTransaction.EntityID),
+		ResourceID:    uuidPtr(postedTransaction.ID),
+		Context: auditCtx(map[string]any{
+			"transaction_id":     postedTransaction.ID.String(),
+			"transaction_number": postedTransaction.TransactionNumber,
+			"posting_date":       postingDate.Format("2006-01-02"),
+		}),
+	})
 	return postedTransaction, nil
 }
 
@@ -1144,6 +1202,19 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 				"reversal_transaction_id": reversalTransaction.ID.String(),
 				"reason":                  reason,
 			})
+		fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+			UserID:        auditUserID(ctx),
+			EventType:     auditTypeTxnReversed,
+			EventCategory: auditCategoryFinance,
+			Severity:      auditSeverityHigh,
+			EntityID:      derefUUIDPtr(postedReversal.EntityID),
+			ResourceID:    uuidPtr(id),
+			Context: auditCtx(map[string]any{
+				"original_transaction_id": id.String(),
+				"reversal_transaction_id": reversalTransaction.ID.String(),
+				"reason":                  reason,
+			}),
+		})
 		return postedReversal, nil
 	}
 
@@ -1216,6 +1287,19 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 			"reason":                  reason,
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnReversed,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityHigh,
+		EntityID:      derefUUIDPtr(postedReversal.EntityID),
+		ResourceID:    uuidPtr(id),
+		Context: auditCtx(map[string]any{
+			"original_transaction_id": id.String(),
+			"reversal_transaction_id": reversalTransaction.ID.String(),
+			"reason":                  reason,
+		}),
+	})
 	return postedReversal, nil
 }
 
@@ -1329,6 +1413,19 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnApproved,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityMedium,
+		EntityID:      derefUUIDPtr(approvedTransaction.EntityID),
+		ResourceID:    uuidPtr(approvedTransaction.ID),
+		Context: auditCtx(map[string]any{
+			"transaction_id":     approvedTransaction.ID.String(),
+			"transaction_number": approvedTransaction.TransactionNumber,
+			"approver_id":        approverID.String(),
+		}),
+	})
 	return approvedTransaction, nil
 }
 
@@ -1440,6 +1537,21 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnRejected,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityMedium,
+		EntityID:      derefUUIDPtr(rejectedTransaction.EntityID),
+		ResourceID:    uuidPtr(rejectedTransaction.ID),
+		Context: auditCtx(map[string]any{
+			"transaction_id":     rejectedTransaction.ID.String(),
+			"transaction_number": rejectedTransaction.TransactionNumber,
+			"rejector_id":        rejectorID.String(),
+			"rejection_reason":   string(reason),
+			"notes":              notes,
+		}),
+	})
 	return rejectedTransaction, nil
 }
 
@@ -1850,6 +1962,19 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 			"transaction_date": date.Format("2006-01-02"),
 		})
 
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeRecurringCreated,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityInfo,
+		EntityID:      derefUUIDPtr(newTransaction.EntityID),
+		ResourceID:    uuidPtr(newTransaction.ID),
+		Context: auditCtx(map[string]any{
+			"template_id":      templateID.String(),
+			"transaction_id":   newTransaction.ID.String(),
+			"transaction_date": date.Format("2006-01-02"),
+		}),
+	})
 	return newTransaction, nil
 }
 

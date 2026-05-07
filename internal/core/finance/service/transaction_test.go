@@ -381,6 +381,7 @@ func (s *TransactionServiceSuite) SetupTest() {
 		nil, // txRunner — nil uses best-effort cleanup path
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
+		nil, // auditSvc — nil skips audit in tests
 	)
 }
 
@@ -1033,6 +1034,7 @@ func (s *TransactionServiceSuite) TestPostTransaction_ClosedPeriod() {
 		nil, // txRunner
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
+		nil, // auditSvc — nil skips audit in tests
 	)
 
 	localRepo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)
@@ -1072,6 +1074,7 @@ func (s *TransactionServiceSuite) TestReverseTransaction_CannotReverseReversal()
 		nil, // txRunner
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
+		nil, // auditSvc — nil skips audit in tests
 	)
 
 	localRepo.On("GetByID", s.ctx, txn.ID).Return(txn, nil)

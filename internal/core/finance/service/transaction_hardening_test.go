@@ -62,6 +62,7 @@ func newHardenSvc(
 		repo, acctRepo, periodRepo, histRepo, entrySvc, nil,
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
+		nil, // auditSvc — nil skips audit in tests
 	)
 }
 

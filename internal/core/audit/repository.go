@@ -16,6 +16,63 @@ import (
 	"github.com/google/uuid"
 )
 
+// Repository defines the interface for the audit repository.
+type Repository interface {
+	// Core CRUD Operations
+	// CreateAuditEvent(ctx context.Context, arg AuditEvent) error
+	CreateAuditEvent(ctx context.Context, req CreateAuditEventRequest) (*AuditEvent, error)
+	GetAuditEvents(ctx context.Context, tenantID uuid.UUID, filters AuditEventFilters) ([]AuditEvent, error)
+	GetAuditEventByID(ctx context.Context, tenantID uuid.UUID, eventID uuid.UUID) (*AuditEvent, error)
+
+	// User-specific queries
+	GetUserAuditHistory(ctx context.Context, tenantID uuid.UUID, userID uuid.UUID, filters AuditEventFilters) ([]AuditEvent, error)
+	GetUserRiskProfile(ctx context.Context, tenantID uuid.UUID, userID uuid.UUID, startTime *time.Time) (*UserRiskProfile, error)
+	GetUserSessionEvents(ctx context.Context, tenantID uuid.UUID, sessionID uuid.UUID) ([]AuditEvent, error)
+
+	// Entity and Resource queries
+	GetAuditEventsByEntity(ctx context.Context, tenantID uuid.UUID, entityID uuid.UUID, filters AuditEventFilters) ([]AuditEvent, error)
+	GetAuditEventsByResource(ctx context.Context, tenantID uuid.UUID, resourceID uuid.UUID, filters AuditEventFilters) ([]AuditEvent, error)
+
+	// Security and Risk Analysis
+	GetHighRiskEvents(ctx context.Context, tenantID uuid.UUID, minRiskScore int, filters AuditEventFilters) ([]AuditEvent, error)
+	GetFailedAccessAttempts(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, userID *uuid.UUID, ipAddress *netip.Addr, limit, offset int) ([]AuditEvent, error)
+	GetRecentSecurityEvents(ctx context.Context, tenantID uuid.UUID, minRiskScore int, startTime time.Time, eventCategory *string, limit int) ([]AuditEvent, error)
+	GetSuspiciousActivityByIP(ctx context.Context, tenantID uuid.UUID, ipAddress *netip.Addr, minRiskScore int, startTime time.Time, limit, offset int) ([]SuspiciousActivityByIP, error)
+
+	// Compliance and Admin queries
+	GetComplianceEvents(ctx context.Context, tenantID uuid.UUID, complianceFlag string, startTime, endTime *time.Time, limit, offset int) ([]AuditEvent, error)
+	GetAdminActions(ctx context.Context, tenantID uuid.UUID, adminUserID, targetUserID *uuid.UUID, startTime, endTime *time.Time, limit, offset int) ([]AuditEvent, error)
+
+	// Analytics and Statistics
+	GetAuditStatsByCategory(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, severity *string) ([]AuditStatsByCategory, error)
+	GetAuditStatsBySeverity(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, eventCategory *string) ([]AuditStatsBySeverity, error)
+	GetAuditLogHealth(ctx context.Context, tenantID uuid.UUID) (*AuditLogHealth, error)
+	GetAuditStorageStats(ctx context.Context, tenantID uuid.UUID) (*AuditStorageStats, error)
+	GetHourlyEventRates(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, limit int) ([]HourlyEventRate, error)
+	GetEventTypeDistribution(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, eventCategory *string, minOccurrences int, limit int) ([]EventTypeDistribution, error)
+
+	// Forensic Investigation
+	GetEventTimelineForUser(ctx context.Context, tenantID uuid.UUID, userID uuid.UUID, startTime, endTime time.Time) ([]EventTimeline, error)
+	GetRelatedEventsByContext(ctx context.Context, tenantID uuid.UUID, contextKey string, contextSearch string, startTime, endTime time.Time, excludeEventID *uuid.UUID, limit int) ([]RelatedEventsByContext, error)
+	GetSimilarIncidentPatterns(ctx context.Context, tenantID uuid.UUID, params SimilarIncidentPatternsParams) ([]SimilarIncidentPattern, error)
+
+	// Advanced Analysis
+	GetAnomalousUserBehavior(ctx context.Context, tenantID uuid.UUID, params AnomalousUserBehaviorParams) ([]AnomalousUserBehavior, error)
+	GetUserAgentAnalysis(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, minEvents int, limit int) ([]UserAgentAnalysis, error)
+	GetDuplicateEventAnalysis(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time, minDuplicateCount int, limit int) ([]DuplicateEventAnalysis, error)
+
+	// Bulk Operations
+	BulkUpdateEventRiskScores(ctx context.Context, tenantID uuid.UUID, params BulkUpdateRiskScoresParams) error
+	BulkAddComplianceFlags(ctx context.Context, tenantID uuid.UUID, params BulkAddComplianceFlagsParams) error
+
+	// Maintenance Operations
+	UpdateEventRiskScore(ctx context.Context, tenantID uuid.UUID, eventID uuid.UUID, riskScore int) error
+	UpdateEventComplianceFlags(ctx context.Context, tenantID uuid.UUID, eventID uuid.UUID, complianceFlags json.RawMessage) error
+	DeleteOldAuditEvents(ctx context.Context, tenantID uuid.UUID, cutoffDate time.Time) error
+	ArchiveOldAuditEvents(ctx context.Context, tenantID uuid.UUID, cutoffDate time.Time, eventCategory *string, limit int) ([]AuditEvent, error)
+	CleanupDuplicateEvents(ctx context.Context, tenantID uuid.UUID, startTime, endTime time.Time) error
+}
+
 type repository struct {
 	store   db.Store
 	logger  logger.Logger
@@ -35,11 +92,11 @@ func NewRepository(store db.Store, logger logger.Logger, tracing tracing.Service
 
 func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventRequest) (*AuditEvent, error) {
 	var auditEvent *AuditEvent
-	tenantID, ok := shared.GetTenantID(ctx)
+	_, ok := shared.GetTenantID(ctx)
 	if !ok {
 		return nil, fmt.Errorf("tenantID has not been set in the context")
 	}
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		var reason string
 		if req.Reason != nil {
 			reason = *req.Reason

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"awo.so/internal/core/audit"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/errors"
@@ -37,6 +38,7 @@ type periodService struct {
 	integrityService IntegrityService // nil → hard-close runs without integrity gate
 	tracing          tracing.Service
 	metrics          metrics.MetricsProvider
+	auditSvc         audit.Service // nil → audit skipped
 }
 
 // NewPeriodService creates a new PeriodService without an integrity gate.
@@ -46,11 +48,13 @@ func NewPeriodService(
 	repo domain.PeriodRepository,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
+	auditSvc audit.Service,
 ) PeriodService {
 	return &periodService{
-		repo:    repo,
-		tracing: tracing,
-		metrics: metrics,
+		repo:     repo,
+		tracing:  tracing,
+		metrics:  metrics,
+		auditSvc: auditSvc,
 	}
 }
 
@@ -66,12 +70,14 @@ func NewPeriodServiceWithIntegrity(
 	integrityService IntegrityService,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
+	auditSvc audit.Service,
 ) PeriodService {
 	return &periodService{
 		repo:             repo,
 		integrityService: integrityService,
 		tracing:          tracing,
 		metrics:          metrics,
+		auditSvc:         auditSvc,
 	}
 }
 
@@ -266,6 +272,23 @@ func (s *periodService) ChangePeriodStatus(ctx context.Context, id uuid.UUID, ne
 
 	s.metrics.IncrementCounter("period_status_changed_total", metrics.Fields{
 		"new_status": string(newStatus),
+	})
+
+	severity := auditSeverityMedium
+	if newStatus == domain.PeriodStatusHardClosed {
+		severity = auditSeverityHigh
+	}
+	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		UserID:        &byUserID,
+		EventType:     auditTypePeriodStatus,
+		EventCategory: auditCategoryFinance,
+		Severity:      severity,
+		ResourceID:    uuidPtr(id),
+		Context: auditCtx(map[string]any{
+			"period_id":  id.String(),
+			"new_status": string(newStatus),
+			"period_name": p.Name,
+		}),
 	})
 	return p, nil
 }
