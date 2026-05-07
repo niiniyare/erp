@@ -38,7 +38,7 @@ type periodService struct {
 	integrityService IntegrityService // nil → hard-close runs without integrity gate
 	tracing          tracing.Service
 	metrics          metrics.MetricsProvider
-	auditSvc         audit.Service // nil → audit skipped
+	auditWriter      *financeAuditWriter // nil → audit skipped
 }
 
 // NewPeriodService creates a new PeriodService without an integrity gate.
@@ -48,13 +48,13 @@ func NewPeriodService(
 	repo domain.PeriodRepository,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
-	auditSvc audit.Service,
+	aw *financeAuditWriter,
 ) PeriodService {
 	return &periodService{
-		repo:     repo,
-		tracing:  tracing,
-		metrics:  metrics,
-		auditSvc: auditSvc,
+		repo:        repo,
+		tracing:     tracing,
+		metrics:     metrics,
+		auditWriter: aw,
 	}
 }
 
@@ -70,14 +70,14 @@ func NewPeriodServiceWithIntegrity(
 	integrityService IntegrityService,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
-	auditSvc audit.Service,
+	aw *financeAuditWriter,
 ) PeriodService {
 	return &periodService{
 		repo:             repo,
 		integrityService: integrityService,
 		tracing:          tracing,
 		metrics:          metrics,
-		auditSvc:         auditSvc,
+		auditWriter:      aw,
 	}
 }
 
@@ -278,18 +278,18 @@ func (s *periodService) ChangePeriodStatus(ctx context.Context, id uuid.UUID, ne
 	if newStatus == domain.PeriodStatusHardClosed {
 		severity = auditSeverityHigh
 	}
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        &byUserID,
 		EventType:     auditTypePeriodStatus,
 		EventCategory: auditCategoryFinance,
 		Severity:      severity,
 		ResourceID:    uuidPtr(id),
 		Context: auditCtx(map[string]any{
-			"period_id":  id.String(),
-			"new_status": string(newStatus),
+			"period_id":   id.String(),
+			"new_status":  string(newStatus),
 			"period_name": p.Name,
 		}),
-	})
+	}, auditTypePeriodStatus+":"+id.String()+":"+string(newStatus))
 	return p, nil
 }
 

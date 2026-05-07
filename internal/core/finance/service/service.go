@@ -49,11 +49,20 @@ type Dependencies struct {
 	FeatureFlagService featureflag.Service
 	// AuditService is the single audit sink for all finance mutations.
 	// nil → audit calls are silently skipped (safe for tests that don't need audit).
-	AuditService       audit.Service
+	AuditService audit.Service
+
+	// AuditOutboxRepo enables durable CRITICAL audit delivery.
+	// When set, CRITICAL events are written to the outbox within the same DB
+	// transaction as the financial mutation and delivered by a background worker.
+	// nil → CRITICAL events fall back to direct write (degraded durability).
+	AuditOutboxRepo AuditOutboxRepository
 }
 
 // NewServices creates a new instance of finance services with all dependencies
 func NewServices(deps Dependencies) *Services {
+	// Build the shared audit writer once — routes by criticality and holds outbox repo.
+	aw := newFinanceAuditWriter(deps.AuditService, deps.AuditOutboxRepo, deps.Metrics)
+
 	// Create TransactionEntry service first as Transaction service depends on it.
 	// Entry methods (CreateEntry, GetEntriesByTransaction, etc.) are part of
 	// TransactionRepository until a dedicated entry repository is extracted.
@@ -74,7 +83,7 @@ func NewServices(deps Dependencies) *Services {
 		deps.TxRunner, // nil OK — falls back to best-effort cleanup on reversal failure
 		deps.Tracing,
 		deps.Metrics,
-		deps.AuditService,
+		aw,
 	)
 
 	// Create Account service with account group repository
@@ -87,13 +96,13 @@ func NewServices(deps Dependencies) *Services {
 		deps.FeatureFlagService,
 	)
 
-	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, deps.AuditService)
+	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, aw)
 	exchangeRateService := NewExchangeRateService(deps.ExchangeRateRepo, deps.Tracing, deps.Metrics)
 	currencyService := NewCurrencyService(deps.CurrencyRepo, deps.Tracing, deps.Metrics)
 	costCenterService := NewCostCenterService(deps.CostCenterRepo, deps.Tracing, deps.Metrics)
 	budgetService := NewBudgetService(deps.BudgetRepo, deps.Tracing, deps.Metrics)
 	taxService := NewTaxService(deps.TaxRepo, deps.Tracing, deps.Metrics)
-	reconciliationService := NewReconciliationService(deps.ReconciliationRepo, deps.Tracing, deps.Metrics, deps.AuditService)
+	reconciliationService := NewReconciliationService(deps.ReconciliationRepo, deps.Tracing, deps.Metrics, aw)
 
 	return &Services{
 		Account:          accountService,

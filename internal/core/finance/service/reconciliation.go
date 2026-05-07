@@ -34,10 +34,10 @@ type ReconciliationService interface {
 }
 
 type reconciliationService struct {
-	repo     domain.ReconciliationRepository
-	tracing  tracing.Service
-	metrics  metrics.MetricsProvider
-	auditSvc audit.Service // nil → audit skipped
+	repo        domain.ReconciliationRepository
+	tracing     tracing.Service
+	metrics     metrics.MetricsProvider
+	auditWriter *financeAuditWriter // nil → audit skipped
 }
 
 // NewReconciliationService creates a new ReconciliationService.
@@ -45,9 +45,9 @@ func NewReconciliationService(
 	repo domain.ReconciliationRepository,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
-	auditSvc audit.Service,
+	aw *financeAuditWriter,
 ) ReconciliationService {
-	return &reconciliationService{repo: repo, tracing: tracing, metrics: metrics, auditSvc: auditSvc}
+	return &reconciliationService{repo: repo, tracing: tracing, metrics: metrics, auditWriter: aw}
 }
 
 func (s *reconciliationService) ImportStatement(ctx context.Context, stmt *domain.BankStatement, lines []*domain.BankStatementLine) (*domain.BankStatement, error) {
@@ -86,7 +86,7 @@ func (s *reconciliationService) ImportStatement(ctx context.Context, stmt *domai
 	}
 
 	s.metrics.IncrementCounter("bank_statement_imported_total", metrics.Fields{})
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeStmtImported,
 		EventCategory: auditCategoryFinance,
@@ -97,7 +97,7 @@ func (s *reconciliationService) ImportStatement(ctx context.Context, stmt *domai
 			"lines_count":  len(lines),
 			"account_id":   stmt.AccountID.String(),
 		}),
-	})
+	}, auditTypeStmtImported+":"+stmt.ID.String())
 	return stmt, nil
 }
 
@@ -169,7 +169,7 @@ func (s *reconciliationService) MatchLine(ctx context.Context, statementID, line
 		span.RecordError(updateErr)
 	}
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        &byUserID,
 		EventType:     auditTypeLineMatched,
 		EventCategory: auditCategoryFinance,
@@ -180,7 +180,7 @@ func (s *reconciliationService) MatchLine(ctx context.Context, statementID, line
 			"line_id":      lineID.String(),
 			"entry_id":     entryID.String(),
 		}),
-	})
+	}, auditTypeLineMatched+":"+lineID.String())
 	return stmt, nil
 }
 
@@ -211,7 +211,7 @@ func (s *reconciliationService) UnmatchLine(ctx context.Context, statementID, li
 		span.RecordError(updateErr)
 	}
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeLineUnmatched,
 		EventCategory: auditCategoryFinance,
@@ -221,7 +221,7 @@ func (s *reconciliationService) UnmatchLine(ctx context.Context, statementID, li
 			"statement_id": statementID.String(),
 			"line_id":      lineID.String(),
 		}),
-	})
+	}, auditTypeLineUnmatched+":"+lineID.String())
 	return stmt, nil
 }
 
@@ -268,7 +268,7 @@ func (s *reconciliationService) CompleteReconciliation(ctx context.Context, stat
 	stmt.UpdatedAt = time.Now()
 
 	s.metrics.IncrementCounter("reconciliation_completed_total", metrics.Fields{})
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        &byUserID,
 		EventType:     auditTypeReconciled,
 		EventCategory: auditCategoryFinance,
@@ -280,7 +280,7 @@ func (s *reconciliationService) CompleteReconciliation(ctx context.Context, stat
 			"unmatched_count":   stmt.UnmatchedCount,
 			"difference_amount": stmt.DifferenceAmount.String(),
 		}),
-	})
+	}, auditTypeReconciled+":"+statementID.String())
 	return stmt, nil
 }
 

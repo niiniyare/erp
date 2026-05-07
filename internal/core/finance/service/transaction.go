@@ -51,7 +51,7 @@ type transactionService struct {
 	txRunner            domain.TxRunner               // nil → reversal uses best-effort cleanup
 	tracing             tracing.Service
 	metrics             metrics.MetricsProvider
-	auditSvc            audit.Service // nil → audit skipped (safe for tests)
+	auditWriter         *financeAuditWriter // nil → audit skipped (safe for tests)
 }
 
 func NewTransactionService(
@@ -63,7 +63,7 @@ func NewTransactionService(
 	txRunner domain.TxRunner,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
-	auditSvc audit.Service,
+	aw *financeAuditWriter,
 ) TransactionService {
 	return &transactionService{
 		repo:                repo,
@@ -74,7 +74,7 @@ func NewTransactionService(
 		txRunner:            txRunner,
 		tracing:             tracing,
 		metrics:             metrics,
-		auditSvc:            auditSvc,
+		auditWriter:         aw,
 	}
 }
 
@@ -285,7 +285,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 				"entries_count":      len(domainEntries),
 				"duration_ms":        duration.Milliseconds(),
 			})
-		fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+		s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 			UserID:        auditUserID(ctx),
 			EventType:     auditTypeTxnCreated,
 			EventCategory: auditCategoryFinance,
@@ -298,7 +298,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 				"transaction_type":   string(transaction.TransactionType),
 				"entries_count":      len(domainEntries),
 			}),
-		})
+		}, auditTypeTxnCreated+":"+transaction.ID.String())
 		return transaction, nil
 	}
 
@@ -352,7 +352,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 			"duration_ms":        duration.Milliseconds(),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnCreated,
 		EventCategory: auditCategoryFinance,
@@ -365,7 +365,7 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 			"transaction_type":   string(transaction.TransactionType),
 			"entries_count":      len(req.Entries),
 		}),
-	})
+	}, auditTypeTxnCreated+":"+transaction.ID.String())
 	return transaction, nil
 }
 
@@ -827,7 +827,7 @@ func (s *transactionService) postTransactionViaPipeline(ctx context.Context, id 
 			"duration_ms":        duration.Milliseconds(),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnPosted,
 		EventCategory: auditCategoryFinance,
@@ -839,7 +839,7 @@ func (s *transactionService) postTransactionViaPipeline(ctx context.Context, id 
 			"transaction_number": postedTransaction.TransactionNumber,
 			"posting_date":       pd.Format("2006-01-02"),
 		}),
-	})
+	}, auditTypeTxnPosted+":"+postedTransaction.ID.String())
 	return postedTransaction, nil
 }
 
@@ -1010,7 +1010,7 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			"duration_ms":        duration.Milliseconds(),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnPosted,
 		EventCategory: auditCategoryFinance,
@@ -1022,7 +1022,7 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			"transaction_number": postedTransaction.TransactionNumber,
 			"posting_date":       postingDate.Format("2006-01-02"),
 		}),
-	})
+	}, auditTypeTxnPosted+":"+postedTransaction.ID.String())
 	return postedTransaction, nil
 }
 
@@ -1140,9 +1140,28 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		reversalTransaction.CreatedBy = reversedBy
 	}
 
+	// Build the CRITICAL audit request before RunInTx so it can be written to
+	// the outbox atomically in Step 6. reversalTransaction.EntityID is known now.
+	reversalAuditReq := audit.CreateAuditEventRequest{
+		UserID:        auditUserID(ctx),
+		EventType:     auditTypeTxnReversed,
+		EventCategory: auditCategoryFinance,
+		Severity:      auditSeverityHigh,
+		EntityID:      derefUUIDPtr(reversalTransaction.EntityID),
+		ResourceID:    uuidPtr(id),
+		Context: auditCtx(map[string]any{
+			"original_transaction_id": id.String(),
+			"reversal_transaction_id": reversalTransaction.ID.String(),
+			"reason":                  reason,
+		}),
+	}
+	reversalAuditKey := auditTypeTxnReversed + ":" + id.String()
+
 	// ── Atomic path (txRunner injected) ────────────────────────────────────────
-	// All five steps run inside a single DB transaction. Any failure rolls back
+	// All six steps run inside a single DB transaction. Any failure rolls back
 	// the entire operation — no partial state, no corrupt GL.
+	// Step 6 writes the CRITICAL audit outbox within the same transaction,
+	// guaranteeing the audit trail and financial mutation are always in sync.
 	if s.txRunner != nil {
 		txErr := s.txRunner.RunInTx(ctx, func(txCtx context.Context) error {
 			// Step 1: Create reversal header.
@@ -1182,6 +1201,12 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 					return fmt.Errorf("insert reversal history: %w", err)
 				}
 			}
+			// Step 6: Write CRITICAL audit outbox atomically with the reversal.
+			// If outbox write fails and outboxRepo is configured, the error is
+			// returned here — rolling back the entire reversal so it can be retried.
+			if err := s.auditWriter.writeOutboxInTx(txCtx, reversalAuditReq, reversalAuditKey); err != nil {
+				return fmt.Errorf("audit outbox: %w", err)
+			}
 			return nil
 		})
 		if txErr != nil {
@@ -1202,19 +1227,7 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 				"reversal_transaction_id": reversalTransaction.ID.String(),
 				"reason":                  reason,
 			})
-		fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
-			UserID:        auditUserID(ctx),
-			EventType:     auditTypeTxnReversed,
-			EventCategory: auditCategoryFinance,
-			Severity:      auditSeverityHigh,
-			EntityID:      derefUUIDPtr(postedReversal.EntityID),
-			ResourceID:    uuidPtr(id),
-			Context: auditCtx(map[string]any{
-				"original_transaction_id": id.String(),
-				"reversal_transaction_id": reversalTransaction.ID.String(),
-				"reason":                  reason,
-			}),
-		})
+		// Audit is already in outbox (Step 6 above). No additional write needed.
 		return postedReversal, nil
 	}
 
@@ -1287,19 +1300,9 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 			"reason":                  reason,
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
-		UserID:        auditUserID(ctx),
-		EventType:     auditTypeTxnReversed,
-		EventCategory: auditCategoryFinance,
-		Severity:      auditSeverityHigh,
-		EntityID:      derefUUIDPtr(postedReversal.EntityID),
-		ResourceID:    uuidPtr(id),
-		Context: auditCtx(map[string]any{
-			"original_transaction_id": id.String(),
-			"reversal_transaction_id": reversalTransaction.ID.String(),
-			"reason":                  reason,
-		}),
-	})
+	// Best-effort path: outbox written after mutation (small atomicity window).
+	// The gap detector surfaces any events lost to a crash in this window.
+	s.auditWriter.writeAudit(ctx, reversalAuditReq, reversalAuditKey)
 	return postedReversal, nil
 }
 
@@ -1413,7 +1416,7 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 			"duration_ms":        duration.Milliseconds(),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnApproved,
 		EventCategory: auditCategoryFinance,
@@ -1425,7 +1428,7 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 			"transaction_number": approvedTransaction.TransactionNumber,
 			"approver_id":        approverID.String(),
 		}),
-	})
+	}, auditTypeTxnApproved+":"+approvedTransaction.ID.String())
 	return approvedTransaction, nil
 }
 
@@ -1537,7 +1540,7 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 			"duration_ms":        duration.Milliseconds(),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnRejected,
 		EventCategory: auditCategoryFinance,
@@ -1551,7 +1554,7 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 			"rejection_reason":   string(reason),
 			"notes":              notes,
 		}),
-	})
+	}, auditTypeTxnRejected+":"+rejectedTransaction.ID.String())
 	return rejectedTransaction, nil
 }
 
@@ -1962,7 +1965,7 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 			"transaction_date": date.Format("2006-01-02"),
 		})
 
-	fireAudit(ctx, s.auditSvc, audit.CreateAuditEventRequest{
+	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeRecurringCreated,
 		EventCategory: auditCategoryFinance,
@@ -1974,7 +1977,7 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 			"transaction_id":   newTransaction.ID.String(),
 			"transaction_date": date.Format("2006-01-02"),
 		}),
-	})
+	}, auditTypeRecurringCreated+":"+newTransaction.ID.String())
 	return newTransaction, nil
 }
 
