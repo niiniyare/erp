@@ -33,12 +33,15 @@ type PeriodService interface {
 }
 
 type periodService struct {
-	repo    domain.PeriodRepository
-	tracing tracing.Service
-	metrics metrics.MetricsProvider
+	repo             domain.PeriodRepository
+	integrityService IntegrityService // nil → hard-close runs without integrity gate
+	tracing          tracing.Service
+	metrics          metrics.MetricsProvider
 }
 
-// NewPeriodService creates a new PeriodService.
+// NewPeriodService creates a new PeriodService without an integrity gate.
+// Use NewPeriodServiceWithIntegrity to enforce ledger health checks before
+// hard-closing a period.
 func NewPeriodService(
 	repo domain.PeriodRepository,
 	tracing tracing.Service,
@@ -48,6 +51,27 @@ func NewPeriodService(
 		repo:    repo,
 		tracing: tracing,
 		metrics: metrics,
+	}
+}
+
+// NewPeriodServiceWithIntegrity creates a PeriodService that gates HARD_CLOSED
+// transitions on a clean integrity scan. If the scan finds any CRITICAL
+// violations, the hard-close is refused until they are resolved.
+//
+// This is the recommended constructor for production deployments. The simpler
+// NewPeriodService is provided for wiring contexts where IntegrityService is
+// not yet available (e.g. integration tests without a full finance stack).
+func NewPeriodServiceWithIntegrity(
+	repo domain.PeriodRepository,
+	integrityService IntegrityService,
+	tracing tracing.Service,
+	metrics metrics.MetricsProvider,
+) PeriodService {
+	return &periodService{
+		repo:             repo,
+		integrityService: integrityService,
+		tracing:          tracing,
+		metrics:          metrics,
 	}
 }
 
@@ -187,6 +211,35 @@ func (s *periodService) ChangePeriodStatus(ctx context.Context, id uuid.UUID, ne
 				WithHTTPStatus(http.StatusUnprocessableEntity)
 		}
 	case domain.PeriodStatusHardClosed:
+		// Integrity gate: if an IntegrityService is wired, run a ledger scan
+		// before allowing hard-close. A CRITICAL violation means the ledger
+		// has unresolved corruption that must be corrected before the period
+		// can be frozen. The scan is tenant-scoped via RLS — no filter needed.
+		if s.integrityService != nil {
+			scanReport, scanErr := s.integrityService.ScanPostedTransactions(ctx, nil)
+			if scanErr != nil {
+				s.metrics.IncrementCounter("period_close_integrity_scan_errors_total", metrics.Fields{})
+				return nil, errors.NewBusinessError("INTEGRITY_SCAN_FAILED",
+					fmt.Sprintf("could not verify ledger integrity before hard-close: %v", scanErr)).
+					WithHTTPStatus(http.StatusInternalServerError)
+			}
+			if scanReport.HasCritical() {
+				s.metrics.IncrementCounter("period_close_blocked_total", metrics.Fields{
+					"reason": "critical_integrity_violations",
+				})
+				return nil, errors.NewBusinessError("PERIOD_CLOSE_BLOCKED",
+					fmt.Sprintf(
+						"hard-close refused: %d CRITICAL integrity violation(s) detected. "+
+							"Resolve all CRITICAL violations and retry. "+
+							"Run ScanPostedTransactions to view details.",
+						len(scanReport.Violations),
+					)).
+					WithHTTPStatus(http.StatusUnprocessableEntity).
+					WithCategory(errors.CategoryBusiness)
+			}
+			// Scan passed — set checksPassed=true so the domain method proceeds.
+			checksPassed = true
+		}
 		if err := p.HardClose(byUserID, now, checksPassed); err != nil {
 			return nil, errors.NewBusinessError("INVALID_TRANSITION", err.Error()).
 				WithHTTPStatus(http.StatusUnprocessableEntity)

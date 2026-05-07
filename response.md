@@ -1,4 +1,181 @@
-# Finance Module — Phase 1, 2, 3 & 4 Report
+# Finance Module — Phase 1, 2, 3, 4 & 5 Report
+
+---
+
+# Phase 5: Platform Reliability, Lifecycle & Disaster-Recovery Hardening
+
+**Date:** 2026-05-07
+
+## 1. Summary
+
+Phase 5 closes the gap between a production-ready finance module and one that survives years of schema evolution, production incidents, operator mistakes, and disaster recovery events. Four concrete durability pillars were implemented:
+
+1. **Period-close integrity gate** — hard-close now requires a clean `ScanPostedTransactions` result when `IntegrityService` is wired; no CRITICAL violations can be frozen into a closed period
+2. **RecoveryService** — structured post-restore verification flow with pass/fail verdict and orphaned-workflow detection
+3. **OperationsService** — operator-facing health reports (GREEN/YELLOW/RED) and reconciliation diagnostics
+4. **DB migration 001004** — concurrent indexes for period-close scan performance; period consistency constraint blocking partial-close DB state
+
+---
+
+## 2. Period-Close Hardening (Task 4)
+
+### Problem
+`ChangePeriodStatus` for `HARD_CLOSED` accepted `checksPassed bool` from the caller. Any caller could pass `true` regardless of ledger state, silently freezing corruption into a closed period.
+
+### Fix
+```go
+// NewPeriodServiceWithIntegrity gates HARD_CLOSED on a passing integrity scan.
+func NewPeriodServiceWithIntegrity(
+    repo domain.PeriodRepository,
+    integrityService IntegrityService,
+    tracing tracing.Service,
+    metrics metrics.MetricsProvider,
+) PeriodService
+```
+
+When `integrityService != nil`, `ChangePeriodStatus(HARD_CLOSED)` now:
+1. Calls `ScanPostedTransactions(ctx, nil)` — full tenant scan, scoped by RLS
+2. If `HasCritical() == true` → returns `PERIOD_CLOSE_BLOCKED` / HTTP 422
+3. If scan passes → sets `checksPassed = true` internally and proceeds
+
+**Metrics:** `period_close_blocked_total{reason=critical_integrity_violations}`, `period_close_integrity_scan_errors_total`
+
+### DB constraint
+```sql
+ALTER TABLE finance_accounting_periods
+    ADD CONSTRAINT chk_period_closed_at_consistency
+        CHECK (status NOT IN ('SOFT_CLOSED', 'HARD_CLOSED') OR closed_at IS NOT NULL);
+```
+
+Blocks a partial-close state where `status = SOFT_CLOSED` but `closed_at IS NULL` — a state only possible via direct DB update or a failed migration.
+
+---
+
+## 3. Disaster Recovery Service (Task 3)
+
+### RecoveryService interface
+```go
+type RecoveryService interface {
+    PostRestoreCheck(ctx, tenantID) (*RecoveryReport, error)
+    FindOrphanedWorkflows(ctx, tenantID, stuckAfter) ([]*OrphanedWorkflow, error)
+}
+```
+
+### PostRestoreCheck
+Runs all three integrity scans sequentially + orphaned-workflow detection. Returns:
+- `HasCriticalIssues bool` — gate for resuming traffic
+- Structured violations from each scan
+- Orphaned workflow list
+- Human-readable `Summary` string
+
+**Verdict logic:**
+| Condition | `HasCriticalIssues` | `Summary` |
+|---|---|---|
+| Any CRITICAL violation | `true` | "POST-RESTORE CHECK FAILED — DO NOT RETURN TRAFFIC" |
+| Non-critical violations only | `false` | "N non-critical violations. Review before period close. Traffic may resume." |
+| No violations | `false` | "Post-restore check PASSED. Ledger clean. Traffic may resume." |
+
+### FindOrphanedWorkflows
+Paginates through `PENDING_APPROVAL` transactions older than `stuckAfter`. For each, checks `approvalRepo.GetWorkflowByTransaction`. Missing records = orphan. Returns list with `RecommendedAction` per orphan.
+
+### Recovery procedure (documented)
+1. Restore DB from backup
+2. Run `PostRestoreCheck` — must return `HasCriticalIssues = false`
+3. Run `FindOrphanedWorkflows(1h)` — resubmit or cancel stale approvals
+4. Re-run `PostRestoreCheck` to confirm clean
+5. Return traffic
+
+---
+
+## 4. Operational Tooling (Task 6)
+
+### OperationsService interface
+```go
+type OperationsService interface {
+    TenantHealthReport(ctx, tenantID) (*TenantHealthReport, error)
+    ReconciliationDiagnostics(ctx, tenantID) (*ReconciliationDiagnostics, error)
+}
+```
+
+### TenantHealthReport
+Runs all three integrity scans and classifies the result:
+
+| Status | Condition | Action |
+|---|---|---|
+| `GREEN` | 0 violations | No action needed |
+| `YELLOW` | Non-critical violations | Review before period close |
+| `RED` | Any CRITICAL violation | Halt period close; escalate |
+
+Includes `Recommendations []string` — actionable next steps per status. Emits `tenant_health_status_total{status=green/yellow/red}`.
+
+**Scheduling:** Run nightly via Temporal cron. Alert on RED or any YELLOW that persists > 3 days.
+
+### ReconciliationDiagnostics
+Lists all non-completed, non-voided bank statements. Identifies statements with unmatched lines (`IsStale = true`). Returns `StaleStatementCount` and `Recommendations` for operator action.
+
+---
+
+## 5. DB Migration 001004
+
+| Change | Type | Purpose |
+|---|---|---|
+| `idx_finance_txn_posting_date` | Partial index (POSTED, posting_date) | Period-close scans, integrity cron |
+| `idx_finance_txn_pending_approval` | Partial index (PENDING_APPROVAL, created_at) | Orphaned-workflow detection |
+| `idx_finance_reversal_history_original` | Index on original_transaction_id | ScanReversalChains per-transaction lookup |
+| `chk_period_closed_at_consistency` | CHECK constraint | Blocks partial-close DB state |
+
+All indexes use `CONCURRENTLY` — zero downtime deployment.
+
+---
+
+## 6. Schema Evolution Safety (Task 2)
+
+**Already present (verified):**
+- `ParseTransactionStatus(s string) (TransactionStatus, error)` — safe parser returning error for unknown values; no panic path
+- `TransactionStatus.IsValid()` — exhaustive switch; unknown values return false
+- All domain status types use Go `string` type — forward-compatible by default; new server reading an old payload sees the raw string and can validate explicitly
+
+**Temporal payload compatibility:**
+- All workflow/activity inputs use `json:",omitempty"` on optional fields
+- `businessErrorToTemporal` wraps errors as `temporal.ApplicationError` — safe to add new error codes without breaking replay
+
+---
+
+## 7. Data Retention Safety (Task 5)
+
+**Already enforced (verified):**
+- `AuditRetentionPeriod = 7 * 365 * 24 * time.Hour` in `domain/constant.go`
+- Terminal states (`IsTerminal()`) block `DeleteTransaction` — POSTED/REVERSED/CANCELLED records are immutable
+- `fk_reversal_history_reversal_txn` ON DELETE RESTRICT prevents orphaning reversal records
+
+**No new code required** — the Phase 4 `IsTerminal()` guard and existing FK constraint already cover data retention requirements.
+
+---
+
+## 8. What Was Not Implemented
+
+| Item | Reason |
+|---|---|
+| Migration static analysis (Task 1 — GO-based SQL validator) | Infrastructure/CI concern; document patterns instead of adding runtime code |
+| Temporal multi-tenant workflow quotas (Task 9) | Temporal server-side config, not service code |
+| Chaos/failure injection tests (Task 4) | Requires integration test harness beyond unit scope |
+
+---
+
+## 9. Final Platform Reliability Verdict
+
+| Capability | Status |
+|---|---|
+| Post-restore verification | OPERATIONAL — `PostRestoreCheck` with pass/fail verdict |
+| Period-close integrity gate | OPERATIONAL — `NewPeriodServiceWithIntegrity` blocks CRITICAL violations |
+| Operational health monitoring | OPERATIONAL — `TenantHealthReport` GREEN/YELLOW/RED + recommendations |
+| Reconciliation diagnostics | OPERATIONAL — stale statement detection |
+| Orphaned-workflow detection | OPERATIONAL — `FindOrphanedWorkflows` with pagination |
+| DB performance at scale | IMPROVED — concurrent indexes for posting-date and approval scans |
+| Schema evolution forward-compat | VERIFIED — safe parsers + Go string types throughout |
+| Audit trail immutability | ENFORCED — `IsTerminal()`, FKs, `chk_period_closed_at_consistency` |
+
+Finance module is now survivable over years of schema evolution, incidents, and disaster recovery events.
 
 ---
 
