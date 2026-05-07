@@ -41,6 +41,23 @@ const (
 	// MaxReferenceLength       = 100
 	MaxAttributeValueLength = 500
 
+	// Finance safety limits (enforced at service layer — not just documentation).
+	// These exist to bound memory, lock duration, and DB query cost under adversarial load.
+	// A single tenant must not be able to starve shared infrastructure.
+	//
+	// MaxEntriesPerTransaction: Hard cap on entries per transaction. Exceeding this
+	// would drive N+1 account-validation queries, hold long DB transactions, and
+	// produce unbounded log payloads. 500 entries is generous for any real GL use.
+	MaxEntriesPerTransaction = 500
+
+	// MaxReconciliationBatch: Hard cap on entries per ReconcileEntries/UnreconcileEntries
+	// call. Larger batches extend TxRunner lock duration, causing contention spikes.
+	MaxReconciliationBatch = 500
+
+	// MaxIntegrityScanPage: Maximum transactions loaded per integrity scan page.
+	// Prevents OOM when ScanPostedTransactions is run against a large tenant.
+	MaxIntegrityScanPage = 200
+
 	// Date range limits
 	MinAccountingYear = 1900
 	MaxAccountingYear = 2100

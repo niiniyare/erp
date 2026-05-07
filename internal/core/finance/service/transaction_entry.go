@@ -653,6 +653,16 @@ func (s *transactionEntryService) ReconcileEntries(ctx context.Context, entryIDs
 	if len(entryIDs) == 0 {
 		return errors.NewBusinessError("VALIDATION_ERROR", "No entries provided for reconciliation")
 	}
+	if len(entryIDs) > domain.MaxReconciliationBatch {
+		s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+			"error_type": "batch_limit_exceeded",
+		})
+		return errors.NewBusinessError("BATCH_LIMIT_EXCEEDED",
+			fmt.Sprintf("reconciliation batch exceeds maximum of %d entries (submitted %d); split into smaller batches",
+				domain.MaxReconciliationBatch, len(entryIDs))).
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
+	}
 
 	// reconcileAll contains the core reconciliation loop shared by both paths.
 	reconcileAll := func(execCtx context.Context) error {
@@ -755,6 +765,16 @@ func (s *transactionEntryService) UnreconcileEntries(ctx context.Context, entryI
 
 	if len(entryIDs) == 0 {
 		return errors.NewBusinessError("VALIDATION_ERROR", "No entries provided for unreconciliation")
+	}
+	if len(entryIDs) > domain.MaxReconciliationBatch {
+		s.metrics.IncrementCounter("reconciliation_errors", metrics.Fields{
+			"error_type": "batch_limit_exceeded",
+		})
+		return errors.NewBusinessError("BATCH_LIMIT_EXCEEDED",
+			fmt.Sprintf("unreconciliation batch exceeds maximum of %d entries (submitted %d)",
+				domain.MaxReconciliationBatch, len(entryIDs))).
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
 	}
 
 	unreconcileAll := func(execCtx context.Context) error {

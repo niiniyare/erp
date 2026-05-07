@@ -98,6 +98,33 @@ func NewTransactionServiceWithPipeline(
 	}
 }
 
+// checkTenantOwnership verifies the loaded transaction belongs to the caller's
+// tenant. Call this immediately after any repo.GetByID that is NOT already
+// protected by a dedicated pipeline stage or inline check.
+// Returns a TENANT_MISMATCH/403 BusinessError on mismatch; nil when OK.
+func (s *transactionService) checkTenantOwnership(ctx context.Context, txn *domain.Transaction) error {
+	callerTenantID, ok := shared.GetTenantID(ctx)
+	if !ok || callerTenantID == uuid.Nil {
+		return nil // no tenant in context — unauthenticated internal call, trust it
+	}
+	if callerTenantID != txn.TenantID {
+		s.metrics.IncrementCounter("tenant_isolation_violations_total", metrics.Fields{
+			"operation": "read",
+		})
+		logger.ErrorContext(ctx, "SECURITY: cross-tenant access attempt blocked",
+			logger.Fields{
+				"transaction_id":     txn.ID.String(),
+				"transaction_tenant": txn.TenantID.String(),
+				"caller_tenant":      callerTenantID.String(),
+			})
+		return errors.NewBusinessError("TENANT_MISMATCH",
+			"transaction does not belong to the caller's tenant").
+			WithHTTPStatus(http.StatusForbidden).
+			WithCategory(errors.CategorySecurity)
+	}
+	return nil
+}
+
 func (s *transactionService) CreateTransaction(ctx context.Context, req domain.CreateTransactionRequest) (*domain.Transaction, error) {
 	ctx, span := s.tracing.StartSpan(ctx, "transaction_service.create_transaction",
 		tracing.WithSpanKind(tracing.SpanKindInternal),
@@ -113,6 +140,20 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 			"transaction_number": req.TransactionNumber,
 			"description":        req.Description,
 		})
+
+	// Safety limit: cap entries per transaction before any processing. A client
+	// submitting thousands of entries can exhaust memory, hold long DB transactions,
+	// and trigger N*accountLookup queries. Enforce here before Validate() builds
+	// expensive data structures.
+	if len(req.Entries) > domain.MaxEntriesPerTransaction {
+		s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
+			"error_type": "entries_limit_exceeded",
+		})
+		return nil, errors.NewBusinessError("ENTRIES_LIMIT_EXCEEDED",
+			fmt.Sprintf("transaction cannot have more than %d entries (submitted %d)", domain.MaxEntriesPerTransaction, len(req.Entries))).
+			WithHTTPStatus(http.StatusBadRequest).
+			WithCategory(errors.CategoryValidation)
+	}
 
 	if err := req.Validate(); err != nil {
 		s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
@@ -323,6 +364,10 @@ func (s *transactionService) GetTransactionByID(ctx context.Context, id uuid.UUI
 		return nil, fmt.Errorf("failed to get transaction: %w", err)
 	}
 
+	if err := s.checkTenantOwnership(ctx, transaction); err != nil {
+		return nil, err
+	}
+
 	logger.DebugContext(ctx, "Transaction retrieved successfully",
 		logger.Fields{
 			"transaction_id":     transaction.ID.String(),
@@ -420,6 +465,10 @@ func (s *transactionService) UpdateTransaction(ctx context.Context, id uuid.UUID
 				"transaction_id": id.String(),
 				"error":          err.Error(),
 			})
+		return nil, err
+	}
+
+	if err := s.checkTenantOwnership(ctx, existingTransaction); err != nil {
 		return nil, err
 	}
 
@@ -527,16 +576,29 @@ func (s *transactionService) DeleteTransaction(ctx context.Context, id uuid.UUID
 		return err
 	}
 
-	if transaction.TransactionStatus == domain.TransactionStatusPosted {
+	if err := s.checkTenantOwnership(ctx, transaction); err != nil {
+		return err
+	}
+
+	// Block deletion of any terminal-state transaction.
+	// POSTED, REVERSED, and CANCELLED are all immutable — they are part of the
+	// auditable financial history. Deleting a REVERSED transaction would orphan
+	// the reversal chain. Deleting CANCELLED removes an audit event.
+	if transaction.TransactionStatus.IsTerminal() {
 		s.metrics.IncrementCounter("transaction_deletion_errors", metrics.Fields{
-			"error_type": "posted_transaction",
+			"error_type": "immutable_status",
+			"status":     string(transaction.TransactionStatus),
 		})
 
-		logger.WarnContext(ctx, "Cannot delete posted transaction",
-			logger.Fields{"transaction_id": id.String()})
+		logger.WarnContext(ctx, "Cannot delete transaction in terminal state",
+			logger.Fields{
+				"transaction_id": id.String(),
+				"status":         string(transaction.TransactionStatus),
+			})
 
-		return errors.NewBusinessError("TRANSACTION_DELETE_NOT_ALLOWED", "Cannot delete posted transaction").
-			WithHTTPStatus(http.StatusBadRequest).
+		return errors.NewBusinessError("TRANSACTION_DELETE_NOT_ALLOWED",
+			fmt.Sprintf("cannot delete transaction with status %q — terminal-state transactions are immutable", transaction.TransactionStatus)).
+			WithHTTPStatus(http.StatusUnprocessableEntity).
 			WithCategory(errors.CategoryBusiness)
 	}
 
