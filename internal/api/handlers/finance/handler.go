@@ -1,6 +1,7 @@
 package finance
 
 import (
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -9,6 +10,7 @@ import (
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 
+	"awo.so/internal/core/finance/domain"
 	financeDomain "awo.so/internal/core/finance/domain"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/shared/errors"
@@ -973,16 +975,45 @@ func (h *FinanceHandler) RejectTransaction(c *fiber.Ctx) error {
 	}
 
 	var req struct {
-		Notes string `json:"notes"`
+		Reason string `json:"reason"` // The rejection reason code
+		Notes  string `json:"notes"`  // Optional additional context
 	}
-	_ = c.BodyParser(&req)
+	if err := c.BodyParser(&req); err != nil {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_REQUEST", "invalid request body").WithHTTPStatus(400))
+	}
 
-	transaction, err := h.services.Transaction.RejectTransaction(ctx, id, req.Notes)
+	// Validate and convert the reason string to RejectionReason type
+	rejectionReason := domain.RejectionReason(req.Reason)
+	if !isValidRejectionReason(rejectionReason) {
+		return h.HandleError(c, errors.NewBusinessError("INVALID_REASON",
+			"invalid rejection reason. Valid reasons: "+getValidReasonsString()).WithHTTPStatus(400))
+	}
+
+	transaction, err := h.services.Transaction.RejectTransaction(ctx, id, rejectionReason, req.Notes)
 	if err != nil {
 		span.RecordError(err)
 		return h.HandleError(c, err)
 	}
 	return h.Success(c, transaction)
+}
+
+// Helper function to validate rejection reason
+func isValidRejectionReason(reason domain.RejectionReason) bool {
+	for _, valid := range domain.ValidReasons {
+		if reason == valid {
+			return true
+		}
+	}
+	return false
+}
+
+// Helper function to get string representation of valid reasons
+func getValidReasonsString() string {
+	reasons := make([]string, len(domain.ValidReasons))
+	for i, r := range domain.ValidReasons {
+		reasons[i] = string(r)
+	}
+	return strings.Join(reasons, ", ")
 }
 
 // ============================================================================
@@ -1397,17 +1428,17 @@ func (h *FinanceHandler) CreateTaxAuthority(c *fiber.Ctx) error {
 	c.SetUserContext(ctx)
 
 	var req struct {
-		AuthorityCode      string `json:"authority_code" validate:"required"`
-		AuthorityName      string `json:"authority_name" validate:"required"`
-		AuthorityType      string `json:"authority_type" validate:"required"`
-		CountryCode        string `json:"country_code" validate:"required"`
-		StateProvinceCode  string `json:"state_province_code"`
-		JurisdictionLevel  string `json:"jurisdiction_level"`
-		FilingFrequency    string `json:"filing_frequency"`
-		FilingDueDay       int    `json:"filing_due_day"`
-		PaymentDueDay      int    `json:"payment_due_day"`
-		SupportsEFiling    bool   `json:"supports_e_filing"`
-		EFilingEndpoint    string `json:"e_filing_endpoint"`
+		AuthorityCode     string `json:"authority_code" validate:"required"`
+		AuthorityName     string `json:"authority_name" validate:"required"`
+		AuthorityType     string `json:"authority_type" validate:"required"`
+		CountryCode       string `json:"country_code" validate:"required"`
+		StateProvinceCode string `json:"state_province_code"`
+		JurisdictionLevel string `json:"jurisdiction_level"`
+		FilingFrequency   string `json:"filing_frequency"`
+		FilingDueDay      int    `json:"filing_due_day"`
+		PaymentDueDay     int    `json:"payment_due_day"`
+		SupportsEFiling   bool   `json:"supports_e_filing"`
+		EFilingEndpoint   string `json:"e_filing_endpoint"`
 	}
 	if err := h.ValidateRequest(c, &req); err != nil {
 		return h.HandleError(c, err)
@@ -1561,11 +1592,11 @@ func (h *FinanceHandler) CreateTaxCode(c *fiber.Ctx) error {
 		ReturnLineNumber  string  `json:"return_line_number"`
 		IsDefault         bool    `json:"is_default"`
 		Brackets          []struct {
-			BracketNumber       int     `json:"bracket_number"`
-			MinimumAmount       float64 `json:"minimum_amount"`
+			BracketNumber       int      `json:"bracket_number"`
+			MinimumAmount       float64  `json:"minimum_amount"`
 			MaximumAmount       *float64 `json:"maximum_amount"`
-			TaxRate             float64 `json:"tax_rate"`
-			MarginalCalculation bool    `json:"marginal_calculation"`
+			TaxRate             float64  `json:"tax_rate"`
+			MarginalCalculation bool     `json:"marginal_calculation"`
 		} `json:"brackets"`
 	}
 	if err := h.ValidateRequest(c, &req); err != nil {

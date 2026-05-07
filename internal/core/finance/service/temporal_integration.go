@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	goerrors "errors"
 	"fmt"
 	"time"
 
@@ -13,8 +14,28 @@ import (
 	"awo.so/internal/core/finance/domain"
 	platformTemporal "awo.so/internal/platform/temporal"
 	"awo.so/internal/shared"
+	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 )
+
+// nonRetryableBusinessErrorTypes lists Temporal error type strings that must
+// not be retried — they represent permanent business-logic failures (auth,
+// validation, not-found) where retrying would never succeed.
+// Keep in sync with businessErrorToTemporal below.
+var nonRetryableBusinessErrorTypes = []string{
+	"BusinessError",
+}
+
+// businessErrorToTemporal converts a *sharedErrors.BusinessError into a
+// temporal.ApplicationError marked non-retryable, so Temporal stops retrying
+// immediately. All other errors are returned as-is (transient; will be retried).
+func businessErrorToTemporal(err error) error {
+	var be *sharedErrors.BusinessError
+	if goerrors.As(err, &be) {
+		return temporal.NewApplicationError(be.Message, "BusinessError", true, err)
+	}
+	return err
+}
 
 // ── TemporalIntegration ────────────────────────────────────────────────────────
 
@@ -74,7 +95,7 @@ func (a *financeActivities) PostTransactionActivity(ctx context.Context, input P
 
 	_, err := a.txnService.PostTransaction(ctx, input.TransactionID, input.PostingDate)
 	if err != nil {
-		return fmt.Errorf("PostTransactionActivity: %w", err)
+		return businessErrorToTemporal(fmt.Errorf("PostTransactionActivity: %w", err))
 	}
 
 	logger.InfoContext(ctx, "PostTransactionActivity completed",
@@ -101,14 +122,14 @@ func (a *financeActivities) GenerateRecurringTransactionActivity(ctx context.Con
 
 	newTxn, err := a.txnService.CreateRecurringTransaction(ctx, input.TemplateTransactionID, input.GenerationDate)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("GenerateRecurringTransactionActivity: create: %w", err)
+		return uuid.Nil, businessErrorToTemporal(fmt.Errorf("GenerateRecurringTransactionActivity: create: %w", err))
 	}
 
 	activity.RecordHeartbeat(ctx, "posting")
 
 	generationDate := input.GenerationDate
 	if _, err := a.txnService.PostTransaction(ctx, newTxn.ID, &generationDate); err != nil {
-		return newTxn.ID, fmt.Errorf("GenerateRecurringTransactionActivity: post: %w", err)
+		return newTxn.ID, businessErrorToTemporal(fmt.Errorf("GenerateRecurringTransactionActivity: post: %w", err))
 	}
 
 	logger.InfoContext(ctx, "GenerateRecurringTransactionActivity completed",
@@ -145,7 +166,7 @@ func (a *financeActivities) EscalateApprovalActivity(ctx context.Context, input 
 	// RejectTransaction moves the transaction back to DRAFT status.
 	_, err := a.txnService.RejectTransaction(sysCtx, input.TransactionID, domain.RejectionReasonExpired, "Approval SLA expired — transaction automatically rejected and returned to DRAFT")
 	if err != nil {
-		return fmt.Errorf("EscalateApprovalActivity: reject: %w", err)
+		return businessErrorToTemporal(fmt.Errorf("EscalateApprovalActivity: reject: %w", err))
 	}
 
 	logger.InfoContext(ctx, "EscalateApprovalActivity completed — transaction returned to DRAFT",
@@ -173,7 +194,7 @@ func (a *financeActivities) ReversalActivity(ctx context.Context, input Reversal
 
 	reversal, err := a.txnService.ReverseTransaction(ctx, input.TransactionID, input.Reason)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("ReversalActivity: %w", err)
+		return uuid.Nil, businessErrorToTemporal(fmt.Errorf("ReversalActivity: %w", err))
 	}
 
 	logger.InfoContext(ctx, "ReversalActivity completed",
@@ -202,8 +223,9 @@ func RecurringTransactionWorkflow(ctx workflow.Context, input RecurringTransacti
 		StartToCloseTimeout: domain.TransactionWorkflowTimeout,
 		HeartbeatTimeout:    30 * time.Second,
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: domain.DefaultRetryAttempts,
-			InitialInterval: domain.StandardRetryBackoff,
+			MaximumAttempts:        domain.DefaultRetryAttempts,
+			InitialInterval:        domain.StandardRetryBackoff,
+			NonRetryableErrorTypes: nonRetryableBusinessErrorTypes,
 		},
 	}
 	ctx = workflow.WithActivityOptions(ctx, ao)
@@ -286,8 +308,9 @@ func ApprovalEscalationWorkflow(ctx workflow.Context, input ApprovalEscalationWo
 		TaskQueue:           domain.TemporalTaskQueueFinanceHighPriority,
 		StartToCloseTimeout: domain.NotificationActivityTimeout * 6, // 60 s
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: domain.NetworkRetryAttempts,
-			InitialInterval: domain.NetworkRetryBackoff,
+			MaximumAttempts:        domain.NetworkRetryAttempts,
+			InitialInterval:        domain.NetworkRetryBackoff,
+			NonRetryableErrorTypes: nonRetryableBusinessErrorTypes,
 		},
 	}
 	actCtx := workflow.WithActivityOptions(ctx, ao)
@@ -319,8 +342,9 @@ func PeriodEndWorkflow(ctx workflow.Context, input PeriodEndWorkflowInput) error
 		StartToCloseTimeout: domain.PeriodClosingWorkflowTimeout,
 		HeartbeatTimeout:    1 * time.Minute,
 		RetryPolicy: &temporal.RetryPolicy{
-			MaximumAttempts: domain.DefaultRetryAttempts,
-			InitialInterval: domain.BulkRetryBackoff,
+			MaximumAttempts:        domain.DefaultRetryAttempts,
+			InitialInterval:        domain.BulkRetryBackoff,
+			NonRetryableErrorTypes: nonRetryableBusinessErrorTypes,
 		},
 	}
 	actCtx := workflow.WithActivityOptions(ctx, ao)

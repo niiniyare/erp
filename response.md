@@ -1,4 +1,95 @@
-# Finance Module Production Hardening Report
+# Finance Module — Phase 1 & 2 Report
+
+---
+
+# Phase 2: Transactional Integrity & Database Enforcement
+
+**Date:** 2026-05-07
+
+## Executive Summary
+
+Phase 2 closed 8 categories of transactional integrity gaps. All changes are backward-compatible. Migration `001003` must be applied to all environments.
+
+## Changes Made
+
+### 1. TxRunner Wiring — CreateTransaction ✅
+
+`CreateTransaction` now uses an atomic path when `s.txRunner != nil`. Header and entries commit together or not at all. Eliminated racy `Delete` cleanup on partial failure.
+
+### 2. TxRunner Wiring — CreateRecurringTransaction ✅
+
+Fixed two bugs:
+- **Missing `TenantID`/`CreatedBy`** on generated transactions (`uuid.Nil` tenant → cross-tenant leak).
+- **No atomic path** — partial entry failures left orphaned header rows.
+
+New code validates `tenantID` from context (MISSING_TENANT → 401), derives `approvalStatus` from template, pre-builds entry slice before any DB write, and wraps everything in `RunInTx`. Dead `newTransactionReq` struct removed.
+
+### 3. N+1 Elimination in ValidateTransaction ✅
+
+**Before:** `accountRepo.GetByID` called per entry including duplicates. 50-entry TX with 10 unique accounts → 50 DB round-trips.
+
+**After:** Pre-loads unique account IDs into `accountCache` map. Same TX → max 10 round-trips.
+
+### 4. Tenant Isolation — postTransactionViaPipeline ✅
+
+Added same cross-tenant guard present in `postTransactionInline`:
+```go
+if callerTenantID, ok := shared.GetTenantID(ctx); ok && callerTenantID != txn.TenantID {
+    return nil, BusinessError("TENANT_MISMATCH") // 403
+}
+```
+
+### 5. RecurringFrequency Typed Constants ✅
+
+Added to `domain/types.go`:
+```go
+RecurringFrequencyDaily, RecurringFrequencyWeekly, RecurringFrequencyBiweekly,
+RecurringFrequencyMonthly, RecurringFrequencyQuarterly, RecurringFrequencyYearly
+```
+Replaced `"BIWEEKLY"` magic string in service with `domain.RecurringFrequencyBiweekly`.
+
+### 6. Temporal NonRetryableErrorTypes ✅
+
+Business errors (`*sharedErrors.BusinessError`) are now wrapped as `temporal.ApplicationError{nonRetryable: true, errType: "BusinessError"}` at every activity return site. All three workflow retry policies include `NonRetryableErrorTypes: ["BusinessError"]`. Transient errors continue retrying; permanent business failures fail immediately.
+
+### 7. DB Migration 001003 ✅
+
+**File:** `db/migration/001003_finance_db_constraints.{up,down}.sql`
+
+| Constraint | Table | Rule |
+|---|---|---|
+| `chk_entry_amounts_non_negative` | entries | debit/credit ≥ 0 |
+| `chk_entry_not_both_sides` | entries | not both debit > 0 and credit > 0 |
+| `chk_entry_at_least_one_side` | entries | debit > 0 OR credit > 0 |
+| `chk_transaction_type_valid` | transactions | enum allowlist |
+| `fk_reversal_history_reversal_txn` | reversal_history | FK → transactions(id) |
+| `chk_posting_date_reasonable` | transactions | posting_date within ±1 year |
+
+Performance indexes: partial index on pending approval queue; partial index on recurring due-date scan.
+
+**Pre-migration diagnostic:**
+```sql
+SELECT COUNT(*) FROM finance_transaction_entries
+WHERE debit_amount < 0
+   OR credit_amount < 0
+   OR (debit_amount > 0 AND credit_amount > 0)
+   OR (debit_amount = 0 AND credit_amount = 0);
+-- Must be 0 before applying migration
+```
+
+## Risk Assessment
+
+| Change | Reversible | Risk |
+|---|---|---|
+| TxRunner wiring | Yes (nil → best-effort) | Low |
+| N+1 fix | Yes | Low |
+| Tenant isolation pipeline | Yes | Low |
+| Temporal non-retryable | Yes | Low |
+| Migration 001003 | Via .down.sql | Medium — rejects existing bad data |
+
+---
+
+# Phase 1: Production Hardening Report
 
 ## 1. Summary
 

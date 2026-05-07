@@ -234,11 +234,12 @@ var (
 
 // Recurring frequency patterns
 const (
-	RecurringFrequencyDaily     = "DAILY"
-	RecurringFrequencyWeekly    = "WEEKLY"
-	RecurringFrequencyMonthly   = "MONTHLY"
-	RecurringFrequencyQuarterly = "QUARTERLY"
-	RecurringFrequencyYearly    = "YEARLY"
+	RecurringFrequencyDaily      = "DAILY"
+	RecurringFrequencyWeekly     = "WEEKLY"
+	RecurringFrequencyBiweekly   = "BIWEEKLY"
+	RecurringFrequencyMonthly    = "MONTHLY"
+	RecurringFrequencyQuarterly  = "QUARTERLY"
+	RecurringFrequencyYearly     = "YEARLY"
 )
 
 // System account codes for standard accounts

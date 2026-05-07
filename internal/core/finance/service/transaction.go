@@ -181,6 +181,71 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 		transaction.CreatedBy = createdBy
 	}
 
+	// Build domain entries before any DB work so both paths share the same slice.
+	var domainEntries []*domain.TransactionEntry
+	if len(req.Entries) > 0 {
+		domainEntries = make([]*domain.TransactionEntry, len(req.Entries))
+		for i, e := range req.Entries {
+			domainEntries[i] = &domain.TransactionEntry{
+				ID:            uuid.New(),
+				TenantID:      tenantID,
+				TransactionID: transaction.ID,
+				EntryNumber:   int32(i + 1),
+				AccountID:     e.AccountID,
+				DebitAmount:   e.DebitAmount,
+				CreditAmount:  e.CreditAmount,
+				Description:   e.Description,
+				Reference:     e.Reference,
+			}
+		}
+	}
+
+	// ── Atomic path (TxRunner injected) ─────────────────────────────────────────
+	// Header and entries commit together; any failure rolls back both.
+	if s.txRunner != nil {
+		txErr := s.txRunner.RunInTx(ctx, func(txCtx context.Context) error {
+			if err := s.repo.Create(txCtx, transaction); err != nil {
+				return fmt.Errorf("create header: %w", err)
+			}
+			if len(domainEntries) > 0 {
+				if err := s.entryService.CreateEntries(txCtx, domainEntries); err != nil {
+					return fmt.Errorf("create entries: %w", err)
+				}
+			}
+			return nil
+		})
+		duration := timer.Stop()
+		if txErr != nil {
+			s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
+				"error_type": "tx_failed",
+			})
+			logger.ErrorContext(ctx, "Failed to create transaction (atomic)",
+				logger.Fields{
+					"transaction_number": req.TransactionNumber,
+					"error":              txErr.Error(),
+				})
+			return nil, txErr
+		}
+		s.metrics.IncrementCounter("transactions_created_total", metrics.Fields{
+			"transaction_type": string(req.TransactionType),
+			"status":           "success",
+		})
+		s.metrics.ObserveHistogram("transaction_creation_duration", duration.Seconds(), metrics.Fields{
+			"transaction_type": string(req.TransactionType),
+		})
+		logger.InfoContext(ctx, "Transaction created successfully",
+			logger.Fields{
+				"transaction_id":     transaction.ID.String(),
+				"transaction_number": transaction.TransactionNumber,
+				"entries_count":      len(domainEntries),
+				"duration_ms":        duration.Milliseconds(),
+			})
+		return transaction, nil
+	}
+
+	// ── Best-effort path (no TxRunner) ──────────────────────────────────────────
+	// Header is written first; on entry failure the header is deleted as cleanup.
+	// Wire TxRunner for true atomicity — this path is a fallback only.
 	err := s.repo.Create(ctx, transaction)
 	if err != nil {
 		timer.Stop()
@@ -192,34 +257,14 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 		return nil, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	// Persist entries atomically. On failure, the header must be rolled back.
-	// Until a TxRunner is wired here, we propagate the error and let the
-	// caller retry; the orphaned header will be cleaned up by a sweep.
-	if len(req.Entries) > 0 {
-		domainEntries := make([]*domain.TransactionEntry, len(req.Entries))
-		for i, e := range req.Entries {
-			entry := &domain.TransactionEntry{
-				ID:            uuid.New(),
-				TenantID:      tenantID,
-				TransactionID: transaction.ID,
-				EntryNumber:   int32(i + 1),
-				AccountID:     e.AccountID,
-				DebitAmount:   e.DebitAmount,
-				CreditAmount:  e.CreditAmount,
-				Description:   e.Description,
-				Reference:     e.Reference,
-			}
-			domainEntries[i] = entry
-		}
-
+	if len(domainEntries) > 0 {
 		if entryErr := s.entryService.CreateEntries(ctx, domainEntries); entryErr != nil {
 			timer.Stop()
 			s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
 				"error_type": "entry_creation_error",
 			})
-			// Best-effort cleanup of the orphaned header.
-			_ = s.repo.Delete(ctx, transaction.ID)
-			logger.ErrorContext(ctx, "Failed to create transaction entries; header rolled back",
+			_ = s.repo.Delete(ctx, transaction.ID) // best-effort header rollback
+			logger.ErrorContext(ctx, "Failed to create transaction entries; header rollback attempted",
 				logger.Fields{
 					"transaction_id": transaction.ID.String(),
 					"error":          entryErr.Error(),
@@ -627,6 +672,13 @@ func (s *transactionService) postTransactionViaPipeline(ctx context.Context, id 
 	txn, err := s.repo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	// Tenant isolation: reject cross-tenant access.
+	if callerTenantID, ok := shared.GetTenantID(ctx); ok && callerTenantID != txn.TenantID {
+		return nil, errors.NewBusinessError("TENANT_MISMATCH", "transaction does not belong to caller's tenant").
+			WithHTTPStatus(http.StatusForbidden).
+			WithCategory(errors.CategorySecurity)
 	}
 
 	pd := time.Now()
@@ -1319,6 +1371,23 @@ func (s *transactionService) ValidateTransaction(ctx context.Context, transactio
 	var totalDebits, totalCredits decimal.Decimal
 	accountMap := make(map[uuid.UUID]bool)
 
+	// Pre-load unique accounts to avoid N+1 queries (one fetch per unique account ID).
+	uniqueAccountIDs := make([]uuid.UUID, 0, len(entries))
+	seen := make(map[uuid.UUID]struct{}, len(entries))
+	for _, e := range entries {
+		if _, dup := seen[e.AccountID]; !dup {
+			seen[e.AccountID] = struct{}{}
+			uniqueAccountIDs = append(uniqueAccountIDs, e.AccountID)
+		}
+	}
+	accountCache := make(map[uuid.UUID]*domain.Accounts, len(uniqueAccountIDs))
+	for _, id := range uniqueAccountIDs {
+		acc, err := s.accountRepo.GetByID(ctx, id)
+		if err == nil {
+			accountCache[id] = acc
+		}
+	}
+
 	for _, entry := range entries {
 		if validationErrs := entry.Validate(); len(validationErrs) > 0 {
 			errors = append(errors, validationErrs...)
@@ -1328,8 +1397,8 @@ func (s *transactionService) ValidateTransaction(ctx context.Context, transactio
 		totalCredits = totalCredits.Add(entry.CreditAmount)
 		accountMap[entry.AccountID] = true
 
-		account, err := s.accountRepo.GetByID(ctx, entry.AccountID)
-		if err != nil {
+		account, ok := accountCache[entry.AccountID]
+		if !ok {
 			errors = append(errors, domain.ValidationError{
 				Field:    fmt.Sprintf("entries[%d].account_id", entry.EntryNumber),
 				Message:  "Account not found",
@@ -1578,49 +1647,80 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 		return nil, fmt.Errorf("failed to get template entries: %w", err)
 	}
 
-	newTransactionReq := &domain.CreateTransactionRequest{
+	tenantID, hasTenant := shared.GetTenantID(ctx)
+	if !hasTenant || tenantID == uuid.Nil {
+		return nil, errors.NewBusinessError("MISSING_TENANT", "tenant context is required to create a recurring transaction").
+			WithHTTPStatus(http.StatusUnauthorized).
+			WithCategory(errors.CategorySecurity)
+	}
+
+	approvalStatus := domain.ApprovalStatusNotRequired
+	if template.ApprovalRequired {
+		approvalStatus = domain.ApprovalStatusPending
+	}
+
+	newTransaction := &domain.Transaction{
+		ID:                 uuid.New(),
+		TenantID:           tenantID,
+		EntityID:           template.EntityID,
 		TransactionNumber:  fmt.Sprintf("%s-%s", template.TransactionNumber, date.Format("20060102")),
-		TransactionType:    template.TransactionType,
 		TransactionDate:    date,
+		TransactionType:    template.TransactionType,
 		Description:        template.Description,
 		ReferenceNumber:    template.ReferenceNumber,
 		CurrencyCode:       template.CurrencyCode,
 		ExchangeRate:       template.ExchangeRate,
+		TransactionStatus:  domain.TransactionStatusDraft,
 		ApprovalRequired:   template.ApprovalRequired,
+		ApprovalStatus:     approvalStatus,
 		SourceModule:       template.SourceModule,
 		SourceDocumentType: template.SourceDocumentType,
 	}
-
-	// Convert CreateTransactionRequest to Transaction domain model
-	newTransaction := &domain.Transaction{
-		ID:                 uuid.New(),
-		EntityID:           template.EntityID,
-		TransactionNumber:  newTransactionReq.TransactionNumber,
-		TransactionDate:    newTransactionReq.TransactionDate,
-		TransactionType:    newTransactionReq.TransactionType,
-		Description:        newTransactionReq.Description,
-		ReferenceNumber:    newTransactionReq.ReferenceNumber,
-		CurrencyCode:       newTransactionReq.CurrencyCode,
-		ExchangeRate:       newTransactionReq.ExchangeRate,
-		TransactionStatus:  domain.TransactionStatusDraft,
-		ApprovalRequired:   newTransactionReq.ApprovalRequired,
-		ApprovalStatus:     domain.ApprovalStatusNotRequired,
-		SourceModule:       newTransactionReq.SourceModule,
-		SourceDocumentType: newTransactionReq.SourceDocumentType,
+	if createdBy, ok := shared.GetUserID(ctx); ok {
+		newTransaction.CreatedBy = createdBy
 	}
 
-	err = s.repo.Create(ctx, newTransaction)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create recurring transaction: %w", err)
-	}
-
+	// Pre-build cloned entries (IDs assigned before persistence so TxRunner path
+	// and best-effort path both use the same slice).
+	recurringEntries := make([]*domain.TransactionEntry, len(entries))
 	for i, entry := range entries {
-		newEntry := entry.Clone()
-		newEntry.TransactionID = newTransaction.ID
-		newEntry.EntryNumber = int32(i + 1)
+		cloned := entry.Clone()
+		cloned.ID = uuid.New()
+		cloned.TenantID = tenantID
+		cloned.TransactionID = newTransaction.ID
+		cloned.EntryNumber = int32(i + 1)
+		recurringEntries[i] = cloned
+	}
 
-		if err := s.entryService.CreateEntry(ctx, newEntry); err != nil {
-			return nil, fmt.Errorf("failed to create recurring entry: %w", err)
+	// ── Atomic path (TxRunner injected) ────────────────────────────────────────
+	if s.txRunner != nil {
+		txErr := s.txRunner.RunInTx(ctx, func(txCtx context.Context) error {
+			if err := s.repo.Create(txCtx, newTransaction); err != nil {
+				return fmt.Errorf("create recurring header: %w", err)
+			}
+			for i, entry := range recurringEntries {
+				if err := s.entryService.CreateEntry(txCtx, entry); err != nil {
+					return fmt.Errorf("create recurring entry %d: %w", i+1, err)
+				}
+			}
+			return nil
+		})
+		if txErr != nil {
+			s.metrics.IncrementCounter("transaction_creation_errors", metrics.Fields{
+				"error_type": "recurring_tx_failed",
+			})
+			return nil, txErr
+		}
+	} else {
+		// ── Best-effort path ──────────────────────────────────────────────────
+		if err = s.repo.Create(ctx, newTransaction); err != nil {
+			return nil, fmt.Errorf("failed to create recurring transaction: %w", err)
+		}
+		for i, entry := range recurringEntries {
+			if err := s.entryService.CreateEntry(ctx, entry); err != nil {
+				_ = s.repo.Delete(ctx, newTransaction.ID) // best-effort rollback
+				return nil, fmt.Errorf("failed to create recurring entry %d: %w", i+1, err)
+			}
 		}
 	}
 
@@ -1691,7 +1791,7 @@ func (s *transactionService) calculateNextRecurringDate(template *domain.Transac
 		return currentDate.AddDate(0, 0, 1)
 	case domain.RecurringFrequencyWeekly:
 		return currentDate.AddDate(0, 0, 7)
-	case "BIWEEKLY": // Not defined in constants, using string literal
+	case domain.RecurringFrequencyBiweekly:
 		return currentDate.AddDate(0, 0, 14)
 	case domain.RecurringFrequencyMonthly:
 		return currentDate.AddDate(0, 1, 0)
