@@ -1663,7 +1663,7 @@ func (mr *MockStoreMockRecorder) DeleteHierarchyPaths(ctx, ancestorID any) *gomo
 }
 
 // DeleteOldAuditEvents mocks base method.
-func (m *MockStore) DeleteOldAuditEvents(ctx context.Context, cutoffDate sql.NullTime) error {
+func (m *MockStore) DeleteOldAuditEvents(ctx context.Context, cutoffDate time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOldAuditEvents", ctx, cutoffDate)
 	ret0, _ := ret[0].(error)
@@ -2804,10 +2804,10 @@ func (mr *MockStoreMockRecorder) GetAuditEventByID(ctx, id any) *gomock.Call {
 }
 
 // GetAuditEvents mocks base method.
-func (m *MockStore) GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*AuditLog, error) {
+func (m *MockStore) GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*GetAuditEventsRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAuditEvents", ctx, arg)
-	ret0, _ := ret[0].([]*AuditLog)
+	ret0, _ := ret[0].([]*GetAuditEventsRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -10862,7 +10862,7 @@ func (mr *MockTxStoreMockRecorder) DeleteHierarchyPaths(ctx, ancestorID any) *go
 }
 
 // DeleteOldAuditEvents mocks base method.
-func (m *MockTxStore) DeleteOldAuditEvents(ctx context.Context, cutoffDate sql.NullTime) error {
+func (m *MockTxStore) DeleteOldAuditEvents(ctx context.Context, cutoffDate time.Time) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "DeleteOldAuditEvents", ctx, cutoffDate)
 	ret0, _ := ret[0].(error)
@@ -12003,10 +12003,10 @@ func (mr *MockTxStoreMockRecorder) GetAuditEventByID(ctx, id any) *gomock.Call {
 }
 
 // GetAuditEvents mocks base method.
-func (m *MockTxStore) GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*AuditLog, error) {
+func (m *MockTxStore) GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*GetAuditEventsRow, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetAuditEvents", ctx, arg)
-	ret0, _ := ret[0].([]*AuditLog)
+	ret0, _ := ret[0].([]*GetAuditEventsRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }

@@ -256,7 +256,7 @@ type Querier interface {
 	DeleteFeatureFlag(ctx context.Context, id uuid.UUID) error
 	DeleteHierarchyPaths(ctx context.Context, ancestorID uuid.UUID) error
 	// Delete audit events older than specified date (for retention policies)
-	DeleteOldAuditEvents(ctx context.Context, cutoffDate sql.NullTime) error
+	DeleteOldAuditEvents(ctx context.Context, cutoffDate time.Time) error
 	DeleteTenant(ctx context.Context) error
 	// DELETE FROM tenant_configurations;
 	// =====================================================
@@ -424,7 +424,7 @@ type Querier interface {
 	// Get a specific audit event by ID
 	GetAuditEventByID(ctx context.Context, id uuid.UUID) (*AuditLog, error)
 	// Get audit events with optional filters and pagination
-	GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*AuditLog, error)
+	GetAuditEvents(ctx context.Context, arg GetAuditEventsParams) ([]*GetAuditEventsRow, error)
 	// Get audit events for a specific entity
 	GetAuditEventsByEntity(ctx context.Context, arg GetAuditEventsByEntityParams) ([]*GetAuditEventsByEntityRow, error)
 	// Get audit events for a specific resource

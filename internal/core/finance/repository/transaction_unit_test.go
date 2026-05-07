@@ -35,7 +35,7 @@ func (s *TransactionRepositoryUnitTestSuite) SetupTest() {
 	s.ctrl = gomock.NewController(s.T())
 	s.mockStore = db.NewMockStore(s.ctrl)
 	s.mockTracer = tracing.NewMockService(s.ctrl)
-	s.repo = NewTransactionRepository(s.mockStore, s.mockTracer)
+	s.repo = NewTransactionRepository(s.mockStore, s.mockTracer, nil)
 	s.tenantID = uuid.New()
 	s.ctx = shared.WithTenantID(context.Background(), s.tenantID)
 }
@@ -102,8 +102,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestCreateTransactionSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			// Mock the inner store call
 			s.mockStore.EXPECT().
 				CreateTransaction(gomock.Any(), gomock.Eq(expectedParams)).
@@ -141,8 +141,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestCreateTransactionDuplicateRefer
 
 	// Mock duplicate key violation
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				CreateTransaction(gomock.Any(), gomock.Any()).
 				Return(nil, &mockPgError{code: "23505"}). // Unique violation
@@ -180,8 +180,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestGetByIDSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				GetTransactionByID(gomock.Any(), transactionID).
 				Return(&expectedTransaction, nil).
@@ -208,8 +208,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestGetByIDNotFound() {
 	transactionID := uuid.New()
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				GetTransactionByID(gomock.Any(), transactionID).
 				Return(nil, db.ErrNoRows).
@@ -247,8 +247,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestGetByReferenceSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				GetTransactionByReference(gomock.Any(), &referenceNumber).
 				Return(&expectedTransaction, nil).
@@ -300,8 +300,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestUpdateTransactionSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				UpdateTransaction(gomock.Any(), gomock.Eq(expectedParams)).
 				Return(nil).
@@ -337,8 +337,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestApproveTransactionSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				ApproveTransaction(gomock.Any(), gomock.Eq(expectedParams)).
 				Return(nil).
@@ -360,8 +360,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestDeleteTransactionSuccess() {
 	transactionID := uuid.New()
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				SoftDeleteTransaction(gomock.Any(), gomock.Any()).
 				Return(nil).
@@ -416,8 +416,8 @@ func (s *TransactionRepositoryUnitTestSuite) TestListTransactionsSuccess() {
 	}
 
 	s.mockStore.EXPECT().
-		WithTenant(gomock.Any(), s.tenantID, gomock.Any()).
-		DoAndReturn(func(ctx context.Context, tenantID uuid.UUID, fn func(context.Context, db.Store) error) error {
+		WithTenantFromCtx(gomock.Any(), gomock.Any()).
+		DoAndReturn(func(ctx context.Context, fn func(context.Context, db.Store) error) error {
 			s.mockStore.EXPECT().
 				ListTransactions(gomock.Any(), gomock.Any()).
 				Return(expectedTransactions, nil).

@@ -1,11 +1,14 @@
+//go:build database
+// +build database
+
 package repository_test
 
 // Integration tests for BudgetRepository.
 //
 // These tests require a running PostgreSQL instance with the full schema applied.
-// Set TEST_DATABASE_URL to run them, e.g.:
+// Set DB_URL to run them, e.g.:
 //
-//	TEST_DATABASE_URL="postgres://user:pass@localhost:5432/erp_test?sslmode=disable" go test ./internal/core/finance/repository/...
+//	DB_URL="postgres://user:pass@localhost:5432/erp_test?sslmode=disable" go test ./internal/core/finance/repository/...
 //
 // The repository manages its own transactions via WithTenant internally.
 // Tests call repo methods directly on top of the shared s.ctx (which carries the tenantID).
@@ -53,7 +56,7 @@ func TestBudgetRepoSuite(t *testing.T) {
 func (s *BudgetRepoSuite) SetupSuite() {
 	dsn := os.Getenv("DB_URL")
 	if dsn == "" {
-		s.T().Skip("TEST_DATABASE_URL not set — skipping repository integration tests")
+		s.T().Skip("DB_URL not set — skipping repository integration tests")
 	}
 
 	store, err := db.NewDB(dsn)

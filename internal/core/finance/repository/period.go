@@ -11,17 +11,19 @@ import (
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared"
+	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/tracing"
 )
 
 type periodRepository struct {
 	store   db.Store
 	tracing tracing.Service
+	logger  logger.Logger
 }
 
 // NewPeriodRepository returns a new PeriodRepository.
-func NewPeriodRepository(store db.Store, tracing tracing.Service) domain.PeriodRepository {
-	return &periodRepository{store: store, tracing: tracing}
+func NewPeriodRepository(store db.Store, tracing tracing.Service, log logger.Logger) domain.PeriodRepository {
+	return &periodRepository{store: store, tracing: tracing, logger: log}
 }
 
 // ── FiscalYear ───────────────────────────────────────────────────────────────
@@ -30,12 +32,11 @@ func (r *periodRepository) CreateFiscalYear(ctx context.Context, fy *domain.Fisc
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.CreateFiscalYear")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -62,13 +63,12 @@ func (r *periodRepository) GetFiscalYearByID(ctx context.Context, id uuid.UUID) 
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetFiscalYearByID")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.FiscalYear
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -110,7 +110,7 @@ func (r *periodRepository) GetFiscalYearByYear(ctx context.Context, tenantID uui
 	defer span.End()
 
 	var result *domain.FiscalYear
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -153,7 +153,7 @@ func (r *periodRepository) ListFiscalYears(ctx context.Context, tenantID uuid.UU
 	defer span.End()
 
 	var results []*domain.FiscalYear
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -198,12 +198,11 @@ func (r *periodRepository) UpdateFiscalYear(ctx context.Context, fy *domain.Fisc
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.UpdateFiscalYear")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -239,12 +238,11 @@ func (r *periodRepository) CreatePeriod(ctx context.Context, period *domain.Acco
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.CreatePeriod")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -271,13 +269,12 @@ func (r *periodRepository) GetPeriodByID(ctx context.Context, id uuid.UUID) (*do
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.GetPeriodByID")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.AccountingPeriod
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -319,7 +316,7 @@ func (r *periodRepository) GetPeriodForDate(ctx context.Context, tenantID uuid.U
 	defer span.End()
 
 	var result *domain.AccountingPeriod
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -367,7 +364,7 @@ func (r *periodRepository) ListPeriods(ctx context.Context, tenantID, fiscalYear
 	defer span.End()
 
 	var results []*domain.AccountingPeriod
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err
@@ -413,12 +410,11 @@ func (r *periodRepository) UpdatePeriod(ctx context.Context, period *domain.Acco
 	ctx, span := r.tracing.StartSpan(ctx, "PeriodRepository.UpdatePeriod")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, s db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s db.Store) error {
 		tx, err := txFrom(s)
 		if err != nil {
 			return err

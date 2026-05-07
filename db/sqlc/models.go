@@ -160,34 +160,63 @@ type AttributeValue struct {
 	UpdatedBy   *uuid.UUID   `json:"updated_by"`
 }
 
-// Immutable audit log with compliance tracking, risk scoring, and detailed context for security monitoring and regulatory compliance.
+// Immutable append-only audit log. Serves all ERP modules. Sensitivity and compliance rules are driven by audit_sensitive_tables and audit_sensitive_fields (000449) — no domain knowledge is embedded in this table or the trigger functions.
 type AuditLog struct {
-	ID        uuid.UUID `json:"id"`
-	TenantID  uuid.UUID `json:"tenant_id"`
-	EventType string    `json:"event_type"`
-	// Event category: ACCESS (authorization), ADMIN (administrative), DATA (data access), AUTH (authentication), SYSTEM (system events), COMPLIANCE (regulatory)
-	EventCategory *string `json:"event_category"`
-	// Event severity level: LOW, INFO, WARN, HIGH, CRITICAL
-	Severity *string    `json:"severity"`
-	UserID   *uuid.UUID `json:"user_id"`
-	// Target user for administrative actions (e.g., admin modifying another user)
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
+	// Composite slug: <table>_INSERT|UPDATE|DELETE for DML triggers; arbitrary slug for manual events (e.g. SESSION_TERMINATED, EXPORT_REQUESTED)
+	EventType string `json:"event_type"`
+	// Generated: INSERT, UPDATE, DELETE, or NULL for non-DML events
+	Operation *string `json:"operation"`
+	// ACCESS=authz check, ADMIN=config/IAM change, DATA=record mutation, AUTH=authentication, SYSTEM=internal, COMPLIANCE=regulatory
+	EventCategory string      `json:"event_category"`
+	Severity      string      `json:"severity"`
+	UserID        *uuid.UUID  `json:"user_id"`
+	SessionID     *uuid.UUID  `json:"session_id"`
+	IpAddress     *netip.Addr `json:"ip_address"`
+	UserAgent     *string     `json:"user_agent"`
+	// Populated when an admin performs an action on or behalf of another user
 	TargetUserID *uuid.UUID `json:"target_user_id"`
 	EntityID     *uuid.UUID `json:"entity_id"`
 	ResourceID   *uuid.UUID `json:"resource_id"`
 	ActionID     *uuid.UUID `json:"action_id"`
 	RoleID       *uuid.UUID `json:"role_id"`
 	PermissionID *uuid.UUID `json:"permission_id"`
-	Decision     *string    `json:"decision"`
-	Reason       *string    `json:"reason"`
-	// Calculated risk score from 0-100 based on action, context, and user behavior
-	RiskScore *int32      `json:"risk_score"`
-	Context   []byte      `json:"context"`
-	IpAddress *netip.Addr `json:"ip_address"`
-	UserAgent *string     `json:"user_agent"`
-	SessionID *uuid.UUID  `json:"session_id"`
-	// JSONB containing compliance-related flags (GDPR, SOX, HIPAA, PCI, etc.)
-	ComplianceFlags []byte       `json:"compliance_flags"`
-	CreatedAt       sql.NullTime `json:"created_at"`
+	// ALLOW or DENY — relevant for access-check events, NULL for trigger-generated DML events
+	Decision *string `json:"decision"`
+	Reason   *string `json:"reason"`
+	// 0–100 composite score calculated from operation type, table sensitivity, and field-level changes
+	RiskScore int32 `json:"risk_score"`
+	// JSONB map of applicable regulatory flags. Which flags appear is determined by audit_sensitive_tables and audit_sensitive_fields — not hardcoded here
+	ComplianceFlags []byte `json:"compliance_flags"`
+	// Structured event payload: table_name, schema_name, record_id, changed_fields, trigger metadata, and operation-specific nested payload
+	Context   []byte    `json:"context"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Registry of column names considered sensitive regardless of table. When a sensitive field is present in (or changed on) an audited row the field's risk_weight and compliance_flags are applied. Populated by module migrations via register_audit_sensitive_field().
+type AuditSensitiveField struct {
+	FieldName  string `json:"field_name"`
+	RiskWeight int32  `json:"risk_weight"`
+	// JSONB map merged into audit_log.compliance_flags when this field is present in the row being audited
+	ComplianceFlags []byte    `json:"compliance_flags"`
+	ModuleName      *string   `json:"module_name"`
+	CreatedAt       time.Time `json:"created_at"`
+}
+
+// Registry of tables that receive elevated risk scores, compliance flags, or severity overrides in the audit system. Populated by module migrations via register_audit_sensitive_table(). Platform core rows are seeded in 000449.
+type AuditSensitiveTable struct {
+	TableName  string `json:"table_name"`
+	RiskWeight int32  `json:"risk_weight"`
+	// NULL = use default category logic in determine_event_category()
+	EventCategory *string `json:"event_category"`
+	// NULL = use default severity logic in determine_severity()
+	SeverityOnDelete *string `json:"severity_on_delete"`
+	// JSONB map merged into audit_log.compliance_flags when this table is the audit target
+	ComplianceFlags []byte `json:"compliance_flags"`
+	// Informational: which module or migration owns this row
+	ModuleName *string   `json:"module_name"`
+	CreatedAt  time.Time `json:"created_at"`
 }
 
 type CasbinRule struct {
@@ -612,6 +641,32 @@ type FinanceApprovalHistory struct {
 	CreatedAt     time.Time  `json:"created_at"`
 }
 
+type FinanceAuditChain struct {
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	OutboxID  uuid.UUID `json:"outbox_id"`
+	Sequence  int64     `json:"sequence"`
+	EventType string    `json:"event_type"`
+	Payload   []byte    `json:"payload"`
+	PrevHash  string    `json:"prev_hash"`
+	ChainHash string    `json:"chain_hash"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type FinanceAuditOutbox struct {
+	ID             uuid.UUID    `json:"id"`
+	TenantID       uuid.UUID    `json:"tenant_id"`
+	IdempotencyKey string       `json:"idempotency_key"`
+	EventType      string       `json:"event_type"`
+	Payload        []byte       `json:"payload"`
+	Status         string       `json:"status"`
+	RetryCount     int32        `json:"retry_count"`
+	MaxRetries     int32        `json:"max_retries"`
+	CreatedAt      time.Time    `json:"created_at"`
+	ProcessedAt    sql.NullTime `json:"processed_at"`
+	ErrorMsg       *string      `json:"error_msg"`
+}
+
 type FinanceBankStatement struct {
 	ID                 uuid.UUID      `json:"id"`
 	TenantID           uuid.UUID      `json:"tenant_id"`
@@ -761,6 +816,22 @@ type FinanceFiscalYear struct {
 	EndDate   time.Time  `json:"end_date"`
 	IsClosed  bool       `json:"is_closed"`
 	IsLocked  bool       `json:"is_locked"`
+}
+
+type FinanceIntegrityViolation struct {
+	ID         uuid.UUID    `json:"id"`
+	TenantID   uuid.UUID    `json:"tenant_id"`
+	Kind       string       `json:"kind"`
+	EntityID   uuid.UUID    `json:"entity_id"`
+	Severity   string       `json:"severity"`
+	Detail     string       `json:"detail"`
+	Lifecycle  string       `json:"lifecycle"`
+	DetectedAt time.Time    `json:"detected_at"`
+	AckedAt    sql.NullTime `json:"acked_at"`
+	ResolvedAt sql.NullTime `json:"resolved_at"`
+	AckedBy    *uuid.UUID   `json:"acked_by"`
+	ResolvedBy *uuid.UUID   `json:"resolved_by"`
+	RepairNote *string      `json:"repair_note"`
 }
 
 type FinanceReversalHistory struct {
@@ -935,6 +1006,18 @@ type FinanceTransactionEntry struct {
 	CreatedAt               time.Time      `json:"created_at"`
 	UpdatedAt               time.Time      `json:"updated_at"`
 	DeletedAt               sql.NullTime   `json:"deleted_at"`
+}
+
+type FinanceViolationSuppression struct {
+	ID            uuid.UUID `json:"id"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	ViolationKind string    `json:"violation_kind"`
+	EntityID      uuid.UUID `json:"entity_id"`
+	Reason        string    `json:"reason"`
+	SuppressedBy  uuid.UUID `json:"suppressed_by"`
+	AuditEventID  *string   `json:"audit_event_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	ExpiresAt     time.Time `json:"expires_at"`
 }
 
 type FinanceWorkflowRecord struct {
@@ -1770,8 +1853,8 @@ type VActiveEntity struct {
 // Hourly audit event summary for the last 7 days with risk metrics and access decision counts for security monitoring dashboards.
 type VAuditSummaryView struct {
 	TenantID        uuid.UUID       `json:"tenant_id"`
-	EventCategory   *string         `json:"event_category"`
-	Severity        *string         `json:"severity"`
+	EventCategory   string          `json:"event_category"`
+	Severity        string          `json:"severity"`
 	HourBucket      pgtype.Interval `json:"hour_bucket"`
 	EventCount      int64           `json:"event_count"`
 	UniqueUsers     int64           `json:"unique_users"`

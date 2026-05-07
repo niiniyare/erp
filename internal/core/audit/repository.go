@@ -104,13 +104,13 @@ func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventR
 
 		params := db.CreateAuditEventParams{
 			EventType:     req.EventType,
-			EventCategory: &req.EventCategory, // Convert string to *string
-			Severity:      &req.Severity,      // Convert string to *string
+			EventCategory: req.EventCategory,
+			Severity:      req.Severity,
 			Context:       req.Context,
 			UserID:        req.UserID,
 			EntityID:      req.EntityID,
 			Decision:      req.Decision,
-			Reason:        &reason, // Handle nil pointer properly
+			Reason:        &reason,
 		}
 
 		dbAuditEvent, err := s.CreateAuditEvent(ctx, params)
@@ -123,19 +123,11 @@ func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventR
 			userID = *dbAuditEvent.UserID
 		}
 
-		var eventCategory, severity string
-		if dbAuditEvent.EventCategory != nil {
-			eventCategory = *dbAuditEvent.EventCategory
-		}
-		if dbAuditEvent.Severity != nil {
-			severity = *dbAuditEvent.Severity
-		}
+		eventCategory := dbAuditEvent.EventCategory
+		severity := dbAuditEvent.Severity
 
-		var riskScore *int
-		if dbAuditEvent.RiskScore != nil {
-			riskScoreInt := int(*dbAuditEvent.RiskScore)
-			riskScore = &riskScoreInt
-		}
+		riskScoreInt := int(dbAuditEvent.RiskScore)
+		riskScore := &riskScoreInt
 
 		var ipAddress *string
 		if dbAuditEvent.IpAddress != nil {
@@ -143,10 +135,7 @@ func (r *repository) CreateAuditEvent(ctx context.Context, req CreateAuditEventR
 			ipAddress = &ipStr
 		}
 
-		var createdAt time.Time
-		if dbAuditEvent.CreatedAt.Valid {
-			createdAt = dbAuditEvent.CreatedAt.Time
-		}
+		createdAt := dbAuditEvent.CreatedAt
 
 		auditEvent = &AuditEvent{
 			ID:              dbAuditEvent.ID,

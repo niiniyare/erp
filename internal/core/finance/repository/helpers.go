@@ -2,6 +2,7 @@ package repository
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -33,4 +34,15 @@ func nullUUID(id uuid.UUID) *uuid.UUID {
 // SQL NULL and a non-nil pointer passes the UUID value through unchanged.
 func nullUUID2(id *uuid.UUID) *uuid.UUID {
 	return id
+}
+
+// zeroTimeToNil converts a time.Time value to a *time.Time pointer.
+// Zero-valued times (representing SQL NULL scanned by pgx) are returned as nil
+// so that callers receive a proper nil pointer rather than a pointer to the
+// zero instant (0001-01-01 00:00:00 UTC).
+func zeroTimeToNil(t time.Time) *time.Time {
+	if t.IsZero() {
+		return nil
+	}
+	return &t
 }

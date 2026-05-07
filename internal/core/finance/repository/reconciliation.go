@@ -13,17 +13,19 @@ import (
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/shared"
+	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/tracing"
 )
 
 type reconciliationRepository struct {
 	store   db.Store
 	tracing tracing.Service
+	logger  logger.Logger
 }
 
 // NewReconciliationRepository returns a new domain.ReconciliationRepository.
-func NewReconciliationRepository(store db.Store, tracing tracing.Service) domain.ReconciliationRepository {
-	return &reconciliationRepository{store: store, tracing: tracing}
+func NewReconciliationRepository(store db.Store, tracing tracing.Service, log logger.Logger) domain.ReconciliationRepository {
+	return &reconciliationRepository{store: store, tracing: tracing, logger: log}
 }
 
 // ── Bank Statement ────────────────────────────────────────────────────────────
@@ -32,12 +34,11 @@ func (r *reconciliationRepository) CreateStatement(ctx context.Context, s *domai
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.CreateStatement")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -72,13 +73,12 @@ func (r *reconciliationRepository) GetStatementByID(ctx context.Context, id uuid
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.GetStatementByID")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.BankStatement
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -109,8 +109,18 @@ func (r *reconciliationRepository) ListStatements(ctx context.Context, tenantID 
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.ListStatements")
 	defer span.End()
 
+	// Validate that the explicit tenantID matches the context tenant to prevent
+	// cross-tenant queries if callers accidentally pass the wrong tenant.
+	ctxTenantID, ok := shared.GetTenantID(ctx)
+	if !ok {
+		return nil, fmt.Errorf("tenant ID not found in context")
+	}
+	if ctxTenantID != tenantID {
+		return nil, fmt.Errorf("tenant ID mismatch: context tenant %s does not match parameter %s", ctxTenantID, tenantID)
+	}
+
 	var results []*domain.BankStatement
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -154,12 +164,11 @@ func (r *reconciliationRepository) UpdateStatement(ctx context.Context, s *domai
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.UpdateStatement")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -197,12 +206,11 @@ func (r *reconciliationRepository) CreateLines(ctx context.Context, lines []*dom
 		return nil
 	}
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -237,13 +245,12 @@ func (r *reconciliationRepository) GetLine(ctx context.Context, lineID uuid.UUID
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.GetLine")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var result *domain.BankStatementLine
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -273,13 +280,12 @@ func (r *reconciliationRepository) ListLines(ctx context.Context, statementID uu
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.ListLines")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return nil, fmt.Errorf("tenant ID not found in context")
 	}
 
 	var results []*domain.BankStatementLine
-	err := r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
@@ -356,12 +362,11 @@ func (r *reconciliationRepository) UnmatchLine(ctx context.Context, lineID uuid.
 	ctx, span := r.tracing.StartSpan(ctx, "ReconciliationRepository.UnmatchLine")
 	defer span.End()
 
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok {
+	if _, ok := shared.GetTenantID(ctx); !ok {
 		return fmt.Errorf("tenant ID not found in context")
 	}
 
-	return r.store.WithTenant(ctx, tenantID, func(ctx context.Context, st db.Store) error {
+	return r.store.WithTenantFromCtx(ctx, func(ctx context.Context, st db.Store) error {
 		tx, err := txFrom(st)
 		if err != nil {
 			return err
