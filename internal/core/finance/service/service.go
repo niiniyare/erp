@@ -70,12 +70,34 @@ type Dependencies struct {
 	// IntegrityService enables automated integrity scans wired into period-close.
 	// nil → integrity gate is skipped for hard-close.
 	IntegrityService IntegrityService
+
+	// ── Phase 9: Governance & Evolution Safety ────────────────────────────────
+
+	// GovernancePolicy is the global default governance policy.
+	// nil → DefaultGovernancePolicy() is used.
+	GovernancePolicy *GovernancePolicy
+
+	// ViolationGovernanceRepo enables violation suppression lifecycle.
+	// nil → suppression is disabled.
+	ViolationGovernanceRepo ViolationGovernanceRepository
+
+	// ComplianceEvidenceRepo enables compliance evidence generation.
+	// nil → evidence bundles omit DB-backed sections.
+	ComplianceEvidenceRepo ComplianceEvidenceRepository
 }
 
 // NewServices creates a new instance of finance services with all dependencies
 func NewServices(deps Dependencies) *Services {
 	// Build the shared audit writer once — routes by criticality and holds outbox repo.
 	aw := newFinanceAuditWriter(deps.AuditService, deps.AuditOutboxRepo, deps.Metrics)
+
+	// ── Phase 9: Governance infrastructure ───────────────────────────────────
+	// Build governance registry first — other services reference it.
+	globalPolicy := DefaultGovernancePolicy()
+	if deps.GovernancePolicy != nil {
+		globalPolicy = *deps.GovernancePolicy
+	}
+	policyRegistry := NewGovernancePolicyRegistry(globalPolicy, deps.Metrics)
 
 	// Build safety enforcer with configured or default policy.
 	safetyPolicy := DefaultSafetyPolicy()
@@ -85,11 +107,23 @@ func NewServices(deps Dependencies) *Services {
 	safetyEnforcer := NewSafetyEnforcer(safetyPolicy, deps.Metrics)
 	anomalyDetector := NewAnomalyDetector(deps.Metrics)
 
+	// Evolution safety guard — wired with registry and enforcer.
+	evolutionGuard := NewEvolutionSafetyGuard(policyRegistry, safetyEnforcer, deps.Metrics)
+
 	// Build integrity escalation service if dependencies are available.
 	var escalation *IntegrityEscalationService
 	if deps.IntegrityService != nil || deps.ViolationRepo != nil {
 		escalation = NewIntegrityEscalationService(deps.IntegrityService, deps.ViolationRepo, deps.Metrics)
 	}
+
+	// Violation governance (suppression + escalation).
+	_ = NewViolationGovernanceService(deps.ViolationRepo, deps.ViolationGovernanceRepo, policyRegistry, aw, deps.Metrics)
+
+	// Compliance evidence service.
+	_ = NewComplianceEvidenceService(deps.ComplianceEvidenceRepo, deps.ViolationRepo, nil, policyRegistry, safetyEnforcer, evolutionGuard, deps.Metrics)
+
+	// Continuous verification — available for caller wiring into startup path.
+	_ = NewContinuousVerificationService(evolutionGuard, nil, nil, nil, deps.ViolationRepo, policyRegistry, deps.Metrics)
 
 	// Create TransactionEntry service first as Transaction service depends on it.
 	// Entry methods (CreateEntry, GetEntriesByTransaction, etc.) are part of
