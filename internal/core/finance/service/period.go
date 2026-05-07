@@ -35,7 +35,8 @@ type PeriodService interface {
 
 type periodService struct {
 	repo             domain.PeriodRepository
-	integrityService IntegrityService // nil → hard-close runs without integrity gate
+	integrityService IntegrityService                // nil → hard-close runs without integrity gate
+	escalation       *IntegrityEscalationService     // nil → violation-lifecycle blocking skipped
 	tracing          tracing.Service
 	metrics          metrics.MetricsProvider
 	auditWriter      *financeAuditWriter // nil → audit skipped
@@ -49,12 +50,14 @@ func NewPeriodService(
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	aw *financeAuditWriter,
+	escalation *IntegrityEscalationService,
 ) PeriodService {
 	return &periodService{
 		repo:        repo,
 		tracing:     tracing,
 		metrics:     metrics,
 		auditWriter: aw,
+		escalation:  escalation,
 	}
 }
 
@@ -71,6 +74,7 @@ func NewPeriodServiceWithIntegrity(
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	aw *financeAuditWriter,
+	escalation *IntegrityEscalationService,
 ) PeriodService {
 	return &periodService{
 		repo:             repo,
@@ -78,6 +82,7 @@ func NewPeriodServiceWithIntegrity(
 		tracing:          tracing,
 		metrics:          metrics,
 		auditWriter:      aw,
+		escalation:       escalation,
 	}
 }
 
@@ -245,6 +250,11 @@ func (s *periodService) ChangePeriodStatus(ctx context.Context, id uuid.UUID, ne
 			}
 			// Scan passed — set checksPassed=true so the domain method proceeds.
 			checksPassed = true
+		}
+		// Escalation gate: block hard-close if unresolved CRITICAL violations exist
+		// in the violation lifecycle tracker (persisted by IntegrityEscalationService).
+		if blockErr := s.escalation.BlockIfCriticalOpen(ctx); blockErr != nil {
+			return nil, blockErr
 		}
 		if err := p.HardClose(byUserID, now, checksPassed); err != nil {
 			return nil, errors.NewBusinessError("INVALID_TRANSITION", err.Error()).

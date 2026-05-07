@@ -1,5 +1,7 @@
 package service
 
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+
 import (
 	"context"
 	"fmt"
@@ -51,7 +53,9 @@ type transactionService struct {
 	txRunner            domain.TxRunner               // nil → reversal uses best-effort cleanup
 	tracing             tracing.Service
 	metrics             metrics.MetricsProvider
-	auditWriter         *financeAuditWriter // nil → audit skipped (safe for tests)
+	auditWriter         *financeAuditWriter  // nil → audit skipped (safe for tests)
+	safetyEnforcer      *SafetyEnforcer      // nil → safety checks skipped (safe for tests)
+	anomalyDetector     *AnomalyDetector     // nil → anomaly observation skipped (safe for tests)
 }
 
 func NewTransactionService(
@@ -64,6 +68,8 @@ func NewTransactionService(
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 	aw *financeAuditWriter,
+	safetyEnforcer *SafetyEnforcer,
+	anomalyDetector *AnomalyDetector,
 ) TransactionService {
 	return &transactionService{
 		repo:                repo,
@@ -75,6 +81,8 @@ func NewTransactionService(
 		tracing:             tracing,
 		metrics:             metrics,
 		auditWriter:         aw,
+		safetyEnforcer:      safetyEnforcer,
+		anomalyDetector:     anomalyDetector,
 	}
 }
 
@@ -919,6 +927,14 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			WithCategory(errors.CategoryBusiness)
 	}
 
+	// Safety: check posting velocity (WARN-only — does not block).
+	s.safetyEnforcer.CheckPostingVelocity(ctx)
+
+	// Safety: block transactions exceeding the configured amount threshold.
+	if err := s.safetyEnforcer.CheckTransactionAmount(ctx, transaction.TotalDebitAmount); err != nil {
+		return nil, err
+	}
+
 	entries, err := s.entryService.GetEntriesByTransactionID(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get transaction entries: %w", err)
@@ -1010,6 +1026,8 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			"duration_ms":        duration.Milliseconds(),
 		})
 
+	s.anomalyDetector.ObservePosting(ctx, postedTransaction.TotalDebitAmount)
+
 	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
 		EventType:     auditTypeTxnPosted,
@@ -1073,6 +1091,13 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		return nil, errors.NewBusinessError("ALREADY_REVERSED", "Transaction is already reversed").
 			WithHTTPStatus(http.StatusUnprocessableEntity).
 			WithCategory(errors.CategoryBusiness)
+	}
+
+	// Safety: block users exceeding the per-hour reversal velocity limit.
+	if reversalUserID, hasUser := shared.GetUserID(ctx); hasUser {
+		if err := s.safetyEnforcer.CheckReversalVelocity(ctx, reversalUserID); err != nil {
+			return nil, err
+		}
 	}
 
 	// FIN-TXN-024: a reversal transaction must not itself be reversed.
@@ -1300,6 +1325,10 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 			"reason":                  reason,
 		})
 
+	if reversalUserID, hasUser := shared.GetUserID(ctx); hasUser {
+		s.anomalyDetector.ObserveReversal(ctx, reversalUserID)
+	}
+
 	// Best-effort path: outbox written after mutation (small atomicity window).
 	// The gap detector surfaces any events lost to a crash in this window.
 	s.auditWriter.writeAudit(ctx, reversalAuditReq, reversalAuditKey)
@@ -1371,6 +1400,11 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 		approverID = transaction.CreatedBy
 	}
 
+	// Safety: block users approving at abnormal velocity (segregation-of-duties + abuse detection).
+	if err := s.safetyEnforcer.CheckApprovalVelocity(ctx, approverID); err != nil {
+		return nil, err
+	}
+
 	timer := s.metrics.Timer("transaction_approval_duration", metrics.Fields{
 		"transaction_type": string(transaction.TransactionType),
 	})
@@ -1415,6 +1449,8 @@ func (s *transactionService) ApproveTransaction(ctx context.Context, id uuid.UUI
 			"transaction_number": approvedTransaction.TransactionNumber,
 			"duration_ms":        duration.Milliseconds(),
 		})
+
+	s.anomalyDetector.ObserveApproval(ctx, approverID)
 
 	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),
@@ -1539,6 +1575,8 @@ func (s *transactionService) RejectTransaction(ctx context.Context, id uuid.UUID
 			"transaction_number": rejectedTransaction.TransactionNumber,
 			"duration_ms":        duration.Milliseconds(),
 		})
+
+	s.anomalyDetector.ObserveRejection(ctx, rejectorID)
 
 	s.auditWriter.writeAudit(ctx, audit.CreateAuditEventRequest{
 		UserID:        auditUserID(ctx),

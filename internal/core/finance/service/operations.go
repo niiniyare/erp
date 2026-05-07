@@ -18,6 +18,8 @@ package service
 //   - Reconciliation investigation: ReconciliationDiagnostics when users report
 //     statements stuck in IN_PROGRESS
 
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+
 import (
 	"context"
 	"fmt"

@@ -27,6 +27,8 @@ package service
 // All methods are READ-ONLY — they detect drift but never auto-correct.
 // Correction requires a human-initiated reversal/amendment flow.
 
+//go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"
+
 import (
 	"context"
 	"fmt"

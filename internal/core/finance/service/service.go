@@ -56,12 +56,40 @@ type Dependencies struct {
 	// transaction as the financial mutation and delivered by a background worker.
 	// nil → CRITICAL events fall back to direct write (degraded durability).
 	AuditOutboxRepo AuditOutboxRepository
+
+	// ── Phase 8: Autonomous Safety ────────────────────────────────────────────
+
+	// SafetyPolicy overrides the default runtime safety policy for all tenants.
+	// nil → DefaultSafetyPolicy() is used.
+	SafetyPolicy *SafetyPolicy
+
+	// ViolationRepo enables persistent integrity violation lifecycle tracking.
+	// nil → violation persistence and escalation blocking are disabled.
+	ViolationRepo IntegrityViolationRepository
+
+	// IntegrityService enables automated integrity scans wired into period-close.
+	// nil → integrity gate is skipped for hard-close.
+	IntegrityService IntegrityService
 }
 
 // NewServices creates a new instance of finance services with all dependencies
 func NewServices(deps Dependencies) *Services {
 	// Build the shared audit writer once — routes by criticality and holds outbox repo.
 	aw := newFinanceAuditWriter(deps.AuditService, deps.AuditOutboxRepo, deps.Metrics)
+
+	// Build safety enforcer with configured or default policy.
+	safetyPolicy := DefaultSafetyPolicy()
+	if deps.SafetyPolicy != nil {
+		safetyPolicy = *deps.SafetyPolicy
+	}
+	safetyEnforcer := NewSafetyEnforcer(safetyPolicy, deps.Metrics)
+	anomalyDetector := NewAnomalyDetector(deps.Metrics)
+
+	// Build integrity escalation service if dependencies are available.
+	var escalation *IntegrityEscalationService
+	if deps.IntegrityService != nil || deps.ViolationRepo != nil {
+		escalation = NewIntegrityEscalationService(deps.IntegrityService, deps.ViolationRepo, deps.Metrics)
+	}
 
 	// Create TransactionEntry service first as Transaction service depends on it.
 	// Entry methods (CreateEntry, GetEntriesByTransaction, etc.) are part of
@@ -84,6 +112,8 @@ func NewServices(deps Dependencies) *Services {
 		deps.Tracing,
 		deps.Metrics,
 		aw,
+		safetyEnforcer,
+		anomalyDetector,
 	)
 
 	// Create Account service with account group repository
@@ -96,7 +126,7 @@ func NewServices(deps Dependencies) *Services {
 		deps.FeatureFlagService,
 	)
 
-	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, aw)
+	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, aw, escalation)
 	exchangeRateService := NewExchangeRateService(deps.ExchangeRateRepo, deps.Tracing, deps.Metrics)
 	currencyService := NewCurrencyService(deps.CurrencyRepo, deps.Tracing, deps.Metrics)
 	costCenterService := NewCostCenterService(deps.CostCenterRepo, deps.Tracing, deps.Metrics)

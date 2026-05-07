@@ -124,7 +124,8 @@ func (s *PeriodServiceSuite) SetupTest() {
 		s.repo,
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
-		nil, // auditSvc — nil skips audit in tests
+		nil, // auditWriter — nil skips audit in tests
+		nil, // escalation — nil skips violation-lifecycle blocking in tests
 	)
 }
 

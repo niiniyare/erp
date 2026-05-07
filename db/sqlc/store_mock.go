@@ -1535,31 +1535,33 @@ func (mr *MockStoreMockRecorder) DeactivateSSOProvider(ctx, provider any) *gomoc
 }
 
 // DeleteAccountBalance mocks base method.
-func (m *MockStore) DeleteAccountBalance(ctx context.Context, id uuid.UUID) error {
+func (m *MockStore) DeleteAccountBalance(ctx context.Context, arg DeleteAccountBalanceParams) (*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountBalance", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DeleteAccountBalance", ctx, arg)
+	ret0, _ := ret[0].(*FinanceAccountBalance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteAccountBalance indicates an expected call of DeleteAccountBalance.
-func (mr *MockStoreMockRecorder) DeleteAccountBalance(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteAccountBalance(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountBalance", reflect.TypeOf((*MockStore)(nil).DeleteAccountBalance), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountBalance", reflect.TypeOf((*MockStore)(nil).DeleteAccountBalance), ctx, arg)
 }
 
 // DeleteAccountValidationRule mocks base method.
-func (m *MockStore) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error {
+func (m *MockStore) DeleteAccountValidationRule(ctx context.Context, arg DeleteAccountValidationRuleParams) (*FinanceAccountValidationRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountValidationRule", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DeleteAccountValidationRule", ctx, arg)
+	ret0, _ := ret[0].(*FinanceAccountValidationRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteAccountValidationRule indicates an expected call of DeleteAccountValidationRule.
-func (mr *MockStoreMockRecorder) DeleteAccountValidationRule(ctx, id any) *gomock.Call {
+func (mr *MockStoreMockRecorder) DeleteAccountValidationRule(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountValidationRule", reflect.TypeOf((*MockStore)(nil).DeleteAccountValidationRule), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountValidationRule", reflect.TypeOf((*MockStore)(nil).DeleteAccountValidationRule), ctx, arg)
 }
 
 // DeleteAction mocks base method.
@@ -4632,18 +4634,18 @@ func (mr *MockStoreMockRecorder) GetPendingApprovalTransactions(ctx, arg any) *g
 }
 
 // GetPendingWorkflowsByUser mocks base method.
-func (m *MockStore) GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error) {
+func (m *MockStore) GetPendingWorkflowsByUser(ctx context.Context, arg GetPendingWorkflowsByUserParams) ([]*GetPendingWorkflowsByUserRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx)
+	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx, arg)
 	ret0, _ := ret[0].([]*GetPendingWorkflowsByUserRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPendingWorkflowsByUser indicates an expected call of GetPendingWorkflowsByUser.
-func (mr *MockStoreMockRecorder) GetPendingWorkflowsByUser(ctx any) *gomock.Call {
+func (mr *MockStoreMockRecorder) GetPendingWorkflowsByUser(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockStore)(nil).GetPendingWorkflowsByUser), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockStore)(nil).GetPendingWorkflowsByUser), ctx, arg)
 }
 
 // GetPeriodEndBalances mocks base method.
@@ -6231,11 +6233,12 @@ func (mr *MockStoreMockRecorder) InsertApprovalHistory(ctx, arg any) *gomock.Cal
 }
 
 // InsertReversalHistory mocks base method.
-func (m *MockStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error {
+func (m *MockStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertReversalHistory", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // InsertReversalHistory indicates an expected call of InsertReversalHistory.
@@ -9000,18 +9003,18 @@ func (mr *MockStoreMockRecorder) ValidateAccountGroupCode(ctx, arg any) *gomock.
 }
 
 // ValidateAccountHierarchy mocks base method.
-func (m *MockStore) ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error) {
+func (m *MockStore) ValidateAccountHierarchy(ctx context.Context, arg ValidateAccountHierarchyParams) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateAccountHierarchy", ctx, parentAccountID)
+	ret := m.ctrl.Call(m, "ValidateAccountHierarchy", ctx, arg)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ValidateAccountHierarchy indicates an expected call of ValidateAccountHierarchy.
-func (mr *MockStoreMockRecorder) ValidateAccountHierarchy(ctx, parentAccountID any) *gomock.Call {
+func (mr *MockStoreMockRecorder) ValidateAccountHierarchy(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountHierarchy", reflect.TypeOf((*MockStore)(nil).ValidateAccountHierarchy), ctx, parentAccountID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountHierarchy", reflect.TypeOf((*MockStore)(nil).ValidateAccountHierarchy), ctx, arg)
 }
 
 // ValidateCurrentTenant mocks base method.
@@ -10731,31 +10734,33 @@ func (mr *MockTxStoreMockRecorder) DeactivateSSOProvider(ctx, provider any) *gom
 }
 
 // DeleteAccountBalance mocks base method.
-func (m *MockTxStore) DeleteAccountBalance(ctx context.Context, id uuid.UUID) error {
+func (m *MockTxStore) DeleteAccountBalance(ctx context.Context, arg DeleteAccountBalanceParams) (*FinanceAccountBalance, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountBalance", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DeleteAccountBalance", ctx, arg)
+	ret0, _ := ret[0].(*FinanceAccountBalance)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteAccountBalance indicates an expected call of DeleteAccountBalance.
-func (mr *MockTxStoreMockRecorder) DeleteAccountBalance(ctx, id any) *gomock.Call {
+func (mr *MockTxStoreMockRecorder) DeleteAccountBalance(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountBalance", reflect.TypeOf((*MockTxStore)(nil).DeleteAccountBalance), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountBalance", reflect.TypeOf((*MockTxStore)(nil).DeleteAccountBalance), ctx, arg)
 }
 
 // DeleteAccountValidationRule mocks base method.
-func (m *MockTxStore) DeleteAccountValidationRule(ctx context.Context, id uuid.UUID) error {
+func (m *MockTxStore) DeleteAccountValidationRule(ctx context.Context, arg DeleteAccountValidationRuleParams) (*FinanceAccountValidationRule, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DeleteAccountValidationRule", ctx, id)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "DeleteAccountValidationRule", ctx, arg)
+	ret0, _ := ret[0].(*FinanceAccountValidationRule)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // DeleteAccountValidationRule indicates an expected call of DeleteAccountValidationRule.
-func (mr *MockTxStoreMockRecorder) DeleteAccountValidationRule(ctx, id any) *gomock.Call {
+func (mr *MockTxStoreMockRecorder) DeleteAccountValidationRule(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountValidationRule", reflect.TypeOf((*MockTxStore)(nil).DeleteAccountValidationRule), ctx, id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DeleteAccountValidationRule", reflect.TypeOf((*MockTxStore)(nil).DeleteAccountValidationRule), ctx, arg)
 }
 
 // DeleteAction mocks base method.
@@ -13828,18 +13833,18 @@ func (mr *MockTxStoreMockRecorder) GetPendingApprovalTransactions(ctx, arg any) 
 }
 
 // GetPendingWorkflowsByUser mocks base method.
-func (m *MockTxStore) GetPendingWorkflowsByUser(ctx context.Context) ([]*GetPendingWorkflowsByUserRow, error) {
+func (m *MockTxStore) GetPendingWorkflowsByUser(ctx context.Context, arg GetPendingWorkflowsByUserParams) ([]*GetPendingWorkflowsByUserRow, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx)
+	ret := m.ctrl.Call(m, "GetPendingWorkflowsByUser", ctx, arg)
 	ret0, _ := ret[0].([]*GetPendingWorkflowsByUserRow)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPendingWorkflowsByUser indicates an expected call of GetPendingWorkflowsByUser.
-func (mr *MockTxStoreMockRecorder) GetPendingWorkflowsByUser(ctx any) *gomock.Call {
+func (mr *MockTxStoreMockRecorder) GetPendingWorkflowsByUser(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockTxStore)(nil).GetPendingWorkflowsByUser), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPendingWorkflowsByUser", reflect.TypeOf((*MockTxStore)(nil).GetPendingWorkflowsByUser), ctx, arg)
 }
 
 // GetPeriodEndBalances mocks base method.
@@ -15441,11 +15446,12 @@ func (mr *MockTxStoreMockRecorder) InsertApprovalHistory(ctx, arg any) *gomock.C
 }
 
 // InsertReversalHistory mocks base method.
-func (m *MockTxStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) error {
+func (m *MockTxStore) InsertReversalHistory(ctx context.Context, arg InsertReversalHistoryParams) (bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InsertReversalHistory", ctx, arg)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // InsertReversalHistory indicates an expected call of InsertReversalHistory.
@@ -18224,18 +18230,18 @@ func (mr *MockTxStoreMockRecorder) ValidateAccountGroupCode(ctx, arg any) *gomoc
 }
 
 // ValidateAccountHierarchy mocks base method.
-func (m *MockTxStore) ValidateAccountHierarchy(ctx context.Context, parentAccountID *uuid.UUID) (bool, error) {
+func (m *MockTxStore) ValidateAccountHierarchy(ctx context.Context, arg ValidateAccountHierarchyParams) (bool, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ValidateAccountHierarchy", ctx, parentAccountID)
+	ret := m.ctrl.Call(m, "ValidateAccountHierarchy", ctx, arg)
 	ret0, _ := ret[0].(bool)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // ValidateAccountHierarchy indicates an expected call of ValidateAccountHierarchy.
-func (mr *MockTxStoreMockRecorder) ValidateAccountHierarchy(ctx, parentAccountID any) *gomock.Call {
+func (mr *MockTxStoreMockRecorder) ValidateAccountHierarchy(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountHierarchy", reflect.TypeOf((*MockTxStore)(nil).ValidateAccountHierarchy), ctx, parentAccountID)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidateAccountHierarchy", reflect.TypeOf((*MockTxStore)(nil).ValidateAccountHierarchy), ctx, arg)
 }
 
 // ValidateCurrentTenant mocks base method.

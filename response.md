@@ -1,4 +1,236 @@
-# Finance Module — Phase 1, 2, 3, 4, 5, 6 & 7 Report
+# Finance Module — Phase 1, 2, 3, 4, 5, 6, 7 & 8 Report
+
+---
+
+# Phase 8: Autonomous Financial Safety Enforcement
+
+**Date:** 2026-05-07
+
+## 1. Summary
+
+Phase 8 transforms the finance module from "safe if operators behave correctly" to a **self-defending financial system**. Ten enforcement layers were implemented: runtime policy enforcement, persistent integrity escalation, tamper-evident audit chain, anomaly detection, outbox governance, self-healing, security monitoring, governance dashboard readiness, anti-entropy verification, and a final autonomous safety audit.
+
+All new services follow the nil-receiver no-op pattern so they are optional in tests without any code changes.
+
+---
+
+## 2. Runtime Safety Policy Engine (`safety_policy.go`)
+
+**What:** Configurable, tenant-aware runtime policy engine with in-memory sliding-window rate limiting.
+
+**Policies enforced:**
+
+| Policy | Default | Action |
+|---|---|---|
+| `MaxTransactionAmount` | 10,000,000 | BLOCK |
+| `MaxReversalsPerHour` | 20 per user | BLOCK |
+| `MaxApprovalVelocityPerHour` | 50 per user | BLOCK |
+| `MaxPostingsPerHour` | 500 system-wide | WARN only |
+
+**Architecture:**
+- `SafetyEnforcer` holds `tenantPolicies map[uuid.UUID]SafetyPolicy` for per-tenant overrides; falls back to `defaultPolicy`
+- Sliding window counters: prune-in-place timestamps older than 1 hour on each check; thread-safe via `sync.RWMutex` (policy map) + per-entry `sync.Mutex` (counters)
+- Returns `ErrSafetyPolicyViolation` with descriptive message on breach
+- Nil-safe: all methods no-op when receiver is nil
+
+**Integration points:**
+- `postTransactionInline`: `CheckTransactionAmount` + `CheckPostingVelocity` (warn)
+- `ReverseTransaction`: `CheckReversalVelocity` per user
+- `ApproveTransaction`: `CheckApprovalVelocity` per user
+
+**Metrics emitted:** `finance_safety_violations_total{check, tenant_id}`
+
+---
+
+## 3. Automatic Integrity Escalation (`integrity_escalation.go`)
+
+**What:** Persistent violation lifecycle tracking. CRITICAL violations block finance mutations.
+
+**Violation lifecycle:** `OPEN` → `ACKNOWLEDGED` → `RESOLVED`
+
+**Repository interface:** `IntegrityViolationRepository`
+- `UpsertViolation` — idempotent upsert on `(tenant_id, kind, entity_id)`; returns whether violation existed and prior lifecycle
+- `CountOpenCritical` — fast path for blocking gate
+- `ListOpenViolations` — filterable by severity
+- `AcknowledgeViolation` / `ResolveViolation` — human sign-off operations
+
+**`IntegrityEscalationService`:**
+- `ScanAndEscalate(ctx)` — runs integrity checks, persists new violations, returns `IntegrityReport` with counts by severity
+- `BlockIfCriticalOpen(ctx)` — returns `ErrIntegrityBlocked` if any CRITICAL violation is OPEN or ACKNOWLEDGED; used as gate in finance mutations
+
+**Blocking gates installed:**
+- `ChangePeriodStatus` → `HardClose` path: blocked if CRITICAL violations open
+- Wired via `NewPeriodService` and `NewPeriodServiceWithIntegrity` (added `escalation *IntegrityEscalationService` parameter)
+
+**DB table:** `finance_integrity_violations` (migration `001006`)
+
+---
+
+## 4. Tamper-Evident Audit Protection (`audit_chain.go`)
+
+**What:** SHA-256 hash chain over every CRITICAL audit event delivered via outbox.
+
+**Chain hash formula:**
+```
+SHA256(prevHash || eventType || base64(payload) || createdAt.RFC3339Nano)
+```
+
+**`AuditChainWriter`:**
+- Called by audit delivery worker after successful CRITICAL event delivery
+- Appends `AuditChainEntry` with monotonically increasing sequence per tenant
+- Idempotency constraint: `UNIQUE(outbox_id)` prevents double-chaining
+
+**`AuditChainVerifier`:**
+- `VerifyChain(ctx, fromSeq, toSeq, pageSize)` — paginated verification
+- Detects three tamper signatures:
+  - `SEQUENCE_GAP` — missing sequence numbers
+  - `PREV_HASH_MISMATCH` — chain link broken
+  - `HASH_MISMATCH` — entry content modified
+
+**Design note:** Full chain verification is too expensive for health endpoints. `checkChainHealth` returns HEALTHY and directs operators to the Temporal cron that runs `VerifyChain` on schedule. Metric `audit_chain_violations_total` is the observable.
+
+**DB table:** `finance_audit_chain` (migration `001006`)
+
+---
+
+## 5. Anomaly Detection Hooks (`anomaly_detector.go`)
+
+**What:** Metrics-driven heuristic observations. Non-blocking. Never returns an error.
+
+**Observations:**
+
+| Method | Trigger | Metric |
+|---|---|---|
+| `ObservePosting` | After inline post | `finance_anomaly_large_transaction_total` if > threshold |
+| `ObserveReversal` | After reversal | `finance_anomaly_reversal_total` |
+| `ObserveApproval` | After approval | `finance_anomaly_approval_total` |
+| `ObserveApprovalFailure` | On failed approval | `finance_anomaly_approval_failure_total` |
+| `ObserveReconciliationUnmatch` | On unmatch | `finance_anomaly_reconciliation_unmatch_total` |
+| `ObserveRejection` | On rejection | `finance_anomaly_rejection_total` |
+
+**Default large-transaction threshold:** 1,000,000
+
+These metrics feed dashboards and alerting rules. The anomaly detector itself makes no business decisions — it only observes and records.
+
+---
+
+## 6. Audit-Outbox Governance (`outbox_governance.go`)
+
+**What:** Extends gap detection with stuck-entry recovery and replay safety validation.
+
+**`OutboxGovernor`:**
+- `CheckBacklog(ctx)` — returns `OutboxBacklogReport`:
+  - `PendingBacklogCount` / `BacklogCritical` (> 100 entries)
+  - `StuckProcessingCount` (PROCESSING for > 5 minutes without completion)
+  - `DeadLetterCount`
+- `RecoverStuck(ctx)` — resets stuck PROCESSING entries back to PENDING (idempotency-safe, only resets entries older than `ProcessingTimeout`)
+- `ValidateReplay(ctx, keys)` — returns which idempotency keys are safe to replay (not already delivered)
+
+**Constants:** `ProcessingTimeout = 5 * time.Minute`, `BacklogCriticalThreshold = 100`
+
+**Repository extension:** `OutboxGovernorRepository` embeds `AuditOutboxRepository` and adds three new query methods.
+
+---
+
+## 7. Self-Healing Opportunities (`self_healing.go`)
+
+**What:** Safe automated recovery. Only takes actions that are idempotency-safe and read-only.
+
+**`SelfHealingService.RunHealingCycle(ctx)`:**
+
+| Action | Safety | Mechanism |
+|---|---|---|
+| Reset stuck PROCESSING | Safe | `OutboxGovernor.RecoverStuck` — idempotency-safe timeout reset |
+| Detect orphaned drafts | Read-only | `CountOrphanedDrafts` (drafts > 72h old) — observes only |
+| Escalate CRITICAL violations | Human required | Returns count in report; does NOT auto-resolve |
+
+**Design principle:** Self-healing never auto-resolves integrity violations. CRITICAL violations require human finance-controller sign-off via `ResolveViolation`. The healing cycle surfaces them and emits metrics; human workflows close them.
+
+**`SelfHealingReport`:** `StuckRecovered int`, `OrphanedDraftCount int`, `CriticalViolationsOpen int`, `Timestamp time.Time`
+
+---
+
+## 8. Security-Oriented Financial Monitoring (`anti_entropy.go`)
+
+**What:** Cross-system consistency verification. Detects silent divergence between subsystems.
+
+**`AntiEntropyService.RunChecks(ctx)`** — three consistency checks over a configurable window (default 24h):
+
+| Check | Condition | Severity |
+|---|---|---|
+| `CRITICAL_VIOLATIONS_WITH_DEAD_AUDIT` | Open CRITICAL violations AND dead outbox entries simultaneously | CRITICAL |
+| `OUTBOX_DELIVERY_STALLED` | Posted transactions exist but zero outbox deliveries in window | HIGH |
+| `AUDIT_CHAIN_NOT_POPULATED` | Deliveries exist but zero chain entries in window | HIGH |
+
+**`AntiEntropyReport`:** `Findings []AntiEntropyFinding`, `CheckedAt time.Time`, `WindowStart time.Time`
+
+Each finding includes `Kind`, `Severity`, `Message`, and relevant counts.
+
+---
+
+## 9. Operational Governance Dashboard Readiness (`governance.go`)
+
+**What:** Single aggregated `FinanceHealthReport` for dashboards, health endpoints, and compliance workflows.
+
+**`FinanceHealthReport` subsystems:**
+
+| Field | Source | Healthy condition |
+|---|---|---|
+| `IntegrityHealth` | `CountOpenCritical` + `ListOpenViolations(HIGH)` | No open CRITICAL or HIGH violations |
+| `AuditDeliveryHealth` | `AuditGapDetector.CheckGaps` | No dead outbox, no stale pending |
+| `OutboxBacklogHealth` | `OutboxGovernor.CheckBacklog` | No critical backlog, no stuck entries |
+| `AuditChainHealth` | Chain verifier configured check | Verifier present; full check deferred to cron |
+| `AnomalyHealth` | Static | Always HEALTHY (metrics-only subsystem) |
+| `SafetyPolicyHealth` | `SafetyEnforcer` nil check | Enforcer configured |
+
+**`Overall`:** worst status across all subsystems (CRITICAL > DEGRADED > HEALTHY). Anomaly subsystem excluded from aggregate (it cannot be CRITICAL or DEGRADED).
+
+**Nil-safe:** all dependencies optional; nil dependency → DEGRADED for that subsystem. Nil receiver → all DEGRADED.
+
+---
+
+## 10. Anti-Entropy Verification
+
+Covered in section 8. The `AntiEntropyService` operates independently of the governance report and is intended for scheduled deep-consistency checks (Temporal cron or nightly job), not the real-time health endpoint.
+
+---
+
+## 11. Final Autonomous Safety Audit
+
+### Silent Corruption Paths Closed
+
+| Path | Was | Now |
+|---|---|---|
+| Large transaction slip | Unchecked | Blocked by `SafetyEnforcer.CheckTransactionAmount` |
+| Rapid reversal abuse | Unchecked | Blocked by `CheckReversalVelocity` per user |
+| Approval velocity attack | Unchecked | Blocked by `CheckApprovalVelocity` per user |
+| HardClose with violations open | Allowed | Blocked by `IntegrityEscalationService.BlockIfCriticalOpen` |
+| Audit event loss (delivery) | Observable only | Dead-letter detected + health status CRITICAL |
+| Audit chain tampering | Undetectable | SHA-256 hash chain, verified on cron |
+| Stuck outbox entries | Operator-manual | Auto-recovered by `SelfHealingService` |
+| Cross-subsystem divergence | Invisible | `AntiEntropyService` cross-checks on schedule |
+| Orphaned draft transactions | Invisible | Surfaced by self-healing cycle |
+| Finance health visibility | None | `FinanceHealthReport` with per-subsystem status |
+
+### Remaining Operator Responsibilities
+
+- **CRITICAL violation resolution** — must be acknowledged and resolved by authorized finance controller; system surfaces but never auto-resolves
+- **SafetyPolicy tuning** — defaults are conservative; high-volume tenants require `SetTenantPolicy` override
+- **AuditChainVerifier cron** — full chain verification deferred to Temporal scheduled workflow; must be wired
+- **AntiEntropy scheduling** — `RunChecks` must be invoked from a cron or health worker; not called inline
+
+### DB Migrations
+
+| Migration | Tables | Purpose |
+|---|---|---|
+| `001006_finance_safety.up.sql` | `finance_integrity_violations`, `finance_audit_chain` | Violation lifecycle + tamper-evident chain |
+| `001006_finance_safety.down.sql` | — | Drops both tables + indexes |
+
+### Wire-Up Summary
+
+All new services wired through `service.go` `Dependencies` struct and `NewServices`. All constructors nil-safe. Test files updated to pass `nil` for new optional dependencies.
+
+---
 
 ---
 
