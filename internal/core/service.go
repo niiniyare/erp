@@ -273,7 +273,8 @@ func (sc *ServiceContainer) initializeBusinessServices(ctx context.Context) erro
 
 	// Finance Service
 	accountRepo := financeRepo.NewAccountsRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing)
-	transactionRepo := financeRepo.NewTransactionRepository(sc.deps.Store, sc.deps.Tracing)
+	transactionRepo := financeRepo.NewTransactionRepository(sc.deps.Store, sc.deps.Tracing, sc.deps.Logger, sc.deps.Metrics)
+
 	financeServiceDeps := financeService.Dependencies{
 		AccountRepo:        accountRepo,
 		TransactionRepo:    transactionRepo,

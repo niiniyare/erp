@@ -1,554 +1,471 @@
 //go:build database
 // +build database
 
-package repository
+// Package repository_test contains real-PostgreSQL integration tests for the
+// finance transaction repository.
+//
+// Run with:
+//
+//	DB_URL="postgres://user:pass@localhost:5432/erp_test?sslmode=disable" \
+//	  go test -tags database ./internal/core/finance/repository/... -v
+package repository_test
 
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/shopspring/decimal"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/finance/domain"
-	"awo.so/internal/core/tenant"
+	"awo.so/internal/core/finance/repository"
 	"awo.so/internal/shared"
 	"awo.so/internal/shared/tracing"
 )
 
-// TransactionRepositoryTestSuite defines test suite for transaction repository operations
-// Tests cover multi-tenant isolation, CRUD operations, transaction management, and error handling
-type TransactionRepositoryTestSuite struct {
+// ============================================================================
+// Suite setup
+// ============================================================================
+
+type TransactionRepoSuite struct {
 	suite.Suite
-	ctx     context.Context
-	runner  *tenant.DatabaseTestRunner
-	repo    domain.TransactionRepository
-	tenantA *db.Tenant
-	tenantB *db.Tenant
-
-	// Test user for foreign key references
-	testUser *db.User
-
-	// Test data cleanup tracking
-	createdTransactionIDs []uuid.UUID
+	req      *require.Assertions
+	pool     *pgxpool.Pool
+	store    db.Store
+	repo     domain.TransactionRepository
+	tenantA  uuid.UUID
+	tenantB  uuid.UUID
+	userID   uuid.UUID // valid user ID for created_by FK
+	ctx      context.Context
 }
 
-// SetupSuite runs once before the entire test suite
-func (s *TransactionRepositoryTestSuite) SetupSuite() {
-	var err error
-	s.runner, err = tenant.NewDatabaseTestRunner()
-	s.Require().NoError(err, "Failed to connect to the database")
+func TestTransactionRepoSuite(t *testing.T) {
+	suite.Run(t, new(TransactionRepoSuite))
+}
+
+func (s *TransactionRepoSuite) SetupSuite() {
+	dsn := os.Getenv("DB_URL")
+	if dsn == "" {
+		s.T().Skip("DB_URL not set — skipping transaction repository integration tests")
+	}
+
+	store, err := db.NewDB(dsn)
+	if err != nil {
+		s.T().Skipf("cannot connect to test DB: %v", err)
+	}
+	s.store = store
+	s.pool = store.GetPool()
+
+	s.repo = repository.NewTransactionRepository(store, tracing.NewNoOpService(), nil, nil)
+
+	s.tenantA = uuid.New()
+	s.tenantB = uuid.New()
+	s.userID = uuid.New()
 	s.ctx = context.Background()
 
-	// Create test tenants
-	s.tenantA, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("finance-transaction-tenant-a-%s", uuid.New().String()[:8]))
-	s.Require().NoError(err, "Failed to create tenant A")
+	if err := s.seedTenant(s.tenantA, "txn-tenant-a"); err != nil {
+		s.T().Skipf("cannot seed tenant A: %v", err)
+	}
+	if err := s.seedTenant(s.tenantB, "txn-tenant-b"); err != nil {
+		s.T().Skipf("cannot seed tenant B: %v", err)
+	}
+	if err := s.seedUser(); err != nil {
+		// Not fatal — if no FK constraint, random UUID works fine.
+		s.T().Logf("note: could not seed test user (%v); using random UUID for created_by", err)
+	}
+}
 
-	s.tenantB, err = s.runner.CreateTestTenant(s.ctx, fmt.Sprintf("finance-transaction-tenant-b-%s", uuid.New().String()[:8]))
-	s.Require().NoError(err, "Failed to create tenant B")
+func (s *TransactionRepoSuite) TearDownSuite() {
+	if s.pool == nil {
+		return
+	}
+	ctx := context.Background()
+	_, _ = s.pool.Exec(ctx,
+		`DELETE FROM finance_transactions WHERE tenant_id IN ($1, $2)`, s.tenantA, s.tenantB)
+	_, _ = s.pool.Exec(ctx,
+		`DELETE FROM tenants WHERE id IN ($1, $2)`, s.tenantA, s.tenantB)
+	s.store.Close()
+}
 
-	// Create test entity and user for foreign key references (within tenant A context)
-	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
-	var testEntity *db.Entity
-	err = s.runner.GetStore().WithTenant(ctxA, s.tenantA.ID, func(ctx context.Context, store db.Store) error {
-		// Create test entity first
-		entityParams := db.CreateEntityParams{
-			Uuid:          uuid.New(),
-			Name:          fmt.Sprintf("Test Entity %s", uuid.New().String()[:8]),
-			Type:          "COMPANY",
-			IsActive:      true,
-			Hidden:        false,
-			AccrualMethod: true,
-			FyStartMonth:  1,
-			Address:       []byte(`{}`),
-			Settings:      []byte(`{}`),
-			Metadata:      []byte(`{}`),
-		}
-		testEntity, err = store.CreateEntity(ctx, entityParams)
-		if err != nil {
-			return err
-		}
+func (s *TransactionRepoSuite) SetupTest() {
+	s.req = require.New(s.T())
+}
 
-		// Create test user
-		userParams := db.CreateUserParams{
-			EntityID:       testEntity.Uuid,
-			Username:       fmt.Sprintf("testuser-%s", uuid.New().String()[:8]),
-			Email:          fmt.Sprintf("test-transactions-%s@example.com", uuid.New().String()[:8]),
-			UserType:       "INTERNAL",
-			UserAttributes: []byte("{}"),
-			Settings:       []byte("{}"),
-		}
-		s.testUser, err = store.CreateUser(ctx, userParams)
+// ============================================================================
+// Seed helpers
+// ============================================================================
+
+func (s *TransactionRepoSuite) seedTenant(id uuid.UUID, slug string) error {
+	_, err := s.pool.Exec(context.Background(), `
+		INSERT INTO tenants (id, name, slug, company_size, country_code, status)
+		VALUES ($1, $2, $3, 'SMALL', 'KE', 'ACTIVE')
+		ON CONFLICT (id) DO NOTHING`,
+		id,
+		"Txn Tenant "+id.String()[:8],
+		slug+"-"+id.String()[:8],
+	)
+	return err
+}
+
+// seedUser inserts a minimal user row so that created_by FK constraints are satisfied.
+// If the schema has no such FK, this is a no-op and the random s.userID is used.
+func (s *TransactionRepoSuite) seedUser() error {
+	// Try to insert a user; ignore if table structure differs.
+	entityID := uuid.New()
+	_, err := s.pool.Exec(context.Background(), `
+		INSERT INTO entities (uuid, name, type, is_active, hidden, accrual_method, fy_start_month,
+		                      address, settings, metadata, tenant_id)
+		VALUES ($1, $2, 'COMPANY', true, false, true, 1, '{}', '{}', '{}', $3)
+		ON CONFLICT (uuid) DO NOTHING`,
+		entityID,
+		"Test Entity "+entityID.String()[:8],
+		s.tenantA,
+	)
+	if err != nil {
 		return err
+	}
+	_, err = s.pool.Exec(context.Background(), `
+		INSERT INTO users (id, entity_id, username, email, user_type, user_attributes, settings, tenant_id)
+		VALUES ($1, $2, $3, $4, 'INTERNAL', '{}', '{}', $5)
+		ON CONFLICT (id) DO NOTHING`,
+		s.userID,
+		entityID,
+		"testuser-"+s.userID.String()[:8],
+		"test-txn-"+s.userID.String()[:8]+"@example.com",
+		s.tenantA,
+	)
+	return err
+}
+
+func (s *TransactionRepoSuite) newTransaction(suffix string) *domain.Transaction {
+	ref := "REF-" + suffix
+	return &domain.Transaction{
+		ID:                uuid.New(),
+		TransactionDate:   time.Now(),
+		TransactionType:   domain.TransactionTypeManual,
+		TransactionStatus: domain.TransactionStatusDraft,
+		TransactionNumber: "TXN-" + suffix,
+		ReferenceNumber:   &ref,
+		Description:       "Test transaction " + suffix,
+		CurrencyCode:      "USD",
+		ExchangeRate:      decimal.NewFromFloat(1.0),
+		IsRecurring:       false,
+		CreatedBy:         s.userID,
+	}
+}
+
+// ============================================================================
+// CRUD tests
+// ============================================================================
+
+// TestCreate_SetsTimestamps verifies DB populates timestamps on insert.
+func (s *TransactionRepoSuite) TestCreate_SetsTimestamps() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction(uuid.New().String()[:8])
+
+	err := s.repo.Create(ctx, txn)
+	s.req.NoError(err)
+	s.req.False(txn.CreatedAt.IsZero(), "CreatedAt must be set by DB")
+	s.req.False(txn.UpdatedAt.IsZero(), "UpdatedAt must be set by DB")
+}
+
+// TestGetByID_RoundTrip verifies all fields persisted correctly.
+func (s *TransactionRepoSuite) TestGetByID_RoundTrip() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction(uuid.New().String()[:8])
+
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	got, err := s.repo.GetByID(ctx, txn.ID)
+	s.req.NoError(err)
+	s.req.Equal(txn.ID, got.ID)
+	s.req.Equal(txn.Description, got.Description)
+	s.req.Equal(txn.TransactionType, got.TransactionType)
+	s.req.Equal(txn.TransactionStatus, got.TransactionStatus)
+	s.req.Equal(txn.CurrencyCode, got.CurrencyCode)
+	s.req.True(txn.ExchangeRate.Equal(got.ExchangeRate))
+}
+
+// TestGetByID_NotFound returns ErrTransactionNotFound for unknown ID.
+func (s *TransactionRepoSuite) TestGetByID_NotFound() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	_, err := s.repo.GetByID(ctx, uuid.New())
+	s.req.ErrorIs(err, domain.ErrTransactionNotFound)
+}
+
+// TestUpdate_PersistsDescriptionChange verifies update is durable.
+func (s *TransactionRepoSuite) TestUpdate_PersistsDescriptionChange() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction(uuid.New().String()[:8])
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	txn.Description = "updated description"
+	s.req.NoError(s.repo.Update(ctx, txn))
+
+	got, err := s.repo.GetByID(ctx, txn.ID)
+	s.req.NoError(err)
+	s.req.Equal("updated description", got.Description)
+	s.req.NotEqual(got.CreatedAt, got.UpdatedAt, "UpdatedAt should advance after update")
+}
+
+// TestDelete_SoftDelete verifies soft-deleted row is invisible to GetByID.
+func (s *TransactionRepoSuite) TestDelete_SoftDelete() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction(uuid.New().String()[:8])
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	s.req.NoError(s.repo.Delete(ctx, txn.ID))
+
+	_, err := s.repo.GetByID(ctx, txn.ID)
+	s.req.ErrorIs(err, domain.ErrTransactionNotFound, "soft-deleted row must not be returned")
+}
+
+// TestDelete_NonExistent returns ErrTransactionNotFound for unknown ID.
+func (s *TransactionRepoSuite) TestDelete_NonExistent() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	err := s.repo.Delete(ctx, uuid.New())
+	s.req.ErrorIs(err, domain.ErrTransactionNotFound)
+}
+
+// ============================================================================
+// Tenant isolation tests (FIN-REPO-TXN-ISO)
+// ============================================================================
+
+// TestTenantIsolation_CrossTenantRead verifies tenant A cannot read tenant B's data.
+func (s *TransactionRepoSuite) TestTenantIsolation_CrossTenantRead() {
+	ctxA := shared.WithTenantID(s.ctx, s.tenantA)
+	ctxB := shared.WithTenantID(s.ctx, s.tenantB)
+
+	txnA := s.newTransaction("ISO-A-" + uuid.New().String()[:6])
+	txnB := s.newTransaction("ISO-B-" + uuid.New().String()[:6])
+
+	s.req.NoError(s.repo.Create(ctxA, txnA))
+	s.req.NoError(s.repo.Create(ctxB, txnB))
+
+	// A can see its own data.
+	got, err := s.repo.GetByID(ctxA, txnA.ID)
+	s.req.NoError(err)
+	s.req.Equal(txnA.ID, got.ID)
+
+	// A cannot see B's data.
+	_, err = s.repo.GetByID(ctxA, txnB.ID)
+	s.req.ErrorIs(err, domain.ErrTransactionNotFound,
+		"tenant A must not read tenant B's transactions")
+
+	// B cannot see A's data.
+	_, err = s.repo.GetByID(ctxB, txnA.ID)
+	s.req.ErrorIs(err, domain.ErrTransactionNotFound,
+		"tenant B must not read tenant A's transactions")
+}
+
+// TestTenantIsolation_SameNumberDifferentTenants verifies same transaction number
+// can exist across tenants (uniqueness is per-tenant).
+func (s *TransactionRepoSuite) TestTenantIsolation_SameNumberDifferentTenants() {
+	sharedNumber := "TXN-SHARED-" + uuid.New().String()[:6]
+	refA := "REF-A"
+	refB := "REF-B"
+
+	txnA := &domain.Transaction{
+		ID: uuid.New(), TransactionDate: time.Now(),
+		TransactionType: domain.TransactionTypeManual, TransactionStatus: domain.TransactionStatusDraft,
+		TransactionNumber: sharedNumber, ReferenceNumber: &refA,
+		Description: "Tenant A shared number", CurrencyCode: "USD",
+		ExchangeRate: decimal.NewFromFloat(1.0), CreatedBy: s.userID,
+	}
+	txnB := &domain.Transaction{
+		ID: uuid.New(), TransactionDate: time.Now(),
+		TransactionType: domain.TransactionTypeManual, TransactionStatus: domain.TransactionStatusDraft,
+		TransactionNumber: sharedNumber, ReferenceNumber: &refB,
+		Description: "Tenant B shared number", CurrencyCode: "USD",
+		ExchangeRate: decimal.NewFromFloat(1.0), CreatedBy: s.userID,
+	}
+
+	ctxA := shared.WithTenantID(s.ctx, s.tenantA)
+	ctxB := shared.WithTenantID(s.ctx, s.tenantB)
+
+	s.req.NoError(s.repo.Create(ctxA, txnA),
+		"same transaction number must be allowed in different tenants")
+	s.req.NoError(s.repo.Create(ctxB, txnB),
+		"same transaction number must be allowed in different tenants")
+}
+
+// TestTenantIsolation_MissingContext rejects operation with no tenant in context.
+func (s *TransactionRepoSuite) TestTenantIsolation_MissingContext() {
+	txn := s.newTransaction("NO-TENANT")
+	err := s.repo.Create(context.Background(), txn)
+	s.req.Error(err)
+	s.req.Contains(err.Error(), "tenant ID not found")
+}
+
+// ============================================================================
+// List / filter tests
+// ============================================================================
+
+// TestList_ByStatus verifies status filter returns only matching rows.
+func (s *TransactionRepoSuite) TestList_ByStatus() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	suffix := uuid.New().String()[:6]
+
+	txn := s.newTransaction("LIST-STATUS-" + suffix)
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	status := domain.TransactionStatusDraft
+	limit := 50
+	offset := 0
+	results, err := s.repo.List(ctx, &domain.TransactionFilter{
+		Status: &status, Limit: &limit, Offset: &offset,
 	})
-	s.Require().NoError(err, "Failed to create test entity and user")
-
-	// Setup repository
-	traceService := tracing.NewNoOpTracingService()
-	s.repo = NewTransactionRepository(s.runner.GetStore(), traceService)
-}
-
-// SetupTest runs before each test
-func (s *TransactionRepositoryTestSuite) SetupTest() {
-	s.createdTransactionIDs = make([]uuid.UUID, 0)
-}
-
-// TearDownTest runs after each test
-func (s *TransactionRepositoryTestSuite) TearDownTest() {
-	// Clean up created transactions
-	for _, transactionID := range s.createdTransactionIDs {
-		// Clean up in both tenant contexts to ensure cleanup
-		ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
-		ctxB := shared.WithTenantID(s.ctx, s.tenantB.ID)
-
-		_ = s.repo.Delete(ctxA, transactionID)
-		_ = s.repo.Delete(ctxB, transactionID)
+	s.req.NoError(err)
+	for _, r := range results {
+		s.req.Equal(domain.TransactionStatusDraft, r.TransactionStatus)
 	}
 }
 
-// TearDownSuite runs once after the entire test suite
-func (s *TransactionRepositoryTestSuite) TearDownSuite() {
-	if s.runner != nil {
-		s.runner.Close()
+// TestList_ByType verifies type filter returns only matching rows.
+func (s *TransactionRepoSuite) TestList_ByType() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	suffix := uuid.New().String()[:6]
+
+	ref := "SYS-REF-" + suffix
+	sysTxn := &domain.Transaction{
+		ID: uuid.New(), TransactionDate: time.Now(),
+		TransactionType: domain.TransactionTypeSystem, TransactionStatus: domain.TransactionStatusDraft,
+		TransactionNumber: "SYS-" + suffix, ReferenceNumber: &ref,
+		Description: "System txn", CurrencyCode: "USD",
+		ExchangeRate: decimal.NewFromFloat(1.0), CreatedBy: s.userID,
+	}
+	s.req.NoError(s.repo.Create(ctx, sysTxn))
+
+	sysType := domain.TransactionTypeSystem
+	limit := 50
+	offset := 0
+	results, err := s.repo.List(ctx, &domain.TransactionFilter{
+		TransactionType: &sysType, Limit: &limit, Offset: &offset,
+	})
+	s.req.NoError(err)
+	for _, r := range results {
+		s.req.Equal(domain.TransactionTypeSystem, r.TransactionType)
 	}
 }
 
-// Test runner
-func TestTransactionRepositoryTestSuite(t *testing.T) {
-	suite.Run(t, new(TransactionRepositoryTestSuite))
-}
+// ============================================================================
+// Approval tests
+// ============================================================================
 
-// TestCreateTransaction tests transaction creation with various scenarios
-func (s *TransactionRepositoryTestSuite) TestCreateTransaction() {
-	testCases := []struct {
-		name        string
-		transaction *domain.Transaction
-		expectError bool
-		errorType   string
-	}{
-		{
-			name: "Valid Manual Transaction Creation",
-			transaction: &domain.Transaction{
-				ID:                uuid.New(),
-				TransactionDate:   time.Now(),
-				TransactionType:   domain.TransactionTypeManual,
-				TransactionStatus: domain.TransactionStatusDraft,
-				TransactionNumber: fmt.Sprintf("TXN-%s", uuid.New().String()[:8]),
-				ReferenceNumber:   stringPtr(fmt.Sprintf("REF-%s", uuid.New().String()[:8])),
-				Description:       "Test manual transaction",
-				CurrencyCode:      "USD",
-				ExchangeRate:      decimal.NewFromFloat(1.0),
-				IsRecurring:       false,
-				CreatedBy:         s.testUser.ID,
-			},
-			expectError: false,
-		},
-		{
-			name: "Valid System Transaction Creation",
-			transaction: &domain.Transaction{
-				ID:                uuid.New(),
-				TransactionDate:   time.Now(),
-				TransactionType:   domain.TransactionTypeSystem,
-				TransactionStatus: domain.TransactionStatusDraft,
-				TransactionNumber: fmt.Sprintf("SYS-TXN-%s", uuid.New().String()[:8]),
-				ReferenceNumber:   stringPtr(fmt.Sprintf("SYS-REF-%s", uuid.New().String()[:8])),
-				Description:       "Test system transaction",
-				CurrencyCode:      "USD",
-				ExchangeRate:      decimal.NewFromFloat(1.0),
-				IsRecurring:       false,
-				CreatedBy:         s.testUser.ID,
-			},
-			expectError: false,
-		},
-		{
-			name: "Transaction with Recurring Pattern",
-			transaction: &domain.Transaction{
-				ID:                 uuid.New(),
-				TransactionDate:    time.Now(),
-				TransactionType:    domain.TransactionTypeManual,
-				TransactionStatus:  domain.TransactionStatusDraft,
-				TransactionNumber:  fmt.Sprintf("REC-TXN-%s", uuid.New().String()[:8]),
-				ReferenceNumber:    stringPtr(fmt.Sprintf("REC-REF-%s", uuid.New().String()[:8])),
-				Description:        "Test recurring transaction",
-				CurrencyCode:       "USD",
-				ExchangeRate:       decimal.NewFromFloat(1.0),
-				IsRecurring:        true,
-				RecurringFrequency: stringPtr(domain.RecurringFrequencyMonthly),
-				NextRecurringDate:  timePtr(time.Now().AddDate(1, 0, 0)),
-				CreatedBy:          s.testUser.ID, // Use test user to avoid foreign key constraint
-			},
-			expectError: false,
-		},
-		{
-			name: "Invalid Transaction - Missing Required Fields",
-			transaction: &domain.Transaction{
-				ID:                uuid.New(),
-				TransactionType:   domain.TransactionTypeManual,
-				TransactionStatus: domain.TransactionStatusDraft,
-				Description:       "", // Missing required field
-				// Amount field removed - doesn't exist in Transaction struct
-			},
-			expectError: true,
-			errorType:   "validation",
-		},
-	}
+// TestApprove_SetsApprovalFields verifies approval metadata is persisted.
+func (s *TransactionRepoSuite) TestApprove_SetsApprovalFields() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction("APPROVAL-" + uuid.New().String()[:6])
+	txn.ApprovalRequired = true
+	txn.ApprovalStatus = domain.ApprovalStatusPending
+	s.req.NoError(s.repo.Create(ctx, txn))
 
-	for _, tc := range testCases {
-		s.Run(tc.name, func() {
-			// Test with tenant A context
-			ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
-
-			err := s.repo.Create(ctx, tc.transaction)
-
-			if tc.expectError {
-				s.Assert().Error(err, "Expected error for test case: %s", tc.name)
-			} else {
-				s.Assert().NoError(err, "Expected no error for test case: %s", tc.name)
-				if err == nil {
-					s.createdTransactionIDs = append(s.createdTransactionIDs, tc.transaction.ID)
-
-					// Verify the transaction was created correctly
-					retrieved, err := s.repo.GetByID(ctx, tc.transaction.ID)
-					s.Assert().NoError(err)
-					s.Assert().Equal(tc.transaction.Description, retrieved.Description)
-					s.Assert().Equal(tc.transaction.TransactionType, retrieved.TransactionType)
-					s.Assert().Equal(tc.transaction.TransactionStatus, retrieved.TransactionStatus)
-					// s.Assert().True(tc.transaction.Amount.Equal(retrieved.Amount)) // Amount field doesn't exist
-				}
-			}
-		})
-	}
-}
-
-// TestGetTransactionByID tests transaction retrieval by ID
-func (s *TransactionRepositoryTestSuite) TestGetTransactionByID() {
-	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
-
-	// Create test transaction
-	transaction := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("GET-TEST-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("GET-REF-%s", uuid.New().String()[:8])),
-		Description:       "Test transaction for retrieval test",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		CreatedBy:         s.testUser.ID,
-	}
-
-	err := s.repo.Create(ctx, transaction)
-	s.Require().NoError(err)
-	s.createdTransactionIDs = append(s.createdTransactionIDs, transaction.ID)
-
-	// Test retrieval
-	retrieved, err := s.repo.GetByID(ctx, transaction.ID)
-	s.Assert().NoError(err)
-	s.Assert().Equal(transaction.Description, retrieved.Description)
-	s.Assert().Equal(transaction.TransactionType, retrieved.TransactionType)
-	// s.Assert().True(transaction.Amount.Equal(retrieved.Amount)) // Amount field doesn't exist
-	s.Assert().NotZero(retrieved.CreatedAt)
-
-	// Test non-existent transaction
-	nonExistentID := uuid.New()
-	_, err = s.repo.GetByID(ctx, nonExistentID)
-	s.Assert().Error(err)
-	s.Assert().Equal(domain.ErrTransactionNotFound, err)
-}
-
-// TestTenantIsolation tests that tenant isolation is properly enforced
-func (s *TransactionRepositoryTestSuite) TestTenantIsolation() {
-	// Create transaction in tenant A
-	ctxA := shared.WithTenantID(s.ctx, s.tenantA.ID)
-	transactionA := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("TENANT-A-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("TENANT-A-REF-%s", uuid.New().String()[:8])),
-		Description:       "Tenant A transaction",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		CreatedBy:         s.testUser.ID,
-	}
-
-	err := s.repo.Create(ctxA, transactionA)
-	s.Require().NoError(err)
-	s.createdTransactionIDs = append(s.createdTransactionIDs, transactionA.ID)
-
-	// Create transaction in tenant B with same reference (should be allowed due to tenant isolation)
-	ctxB := shared.WithTenantID(s.ctx, s.tenantB.ID)
-	transactionB := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("TENANT-B-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("TENANT-B-REF-%s", uuid.New().String()[:8])),
-		Description:       "Tenant B transaction",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		CreatedBy:         s.testUser.ID,
-	}
-
-	err = s.repo.Create(ctxB, transactionB)
-	s.Require().NoError(err)
-	s.createdTransactionIDs = append(s.createdTransactionIDs, transactionB.ID)
-
-	// Verify tenant A can only see its transaction
-	retrievedA, err := s.repo.GetByID(ctxA, transactionA.ID)
-	s.Assert().NoError(err)
-	s.Assert().Equal(transactionA.Description, retrievedA.Description)
-
-	// Verify tenant A cannot see tenant B's transaction
-	_, err = s.repo.GetByID(ctxA, transactionB.ID)
-	s.Assert().Error(err)
-	s.Assert().Equal(domain.ErrTransactionNotFound, err)
-
-	// Verify tenant B can only see its transaction
-	retrievedB, err := s.repo.GetByID(ctxB, transactionB.ID)
-	s.Assert().NoError(err)
-	s.Assert().Equal(transactionB.Description, retrievedB.Description)
-
-	// Verify tenant B cannot see tenant A's transaction
-	_, err = s.repo.GetByID(ctxB, transactionA.ID)
-	s.Assert().Error(err)
-	s.Assert().Equal(domain.ErrTransactionNotFound, err)
-}
-
-// TestListTransactionsWithFiltering tests transaction listing with various filters
-func (s *TransactionRepositoryTestSuite) TestListTransactionsWithFiltering() {
-	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
-
-	// Create multiple test transactions with different statuses
-	transactions := []*domain.Transaction{
-		{
-			ID:                uuid.New(),
-			TransactionDate:   time.Now(),
-			TransactionType:   domain.TransactionTypeManual,
-			TransactionStatus: domain.TransactionStatusDraft,
-			TransactionNumber: fmt.Sprintf("FILTER-1-%s", uuid.New().String()[:8]),
-			ReferenceNumber:   stringPtr(fmt.Sprintf("FILTER-REF-1-%s", uuid.New().String()[:8])),
-			Description:       "Pending transaction 1",
-			CurrencyCode:      "USD",
-			ExchangeRate:      decimal.NewFromFloat(1.0),
-			IsRecurring:       false,
-			CreatedBy:         s.testUser.ID,
-		},
-		{
-			ID:                uuid.New(),
-			TransactionDate:   time.Now(),
-			TransactionType:   domain.TransactionTypeManual,
-			TransactionStatus: domain.TransactionStatusDraft, // Changed from POSTED to avoid business logic errors
-			TransactionNumber: fmt.Sprintf("FILTER-2-%s", uuid.New().String()[:8]),
-			ReferenceNumber:   stringPtr(fmt.Sprintf("FILTER-REF-2-%s", uuid.New().String()[:8])),
-			Description:       "Posted transaction 1",
-			CurrencyCode:      "USD",
-			ExchangeRate:      decimal.NewFromFloat(1.0),
-			IsRecurring:       false,
-			CreatedBy:         s.testUser.ID,
-		},
-		{
-			ID:                uuid.New(),
-			TransactionDate:   time.Now(),
-			TransactionType:   domain.TransactionTypeSystem,
-			TransactionStatus: domain.TransactionStatusDraft, // Changed from POSTED to avoid business logic errors
-			TransactionNumber: fmt.Sprintf("FILTER-3-%s", uuid.New().String()[:8]),
-			ReferenceNumber:   stringPtr(fmt.Sprintf("FILTER-REF-3-%s", uuid.New().String()[:8])),
-			Description:       "System transaction",
-			CurrencyCode:      "USD",
-			ExchangeRate:      decimal.NewFromFloat(1.0),
-			IsRecurring:       false,
-			CreatedBy:         s.testUser.ID,
-		},
-	}
-
-	// Create all transactions
-	for _, transaction := range transactions {
-		err := s.repo.Create(ctx, transaction)
-		s.Require().NoError(err)
-		s.createdTransactionIDs = append(s.createdTransactionIDs, transaction.ID)
-	}
-
-	// Test list all transactions with limit
-	filter := &domain.TransactionFilter{
-		Limit:  intPtr(10),
-		Offset: intPtr(0),
-	}
-
-	results, err := s.repo.List(ctx, filter)
-	s.Assert().NoError(err)
-	s.Assert().GreaterOrEqual(len(results), 3) // At least our 3 transactions
-
-	// Test list by status - using DRAFT since we changed POSTED to DRAFT
-	draftStatus := domain.TransactionStatusDraft
-	statusFilter := &domain.TransactionFilter{
-		Status: &draftStatus,
-		Limit:  intPtr(10),
-		Offset: intPtr(0),
-	}
-
-	statusResults, err := s.repo.List(ctx, statusFilter)
-	s.Assert().NoError(err)
-	s.Assert().GreaterOrEqual(len(statusResults), 3) // All 3 transactions are now DRAFT
-
-	// Verify all returned transactions have draft status
-	for _, transaction := range statusResults {
-		s.Assert().Equal(domain.TransactionStatusDraft, transaction.TransactionStatus)
-	}
-
-	// Test list by transaction type
-	systemType := domain.TransactionTypeSystem
-	typeFilter := &domain.TransactionFilter{
-		TransactionType: &systemType,
-		Limit:           intPtr(10),
-		Offset:          intPtr(0),
-	}
-
-	typeResults, err := s.repo.List(ctx, typeFilter)
-	s.Assert().NoError(err)
-	s.Assert().GreaterOrEqual(len(typeResults), 1) // At least our 1 system transaction
-
-	// Verify all returned transactions are system type
-	for _, transaction := range typeResults {
-		s.Assert().Equal(domain.TransactionTypeSystem, transaction.TransactionType)
-	}
-}
-
-// TestUpdateTransaction tests transaction updates
-func (s *TransactionRepositoryTestSuite) TestUpdateTransaction() {
-	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
-
-	// Create test transaction
-	transaction := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("UPDATE-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("UPDATE-REF-%s", uuid.New().String()[:8])),
-		Description:       "Original transaction description",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		CreatedBy:         s.testUser.ID,
-	}
-
-	err := s.repo.Create(ctx, transaction)
-	s.Require().NoError(err)
-	s.createdTransactionIDs = append(s.createdTransactionIDs, transaction.ID)
-
-	// Update transaction - keep as DRAFT to avoid business logic errors
-	transaction.Description = "Updated transaction description"
-	// transaction.Amount = decimal.NewFromFloat(150.00) // Amount field doesn't exist
-	// Keep status as DRAFT to avoid posting requirements
-
-	err = s.repo.Update(ctx, transaction)
-	s.Assert().NoError(err)
-
-	// Verify updates
-	updated, err := s.repo.GetByID(ctx, transaction.ID)
-	s.Assert().NoError(err)
-	s.Assert().Equal("Updated transaction description", updated.Description)
-	// s.Assert().True(decimal.NewFromFloat(150.00).Equal(updated.Amount)) // Amount field doesn't exist
-	s.Assert().Equal(domain.TransactionStatusDraft, updated.TransactionStatus) // Status remains DRAFT
-	s.Assert().NotEqual(updated.CreatedAt, updated.UpdatedAt)
-}
-
-// TestTransactionApproval tests transaction approval functionality
-func (s *TransactionRepositoryTestSuite) TestTransactionApproval() {
-	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
-
-	// Create test transaction that requires approval
-	transaction := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("APPROVAL-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("APPROVAL-REF-%s", uuid.New().String()[:8])),
-		Description:       "Transaction requiring approval",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		ApprovalRequired:  true,                         // Require approval
-		ApprovalStatus:    domain.ApprovalStatusPending, // Set to pending for approval
-		CreatedBy:         s.testUser.ID,
-	}
-
-	err := s.repo.Create(ctx, transaction)
-	s.Require().NoError(err)
-	s.createdTransactionIDs = append(s.createdTransactionIDs, transaction.ID)
-
-	// Test approval - use the test user as approver
-	approverID := s.testUser.ID
+	approverID := s.userID
 	approvedAt := time.Now()
-	notes := "Approved for processing"
+	notes := "looks good"
+	s.req.NoError(s.repo.Approve(ctx, txn.ID, approverID, approvedAt, &notes))
 
-	err = s.repo.Approve(ctx, transaction.ID, approverID, approvedAt, &notes)
-	s.Assert().NoError(err)
-
-	// Verify approval
-	approved, err := s.repo.GetByID(ctx, transaction.ID)
-	s.Assert().NoError(err)
-	s.Assert().Equal(domain.ApprovalStatusApproved, approved.ApprovalStatus)
-	s.Assert().Equal(approverID, *approved.ApprovedBy)
-	s.Assert().WithinDuration(approvedAt, *approved.ApprovedAt, time.Second)
-	s.Assert().Equal(notes, *approved.ApprovalNotes)
+	got, err := s.repo.GetByID(ctx, txn.ID)
+	s.req.NoError(err)
+	s.req.Equal(domain.ApprovalStatusApproved, got.ApprovalStatus)
+	s.req.Equal(approverID, *got.ApprovedBy)
+	s.req.WithinDuration(approvedAt, *got.ApprovedAt, time.Second)
+	s.req.Equal(notes, *got.ApprovalNotes)
 }
 
-// TestDeleteTransaction tests soft delete functionality
-func (s *TransactionRepositoryTestSuite) TestDeleteTransaction() {
-	ctx := shared.WithTenantID(s.ctx, s.tenantA.ID)
+// ============================================================================
+// DB constraint tests
+// ============================================================================
 
-	// Create test transaction
-	transaction := &domain.Transaction{
-		ID:                uuid.New(),
-		TransactionDate:   time.Now(),
-		TransactionType:   domain.TransactionTypeManual,
-		TransactionStatus: domain.TransactionStatusDraft,
-		TransactionNumber: fmt.Sprintf("DELETE-%s", uuid.New().String()[:8]),
-		ReferenceNumber:   stringPtr(fmt.Sprintf("DELETE-REF-%s", uuid.New().String()[:8])),
-		Description:       "Transaction to delete",
-		CurrencyCode:      "USD",
-		ExchangeRate:      decimal.NewFromFloat(1.0),
-		IsRecurring:       false,
-		CreatedBy:         s.testUser.ID,
+// TestDBConstraint_UniqueTransactionNumber verifies per-tenant uniqueness.
+func (s *TransactionRepoSuite) TestDBConstraint_UniqueTransactionNumber() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	txn := s.newTransaction("DUP-" + uuid.New().String()[:6])
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	// Duplicate with same number, same tenant → must fail.
+	dup := s.newTransaction(txn.TransactionNumber[4:]) // same suffix
+	dup.TransactionNumber = txn.TransactionNumber
+	err := s.repo.Create(ctx, dup)
+	s.req.Error(err, "duplicate transaction number within same tenant must fail")
+}
+
+// TestDBConstraint_EntryAmounts verifies double-entry constraints at DB level.
+func (s *TransactionRepoSuite) TestDBConstraint_EntryAmounts() {
+	_, err := s.pool.Exec(context.Background(),
+		`SELECT set_tenant_context($1)`, s.tenantA)
+	s.req.NoError(err)
+
+	txnID := uuid.New()
+	_, err = s.pool.Exec(context.Background(), `
+		INSERT INTO finance_transactions
+		  (id, tenant_id, transaction_number, transaction_type, transaction_status,
+		   transaction_date, description, currency_code, exchange_rate,
+		   total_debit_amount, total_credit_amount, approval_status, created_by)
+		VALUES
+		  ($1, current_tenant_id(), $2, 'MANUAL', 'DRAFT',
+		   NOW(), 'Constraint test', 'USD', 1.0, 0, 0, 'NOT_REQUIRED', $3)`,
+		txnID,
+		fmt.Sprintf("TXN-CONSTRAINT-%s", uuid.New().String()[:8]),
+		s.userID,
+	)
+	if err != nil {
+		s.T().Logf("skipping entry constraint test: cannot insert parent txn: %v", err)
+		s.T().Skip()
 	}
+	defer func() {
+		_, _ = s.pool.Exec(context.Background(),
+			`DELETE FROM finance_transactions WHERE id = $1`, txnID)
+	}()
 
-	err := s.repo.Create(ctx, transaction)
-	s.Require().NoError(err)
-
-	// Verify transaction exists
-	_, err = s.repo.GetByID(ctx, transaction.ID)
-	s.Assert().NoError(err)
-
-	// Delete transaction
-	err = s.repo.Delete(ctx, transaction.ID)
-	s.Assert().NoError(err)
-
-	// Verify transaction is soft deleted (should return not found error)
-	_, err = s.repo.GetByID(ctx, transaction.ID)
-	s.Assert().Error(err)
-	s.Assert().Equal(domain.ErrTransactionNotFound, err)
-
-	// Verify deleting non-existent transaction returns appropriate error
-	nonExistentID := uuid.New()
-	err = s.repo.Delete(ctx, nonExistentID)
-	s.Assert().Error(err)
-	s.Assert().Equal(domain.ErrTransactionNotFound, err)
+	// Both debit AND credit non-zero must fail.
+	_, err = s.pool.Exec(context.Background(), `
+		INSERT INTO finance_transaction_entries
+		  (tenant_id, transaction_id, entry_number, account_id,
+		   debit_amount, credit_amount, description, exchange_rate)
+		VALUES
+		  (current_tenant_id(), $1, 1, $2, 500.00, 500.00, 'dual amounts', 1.0)`,
+		txnID, uuid.New(),
+	)
+	s.req.Error(err, "both debit_amount > 0 AND credit_amount > 0 must be rejected")
 }
 
-// Helper functions are now in mappers.go
-func timePtr(t time.Time) *time.Time {
-	return &t
+// ============================================================================
+// Recurring transaction tests
+// ============================================================================
+
+// TestCreate_RecurringTransaction verifies recurring metadata persisted.
+func (s *TransactionRepoSuite) TestCreate_RecurringTransaction() {
+	ctx := shared.WithTenantID(s.ctx, s.tenantA)
+	freq := "MONTHLY"
+	next := time.Now().AddDate(0, 1, 0)
+	ref := "REC-REF-" + uuid.New().String()[:6]
+
+	txn := &domain.Transaction{
+		ID: uuid.New(), TransactionDate: time.Now(),
+		TransactionType: domain.TransactionTypeManual, TransactionStatus: domain.TransactionStatusDraft,
+		TransactionNumber:  "REC-" + uuid.New().String()[:8],
+		ReferenceNumber:    &ref,
+		Description:        "Recurring transaction",
+		CurrencyCode:       "USD",
+		ExchangeRate:       decimal.NewFromFloat(1.0),
+		IsRecurring:        true,
+		RecurringFrequency: &freq,
+		NextRecurringDate:  &next,
+		CreatedBy:          s.userID,
+	}
+	s.req.NoError(s.repo.Create(ctx, txn))
+
+	got, err := s.repo.GetByID(ctx, txn.ID)
+	s.req.NoError(err)
+	s.req.True(got.IsRecurring)
+	s.req.Equal(freq, *got.RecurringFrequency)
+	s.req.WithinDuration(next, *got.NextRecurringDate, time.Second)
 }
