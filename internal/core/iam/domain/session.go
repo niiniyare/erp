@@ -173,11 +173,10 @@ func DefaultConfiguration() Configuration {
 //     is stored in the DB column named session_token (the column name omits
 //     "_hash" for brevity; always treat session_token values as hashes).
 //
-//   - Permissions is a pre-computed map built from the user's effective roles
-//     at login.  It is the fast path for O(1) permission checks in
-//     ResolvedSession.Can().  Changing a user's roles does NOT update live
-//     sessions — the session must be invalidated and re-created for role
-//     changes to take effect immediately.
+//   - Authorization decisions are made by the Casbin enforcer at request time,
+//     NOT from a permission snapshot in the session.  The session carries
+//     identity and context only.  This ensures role revocations take effect
+//     on the next request without requiring session invalidation.
 //
 // TenantID vs EntityScope
 
@@ -201,19 +200,17 @@ func DefaultConfiguration() Configuration {
 type Session struct {
 	ID            uuid.UUID
 	UserID        uuid.UUID
-	TenantID      uuid.UUID       // RLS key — must be set via app.tenant_id in every TX
-	UserType      string          // persisted enum: "INTERNAL"|"SYSADMIN"|"CUSTOMER"|"PORTAL"|"API"
-	TokenHash     string          // sha256hex(raw_token); DB column: session_token
-	Permissions   map[string]bool // pre-computed permission map; O(1) checks, no DB round-trip
-	PrincipalID   *uuid.UUID      // non-nil for portal sessions; identifies the represented party
-	EntityScope   EntityScope     // application-layer entity visibility scope
-	Configuration Configuration   // pre-computed flags, tenant settings, and user preferences
+	TenantID      uuid.UUID     // RLS key — must be set via app.tenant_id in every TX
+	UserType      string        // persisted enum: "INTERNAL"|"SYSADMIN"|"CUSTOMER"|"PORTAL"|"API"
+	TokenHash     string        // sha256hex(raw_token); DB column: session_token
+	PrincipalID   *uuid.UUID    // non-nil for portal sessions; identifies the represented party
+	EntityScope   EntityScope   // application-layer entity visibility scope
+	Configuration Configuration // pre-computed flags, tenant settings, and user preferences
 	IsActive      bool
 	ExpiresAt     time.Time
 	LastSeenAt    time.Time
 	IPAddress     string
 	UserAgent     string
-	RiskScore     int
 }
 
 // ActorType translates the persisted UserType into the canonical ActorType
