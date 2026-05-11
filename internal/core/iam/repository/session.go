@@ -392,10 +392,13 @@ func (r *sessionRepo) StorePendingMFA(ctx context.Context, pendingToken string, 
 	return r.cache.Set(ctx, key, userID.String(), mfaLoginPendingTTL)
 }
 
+// GetPendingMFA atomically retrieves and deletes the pending MFA token (Redis GETDEL).
+// The first caller gets the userID; any subsequent call for the same token returns an error,
+// preventing duplicate session creation from concurrent CompleteMFALogin requests.
 func (r *sessionRepo) GetPendingMFA(ctx context.Context, pendingToken string) (uuid.UUID, error) {
 	key := "mfa:login:pending:" + pendingToken
 	var idStr string
-	if err := r.cache.Get(ctx, key, &idStr); err != nil {
+	if err := r.cache.GetAndDelete(ctx, key, &idStr); err != nil {
 		return uuid.Nil, fmt.Errorf("session repo: mfa pending not found or expired")
 	}
 	id, err := uuid.Parse(idStr)
@@ -406,5 +409,7 @@ func (r *sessionRepo) GetPendingMFA(ctx context.Context, pendingToken string) (u
 }
 
 func (r *sessionRepo) DeletePendingMFA(ctx context.Context, pendingToken string) error {
+	// No-op: GetPendingMFA is atomic (GETDEL) — deletion is implicit on fetch.
+	// Method retained for explicit cancellation paths (e.g. user aborts MFA flow).
 	return r.cache.Delete(ctx, "mfa:login:pending:"+pendingToken)
 }

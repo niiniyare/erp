@@ -323,10 +323,11 @@ Tasks:
 **File**: `internal/core/iam/repository/session.go`
 
 Tasks:
-- [ ] Replace `GetPendingMFA()` + separate `DeletePendingMFA()` with Redis `GETDEL` command
-- [ ] `GETDEL` atomically fetches and deletes — prevents concurrent `CompleteMFALogin` producing
+- [x] Replace `GetPendingMFA()` + separate `DeletePendingMFA()` with Redis `GETDEL` command
+- [x] `GETDEL` atomically fetches and deletes — prevents concurrent `CompleteMFALogin` producing
   duplicate sessions
-- [ ] If Redis client version lacks `GETDEL`: use Lua script: `GET` + `DEL` in single round-trip
+- [x] Added `GetAndDelete` to `cache.Service` interface + `redisClient` impl (uses `client.GetDel`)
+- [x] `DeletePendingMFA` retained for explicit cancellation paths; `CompleteMFALogin` no longer calls it
 - [ ] Add test: two concurrent `CompleteMFALogin` calls for same pending token → only one session
 
 ---

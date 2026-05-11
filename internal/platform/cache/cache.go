@@ -72,6 +72,9 @@ var (
 type Service interface {
 	// Core operations
 	Get(ctx context.Context, key string, dest any) error
+	// GetAndDelete atomically fetches the value and deletes the key in one round-trip.
+	// Returns ErrCacheMiss if the key does not exist.
+	GetAndDelete(ctx context.Context, key string, dest any) error
 	Set(ctx context.Context, key string, value any, expiration time.Duration) error
 	Delete(ctx context.Context, key string) error
 	Flush(ctx context.Context) error
@@ -635,6 +638,61 @@ func (r *redisClient) Get(ctx context.Context, key string, dest any) error {
 		})
 	}
 
+	return nil
+}
+
+// GetAndDelete atomically fetches and deletes a key from Redis (GETDEL).
+// Returns ErrCacheMiss if the key does not exist.
+func (r *redisClient) GetAndDelete(ctx context.Context, key string, dest any) error {
+	var span tracing.Span
+	if r.tracer != nil {
+		ctx, span = r.tracer.StartSpan(ctx, "cache.GetAndDelete",
+			tracing.WithSpanKind(tracing.SpanKindClient),
+			tracing.WithAttributes(
+				attribute.String("cache.key", key),
+				attribute.String("cache.operation", "getdel"),
+			),
+		)
+		defer span.End()
+	}
+
+	startTime := time.Now()
+	tenantID, _, _ := r.getTenantInfo(ctx)
+
+	if dest == nil {
+		err := ErrNilValue
+		r.recordError(ctx, span, "getdel", err, tenantID, startTime)
+		return err
+	}
+
+	err := r.executeWithCircuitBreaker(ctx, func() error {
+		finalKey, keyErr := r.buildKey(ctx, key)
+		if keyErr != nil {
+			return keyErr
+		}
+		val, getErr := r.client.GetDel(ctx, finalKey).Bytes()
+		if getErr != nil {
+			if getErr == redis.Nil {
+				return ErrCacheMiss
+			}
+			return sharedErrors.NewBusinessError("CACHE_GETDEL_FAILED", "Failed to get-and-delete value from cache").
+				WithHTTPStatus(500).
+				WithCategory(sharedErrors.CategorySystem).
+				WithDetail("error", getErr.Error()).
+				WithDetail("key", key)
+		}
+		return r.deserializeValue(val, dest)
+	})
+
+	r.updateStats("get", err, startTime)
+	r.recordMetrics(ctx, "getdel", err, tenantID, startTime)
+	if err != nil {
+		r.recordError(ctx, span, "getdel", err, tenantID, startTime)
+		return err
+	}
+	if span != nil {
+		span.SetStatus(codes.Ok, "Cache get-and-delete hit")
+	}
 	return nil
 }
 

@@ -157,8 +157,7 @@ func (s *sessionService) CompleteMFALogin(ctx context.Context, pendingToken, mfa
 		return nil, "", errors.ErrMFAInvalid
 	}
 
-	// Pending token is single-use — delete it regardless of subsequent errors.
-	_ = s.repo.DeletePendingMFA(ctx, pendingToken)
+	// Pending token already consumed atomically by GetPendingMFA (GETDEL) — no separate delete needed.
 
 	user, err := s.identity.GetUserByID(ctx, userID)
 	if err != nil {

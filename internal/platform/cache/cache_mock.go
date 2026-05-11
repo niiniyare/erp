@@ -168,6 +168,20 @@ func (mr *MockServiceMockRecorder) Get(ctx, key, dest any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockService)(nil).Get), ctx, key, dest)
 }
 
+// GetAndDelete mocks base method.
+func (m *MockService) GetAndDelete(ctx context.Context, key string, dest any) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetAndDelete", ctx, key, dest)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// GetAndDelete indicates an expected call of GetAndDelete.
+func (mr *MockServiceMockRecorder) GetAndDelete(ctx, key, dest any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAndDelete", reflect.TypeOf((*MockService)(nil).GetAndDelete), ctx, key, dest)
+}
+
 // GetGlobalMemory mocks base method.
 func (m *MockService) GetGlobalMemory(key string, dest any) error {
 	m.ctrl.T.Helper()
