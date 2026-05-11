@@ -130,6 +130,18 @@ internal/core/iam/
 
 ---
 
+### Operational Guides
+
+For day-to-day operation and administration of the IAM module, see:
+
+- [Tenant Administration](./23-tenant-administration.md) — bootstrap, user lifecycle, custom roles, separation of duties
+- [Platform Administration](./24-platform-administration.md) — platform users, super admin bootstrap, platform authority model
+- [User Entity Scope](./25-user-entity-scope.md) — ALL / SUBTREE / ENTITY_ONLY scope types with worked examples
+- [API Keys and Service Accounts](./26-api-keys-and-service-accounts.md) — key lifecycle, service account model, security and rotation guidance
+- [Resource/Action Ownership](./27-resource-action-ownership.md) — module-owned resources, naming conventions, feature flags vs settings vs preferences
+
+---
+
 ### What Is Not Implemented
 
 **[PLANNED - NOT IN v1.0]** — see `deferred-features.md`:

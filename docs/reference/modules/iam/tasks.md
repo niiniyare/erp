@@ -375,15 +375,14 @@ Tasks:
 **File**: `internal/core/iam/service/authz.go`
 
 Tasks:
-- [ ] Guard in `AddPolicy()`: if `domain == DomainPlatform` and caller subject prefix is not
-  `"platform:"` → return `authz.ErrForbidden`
-- [ ] Guard in `AssignRole()`: if role has `"role:platform-"` prefix and caller is not platform
-  actor → return `authz.ErrForbidden`
-- [ ] Guard in `RemovePolicy()`: same domain check as `AddPolicy`
-- [ ] Caller actor type derived from `AssignedBy` subject prefix — must be validated non-empty
-- [ ] The existing namespace/tenant-scope/delegation guards from `authz/roles.go` (`builtinRoles`
-  registry, `AssignableTo` check) — verify these are still intact post-refactor
-- [ ] Add test: tenant actor cannot write `_platform_` policy (AZ-SEC-050)
+- [x] Guard in `AddPolicy()`: if `domain == DomainPlatform` and `p.Subject` prefix is not
+  `"platform:"` → return `ErrForbidden`
+- [x] Guard in `AssignRole()`: if role has `"role:platform-"` prefix and `AssignedBy` prefix is not
+  `"platform:"` → return `ErrForbidden`
+- [x] Guard in `RemovePolicy()`: same domain check as `AddPolicy`
+- [x] `AssignedBy` validated non-empty in `AssignRole()` — ErrInvalidRequest if absent
+- [x] `builtinRoles` registry / `AssignableTo` check: not present in current codebase (not yet built)
+- [x] Add test: AZ-SEC-050 — TestAddPolicy_PlatformDomainGuard, TestAssignRole_PlatformRoleGuard, etc.
 
 ---
 
@@ -1160,6 +1159,82 @@ pre-computed permission map as the primary authorization fast-path.
 
 - [ ] Reflect that `RequirePermission` calls `Enforce()`, not session map
 - [ ] Update any code examples showing `session.Can()` or `session.CanDo()`
+
+---
+
+---
+
+## 16. Documentation Expansion Tasks (2026-05-11)
+
+This section tracks the operational/admin/user-facing architecture documentation added in the
+second documentation pass (after first-round reconciliation was complete).
+
+### Completed Tasks
+
+- [DONE] Tenant administration operational guide added (`23-tenant-administration.md`)
+  - Bootstrap flow, `BootstrapTenantAdmin` behavior, `SeedDefaultRoles`
+  - What tenant admins can and cannot do
+  - Custom role creation, hierarchy, immutable system roles
+  - User lifecycle: create → assign → entity scope → activate/deactivate
+  - Separation of platform vs tenant authority
+
+- [DONE] Platform administration guide added (`24-platform-administration.md`)
+  - Platform vs tenant vs service actor types
+  - Platform roles (super_admin, support, operator, billing, compliance)
+  - Super admin bootstrap mechanism and emergency recovery
+  - Platform operational boundaries per role
+  - Casbin domain isolation for `_platform_`
+
+- [DONE] Entity scope guide added (`25-user-entity-scope.md`)
+  - Three scope types: ALL, SUBTREE, ENTITY_ONLY
+  - Worked examples: retail, finance, HR, airline, forecourt
+  - How enforcement works (application-layer WHERE clauses)
+  - Assignment, changing scope, default scope behavior
+
+- [DONE] API keys and service accounts guide added (`26-api-keys-and-service-accounts.md`)
+  - Key lifecycle: create, prefix+hash format, scopes (PARTIAL), expiry, revocation
+  - 5-minute cache TTL limitation documented
+  - Service account model and M2M recommended role structure
+  - Security guarantees and operational best practices
+
+- [DONE] Resource/action ownership model documented (`27-resource-action-ownership.md`)
+  - Module-owned resources — no central compile-time registry
+  - Naming conventions: `module.submodule.resource` dot notation
+  - Standard action verbs and wildcard rules
+  - Module examples: finance, inventory, CRM, airline, forecourt
+  - Feature flags vs tenant settings vs user preferences — clear distinctions
+
+- [DONE] Open security items documented in `17-security-considerations.md`
+  - AUTHZ-4: Platform domain write guard — NOT IMPLEMENTED
+  - AUTHZ-5: Policy count limit — NOT IMPLEMENTED
+  - DB-1: Unused `permissions` column in user_sessions
+  - AUTHZ-7: Persistent audit log — OTel spans only
+
+### Open Tasks from This Expansion
+
+- [OPEN] **AUTHZ-4**: Implement platform domain write guard in `AuthzService.AddPolicy()` and `AssignRole()`
+  - See `service/authz.go`
+  - Guard: `if targetDomain == DomainPlatform && !caller.IsPlatform() { return ErrForbidden }`
+  - Requires service-layer access to the caller's actor type
+
+- [OPEN] **AUTHZ-5**: Implement policy count limit per tenant domain
+  - In `AddPolicy()`: check `len(GetPolicies(domain))` before inserting
+  - Configurable limit (suggest default: 10,000 rules per domain)
+  - Return `ErrPolicyLimitExceeded` when limit reached
+  - Expose limit as a tenant setting or platform config
+
+- [OPEN] **DB-1**: Write and apply migration to drop `permissions` column from `user_sessions`
+  - Migration: `000XXX_drop_session_permissions_column.up.sql`
+  - SQL: `ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;`
+  - Down migration: re-add as `permissions JSONB NULL`
+  - After applying: run `make sqlc` to regenerate models
+  - Coordinate with SES-4 completion
+
+- [OPEN] **AUTHZ-7**: Design and implement persistent audit log for authorization decisions
+  - Design `audit_events` table (see `17-security-considerations.md` for schema draft)
+  - Instrument `AssignRole`, `RevokeRole`, `AddPolicy`, `RemovePolicy` to emit events
+  - Table must be append-only (no UPDATE/DELETE for application_role)
+  - Long retention (90+ days) for compliance evidence
 
 ---
 

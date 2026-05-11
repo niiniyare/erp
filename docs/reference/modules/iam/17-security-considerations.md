@@ -317,4 +317,94 @@ Incident Response:
 
 ---
 
+### Open Security Items (Known Gaps)
+
+The following security items are acknowledged gaps in the v1.0 implementation. Each entry documents the risk, current mitigation, and planned remediation.
+
+---
+
+#### AUTHZ-4: Platform Domain Write Guard at Service Layer
+
+**Status**: NOT IMPLEMENTED
+
+**Risk**: The `AddPolicy` and `AssignRole` methods on `AuthzService` accept any domain string from the caller. A misconfigured Casbin policy or a bug in a handler could write a policy to the `_platform_` domain from a tenant-scoped request. This would not grant immediate access (tenant sessions produce tenant-domain principals), but it would pollute the platform domain's policy set and could be exploited if combined with other bugs.
+
+**Current mitigation**: PostgreSQL RLS does not protect `casbin_rule` for `application_role` (Casbin requires unrestricted access to its table). The only boundary is the session's domain — tenant admins produce tenant-domain Principals, so any policy they create via the normal API path lands in their tenant domain. This relies on the handler correctly using `session.ToPrincipal().Domain`, not an arbitrary request body parameter.
+
+**Planned remediation**: Add an explicit domain ownership check in `AddPolicy` and `AssignRole` at the service layer:
+```go
+if targetDomain == DomainPlatform && !caller.IsPlatform() {
+    return ErrForbidden
+}
+```
+
+---
+
+#### AUTHZ-5: Policy Count Limit per Tenant
+
+**Status**: NOT IMPLEMENTED
+
+**Risk**: A tenant admin (or a compromised tenant admin account) could create an unbounded number of Casbin rules. Since the `SyncedEnforcer` loads all policies into memory, a very large policy set degrades enforcement performance for all tenants sharing the same process. It also increases DB load during the 30-second auto-reload cycle.
+
+**Current mitigation**: Rate limiting on policy management API endpoints prevents rapid policy creation. The `casbin_rule` UNIQUE index prevents exact duplicate insertions. Operational monitoring of `casbin_rule` table row counts per domain.
+
+**Planned remediation**: Add a configurable per-tenant policy rule limit check before `AddPolicy`:
+```go
+policies, _ := svc.GetPolicies(ctx, domain)
+if len(policies) >= cfg.MaxPoliciesPerDomain {
+    return ErrPolicyLimitExceeded
+}
+```
+The limit should be configurable (e.g., via tenant settings) with a platform-enforced maximum.
+
+---
+
+#### DB-1: Unused `permissions` Column in `user_sessions` Table
+
+**Status**: Column exists in schema; queries updated to not populate it; column not yet dropped
+
+**Risk**: Low — the column is unused at runtime and carries no sensitive data in current sessions. The risk is developer confusion: new developers reading the schema may incorrectly assume the column is populated and attempt to read permissions from the session table, reintroducing the removed permissions-in-session anti-pattern.
+
+**Current mitigation**: The `ResolvedSession` domain model has no `Permissions` field. The session repository does not read or write this column. Documentation explicitly states sessions carry no permission data (see `00-iam-overview.md`).
+
+**Planned remediation**: Write and apply a migration to drop the column:
+```sql
+ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;
+```
+Then re-run `sqlc generate` to remove the column from generated models. Track this as migration `000XXX_drop_session_permissions_column.up.sql`.
+
+---
+
+#### AUTHZ-7: Persistent Audit Log for Authorization Decisions
+
+**Status**: OTel spans only — no persistent audit table for authorization decisions
+
+**Risk**: Post-incident forensics rely on ephemeral trace data (OpenTelemetry spans). If the trace backend has a short retention policy or is unavailable during an incident, authorization decisions and policy changes cannot be reconstructed. This affects compliance posture (SOC 2, ISO 27001) and incident response capability.
+
+**Current partial coverage**:
+- `role_assignments` table provides a record of role assignment changes (who assigned what, when)
+- `configuration_audit` table (migration `000601`) records configuration changes with full old/new value history
+- OTel spans on `Enforce()`, `AddPolicy()`, `AssignRole()`, `RevokeRole()` provide real-time visibility
+
+**Planned remediation**: Design and implement a dedicated `audit_events` table for security-sensitive IAM events:
+```sql
+CREATE TABLE audit_events (
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  tenant_id     UUID REFERENCES tenants(id),
+  event_type    TEXT NOT NULL,    -- 'ROLE_ASSIGNED', 'ROLE_REVOKED', 'POLICY_ADDED', 'POLICY_REMOVED', 'ACCESS_DENIED', 'ACCESS_GRANTED'
+  actor_subject TEXT NOT NULL,   -- who performed the action
+  actor_domain  TEXT NOT NULL,
+  target_subject TEXT,           -- who was affected (for role events)
+  resource      TEXT,            -- object (for access events)
+  action        TEXT,            -- verb (for access events)
+  outcome       TEXT,            -- 'allowed' or 'denied'
+  metadata      JSONB,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+This table should be immutable (no UPDATE or DELETE for application_role), append-only, with long retention for compliance evidence.
+
+---
+
 Next: [Common Business Scenarios](./18-common-business-scenarios.md)

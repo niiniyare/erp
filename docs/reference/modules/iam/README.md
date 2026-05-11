@@ -63,6 +63,14 @@
 38. [Deferred Features — Not Active in v1.0](./deferred-features.md)
 39. [Delivery Task Plan](./tasks.md)
 
+### Operational and Administration Guides (NEW — 2026-05-11)
+
+40. [Tenant Administration — Bootstrap, Roles, User Lifecycle](./23-tenant-administration.md)
+41. [Platform Administration — Platform Users, Super Admin, Authority Model](./24-platform-administration.md)
+42. [User Entity Scope — ALL / SUBTREE / ENTITY_ONLY](./25-user-entity-scope.md)
+43. [API Keys and Service Accounts — Lifecycle, Security, Practices](./26-api-keys-and-service-accounts.md)
+44. [Resource/Action Ownership — Module Registry, Feature Flags vs Settings vs Prefs](./27-resource-action-ownership.md)
+
 ---
 
 ## Related Modules
