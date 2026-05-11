@@ -17,7 +17,7 @@ import (
 // @Produce json
 // @Param id path string true "Organization ID"
 // @Param organization body coreTenant.UpdateTenantRequest true "Organization Update Request"
-// @Success 200 {object} map[string]interface{} "Organization updated successfully"
+// @Success 200 {object} map[string]any "Organization updated successfully"
 // @Failure 400 {object} errors.HTTPError "Invalid request body or ID"
 // @Failure 404 {object} errors.HTTPError "Organization not found"
 // @Failure 409 {object} errors.HTTPError "Conflict (e.g., subdomain taken)"

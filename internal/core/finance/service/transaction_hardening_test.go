@@ -437,7 +437,7 @@ func TestCONC001_ConcurrentPost_SameTxn_NoPanic(t *testing.T) {
 
 	const n = 10
 	var wg sync.WaitGroup
-	panics := make(chan interface{}, n)
+	panics := make(chan any, n)
 
 	for i := 0; i < n; i++ {
 		wg.Add(1)

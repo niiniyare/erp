@@ -169,13 +169,13 @@ func TestRouteSecurityManager_RateLimitConfiguration(t *testing.T) {
 func TestRouteSecurityManager_SecurityConfigDefaults(t *testing.T) {
 	tests := []struct {
 		name           string
-		configFunc     func() interface{}
-		expectedFields map[string]interface{}
+		configFunc     func() any
+		expectedFields map[string]any
 	}{
 		{
 			name:       "API Security Config",
-			configFunc: func() interface{} { return DefaultAPISecurityConfig() },
-			expectedFields: map[string]interface{}{
+			configFunc: func() any { return DefaultAPISecurityConfig() },
+			expectedFields: map[string]any{
 				"RequireAuth":   true,
 				"RequireTenant": true,
 				"EnableCORS":    true,
@@ -184,8 +184,8 @@ func TestRouteSecurityManager_SecurityConfigDefaults(t *testing.T) {
 		},
 		{
 			name:       "UI Security Config",
-			configFunc: func() interface{} { return DefaultUISecurityConfig() },
-			expectedFields: map[string]interface{}{
+			configFunc: func() any { return DefaultUISecurityConfig() },
+			expectedFields: map[string]any{
 				"RequireSession":        true,
 				"EnableCSRF":            true,
 				"EnableSecurityHeaders": true,
@@ -194,15 +194,15 @@ func TestRouteSecurityManager_SecurityConfigDefaults(t *testing.T) {
 		},
 		{
 			name:       "Public Security Config",
-			configFunc: func() interface{} { return DefaultPublicSecurityConfig() },
-			expectedFields: map[string]interface{}{
+			configFunc: func() any { return DefaultPublicSecurityConfig() },
+			expectedFields: map[string]any{
 				"EnableBasicHeaders": true,
 			},
 		},
 		{
 			name:       "Global Security Config",
-			configFunc: func() interface{} { return DefaultGlobalSecurityConfig() },
-			expectedFields: map[string]interface{}{
+			configFunc: func() any { return DefaultGlobalSecurityConfig() },
+			expectedFields: map[string]any{
 				"EnableRequestID":     true,
 				"EnableRecovery":      true,
 				"EnableObservability": true,

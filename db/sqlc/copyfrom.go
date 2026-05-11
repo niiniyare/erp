@@ -27,8 +27,8 @@ func (r *iteratorForBulkCreateEntityStates) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForBulkCreateEntityStates) Values() ([]interface{}, error) {
-	return []interface{}{
+func (r iteratorForBulkCreateEntityStates) Values() ([]any, error) {
+	return []any{
 		r.rows[0].Uuid,
 		r.rows[0].TenantID,
 		r.rows[0].FiscalYear,

@@ -122,7 +122,7 @@ func (h *TenantHandler) handleError(c *fiber.Ctx, err error) error {
 }
 
 // validateRequest parses and validates the request body against the provided struct.
-func (h *TenantHandler) validateRequest(c *fiber.Ctx, req interface{}) error {
+func (h *TenantHandler) validateRequest(c *fiber.Ctx, req any) error {
 	if err := c.BodyParser(req); err != nil {
 		return errors.NewBusinessError("INVALID_JSON", "Invalid JSON format").
 			WithHTTPStatus(400).
@@ -138,7 +138,7 @@ func (h *TenantHandler) validateRequest(c *fiber.Ctx, req interface{}) error {
 }
 
 // success returns a standardized 200 OK success response.
-func (h *TenantHandler) success(c *fiber.Ctx, data interface{}) error {
+func (h *TenantHandler) success(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -152,7 +152,7 @@ func (h *TenantHandler) success(c *fiber.Ctx, data interface{}) error {
 }
 
 // successWithMeta returns a 200 OK response with additional top-level metadata.
-func (h *TenantHandler) successWithMeta(c *fiber.Ctx, data interface{}, meta fiber.Map) error {
+func (h *TenantHandler) successWithMeta(c *fiber.Ctx, data any, meta fiber.Map) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -167,7 +167,7 @@ func (h *TenantHandler) successWithMeta(c *fiber.Ctx, data interface{}, meta fib
 }
 
 // created returns a 201 Created response.
-func (h *TenantHandler) created(c *fiber.Ctx, data interface{}) error {
+func (h *TenantHandler) created(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -181,7 +181,7 @@ func (h *TenantHandler) created(c *fiber.Ctx, data interface{}) error {
 }
 
 // accepted returns a 202 Accepted response for async operations.
-func (h *TenantHandler) accepted(c *fiber.Ctx, data interface{}) error {
+func (h *TenantHandler) accepted(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,

@@ -345,7 +345,7 @@ func (suite *RouterTestSuite) TestHealthRouteRegistration() {
 				body, err := io.ReadAll(resp.Body)
 				require.NoError(suite.T(), err)
 
-				var healthResponse map[string]interface{}
+				var healthResponse map[string]any
 				err = json.Unmarshal(body, &healthResponse)
 				require.NoError(suite.T(), err, "Response should be valid JSON")
 

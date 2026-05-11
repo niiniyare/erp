@@ -612,7 +612,7 @@ func (s *CacheTestSuite) TestMemoryCache() {
 	tests := []struct {
 		name  string
 		key   string
-		value interface{}
+		value any
 		ttl   time.Duration
 	}{
 		{

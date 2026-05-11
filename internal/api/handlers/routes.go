@@ -512,7 +512,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Account management endpoints — require finance.accounts.read / create / update etc.
 	accountsGroup := financeGroup.Group("/accounts")
-	accountsGroup.Use(middlewarePkg.Authorize("finance.accounts.read"))
+	accountsGroup.Use(r.authorizeMiddleware("finance.accounts.read"))
 	accountsGroup.Post("/", handler.CreateAccount)               // POST /api/v1/finance/accounts - Create account
 	accountsGroup.Get("/", handler.ListAccounts)                 // GET /api/v1/finance/accounts - List accounts with filters
 	accountsGroup.Get("/:id", handler.GetAccount)                // GET /api/v1/finance/accounts/:id - Get account by ID
@@ -522,7 +522,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Transaction management endpoints — require finance.transactions.read
 	transactionsGroup := financeGroup.Group("/transactions")
-	transactionsGroup.Use(middlewarePkg.Authorize("finance.transactions.read"))
+	transactionsGroup.Use(r.authorizeMiddleware("finance.transactions.read"))
 	transactionsGroup.Post("/", handler.CreateTransaction)              // POST   /api/v1/finance/transactions
 	transactionsGroup.Get("/", handler.ListTransactions)                // GET    /api/v1/finance/transactions
 	transactionsGroup.Get("/:id", handler.GetTransaction)              // GET    /api/v1/finance/transactions/:id
@@ -532,7 +532,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Fiscal year and period management
 	fiscalYearsGroup := financeGroup.Group("/fiscal-years")
-	fiscalYearsGroup.Use(middlewarePkg.Authorize("finance.periods.read"))
+	fiscalYearsGroup.Use(r.authorizeMiddleware("finance.periods.read"))
 	fiscalYearsGroup.Post("/", handler.CreateFiscalYear)                        // POST /api/v1/finance/fiscal-years
 	fiscalYearsGroup.Get("/", handler.ListFiscalYears)                          // GET  /api/v1/finance/fiscal-years
 	fiscalYearsGroup.Get("/:id", handler.GetFiscalYear)                         // GET  /api/v1/finance/fiscal-years/:id
@@ -540,28 +540,28 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	fiscalYearsGroup.Get("/:id/periods", handler.ListPeriods)                   // GET  /api/v1/finance/fiscal-years/:id/periods
 
 	periodsGroup := financeGroup.Group("/periods")
-	periodsGroup.Use(middlewarePkg.Authorize("finance.periods.read"))
+	periodsGroup.Use(r.authorizeMiddleware("finance.periods.read"))
 	periodsGroup.Get("/current", handler.GetCurrentPeriod)                      // GET   /api/v1/finance/periods/current
 	periodsGroup.Get("/:id", handler.GetPeriod)                                 // GET   /api/v1/finance/periods/:id
 	periodsGroup.Patch("/:id/status", handler.ChangePeriodStatus)               // PATCH /api/v1/finance/periods/:id/status
 
 	// Currency management
 	currenciesGroup := financeGroup.Group("/currencies")
-	currenciesGroup.Use(middlewarePkg.Authorize("finance.currencies.read"))
+	currenciesGroup.Use(r.authorizeMiddleware("finance.currencies.read"))
 	currenciesGroup.Post("/", handler.CreateCurrency)    // POST /api/v1/finance/currencies
 	currenciesGroup.Get("/", handler.ListCurrencies)     // GET  /api/v1/finance/currencies
 	currenciesGroup.Put("/:id", handler.UpdateCurrency)  // PUT  /api/v1/finance/currencies/:id
 
 	// Exchange rate management
 	ratesGroup := financeGroup.Group("/exchange-rates")
-	ratesGroup.Use(middlewarePkg.Authorize("finance.currencies.read"))
+	ratesGroup.Use(r.authorizeMiddleware("finance.currencies.read"))
 	ratesGroup.Post("/", handler.UpsertExchangeRate)         // POST /api/v1/finance/exchange-rates (upsert)
 	ratesGroup.Get("/", handler.GetExchangeRate)             // GET  /api/v1/finance/exchange-rates?from=&to=&date=
 	ratesGroup.Get("/history", handler.ListExchangeRates)    // GET  /api/v1/finance/exchange-rates/history
 
 	// Budget management
 	budgetsGroup := financeGroup.Group("/budgets")
-	budgetsGroup.Use(middlewarePkg.Authorize("finance.budgets.read"))
+	budgetsGroup.Use(r.authorizeMiddleware("finance.budgets.read"))
 	budgetsGroup.Post("/", handler.CreateBudget)                    // POST   /api/v1/finance/budgets
 	budgetsGroup.Get("/", handler.ListBudgets)                      // GET    /api/v1/finance/budgets?fiscal_year_id=
 	budgetsGroup.Get("/:id", handler.GetBudget)                     // GET    /api/v1/finance/budgets/:id
@@ -573,7 +573,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Cost centre management
 	costCentersGroup := financeGroup.Group("/cost-centers")
-	costCentersGroup.Use(middlewarePkg.Authorize("finance.cost_centers.read"))
+	costCentersGroup.Use(r.authorizeMiddleware("finance.cost_centers.read"))
 	costCentersGroup.Post("/", handler.CreateCostCenter)       // POST   /api/v1/finance/cost-centers
 	costCentersGroup.Get("/", handler.ListCostCenters)         // GET    /api/v1/finance/cost-centers
 	costCentersGroup.Get("/:id", handler.GetCostCenter)        // GET    /api/v1/finance/cost-centers/:id
@@ -582,7 +582,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Tax authority and code management
 	taxGroup := financeGroup.Group("/tax")
-	taxGroup.Use(middlewarePkg.Authorize("finance.tax.read"))
+	taxGroup.Use(r.authorizeMiddleware("finance.tax.read"))
 
 	taxAuthGroup := taxGroup.Group("/authorities")
 	taxAuthGroup.Post("/", handler.CreateTaxAuthority)       // POST   /api/v1/finance/tax/authorities
@@ -598,7 +598,7 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 
 	// Bank reconciliation
 	reconGroup := financeGroup.Group("/reconciliation")
-	reconGroup.Use(middlewarePkg.Authorize("finance.reconciliation.read"))
+	reconGroup.Use(r.authorizeMiddleware("finance.reconciliation.read"))
 
 	statementsGroup := reconGroup.Group("/statements")
 	statementsGroup.Post("/", handler.ImportBankStatement)                                // POST   /api/v1/finance/reconciliation/statements
@@ -628,7 +628,11 @@ func (r *Router) registerSchemaAPI(apiRouter fiber.Router) error {
 	schemaGroup.Use(r.authenticateMiddleware())
 
 	// GET /api/v1/schema/boot — AMIS app shell (nav filtered by flags + permissions)
-	schemaGroup.Get("/boot", schemaHandler.BootHandler(r.deps.Store))
+	var authzSvc iam.AuthzService
+	if r.deps.AuthConfig != nil {
+		authzSvc = r.deps.AuthConfig.AuthzService
+	}
+	schemaGroup.Get("/boot", schemaHandler.BootHandler(r.deps.Store, authzSvc))
 
 	r.deps.Logger.Info("registered schema API endpoints")
 	return nil
@@ -745,7 +749,11 @@ func (r *Router) registerAuditAPI(apiRouter fiber.Router) error {
 
 	auditGroup := apiRouter.Group("/v1/audit-logs")
 	auditGroup.Use(r.authenticateMiddleware())
-	auditGroup.Get("/", auditHandler.ListAuditEventsHandler(r.deps.AuditService))
+	var auditAuthzSvc iam.AuthzService
+	if r.deps.AuthConfig != nil {
+		auditAuthzSvc = r.deps.AuthConfig.AuthzService
+	}
+	auditGroup.Get("/", auditHandler.ListAuditEventsHandler(r.deps.AuditService, auditAuthzSvc))
 
 	r.deps.Logger.Info("registered audit API endpoints")
 	return nil
@@ -760,6 +768,16 @@ func (r *Router) authenticateMiddleware() fiber.Handler {
 	cfg := *r.deps.AuthConfig
 	cfg.APIKeyService = r.deps.APIKeyService // inject if wired
 	return middlewarePkg.Authenticate(cfg)
+}
+
+// authorizeMiddleware returns an Authorize handler for the given permission if
+// the AuthzService is configured, otherwise returns a no-op pass-through
+// (dev / test mode where auth is disabled).
+func (r *Router) authorizeMiddleware(permission string) fiber.Handler {
+	if r.deps.AuthConfig == nil || r.deps.AuthConfig.AuthzService == nil {
+		return func(c *fiber.Ctx) error { return c.Next() }
+	}
+	return middlewarePkg.Authorize(*r.deps.AuthConfig, permission)
 }
 
 // Future module registration examples:

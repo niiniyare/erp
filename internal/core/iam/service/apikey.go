@@ -19,10 +19,10 @@ import (
 )
 
 const (
-	apiKeyPrefix    = "eak_"      // ERP API Key prefix — makes keys recognisable in logs
+	apiKeyPrefix    = "eak_" // ERP API Key prefix — makes keys recognisable in logs
 	apiKeyCacheTTL  = 5 * time.Minute
-	apiKeyCacheNS   = "apikey:"   // Redis key namespace: apikey:{sha256hex(rawToken)}
-	apiKeyRawLength = 32          // bytes of random entropy; 64 hex chars after encoding
+	apiKeyCacheNS   = "apikey:" // Redis key namespace: apikey:{sha256hex(rawToken)}
+	apiKeyRawLength = 32        // bytes of random entropy; 64 hex chars after encoding
 )
 
 // Port (interface)
@@ -186,13 +186,11 @@ func buildAPIKeySession(key *domain.APIKey) *domain.ResolvedSession {
 	}
 
 	return &domain.ResolvedSession{
-		UserID:      key.CreatedBy, // creator — for audit trail
-		UserType:    "API",
-		TenantID:    key.TenantID,
-		DisplayName: key.Name,
-		Permissions: perms,
-		EntityScope: domain.EntityScope{Type: domain.EntityScopeAll},
+		UserID:        key.CreatedBy, // creator — for audit trail
+		UserType:      "API",
+		TenantID:      key.TenantID,
+		DisplayName:   key.Name,
+		EntityScope:   domain.EntityScope{Type: domain.EntityScopeAll},
 		Configuration: domain.DefaultConfiguration(),
 	}
 }
-

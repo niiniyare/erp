@@ -255,7 +255,7 @@ WHERE  tenant_id = current_tenant_id()
   AND  id        = $1
 RETURNING updated_at`
 
-		var updatedBy interface{}
+		var updatedBy any
 		if fy.UpdatedBy != nil {
 			updatedBy = nullUUID(*fy.UpdatedBy)
 		}

@@ -146,7 +146,7 @@ SELECT id, tenant_id, account_id, statement_reference, statement_date, start_dat
 FROM   finance_bank_statements
 WHERE  tenant_id = current_tenant_id()`)
 
-		args := []interface{}{}
+		args := []any{}
 		if accountID != nil {
 			args = append(args, *accountID)
 			sb.WriteString(fmt.Sprintf(" AND account_id = $%d", len(args)))

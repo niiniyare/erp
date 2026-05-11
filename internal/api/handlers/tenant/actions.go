@@ -15,7 +15,7 @@ import (
 // @Tags Organizations
 // @Produce json
 // @Param id path string true "Organization ID"
-// @Success 200 {object} map[string]interface{} "Activation successful"
+// @Success 200 {object} map[string]any "Activation successful"
 // @Failure 400 {object} errors.HTTPError "Invalid ID or invalid state transition"
 // @Failure 404 {object} errors.HTTPError "Organization not found"
 // @Router /organizations/{id}/activate [post]
@@ -53,7 +53,7 @@ func (h *TenantHandler) Activate(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "Organization ID"
 // @Param reason body object true "Suspension Reason"
-// @Success 200 {object} map[string]interface{} "Suspension successful"
+// @Success 200 {object} map[string]any "Suspension successful"
 // @Failure 400 {object} errors.HTTPError "Invalid ID or invalid state transition"
 // @Failure 404 {object} errors.HTTPError "Organization not found"
 // @Router /organizations/{id}/suspend [post]
@@ -98,7 +98,7 @@ func (h *TenantHandler) Suspend(c *fiber.Ctx) error {
 // @Tags Organizations
 // @Produce json
 // @Param id path string true "Organization ID"
-// @Success 200 {object} map[string]interface{} "Archival successful"
+// @Success 200 {object} map[string]any "Archival successful"
 // @Failure 400 {object} errors.HTTPError "Invalid ID or invalid state transition"
 // @Failure 404 {object} errors.HTTPError "Organization not found"
 // @Router /organizations/{id}/archive [post]

@@ -428,7 +428,7 @@ SELECT id, tenant_id, code, name, description, tax_type, tax_category, tax_autho
 FROM   finance_tax_codes
 WHERE  tenant_id = current_tenant_id()`)
 
-		args := []interface{}{}
+		args := []any{}
 		if taxType != nil {
 			args = append(args, string(*taxType))
 			sb.WriteString(fmt.Sprintf(" AND tax_type = $%d", len(args)))
@@ -650,7 +650,7 @@ func (r *taxRepository) DeleteBrackets(ctx context.Context, taxCodeID uuid.UUID)
 
 // scannable abstracts pgx.Row and pgx.Rows so we can reuse scanTaxCode.
 type scannable interface {
-	Scan(dest ...interface{}) error
+	Scan(dest ...any) error
 }
 
 func scanTaxCode(row scannable) (*domain.TaxCode, error) {
@@ -696,7 +696,7 @@ func scanTaxCode(row scannable) (*domain.TaxCode, error) {
 }
 
 // nullString converts an empty string to nil for nullable DB columns.
-func nullString(s string) interface{} {
+func nullString(s string) any {
 	if s == "" {
 		return nil
 	}
@@ -704,7 +704,7 @@ func nullString(s string) interface{} {
 }
 
 // nullDecimal converts a nil decimal pointer to nil for nullable DB columns.
-func nullDecimal(d *decimal.Decimal) interface{} {
+func nullDecimal(d *decimal.Decimal) any {
 	if d == nil {
 		return nil
 	}

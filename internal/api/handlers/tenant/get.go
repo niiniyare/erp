@@ -15,7 +15,7 @@ import (
 // @Produce json
 // @Param id path string true "Organization ID"
 // @Param view query string false "Response view (summary, default, detailed)" Enums(summary, default, detailed) default(default)
-// @Success 200 {object} map[string]interface{} "Successful response"
+// @Success 200 {object} map[string]any "Successful response"
 // @Failure 400 {object} errors.HTTPError "Invalid ID format"
 // @Failure 404 {object} errors.HTTPError "Organization not found"
 // @Failure 500 {object} errors.HTTPError "Internal Server Error"

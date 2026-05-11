@@ -5,10 +5,10 @@
 //
 //  1. Feature flag: sess.Configuration.Flags["{module}.enabled"] must be true
 //     (or the key must be absent, which means "not explicitly disabled").
-//  2. Permission: sess.Can("{module}.{resource}.read") must return true.
+//  2. Permission: authzSvc.Enforce(principal, "{module}.{resource}", "read") must return true.
 //
-// Because both checks operate against the pre-computed ResolvedSession, there
-// are no extra DB round-trips per request beyond the two queries below.
+// The feature flag check is fast (in-memory). The permission check calls Casbin
+// in-process (no extra DB round-trips per resource beyond the two module/resource queries).
 package schema
 
 import (
@@ -21,12 +21,13 @@ import (
 // BootHandler returns the AMIS app shell schema for the authenticated user.
 //
 // Route: GET /schema/boot  (requires Authenticate middleware)
-func BootHandler(store db.Store) fiber.Handler {
+func BootHandler(store db.Store, authzSvc iam.AuthzService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
+		principal, _ := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
 
 		modules, err := store.ListActiveSystemModules(c.Context())
 		if err != nil {
@@ -51,7 +52,13 @@ func BootHandler(store db.Store) fiber.Handler {
 			children := make([]fiber.Map, 0, len(resources))
 			for _, res := range resources {
 				// 2. Permission gate: user must have at least read on this resource.
-				if !sess.Can(mod.Slug + "." + res.Slug + ".read") {
+				allowed, err := authzSvc.Enforce(c.Context(), iam.Request{
+					Subject: principal.Subject,
+					Domain:  principal.Domain,
+					Object:  mod.Slug + "." + res.Slug,
+					Action:  "read",
+				})
+				if err != nil || !allowed {
 					continue
 				}
 

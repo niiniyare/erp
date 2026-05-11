@@ -12,7 +12,7 @@ import (
 
 // StageLog records the outcome of a single stage execution within a pipeline run.
 type StageLog struct {
-	StageName  string
+	StageName string
 	// Status mirrors StageResult.Status: "completed" | "skipped" | "suspended" | "failed" | "simulated"
 	Status     string
 	SkipReason string
@@ -108,15 +108,6 @@ func (o *OperationContext) Flag(key string) bool {
 }
 
 // ── Delegation helpers ────────────────────────────────────────────────────────
-
-// Can reports whether the session grants resource+"."+action.
-// Returns false when the session is nil.
-func (o *OperationContext) Can(resource, action string) bool {
-	if o.Session == nil {
-		return false
-	}
-	return o.Session.CanDo(resource, action)
-}
 
 // FeatureEnabled returns whether the named feature flag is on for this tenant.
 // Returns false when the session is nil.

@@ -240,11 +240,11 @@ func (s *Session) IsValid() bool {
 // session.  It is constructed by the authn middleware, stored in Fiber Locals
 // under LocalsKeySession, and consumed by handlers and the authz middleware.
 //
-// Design goal: a handler or service method should be able to answer all three
-// questions below by reading this struct alone — with no extra DB or cache
-// round-trips:
+// Design goal: a handler or service method should be able to answer the
+// questions below by reading this struct, with authorization delegated to
+// Casbin:
 //
-//  1. "Can this user perform this action?"  → Can() / CanDo()
+//  1. "Can this user perform this action?"  → authzService.Enforce(ToPrincipal(), ...)
 //  2. "Which entities can this user see?"   → EntityScope
 //  3. "Is this feature enabled?"            → Configuration.Flags["name"]
 //
@@ -267,14 +267,15 @@ func (s *Session) IsValid() bool {
 //
 //	Mirrors Session.PrincipalID — non-nil for portal users only.
 type ResolvedSession struct {
-	UserID        uuid.UUID       `json:"user_id"`
-	UserType      string          `json:"user_type"` // persisted enum; always use ActorTypeFromUserType() for authz logic
-	TenantID      uuid.UUID       `json:"tenant_id"` // RLS key — set as app.tenant_id in every DB transaction
-	PrincipalID   *uuid.UUID      `json:"principal_id,omitempty"` // non-nil for portal users; identifies the represented party
-	DisplayName   string          `json:"display_name"`
-	Permissions   map[string]bool `json:"permissions"` // pre-computed at login; O(1) permission checks via Can() / CanDo()
-	EntityScope   EntityScope     `json:"entity_scope"`     // application-layer entity visibility; enforced in service methods
-	Configuration Configuration   `json:"configuration"`    // feature flags, tenant settings, and user preferences
+	UserID        uuid.UUID     `json:"user_id"`
+	UserType      string        `json:"user_type"`                 // persisted enum; always use ActorTypeFromUserType() for authz logic
+	TenantID      uuid.UUID     `json:"tenant_id"`                 // RLS key — set as app.tenant_id in every DB transaction
+	PrincipalID   *uuid.UUID    `json:"principal_id,omitempty"`    // non-nil for portal users; identifies the represented party
+	DisplayName   string        `json:"display_name"`
+	EntityScope   EntityScope   `json:"entity_scope"`              // application-layer entity visibility; enforced in service methods
+	Configuration Configuration `json:"configuration"`             // feature flags, tenant settings, and user preferences
+	// Authorization is NOT stored here. All permission checks must go through
+	// authzService.Enforce(ctx, authz.Request{...}) using ToPrincipal() as the identity.
 }
 
 // LocalsKeySession is the Fiber Locals key for the authenticated ResolvedSession.
@@ -286,37 +287,6 @@ type ResolvedSession struct {
 //	    return fiber.ErrUnauthorized
 //	}
 const LocalsKeySession = "resolved_session"
-
-// Can reports whether the session holds the given permission key.
-//
-// The key format is "resource.action" — e.g. "invoice.read" or
-// "hr.employee.create".  This is an O(1) map lookup; it never touches the DB
-// or the Casbin engine.  Permission maps are computed once at login and
-// embedded in the session row.
-//
-// Returns false for nil receivers and nil permission maps, so callers do not
-// need a nil guard before calling Can.
-func (s *ResolvedSession) Can(permission string) bool {
-	if s == nil || s.Permissions == nil {
-		return false
-	}
-	// "*" is a superuser sentinel set by buildPermissions when the session
-	// holds a wildcard allow policy (e.g. tenant_admin with Object="*").
-	if s.Permissions["*"] {
-		return true
-	}
-	return s.Permissions[permission]
-}
-
-// CanDo is a convenience wrapper over Can for callers that hold resource and
-// action as separate strings.
-//
-//	if !sess.CanDo("invoice", "approve") {
-//	    return fiber.ErrForbidden
-//	}
-func (s *ResolvedSession) CanDo(resource, action string) bool {
-	return s.Can(resource + "." + action)
-}
 
 // FeatureEnabled reports whether the named feature flag is enabled in this
 // session's pre-computed Configuration.  Returns false for nil receivers,
@@ -439,8 +409,8 @@ func (s *ResolvedSession) IsPlatform() bool {
 // =============================================================================
 
 // MarshalSessionJSON marshals v to JSON bytes, returning the safe fallback
-// "{}" if marshalling fails.  Used when writing EntityScope, Configuration,
-// or Permissions to JSONB columns in the session store.
+// "{}" if marshalling fails.  Used when writing EntityScope or Configuration
+// to JSONB columns in the session store.
 func MarshalSessionJSON(v any) []byte {
 	b, err := json.Marshal(v)
 	if err != nil {

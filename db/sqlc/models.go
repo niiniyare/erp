@@ -1079,7 +1079,7 @@ type MvTenantFeatureFlagsCache struct {
 	FeatureFlagID     uuid.UUID   `json:"feature_flag_id"`
 	FeatureFlagName   string      `json:"feature_flag_name"`
 	FlagType          string      `json:"flag_type"`
-	Enabled           interface{} `json:"enabled"`
+	Enabled           any `json:"enabled"`
 	Value             []byte      `json:"value"`
 	EvaluationSource  string      `json:"evaluation_source"`
 	DefaultValue      bool        `json:"default_value"`
@@ -1089,8 +1089,8 @@ type MvTenantFeatureFlagsCache struct {
 	OverrideEnabled   *bool       `json:"override_enabled"`
 	OverrideValue     []byte      `json:"override_value"`
 	OverrideReason    *string     `json:"override_reason"`
-	CacheTimestamp    interface{} `json:"cache_timestamp"`
-	CacheCreatedAt    interface{} `json:"cache_created_at"`
+	CacheTimestamp    any `json:"cache_timestamp"`
+	CacheCreatedAt    any `json:"cache_created_at"`
 }
 
 type MvUserEffectivePermission struct {
@@ -1098,9 +1098,9 @@ type MvUserEffectivePermission struct {
 	TenantID            uuid.UUID   `json:"tenant_id"`
 	ResourceID          uuid.UUID   `json:"resource_id"`
 	ActionID            uuid.UUID   `json:"action_id"`
-	AllowFlag           interface{} `json:"allow_flag"`
-	RolePermissionIds   interface{} `json:"role_permission_ids"`
-	DirectPermissionIds interface{} `json:"direct_permission_ids"`
+	AllowFlag           any `json:"allow_flag"`
+	RolePermissionIds   any `json:"role_permission_ids"`
+	DirectPermissionIds any `json:"direct_permission_ids"`
 }
 
 // Stores user notification preferences.
@@ -1859,7 +1859,7 @@ type VAuditSummaryView struct {
 	EventCount      int64           `json:"event_count"`
 	UniqueUsers     int64           `json:"unique_users"`
 	AvgRiskScore    float64         `json:"avg_risk_score"`
-	MaxRiskScore    interface{}     `json:"max_risk_score"`
+	MaxRiskScore    any     `json:"max_risk_score"`
 	DeniedAttempts  int64           `json:"denied_attempts"`
 	AllowedAttempts int64           `json:"allowed_attempts"`
 }
@@ -2082,7 +2082,7 @@ type VFinancialStatementStructure struct {
 	GroupPath                 *string     `json:"group_path"`
 	AccountCount              int64       `json:"account_count"`
 	ActiveAccountCount        int64       `json:"active_account_count"`
-	GroupBalance              interface{} `json:"group_balance"`
+	GroupBalance              any `json:"group_balance"`
 }
 
 // Summary view of roles with their permissions, resources, actions, and user assignment counts for role management and analysis.
@@ -2095,8 +2095,8 @@ type VRolePermissionsSummary struct {
 	HierarchyLevel    *int32      `json:"hierarchy_level"`
 	ModuleID          *uuid.UUID  `json:"module_id"`
 	ModuleName        *string     `json:"module_name"`
-	ResourceNames     interface{} `json:"resource_names"`
-	ActionNames       interface{} `json:"action_names"`
+	ResourceNames     any `json:"resource_names"`
+	ActionNames       any `json:"action_names"`
 	PermissionCount   int64       `json:"permission_count"`
 	AssignedUserCount int64       `json:"assigned_user_count"`
 }
@@ -2107,9 +2107,9 @@ type VSecurityThreatDashboard struct {
 	Username               string      `json:"username"`
 	Email                  string      `json:"email"`
 	HighRiskSessions       int64       `json:"high_risk_sessions"`
-	MaxRiskScore           interface{} `json:"max_risk_score"`
+	MaxRiskScore           any `json:"max_risk_score"`
 	CriticalEvents         int64       `json:"critical_events"`
-	LastSuspiciousActivity interface{} `json:"last_suspicious_activity"`
+	LastSuspiciousActivity any `json:"last_suspicious_activity"`
 }
 
 type VTenantEntitySummary struct {
@@ -2144,8 +2144,8 @@ type VTenantResourceUtilization struct {
 	NonDeletedEntities int64       `json:"non_deleted_entities"`
 	SequenceStates     int64       `json:"sequence_states"`
 	DocumentTypes      int64       `json:"document_types"`
-	LastEntityCreated  interface{} `json:"last_entity_created"`
-	LastEntityUpdated  interface{} `json:"last_entity_updated"`
+	LastEntityCreated  any `json:"last_entity_created"`
+	LastEntityUpdated  any `json:"last_entity_updated"`
 }
 
 // view combining user, person, and employee data with role aggregations and combined ABAC attributes for authorization decisions.
@@ -2171,8 +2171,8 @@ type VUserCompleteView struct {
 	DepartmentID       *uuid.UUID   `json:"department_id"`
 	EmploymentStatus   *string      `json:"employment_status"`
 	SecurityLevel      *int32       `json:"security_level"`
-	CombinedAttributes interface{}  `json:"combined_attributes"`
-	RoleNames          interface{}  `json:"role_names"`
-	RoleIds            interface{}  `json:"role_ids"`
+	CombinedAttributes any  `json:"combined_attributes"`
+	RoleNames          any  `json:"role_names"`
+	RoleIds            any  `json:"role_ids"`
 	ActiveRoleCount    int64        `json:"active_role_count"`
 }

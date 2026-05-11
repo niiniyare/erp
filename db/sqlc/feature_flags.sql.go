@@ -42,12 +42,12 @@ type BulkEvaluateFeatureFlagsParams struct {
 
 type BulkEvaluateFeatureFlagsRow struct {
 	FlagKey        string      `json:"flag_key"`
-	EvaluatedValue interface{} `json:"evaluated_value"`
+	EvaluatedValue any `json:"evaluated_value"`
 	IsEnabled      bool        `json:"is_enabled"`
 	Source         string      `json:"source"`
 	Reason         string      `json:"reason"`
 	Variation      string      `json:"variation"`
-	EvaluatedAt    interface{} `json:"evaluated_at"`
+	EvaluatedAt    any `json:"evaluated_at"`
 }
 
 // Simplified bulk evaluation based on current schema

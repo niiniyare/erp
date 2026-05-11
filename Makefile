@@ -136,13 +136,15 @@ mock: ##  Regenerate all go:generate mocks
 .PHONY: wire-install
 wire-install: ##  Install Google Wire
 	@echo "$(BLUE)Installing Wire...$(NC)"
-	go install github.com/google/wire/cmd/wire@latest
-	@echo "$(GREEN)✅  Wire installed$(NC)"
+	# go install github.com/google/wire/cmd/wire@latest
+	@go install github.com/goforj/wire/cmd/wire@lates
+	t	@echo "$(GREEN)✅  Wire installed$(NC)"
 
 .PHONY: wire
 wire: ## ⚡ Generate Wire dependency-injection code
 	@echo "$(BLUE)Generating Wire code...$(NC)"
-	@./scripts/generate-wire.sh
+	@go tool  github.com/goforj/wire/cmd/wire  ./cmd/server/
+	# @./scripts/generate-wire.sh
 	@echo "$(GREEN)✅  Wire generation complete$(NC)"
 
 .PHONY: wire-check

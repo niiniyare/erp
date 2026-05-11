@@ -247,7 +247,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Create() {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(suite.T(), err)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err = json.Unmarshal(body, &response)
 			require.NoError(suite.T(), err, "Response should be valid JSON")
 
@@ -372,7 +372,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Get() {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(suite.T(), err)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err = json.Unmarshal(body, &response)
 			require.NoError(suite.T(), err, "Response should be valid JSON")
 
@@ -480,7 +480,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_List() {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(suite.T(), err)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err = json.Unmarshal(body, &response)
 			require.NoError(suite.T(), err, "Response should be valid JSON")
 
@@ -618,7 +618,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_Update() {
 			body, err := io.ReadAll(resp.Body)
 			require.NoError(suite.T(), err)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err = json.Unmarshal(body, &response)
 			require.NoError(suite.T(), err, "Response should be valid JSON")
 
@@ -740,7 +740,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_BusinessRules() {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(suite.T(), err)
 
-		var response map[string]interface{}
+		var response map[string]any
 		err = json.Unmarshal(body, &response)
 		require.NoError(suite.T(), err)
 
@@ -890,7 +890,7 @@ func (suite *TenantHandlerTestSuite) TestTenantHandler_ErrorHandling() {
 		body, err := io.ReadAll(resp.Body)
 		require.NoError(suite.T(), err)
 
-		var response map[string]interface{}
+		var response map[string]any
 		err = json.Unmarshal(body, &response)
 		require.NoError(suite.T(), err)
 

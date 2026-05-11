@@ -315,8 +315,8 @@ type GetEvaluationCacheStatsRow struct {
 	UniqueResourceTypes    int64          `json:"unique_resource_types"`
 	UniqueActions          int64          `json:"unique_actions"`
 	AvgEvaluationTimeMs    float64        `json:"avg_evaluation_time_ms"`
-	MinEvaluationTimeMs    interface{}    `json:"min_evaluation_time_ms"`
-	MaxEvaluationTimeMs    interface{}    `json:"max_evaluation_time_ms"`
+	MinEvaluationTimeMs    any    `json:"min_evaluation_time_ms"`
+	MaxEvaluationTimeMs    any    `json:"max_evaluation_time_ms"`
 	CacheHitRate           pgtype.Numeric `json:"cache_hit_rate"`
 }
 

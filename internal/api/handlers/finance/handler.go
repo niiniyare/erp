@@ -145,7 +145,7 @@ func (h *FinanceHandler) GetAccount(c *fiber.Ctx) error {
 // @Param limit query int false "Limit for pagination" default(20)
 // @Param root_type query string false "Filter by root type"
 // @Param active query bool false "Filter by active status"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} map[string]any
 // @Router /api/v1/finance/accounts [get]
 func (h *FinanceHandler) ListAccounts(c *fiber.Ctx) error {
 	// Step 1: Start tracing
@@ -178,8 +178,8 @@ func (h *FinanceHandler) ListAccounts(c *fiber.Ctx) error {
 	}
 
 	// Step 4: Return response with metadata
-	meta := map[string]interface{}{
-		"pagination": map[string]interface{}{
+	meta := map[string]any{
+		"pagination": map[string]any{
 			"offset": offset,
 			"limit":  limit,
 			"count":  len(accounts),
@@ -338,8 +338,8 @@ func (h *FinanceHandler) ListTransactions(c *fiber.Ctx) error {
 		return h.HandleError(c, err)
 	}
 
-	meta := map[string]interface{}{
-		"pagination": map[string]interface{}{
+	meta := map[string]any{
+		"pagination": map[string]any{
 			"offset": offset,
 			"limit":  limit,
 			"count":  len(transactions),
@@ -370,13 +370,13 @@ func (h *FinanceHandler) GetTrialBalance(c *fiber.Ctx) error {
 
 	// This method doesn't exist in AccountService - removing for now
 	// trialBalance, err := h.services.Account.GetTrialBalance(ctx, asOfDate)
-	trialBalance := map[string]interface{}{"message": "Trial balance not implemented yet"}
+	trialBalance := map[string]any{"message": "Trial balance not implemented yet"}
 	err := error(nil)
 	if err != nil {
 		return h.HandleError(c, err)
 	}
 
-	meta := map[string]interface{}{
+	meta := map[string]any{
 		"as_of_date":   asOfDate.Format("2006-01-02"),
 		"generated_at": time.Now(),
 	}
@@ -409,13 +409,13 @@ func (h *FinanceHandler) GetAccountBalance(c *fiber.Ctx) error {
 
 	// This method doesn't exist in AccountService - removing for now
 	// balance, err := h.services.Account.GetAccountBalance(ctx, accountUUID, asOfDate)
-	balance := map[string]interface{}{"message": "Account balance not implemented yet"}
+	balance := map[string]any{"message": "Account balance not implemented yet"}
 	err = error(nil)
 	if err != nil {
 		return h.HandleError(c, err)
 	}
 
-	meta := map[string]interface{}{
+	meta := map[string]any{
 		"account_id": accountID,
 		"as_of_date": asOfDate.Format("2006-01-02"),
 	}
@@ -455,7 +455,7 @@ func (h *FinanceHandler) HandleError(c *fiber.Ctx, err error) error {
 }
 
 // ValidateRequest validates request data
-func (h *FinanceHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
+func (h *FinanceHandler) ValidateRequest(c *fiber.Ctx, req any) error {
 	if err := c.BodyParser(req); err != nil {
 		return errors.NewBusinessError("INVALID_JSON", "Invalid JSON format").
 			WithHTTPStatus(400).
@@ -471,7 +471,7 @@ func (h *FinanceHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
 }
 
 // Success returns a standardized success response
-func (h *FinanceHandler) Success(c *fiber.Ctx, data interface{}) error {
+func (h *FinanceHandler) Success(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -484,7 +484,7 @@ func (h *FinanceHandler) Success(c *fiber.Ctx, data interface{}) error {
 }
 
 // SuccessWithMeta returns success response with metadata
-func (h *FinanceHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta map[string]interface{}) error {
+func (h *FinanceHandler) SuccessWithMeta(c *fiber.Ctx, data any, meta map[string]any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -498,7 +498,7 @@ func (h *FinanceHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta ma
 }
 
 // Created returns a 201 response
-func (h *FinanceHandler) Created(c *fiber.Ctx, data interface{}) error {
+func (h *FinanceHandler) Created(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,

@@ -173,7 +173,7 @@ func BenchmarkCacheMSet(b *testing.B) {
 	for _, tt := range tests {
 		b.Run(tt.name, func(b *testing.B) {
 			// Prepare data
-			pairs := make(map[string]interface{}, tt.keyCount)
+			pairs := make(map[string]any, tt.keyCount)
 			for i := 0; i < tt.keyCount; i++ {
 				key := fmt.Sprintf("bench:mset:%s:%d", tt.name, i)
 				pairs[key] = fmt.Sprintf("value-%d", i)
@@ -358,7 +358,7 @@ func BenchmarkComplexStruct(b *testing.B) {
 		Age      int                    `json:"age"`
 		Active   bool                   `json:"active"`
 		Tags     []string               `json:"tags"`
-		Metadata map[string]interface{} `json:"metadata"`
+		Metadata map[string]any `json:"metadata"`
 		Created  time.Time              `json:"created"`
 	}
 
@@ -369,10 +369,10 @@ func BenchmarkComplexStruct(b *testing.B) {
 		Age:    30,
 		Active: true,
 		Tags:   []string{"tag1", "tag2", "tag3", "tag4", "tag5"},
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"role":        "admin",
 			"permissions": []string{"read", "write", "delete"},
-			"settings": map[string]interface{}{
+			"settings": map[string]any{
 				"theme": "dark",
 				"lang":  "en",
 			},

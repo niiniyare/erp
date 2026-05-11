@@ -7,7 +7,6 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-// Account Activity Types
 type AccountCodeValidationInput struct {
 	AccountCode string `json:"account_code"`
 	AccountType string `json:"account_type"`
@@ -131,7 +130,12 @@ type ReconciliationReportResult struct {
 	ReportPath string    `json:"report_path"`
 }
 
+//
+//
 // Compliance and Audit Activity Types
+//
+//
+
 type AuditInitializationInput struct {
 	AuditType       string   `json:"audit_type"`
 	AuditPeriod     string   `json:"audit_period"`
@@ -191,6 +195,7 @@ type ComplianceAlertInput struct {
 }
 
 // Fraud Detection Activity Types
+
 type FraudDetectionInitInput struct {
 	DetectionType    string   `json:"detection_type"`
 	DetectionRules   []string `json:"detection_rules"`
@@ -261,6 +266,7 @@ type FraudDetectionReportResult struct {
 }
 
 // Transaction Processing Activity Types
+
 type TransactionReversalInput struct {
 	OriginalTransactionID uuid.UUID `json:"original_transaction_id"`
 	ReversalReason        string    `json:"reversal_reason"`
@@ -287,6 +293,7 @@ type ReversalCreationResult struct {
 }
 
 // Period Closing Activity Types
+
 type PreClosingValidationInput struct {
 	ClosingPeriod   string    `json:"closing_period"`
 	TenantID        uuid.UUID `json:"tenant_id"`
@@ -393,6 +400,7 @@ type ClosingNotificationInput struct {
 }
 
 // Year-End Closing Activity Types
+
 type PreYearEndValidationInput struct {
 	FiscalYear      string    `json:"fiscal_year"`
 	TenantID        uuid.UUID `json:"tenant_id"`

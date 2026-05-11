@@ -221,7 +221,6 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	sessionRepo := iam.NewSessionRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
 	sc.SessionService = iam.NewSessionService(
 		sc.IdentityService,
-		sc.IAMService,
 		sessionRepo,
 		sc.deps.Tracing,
 		sc.deps.Metrics,

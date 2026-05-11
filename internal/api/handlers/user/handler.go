@@ -170,7 +170,7 @@ func (h *UserHandler) Get(c *fiber.Ctx) error {
 // @Param limit query int false "Limit for pagination" default(20)
 // @Param status query string false "Filter by account status" Enums(ACTIVE, INACTIVE, SUSPENDED, LOCKED, PENDING_VERIFICATION, ARCHIVED)
 // @Param user_type query string false "Filter by user type" Enums(INTERNAL, CUSTOMER, VENDOR, PARTNER, API, SERVICE, ADMIN, SYSTEM)
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} map[string]any
 // @Router /api/v1/users [get]
 func (h *UserHandler) List(c *fiber.Ctx) error {
 	// Step 1: Start tracing
@@ -212,7 +212,7 @@ func (h *UserHandler) List(c *fiber.Ctx) error {
 	}
 
 	// Step 5: Return with pagination metadata
-	return h.SuccessWithMeta(c, items, map[string]interface{}{
+	return h.SuccessWithMeta(c, items, map[string]any{
 		"limit":  limit,
 		"offset": offset,
 		"count":  len(items),
@@ -370,7 +370,7 @@ func (h *UserHandler) Authenticate(c *fiber.Ctx) error {
 // @Produce json
 // @Param id path string true "User ID" format(uuid)
 // @Param request body iam.ChangePasswordRequest true "Password change request"
-// @Success 200 {object} map[string]interface{}
+// @Success 200 {object} map[string]any
 // @Router /api/v1/users/{id}/change-password [post]
 func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	// Step 1: Start tracing
@@ -406,7 +406,7 @@ func (h *UserHandler) ChangePassword(c *fiber.Ctx) error {
 	)
 
 	// Step 5: Return successful response
-	return h.Success(c, map[string]interface{}{
+	return h.Success(c, map[string]any{
 		"message": "Password changed successfully",
 	})
 }
@@ -443,7 +443,7 @@ func (h *UserHandler) HandleError(c *fiber.Ctx, err error) error {
 }
 
 // ValidateRequest validates request data
-func (h *UserHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
+func (h *UserHandler) ValidateRequest(c *fiber.Ctx, req any) error {
 	if err := c.BodyParser(req); err != nil {
 		return errors.NewBusinessError("INVALID_JSON", "Invalid JSON format").
 			WithHTTPStatus(400).
@@ -459,7 +459,7 @@ func (h *UserHandler) ValidateRequest(c *fiber.Ctx, req interface{}) error {
 }
 
 // Success returns a standardized success response
-func (h *UserHandler) Success(c *fiber.Ctx, data interface{}) error {
+func (h *UserHandler) Success(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -472,7 +472,7 @@ func (h *UserHandler) Success(c *fiber.Ctx, data interface{}) error {
 }
 
 // SuccessWithMeta returns success response with metadata
-func (h *UserHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta map[string]interface{}) error {
+func (h *UserHandler) SuccessWithMeta(c *fiber.Ctx, data any, meta map[string]any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -486,7 +486,7 @@ func (h *UserHandler) SuccessWithMeta(c *fiber.Ctx, data interface{}, meta map[s
 }
 
 // Created returns a 201 response
-func (h *UserHandler) Created(c *fiber.Ctx, data interface{}) error {
+func (h *UserHandler) Created(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
 		"success":    true,
 		"data":       data,
@@ -586,8 +586,8 @@ type User struct {
 	Language      string                 `json:"language,omitempty"`
 	Roles         []string               `json:"roles,omitempty"`
 	Permissions   []string               `json:"permissions,omitempty"`
-	Preferences   map[string]interface{} `json:"preferences,omitempty"`
-	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	Preferences   map[string]any `json:"preferences,omitempty"`
+	Metadata      map[string]any `json:"metadata,omitempty"`
 	CreatedAt     string                 `json:"created_at"`
 	UpdatedAt     *string                `json:"updated_at,omitempty"`
 }

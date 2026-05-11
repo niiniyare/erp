@@ -93,7 +93,7 @@ func (s *IntegrationTestSuite) TestRealWorldUserCaching() {
 					UserID:    uuid.New().String(),
 					Token:     "jwt-token-here",
 					ExpiresAt: time.Now().Add(30 * time.Minute),
-					Data: map[string]interface{}{
+					Data: map[string]any{
 						"ip":         "192.168.1.1",
 						"user_agent": "Mozilla/5.0",
 					},
@@ -335,7 +335,7 @@ func (s *IntegrationTestSuite) TestBulkOperationsPerformance() {
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
 			// Prepare data
-			pairs := make(map[string]interface{})
+			pairs := make(map[string]any)
 			keys := make([]string, tt.keyCount)
 
 			for i := 0; i < tt.keyCount; i++ {
@@ -492,11 +492,11 @@ func (s *IntegrationTestSuite) TestComplexDataStructures() {
 	complex := ComplexStruct{
 		ID:   uuid.New().String(),
 		Name: "Complex Test",
-		Metadata: map[string]interface{}{
+		Metadata: map[string]any{
 			"string":  "value",
 			"number":  42,
 			"boolean": true,
-			"nested": map[string]interface{}{
+			"nested": map[string]any{
 				"key1": "value1",
 				"key2": 123,
 			},
@@ -561,7 +561,7 @@ type Session struct {
 	UserID    string                 `json:"user_id"`
 	Token     string                 `json:"token"`
 	ExpiresAt time.Time              `json:"expires_at"`
-	Data      map[string]interface{} `json:"data"`
+	Data      map[string]any `json:"data"`
 }
 
 type ShoppingCart struct {
@@ -580,7 +580,7 @@ type CartItem struct {
 type ComplexStruct struct {
 	ID         string                 `json:"id"`
 	Name       string                 `json:"name"`
-	Metadata   map[string]interface{} `json:"metadata"`
+	Metadata   map[string]any `json:"metadata"`
 	Tags       []string               `json:"tags"`
 	Timestamps Timestamps             `json:"timestamps"`
 	Relations  []Relation             `json:"relations"`

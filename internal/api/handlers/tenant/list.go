@@ -15,7 +15,7 @@ import (
 // @Param status query string false "Filter by organization status (e.g., ACTIVE, SUSPENDED)"
 // @Param search query string false "Search term for organization name or slug"
 // @Param sort_by query string false "Field to sort by (e.g., name, created_at)" default(created_at)
-// @Success 200 {object} map[string]interface{} "A paginated list of organizations"
+// @Success 200 {object} map[string]any "A paginated list of organizations"
 // @Failure 500 {object} errors.HTTPError "Internal Server Error"
 // @Router /organizations [get]
 func (h *TenantHandler) List(c *fiber.Ctx) error {

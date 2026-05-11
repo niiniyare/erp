@@ -222,7 +222,7 @@ func TestReplayStorm_NilAuditChainWriter_NoPanic(t *testing.T) {
 	ctx := shared.WithTenantID(context.Background(), tenantID)
 
 	const goroutines = 40
-	panics := make([]interface{}, goroutines)
+	panics := make([]any, goroutines)
 	var wg sync.WaitGroup
 
 	for i := 0; i < goroutines; i++ {

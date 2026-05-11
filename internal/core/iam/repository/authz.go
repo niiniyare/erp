@@ -342,7 +342,7 @@ func (a *pgxAdapter) RemovePolicies(sec, ptype string, rules [][]string) error {
 
 func (a *pgxAdapter) RemoveFilteredPolicy(sec, ptype string, fieldIndex int, fieldValues ...string) error {
 	query := `DELETE FROM casbin_rule WHERE ptype=$1`
-	args := []interface{}{ptype}
+	args := []any{ptype}
 	cols := []string{"v0", "v1", "v2", "v3", "v4", "v5"}
 
 	for i, val := range fieldValues {

@@ -179,14 +179,13 @@ func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing
 // NewSessionService constructs the session service with TTL from app config.
 func NewSessionService(
 	identitySvc iam.UserService,
-	authzSvc iam.AuthzService,
 	repo iam.SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 	cfg *config.Config,
 ) iam.SessionService {
-	return iam.NewSessionServiceWithConfig(identitySvc, authzSvc, repo, tracer, m, log, iam.SessionConfig{
+	return iam.NewSessionServiceWithConfig(identitySvc, repo, tracer, m, log, iam.SessionConfig{
 		SessionTTL: cfg.Auth.SessionTTL,
 		CookieName: cfg.Auth.CookieName,
 	})

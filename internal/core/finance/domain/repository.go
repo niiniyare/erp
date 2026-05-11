@@ -198,6 +198,7 @@ type AuditRepository interface {
 // Filter and parameter structures
 
 // AccountFilter defines filtering options for chart of accounts queries.
+
 // All pointer fields are optional; nil means "no filter on this field".
 //
 //	type AccountFilter struct {

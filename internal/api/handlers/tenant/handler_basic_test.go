@@ -98,7 +98,7 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err = json.Unmarshal(body, &response)
 	require.NoError(t, err)
 
@@ -184,7 +184,7 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	body, err := io.ReadAll(resp.Body)
 	require.NoError(t, err)
 
-	var response map[string]interface{}
+	var response map[string]any
 	err = json.Unmarshal(body, &response)
 	require.NoError(t, err)
 
@@ -192,7 +192,7 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	assert.Contains(t, response, "data")
 	assert.Contains(t, response, "pagination")
 
-	data, ok := response["data"].([]interface{})
+	data, ok := response["data"].([]any)
 	require.True(t, ok)
 	assert.Len(t, data, 2)
 }

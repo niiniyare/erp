@@ -192,7 +192,7 @@ func TestConcurrent_IntegrityScan_NoPanicNoDataRace(t *testing.T) {
 
 	const goroutines = 20
 	var wg sync.WaitGroup
-	panics := make([]interface{}, goroutines)
+	panics := make([]any, goroutines)
 
 	for i := 0; i < goroutines; i++ {
 		wg.Add(1)
@@ -227,7 +227,7 @@ func TestConcurrent_NilAuditChainVerifier_NoPanic(t *testing.T) {
 
 	const goroutines = 30
 	var wg sync.WaitGroup
-	panics := make([]interface{}, goroutines)
+	panics := make([]any, goroutines)
 
 	for i := 0; i < goroutines; i++ {
 		wg.Add(1)

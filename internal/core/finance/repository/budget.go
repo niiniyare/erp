@@ -143,7 +143,7 @@ SELECT id, tenant_id, fiscal_year_id, name, description, budget_type, status, cu
 FROM   finance_budgets
 WHERE  tenant_id = current_tenant_id()`)
 
-		args := []interface{}{}
+		args := []any{}
 		if fiscalYearID != nil {
 			args = append(args, *fiscalYearID)
 			sb.WriteString(fmt.Sprintf(" AND fiscal_year_id = $%d", len(args)))

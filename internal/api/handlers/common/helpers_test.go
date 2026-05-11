@@ -67,7 +67,7 @@ func (suite *HandlerHelpersTestSuite) TestHandlerHelper_Respond() {
 	tests := []struct {
 		name           string
 		acceptHeader   string
-		data           interface{}
+		data           any
 		expectedStatus int
 		expectedType   string
 		description    string
@@ -144,7 +144,7 @@ func (suite *HandlerHelpersTestSuite) TestHandlerHelper_RenderComponent() {
 	tests := []struct {
 		name            string
 		component       string
-		data            interface{}
+		data            any
 		expectedStatus  int
 		expectedContain string
 		description     string

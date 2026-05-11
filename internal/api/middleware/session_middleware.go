@@ -11,10 +11,24 @@ import (
 	"awo.so/internal/shared"
 )
 
+// splitPermission splits a dotted permission string into (object, action).
+// "finance.accounts.read" → ("finance.accounts", "read")
+// "finance.accounts"      → ("finance", "accounts")
+func splitPermission(perm string) (object, action string) {
+	i := strings.LastIndex(perm, ".")
+	if i < 0 {
+		return perm, "*"
+	}
+	return perm[:i], perm[i+1:]
+}
+
 // AuthConfig holds configuration for session-based authentication middleware.
 type AuthConfig struct {
 	// SessionService validates tokens and returns ResolvedSessions.
 	SessionService iam.SessionService
+	// AuthzService enforces permission checks in Authorize middleware.
+	// Required when using Authorize; optional otherwise.
+	AuthzService iam.AuthzService
 	// APIKeyService validates "eak_" prefixed bearer tokens.
 	// Optional — API key auth is skipped when nil.
 	APIKeyService iam.APIKeyService
@@ -68,18 +82,32 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 	}
 }
 
-// Authorize returns a Fiber middleware that checks whether the authenticated
-// session holds the given permission key (e.g. "finance.accounts.read").
+// Authorize returns a Fiber middleware that enforces the given permission via
+// the Casbin authz service stored in cfg.
 //
-// Must run after Authenticate (requires LocalsKeySession to be set).
-// Returns 403 if the permission is absent.
-func Authorize(permission string) fiber.Handler {
+// Must run after Authenticate (requires LocalsKeySession and LocalsKeyPrincipal).
+// Returns 403 if the permission is denied or cfg.AuthzService is nil.
+func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
-		if !sess.Can(permission) {
+		if cfg.AuthzService == nil {
+			return fiber.NewError(fiber.StatusForbidden, "permission denied")
+		}
+		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+		}
+		obj, act := splitPermission(permission)
+		allowed, err := cfg.AuthzService.Enforce(c.Context(), iam.Request{
+			Subject: principal.Subject,
+			Domain:  principal.Domain,
+			Object:  obj,
+			Action:  act,
+		})
+		if err != nil || !allowed {
 			return fiber.NewError(fiber.StatusForbidden, "permission denied")
 		}
 		return c.Next()

@@ -56,7 +56,6 @@ type SessionService interface {
 
 type sessionService struct {
 	identity UserService
-	authz    AuthzService
 	repo     repository.SessionRepository
 	tracer   tracing.Service
 	metrics  metrics.MetricsProvider
@@ -67,19 +66,17 @@ type sessionService struct {
 // NewSessionService constructs a SessionService with default config.
 func NewSessionService(
 	identitySvc UserService,
-	authzSvc AuthzService,
 	repo repository.SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 ) SessionService {
-	return NewSessionServiceWithConfig(identitySvc, authzSvc, repo, tracer, m, log, domain.DefaultSessionConfig())
+	return NewSessionServiceWithConfig(identitySvc, repo, tracer, m, log, domain.DefaultSessionConfig())
 }
 
 // NewSessionServiceWithConfig constructs a SessionService with explicit config.
 func NewSessionServiceWithConfig(
 	identitySvc UserService,
-	authzSvc AuthzService,
 	repo repository.SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
@@ -89,7 +86,6 @@ func NewSessionServiceWithConfig(
 	scopedLog := log.WithFields(logger.Fields{"component": "iam.session"})
 	return &sessionService{
 		identity: identitySvc,
-		authz:    authzSvc,
 		repo:     repo,
 		tracer:   tracer,
 		metrics:  m,
@@ -187,19 +183,12 @@ func (s *sessionService) LoginWithSSO(ctx context.Context, user *domain.User) (*
 
 // buildAndPersistSession creates the ResolvedSession and persists it.
 // Called by Login (non-MFA path), CompleteMFALogin, and LoginWithSSO.
+//
+// Session carries identity and context only — no permission snapshot.
+// Authorization decisions are made per-request by authzService.Enforce().
 func (s *sessionService) buildAndPersistSession(ctx context.Context, user *domain.User) (*domain.ResolvedSession, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildAndPersistSession")
 	defer span.End()
-
-	perms, err := s.buildPermissions(ctx, user)
-	if err != nil {
-		s.log.WarnContext(ctx, "buildPermissions failed, proceeding with empty map", logger.Fields{
-			"user_id":  user.ID.String(),
-			"error":    err.Error(),
-			"trace_id": s.tracer.GetTraceID(ctx),
-		})
-		perms = make(map[string]bool)
-	}
 
 	rawToken, hash, err := generateToken()
 	if err != nil {
@@ -242,7 +231,6 @@ func (s *sessionService) buildAndPersistSession(ctx context.Context, user *domai
 		TenantID:      tenantID,
 		UserType:      user.UserType,
 		TokenHash:     hash,
-		Permissions:   perms,
 		EntityScope:   entityScope,
 		Configuration: configuration,
 		IsActive:      true,
@@ -265,7 +253,6 @@ func (s *sessionService) buildAndPersistSession(ctx context.Context, user *domai
 		UserType:      user.UserType,
 		TenantID:      tenantID,
 		DisplayName:   displayName(user),
-		Permissions:   perms,
 		EntityScope:   entityScope,
 		Configuration: configuration,
 	}
@@ -374,92 +361,6 @@ func (s *sessionService) LogoutAllForTenant(ctx context.Context, tenantID uuid.U
 	s.log.DebugContext(ctx, "all tenant sessions invalidated", logger.Fields{"tenant_id": tenantID.String()})
 	s.metrics.IncrementCounter("iam.session.logout.bulk", metrics.Fields{"scope": "tenant"})
 	return nil
-}
-
-// Permission computation
-
-func (s *sessionService) buildPermissions(ctx context.Context, user *domain.User) (map[string]bool, error) {
-	ctx, span := s.tracer.StartSpan(ctx, "iam.session.buildPermissions")
-	defer span.End()
-
-	subject := subjectForUser(user)
-	domainName := domainForUser(user)
-
-	span.SetAttributes(
-		attribute.String("authz.subject", subject),
-		attribute.String("authz.domain", domainName),
-	)
-
-	// GetImplicitRoles traverses the full role inheritance chain, unlike
-	// GetRoles which only returns directly-assigned roles.
-	roles, err := s.authz.GetImplicitRoles(ctx, subject, domainName)
-	if err != nil {
-		span.RecordError(err)
-		return nil, fmt.Errorf("buildPermissions: GetImplicitRoles: %w", err)
-	}
-
-	// Just-in-time bootstrap: if a tenant user has no roles yet (e.g. they
-	// were created before the bootstrap logic existed), seed the default
-	// tenant_admin role now so the first login isn't permission-less.
-	if len(roles) == 0 && domain.ActorTypeFromUserType(user.UserType) == domain.ActorTenant && user.TenantID != uuid.Nil {
-		if bErr := s.authz.BootstrapTenantAdmin(ctx, user.TenantID, user.ID); bErr != nil {
-			s.log.WarnContext(ctx, "jit bootstrap tenant_admin failed", logger.Fields{
-				"user_id": user.ID.String(), "error": bErr.Error(),
-			})
-		} else {
-			// Reload roles after bootstrap.
-			roles, _ = s.authz.GetImplicitRoles(ctx, subject, domainName)
-		}
-	}
-
-	policies, err := s.authz.GetPolicies(ctx, domainName)
-	if err != nil {
-		span.RecordError(err)
-		return nil, fmt.Errorf("buildPermissions: GetPolicies: %w", err)
-	}
-
-	roleSet := make(map[string]bool, len(roles))
-	for _, r := range roles {
-		roleSet[r] = true
-	}
-
-	// Separate allows and denies; deny-override: one deny beats all allows.
-	allows := make(map[string]bool)
-	denies := make(map[string]bool)
-	for _, p := range policies {
-		if !roleSet[p.Subject] {
-			continue
-		}
-		key := p.Object + "." + p.Action
-		switch p.Effect {
-		case "allow":
-			allows[key] = true
-		case "deny":
-			denies[key] = true
-		}
-	}
-
-	perms := make(map[string]bool, len(allows))
-	for key := range allows {
-		if !denies[key] {
-			perms[key] = true
-		}
-	}
-
-	// Collapse wildcard: a "*.*" policy (Object="*", Action="*") means the
-	// role has blanket access. Replace it with the special "*" sentinel that
-	// ResolvedSession.Can() recognises so every permission check short-circuits.
-	if perms["*.*"] && !denies["*.*"] {
-		delete(perms, "*.*")
-		perms["*"] = true
-	}
-
-	span.SetAttributes(
-		attribute.Int("authz.roles_count", len(roles)),
-		attribute.Int("authz.permissions_count", len(perms)),
-	)
-	s.metrics.IncrementCounter("iam.session.permissions_computed", nil)
-	return perms, nil
 }
 
 // Helpers

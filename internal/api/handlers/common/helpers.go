@@ -63,12 +63,12 @@ func NewNotFoundError(resource, id string) NotFoundError {
 }
 
 // Respond handles content negotiation and sends appropriate response
-func (h *HandlerHelper) Respond(c *fiber.Ctx, statusCode int, data interface{}) error {
+func (h *HandlerHelper) Respond(c *fiber.Ctx, statusCode int, data any) error {
 	return h.RespondWithComponent(c, statusCode, data, nil)
 }
 
 // RespondWithComponent handles content negotiation with optional component override
-func (h *HandlerHelper) RespondWithComponent(c *fiber.Ctx, statusCode int, data interface{}, component templ.Component) error {
+func (h *HandlerHelper) RespondWithComponent(c *fiber.Ctx, statusCode int, data any, component templ.Component) error {
 	// Check for content type preferences
 	acceptHeader := c.Get("Accept")
 	contentType := c.Get("Content-Type")
@@ -137,7 +137,7 @@ func (h *HandlerHelper) RenderTemplComponent(c *fiber.Ctx, statusCode int, compo
 }
 
 // RenderComponent renders a TemplUI component with data (legacy method)
-func (h *HandlerHelper) RenderComponent(c *fiber.Ctx, component string, data interface{}) error {
+func (h *HandlerHelper) RenderComponent(c *fiber.Ctx, component string, data any) error {
 	c.Set("Content-Type", "text/html; charset=utf-8")
 	c.Status(200)
 

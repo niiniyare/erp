@@ -18,19 +18,19 @@ import (
 
 type (
 	// Identity
-	User              = domain.User
-	Person            = domain.Person
-	Employee          = domain.Employee
-	UserWithDetails   = domain.UserWithDetails
-	UserRole          = domain.UserRole
-	AccountStatus     = domain.AccountStatus
-	EmploymentStatus  = domain.EmploymentStatus
-	CreateUserRequest = domain.CreateUserRequest
-	UpdateUserRequest = domain.UpdateUserRequest
-	ListUsersRequest  = domain.ListUsersRequest
-	AuthenticateRequest  = domain.AuthenticateRequest
+	User                  = domain.User
+	Person                = domain.Person
+	Employee              = domain.Employee
+	UserWithDetails       = domain.UserWithDetails
+	UserRole              = domain.UserRole
+	AccountStatus         = domain.AccountStatus
+	EmploymentStatus      = domain.EmploymentStatus
+	CreateUserRequest     = domain.CreateUserRequest
+	UpdateUserRequest     = domain.UpdateUserRequest
+	ListUsersRequest      = domain.ListUsersRequest
+	AuthenticateRequest   = domain.AuthenticateRequest
 	ChangePasswordRequest = domain.ChangePasswordRequest
-	CreatePersonRequest  = domain.CreatePersonRequest
+	CreatePersonRequest   = domain.CreatePersonRequest
 	CreateEmployeeRequest = domain.CreateEmployeeRequest
 
 	// Authorization
@@ -59,12 +59,12 @@ type (
 	CreateAPIKeyRequest = domain.CreateAPIKeyRequest
 
 	// Session
-	SessionConfig    = domain.SessionConfig
-	EntityScopeType  = domain.EntityScopeType
-	EntityScope      = domain.EntityScope
-	Configuration    = domain.Configuration
-	Session          = domain.Session
-	ResolvedSession  = domain.ResolvedSession
+	SessionConfig   = domain.SessionConfig
+	EntityScopeType = domain.EntityScopeType
+	EntityScope     = domain.EntityScope
+	Configuration   = domain.Configuration
+	Session         = domain.Session
+	ResolvedSession = domain.ResolvedSession
 
 	// Errors
 	Error = domain.Error
@@ -134,20 +134,21 @@ var (
 	WithDelegatedBy = domain.WithDelegatedBy
 
 	// Config defaults
-	DefaultSessionConfig    = domain.DefaultSessionConfig
-	DefaultConfiguration    = domain.DefaultConfiguration
-	AllAccountStatuses      = domain.AllAccountStatuses
-	AllEmploymentStatuses   = domain.AllEmploymentStatuses
+	DefaultSessionConfig  = domain.DefaultSessionConfig
+	DefaultConfiguration  = domain.DefaultConfiguration
+	AllAccountStatuses    = domain.AllAccountStatuses
+	AllEmploymentStatuses = domain.AllEmploymentStatuses
 )
 
 // Re-export: Service Interfaces
 
 type (
-	UserService    = iamservice.UserService
-	AuthzService   = iamservice.AuthzService
-	SessionService = iamservice.SessionService
-	SSOService     = iamservice.SSOService
-	APIKeyService  = iamservice.APIKeyService
+	UserService        = iamservice.UserService
+	AuthzService       = iamservice.AuthzService
+	SessionService     = iamservice.SessionService
+	SSOService         = iamservice.SSOService
+	APIKeyService      = iamservice.APIKeyService
+	SessionInvalidator = iamservice.SessionInvalidator
 
 	// Service is a backward-compatible alias for AuthzService.
 	// Prefer AuthzService in new code.
@@ -215,31 +216,27 @@ func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing
 // Cache is handled by the repository — the service receives no cache dependency.
 func NewSessionService(
 	identity UserService,
-	authz AuthzService,
 	repo SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 ) SessionService {
-	return iamservice.NewSessionService(identity, authz, repo, tracer, m, log)
+	return iamservice.NewSessionService(identity, repo, tracer, m, log)
 }
 
 // NewSessionServiceWithConfig constructs a SessionService with explicit session config.
 func NewSessionServiceWithConfig(
 	identity UserService,
-	authz AuthzService,
 	repo SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 	cfg SessionConfig,
 ) SessionService {
-	return iamservice.NewSessionServiceWithConfig(identity, authz, repo, tracer, m, log, cfg)
+	return iamservice.NewSessionServiceWithConfig(identity, repo, tracer, m, log, cfg)
 }
 
 // NewSSORepository constructs a Postgres-backed SSORepository.
-// NOTE: Run `make sqlc` after applying migration 000309 to generate the
-// required Store methods for this repository.
 func NewSSORepository(store db.Store) SSORepository {
 	return repository.NewSSORepository(store)
 }

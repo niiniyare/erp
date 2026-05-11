@@ -3,6 +3,8 @@ package service
 import (
 	"context"
 	"fmt"
+	"strings"
+	"time"
 
 	casbin "github.com/casbin/casbin/v2"
 	casbinmodel "github.com/casbin/casbin/v2/model"
@@ -18,6 +20,13 @@ import (
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
+
+// SessionInvalidator is a narrow port that AuthzService uses to evict cached
+// sessions when a role is revoked.  Implemented by SessionRepository so that
+// the authz service does not import the session service package.
+type SessionInvalidator interface {
+	InvalidateByUser(ctx context.Context, userID uuid.UUID) error
+}
 
 // Port (interface)
 
@@ -58,21 +67,23 @@ type AuthzService interface {
 
 // AuthzConfig holds the dependencies required to create an AuthzService.
 type AuthzConfig struct {
-	Store   db.Store                // required
-	Cache   cache.Service           // required (passed to repo)
-	Logger  logger.Logger           // required
-	Metrics metrics.MetricsProvider // optional
-	Tracer  tracing.Service         // optional
+	Store              db.Store                // required
+	Cache              cache.Service           // required (passed to repo)
+	Logger             logger.Logger           // required
+	Metrics            metrics.MetricsProvider // optional
+	Tracer             tracing.Service         // optional
+	SessionInvalidator SessionInvalidator      // optional; enables cache eviction on role revocation
 }
 
 // Implementation
 
 type authzService struct {
-	enforcer *casbin.Enforcer
-	repo     repository.AuthzRepository
-	log      logger.Logger
-	metrics  metrics.MetricsProvider
-	tracer   tracing.Service
+	enforcer    *casbin.SyncedEnforcer
+	repo        repository.AuthzRepository
+	sessionInv  SessionInvalidator // may be nil
+	log         logger.Logger
+	metrics     metrics.MetricsProvider
+	tracer      tracing.Service
 }
 
 // NewAuthzService creates a fully initialised AuthzService backed by PostgreSQL via Casbin.
@@ -93,16 +104,26 @@ func NewAuthzService(cfg AuthzConfig) (AuthzService, error) {
 	}
 
 	adapter := repository.NewPgxAdapter(cfg.Store.GetPool())
-	e, err := casbin.NewEnforcer(m, adapter)
+	e, err := casbin.NewSyncedEnforcer(m, adapter)
 	if err != nil {
 		return nil, fmt.Errorf("authz: create casbin enforcer: %w", err)
 	}
 	e.EnableAutoSave(true)
+	// Reload policy from DB every 30 s so all replicas converge.
+	// See security-considerations.md T8.
+	e.StartAutoLoadPolicy(30 * time.Second)
 
 	log := cfg.Logger.WithFields(logger.Fields{"component": "iam.authz"})
 	repo := repository.NewAuthzRepository(cfg.Store, cfg.Cache, log, cfg.Metrics, cfg.Tracer)
 
-	return &authzService{enforcer: e, repo: repo, log: log, metrics: cfg.Metrics, tracer: cfg.Tracer}, nil
+	return &authzService{
+		enforcer:   e,
+		repo:       repo,
+		sessionInv: cfg.SessionInvalidator,
+		log:        log,
+		metrics:    cfg.Metrics,
+		tracer:     cfg.Tracer,
+	}, nil
 }
 
 // NewInMemoryAuthzService creates an AuthzService backed by a pure in-memory
@@ -115,18 +136,19 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	if err != nil {
 		return nil, fmt.Errorf("authz: build casbin model: %w", err)
 	}
-	e, err := casbin.NewEnforcer(m)
+	e, err := casbin.NewSyncedEnforcer(m)
 	if err != nil {
 		return nil, fmt.Errorf("authz: create in-memory enforcer: %w", err)
 	}
 	e.EnableAutoSave(false)
 	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
 	return &authzService{
-		enforcer: e,
-		repo:     repo,
-		log:      scopedLog,
-		metrics:  metrics.NewNoOpMetricsProvider(),
-		tracer:   tracing.NewNoOpService(),
+		enforcer:   e,
+		repo:       repo,
+		sessionInv: nil, // no session invalidation in tests
+		log:        scopedLog,
+		metrics:    metrics.NewNoOpMetricsProvider(),
+		tracer:     tracing.NewNoOpService(),
 	}, nil
 }
 
@@ -192,12 +214,12 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 
 	span.SetAttributes(attribute.Int("authz.batch_size", len(reqs)))
 
-	batch := make([][]interface{}, len(reqs))
+	batch := make([][]any, len(reqs))
 	for i, r := range reqs {
 		if r.Subject == "" || r.Domain == "" || r.Object == "" || r.Action == "" {
 			return nil, domain.ErrInvalidRequest
 		}
-		batch[i] = []interface{}{r.Subject, r.Domain, r.Object, r.Action}
+		batch[i] = []any{r.Subject, r.Domain, r.Object, r.Action}
 	}
 	results, err := s.enforcer.BatchEnforce(batch)
 	if err != nil {
@@ -312,6 +334,20 @@ func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName
 	s.log.DebugContext(ctx, "role revoked", logger.Fields{
 		"subject": subject, "role": role, "domain": domainName,
 	})
+
+	// Evict cached sessions for the affected user so the revocation takes
+	// effect immediately rather than waiting for the session TTL to expire.
+	// Best-effort: failure is logged but does not fail the revocation.
+	if s.sessionInv != nil {
+		if userID, err := subjectToUserID(subject); err == nil {
+			if err := s.sessionInv.InvalidateByUser(ctx, userID); err != nil {
+				s.log.WarnContext(ctx, "authz: session eviction after role revoke failed", logger.Fields{
+					"subject": subject, "error": err.Error(),
+				})
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -569,6 +605,16 @@ func (s *authzService) BootstrapTenantAdmin(ctx context.Context, tenantID, userI
 }
 
 // Internal helpers
+
+// subjectToUserID extracts the UUID from a Casbin subject string.
+// Subject format: "<prefix>:<uuid>" (e.g. "tenant:abc-123", "portal:abc-123").
+func subjectToUserID(subject string) (uuid.UUID, error) {
+	parts := strings.SplitN(subject, ":", 2)
+	if len(parts) != 2 {
+		return uuid.Nil, fmt.Errorf("authz: invalid subject format %q", subject)
+	}
+	return uuid.Parse(parts[1])
+}
 
 // revokeExpiredRoles lazily removes roles whose expiry has passed.
 // Non-fatal: enforce proceeds even if cleanup fails.

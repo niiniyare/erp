@@ -107,7 +107,7 @@ func (h *UIHandler) RegisterRoutes(group fiber.Router) {
 // AMISResponse wraps backend data into AMIS-compatible response format.
 // AMIS expects: {"status": 0, "msg": "", "data": {...}}
 // Backend returns: {"success": true, "data": {...}, "request_id": "...", "timestamp": "..."}
-func AMISResponse(data interface{}, msg string) fiber.Map {
+func AMISResponse(data any, msg string) fiber.Map {
 	return fiber.Map{
 		"status": 0,
 		"msg":    msg,
@@ -125,7 +125,7 @@ func AMISErrorResponse(msg string) fiber.Map {
 
 // AMISListResponse wraps a list result for AMIS CRUD components.
 // AMIS expects: {"status": 0, "data": {"items": [...], "total": N}}
-func AMISListResponse(items interface{}, total int64) fiber.Map {
+func AMISListResponse(items any, total int64) fiber.Map {
 	return fiber.Map{
 		"status": 0,
 		"msg":    "",
@@ -155,7 +155,7 @@ func AMISAdapterMiddleware() fiber.Handler {
 		if strings.Contains(string(c.Response().Header.ContentType()), "application/json") {
 			body := c.Response().Body()
 
-			var original map[string]interface{}
+			var original map[string]any
 			if jsonErr := json.Unmarshal(body, &original); jsonErr == nil {
 				// Check if it's already AMIS format
 				if _, hasStatus := original["status"]; hasStatus {

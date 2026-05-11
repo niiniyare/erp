@@ -14,20 +14,30 @@ import (
 // ListAuditEventsHandler returns paginated audit events for the authenticated tenant.
 //
 // Route: GET /api/v1/audit-logs  (requires Authenticate middleware)
-// Permission gate: iam.sessions.read
+// Permission gate: iam.sessions / read
 //
 // Query params:
 //
 //	limit  int  — default 50, max 1000
 //	offset int  — default 0
-func ListAuditEventsHandler(svc audit.Service) fiber.Handler {
+func ListAuditEventsHandler(svc audit.Service, authzSvc iam.AuthzService) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
+		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		if !ok {
+			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+		}
 
-		if !sess.Can("iam.sessions.read") {
+		allowed, err := authzSvc.Enforce(c.Context(), iam.Request{
+			Subject: principal.Subject,
+			Domain:  principal.Domain,
+			Object:  "iam.sessions",
+			Action:  "read",
+		})
+		if err != nil || !allowed {
 			return fiber.NewError(fiber.StatusForbidden, "insufficient permissions")
 		}
 

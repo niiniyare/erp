@@ -16,7 +16,7 @@ import (
 // @Accept json
 // @Produce json
 // @Param organization body coreTenant.CreateTenantRequest true "Organization Creation Request"
-// @Success 201 {object} map[string]interface{} "Organization created successfully"
+// @Success 201 {object} map[string]any "Organization created successfully"
 // @Failure 400 {object} errors.HTTPError "Validation Error"
 // @Failure 409 {object} errors.HTTPError "Conflict (e.g., subdomain taken)"
 // @Failure 500 {object} errors.HTTPError "Internal Server Error"

@@ -1,4 +1,4 @@
-// Package query contains read-side projections for the chart of accounts
+// Package domain  contains read-side projections for the chart of accounts
 // and reporting hierarchy. Nothing in this package participates in the write
 // path. These types are assembled by query handlers from the domain entities;
 // they should never be passed to service methods that create or mutate data.
@@ -192,12 +192,12 @@ type ChartOfAccountsView struct {
 // TreeFilter is the query predicate for fetching an AccountTreeNode list.
 // It covers both account nodes and group nodes in a unified query.
 type TreeFilter struct {
-	EntityID          *uuid.UUID        `json:"entity_id,omitempty"`
-	ReportingSchemeID *uuid.UUID        `json:"reporting_scheme_id,omitempty"`
-	IsGroup           *bool             `json:"is_group,omitempty"` // nil = both accounts and groups
-	ParentID          *uuid.UUID        `json:"parent_id,omitempty"`
-	IsActive          *bool             `json:"is_active,omitempty"`
-	SearchQuery       *string           `json:"search_query,omitempty"`
+	EntityID          *uuid.UUID `json:"entity_id,omitempty"`
+	ReportingSchemeID *uuid.UUID `json:"reporting_scheme_id,omitempty"`
+	IsGroup           *bool      `json:"is_group,omitempty"` // nil = both accounts and groups
+	ParentID          *uuid.UUID `json:"parent_id,omitempty"`
+	IsActive          *bool      `json:"is_active,omitempty"`
+	SearchQuery       *string    `json:"search_query,omitempty"`
 
 	// Account-specific predicates
 	RootType    *RootType `json:"root_type,omitempty"`

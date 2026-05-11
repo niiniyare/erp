@@ -93,16 +93,10 @@ func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
 	ctx, span := r.tracing.StartSpan(ctx, "session.repo.Create")
 	defer span.End()
 
-	permsJSON, err := json.Marshal(s.Permissions)
-	if err != nil {
-		return fmt.Errorf("session repo: marshal permissions: %w", err)
-	}
-
 	entityScopeJSON := domain.MarshalSessionJSON(s.EntityScope)
 	configJSON := domain.MarshalSessionJSON(s.Configuration)
 
 	// s.PrincipalID is already *uuid.UUID — nil means non-portal session.
-	// No indirection needed; assign directly.
 	var principalID *uuid.UUID
 	if s.PrincipalID != nil {
 		principalID = s.PrincipalID
@@ -125,26 +119,28 @@ func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
 		userType = &s.UserType
 	}
 
-	riskScore := int32(s.RiskScore)
-
-	err = r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s2 db.Store) error {
+	err := r.store.WithTenantFromCtx(ctx, func(ctx context.Context, s2 db.Store) error {
 		return s2.CreateSession(ctx, db.CreateSessionParams{
 			UserID:        s.UserID,
 			UserType:      userType,
 			SessionToken:  s.TokenHash,
-			Permissions:   permsJSON,
+			Permissions:   json.RawMessage("{}"), // TODO(SES-4): remove after permissions column migration
 			PrincipalID:   principalID,
 			EntityScope:   entityScopeJSON,
 			Configuration: configJSON,
 			IpAddress:     ipAddr,
 			UserAgent:     userAgent,
 			ExpiresAt:     s.ExpiresAt,
-			RiskScore:     &riskScore,
+			RiskScore:     nil, // removed from Session model
 		})
 	})
 	if err != nil {
 		return fmt.Errorf("session repo: create session: %w", err)
 	}
+
+	// Track session token hash per user for bulk Redis eviction on InvalidateByUser.
+	// Best-effort: failure here does not fail the Create.
+	r.trackUserSession(ctx, s.UserID, s.TokenHash, s.ExpiresAt)
 	return nil
 }
 
@@ -172,13 +168,6 @@ func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.R
 
 	// 3. Convert session row → ResolvedSession
 
-	perms := make(map[string]bool)
-	if len(row.Permissions) > 0 {
-		if err := json.Unmarshal(row.Permissions, &perms); err != nil {
-			return nil, fmt.Errorf("session repo: unmarshal permissions: %w", err)
-		}
-	}
-
 	var entityScope domain.EntityScope
 	if len(row.EntityScope) > 0 {
 		_ = json.Unmarshal(row.EntityScope, &entityScope)
@@ -202,7 +191,6 @@ func (r *sessionRepo) ValidateToken(ctx context.Context, hash string) (*domain.R
 		UserType:      utype,
 		TenantID:      row.TenantID,
 		PrincipalID:   row.PrincipalID, // *uuid.UUID; nil for non-portal sessions
-		Permissions:   perms,
 		EntityScope:   entityScope,
 		Configuration: config,
 		// DisplayName is not stored on the session row — it is populated only
@@ -238,6 +226,8 @@ func (r *sessionRepo) InvalidateByUser(ctx context.Context, userID uuid.UUID) er
 	if err := r.store.InvalidateSessionsByUser(ctx, userID); err != nil {
 		return fmt.Errorf("session repo: invalidate by user: %w", err)
 	}
+	// Evict all cached session entries for this user.
+	r.evictUserSessionCache(ctx, userID)
 	return nil
 }
 
@@ -247,6 +237,9 @@ func (r *sessionRepo) InvalidateByTenant(ctx context.Context, tenantID uuid.UUID
 	if err := r.store.InvalidateSessionsByTenant(ctx, tenantID); err != nil {
 		return fmt.Errorf("session repo: invalidate by tenant: %w", err)
 	}
+	// Cache entries for tenant sessions expire naturally within the session TTL.
+	// Proactive eviction would require a tenant→hashes index similar to the
+	// user→hashes index; omitted for v1.0 (tenant-wide logouts are rare ops).
 	return nil
 }
 
@@ -356,6 +349,41 @@ func derefInt32(p *int32) int32 {
 
 // keep compiler from complaining about unused derefInt32 if not otherwise used
 var _ = derefInt32
+
+// User session tracking — supports bulk Redis eviction in InvalidateByUser.
+//
+// Token hashes for each user are stored as a JSON array at key
+// "user_sessions:{userID}". The list TTL matches the session TTL so stale
+// entries are cleaned up automatically. All operations are best-effort;
+// failures only affect cache eviction latency, not correctness.
+
+const userSessionsKeyPrefix = "user_sessions:"
+
+func (r *sessionRepo) trackUserSession(ctx context.Context, userID uuid.UUID, hash string, expiresAt time.Time) {
+	key := userSessionsKeyPrefix + userID.String()
+	ttl := time.Until(expiresAt)
+	if ttl <= 0 {
+		return
+	}
+
+	var hashes []string
+	// Read existing list; ignore miss (first session for this user).
+	_ = r.cache.Get(ctx, key, &hashes)
+	hashes = append(hashes, hash)
+	_ = r.cache.Set(ctx, key, hashes, ttl)
+}
+
+func (r *sessionRepo) evictUserSessionCache(ctx context.Context, userID uuid.UUID) {
+	key := userSessionsKeyPrefix + userID.String()
+	var hashes []string
+	if err := r.cache.Get(ctx, key, &hashes); err != nil {
+		return // nothing tracked
+	}
+	for _, h := range hashes {
+		_ = r.cache.Delete(ctx, sessionCacheKey(h))
+	}
+	_ = r.cache.Delete(ctx, key)
+}
 
 // MFA pending login state
 

@@ -351,7 +351,7 @@ func (s *ComplianceEvidenceService) effectivePolicy(ctx context.Context) Governa
 
 // computeEvidenceHash computes SHA-256 over the JSON-serialised v (with
 // ContentHash cleared so the hash is deterministic).
-func computeEvidenceHash(v interface{}) string {
+func computeEvidenceHash(v any) string {
 	b, err := json.Marshal(v)
 	if err != nil {
 		return ""
