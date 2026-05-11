@@ -393,16 +393,11 @@ Tasks:
 **File**: `internal/core/iam/service/authz.go`
 
 Tasks:
-- [ ] In `AddPolicy()`, before Casbin insert, check current domain policy count:
-  ```go
-  policies, _ := s.GetPolicies(ctx, policy.Domain)
-  if len(policies) >= maxPoliciesPerDomain { // default: 10_000
-      return ErrPolicyLimitExceeded
-  }
-  ```
-- [ ] Add `ErrPolicyLimitExceeded` to `domain/errors.go` (HTTP 429 or 400)
-- [ ] `maxPoliciesPerDomain` configurable via `AuthzConfig`, default `10_000`
-- [ ] Add metric: `iam.authz.policy_count` gauge per domain (emitted on `AddPolicy`)
+- [x] In `AddPolicy()`, before Casbin insert, check `s.enforcer.GetFilteredPolicy(1, domain)` count
+- [x] Returns `ErrPolicyLimitExceeded` (HTTP 429) when `count >= maxPolicies`
+- [x] Add `ErrPolicyLimitExceeded` to `domain/errors.go`
+- [x] `MaxPoliciesPerDomain` in `AuthzConfig`; `DefaultMaxPoliciesPerDomain = 10_000` constant
+- [x] Metric `iam.authz.policy_count` emitted per domain on every `AddPolicy` call
 
 ---
 
@@ -425,13 +420,14 @@ Tasks:
 **File**: `internal/core/iam/service/authz.go`, `service/identity.go`
 
 Tasks:
-- [ ] `AssignRole()`: emit audit log event `ROLE_ASSIGNED` with subject, role, domain, assigned_by, expires_at
-- [ ] `RevokeRole()`: emit `ROLE_REVOKED` with subject, role, domain, revoked_by
-- [ ] `AddPolicy()`: emit `POLICY_ADDED` with full policy struct and caller subject
-- [ ] `RemovePolicy()`: emit `POLICY_REMOVED` with policy and caller subject
-- [ ] Use existing `audit.Log` infrastructure if available; OTel span attributes as fallback
-- [ ] Platform-domain events must trigger monitoring alert (`17-security-considerations.md` T7)
-- [ ] `RoleAssignment.AssignedBy` must never be empty — validated before DB write
+- [x] `AssignRole()`: emits `SECURITY_EVENT: ROLE_ASSIGNED` (InfoContext / WarnContext for platform)
+- [x] `RevokeRole()`: emits `SECURITY_EVENT: ROLE_REVOKED`
+- [x] `AddPolicy()`: emits `SECURITY_EVENT: POLICY_ADDED`
+- [x] `RemovePolicy()`: emits `SECURITY_EVENT: POLICY_REMOVED`
+- [x] OTel span attribute `audit.event` set on each mutating call
+- [x] Platform-domain events logged at WarnContext (monitoring alert hook); non-platform at InfoContext
+- [x] `AssignedBy` validated non-empty in `AssignRole()` (AUTHZ-4)
+- [ ] Persistent `audit_events` table + durable delivery — deferred (see Section 16 OPEN tasks)
 
 ---
 

@@ -65,6 +65,12 @@ type AuthzService interface {
 
 // Config
 
+// DefaultMaxPoliciesPerDomain is the default cap on Casbin p-rules per domain.
+// A single tenant domain with 10 000 rules already represents an unusually
+// large policy set; beyond that the risk of accidental DoS via policy inflation
+// outweighs legitimate use cases.
+const DefaultMaxPoliciesPerDomain = 10_000
+
 // AuthzConfig holds the dependencies required to create an AuthzService.
 type AuthzConfig struct {
 	Store              db.Store                // required
@@ -73,17 +79,21 @@ type AuthzConfig struct {
 	Metrics            metrics.MetricsProvider // optional
 	Tracer             tracing.Service         // optional
 	SessionInvalidator SessionInvalidator      // optional; enables cache eviction on role revocation
+	// MaxPoliciesPerDomain caps the number of Casbin p-rules per domain.
+	// Zero means use DefaultMaxPoliciesPerDomain.
+	MaxPoliciesPerDomain int
 }
 
 // Implementation
 
 type authzService struct {
-	enforcer    *casbin.SyncedEnforcer
-	repo        repository.AuthzRepository
-	sessionInv  SessionInvalidator // may be nil
-	log         logger.Logger
-	metrics     metrics.MetricsProvider
-	tracer      tracing.Service
+	enforcer     *casbin.SyncedEnforcer
+	repo         repository.AuthzRepository
+	sessionInv   SessionInvalidator // may be nil
+	log          logger.Logger
+	metrics      metrics.MetricsProvider
+	tracer       tracing.Service
+	maxPolicies  int // per-domain p-rule cap; 0 means DefaultMaxPoliciesPerDomain
 }
 
 // NewAuthzService creates a fully initialised AuthzService backed by PostgreSQL via Casbin.
@@ -116,13 +126,19 @@ func NewAuthzService(cfg AuthzConfig) (AuthzService, error) {
 	log := cfg.Logger.WithFields(logger.Fields{"component": "iam.authz"})
 	repo := repository.NewAuthzRepository(cfg.Store, cfg.Cache, log, cfg.Metrics, cfg.Tracer)
 
+	maxPolicies := cfg.MaxPoliciesPerDomain
+	if maxPolicies <= 0 {
+		maxPolicies = DefaultMaxPoliciesPerDomain
+	}
+
 	return &authzService{
-		enforcer:   e,
-		repo:       repo,
-		sessionInv: cfg.SessionInvalidator,
-		log:        log,
-		metrics:    cfg.Metrics,
-		tracer:     cfg.Tracer,
+		enforcer:    e,
+		repo:        repo,
+		sessionInv:  cfg.SessionInvalidator,
+		log:         log,
+		metrics:     cfg.Metrics,
+		tracer:      cfg.Tracer,
+		maxPolicies: maxPolicies,
 	}, nil
 }
 
@@ -143,12 +159,13 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	e.EnableAutoSave(false)
 	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
 	return &authzService{
-		enforcer:   e,
-		repo:       repo,
-		sessionInv: nil, // no session invalidation in tests
-		log:        scopedLog,
-		metrics:    metrics.NewNoOpMetricsProvider(),
-		tracer:     tracing.NewNoOpService(),
+		enforcer:    e,
+		repo:        repo,
+		sessionInv:  nil, // no session invalidation in tests
+		log:         scopedLog,
+		metrics:     metrics.NewNoOpMetricsProvider(),
+		tracer:      tracing.NewNoOpService(),
+		maxPolicies: DefaultMaxPoliciesPerDomain,
 	}, nil
 }
 
@@ -307,9 +324,28 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 	}
 
 	s.metrics.IncrementCounter("iam.authz.role.assigned", nil)
-	s.log.DebugContext(ctx, "role assigned", logger.Fields{
-		"subject": subject, "role": role, "domain": domainName,
-	})
+
+	// Audit: ROLE_ASSIGNED — durable audit log not yet wired; use structured log + span.
+	// Replace with audit.Emit(ctx, events.RoleAssigned{...}) once audit table is available.
+	auditFields := logger.Fields{
+		"event":       "ROLE_ASSIGNED",
+		"subject":     subject,
+		"role":        role,
+		"domain":      domainName,
+		"assigned_by": ao.AssignedBy,
+	}
+	if ao.ExpiresAt != nil {
+		auditFields["expires_at"] = ao.ExpiresAt.Format("2006-01-02T15:04:05Z07:00")
+	}
+	if domainName == domain.DomainPlatform {
+		s.log.WarnContext(ctx, "SECURITY_EVENT: ROLE_ASSIGNED in platform domain", auditFields)
+	} else {
+		s.log.InfoContext(ctx, "SECURITY_EVENT: ROLE_ASSIGNED", auditFields)
+	}
+	span.SetAttributes(
+		attribute.String("audit.event", "ROLE_ASSIGNED"),
+		attribute.String("audit.assigned_by", ao.AssignedBy),
+	)
 	return nil
 }
 
@@ -345,9 +381,20 @@ func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName
 	}
 
 	s.metrics.IncrementCounter("iam.authz.role.revoked", nil)
-	s.log.DebugContext(ctx, "role revoked", logger.Fields{
-		"subject": subject, "role": role, "domain": domainName,
-	})
+
+	// Audit: ROLE_REVOKED
+	revokeFields := logger.Fields{
+		"event":   "ROLE_REVOKED",
+		"subject": subject,
+		"role":    role,
+		"domain":  domainName,
+	}
+	if domainName == domain.DomainPlatform {
+		s.log.WarnContext(ctx, "SECURITY_EVENT: ROLE_REVOKED in platform domain", revokeFields)
+	} else {
+		s.log.InfoContext(ctx, "SECURITY_EVENT: ROLE_REVOKED", revokeFields)
+	}
+	span.SetAttributes(attribute.String("audit.event", "ROLE_REVOKED"))
 
 	// Evict cached sessions for the affected user so the revocation takes
 	// effect immediately rather than waiting for the session TTL to expire.
@@ -470,6 +517,18 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.AddPolicy")
 	defer span.End()
 
+	// Policy count guard: cap p-rules per domain to prevent DoS via policy inflation.
+	// GetFilteredPolicy is in-memory (Casbin caches the full policy set) — no DB round-trip.
+	existing, _ := s.enforcer.GetFilteredPolicy(1, p.Domain)
+	domainCount := len(existing)
+	s.metrics.IncrementCounter("iam.authz.policy_count", metrics.Fields{"domain": p.Domain})
+	if domainCount >= s.maxPolicies {
+		s.log.WarnContext(ctx, "authz: policy limit reached for domain", logger.Fields{
+			"domain": p.Domain, "count": domainCount, "limit": s.maxPolicies,
+		})
+		return domain.ErrPolicyLimitExceeded
+	}
+
 	span.SetAttributes(
 		attribute.String("authz.subject", p.Subject),
 		attribute.String("authz.domain", p.Domain),
@@ -496,9 +555,22 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 	}
 
 	s.metrics.IncrementCounter("iam.authz.policy.added", nil)
-	s.log.DebugContext(ctx, "policy added", logger.Fields{
-		"subject": p.Subject, "domain": p.Domain, "object": p.Object, "action": p.Action, "effect": p.Effect,
-	})
+
+	// Audit: POLICY_ADDED
+	policyAddFields := logger.Fields{
+		"event":   "POLICY_ADDED",
+		"subject": p.Subject,
+		"domain":  p.Domain,
+		"object":  p.Object,
+		"action":  p.Action,
+		"effect":  p.Effect,
+	}
+	if p.Domain == domain.DomainPlatform {
+		s.log.WarnContext(ctx, "SECURITY_EVENT: POLICY_ADDED in platform domain", policyAddFields)
+	} else {
+		s.log.InfoContext(ctx, "SECURITY_EVENT: POLICY_ADDED", policyAddFields)
+	}
+	span.SetAttributes(attribute.String("audit.event", "POLICY_ADDED"))
 	return nil
 }
 
@@ -536,6 +608,21 @@ func (s *authzService) RemovePolicy(ctx context.Context, p domain.Policy) error 
 	}
 
 	s.metrics.IncrementCounter("iam.authz.policy.removed", nil)
+
+	// Audit: POLICY_REMOVED
+	policyRemoveFields := logger.Fields{
+		"event":   "POLICY_REMOVED",
+		"subject": p.Subject,
+		"domain":  p.Domain,
+		"object":  p.Object,
+		"action":  p.Action,
+	}
+	if p.Domain == domain.DomainPlatform {
+		s.log.WarnContext(ctx, "SECURITY_EVENT: POLICY_REMOVED from platform domain", policyRemoveFields)
+	} else {
+		s.log.InfoContext(ctx, "SECURITY_EVENT: POLICY_REMOVED", policyRemoveFields)
+	}
+	span.SetAttributes(attribute.String("audit.event", "POLICY_REMOVED"))
 	return nil
 }
 

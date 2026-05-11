@@ -20,10 +20,11 @@ func (e *Error) Error() string {
 // Authorization Sentinels
 
 var (
-	ErrForbidden      = &Error{"AUTHZ_FORBIDDEN", "access denied", 403}
-	ErrUnauthorized   = &Error{"AUTHZ_UNAUTHORIZED", "authentication required", 401}
-	ErrInvalidRequest = &Error{"AUTHZ_INVALID", "subject/domain/obj/act required", 400}
-	ErrPolicyConflict = &Error{"AUTHZ_DUPLICATE", "policy already exists", 409}
+	ErrForbidden           = &Error{"AUTHZ_FORBIDDEN", "access denied", 403}
+	ErrUnauthorized        = &Error{"AUTHZ_UNAUTHORIZED", "authentication required", 401}
+	ErrInvalidRequest      = &Error{"AUTHZ_INVALID", "subject/domain/obj/act required", 400}
+	ErrPolicyConflict      = &Error{"AUTHZ_DUPLICATE", "policy already exists", 409}
+	ErrPolicyLimitExceeded = &Error{"AUTHZ_POLICY_LIMIT", "policy limit per domain exceeded", 429}
 )
 
 // Identity Validation Errors
