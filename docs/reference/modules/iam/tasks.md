@@ -1219,12 +1219,10 @@ second documentation pass (after first-round reconciliation was complete).
   - Return `ErrPolicyLimitExceeded` when limit reached
   - Expose limit as a tenant setting or platform config
 
-- [OPEN] **DB-1**: Write and apply migration to drop `permissions` column from `user_sessions`
-  - Migration: `000XXX_drop_session_permissions_column.up.sql`
-  - SQL: `ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;`
-  - Down migration: re-add as `permissions JSONB NULL`
-  - After applying: run `make sqlc` to regenerate models
-  - Coordinate with SES-4 completion
+- [DONE] **DB-1**: Migration `001008_sessions_drop_permissions` written
+  - Up: `ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;`
+  - Down: re-adds as `permissions JSONB NULL`
+  - After applying: run `make sqlc` to regenerate models (SES-4)
 
 - [OPEN] **AUTHZ-7**: Design and implement persistent audit log for authorization decisions
   - Design `audit_events` table (see `17-security-considerations.md` for schema draft)

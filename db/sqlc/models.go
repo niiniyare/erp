@@ -73,6 +73,18 @@ type Action struct {
 	UpdatedAt sql.NullTime `json:"updated_at"`
 }
 
+type ActiveFinanceViolationSuppression struct {
+	ID            uuid.UUID `json:"id"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	ViolationKind string    `json:"violation_kind"`
+	EntityID      uuid.UUID `json:"entity_id"`
+	Reason        string    `json:"reason"`
+	SuppressedBy  uuid.UUID `json:"suppressed_by"`
+	AuditEventID  *string   `json:"audit_event_id"`
+	CreatedAt     time.Time `json:"created_at"`
+	ExpiresAt     time.Time `json:"expires_at"`
+}
+
 // Third-party / integration API keys. Key is hashed (SHA-256) — raw key returned once at creation and never stored.
 type ApiKey struct {
 	ID       uuid.UUID `json:"id"`

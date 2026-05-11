@@ -26,10 +26,20 @@ CREATE TABLE IF NOT EXISTS finance_violation_suppressions (
 );
 
 -- Active suppression lookup: (tenant, kind, entity) → suppression.
-CREATE INDEX IF NOT EXISTS idx_fvs_active
-    ON finance_violation_suppressions (tenant_id, violation_kind, entity_id, expires_at)
-    WHERE expires_at > NOW();
+-- Note: Cannot use WHERE expires_at > NOW() because NOW() is volatile.
+-- Instead, filter active records in query or use a scheduled materialized view.
+CREATE INDEX IF NOT EXISTS idx_fvs_lookup
+    ON finance_violation_suppressions (tenant_id, violation_kind, entity_id, expires_at);
 
--- Expiry cleanup: find all expired suppressions efficiently.
+-- Additional index for expiry cleanup queries.
 CREATE INDEX IF NOT EXISTS idx_fvs_expires_at
     ON finance_violation_suppressions (expires_at);
+
+-- Optional: Create a view for active suppressions (cleaner than inline filtering)
+CREATE OR REPLACE VIEW active_finance_violation_suppressions AS
+SELECT *
+FROM finance_violation_suppressions
+WHERE expires_at > NOW();
+
+
+

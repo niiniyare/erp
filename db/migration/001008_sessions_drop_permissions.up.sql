@@ -1,0 +1,11 @@
+-- ------------------------------------------------------------------------------------------------
+-- USER_SESSIONS — DROP PERMISSIONS COLUMN
+-- ------------------------------------------------------------------------------------------------
+-- DB-1 (IAM v1.0): The permissions JSONB column was removed from all active queries in SES-4
+-- (migration 000305). Authorization is Casbin-only — session permission snapshots are gone.
+-- This migration physically drops the column now that v1.0 is stable.
+--
+-- Pre-requisite: SES-4 (sessions.sql queries no longer reference permissions).
+-- After applying: run `make sqlc` to regenerate SQLC models.
+-- ------------------------------------------------------------------------------------------------
+ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;
