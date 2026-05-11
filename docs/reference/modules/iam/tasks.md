@@ -211,9 +211,9 @@ sync in one mechanism. No separate watcher is needed for v1.0.
 schema with zero service implementation." The module compiles but is a v2.0 reserved feature.
 
 Tasks:
-- [ ] Add `//go:build ignore` to all `.go` files in `internal/core/access/`
-- [ ] Confirm `go build ./...` succeeds with no `internal/core/access` imports in active code
-- [ ] Add `README.md` in `internal/core/access/`: reserved for v2.0 ABAC, not active in v1.0
+- [x] Add `//go:build ignore` to all `.go` files in `internal/core/access/`
+- [x] Confirm `go build ./...` succeeds with no `internal/core/access` imports in active code
+- [x] Add `README.md` in `internal/core/access/`: reserved for v2.0 ABAC, not active in v1.0
 - [ ] Mark DB migrations `000404`–`000413` with comments: reserved for v2.0 (do not drop)
 - [ ] Audit `db/queries/policies.sql` — remove or gate queries used only by access module
 

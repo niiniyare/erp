@@ -1,7 +1,7 @@
 // Package handlers_test contains end-to-end pipeline tests for the HTTP layer.
 // These tests exercise the full Authenticate → Authorize / RequireFlag →
 // handler chain using mock services — no database required.
-// 
+//
 // Phase 16 coverage:
 // V1 — Login returns a populated session (HttpOnly cookie + non-empty Permissions)
 // V2 — Protected route: 401 no token, 403 wrong perm, 200 correct perm
@@ -10,8 +10,8 @@ package handlers_test
 
 import (
 	"context"
-	stderrors "errors"
 	"encoding/json"
+	stderrors "errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -41,14 +41,16 @@ type mockSessionSvc struct {
 func (m *mockSessionSvc) Login(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	return m.loginSess, m.loginToken, m.loginErr
 }
+
 func (m *mockSessionSvc) CompleteMFALogin(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil
 }
+
 func (m *mockSessionSvc) ValidateSession(_ context.Context, _ string) (*iam.ResolvedSession, error) {
 	return m.validateSess, m.validateErr
 }
-func (m *mockSessionSvc) Logout(_ context.Context, _ string) error             { return nil }
-func (m *mockSessionSvc) LogoutAllForUser(_ context.Context, _ uuid.UUID) error { return nil }
+func (m *mockSessionSvc) Logout(_ context.Context, _ string) error                { return nil }
+func (m *mockSessionSvc) LogoutAllForUser(_ context.Context, _ uuid.UUID) error   { return nil }
 func (m *mockSessionSvc) LogoutAllForTenant(_ context.Context, _ uuid.UUID) error { return nil }
 func (m *mockSessionSvc) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil
@@ -91,7 +93,7 @@ func (s *PipelineSuite) SetupTest() {
 	// V2: permission-gated route
 	app.Get("/api/v1/protected",
 		mw.Authenticate(authCfg),
-		mw.Authorize("finance.accounts.read"),
+		mw.Authorize(authCfg, "finance.accounts.read"),
 		func(c *fiber.Ctx) error { return c.JSON(fiber.Map{"ok": true}) },
 	)
 
@@ -109,10 +111,10 @@ func (s *PipelineSuite) SetupTest() {
 
 func (s *PipelineSuite) TestV1_Login_Returns200_WithCookieAndPermissions() {
 	sess := &iam.ResolvedSession{
-		UserID:      uuid.New(),
-		UserType:    "INTERNAL",
-		TenantID:    uuid.New(),
-		Permissions: map[string]bool{"finance.accounts.read": true},
+		UserID:   uuid.New(),
+		UserType: "INTERNAL",
+		TenantID: uuid.New(),
+		// Permissions: map[string]bool{"finance.accounts.read": true},
 		EntityScope: iam.EntityScope{Type: iam.EntityScopeAll},
 		Configuration: func() iam.Configuration {
 			cfg := iam.DefaultConfiguration()
@@ -163,10 +165,10 @@ func (s *PipelineSuite) TestV2_NoToken_Returns401() {
 
 func (s *PipelineSuite) TestV2_ValidSession_WrongPermission_Returns403() {
 	s.svc.validateSess = &iam.ResolvedSession{
-		UserID:        uuid.New(),
-		UserType:      "INTERNAL",
-		TenantID:      uuid.New(),
-		Permissions:   map[string]bool{}, // lacks finance.accounts.read
+		UserID:   uuid.New(),
+		UserType: "INTERNAL",
+		TenantID: uuid.New(),
+		// Permissions:   map[string]bool{}, // lacks finance.accounts.read
 		Configuration: iam.DefaultConfiguration(),
 	}
 
@@ -180,10 +182,10 @@ func (s *PipelineSuite) TestV2_ValidSession_WrongPermission_Returns403() {
 
 func (s *PipelineSuite) TestV2_ValidSession_CorrectPermission_Returns200() {
 	s.svc.validateSess = &iam.ResolvedSession{
-		UserID:        uuid.New(),
-		UserType:      "INTERNAL",
-		TenantID:      uuid.New(),
-		Permissions:   map[string]bool{"finance.accounts.read": true},
+		UserID:   uuid.New(),
+		UserType: "INTERNAL",
+		TenantID: uuid.New(),
+		// Permissions:   map[string]bool{"finance.accounts.read": true},
 		Configuration: iam.DefaultConfiguration(),
 	}
 
@@ -202,7 +204,7 @@ func (s *PipelineSuite) TestV3_FlagDisabled_Returns403() {
 		UserID:   uuid.New(),
 		UserType: "INTERNAL",
 		TenantID: uuid.New(),
-		Permissions: map[string]bool{"finance.accounts.read": true},
+		// Permissions: map[string]bool{"finance.accounts.read": true},
 		Configuration: iam.Configuration{
 			Flags:    map[string]bool{"finance": false},
 			Settings: map[string]string{},
@@ -223,7 +225,7 @@ func (s *PipelineSuite) TestV3_FlagEnabled_Returns200() {
 		UserID:   uuid.New(),
 		UserType: "INTERNAL",
 		TenantID: uuid.New(),
-		Permissions: map[string]bool{},
+		// Permissions: map[string]bool{},
 		Configuration: iam.Configuration{
 			Flags:    map[string]bool{"finance": true},
 			Settings: map[string]string{},

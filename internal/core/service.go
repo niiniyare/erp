@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	db "awo.so/db/sqlc"
-	"awo.so/internal/core/access"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/entity"
 	"awo.so/internal/core/featureflag"
@@ -60,9 +59,8 @@ type ServiceContainer struct {
 	IdentityService iam.UserService
 
 	// Security & Access Control
-	IAMService     iam.AuthzService
-	AccessService  access.Service
-	AuditService   audit.Service
+	IAMService   iam.AuthzService
+	AuditService audit.Service
 	SessionService iam.SessionService
 
 	// Feature Management
@@ -440,10 +438,6 @@ func (sc *ServiceContainer) GetSessionService() iam.SessionService {
 
 func (sc *ServiceContainer) GetIAMService() iam.Service {
 	return sc.IAMService
-}
-
-func (sc *ServiceContainer) GetAccessService() access.Service {
-	return sc.AccessService
 }
 
 func (sc *ServiceContainer) GetAuditService() audit.Service {

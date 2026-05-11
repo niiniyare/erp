@@ -1,3 +1,5 @@
+//go:build ignore
+
 package request
 
 //go:generate sh -c "mockgen -source=$GOFILE -destination=$(echo $GOFILE | sed 's/\\.go$//')_mock.go -package=$GOPACKAGE"

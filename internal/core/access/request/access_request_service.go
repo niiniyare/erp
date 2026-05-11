@@ -1,3 +1,5 @@
+//go:build ignore
+
 package request
 
 //go:generate go run go.uber.org/mock/mockgen -source=access_request_service.go -destination=mock.go -package=request
