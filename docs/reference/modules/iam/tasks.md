@@ -4,6 +4,7 @@
 > **Architecture baseline**: RBAC-only, Casbin-driven, Session-as-context.
 > **Source of authority**: `docs/reference/modules/iam/` (full reference suite) + `testing.md`
 > **Last validated**: 2026-05-11 (third-pass architectural audit + documentation reconciliation)
+> **Last updated**: 2026-05-11 (fourth-pass — AUTHZ-4/5/7, T-ROLES, T-ISO, T-UNIT complete)
 
 ---
 
@@ -24,17 +25,37 @@ The following BLOCK items from the original plan have been **completed**:
 | SES-3 | Redis session cache contains context only (no permissions) | DONE |
 | SES-5 | MFA pending token atomic consumption via Redis GETDEL | DONE |
 
-**Remaining open items** from the original plan — see Section 2 onward for task details:
+**Completed since last audit (2026-05-11):**
 
 | Item | Status |
 |---|---|
-| AUTHZ-4: platform domain write guard at service layer | OPEN |
-| AUTHZ-5: policy count limit per domain (DoS prevention) | OPEN |
-| AUTHZ-7: persistent security event audit log | OPEN |
-| SES-4: `make sqlc` re-run after permissions column removal | OPEN |
-| DB-1: migration to drop `permissions` column from `user_sessions` | OPEN |
-| Most T-ROLES tests: commented out, need uncommenting and fixing | OPEN |
-| Most T-INT, T-SEC, T-ISO tests | OPEN |
+| AUTHZ-4: platform domain write guard + AssignedBy required | DONE |
+| AUTHZ-5: policy count limit per domain (DoS prevention) | DONE |
+| AUTHZ-7: structured security event audit log (ROLE_ASSIGNED/REVOKED, POLICY_ADDED/REMOVED) | DONE |
+| SES-4: `make sqlc` re-run after permissions column removal | DONE |
+| DB-1: migration `001008` to drop `permissions` column from `user_sessions` | DONE |
+| T-ROLES: all tests uncommented and passing (DB-backed, requires DATABASE_URL) | DONE |
+| T-ISO (AZ-ISO-001..020): all passing | DONE |
+| T-UNIT (AZ-TYP-*, session model, AssignOpts, errors): all passing | DONE |
+| T-SEC: `TestSystemRole_ImmutableFromTenantActor`, `TestPolicyCountLimit_Enforced` | DONE |
+| Casbin model wildcard subject fix (`p.sub == "*"` in matcher) | DONE |
+
+**Remaining open items** — see Section 2 onward for task details:
+
+| Item | Status |
+|---|---|
+| AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | OPEN |
+| AUTHZ-3: audit no handler bypasses auth via direct DB role query | OPEN |
+| AUTHZ-6: subject prefix validation in authn middleware | OPEN |
+| T-INT: integration tests (DB + Redis required) | OPEN |
+| T-ADAPTER (AZ-ADP-001..050): DB required | OPEN |
+| T-SERVICE (AZ-SVC-001..061): DB required | OPEN |
+| T-TEMP (AZ-TEMP-001..010): DB required | OPEN |
+| T-MIDDLEWARE (AZ-MID-001..040 + post-refactor tests): Fiber mock | OPEN |
+| ROLE-1..5: role lifecycle, consistency, audit trail | OPEN |
+| CACHE-2/3: invalidation matrix wiring, API key revocation doc | OPEN |
+| DB-2/3/4: constraint/index validation, migration rollback safety | OPEN |
+| SEC-4: API key lifecycle — document 5-min TTL window | OPEN |
 | Documentation updates `10b`, `11`, `12b` | DONE (2026-05-11) |
 
 ---
@@ -376,7 +397,7 @@ Tasks:
 
 Tasks:
 - [x] Guard in `AddPolicy()`: if `domain == DomainPlatform` and `p.Subject` prefix is not
-  `"platform:"` → return `ErrForbidden`
+  `"platform:"` or `"role:"` → return `ErrForbidden` (role subjects are valid policy holders)
 - [x] Guard in `AssignRole()`: if role has `"role:platform-"` prefix and `AssignedBy` prefix is not
   `"platform:"` → return `ErrForbidden`
 - [x] Guard in `RemovePolicy()`: same domain check as `AddPolicy`
@@ -536,9 +557,10 @@ Tasks:
 subject format."
 
 Tasks:
-- [ ] Authn middleware: validate subject prefix after JWT decode — reject `"usr_001"`, `"admin"`, `""`
-- [ ] Valid prefixes: `"platform:"`, `"tenant:"`, `"portal:"`, `"api:"` — all must have non-empty suffix
-- [ ] Return `401 Unauthorized` with generic message on invalid subject (no detail leak)
+- [x] Authn middleware: validate subject prefix in `Authenticate` after `setSessionLocals` — rejects any subject without valid prefix
+- [x] Valid prefixes: `"platform:"`, `"tenant:"`, `"portal:"`, `"api:"` — all must have non-empty suffix (`isValidSubject` helper)
+- [x] Returns `401 Unauthorized` with generic "authentication required" (no detail leak)
+- [x] Applied to both API key and session token paths in `session_middleware.go`
 - [ ] Test: AZ-SEC-050 — request crafting `Domain="_platform_"` without platform JWT is rejected
 
 ---
@@ -546,13 +568,13 @@ Tasks:
 ### ISO-3 — Cross-Tenant Leakage Tests
 
 All must run in CI on every PR touching `iam/`, `authz/`, or `middleware/`:
-- [ ] AZ-ISO-001: policy in dom-1 does not match request for dom-2
-- [ ] AZ-ISO-002: role assignment in dom-1 does not grant access in dom-2
-- [ ] AZ-ISO-003: platform domain policy does not match tenant domain request
-- [ ] AZ-ISO-004: tenant domain role does not apply in portal domain
-- [ ] AZ-ISO-005: tenant domain role does not apply in API domain
-- [ ] AZ-ISO-010: two tenants with identical role names — no cross-tenant access
-- [ ] AZ-ISO-020: wildcard subject deny in dom-1 stays domain-scoped
+- [x] AZ-ISO-001: policy in dom-1 does not match request for dom-2
+- [x] AZ-ISO-002: role assignment in dom-1 does not grant access in dom-2
+- [x] AZ-ISO-003: platform domain policy does not match tenant domain request
+- [x] AZ-ISO-004: tenant domain role does not apply in portal domain
+- [x] AZ-ISO-005: tenant domain role does not apply in API domain
+- [x] AZ-ISO-010: two tenants with identical role names — no cross-tenant access
+- [x] AZ-ISO-020: wildcard subject deny in dom-1 stays domain-scoped
 
 ---
 
@@ -769,23 +791,27 @@ From `testing.md` AZ-SVC-001 to AZ-SVC-061:
 
 From `testing.md` AZ-ROLE-001 to AZ-ROLE-042 (`roles_test.go`):
 
-- [ ] AZ-ROLE-001 `TestAssignRole_Success` [uncomment]
-- [ ] AZ-ROLE-002 `TestAssignRole_Idempotent` [uncomment]
-- [ ] AZ-ROLE-003 `TestAssignRole_WithExpiry` [uncomment]
-- [ ] AZ-ROLE-004 `TestAssignRole_WithAssignedBy` [uncomment]
-- [ ] AZ-ROLE-005 `TestAssignRole_WithDelegatedBy` [uncomment]
-- [ ] AZ-ROLE-006 `TestAssignRole_ReactivatesRevoked` [uncomment]
-- [ ] AZ-ROLE-010 `TestRevokeRole_Success` [uncomment]
-- [ ] AZ-ROLE-011 `TestRevokeRole_NotExist` [uncomment]
-- [ ] AZ-ROLE-020 `TestGetRoles_HasRoles` [uncomment]
-- [ ] AZ-ROLE-021 `TestGetRoles_NoRoles` [uncomment]
-- [ ] AZ-ROLE-022 `TestGetRoles_MultipleRoles` [uncomment]
-- [ ] AZ-ROLE-030 `TestHasRole_True` [uncomment]
-- [ ] AZ-ROLE-031 `TestHasRole_AfterRevoke` [uncomment]
-- [ ] AZ-ROLE-032 `TestHasRole_WrongDomain` [uncomment]
-- [ ] AZ-ROLE-040 `TestGetAssignments_IncludesInactive` [uncomment]
-- [ ] AZ-ROLE-041 `TestGetAssignments_FullMetadata` [uncomment]
-- [ ] AZ-ROLE-042 `TestGetAssignments_Unknown` [uncomment]
+- [x] AZ-ROLE-001 `TestAssignRole_PersistsToDB`
+- [x] AZ-ROLE-002 `TestAssignRole_Idempotent`
+- [x] AZ-ROLE-003 `TestAssignRole_WithExpiry_StoredCorrectly`
+- [x] AZ-ROLE-004 `TestAssignRole_WithAssignedBy_StoredCorrectly`
+- [x] AZ-ROLE-005 `TestAssignRole_WithDelegatedBy_StoredCorrectly`
+- [x] AZ-ROLE-006 `TestAssignRole_ReactivatesPreviouslyRevoked`
+- [x] AZ-ROLE-010 `TestRevokeRole_MarksInactiveAndRemovesGRule`
+- [x] AZ-ROLE-011 `TestRevokeRole_NonExistent_NoError`
+- [x] AZ-ROLE-020 `TestGetRoles_ReturnsSingleRole`
+- [x] AZ-ROLE-021 `TestGetRoles_NoRoles_ReturnsEmptySlice_NotError`
+- [x] AZ-ROLE-022 `TestGetRoles_ReturnsMultipleRoles`
+- [x] AZ-ROLE-030 `TestHasRole_TrueAfterAssign`
+- [x] AZ-ROLE-031 `TestHasRole_FalseAfterRevoke`
+- [x] AZ-ROLE-032 `TestHasRole_IsDomainScoped`
+- [x] AZ-ROLE-040 `TestGetAssignments_IncludesInactiveRows`
+- [x] AZ-ROLE-041 `TestGetAssignments_ReturnsRow` (full metadata)
+- [x] AZ-ROLE-042 `TestGetAssignments_EmptyForUnknownSubject`
+- [x] AZ-ROLE-043 `TestEnforce_ExpiredRole_IsRevoked` (temporal)
+- [x] AZ-ROLE-044 `TestEnforce_ActiveRole_NotExpired`
+- [x] AZ-ROLE-045 `TestEnforce_PermanentRole_NeverExpires`
+- [x] AZ-ROLE-046 `TestEnforce_MultipleExpiredRoles_AllRevoked`
 
 ---
 
@@ -806,14 +832,14 @@ From `testing.md` AZ-TEMP-001 to AZ-TEMP-010:
 
 From `testing.md` AZ-MID-001 to AZ-MID-040:
 
-- [ ] AZ-MID-001 `TestMiddleware_NoPrincipal` → 401
-- [ ] AZ-MID-002 `TestMiddleware_EmptyPrincipal` → 401
-- [ ] AZ-MID-010 `TestMiddleware_Forbidden` → 403
-- [ ] AZ-MID-011 `TestMiddleware_Allow` → calls Next()
-- [ ] AZ-MID-020 `TestMiddleware_ObjectExpansion`
-- [ ] AZ-MID-021 `TestMiddleware_NoIDParam`
-- [ ] AZ-MID-030 `TestMiddleware_EnforceError` → 500
-- [ ] AZ-MID-040 `TestMiddleware_LocalsKey`
+- [x] AZ-MID-001 `TestMiddleware_NoPrincipal` → 401
+- [x] AZ-MID-002 `TestMiddleware_EmptyPrincipal` → 401
+- [x] AZ-MID-010 `TestMiddleware_Forbidden` → 403
+- [x] AZ-MID-011 `TestMiddleware_Allow` → calls Next()
+- [x] AZ-MID-020 `TestMiddleware_ObjectExpansion` (with/without :id param)
+- [x] AZ-MID-021 `TestMiddleware_NoIDParam` → plain object
+- [ ] AZ-MID-030 `TestMiddleware_EnforceError` → 500 (not yet covered)
+- [x] AZ-MID-040 `TestMiddleware_LocalsKey` (wrong key → 401)
 
 **New — post-refactor middleware tests** (risk: BLOCK-1):
 - [ ] `TestRequirePermission_CallsEnforce` — mock authz service, confirm `Enforce()` called

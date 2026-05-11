@@ -11,6 +11,22 @@ import (
 	"awo.so/internal/shared"
 )
 
+// validSubjectPrefixes are the only prefixes a resolved Principal subject may
+// carry.  Any other value indicates a corrupted session or injection attempt.
+// Rule 1 — docs/reference/modules/iam/20-business-rules-and-validation.md.
+var validSubjectPrefixes = []string{"platform:", "tenant:", "portal:", "api:"}
+
+// isValidSubject returns true if subject has one of the four recognised
+// prefixes and a non-empty suffix after that prefix.
+func isValidSubject(subject string) bool {
+	for _, prefix := range validSubjectPrefixes {
+		if strings.HasPrefix(subject, prefix) {
+			return len(subject) > len(prefix) // must have a non-empty id part
+		}
+	}
+	return false
+}
+
 // splitPermission splits a dotted permission string into (object, action).
 // "finance.accounts.read" → ("finance.accounts", "read")
 // "finance.accounts"      → ("finance", "accounts")
@@ -68,6 +84,9 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 				return fiber.NewError(fiber.StatusUnauthorized, "invalid or revoked API key")
 			}
 			setSessionLocals(c, resolved)
+			if !isValidSubject(resolved.ToPrincipal().Subject) {
+				return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+			}
 			return c.Next()
 		}
 
@@ -78,6 +97,9 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 		}
 
 		setSessionLocals(c, resolved)
+		if !isValidSubject(resolved.ToPrincipal().Subject) {
+			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+		}
 		return c.Next()
 	}
 }

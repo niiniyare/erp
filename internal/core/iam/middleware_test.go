@@ -126,7 +126,7 @@ func (s *MiddlewareSuite) TestMiddleware_AllowPolicy_Returns200_AndCallsNext() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	app := fiberApp(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
@@ -146,7 +146,7 @@ func (s *MiddlewareSuite) TestMiddleware_ObjectExpansion_WithIDParam() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	app := fiberAppWithID(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
@@ -165,7 +165,7 @@ func (s *MiddlewareSuite) TestMiddleware_ObjectExpansion_IDParamUsedAsResourceID
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	app := fiberAppWithID(
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
@@ -189,7 +189,7 @@ func (s *MiddlewareSuite) TestMiddleware_NoIDParam_UsesPlainObject() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	app := fiberApp( // no :id route
 		withPrincipal(Principal{Subject: testSubject, Domain: testDomain}),
@@ -208,7 +208,7 @@ func (s *MiddlewareSuite) TestMiddleware_DenyRule_Returns403() {
 		Action:  "*",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 	s.Require().NoError(s.svc.AddPolicy(s.ctx, Policy{
 		Subject: testSubject,
 		Domain:  testDomain,

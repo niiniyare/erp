@@ -120,7 +120,7 @@ func (s *ServiceSuite) TestEnforce_Allow_ExactMatch() {
 		Effect:  "allow",
 	}))
 	// Assign the role to the subject (Casbin g-rule).
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	ok, err := s.svc.Enforce(s.ctx, Request{
 		Subject: testSubject,
@@ -140,7 +140,7 @@ func (s *ServiceSuite) TestEnforce_Allow_WildcardObject() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	for _, obj := range []string{"invoice/inv_001", "invoice/inv_999", "invoice/xyz"} {
 		s.Run(obj, func() {
@@ -164,7 +164,7 @@ func (s *ServiceSuite) TestEnforce_Allow_WildcardAction() {
 		Action:  "*",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	for _, act := range []string{"read", "create", "delete", "approve", "export"} {
 		s.Run(act, func() {
@@ -191,7 +191,7 @@ func (s *ServiceSuite) TestEnforce_DenyOverridesAllow() {
 		Action:  "*",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	// Blanket deny on the subject itself
 	s.Require().NoError(s.svc.AddPolicy(s.ctx, Policy{
@@ -225,7 +225,7 @@ func (s *ServiceSuite) TestEnforce_PolicyDoesNotCrossDomains() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, dom1))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, dom1, WithAssignedBy("platform:system")))
 
 	// dom2 has no policies at all
 	ok, err := s.svc.Enforce(s.ctx, Request{
@@ -264,7 +264,7 @@ func (s *ServiceSuite) TestEnforceBatch_MixedResults() {
 		Action:  "read",
 		Effect:  "allow",
 	}))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	reqs := []Request{
 		{Subject: testSubject, Domain: testDomain, Object: "invoice/1", Action: "read"},    // allow
@@ -335,7 +335,7 @@ func (s *ServiceSuite) TestRemovePolicy_RemovesMatchingRule() {
 		Object: "invoice/*", Action: "read", Effect: "allow",
 	}
 	s.Require().NoError(s.svc.AddPolicy(s.ctx, pol))
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	// Verify allow before removal.
 	ok, _ := s.svc.Enforce(s.ctx, Request{
@@ -424,7 +424,7 @@ func (s *ServiceSuite) TestInvalidateCache_ReloadsDirectSQLWrite() {
 	s.Require().NoError(err)
 
 	// Assign role via Casbin directly through Service (in-memory + DB).
-	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain))
+	s.Require().NoError(s.svc.AssignRole(s.ctx, testTenantID, testSubject, testRole, testDomain, WithAssignedBy("platform:system")))
 
 	// Before reload: in-memory model was NOT updated by raw SQL insert, so
 	// GetPolicies still reflects only previously loaded state. After reload it must appear.
