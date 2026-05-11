@@ -249,6 +249,21 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 		return domain.ErrInvalidRequest
 	}
 
+	ao := domain.ApplyAssignOpts(opts)
+
+	// AssignedBy must always be non-empty — system assignments must pass a
+	// well-known system subject (e.g. "platform:system") not an empty string.
+	if ao.AssignedBy == "" {
+		return fmt.Errorf("authz: AssignedBy is required for role assignments: %w", domain.ErrInvalidRequest)
+	}
+
+	// Platform role guard: only platform actors may assign roles with the
+	// "role:platform-" prefix.  A non-platform AssignedBy subject on a
+	// platform role indicates a privilege escalation attempt.
+	if strings.HasPrefix(role, "role:platform-") && !strings.HasPrefix(ao.AssignedBy, "platform:") {
+		return domain.ErrForbidden
+	}
+
 	span.SetAttributes(
 		attribute.String("authz.subject", subject),
 		attribute.String("authz.role", role),
@@ -268,7 +283,6 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 	}
 
 	tid, _ := uuid.Parse(tenantID)
-	ao := domain.ApplyAssignOpts(opts)
 
 	// repo expects *string for nullable audit columns;
 	// empty string means not provided → pass nil.
@@ -447,6 +461,11 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 	if p.Effect != "allow" && p.Effect != "deny" {
 		return fmt.Errorf("authz: invalid policy effect %q: must be \"allow\" or \"deny\"", p.Effect)
 	}
+	// Platform domain guard: only platform subjects may hold policies in _platform_.
+	// A tenant actor reaching this path indicates a privilege escalation attempt.
+	if p.Domain == domain.DomainPlatform && !strings.HasPrefix(p.Subject, "platform:") {
+		return domain.ErrForbidden
+	}
 
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.AddPolicy")
 	defer span.End()
@@ -486,6 +505,10 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 func (s *authzService) RemovePolicy(ctx context.Context, p domain.Policy) error {
 	if p.Subject == "" || p.Domain == "" || p.Object == "" || p.Action == "" {
 		return domain.ErrInvalidRequest
+	}
+	// Platform domain guard: only platform subjects may remove policies from _platform_.
+	if p.Domain == domain.DomainPlatform && !strings.HasPrefix(p.Subject, "platform:") {
+		return domain.ErrForbidden
 	}
 
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.RemovePolicy")
@@ -601,7 +624,8 @@ func (s *authzService) BootstrapTenantAdmin(ctx context.Context, tenantID, userI
 		})
 	}
 
-	return s.AssignRole(ctx, tenantID.String(), subject, roleName, domainName)
+	return s.AssignRole(ctx, tenantID.String(), subject, roleName, domainName,
+		domain.WithAssignedBy("platform:system"))
 }
 
 // Internal helpers
