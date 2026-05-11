@@ -129,7 +129,10 @@ func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 			Object:  obj,
 			Action:  act,
 		})
-		if err != nil || !allowed {
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "authorization check failed")
+		}
+		if !allowed {
 			return fiber.NewError(fiber.StatusForbidden, "permission denied")
 		}
 		return c.Next()

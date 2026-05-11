@@ -32,26 +32,26 @@ func BuildRouter(app *fiber.App, deps *Deps) {
     sg := auth.Group("/schema")
     sg.Get("/accounting/transactions",
         middleware.RequireFlag("finance.transactions"),
-        middleware.RequirePermission("finance.transactions", "read"),
+        middleware.Authorize(deps.Platform.IAM, "finance.transactions.read"),
         handlers.TransactionListSchema(deps))
     sg.Get("/settings/modules",
-        middleware.RequirePermission("settings.modules", "read"),
+        middleware.Authorize(deps.Platform.IAM, "settings.modules.read"),
         handlers.ModuleFlagsSchema(deps))
     sg.Get("/settings/finance",
-        middleware.RequirePermission("settings.finance", "read"),
+        middleware.Authorize(deps.Platform.IAM, "settings.finance.read"),
         handlers.FinanceSettingsSchema(deps))
 
     // Data API routes
     api := auth.Group("/api/v1")
     api.Get("/transactions",
         middleware.RequireFlag("finance.transactions"),
-        middleware.RequirePermission("finance.transactions", "read"),
+        middleware.Authorize(deps.Platform.IAM, "finance.transactions.read"),
         handlers.ListTransactions(deps))
     api.Patch("/settings/flags/:key",
-        middleware.RequirePermission("settings.modules", "update"),
+        middleware.Authorize(deps.Platform.IAM, "settings.modules.update"),
         handlers.SetFlag(deps))
     api.Patch("/settings/:module",
-        middleware.RequirePermission("settings.finance", "update"),
+        middleware.Authorize(deps.Platform.IAM, "settings.finance.update"),
         handlers.UpdateModuleSettings(deps))
 }
 ```
@@ -60,29 +60,98 @@ func BuildRouter(app *fiber.App, deps *Deps) {
 
 ### Middleware Implementations
 
+All authorization routes through Casbin — no permission snapshot in the session.
+
 ```go
-func RequirePermission(resource, action string) fiber.Handler {
+// Authorize enforces a single "object.action" permission via Casbin.
+// Must run after Authenticate (requires LocalsKeySession and LocalsKeyPrincipal).
+//
+// Responses:
+//   401 — no authenticated session in Locals
+//   500 — Enforce returned a non-nil error (enforcer unavailable)
+//   403 — Enforce returned false (permission denied)
+//   next — Enforce returned true (allowed)
+func Authorize(cfg AuthConfig, permission string) fiber.Handler {
     return func(c *fiber.Ctx) error {
-        if !ContextSession(c).CanDo(resource, action) {
-            return c.Status(403).JSON(response.Err(
-                fmt.Sprintf("permission denied: %s.%s", resource, action)))
+        sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+        if !ok || sess == nil {
+            return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+        }
+        if cfg.AuthzService == nil {
+            return fiber.NewError(fiber.StatusForbidden, "permission denied")
+        }
+        principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+        if !ok {
+            return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+        }
+        obj, act := splitPermission(permission)
+        allowed, err := cfg.AuthzService.Enforce(c.Context(), iam.Request{
+            Subject: principal.Subject,
+            Domain:  principal.Domain,
+            Object:  obj,
+            Action:  act,
+        })
+        if err != nil {
+            return fiber.NewError(fiber.StatusInternalServerError, "authorization check failed")
+        }
+        if !allowed {
+            return fiber.NewError(fiber.StatusForbidden, "permission denied")
         }
         return c.Next()
     }
 }
 
+// RequireFlag checks whether the session's pre-computed Configuration has the
+// named feature flag enabled. No Casbin call — flags are context, not authz.
+// Returns 403 if the flag is absent or false.
 func RequireFlag(flagKey string) fiber.Handler {
     return func(c *fiber.Ctx) error {
-        if !ContextSession(c).FeatureEnabled(flagKey) {
-            return c.Status(403).JSON(response.Err(
-                "this feature is not enabled for your organisation"))
+        sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+        if !ok || sess == nil {
+            return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+        }
+        if !sess.FeatureEnabled(flagKey) {
+            return fiber.NewError(fiber.StatusForbidden, "feature not enabled")
         }
         return c.Next()
     }
 }
 ```
 
-Both read from the pre-computed session — zero DB hits.
+**Key invariants:**
+- `Authorize` calls `authzService.Enforce()` on every request — no cached permission map
+- `RequireFlag` reads `session.Configuration.Flags` — O(1), no Casbin, no DB
+- Subject and Domain always come from the authenticated session, never from the request body
+
+---
+
+### Single-Path Authorization
+
+There is one enforcement path: every permission check calls `Casbin.Enforce()`.
+
+```
+Request
+  → Authenticate        (validates token, populates LocalsKeySession + LocalsKeyPrincipal)
+  → RequireFlag(...)    (optional; feature gate from session.Configuration — not authz)
+  → Authorize(cfg, ...) (Casbin.Enforce → 401 | 500 | 403 | next)
+  → Handler
+```
+
+```go
+// All routes use the same Casbin path:
+finance.Get("/invoices",
+    middleware.RequireFlag("finance.transactions"),           // feature gate
+    middleware.Authorize(cfg, "finance.receivables.invoices.read"), // Casbin enforce
+    handler.ListInvoices)
+
+admin.Post("/roles/:id/assign",
+    middleware.Authorize(cfg, "role.assign"),                // Casbin enforce
+    handler.AssignRole)
+```
+
+> **Removed (v1.0)**: `session.CanDo()` / `session.Can()` fast path. The session no
+> longer carries a permission snapshot. All authorization is Casbin-only. This ensures
+> role revocations take effect on the next request without requiring session invalidation.
 
 ---
 
@@ -91,11 +160,13 @@ Both read from the pre-computed session — zero DB hits.
 Used in every handler — never pass tenant_id or user_id as function parameters:
 
 ```go
-func ContextSession(c *fiber.Ctx) *domain.ResolvedSession  { return c.Locals("session").(*domain.ResolvedSession) }
-func ContextTenantID(c *fiber.Ctx) uuid.UUID               { return ContextSession(c).TenantID }
-func ContextUserID(c *fiber.Ctx) uuid.UUID                 { return ContextSession(c).UserID }
-func ContextEntityID(c *fiber.Ctx) uuid.UUID               { return ContextSession(c).EntityID }
-func ContextPrincipalID(c *fiber.Ctx) uuid.UUID            { return ContextSession(c).PrincipalID }
+func ContextSession(c *fiber.Ctx) *iam.ResolvedSession {
+    return c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+}
+func ContextTenantID(c *fiber.Ctx) uuid.UUID  { return ContextSession(c).TenantID }
+func ContextUserID(c *fiber.Ctx) uuid.UUID    { return ContextSession(c).UserID }
+func ContextEntityID(c *fiber.Ctx) uuid.UUID  { return ContextSession(c).EntityScope.EntityID }
+func ContextPrincipalID(c *fiber.Ctx) *uuid.UUID { return ContextSession(c).PrincipalID }
 ```
 
 ---
@@ -127,27 +198,6 @@ func SetDBPool(pools *db.Pools) fiber.Handler {
         return c.Next()
     }
 }
-```
-
----
-
-### Two-Path Authorization
-
-| Path | Middleware | When to use |
-|---|---|---|
-| Fast path | `RequirePermission(resource, action)` — O(1) session map | Hot-path API routes |
-| Casbin path | `authz.Middleware(obj, act)` | Management ops where session may be stale after role changes |
-
-```go
-// Hot path (most routes)
-finance.Get("/invoices",
-    middleware.RequirePermission("finance.receivables.invoices", "read"),
-    handler.ListInvoices)
-
-// Casbin path (role management operations)
-admin.Post("/roles/:id/assign",
-    authzSvc.Middleware("role", "assign"),
-    handler.AssignRole)
 ```
 
 ---

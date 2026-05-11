@@ -770,6 +770,19 @@ func (s *MiddlewareUnitSuite) TestMiddleware_NoIDParam_UsesPlainObject() {
 	s.Equal(fiber.StatusOK, testRequest(app, "/res"))
 }
 
+// AZ-MID-030 — Enforce error → 500 (not 403).
+// testMiddlewareHandler propagates the raw error from Enforce; Fiber converts
+// any non-fiber.Error return to 500 by default.
+func (s *MiddlewareUnitSuite) TestMiddleware_EnforceError_Returns500() {
+	stub := errAuthzService{}
+	app := makeApp(
+		injectPrincipal(Principal{Subject: "tenant:usr_001", Domain: "dom-1"}),
+		testMiddlewareHandler(stub, "invoice", "read"),
+		respondOK,
+	)
+	s.Equal(fiber.StatusInternalServerError, testRequest(app, "/res"))
+}
+
 func (s *MiddlewareUnitSuite) TestMiddleware_IDParam_WrongResource_Returns403() {
 	// Policy only for "invoice/specific" — other IDs denied.
 	s.Require().NoError(s.svc.AddPolicy(s.ctx, Policy{

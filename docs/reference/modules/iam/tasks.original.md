@@ -4,13 +4,13 @@
 > **Architecture baseline**: RBAC-only, Casbin-driven, Session-as-context.
 > **Source of authority**: `docs/reference/modules/iam/` (full reference suite) + `testing.md`
 > **Last validated**: 2026-05-11 (third-pass architectural audit + documentation reconciliation)
-> **Last updated**: 2026-05-11 (fifth-pass — AUTHZ-2, T-MIDDLEWARE complete)
+> **Last updated**: 2026-05-11 (fourth-pass — AUTHZ-4/5/7, T-ROLES, T-ISO, T-UNIT complete)
 
 ---
 
 ## 0. Implementation Status Summary (as of 2026-05-11)
 
-Completed BLOCK items:
+The following BLOCK items from the original plan have been **completed**:
 
 | BLOCK | Item | Status |
 |---|---|---|
@@ -39,21 +39,19 @@ Completed BLOCK items:
 | T-UNIT (AZ-TYP-*, session model, AssignOpts, errors): all passing | DONE |
 | T-SEC: `TestSystemRole_ImmutableFromTenantActor`, `TestPolicyCountLimit_Enforced` | DONE |
 | Casbin model wildcard subject fix (`p.sub == "*"` in matcher) | DONE |
-| AUTHZ-2: `Authorize` middleware single Casbin path; bug fix (503→500 on Enforce error) | DONE |
-| T-MIDDLEWARE: AZ-MID-030 + post-refactor suite (authorize_test.go) | DONE |
 
-**Remaining open items** — see Section 2 onward:
+**Remaining open items** — see Section 2 onward for task details:
 
 | Item | Status |
 |---|---|
-| AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | DONE |
+| AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | OPEN |
 | AUTHZ-3: audit no handler bypasses auth via direct DB role query | OPEN |
 | AUTHZ-6: subject prefix validation in authn middleware | OPEN |
 | T-INT: integration tests (DB + Redis required) | OPEN |
 | T-ADAPTER (AZ-ADP-001..050): DB required | OPEN |
 | T-SERVICE (AZ-SVC-001..061): DB required | OPEN |
 | T-TEMP (AZ-TEMP-001..010): DB required | OPEN |
-| T-MIDDLEWARE (AZ-MID-001..040 + post-refactor tests): Fiber mock | DONE |
+| T-MIDDLEWARE (AZ-MID-001..040 + post-refactor tests): Fiber mock | OPEN |
 | ROLE-1..5: role lifecycle, consistency, audit trail | OPEN |
 | CACHE-2/3: invalidation matrix wiring, API key revocation doc | OPEN |
 | DB-2/3/4: constraint/index validation, migration rollback safety | OPEN |
@@ -66,13 +64,13 @@ Completed BLOCK items:
 
 ### Current State
 
-IAM module implements **single-path Casbin enforcement**:
+The IAM module now implements **single-path Casbin enforcement**:
 
 - Session carries identity + context only: `UserID`, `TenantID`, `UserType`, `EntityScope`, `Configuration`. No `Permissions` map. No `Can()` / `CanDo()`.
 - Every authorization decision routes through `authzService.Enforce()`.
 - `casbin.SyncedEnforcer` with `StartAutoLoadPolicy(30s)` provides goroutine safety and multi-instance convergence.
-- `RevokeRole()` calls `SessionInvalidator.InvalidateByUser()` — session cache evicted on role revocation.
-- `Logout()` synchronously deletes Redis session cache entry.
+- `RevokeRole()` calls `SessionInvalidator.InvalidateByUser()` — session cache is evicted on role revocation.
+- `Logout()` synchronously deletes the Redis session cache entry.
 - MFA pending token consumed atomically via Redis `GETDEL`.
 - `internal/core/access/` (ABAC) gated with `//go:build ignore`.
 
@@ -89,15 +87,20 @@ IAM module implements **single-path Casbin enforcement**:
 
 ## 2. Critical Architectural Fixes
 
-> **[DONE]** = verified implemented. **[OPEN]** = requires work before production.
+> Items marked **[DONE]** are verified implemented in the current codebase.
+> Items marked **[OPEN]** still require work before production deployment.
 
 ---
 
 ### BLOCK-1 — Migrate from Two-Path to Single Casbin Enforcement [DONE]
 
-**Context**: Two-path system was previous design. Session layer rewritten to carry context only. `session.Can()` and `CanDo()` never present in current codebase — all auth through `authzService.Enforce()`. Documentation updated 2026-05-11.
+**Context**: The two-path system was the previously documented design. The session layer was
+rewritten to carry context only. `session.Can()` and `CanDo()` were never present in the current
+codebase — all auth goes through `authzService.Enforce()`. Documentation updated 2026-05-11.
 
-**Performance implication**: Every protected request calls `Casbin.Enforce()` (in-memory, no DB on hot path). Expected latency: ~0.1ms per call vs previous O(1) map lookup. Acceptable for ERP workloads. Feature flag and setting reads remain O(1) from `session.Configuration`.
+**Performance implication**: Every protected request now calls `Casbin.Enforce()` (in-memory, no DB
+on hot path). Expected latency: ~0.1ms per call vs previous O(1) map lookup. Acceptable for ERP
+workloads. Feature flag and setting reads remain O(1) from `session.Configuration`.
 
 **Files**:
 - `internal/core/iam/domain/session.go` — remove `Permissions`, `Can()`, `CanDo()`, `RiskScore`
@@ -134,19 +137,26 @@ func RequirePermission(authzSvc authz.Service, resource, action string) fiber.Ha
 
 **Documentation to update**: `10b-session-precomputation.md`, `12b-http-middleware.md` (Section 15).
 
-**Risk if not fixed**: Two concurrent enforcement authorities. Role revocations don't take effect in fast path for up to 8h. Wildcard `"*"` sentinel outside Casbin control.
+**Risk if not fixed**: Two concurrent enforcement authorities. Role revocations do not take effect
+in the fast path for up to 8h. Wildcard `"*"` sentinel outside Casbin control.
 
 ---
 
 ### BLOCK-2 — Fix Logout: Evict Redis on Session Invalidation [DONE]
 
-**Context**: Was identified as bug. Fixed: `repo.Invalidate(hash)` calls `cache.Delete(ctx, sessionCacheKey(hash))` synchronously. `InvalidateByUser` evicts all user session Redis keys via `user_sessions:{userID}` index. `ValidateToken()` hits cache first — logged-out user with valid Redis key continued to pass authentication.
+**Context**: Was identified as a bug. Now fixed: `repo.Invalidate(hash)` calls
+`cache.Delete(ctx, sessionCacheKey(hash))` synchronously. `InvalidateByUser` evicts all user
+session Redis keys via the `user_sessions:{userID}` index.
+The session repository's `ValidateToken()` hits cache first — a logged-out user with a valid Redis
+key continues to pass authentication.
 
 **File**: `internal/core/iam/repository/session.go`
 
 Tasks:
-- [ ] `Invalidate(ctx, tokenHash)`: call `cache.Delete(ctx, sessionCacheKey(tokenHash))` BEFORE returning, not as fallback
-- [ ] `InvalidateByUser(ctx, userID)`: enumerate and delete all Redis keys for `userID` OR use Redis key prefix pattern for bulk eviction
+- [ ] `Invalidate(ctx, tokenHash)`: call `cache.Delete(ctx, sessionCacheKey(tokenHash))` BEFORE
+  returning, not as a fallback
+- [ ] `InvalidateByUser(ctx, userID)`: enumerate and delete all Redis keys for `userID` OR use a
+  Redis key prefix pattern that allows bulk eviction
 - [ ] `InvalidateByTenant(ctx, tenantID)`: same — bulk evict tenant session keys
 - [ ] Confirm: `Logout()` in session service calls `repo.Invalidate()` which now deletes Redis
 
@@ -156,11 +166,16 @@ Tasks:
 
 ### BLOCK-3 — Wire SessionInvalidator into Authz Service [DONE]
 
-**Context**: Was missing. Now implemented: `authzService` holds `SessionInvalidator` interface (implemented by `SessionRepository`). `RevokeRole()` calls `sessionInv.InvalidateByUser(userID)` after removing Casbin g-rule. `AuthzConfig.SessionInvalidator` is optional (nil-safe for tests). Invalidation matrix documented in `10b-session-precomputation.md` — only flag/setting path was wired; authz path was not.
+**Context**: Was missing. Now implemented: `authzService` holds a `SessionInvalidator` interface
+(implemented by `SessionRepository`). `RevokeRole()` calls `sessionInv.InvalidateByUser(userID)`
+after removing the Casbin g-rule. `AuthzConfig.SessionInvalidator` is optional (nil-safe for tests). The invalidation
+matrix is already documented in `10b-session-precomputation.md` — it just is not wired for the
+authz path (only the flag/setting path has it).
 
 **Files**:
 - `internal/core/iam/service/authz.go` — add `SessionInvalidator` dependency, call on mutations
-- `internal/core/iam/service/session.go` — expose `InvalidateByUser` / `InvalidateByTenant` as `SessionInvalidator` implementation
+- `internal/core/iam/service/session.go` — expose `InvalidateByUser` / `InvalidateByTenant` as
+  `SessionInvalidator` implementation
 
 **Interface** (add to `service/authz.go`):
 ```go
@@ -177,24 +192,31 @@ type SessionInvalidator interface {
 - `RemovePolicy()`: parse `tenantID` from domain → `invalidator.InvalidateByTenant()`
 - `AssignRole()`: `InvalidateByUser()` to force re-authentication with new permissions
 
-**Risk if not fixed**: Role revocation doesn't revoke access. Security contract broken.
+**Risk if not fixed**: Role revocation does not revoke access. Security contract broken.
 
 ---
 
 ### BLOCK-4 — Replace Enforcer with `casbin.SyncedEnforcer` [DONE]
 
-**Context**: Now implemented: `NewAuthzService` uses `casbin.NewSyncedEnforcer(m, adapter)` and calls `e.StartAutoLoadPolicy(30 * time.Second)`. Thread safety and 30s multi-instance convergence active. Previous non-synced enforcer caused data race under concurrent `Enforce()` + `RevokeRole()` calls.
+**Context**: Now implemented: `NewAuthzService` uses `casbin.NewSyncedEnforcer(m, adapter)` and
+calls `e.StartAutoLoadPolicy(30 * time.Second)`. Thread safety and 30s multi-instance convergence
+are both active. The authz module should use `casbin.SyncedEnforcer` for production."
+Current implementation uses the non-synced enforcer. Under concurrent `Enforce()` + `RevokeRole()`
+calls (which call `DeleteRoleForUserInDomain()`), this is a data race.
 
 **File**: `internal/core/iam/service/authz.go`
 
 Tasks:
 - [ ] Replace `casbin.NewEnforcer(m, adapter)` with `casbin.NewSyncedEnforcer(m, adapter)`
-- [ ] Call `enforcer.StartAutoLoadPolicy(30 * time.Second)` after init
-- [ ] Stop auto-loader on shutdown: `enforcer.StopAutoLoadPolicy()` in cleanup hook
-- [ ] `InvalidateCache()` becomes no-op wrapper over `enforcer.LoadPolicy()`
+- [ ] Call `enforcer.StartAutoLoadPolicy(30 * time.Second)` after init — periodic reload handles
+  multi-instance state divergence (documented approach in `17-security-considerations.md` T8)
+- [ ] Stop the auto-loader on service shutdown: `enforcer.StopAutoLoadPolicy()` in a cleanup hook
+- [ ] `InvalidateCache()` becomes a no-op wrapper over `enforcer.LoadPolicy()` (SyncedEnforcer
+  handles the locking)
 - [ ] Add metric: `iam.authz.policy_reload` counter (label: `method=auto_reload`)
 
-**Note**: `SyncedEnforcer.StartAutoLoadPolicy(30s)` handles goroutine safety AND multi-instance sync. No separate watcher needed for v1.0.
+**Note**: `SyncedEnforcer.StartAutoLoadPolicy(30s)` handles both goroutine safety AND multi-instance
+sync in one mechanism. No separate watcher is needed for v1.0.
 
 **Risk if not fixed**: Data race under concurrent authz mutations. Undefined behavior in production.
 
@@ -202,7 +224,9 @@ Tasks:
 
 ### BLOCK-5 — Gate `internal/core/access/` Module [DONE]
 
-**Context**: Implemented. Every `.go` file in `internal/core/access/` carries `//go:build ignore`. Package doesn't compile into binary. DB migrations 000404–000413 marked as v2.0 reserved.
+**Context**: Implemented. Every `.go` file in `internal/core/access/` carries `//go:build ignore`.
+The package does not compile into the binary. DB migrations 000404–000413 are marked as v2.0
+reserved in their headers.
 
 Tasks:
 - [x] Add `//go:build ignore` to all `.go` files in `internal/core/access/`
@@ -217,11 +241,15 @@ Tasks:
 
 ### BLOCK-6 — Move JIT Bootstrap Out of Session Service [DONE]
 
-**Context**: Was privilege escalation path. Fixed: `BootstrapTenantAdmin()` called only from `UserService.RegisterNewUser()`, not from session/login path. Session service has no reference to authz service; no JIT bootstrap during login. Any roleless tenant user at login silently got `tenant_admin` — role assignment must not happen inside session layer.
+**Context**: Was identified as a privilege escalation path. Now fixed: `BootstrapTenantAdmin()` is
+called only from `UserService.RegisterNewUser()`, not from the session/login path. The session
+service has no reference to the authz service; there is no JIT bootstrap during login. `review.md` identifies this as privilege escalation: any roleless tenant user
+at login gets `tenant_admin` silently. Role assignment must not happen inside the session layer.
 
 **Files**:
 - `internal/core/iam/service/session.go` — remove JIT bootstrap call
-- `internal/core/iam/seed.go` — `SeedDefaultRoles` + `AssignAdminRole` already exist; wire at tenant provision time (not login)
+- `internal/core/iam/seed.go` — `SeedDefaultRoles` + `AssignAdminRole` already exist; wire at
+  tenant provision time (not at login)
 - Tenant provisioning flow — explicit call to `authzSvc.BootstrapTenantAdmin()` after tenant creation
 
 **Expected change**:
@@ -273,8 +301,11 @@ Tasks:
 - [x] Remove local deny-override logic (belongs to Casbin model, not session service)
 - [x] Remove JIT bootstrap call (BLOCK-6)
 - [x] Simplify `buildAndPersistSession()` — no permission computation, no role queries
-- [x] Session payload after refactor: `UserID`, `TenantID`, `UserType`, `EntityScope`, `Configuration` (flags/settings/prefs), token fields, `IPAddress`, `UserAgent`, `ExpiresAt`
-- [x] Five parallel queries in `buildSession` reduce to: `ResolveEntityScope`, `FlagService.ResolveForTenant`, `SettingService.ResolveForTenant`, `UserPreferences` — four total (permissions query removed)
+- [x] Session payload after refactor: `UserID`, `TenantID`, `UserType`, `EntityScope`,
+  `Configuration` (flags/settings/prefs), token fields, `IPAddress`, `UserAgent`, `ExpiresAt`
+- [x] The five parallel queries in `buildSession` reduce to: `ResolveEntityScope`,
+  `FlagService.ResolveForTenant`, `SettingService.ResolveForTenant`, `UserPreferences` — four total
+  (permissions query removed)
 
 ---
 
@@ -287,7 +318,8 @@ Tasks:
 - [x] Remove `Permissions` deserialization from `ValidateToken()` cache hit path
 - [x] Verify cached `ResolvedSession` contains no permission data
 - [x] Fix `Invalidate()` to DELETE Redis key (BLOCK-2)
-- [x] Cache TTL must match `session.ExpiresAt - time.Now()`, not fixed `SessionTTL` value
+- [x] Cache TTL must match `session.ExpiresAt - time.Now()`, not a fixed `SessionTTL` value
+  (prevents cached session outliving DB session)
 
 ---
 
@@ -299,7 +331,8 @@ Tasks:
 - [x] Remove `permissions` JSONB from `CreateSession` INSERT
 - [x] Remove `permissions` from `GetSessionByToken` / `ValidateToken` SELECT
 - [ ] Run `make sqlc` after query changes
-- [x] Comment out `permissions` column in `db/migration/000305_identity_sessions_add_permissions.up.sql` (note: column is in 000305 not 000304; `principal_id` kept in same migration)
+- [x] Comment out `permissions` column in `db/migration/000305_identity_sessions_add_permissions.up.sql`
+  (note: column is in 000305 not 000304; `principal_id` kept in same migration)
 - [x] Keep `principal_id` column — valid for audit trail
 
 ---
@@ -310,7 +343,8 @@ Tasks:
 
 Tasks:
 - [x] Replace `GetPendingMFA()` + separate `DeletePendingMFA()` with Redis `GETDEL` command
-- [x] `GETDEL` atomically fetches and deletes — prevents concurrent `CompleteMFALogin` producing duplicate sessions
+- [x] `GETDEL` atomically fetches and deletes — prevents concurrent `CompleteMFALogin` producing
+  duplicate sessions
 - [x] Added `GetAndDelete` to `cache.Service` interface + `redisClient` impl (uses `client.GetDel`)
 - [x] `DeletePendingMFA` retained for explicit cancellation paths; `CompleteMFALogin` no longer calls it
 - [x] Add test: two concurrent `CompleteMFALogin` calls for same pending token → only one session
@@ -321,7 +355,8 @@ Tasks:
 
 ### AUTHZ-1 — Enforce Single Enforcement Entrypoint
 
-After BLOCK-1 removes `Can()` / `CanDo()`, callers will fail to compile. Use as forcing function — don't silence compile errors, fix each call site.
+After BLOCK-1 removes `Can()` / `CanDo()`, callers will fail to compile. Use this as a forcing
+function — do not silence compile errors, fix each call site.
 
 Tasks:
 - [x] `grep -rn "\.Can\b\|\.CanDo\b\|RequirePermission" --include="*.go" internal/ cmd/` — fix all hits
@@ -331,26 +366,18 @@ Tasks:
 
 ---
 
-### AUTHZ-2 — Standardize Middleware: Single Casbin Path [DONE]
+### AUTHZ-2 — Standardize Middleware: Single Casbin Path
 
-**Files**: `internal/api/middleware/session_middleware.go`, `internal/core/iam/`
+**Files**: `internal/core/iam/adapter.go`, middleware layer
 
 Tasks:
-- [x] `Authorize(cfg, permission)` calls `cfg.AuthzService.Enforce()` — single Casbin path confirmed
-- [x] `RequireFlag(flagKey)` — reads `session.FeatureEnabled()` (context, not enforcement)
-- [x] No `authzSvc.Middleware()` method — HTTP middleware lives in `api/middleware`, not on interface
-- [x] "Two-path" table removed from `12b-http-middleware.md` — now documents single-path only
-- [x] Middleware flow: `Authenticate` → set `Principal` in Locals → `Authorize(cfg, perm)` → `Enforce`
-- [x] `Authorize` returns: 401 (no session/principal), 500 (Enforce error), 403 (denied), next (allowed)
-- [x] Bug fixed: `Authorize` was returning 403 on `Enforce` error — now correctly returns 500
-- [x] Tests: AZ-MID-030 (enforce error → 500), post-refactor suite in `authorize_test.go` — all pass
-
-**Implementation notes (2026-05-11)**:
-- Fixed: `internal/api/middleware/session_middleware.go` — split merged `err != nil || !allowed` condition
-- Added: `internal/api/middleware/authorize_test.go` — 4 post-refactor tests (recording stub, RequireFlag, EnforceError→500, NoSessionCan compile proof)
-- Added: `internal/core/iam/middleware_impl_test.go` — `errAuthzService` stub for AZ-MID-030
-- Added: `TestMiddleware_EnforceError_Returns500` to `MiddlewareUnitSuite` in `unit_test.go`
-- Updated: `docs/reference/modules/iam/12b-http-middleware.md` — single-path enforcement only
+- [ ] `RequirePermission(resource, action)` — rewritten to call `Enforce()` (BLOCK-1)
+- [ ] `RequireFlag(flagKey)` — remains unchanged; reads `session.FeatureEnabled()` (context, not enforcement)
+- [ ] `authzSvc.Middleware(obj, act)` — remains for management ops; confirm it calls `Enforce()`
+- [ ] The "two-path" table in `12b-http-middleware.md` must be updated (Section 15) — now single path
+- [ ] Middleware flow: `ValidateSession` → set `Principal` in Locals → `RequirePermission` → `Enforce`
+- [ ] Middleware must return: 401 (no Principal), 403 (Enforce false), 500 (Enforce error)
+- [ ] Tests: AZ-MID-001 through AZ-MID-040 must pass (see Section 10)
 
 ---
 
@@ -369,8 +396,10 @@ Tasks:
 **File**: `internal/core/iam/service/authz.go`
 
 Tasks:
-- [x] Guard in `AddPolicy()`: if `domain == DomainPlatform` and `p.Subject` prefix is not `"platform:"` or `"role:"` → return `ErrForbidden`
-- [x] Guard in `AssignRole()`: if role has `"role:platform-"` prefix and `AssignedBy` prefix is not `"platform:"` → return `ErrForbidden`
+- [x] Guard in `AddPolicy()`: if `domain == DomainPlatform` and `p.Subject` prefix is not
+  `"platform:"` or `"role:"` → return `ErrForbidden` (role subjects are valid policy holders)
+- [x] Guard in `AssignRole()`: if role has `"role:platform-"` prefix and `AssignedBy` prefix is not
+  `"platform:"` → return `ErrForbidden`
 - [x] Guard in `RemovePolicy()`: same domain check as `AddPolicy`
 - [x] `AssignedBy` validated non-empty in `AssignRole()` — ErrInvalidRequest if absent
 - [x] `builtinRoles` registry / `AssignableTo` check: not present in current codebase (not yet built)
@@ -380,7 +409,7 @@ Tasks:
 
 ### AUTHZ-5 — Policy Count Limit Guard (DoS Prevention)
 
-**Context**: `17-security-considerations.md` T6 documents this as required control.
+**Context**: `17-security-considerations.md` T6 documents this as a required control.
 
 **File**: `internal/core/iam/service/authz.go`
 
@@ -397,8 +426,10 @@ Tasks:
 
 Tasks:
 - [ ] Verify every `Enforce()` call passes domain derived from authenticated session (not request body)
-- [ ] Verify `SetDBPool` middleware correctly propagates `TenantID` and `UserType` from session (not from request) — confirmed in `12b-http-middleware.md`
-- [ ] Verify subject prefix validation in authn middleware (Rule 1 from `20-business-rules-and-validation.md`): subject without `"platform:"`, `"tenant:"`, `"portal:"`, or `"api:"` prefix must be rejected
+- [ ] Verify `SetDBPool` middleware correctly propagates `TenantID` and `UserType` from session
+  (not from request) — confirmed in `12b-http-middleware.md`
+- [ ] Verify subject prefix validation in authn middleware (Rule 1 from `20-business-rules-and-validation.md`):
+  subject without `"platform:"`, `"tenant:"`, `"portal:"`, or `"api:"` prefix must be rejected
 - [ ] Add test: AZ-ISO-001 through AZ-ISO-020 pass
 
 ---
@@ -425,7 +456,9 @@ Tasks:
 
 ### ROLE-1 — Tenant Custom Role Creation
 
-`builtinRoles` registry in `seed.go` defines system roles. Tenant custom roles implicitly created by adding policies with arbitrary role names. Explicit creation flow needed for validation and lifecycle management.
+Current state: `builtinRoles` registry in `seed.go` defines system roles. Tenant custom roles
+are implicitly created by adding policies with arbitrary role names. An explicit creation flow
+is needed for validation and lifecycle management.
 
 **Files**: `internal/core/iam/service/authz.go` or new `service/roles.go`
 
@@ -444,28 +477,32 @@ Tasks:
 Tasks:
 - [ ] Confirm no inheritance logic exists outside Casbin `g` rules — code audit
 - [ ] Document (in code): child role inherits parent's policies via Casbin model automatically
-- [ ] To make `role:finance-viewer` inherit `role:read-only`: add g rule `(role:finance-viewer, role:read-only, domain)` — Casbin g rule, not app concept
+- [ ] To make `role:finance-viewer` inherit `role:read-only`: add g rule
+  `(role:finance-viewer, role:read-only, domain)` — this is a Casbin g rule, not an app concept
 - [ ] Add test: `GetImplicitRoles` returns transitive role chain (hierarchy test)
-- [ ] Add test: revoking parent role via Casbin removes implicit permissions from child subjects
+- [ ] Add test: revoking a parent role via Casbin removes implicit permissions from child subjects
 
 ---
 
 ### ROLE-3 — Role Assignment Consistency (DB ↔ Casbin)
 
-**Context**: Rule 8 in `20-business-rules-and-validation.md` defines reconciliation queries. Both SQL queries documented there verbatim.
+**Context**: Rule 8 in `20-business-rules-and-validation.md` defines the reconciliation queries.
+Both SQL queries are documented there verbatim.
 
 Tasks:
-- [ ] `AssignRole()`: writes to BOTH `role_assignments` (audit) AND `casbin_rule` (enforcement) — must be atomic (transaction or two-phase write with compensating delete)
+- [ ] `AssignRole()`: writes to BOTH `role_assignments` (audit) AND `casbin_rule` (enforcement)
+  — must be atomic (transaction or two-phase write with compensating delete)
 - [ ] `RevokeRole()`: deactivates `role_assignments` AND removes g-rule atomically
 - [ ] Add startup reconciliation: run Rule 8 queries on service init, log WARNING per orphaned row
-- [ ] Add `reconcileRoleConsistency(ctx)` as exported maintenance method
+- [ ] Add `reconcileRoleConsistency(ctx)` as an exported maintenance method
 - [ ] Add metric: `iam.authz.reconciliation.orphaned_assignments` gauge (emitted at startup)
 
 ---
 
 ### ROLE-4 — Temporal Role Lazy Revoke Safety
 
-**Context**: Documented in `09-temporal-roles-and-expiry.md`. Lazy revoke correct approach for v1.0. Phase 2 background sweep is future work.
+**Context**: Documented in `09-temporal-roles-and-expiry.md`. Lazy revoke is the correct approach
+for v1.0. Phase 2 background sweep is future work.
 
 Tasks:
 - [ ] Confirm `revokeExpiredRoles()` failure is non-fatal — logs warning, `Enforce()` continues
@@ -479,11 +516,12 @@ Tasks:
 
 ### ROLE-5 — Role Audit Trail Completeness
 
-**Context**: `role_assignments` is authoritative audit source (Rule 8, `20-business-rules-and-validation.md`).
+**Context**: `role_assignments` is the authoritative audit source (Rule 8, `20-business-rules-and-validation.md`).
 
 Tasks:
 - [ ] `AssignedBy` field must always be set — validate non-empty before DB write
-- [ ] Add `RevokedBy` capture: when `RevokeRole()` deactivates a row, record who revoked it (either `updated_by` column or audit log from AUTHZ-7)
+- [ ] Add `RevokedBy` capture: when `RevokeRole()` deactivates a row, record who revoked it
+  (either as an `updated_by` column or in the audit log from AUTHZ-7)
 - [ ] `GetAssignments()` returns both active and inactive rows — full audit trail preserved
 - [ ] Confirm `GetAssignments()` ordered by `created_at DESC`
 - [ ] Tests: AZ-ROLE-040, AZ-ROLE-041, AZ-ROLE-042
@@ -495,7 +533,7 @@ Tasks:
 ### ISO-1 — RLS Consistency Audit
 
 Tables that MUST have RLS:
-- `user_sessions` — tenant-scoped
+- `user_sessions` — tenant-scoped (session belongs to one tenant)
 - `role_assignments` — tenant-scoped (audit trail)
 - `users`, `persons`, `employees` — tenant-scoped
 
@@ -508,13 +546,15 @@ Tasks:
 - [ ] Verify `000306_security_active_tenant_guard` migration applied — PENDING tenant blocks session
 - [ ] Verify `000307_security_policy_evaluations_rls` migration applied
 - [ ] Test AZ-INT-030: `application_role` sees only its tenant's `role_assignments`
-- [ ] Test: unauthenticated DB session (`set_tenant_context` not called) returns zero rows from all tenant-scoped tables
+- [ ] Test: unauthenticated DB session (`set_tenant_context` not called) returns zero rows from
+  all tenant-scoped tables
 
 ---
 
 ### ISO-2 — Subject Prefix Validation in Authn Middleware
 
-**Context**: Rule 1 in `20-business-rules-and-validation.md`: "The authn middleware MUST enforce subject format."
+**Context**: Rule 1 in `20-business-rules-and-validation.md`: "The authn middleware MUST enforce
+subject format."
 
 Tasks:
 - [x] Authn middleware: validate subject prefix in `Authenticate` after `setSessionLocals` — rejects any subject without valid prefix
@@ -543,15 +583,17 @@ All must run in CI on every PR touching `iam/`, `authz/`, or `middleware/`:
 ### CACHE-1 — Redis Session Contains Only Context
 
 After SES-1 and SES-3 complete:
-- [ ] Verify cached `ResolvedSession` contains: `UserID`, `TenantID`, `UserType`, `EntityScope`, `Configuration` (flags/settings/prefs), `ExpiresAt`, `IsActive` — nothing else
+- [ ] Verify cached `ResolvedSession` contains: `UserID`, `TenantID`, `UserType`, `EntityScope`,
+  `Configuration` (flags/settings/prefs), `ExpiresAt`, `IsActive` — nothing else
 - [ ] Verify no `Permissions` field in serialized cache entry (`grep` or JSON marshal test)
-- [ ] Cache TTL = `session.ExpiresAt - time.Now()` — sessions cannot outlive DB expiry
+- [ ] Cache TTL = `session.ExpiresAt - time.Now()` — sessions cannot outlive their DB expiry
 
 ---
 
 ### CACHE-2 — Invalidation Matrix Wiring
 
-**Context**: Invalidation matrix correctly documented in `10b-session-precomputation.md`. Flag/setting path implemented. Authz path (role/policy change) NOT wired.
+**Context**: The invalidation matrix is correctly documented in `10b-session-precomputation.md`.
+The flag/setting path is implemented. The authz path (role/policy change) is NOT wired.
 
 | Trigger | Scope | Method | Status |
 |---|---|---|---|
@@ -566,18 +608,20 @@ Tasks:
 - [ ] Wire BLOCK-2 (Logout Redis delete)
 - [ ] Wire BLOCK-3 (role/policy change → session invalidation)
 - [ ] Test: revoke role → validate session → next `Enforce()` returns 403 (not re-login)
-- [ ] Test: no over-invalidation — unrelated tenant policy changes don't invalidate other tenant sessions
+- [ ] Test: no over-invalidation — unrelated tenant policy changes do not invalidate other tenant sessions
 
 ---
 
 ### CACHE-3 — API Key Revocation Timing
 
-**Context**: `review.md` finding: "revoked API key remains valid for up to 5 minutes by design (cache TTL)." Known gap.
+**Context**: `review.md` finding: "revoked API key remains valid for up to 5 minutes by design
+(cache TTL)." This is a known gap.
 
 Tasks:
 - [ ] Document the 5-minute revocation window explicitly in `17-security-considerations.md`
-- [ ] For v1.0: accept this window — document as known limitation
-- [ ] For critical revocations (compromised key): `InvalidateCache()` call + direct Redis eviction of API key's session entry
+- [ ] For v1.0: accept this window — document as a known limitation
+- [ ] For critical revocations (compromised key): `InvalidateCache()` call + direct Redis eviction
+  of the API key's session entry
 - [ ] `SEC-4` test: API key revocation eventually takes effect within TTL window
 
 ---
@@ -592,7 +636,8 @@ Tasks:
 - [ ] `ResolvedSession.CanDo(resource, action string) bool`
 - [ ] Wildcard `"*"` sentinel logic
 
-Keep: `ToPrincipal()`, `EntityScope`, `Configuration`, `FeatureEnabled()`, all Setting helpers, `IsPlatform()`, `IsPortal()`.
+Keep: `ToPrincipal()`, `EntityScope`, `Configuration`, `FeatureEnabled()`, all Setting helpers,
+`IsPlatform()`, `IsPortal()`.
 
 ---
 
@@ -617,7 +662,8 @@ Keep: `ToPrincipal()`, `EntityScope`, `Configuration`, `FeatureEnabled()`, all S
 ### DEL-4 — Dead DB Queries
 
 - [ ] Remove `permissions` from session queries (SES-4)
-- [ ] Remove or mark queries used only by `access/` module: `db/queries/policies.sql` (any query referencing `000404`–`000413` tables)
+- [ ] Remove or mark queries used only by `access/` module: `db/queries/policies.sql` (any
+  query referencing `000404`–`000413` tables)
 - [ ] Mark migrations `000404`–`000413` as v2.0-reserved (comment header, do not drop)
 - [ ] Run `make sqlc` after all query changes
 
@@ -657,7 +703,7 @@ Keep: `ToPrincipal()`, `EntityScope`, `Configuration`, `FeatureEnabled()`, all S
 
 ### DB-4 — Migration Rollback Safety
 
-For all new migrations:
+For all new migrations introduced by this plan:
 - [ ] Every `.up.sql` has matching `.down.sql`
 - [ ] Down migrations tested: up → down → state returns to baseline
 - [ ] New columns added as `NULLABLE` or with defaults — never `NOT NULL` without default on existing tables
@@ -667,7 +713,8 @@ For all new migrations:
 
 ## 10. Testing Strategy
 
-Tests organized by layer. Every test maps to specific risk or audit finding. Tests marked `[uncomment]` exist in test files but are disabled — enable and fix, do not rewrite.
+Tests are organized by layer. Every test maps to a specific risk or audit finding. Tests marked
+`[uncomment]` exist in test files but are disabled — enable and fix, do not rewrite.
 
 ### T-UNIT — Unit Tests (no DB)
 
@@ -739,7 +786,8 @@ From `testing.md` AZ-SVC-001 to AZ-SVC-061:
 
 ### T-ROLES — Role Management Tests
 
-> **Note**: `review.md` states "every single role-management DB integration test is commented out." Tests exist — uncomment, fix compilation errors, verify against current schema.
+> **Note**: `review.md` states "every single role-management DB integration test is commented out."
+> These tests exist — uncomment, fix compilation errors, verify against current schema.
 
 From `testing.md` AZ-ROLE-001 to AZ-ROLE-042 (`roles_test.go`):
 
@@ -796,7 +844,8 @@ From `testing.md` AZ-MID-001 to AZ-MID-040:
 **New — post-refactor middleware tests** (risk: BLOCK-1):
 - [ ] `TestRequirePermission_CallsEnforce` — mock authz service, confirm `Enforce()` called
 - [ ] `TestRequirePermission_NoSessionCan` — confirm `session.Can()` NOT called (method absent)
-- [ ] `TestRequireFlag_UsesSessionConfiguration` — confirm flag check hits `session.FeatureEnabled()` (not Casbin)
+- [ ] `TestRequireFlag_UsesSessionConfiguration` — confirm flag check hits `session.FeatureEnabled()`
+  (not Casbin — flags are context, not authorization)
 
 **File**: `internal/core/iam/middleware_test.go`
 
@@ -825,7 +874,8 @@ From `testing.md` AZ-INT-001 to AZ-INT-031:
 - [ ] AZ-INT-001 `TestFullRBACFlow`
 - [ ] AZ-INT-002 `TestTerminationFlow`
 - [ ] AZ-INT-003 `TestTemporalRoleFlow`
-- [ ] AZ-INT-010 `TestMultiInstanceSync` — two `authz.New()` on same DB; `SyncedEnforcer` auto-reload closes gap within 30s
+- [ ] AZ-INT-010 `TestMultiInstanceSync` — two `authz.New()` on same DB; `SyncedEnforcer` auto-reload
+  closes the gap within 30s; test waits for reload then re-enforces
 - [ ] AZ-INT-020 `TestReconciliation_DetectsOrphan` — runs Rule 8 queries from `20-business-rules-and-validation.md`
 - [ ] AZ-INT-030 `TestRLS_RoleAssignments`
 - [ ] AZ-INT-031 `TestRLS_CasbinRule_NoTenantFilter`
@@ -1074,32 +1124,37 @@ From `testing.md` AZ-SEC-001 to AZ-SEC-050:
 
 ## 15. Documentation Update Tasks
 
-These documents describe OLD two-path architecture. Must be updated to reflect single Casbin enforcement path before or alongside Phase 2.
+These documents describe the OLD two-path architecture. They MUST be updated to reflect the
+single Casbin enforcement path before or alongside Phase 2.
 
 ### DOC-1 — Update `10b-session-precomputation.md`
 
-**Current content**: Describes 5-query parallel `buildSession()` including permissions query. Shows `session.Can()` / `session.CanDo()` as enforcement mechanism. Documents pre-computed permission map as primary authorization fast-path.
+**Current content**: Describes the 5-query parallel `buildSession()` including permissions query.
+Shows `session.Can()` / `session.CanDo()` as the enforcement mechanism. Documents the
+pre-computed permission map as the primary authorization fast-path.
 
 **Required updates**:
-- [ ] Remove permissions from 5-query parallel block (reduce to 4 queries)
+- [ ] Remove permissions from the 5-query parallel block (reduce to 4 queries)
 - [ ] Remove `Permissions map[string]bool` from `ResolvedSession` code block
 - [ ] Remove `Can()` / `CanDo()` methods from `ResolvedSession` code block
 - [ ] Update "What Gets Built at Login" section — flags/settings/prefs/entity-scope only
 - [ ] Update "In-Handler Usage" example — replace `session.CanDo()` with `authzSvc.Enforce()`
-- [ ] Retain invalidation matrix (correct and fully valid)
-- [ ] Add note: "Permission checks use Casbin.Enforce() — O(memory), no DB. Feature flags and settings remain O(1) from session.Configuration."
+- [ ] Retain the invalidation matrix (it is correct and fully valid)
+- [ ] Add note: "Permission checks use Casbin.Enforce() — O(memory), no DB. Feature flags and
+  settings remain O(1) from session.Configuration."
 
 ---
 
 ### DOC-2 — Update `12b-http-middleware.md`
 
-**Current content**: Shows `RequirePermission` using `session.CanDo()` and documents "two-path authorization" table (fast path vs Casbin path).
+**Current content**: Shows `RequirePermission` using `session.CanDo()` and documents a
+"two-path authorization" table (fast path vs Casbin path).
 
 **Required updates**:
 - [ ] Rewrite `RequirePermission` implementation to call `authzSvc.Enforce()` (match BLOCK-1 code)
-- [ ] Remove "two-path authorization" table — single Casbin path now
-- [ ] Update router example — `RequirePermission` now takes `authzSvc` as parameter
-- [ ] Keep `RequireFlag` unchanged — correctly reads `session.FeatureEnabled()` (context)
+- [ ] Remove the "two-path authorization" table — single Casbin path now
+- [ ] Update the router example — `RequirePermission` now takes `authzSvc` as a parameter
+- [ ] Keep `RequireFlag` unchanged — it correctly reads `session.FeatureEnabled()` (context)
 - [ ] Update "Both read from pre-computed session" note — permissions no longer pre-computed
 
 ---
@@ -1108,14 +1163,14 @@ These documents describe OLD two-path architecture. Must be updated to reflect s
 
 - [ ] T8 section: mark `casbin.SyncedEnforcer` as DONE once BLOCK-4 complete
 - [ ] Add API key revocation window (5 min) to threat mitigations table (CACHE-3)
-- [ ] Add policy count limit as T6 mitigation (AUTHZ-5)
+- [ ] Add policy count limit as a T6 mitigation (AUTHZ-5)
 
 ---
 
 ### DOC-4 — Update `16-performance-and-caching.md`
 
 - [ ] Update login latency: "5-6ms (5 parallel queries)" → "4ms (4 parallel queries, no permissions)"
-- [ ] Update `ResolvedSession` description — remove Permissions from "pre-computed" list
+- [ ] Update `ResolvedSession` description — remove Permissions from the "pre-computed" list
 - [ ] Add section: "Casbin Enforce Latency" with benchmark results from PERF-1
 - [ ] Update "Two-layer permission architecture" to reflect single Casbin path
 
@@ -1128,9 +1183,12 @@ These documents describe OLD two-path architecture. Must be updated to reflect s
 
 ---
 
+---
+
 ## 16. Documentation Expansion Tasks (2026-05-11)
 
-Tracks operational/admin/user-facing architecture documentation added in second documentation pass (after first-round reconciliation complete).
+This section tracks the operational/admin/user-facing architecture documentation added in the
+second documentation pass (after first-round reconciliation was complete).
 
 ### Completed Tasks
 
@@ -1178,13 +1236,13 @@ Tracks operational/admin/user-facing architecture documentation added in second 
 - [OPEN] **AUTHZ-4**: Implement platform domain write guard in `AuthzService.AddPolicy()` and `AssignRole()`
   - See `service/authz.go`
   - Guard: `if targetDomain == DomainPlatform && !caller.IsPlatform() { return ErrForbidden }`
-  - Requires service-layer access to caller's actor type
+  - Requires service-layer access to the caller's actor type
 
 - [OPEN] **AUTHZ-5**: Implement policy count limit per tenant domain
   - In `AddPolicy()`: check `len(GetPolicies(domain))` before inserting
   - Configurable limit (suggest default: 10,000 rules per domain)
   - Return `ErrPolicyLimitExceeded` when limit reached
-  - Expose limit as tenant setting or platform config
+  - Expose limit as a tenant setting or platform config
 
 - [DONE] **DB-1**: Migration `001008_sessions_drop_permissions` written
   - Up: `ALTER TABLE user_sessions DROP COLUMN IF EXISTS permissions;`
