@@ -48,6 +48,7 @@ func (q *Queries) CountPolicies(ctx context.Context, arg CountPoliciesParams) (i
 }
 
 const createPolicy = `-- name: CreatePolicy :one
+
 INSERT INTO
   policies (
     tenant_id,
@@ -105,6 +106,16 @@ type CreatePolicyParams struct {
 	CreatedBy   *uuid.UUID `json:"created_by"`
 }
 
+// =============================================================================
+// V2.0 RESERVED — ABAC POLICY QUERIES (DO NOT USE IN v1.0)
+//
+// These queries operate on the ABAC policy tables created by migrations
+// 000404–000413. The internal/core/access/ module that uses these queries
+// is gated with //go:build ignore for v1.0.
+//
+// Do NOT call these from active code. Do NOT drop these queries or the
+// underlying migrations — they are preserved for v2.0 activation.
+// =============================================================================
 // Policies CRUD Operations
 func (q *Queries) CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error) {
 	row := q.db.QueryRow(ctx, createPolicy,

@@ -255,17 +255,17 @@ authzSvc.BootstrapTenantAdmin(ctx, firstAdminUserID, tenantID)
 **File**: `internal/core/iam/domain/session.go`
 
 Tasks:
-- [ ] Remove `Permissions map[string]bool` from `Session` struct
-- [ ] Remove `Permissions map[string]bool` from `ResolvedSession` struct
-- [ ] Remove `Can(permission string) bool` method
-- [ ] Remove `CanDo(resource, action string) bool` method
-- [ ] Remove `RiskScore float64` field (dead — no computation exists in any service)
-- [ ] Remove wildcard `"*"` sentinel logic from `Can()` (deletes with the method)
-- [ ] Keep `ToPrincipal()` — required for Casbin `Enforce()` calls
-- [ ] Keep `EntityScope` — legitimate query context, not enforcement
-- [ ] Keep `Configuration` (`Flags`, `Settings`, `Prefs`) — O(1) context reads remain valid
-- [ ] Keep `FeatureEnabled()`, `SettingString()`, `SettingBool()`, `SettingInt()`, `SettingDecimal()`
-- [ ] Keep `IsPlatform()`, `IsPortal()` — identity checks, not authorization
+- [x] Remove `Permissions map[string]bool` from `Session` struct
+- [x] Remove `Permissions map[string]bool` from `ResolvedSession` struct
+- [x] Remove `Can(permission string) bool` method
+- [x] Remove `CanDo(resource, action string) bool` method
+- [x] Remove `RiskScore float64` field (dead — no computation exists in any service)
+- [x] Remove wildcard `"*"` sentinel logic from `Can()` (deletes with the method)
+- [x] Keep `ToPrincipal()` — required for Casbin `Enforce()` calls
+- [x] Keep `EntityScope` — legitimate query context, not enforcement
+- [x] Keep `Configuration` (`Flags`, `Settings`, `Prefs`) — O(1) context reads remain valid
+- [x] Keep `FeatureEnabled()`, `SettingString()`, `SettingBool()`, `SettingInt()`, `SettingDecimal()`
+- [x] Keep `IsPlatform()`, `IsPortal()` — identity checks, not authorization
 
 **Verify**: `grep -rn "\.Can\b\|\.CanDo\b" --include="*.go" internal/` returns zero hits.
 
@@ -276,15 +276,15 @@ Tasks:
 **File**: `internal/core/iam/service/session.go`
 
 Tasks:
-- [ ] Delete `buildPermissions()` function entirely
-- [ ] Remove all `authz.GetImplicitRoles()` calls from session service
-- [ ] Remove all `authz.GetPolicies()` calls from session service
-- [ ] Remove local deny-override logic (belongs to Casbin model, not session service)
-- [ ] Remove JIT bootstrap call (BLOCK-6)
-- [ ] Simplify `buildAndPersistSession()` — no permission computation, no role queries
-- [ ] Session payload after refactor: `UserID`, `TenantID`, `UserType`, `EntityScope`,
+- [x] Delete `buildPermissions()` function entirely
+- [x] Remove all `authz.GetImplicitRoles()` calls from session service
+- [x] Remove all `authz.GetPolicies()` calls from session service
+- [x] Remove local deny-override logic (belongs to Casbin model, not session service)
+- [x] Remove JIT bootstrap call (BLOCK-6)
+- [x] Simplify `buildAndPersistSession()` — no permission computation, no role queries
+- [x] Session payload after refactor: `UserID`, `TenantID`, `UserType`, `EntityScope`,
   `Configuration` (flags/settings/prefs), token fields, `IPAddress`, `UserAgent`, `ExpiresAt`
-- [ ] The five parallel queries in `buildSession` reduce to: `ResolveEntityScope`,
+- [x] The five parallel queries in `buildSession` reduce to: `ResolveEntityScope`,
   `FlagService.ResolveForTenant`, `SettingService.ResolveForTenant`, `UserPreferences` — four total
   (permissions query removed)
 
@@ -295,11 +295,11 @@ Tasks:
 **File**: `internal/core/iam/repository/session.go`
 
 Tasks:
-- [ ] Remove `Permissions` JSONB serialization from `CacheResolved()`
-- [ ] Remove `Permissions` deserialization from `ValidateToken()` cache hit path
-- [ ] Verify cached `ResolvedSession` contains no permission data
-- [ ] Fix `Invalidate()` to DELETE Redis key (BLOCK-2)
-- [ ] Cache TTL must match `session.ExpiresAt - time.Now()`, not a fixed `SessionTTL` value
+- [x] Remove `Permissions` JSONB serialization from `CacheResolved()`
+- [x] Remove `Permissions` deserialization from `ValidateToken()` cache hit path
+- [x] Verify cached `ResolvedSession` contains no permission data
+- [x] Fix `Invalidate()` to DELETE Redis key (BLOCK-2)
+- [x] Cache TTL must match `session.ExpiresAt - time.Now()`, not a fixed `SessionTTL` value
   (prevents cached session outliving DB session)
 
 ---
@@ -309,13 +309,12 @@ Tasks:
 **Files**: `db/queries/sessions.sql`, `db/sqlc/sessions.sql.go`
 
 Tasks:
-- [ ] Remove `permissions` JSONB from `CreateSession` INSERT
-- [ ] Remove `permissions` from `GetSessionByToken` / `ValidateToken` SELECT
+- [x] Remove `permissions` JSONB from `CreateSession` INSERT
+- [x] Remove `permissions` from `GetSessionByToken` / `ValidateToken` SELECT
 - [ ] Run `make sqlc` after query changes
-- [ ] since its small change modify `db/migration/000304_identity_add_user_sessions.up.sql` and comment out `permissions` column
-  ```sql
-  ```
-- [ ] Keep `principal_id` column — valid for audit trail
+- [x] Comment out `permissions` column in `db/migration/000305_identity_sessions_add_permissions.up.sql`
+  (note: column is in 000305 not 000304; `principal_id` kept in same migration)
+- [x] Keep `principal_id` column — valid for audit trail
 
 ---
 

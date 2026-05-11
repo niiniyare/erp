@@ -124,14 +124,12 @@ func (r *sessionRepo) Create(ctx context.Context, s domain.Session) error {
 			UserID:        s.UserID,
 			UserType:      userType,
 			SessionToken:  s.TokenHash,
-			Permissions:   json.RawMessage("{}"), // TODO(SES-4): remove after permissions column migration
 			PrincipalID:   principalID,
 			EntityScope:   entityScopeJSON,
 			Configuration: configJSON,
 			IpAddress:     ipAddr,
 			UserAgent:     userAgent,
 			ExpiresAt:     s.ExpiresAt,
-			RiskScore:     nil, // removed from Session model
 		})
 	})
 	if err != nil {

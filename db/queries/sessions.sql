@@ -1,34 +1,32 @@
 -- name: CreateSession :exec
 -- Inserts a fully pre-computed session at login.
--- configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 5 concurrent queries.
+-- configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 4 concurrent queries.
 -- entity_scope  = {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/.../"}.
+-- NOTE: permissions column removed (SES-4) — authorization is Casbin-only (no session snapshot).
+--       risk_score column removed — no computation exists; column retained in DB for rollback safety.
 INSERT INTO user_sessions (
     tenant_id,
     user_id,
     user_type,
     session_token,
-    permissions,
     principal_id,
     entity_scope,
     configuration,
     ip_address,
     user_agent,
     expires_at,
-    risk_score,
     is_active
 ) VALUES (
     current_tenant_id(),
     $1,  -- user_id
     $2,  -- user_type     (copied from users for SetDBPool without extra join)
     $3,  -- session_token (sha256hex of raw token — raw token never stored)
-    $4,  -- permissions   (JSONB: {"finance.transactions.read": true, ...})
-    $5,  -- principal_id  (nullable UUID: portal users' business record)
-    $6,  -- entity_scope  (JSONB: pre-computed access scope)
-    $7,  -- configuration (JSONB: flags + settings + prefs)
-    $8,  -- ip_address
-    $9,  -- user_agent
-    $10, -- expires_at
-    $11, -- risk_score
+    $4,  -- principal_id  (nullable UUID: portal users' business record)
+    $5,  -- entity_scope  (JSONB: pre-computed access scope)
+    $6,  -- configuration (JSONB: flags + settings + prefs)
+    $7,  -- ip_address
+    $8,  -- user_agent
+    $9,  -- expires_at
     TRUE
 );
 
@@ -40,14 +38,12 @@ SELECT
     tenant_id,
     user_type,
     session_token,
-    permissions,
     principal_id,
     entity_scope,
     configuration,
     ip_address,
     user_agent,
     expires_at,
-    risk_score,
     is_active,
     last_accessed_at
 FROM user_sessions
@@ -65,8 +61,8 @@ WHERE  session_token = $1
   AND  expires_at > NOW()
 RETURNING
     id, user_id, tenant_id, user_type, session_token,
-    permissions, principal_id, entity_scope, configuration,
-    ip_address, user_agent, expires_at, risk_score, is_active, last_accessed_at;
+    principal_id, entity_scope, configuration,
+    ip_address, user_agent, expires_at, is_active, last_accessed_at;
 
 -- name: InvalidateSession :exec
 -- Logout: immediately deactivates a single session.

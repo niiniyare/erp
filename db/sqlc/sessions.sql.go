@@ -45,28 +45,24 @@ INSERT INTO user_sessions (
     user_id,
     user_type,
     session_token,
-    permissions,
     principal_id,
     entity_scope,
     configuration,
     ip_address,
     user_agent,
     expires_at,
-    risk_score,
     is_active
 ) VALUES (
     current_tenant_id(),
     $1,  -- user_id
     $2,  -- user_type     (copied from users for SetDBPool without extra join)
     $3,  -- session_token (sha256hex of raw token — raw token never stored)
-    $4,  -- permissions   (JSONB: {"finance.transactions.read": true, ...})
-    $5,  -- principal_id  (nullable UUID: portal users' business record)
-    $6,  -- entity_scope  (JSONB: pre-computed access scope)
-    $7,  -- configuration (JSONB: flags + settings + prefs)
-    $8,  -- ip_address
-    $9,  -- user_agent
-    $10, -- expires_at
-    $11, -- risk_score
+    $4,  -- principal_id  (nullable UUID: portal users' business record)
+    $5,  -- entity_scope  (JSONB: pre-computed access scope)
+    $6,  -- configuration (JSONB: flags + settings + prefs)
+    $7,  -- ip_address
+    $8,  -- user_agent
+    $9,  -- expires_at
     TRUE
 )
 `
@@ -75,32 +71,31 @@ type CreateSessionParams struct {
 	UserID        uuid.UUID   `json:"user_id"`
 	UserType      *string     `json:"user_type"`
 	SessionToken  string      `json:"session_token"`
-	Permissions   []byte      `json:"permissions"`
 	PrincipalID   *uuid.UUID  `json:"principal_id"`
 	EntityScope   []byte      `json:"entity_scope"`
 	Configuration []byte      `json:"configuration"`
 	IpAddress     *netip.Addr `json:"ip_address"`
 	UserAgent     *string     `json:"user_agent"`
 	ExpiresAt     time.Time   `json:"expires_at"`
-	RiskScore     *int32      `json:"risk_score"`
 }
 
 // Inserts a fully pre-computed session at login.
-// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 5 concurrent queries.
+// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 4 concurrent queries.
 // entity_scope  = {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/.../"}.
+// NOTE: permissions column removed (SES-4) — authorization is Casbin-only (no session snapshot).
+//
+//	risk_score column removed — no computation exists; column retained in DB for rollback safety.
 func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) error {
 	_, err := q.db.Exec(ctx, createSession,
 		arg.UserID,
 		arg.UserType,
 		arg.SessionToken,
-		arg.Permissions,
 		arg.PrincipalID,
 		arg.EntityScope,
 		arg.Configuration,
 		arg.IpAddress,
 		arg.UserAgent,
 		arg.ExpiresAt,
-		arg.RiskScore,
 	)
 	return err
 }
@@ -112,14 +107,12 @@ SELECT
     tenant_id,
     user_type,
     session_token,
-    permissions,
     principal_id,
     entity_scope,
     configuration,
     ip_address,
     user_agent,
     expires_at,
-    risk_score,
     is_active,
     last_accessed_at
 FROM user_sessions
@@ -134,14 +127,12 @@ type GetSessionByTokenRow struct {
 	TenantID       uuid.UUID    `json:"tenant_id"`
 	UserType       *string      `json:"user_type"`
 	SessionToken   string       `json:"session_token"`
-	Permissions    []byte       `json:"permissions"`
 	PrincipalID    *uuid.UUID   `json:"principal_id"`
 	EntityScope    []byte       `json:"entity_scope"`
 	Configuration  []byte       `json:"configuration"`
 	IpAddress      *netip.Addr  `json:"ip_address"`
 	UserAgent      *string      `json:"user_agent"`
 	ExpiresAt      time.Time    `json:"expires_at"`
-	RiskScore      *int32       `json:"risk_score"`
 	IsActive       *bool        `json:"is_active"`
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 }
@@ -156,14 +147,12 @@ func (q *Queries) GetSessionByToken(ctx context.Context, sessionToken string) (*
 		&i.TenantID,
 		&i.UserType,
 		&i.SessionToken,
-		&i.Permissions,
 		&i.PrincipalID,
 		&i.EntityScope,
 		&i.Configuration,
 		&i.IpAddress,
 		&i.UserAgent,
 		&i.ExpiresAt,
-		&i.RiskScore,
 		&i.IsActive,
 		&i.LastAccessedAt,
 	)
@@ -217,8 +206,8 @@ WHERE  session_token = $1
   AND  expires_at > NOW()
 RETURNING
     id, user_id, tenant_id, user_type, session_token,
-    permissions, principal_id, entity_scope, configuration,
-    ip_address, user_agent, expires_at, risk_score, is_active, last_accessed_at
+    principal_id, entity_scope, configuration,
+    ip_address, user_agent, expires_at, is_active, last_accessed_at
 `
 
 type TouchAndGetSessionRow struct {
@@ -227,14 +216,12 @@ type TouchAndGetSessionRow struct {
 	TenantID       uuid.UUID    `json:"tenant_id"`
 	UserType       *string      `json:"user_type"`
 	SessionToken   string       `json:"session_token"`
-	Permissions    []byte       `json:"permissions"`
 	PrincipalID    *uuid.UUID   `json:"principal_id"`
 	EntityScope    []byte       `json:"entity_scope"`
 	Configuration  []byte       `json:"configuration"`
 	IpAddress      *netip.Addr  `json:"ip_address"`
 	UserAgent      *string      `json:"user_agent"`
 	ExpiresAt      time.Time    `json:"expires_at"`
-	RiskScore      *int32       `json:"risk_score"`
 	IsActive       *bool        `json:"is_active"`
 	LastAccessedAt sql.NullTime `json:"last_accessed_at"`
 }
@@ -250,14 +237,12 @@ func (q *Queries) TouchAndGetSession(ctx context.Context, sessionToken string) (
 		&i.TenantID,
 		&i.UserType,
 		&i.SessionToken,
-		&i.Permissions,
 		&i.PrincipalID,
 		&i.EntityScope,
 		&i.Configuration,
 		&i.IpAddress,
 		&i.UserAgent,
 		&i.ExpiresAt,
-		&i.RiskScore,
 		&i.IsActive,
 		&i.LastAccessedAt,
 	)

@@ -25,7 +25,7 @@ type Querier interface {
 	// Usage: Soft delete or archive old entity states
 	// Use case: Long-term data archival while maintaining referential integrity
 	ArchiveOldEntityStates(ctx context.Context, fiscalYear *int16) error
-	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (any, error)
+	AssignUserRole(ctx context.Context, arg AssignUserRoleParams) (interface{}, error)
 	BatchSoftDeleteEntities(ctx context.Context, uuids []uuid.UUID) error
 	// ===============================================
 	// Batch Operations
@@ -169,13 +169,25 @@ type Querier interface {
 	CreateModule(ctx context.Context, arg CreateModuleParams) (*Module, error)
 	CreatePasswordResetToken(ctx context.Context, arg CreatePasswordResetTokenParams) error
 	CreatePerson(ctx context.Context, arg CreatePersonParams) (*Person, error)
+	// =============================================================================
+	// V2.0 RESERVED — ABAC POLICY QUERIES (DO NOT USE IN v1.0)
+	//
+	// These queries operate on the ABAC policy tables created by migrations
+	// 000404–000413. The internal/core/access/ module that uses these queries
+	// is gated with //go:build ignore for v1.0.
+	//
+	// Do NOT call these from active code. Do NOT drop these queries or the
+	// underlying migrations — they are preserved for v2.0 activation.
+	// =============================================================================
 	// Policies CRUD Operations
 	CreatePolicy(ctx context.Context, arg CreatePolicyParams) (*Policy, error)
 	CreatePolicyEvaluation(ctx context.Context, arg CreatePolicyEvaluationParams) (*PolicyEvaluation, error)
 	CreateResource(ctx context.Context, arg CreateResourceParams) (*Resource, error)
 	// Inserts a fully pre-computed session at login.
-	// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 5 concurrent queries.
+	// configuration = {"flags":{...},"settings":{...},"prefs":{...}} built from 4 concurrent queries.
 	// entity_scope  = {"type":"all"|"subtree"|"entity","entity_id":"uuid","path_prefix":"/.../"}.
+	// NOTE: permissions column removed (SES-4) — authorization is Casbin-only (no session snapshot).
+	//       risk_score column removed — no computation exists; column retained in DB for rollback safety.
 	CreateSession(ctx context.Context, arg CreateSessionParams) error
 	// ==========================================
 	// Template Application Queries
@@ -400,7 +412,7 @@ type Querier interface {
 	GetAllTenantsRevenueAnalytics(ctx context.Context, arg GetAllTenantsRevenueAnalyticsParams) ([]*GetAllTenantsRevenueAnalyticsRow, error)
 	// Admin-level storage analytics (cross-tenant view)
 	GetAllTenantsStorageAnalytics(ctx context.Context) ([]*GetAllTenantsStorageAnalyticsRow, error)
-	GetAllTransactionTags(ctx context.Context) ([]any, error)
+	GetAllTransactionTags(ctx context.Context) ([]interface{}, error)
 	// Detect anomalous user behavior patterns
 	GetAnomalousUserBehavior(ctx context.Context, arg GetAnomalousUserBehaviorParams) ([]*GetAnomalousUserBehaviorRow, error)
 	GetApplicablePolicies(ctx context.Context, arg GetApplicablePoliciesParams) ([]*Policy, error)
@@ -506,11 +518,11 @@ type Querier interface {
 	// 6. PERFORMANCE AND ANALYTICS QUERIES
 	// =====================================================================
 	GetEntityCountByType(ctx context.Context) ([]*GetEntityCountByTypeRow, error)
-	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (any, error)
+	GetEntityDepth(ctx context.Context, ancestorID uuid.UUID) (interface{}, error)
 	GetEntityDescendants(ctx context.Context, ancestorID uuid.UUID) ([]*GetEntityDescendantsRow, error)
 	GetEntityHealthCheck(ctx context.Context) (*GetEntityHealthCheckRow, error)
 	GetEntityHierarchyStats(ctx context.Context) (*GetEntityHierarchyStatsRow, error)
-	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (any, error)
+	GetEntityLevel(ctx context.Context, descendantID uuid.UUID) (interface{}, error)
 	GetEntityParent(ctx context.Context, descendantID uuid.UUID) (*Entity, error)
 	GetEntityPath(ctx context.Context, descendantID uuid.UUID) ([]*GetEntityPathRow, error)
 	GetEntityRoots(ctx context.Context) ([]*Entity, error)
@@ -720,7 +732,7 @@ type Querier interface {
 	GetHighRiskEvents(ctx context.Context, arg GetHighRiskEventsParams) ([]*GetHighRiskEventsRow, error)
 	// Usage: Gets the highest sequence number for a specific entity/key/fiscal year combination
 	// Use case: Finding the current maximum sequence before manual adjustments
-	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (any, error)
+	GetHighestSequenceNumber(ctx context.Context, arg GetHighestSequenceNumberParams) (interface{}, error)
 	// Get hourly event rates for capacity planning
 	GetHourlyEventRates(ctx context.Context, arg GetHourlyEventRatesParams) ([]*GetHourlyEventRatesRow, error)
 	GetInactiveAccounts(ctx context.Context, arg GetInactiveAccountsParams) ([]*GetInactiveAccountsRow, error)
@@ -732,7 +744,7 @@ type Querier interface {
 	GetLeafAccountsWithGroups(ctx context.Context, arg GetLeafAccountsWithGroupsParams) ([]*VFinanceAccountsWithGroup, error)
 	// Get metadata about materialized views
 	GetMaterializedViewMetadata(ctx context.Context) ([]*GetMaterializedViewMetadataRow, error)
-	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (any, error)
+	GetMaxSequenceByEntityAndKey(ctx context.Context, arg GetMaxSequenceByEntityAndKeyParams) (interface{}, error)
 	GetModuleBySlug(ctx context.Context, slug string) (*Module, error)
 	// Ensures positive sequence number
 	// =====================================================================
@@ -853,7 +865,7 @@ type Querier interface {
 	GetSettingDefinition(ctx context.Context, settingKey string) (*SettingDefinition, error)
 	// Find similar incident patterns for threat intelligence
 	GetSimilarIncidentPatterns(ctx context.Context, arg GetSimilarIncidentPatternsParams) ([]*GetSimilarIncidentPatternsRow, error)
-	GetSpecificSetting(ctx context.Context, key string) (any, error)
+	GetSpecificSetting(ctx context.Context, key string) (interface{}, error)
 	GetStaleAccountBalances(ctx context.Context, arg GetStaleAccountBalancesParams) ([]*GetStaleAccountBalancesRow, error)
 	// Usage: Finds entity states that haven't been updated recently
 	// Use case: Identifying inactive sequences, cleanup candidate identification

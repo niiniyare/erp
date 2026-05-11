@@ -31,7 +31,7 @@ WHERE
 `
 
 type AddTransactionAttachmentParams struct {
-	AttachmentID  any `json:"attachment_id"`
+	AttachmentID  interface{} `json:"attachment_id"`
 	UpdatedBy     *uuid.UUID  `json:"updated_by"`
 	TransactionID uuid.UUID   `json:"transaction_id"`
 }
@@ -56,7 +56,7 @@ WHERE
 `
 
 type AddTransactionTagParams struct {
-	Tag           any `json:"tag"`
+	Tag           interface{} `json:"tag"`
 	UpdatedBy     *uuid.UUID  `json:"updated_by"`
 	TransactionID uuid.UUID   `json:"transaction_id"`
 }
@@ -510,15 +510,15 @@ ORDER BY
   tag
 `
 
-func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]any, error) {
+func (q *Queries) GetAllTransactionTags(ctx context.Context) ([]interface{}, error) {
 	rows, err := q.db.Query(ctx, getAllTransactionTags)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []any{}
+	items := []interface{}{}
 	for rows.Next() {
-		var tag any
+		var tag interface{}
 		if err := rows.Scan(&tag); err != nil {
 			return nil, err
 		}
@@ -981,7 +981,7 @@ ORDER BY
 `
 
 type GetTransactionCountByTagRow struct {
-	Tag              any `json:"tag"`
+	Tag              interface{} `json:"tag"`
 	TransactionCount int64       `json:"transaction_count"`
 }
 
@@ -2096,7 +2096,7 @@ WHERE
 `
 
 type RemoveTransactionAttachmentParams struct {
-	AttachmentID  any `json:"attachment_id"`
+	AttachmentID  interface{} `json:"attachment_id"`
 	UpdatedBy     *uuid.UUID  `json:"updated_by"`
 	TransactionID uuid.UUID   `json:"transaction_id"`
 }
@@ -2120,7 +2120,7 @@ WHERE
 `
 
 type RemoveTransactionTagParams struct {
-	Tag           any `json:"tag"`
+	Tag           interface{} `json:"tag"`
 	UpdatedBy     *uuid.UUID  `json:"updated_by"`
 	TransactionID uuid.UUID   `json:"transaction_id"`
 }

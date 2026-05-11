@@ -1428,7 +1428,7 @@ type GetAccountsForFinancialStatementsRow struct {
 	CreatedBy                   uuid.UUID      `json:"created_by"`
 	UpdatedBy                   *uuid.UUID     `json:"updated_by"`
 	IsLeafAccount               *bool          `json:"is_leaf_account"`
-	CalculatedBalance           any    `json:"calculated_balance"`
+	CalculatedBalance           interface{}    `json:"calculated_balance"`
 }
 
 func (q *Queries) GetAccountsForFinancialStatements(ctx context.Context, arg GetAccountsForFinancialStatementsParams) ([]*GetAccountsForFinancialStatementsRow, error) {

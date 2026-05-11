@@ -1,17 +1,19 @@
 -- ------------------------------------------------------------------------------------------------
--- USER_SESSIONS — ADD PERMISSIONS AND PRINCIPAL_ID COLUMNS
+-- USER_SESSIONS — ADD PRINCIPAL_ID COLUMN
 -- ------------------------------------------------------------------------------------------------
--- Adds two columns to user_sessions that support the pre-computed authz model:
---   permissions:  O(1) per-request lookup map built at login via ResolvedSession.Can().
---   principal_id: for portal users, the contact/employee UUID they act on behalf of.
+-- principal_id: for portal users, the contact/employee UUID they act on behalf of.
 --
 -- NOTE: Depends on user_sessions (000304) and users(id).
+--
+-- SES-4 (IAM v1.0): permissions column removed from active queries — authorization is
+-- Casbin-only. The DB column is retained for rollback safety; it will be dropped in a
+-- dedicated migration (DB-1) once v1.0 is fully stable.
 -- ------------------------------------------------------------------------------------------------
 ALTER TABLE user_sessions
-    ADD COLUMN IF NOT EXISTS permissions  JSONB NOT NULL DEFAULT '{}'::jsonb,
+    -- ADD COLUMN IF NOT EXISTS permissions  JSONB NOT NULL DEFAULT '{}'::jsonb,  -- SES-4: removed; Casbin-only authz
     ADD COLUMN IF NOT EXISTS principal_id UUID  REFERENCES users(id) ON DELETE SET NULL;
 
-COMMENT ON COLUMN user_sessions.permissions  IS 'Pre-computed permission map {"finance.invoices.read": true, ...} stored at login; used for O(1) authz on every request.';
+-- COMMENT ON COLUMN user_sessions.permissions  IS '...';  -- SES-4: column removed from queries
 COMMENT ON COLUMN user_sessions.principal_id IS 'For portal users: the contact/employee UUID they act as. NULL for platform and tenant users.';
 
 -- ------------------------------------------------------------------------------------------------
