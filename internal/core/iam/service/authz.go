@@ -169,6 +169,34 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 	}, nil
 }
 
+// NewInMemoryAuthzServiceWithLimit is like NewInMemoryAuthzService but with a
+// configurable per-domain policy cap. Intended for unit tests that exercise the
+// AUTHZ-5 policy count guard without needing a database.
+func NewInMemoryAuthzServiceWithLimit(repo repository.AuthzRepository, log logger.Logger, maxPolicies int) (AuthzService, error) {
+	m, err := casbinmodel.NewModelFromString(domain.CasbinModel)
+	if err != nil {
+		return nil, fmt.Errorf("authz: build casbin model: %w", err)
+	}
+	e, err := casbin.NewSyncedEnforcer(m)
+	if err != nil {
+		return nil, fmt.Errorf("authz: create in-memory enforcer: %w", err)
+	}
+	e.EnableAutoSave(false)
+	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
+	if maxPolicies <= 0 {
+		maxPolicies = DefaultMaxPoliciesPerDomain
+	}
+	return &authzService{
+		enforcer:    e,
+		repo:        repo,
+		sessionInv:  nil,
+		log:         scopedLog,
+		metrics:     metrics.NewNoOpMetricsProvider(),
+		tracer:      tracing.NewNoOpService(),
+		maxPolicies: maxPolicies,
+	}, nil
+}
+
 // Enforcement
 
 func (s *authzService) Enforce(ctx context.Context, r domain.Request) (bool, error) {
@@ -311,16 +339,18 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 		delegatedBy = &ao.DelegatedBy
 	}
 
-	if err := s.repo.UpsertRoleAssignment(ctx, tid, subject, role, domainName, assignedBy, delegatedBy, ao.ExpiresAt); err != nil {
-		span.RecordError(err)
-		s.log.ErrorContext(ctx, "authz assign role: upsert failed", logger.Fields{
-			"subject":  subject,
-			"role":     role,
-			"domain":   domainName,
-			"error":    err.Error(),
-			"trace_id": s.tracer.GetTraceID(ctx),
-		})
-		return err
+	if s.repo != nil {
+		if err := s.repo.UpsertRoleAssignment(ctx, tid, subject, role, domainName, assignedBy, delegatedBy, ao.ExpiresAt); err != nil {
+			span.RecordError(err)
+			s.log.ErrorContext(ctx, "authz assign role: upsert failed", logger.Fields{
+				"subject":  subject,
+				"role":     role,
+				"domain":   domainName,
+				"error":    err.Error(),
+				"trace_id": s.tracer.GetTraceID(ctx),
+			})
+			return err
+		}
 	}
 
 	s.metrics.IncrementCounter("iam.authz.role.assigned", nil)
@@ -368,16 +398,18 @@ func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName
 
 	s.enforcer.DeleteRoleForUserInDomain(subject, role, domainName)
 
-	if err := s.repo.DeactivateRoleAssignment(ctx, subject, role, domainName); err != nil {
-		span.RecordError(err)
-		s.log.ErrorContext(ctx, "authz revoke role: deactivate failed", logger.Fields{
-			"subject":  subject,
-			"role":     role,
-			"domain":   domainName,
-			"error":    err.Error(),
-			"trace_id": s.tracer.GetTraceID(ctx),
-		})
-		return err
+	if s.repo != nil {
+		if err := s.repo.DeactivateRoleAssignment(ctx, subject, role, domainName); err != nil {
+			span.RecordError(err)
+			s.log.ErrorContext(ctx, "authz revoke role: deactivate failed", logger.Fields{
+				"subject":  subject,
+				"role":     role,
+				"domain":   domainName,
+				"error":    err.Error(),
+				"trace_id": s.tracer.GetTraceID(ctx),
+			})
+			return err
+		}
 	}
 
 	s.metrics.IncrementCounter("iam.authz.role.revoked", nil)
@@ -483,6 +515,9 @@ func (s *authzService) GetAssignments(ctx context.Context, subject, domainName s
 		attribute.String("authz.domain", domainName),
 	)
 
+	if s.repo == nil {
+		return nil, nil // in-memory service — no persistent assignments
+	}
 	assignments, err := s.repo.ListRoleAssignments(ctx, subject, domainName)
 	if err != nil {
 		span.RecordError(err)
@@ -508,9 +543,13 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 	if p.Effect != "allow" && p.Effect != "deny" {
 		return fmt.Errorf("authz: invalid policy effect %q: must be \"allow\" or \"deny\"", p.Effect)
 	}
-	// Platform domain guard: only platform subjects may hold policies in _platform_.
-	// A tenant actor reaching this path indicates a privilege escalation attempt.
-	if p.Domain == domain.DomainPlatform && !strings.HasPrefix(p.Subject, "platform:") {
+	// Platform domain guard: only platform or role subjects may hold policies in _platform_.
+	// A tenant/portal/api actor reaching this path indicates a privilege escalation attempt.
+	// Role subjects ("role:...") are allowed because they are role-to-permission bindings,
+	// not user identities — a "role:platform-admin" policy is assigned to platform users via g-rules.
+	if p.Domain == domain.DomainPlatform &&
+		!strings.HasPrefix(p.Subject, "platform:") &&
+		!strings.HasPrefix(p.Subject, "role:") {
 		return domain.ErrForbidden
 	}
 
@@ -578,8 +617,10 @@ func (s *authzService) RemovePolicy(ctx context.Context, p domain.Policy) error 
 	if p.Subject == "" || p.Domain == "" || p.Object == "" || p.Action == "" {
 		return domain.ErrInvalidRequest
 	}
-	// Platform domain guard: only platform subjects may remove policies from _platform_.
-	if p.Domain == domain.DomainPlatform && !strings.HasPrefix(p.Subject, "platform:") {
+	// Platform domain guard: only platform or role subjects may remove policies from _platform_.
+	if p.Domain == domain.DomainPlatform &&
+		!strings.HasPrefix(p.Subject, "platform:") &&
+		!strings.HasPrefix(p.Subject, "role:") {
 		return domain.ErrForbidden
 	}
 
@@ -730,6 +771,9 @@ func subjectToUserID(subject string) (uuid.UUID, error) {
 // revokeExpiredRoles lazily removes roles whose expiry has passed.
 // Non-fatal: enforce proceeds even if cleanup fails.
 func (s *authzService) revokeExpiredRoles(ctx context.Context, subject, domainName string) error {
+	if s.repo == nil {
+		return nil // in-memory / test service — no DB, skip expiry cleanup
+	}
 	names, err := s.repo.ListExpiredActiveRoleNames(ctx, subject, domainName)
 	if err != nil {
 		return err

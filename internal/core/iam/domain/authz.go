@@ -354,7 +354,7 @@ g = _, _, _
 e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
 
 [matchers]
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
+m = (g(r.sub, p.sub, r.dom) || p.sub == "*") && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
 `
 
 // Odl models TODO: Review

@@ -97,7 +97,7 @@ func (s *AuthzEnforceSuite) TestV4_ExpiredRole_LazilyCleaned_DeniesAccess() {
 	role := "role:finance-manager"
 
 	// Assign role and policy — user has access before expiry.
-	require.NoError(s.T(), s.svc.AssignRole(ctx, tenantID, subject, role, tenantID))
+	require.NoError(s.T(), s.svc.AssignRole(ctx, tenantID, subject, role, tenantID, iam.WithAssignedBy("platform:system")))
 	require.NoError(s.T(), s.svc.AddPolicy(ctx, iam.Policy{
 		Subject: role, Domain: tenantID, Object: "invoice/*", Action: "*", Effect: "allow",
 	}))
@@ -138,7 +138,7 @@ func (s *AuthzEnforceSuite) TestV5_CrossTenantPolicyLeak_Denied() {
 	role := "role:finance-manager"
 
 	// Configure role + policy only in tenantA's domain.
-	require.NoError(s.T(), s.svc.AssignRole(ctx, tenantA, subject, role, tenantA))
+	require.NoError(s.T(), s.svc.AssignRole(ctx, tenantA, subject, role, tenantA, iam.WithAssignedBy("platform:system")))
 	require.NoError(s.T(), s.svc.AddPolicy(ctx, iam.Policy{
 		Subject: role, Domain: tenantA, Object: "invoice/*", Action: "*", Effect: "allow",
 	}))

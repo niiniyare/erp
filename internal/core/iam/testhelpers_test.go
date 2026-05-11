@@ -66,6 +66,7 @@ func (noopCache) DeleteGlobalMemory(_ string) error                             
 func (noopCache) Ping(_ context.Context) error                                        { return nil }
 func (noopCache) Stats() cache.CacheStats                                             { return cache.CacheStats{} }
 func (noopCache) Reset()                                                              {}
+func (noopCache) GetAndDelete(_ context.Context, _ string, _ any) error               { return errCacheMiss }
 func (noopCache) Close() error                                                        { return nil }
 
 //
@@ -157,9 +158,10 @@ func newMemService(t *testing.T) Service {
 
 // memRole adds a Casbin g-rule via AssignRole against the noop repo.
 // Uses a dummy tenantID since UpsertRoleAssignment is a noop in tests.
-func memRole(t *testing.T, svc Service, subject, role, domain string) {
+func memRole(t *testing.T, svc Service, subject, role, domainName string) {
 	t.Helper()
-	require.NoError(t, svc.AssignRole(context.Background(), testTenantID, subject, role, domain))
+	require.NoError(t, svc.AssignRole(context.Background(), testTenantID, subject, role, domainName,
+		WithAssignedBy("platform:system")))
 }
 
 // constants reused across integration tests

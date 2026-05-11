@@ -697,18 +697,17 @@ Tests are organized by layer. Every test maps to a specific risk or audit findin
 ### T-UNIT — Unit Tests (no DB)
 
 **Types & Helpers** (`types_test.go`, `errors_test.go`):
-- [ ] AZ-TYP-001 `TestSubjectBuilders` — PlatformSubject, TenantSubject, PortalSubject, APISubject
-- [ ] AZ-TYP-010 `TestDomainBuilders` — TenantDomain, PortalDomain, APIDomain, DomainPlatform
-- [ ] AZ-TYP-020 `TestAssignOpts` — WithExpiry, WithAssignedBy, WithDelegatedBy, multiple opts
-- [ ] AZ-TYP-030 `TestErrorString` — Error.Error() format
-- [ ] AZ-TYP-031 `TestSentinelErrors` — HTTP status codes
+- [x] AZ-TYP-001 `TestSubjectBuilders` — PlatformSubject, TenantSubject, PortalSubject, APISubject
+- [x] AZ-TYP-010 `TestDomainBuilders` — TenantDomain, PortalDomain, APIDomain, DomainPlatform
+- [x] AZ-TYP-020 `TestAssignOpts` — WithExpiry, WithAssignedBy, WithDelegatedBy, multiple opts
+- [x] AZ-TYP-030 `TestErrorString` — Error.Error() format
+- [x] AZ-TYP-031 `TestSentinelErrors` — HTTP status codes (incl. ErrPolicyLimitExceeded=429)
 
 **Session model post-refactor** (new, risk: BLOCK-1):
-- [ ] `TestResolvedSession_NoPermissions` — `ResolvedSession` struct has no `Permissions` field
-- [ ] `TestResolvedSession_NoCan` — no `Can()` or `CanDo()` method (compile-time check)
-- [ ] `TestResolvedSession_ToPrincipal` — returns correct Subject+Domain from session
-- [ ] `TestResolvedSession_FeatureEnabled` — parent flag check works
-- [ ] `TestResolvedSession_Configuration` — SettingString, SettingBool, SettingInt, SettingDecimal
+- [x] `TestResolvedSession_NoPermissions` — compile-time proof no Permissions field
+- [x] `TestResolvedSession_ToPrincipal` — all actor types produce correct Subject+Domain
+- [x] `TestResolvedSession_FeatureEnabled` — reads from Configuration.Flags; nil-safe
+- [x] `TestResolvedSession_Configuration` — SettingString, SettingBool, SettingInt, SettingDecimal
 
 ---
 
@@ -830,13 +829,13 @@ From `testing.md` AZ-MID-001 to AZ-MID-040:
 
 From `testing.md` AZ-ISO-001 to AZ-ISO-020:
 
-- [ ] AZ-ISO-001 `TestDomainIsolation_PolicyDoesNotCrossDomain`
-- [ ] AZ-ISO-002 `TestDomainIsolation_RoleDoesNotCrossDomain`
-- [ ] AZ-ISO-003 `TestDomainIsolation_PlatformVsTenant`
-- [ ] AZ-ISO-004 `TestDomainIsolation_TenantVsPortal`
-- [ ] AZ-ISO-005 `TestDomainIsolation_TenantVsAPI`
-- [ ] AZ-ISO-010 `TestDomainIsolation_CrossTenant`
-- [ ] AZ-ISO-020 `TestDomainIsolation_WildcardSubjectDomainScoped`
+- [x] AZ-ISO-001 `TestDomainIsolation_PolicyDoesNotCrossDomain`
+- [x] AZ-ISO-002 `TestDomainIsolation_RoleDoesNotCrossDomain`
+- [x] AZ-ISO-003 `TestDomainIsolation_PlatformVsTenant`
+- [x] AZ-ISO-004 `TestDomainIsolation_TenantVsPortal`
+- [x] AZ-ISO-005 `TestDomainIsolation_TenantVsAPI`
+- [x] AZ-ISO-010 `TestDomainIsolation_CrossTenant`
+- [x] AZ-ISO-020 `TestDomainIsolation_WildcardSubjectDomainScoped`
 
 **File**: `internal/core/iam/authz_enforce_test.go`
 
@@ -878,8 +877,8 @@ From `testing.md` AZ-SEC-001 to AZ-SEC-050:
 - [ ] AZ-SEC-050 `TestPlatformDomain_NotInjectable`
 
 **New — post-refactor security tests**:
-- [ ] `TestSystemRole_ImmutableFromTenantActor` — tenant actor cannot modify `_platform_` policies (AUTHZ-4)
-- [ ] `TestPolicyCountLimit_Enforced` — adding policy #10,001 returns error (AUTHZ-5)
+- [x] `TestSystemRole_ImmutableFromTenantActor` — tenant actor cannot modify `_platform_` policies (AUTHZ-4)
+- [x] `TestPolicyCountLimit_Enforced` — adding policy beyond limit returns ErrPolicyLimitExceeded (AUTHZ-5)
 - [ ] `TestJITBootstrap_Removed` — login as roleless user does NOT auto-assign tenant_admin (BLOCK-6)
 - [ ] `TestAssignRole_Guards` — guard1 (namespace), guard2 (cross-tenant), guard3 (delegation)
 
