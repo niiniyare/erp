@@ -328,7 +328,7 @@ Tasks:
   duplicate sessions
 - [x] Added `GetAndDelete` to `cache.Service` interface + `redisClient` impl (uses `client.GetDel`)
 - [x] `DeletePendingMFA` retained for explicit cancellation paths; `CompleteMFALogin` no longer calls it
-- [ ] Add test: two concurrent `CompleteMFALogin` calls for same pending token → only one session
+- [x] Add test: two concurrent `CompleteMFALogin` calls for same pending token → only one session
 
 ---
 
@@ -340,11 +340,10 @@ After BLOCK-1 removes `Can()` / `CanDo()`, callers will fail to compile. Use thi
 function — do not silence compile errors, fix each call site.
 
 Tasks:
-- [ ] `grep -rn "\.Can\b\|\.CanDo\b\|RequirePermission" --include="*.go" internal/ cmd/` — fix all hits
-- [ ] Each replacement: `authzService.Enforce(ctx, authz.Request{Subject, Domain, Object, Action})`
-- [ ] Subject and Domain must come from `session.ToPrincipal()` — never constructed ad hoc from
-  request body or URL params
-- [ ] `RequirePermission` middleware rewritten to call `authzService.Enforce()` (see BLOCK-1)
+- [x] `grep -rn "\.Can\b\|\.CanDo\b\|RequirePermission" --include="*.go" internal/ cmd/` — fix all hits
+- [x] No call sites found — `Can`/`CanDo` never existed; all authz via `authzService.Enforce()`
+- [x] Subject and Domain always from `session.ToPrincipal()` (set in `setSessionLocals`)
+- [x] `Authorize` middleware calls `Enforce()` directly (see BLOCK-1)
 
 ---
 

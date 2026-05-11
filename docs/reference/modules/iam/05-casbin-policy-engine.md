@@ -2,9 +2,15 @@
 
 ## Casbin Policy Engine
 
+> **[IMPLEMENTED]** — Casbin is the sole authorization authority in v1.0.
+> All permission decisions go through `authzService.Enforce()`.
+
+---
+
 ### The Casbin CONF Model
 
-The authorization module uses a single Casbin model defined in `model.go`. Every enforcement decision is evaluated against this model:
+Defined in `internal/core/iam/domain/authz.go` as the `CasbinModel` constant.
+This is the canonical definition — the enforcer is built from this string at startup.
 
 ```ini
 [request_definition]
@@ -23,208 +29,144 @@ e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
 m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
 ```
 
-> **Note:** `keyMatch2` on `obj` supports URL-style path params (`invoice/:id` matches `invoice/abc-123`).
-> `keyMatch` on `act` supports glob wildcards (`*` matches any verb like `read` or `delete`).
-> Using `keyMatch2` on `act` was a prior bug — it treats `:param` syntax, so `*` would **never** match `read`, silently denying all wildcard-action policies.
+**Key design decisions:**
 
-### Breaking Down Each Section
+1. **Deny-override effect**: `some(allow) && !some(deny)` — one explicit deny beats all allows.
+2. **Domain-scoped RBAC**: `g = _, _, _` (three-parameter role). Roles are tenant-local.
+3. **`keyMatch2` on `obj`**: URL-style `:param` wildcards (`invoice/:id` matches `invoice/abc-123`). Also matches glob `*`.
+4. **`keyMatch` on `act`**: Glob wildcards only. `*` matches any verb. (`keyMatch2` would break `*` action policies — it uses `:param` syntax, not glob.)
 
-#### `[request_definition]` — What an Enforce Call Looks Like
+---
 
-```markdown
-r = sub, dom, obj, act
+### Request Tuple
 
-sub → WHO is acting         "tenant:usr_a1b2c3d4"
-dom → IN WHICH scope        "a1b2c3d4-tenant-uuid"
-obj → ON WHAT resource      "invoice/inv_2026_001"
-act → DOING WHAT action     "read"
-
-Go code:
-  authz.Request{
-      Subject: "tenant:usr_a1b2c3d4",
-      Domain:  "a1b2c3d4-tenant-uuid",
-      Object:  "invoice/inv_2026_001",
-      Action:  "read",
-  }
+```go
+// domain.Request — the Casbin (sub, dom, obj, act) tuple
+authz.Request{
+    Subject: "tenant:550e8400-e29b-41d4-a716-446655440000",  // who
+    Domain:  "a1b2c3d4-tenant-uuid",                          // which tenant
+    Object:  "invoice/inv_2026_001",                          // what resource
+    Action:  "read",                                          // what action
+}
 ```
 
-#### `[policy_definition]` — What a Policy Row Looks Like
+Subject format: `"<actor-class>:<id>"` — built by helpers in `domain/authz.go`:
+- `PlatformSubject(userID)` → `"platform:<uuid>"`
+- `TenantSubject(userID)` → `"tenant:<uuid>"`
+- `PortalSubject(userID)` → `"portal:<uuid>"`
+- `APISubject(clientID)` → `"api:<client-id>"`
 
-```markdown
-p = sub, dom, obj, act, eft
+Domain format:
+- `TenantDomain(tenantID)` → `"<tenantUUID>"` (bare UUID)
+- `DomainPlatform` constant → `"_platform_"`
+- `PortalDomain(tenantID)` → `"<tenantUUID>:portal"`
+- `APIDomain(tenantID)` → `"<tenantUUID>:api"`
 
-eft = "allow" or "deny"
+---
 
-Examples in casbin_rule table:
-ptype | v0                     | v1             | v2          | v3     | v4    | v5
-──────┼────────────────────────┼────────────────┼─────────────┼────────┼───────┼───
-p     | role:finance-manager   | {tenantID}     | invoice/*   | *      | allow |
-p     | role:sales-rep         | {tenantID}     | order/*     | read   | allow |
-p     | role:sales-rep         | {tenantID}     | order/*     | create | allow |
-p     | tenant:sanctioned-user | {tenantID}     | *           | *      | deny  |
-p     | role:auditor           | {tenantID}     | */export    | *      | deny  |
+### Policy Rules in casbin_rule
+
+```
+ptype | v0 (sub)               | v1 (dom)        | v2 (obj)    | v3 (act)  | v4 (eft)
+──────┼────────────────────────┼─────────────────┼─────────────┼───────────┼─────────
+p     | tenant_admin           | {tenantID}      | *           | *         | allow
+p     | finance-manager        | {tenantID}      | invoice/*   | *         | allow
+p     | finance-viewer         | {tenantID}      | invoice/*   | read      | allow
+p     | tenant:sanctioned-user | {tenantID}      | *           | *         | deny
 ```
 
-#### `[role_definition]` — How Role Hierarchy Works
+### Role Assignment (g-rules) in casbin_rule
 
-```markdown
-g = _, _, _  (three-parameter role — user, role, domain)
-
-Examples in casbin_rule table:
-ptype | v0                     | v1                    | v2         | v3 | v4 | v5
-──────┼────────────────────────┼───────────────────────┼────────────┼────┼────┼───
-g     | tenant:usr_a1b2c3d4    | role:finance-manager  | {tenantID} |    |    |
-g     | tenant:usr_b2c3d4e5    | role:sales-rep        | {tenantID} |    |    |
-g     | role:finance-manager   | role:finance-viewer   | {tenantID} |    |    |
-                                ↑
-                        Role inherits from role:finance-viewer
-                        finance-manager gets all viewer permissions
-                        PLUS any policies assigned to finance-manager
+```
+ptype | v0 (user)              | v1 (role)        | v2 (domain)
+──────┼────────────────────────┼──────────────────┼────────────
+g     | tenant:usr_a1b2c3d4    | tenant_admin     | {tenantID}
+g     | tenant:usr_b2c3d4e5    | finance-manager  | {tenantID}
+g     | finance-manager        | finance-viewer   | {tenantID}   ← role inherits from role
 ```
 
-#### `[policy_effect]` — Deny-Override Logic
+---
 
-```markdown
-e = some(where (p.eft == allow)) && !some(where (p.eft == deny))
+### Effect Model: Deny-Override
 
-Translated:
-  ALLOW  if: at least one matching policy says "allow"
-         AND no matching policy says "deny"
-  DENY   if: no matching allow rule
-             OR at least one matching deny rule
+```
+ALLOW  if: at least one matching policy says "allow"
+       AND no matching policy says "deny"
 
-This is deny-override. One deny beats 100 allows.
-
-Example:
-  User has: role:finance-manager  → policy: invoice/* allow
-  User also: on sanctions list    → policy: * deny (explicit)
-
-  Request: Enforce("tenant:usr", domain, "invoice/123", "read")
-  Result:  DENIED — the deny rule wins
+DENY   if: no matching allow rule
+       OR  at least one matching deny rule (one deny beats all allows)
 ```
 
-#### `[matchers]` — How a Request Is Evaluated
-
-```markdown
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && keyMatch2(r.obj, p.obj) && keyMatch(r.act, p.act)
-
-Step 1: g(r.sub, p.sub, r.dom)
-  Does r.sub have the role p.sub in domain r.dom?
-  Example: does "tenant:usr_001" have role "role:finance-manager" in "tenant-abc"?
-  → Yes (from the g-rule) → match continues
-
-Step 2: r.dom == p.dom
-  Is the request domain the same as the policy domain?
-  → Prevents cross-domain policy leakage
-  → "tenant-abc" != "tenant-xyz" → no match (isolation enforced)
-
-Step 3: keyMatch2(r.obj, p.obj)
-  Does the requested object match the policy object pattern?
-  Uses URL-style :param wildcards for path segments.
-  keyMatch2("invoice/inv_123", "invoice/:id") → true
-  keyMatch2("invoice/inv_123", "order/:id")   → false
-  keyMatch2("invoice/inv_123", "*")           → true
-
-Step 4: keyMatch(r.act, p.act)   ← keyMatch, NOT keyMatch2
-  Does the requested action match the policy action pattern?
-  Uses glob wildcards. keyMatch2 would break "*" action policies.
-  keyMatch("read",   "read") → true
-  keyMatch("read",   "*")    → true   (glob: * matches any verb)
-  keyMatch("delete", "read") → false
-```
+---
 
 ### Pattern Matching Reference
 
-**`keyMatch2`** is used for `obj` (resource objects) — URL-style `:param` path segments.
+**`keyMatch2`** on `obj`:
 
-| Pattern | Request Object | Match? | Notes |
-|---------|---------------|--------|-------|
-| `invoice/:id` | `invoice/inv_123` | ✅ | Named path parameter |
-| `invoice/*` | `invoice/inv_123` | ✅ | Glob wildcard also works |
-| `invoice/*` | `invoice/inv_123/pdf` | ❌ | Does NOT match sub-paths |
-| `*/export` | `invoice/export` | ✅ | Any resource, export action |
-| `*` | `invoice/inv_123` | ✅ | Matches everything |
-| `report/finance/*` | `report/finance/pnl` | ✅ | Scoped to finance reports |
+| Pattern    | Request Object        | Match? |
+|------------|-----------------------|--------|
+| `invoice/:id` | `invoice/inv_123`  | Yes    |
+| `invoice/*`   | `invoice/inv_123`  | Yes    |
+| `*`           | `invoice/inv_123`  | Yes    |
+| `invoice/*`   | `invoice/inv_123/pdf` | No (single segment) |
 
-**`keyMatch`** is used for `act` (action verbs) — glob wildcards only.
+**`keyMatch`** on `act`:
 
-| Pattern | Request Action | Match? | Notes |
-|---------|---------------|--------|-------|
-| `read` | `read` | ✅ | Exact match |
-| `*` | `read` | ✅ | Wildcard — any action |
-| `*` | `delete` | ✅ | Wildcard — any action |
-| `read` | `delete` | ❌ | No match |
+| Pattern | Request Action | Match? |
+|---------|----------------|--------|
+| `read`  | `read`         | Yes    |
+| `*`     | `read`         | Yes    |
+| `*`     | `delete`       | Yes    |
+| `read`  | `delete`       | No     |
 
-### Policy Examples by Module
+---
 
-```markdown
-FINANCE MODULE POLICIES:
+### Role Inheritance
 
-Allow finance manager to do anything with invoices:
-  p | role:finance-manager | {tenantID} | invoice/* | * | allow
+Role-to-role g-rules create inheritance. `finance-manager` inheriting from `finance-viewer` means `finance-manager` gets all policies assigned to `finance-viewer` as well as its own.
 
-Allow finance viewer to read invoices:
-  p | role:finance-viewer  | {tenantID} | invoice/* | read | allow
+```
+g | finance-manager | finance-viewer | {dom}
 
-Allow CFO to approve invoices over limit:
-  p | role:cfo             | {tenantID} | invoice/*/approve | execute | allow
-
-Block everyone from deleting closed-period journals:
-  p | *                    | {tenantID} | journal/closed/* | delete | deny
-
-
-SALES MODULE POLICIES:
-
-Allow sales rep to create/read orders:
-  p | role:sales-rep    | {tenantID} | order/*    | create | allow
-  p | role:sales-rep    | {tenantID} | order/*    | read   | allow
-
-Block sales rep from applying discounts > 10%:
-  p | role:sales-rep    | {tenantID} | discount/high/* | create | deny
-
-Allow sales manager all order operations:
-  p | role:sales-manager | {tenantID} | order/*   | * | allow
-  p | role:sales-manager | {tenantID} | discount/* | * | allow
-
-
-PORTAL POLICIES:
-
-Allow customer to view their own invoices:
-  p | portal:cust-001  | {tenantID}:portal | invoice/* | read | allow
-
-Block portal users from any internal resource:
-  p | role:portal-user | {tenantID}:portal | internal/* | * | deny
+Effective: a user with finance-manager gets all policies of:
+  finance-manager (direct)
+  finance-viewer  (inherited)
 ```
 
-### Role Inheritance Example
+`GetImplicitRoles(subject, domain)` returns all roles including inherited ones. `GetRoles(subject, domain)` returns only directly assigned roles.
 
-```markdown
-ROLE HIERARCHY FOR FINANCE:
+---
 
-Roles and their parent roles (g-rules):
-  role:finance-manager  inherits from  role:finance-viewer
-  role:finance-viewer   inherits from  role:report-viewer
+### Bootstrapped Roles
 
-Policies assigned:
-  role:report-viewer   → report/* read allow
-  role:finance-viewer  → invoice/* read allow
-  role:finance-viewer  → payment/* read allow
-  role:finance-manager → invoice/* * allow
-  role:finance-manager → payment/* * allow
+On tenant user creation (when `authz` is wired into `UserService`), `BootstrapTenantAdmin` is called:
 
-User assignment:
-  tenant:usr_cfo → role:finance-manager (in {tenantID})
+1. Seeds policy: `(tenant_admin, {tenantID}, *, *, allow)` — wildcard allow for tenant_admin.
+2. Assigns user to `tenant_admin` role in that domain.
+3. Idempotent: duplicate policies return `ErrPolicyConflict` (silently ignored).
 
-Effective permissions for usr_cfo:
-  → report/* read         (inherited from report-viewer)
-  → invoice/* read        (inherited from finance-viewer)
-  → payment/* read        (inherited from finance-viewer)
-  → invoice/* *           (from finance-manager)
-  → payment/* *           (from finance-manager)
+**Important**: Bootstrap only runs when `authz` is non-nil in `NewUserServiceWithConfig`. The first user created for a tenant gets `tenant_admin`. Subsequent users do not get auto-assigned any role.
 
-Result: CFO can do everything with invoices and payments,
-        and can read all reports.
-```
+---
+
+### Multi-Instance Propagation [IMPLEMENTED]
+
+- `SyncedEnforcer` with `StartAutoLoadPolicy(30 * time.Second)`: all instances reload from DB every 30s.
+- Policy writes (AddPolicy, AssignRole) use `EnableAutoSave(true)` — writes go to DB and update in-memory immediately on the calling instance.
+- Other instances pick up changes at the next 30s reload cycle.
+- Maximum inconsistency window: 30 seconds.
+- `InvalidateCache()` forces immediate reload on the calling instance only.
+
+---
+
+### Lazy Expiry Cleanup
+
+On every `Enforce()` call, `revokeExpiredRoles(subject, domain)` runs:
+- Queries `role_assignments` for active rows where `expires_at < NOW()` for the given subject+domain.
+- Uses partial index `idx_role_assignments_expires` (only rows with non-null `expires_at`).
+- For most subjects: 0 rows, near-zero I/O.
+- Removes expired roles from the in-memory enforcer and marks DB rows inactive.
+- Non-fatal: enforce proceeds even if cleanup fails.
 
 ---
 

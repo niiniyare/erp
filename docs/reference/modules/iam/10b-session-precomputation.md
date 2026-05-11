@@ -1,177 +1,181 @@
 [<-- Back to Index](README.md)
 
-## Session — Pre-Computed Everything
+## Session Model — Context Only
 
-### Why Pre-Compute
-
-A single page load triggers 8–12 API calls. Each call could naively query the DB for permissions, flags, settings, and entity scope. At load, this becomes the dominant source of latency. The solution: compute everything once at login, store it in the session JSONB, read it as in-memory map lookups on every subsequent request.
+> **[IMPLEMENTED]** — This document describes the v1.0 session model.
+>
+> **IMPORTANT**: This document has been significantly revised from a prior version that described
+> a "pre-computed permissions" model. That model was replaced. The current session carries
+> **context only** — no permission snapshot, no `Can()` method, no `CanDo()` method.
+> All authorization decisions go through `authzService.Enforce()`.
 
 ---
 
 ### What Gets Built at Login
 
-```go
-// internal/platform/iam.go — called once during session creation
+At login, the session service calls `buildAndPersistSession()`, which computes:
 
-func (s *IAMService) buildSession(ctx context.Context,
-    user *domain.User) (*domain.ResolvedSession, error) {
+1. `generateToken()` — 32 bytes of random entropy → raw token (returned to client once) + sha256hex hash (stored).
+2. `repo.ResolveEntityScope(ctx, user.EntityID)` — one DB query to resolve entity hierarchy.
+3. `repo.LoadLoginConfig(ctx, userID, tenantID)` — resolves flags, tenant settings, and user preferences.
+4. Computes TTL from `iam.session_ttl_hours` tenant setting, fallback to 8h.
+5. INSERT `user_sessions` row.
+6. Cache `ResolvedSession` in Redis at key `"session:{hash}"` with TTL.
 
-    // Five queries, run in parallel
-    var (
-        perms    map[string]bool
-        scope    domain.EntityScope
-        flags    map[string]bool
-        settings map[string]string
-        prefs    map[string]string
-    )
-
-    g, gctx := errgroup.WithContext(ctx)
-    g.Go(func() error { var err error; perms,    err = s.computePermissions(gctx, user); return err })
-    g.Go(func() error { var err error; scope,    err = s.resolveEntityScope(gctx, user.EntityID); return err })
-    g.Go(func() error { var err error; flags,    err = s.flagRepo.ResolveForTenant(gctx, user.TenantID); return err })
-    g.Go(func() error { var err error; settings, err = s.settingRepo.ResolveForTenant(gctx, user.TenantID); return err })
-    g.Go(func() error { var err error; prefs,    err = s.prefRepo.GetForUser(gctx, user.ID); return err })
-    if err := g.Wait(); err != nil { return nil, err }
-
-    return &domain.ResolvedSession{
-        UserID:      user.ID,
-        UserType:    user.UserType,
-        TenantID:    user.TenantID,
-        PrincipalID: user.PrincipalID,
-        EntityID:    user.EntityID,
-        DisplayName: user.DisplayName,
-        Permissions: perms,
-        EntityScope: scope,
-        Configuration: domain.SessionConfiguration{
-            Flags:    flags,
-            Settings: settings,
-            Prefs:    prefs,
-        },
-    }, nil
-}
-```
-
-| Operation | Cost (concurrent) |
-|---|---|
-| ComputePermissions | ~2ms (role→permission JOIN) |
-| ResolveEntityScope | ~1ms (entity path lookup) |
-| FlagService.Resolve | ~1ms (LEFT JOIN flag tables) |
-| SettingService.Resolve | ~1ms (LEFT JOIN setting tables) |
-| UserPreferences | ~0.5ms |
-| **Total at login** | **~5–6ms** (all five run concurrently) |
-
-No further DB hits for auth, flags, or settings for the 8h session lifetime (default; configurable via tenant setting `iam.session_ttl_hours`).
+**What is NOT computed at login:**
+- No permission map (no `ComputePermissions()` call).
+- No role list.
+- No Casbin policy evaluation.
 
 ---
 
-### The ResolvedSession Type
+### The ResolvedSession Type [IMPLEMENTED]
 
 ```go
+// internal/core/iam/domain/session.go
+
 type ResolvedSession struct {
-    UserID        uuid.UUID
-    UserType      UserType
-    TenantID      uuid.UUID
-    PrincipalID   uuid.UUID
-    EntityID      uuid.UUID
-    DisplayName   string
-    Permissions   map[string]bool      // "finance.transactions.approve" → true/false
-    EntityScope   EntityScope          // type + path prefix for subtree queries
-    Configuration SessionConfiguration
+    UserID        uuid.UUID     // who the user is
+    UserType      string        // persisted enum: "INTERNAL"|"SYSADMIN"|"CUSTOMER"|"PORTAL"|"API"
+    TenantID      uuid.UUID     // RLS boundary — SET LOCAL awo.tenant_id = '<TenantID>'
+    PrincipalID   *uuid.UUID    // non-nil for portal users; identifies represented party
+    DisplayName   string        // for display only
+    EntityScope   EntityScope   // application-layer entity visibility
+    Configuration Configuration // feature flags, tenant settings, user preferences
+    // NOTE: No Permissions map. No Can() method. No CanDo() method.
+    // Authorization is delegated entirely to authzService.Enforce().
 }
 
-type SessionConfiguration struct {
-    Flags    map[string]bool   // "finance.transactions.approval_workflow" → true
-    Settings map[string]string // "finance.transactions.approval_threshold" → "100000"
-    Prefs    map[string]string // "finance.entry_mode" → "spreadsheet"
+type EntityScope struct {
+    Type       EntityScopeType // "all" | "subtree" | "entity"
+    EntityID   string          // home entity UUID (for entity/subtree scopes)
+    PathPrefix string          // ltree path prefix (for subtree queries)
 }
 
-// All checks are O(1) map lookups — no DB
-func (s *ResolvedSession) Can(permission string) bool {
-    return s.Permissions[permission]
+type Configuration struct {
+    Flags    map[string]bool   // "feature.name" → true/false
+    Settings map[string]string // "setting.key" → "value"
+    Prefs    map[string]string // "pref.key" → "value"
 }
-// CanDo is a convenience wrapper for callers that hold resource and action separately.
-func (s *ResolvedSession) CanDo(resource, action string) bool {
-    return s.Can(resource + "." + action)
-}
-func (s *ResolvedSession) FeatureEnabled(key string) bool {
-    if !s.Configuration.Flags[key] { return false }
-    if idx := strings.Index(key, "."); idx > 0 {
-        if !s.Configuration.Flags[key[:idx]] { return false }
-    }
-    return true
-}
-func (s *ResolvedSession) IsPlatform() bool { return s.UserType == UserTypePlatform }
-func (s *ResolvedSession) IsPortal()   bool { return s.UserType == UserTypePortal }
 ```
+
+**Available helper methods on `*ResolvedSession`:**
+- `ToPrincipal()` — builds the Casbin `(Subject, Domain)` pair for `Enforce()` calls.
+- `FeatureEnabled(flag string) bool` — O(1) map lookup on `Configuration.Flags`.
+- `SettingString(key, default)`, `SettingBool(key, default)`, `SettingInt(key, default)`, `SettingDecimal(key, default)`.
+- `IsPlatform() bool`, `IsPortal() bool` — identity checks.
+
+**NOT available:**
+- `Can(permission string) bool` — removed; use `authzService.Enforce()`.
+- `CanDo(resource, action string) bool` — removed; use `authzService.Enforce()`.
 
 ---
 
-### Session Invalidation
+### Why Session-as-Context (Not Session-as-Authority)
 
-When a flag or setting that affects security changes, existing sessions are stale. Services handle this automatically:
+**Single enforcement authority**: Having two enforcement paths (session.Can() + Casbin.Enforce()) creates a split: role revocations would take effect in Casbin immediately but persist in the session for up to 8h via the cached permissions map. This is a correctness defect.
+
+**Performance**: Casbin `Enforce()` is in-memory (~0.1ms). The session permission map's O(1) advantage is real but not significant for ERP workloads where total request latency is 50–200ms.
+
+**Simplicity**: One path means one place to audit, one place to debug, one place to add deny rules.
+
+---
+
+### Configuration — Pre-Computed at Login [IMPLEMENTED]
+
+Feature flags, tenant settings, and user preferences are still pre-computed at login. These are **context reads** — they tell the code *how* to behave, not *whether* to act.
 
 ```go
-func (s *FlagService) Set(ctx context.Context,
-    params domain.SetFlagParams) error {
-
-    def, _ := s.repo.GetDefinition(ctx, params.FlagKey)
-    if err := s.repo.UpsertTenantFlag(ctx, params); err != nil { return err }
-
-    // A flag that makes a feature appear or disappear requires session refresh
-    if def.IsModuleOrResourceFlag() {
-        s.sessionRepo.InvalidateByTenant(ctx, params.TenantID)
-    }
-    return nil
+// Reading flags (O(1), no DB, no Casbin)
+if sess.FeatureEnabled("hr.payroll_v2.enabled") {
+    // use new payroll logic
 }
+
+// Reading settings (O(1), no DB, no Casbin)
+ttl := sess.SettingInt("iam.session_ttl_hours", 8)
+
+// Reading preferences (O(1), no DB, no Casbin)
+theme := sess.Configuration.Prefs["ui.theme"]
 ```
 
-**Invalidation matrix:**
-
-| Trigger | Scope | Method |
-|---|---|---|
-| Logout | Single session | `InvalidateBySession()` |
-| User suspended/terminated | All user sessions | `InvalidateByUser()` |
-| Sensitive role/permission change | All user sessions | `InvalidateByUser()` |
-| Module/resource flag toggled | All tenant sessions | `InvalidateByTenant()` |
-| Session TTL (8h default) | Expired rows | Background cleanup job |
+Flags and settings may be stale if they change after the session was created (up to the session TTL). For most ERP settings this is acceptable. For security-relevant flag changes, call `InvalidateByTenant()` to force re-login.
 
 ---
 
-### In-Handler Usage
+### Entity Scope [IMPLEMENTED]
 
-Handlers only read from the session — zero DB hits:
+`EntityScope` controls data visibility **within a tenant**, enforced by service methods that add WHERE clauses. It is not an authorization decision — it is a query filter.
 
-```go
-func TransactionFormSchema(deps *app.Deps) fiber.Handler {
-    return func(c *fiber.Ctx) error {
-        session := middleware.ContextSession(c)
+```
+EntityScopeAll     → no entity WHERE clause; user sees all entities in tenant
+EntityScopeSubtree → WHERE entity_path <@ '{PathPrefix}'
+EntityScopeEntity  → WHERE entity_id = '{EntityID}'
+```
 
-        cfg := TransactionFormConfig{
-            // Flags — from session, zero DB hit
-            ShowCurrencyField:   session.FeatureEnabled("finance.multi_currency"),
-            ShowProjectField:    session.FeatureEnabled("finance.project_tracking"),
-            ShowApprovalSection: session.FeatureEnabled("finance.transactions.approval_workflow"),
+Resolved once at login via `ResolveEntityScope(ctx, entityID)`:
+- `entityID == uuid.Nil` → `EntityScopeAll` (platform/system users with no entity).
+- Root entity (level 1) → `EntityScopeAll`.
+- Branch entity (has children) → `EntityScopeSubtree` with path prefix.
+- Leaf entity (no children) → `EntityScopeEntity`.
 
-            // Settings — from session, typed helpers
-            RequireCostCenter:   session.SettingBool("finance.transactions.cost_center_required", false),
-            ApprovalThreshold:   session.SettingDecimal("finance.transactions.approval_threshold", decimal.Zero),
-            DecimalPlaces:       session.SettingInt("finance.decimal_places", 2),
+---
 
-            // Permissions — from session
-            CanPost:             session.CanDo("finance.transactions", "post"),
-            CanApprove:          session.CanDo("finance.transactions", "approve"),
-            CanVoid:             session.CanDo("finance.transactions", "void"),
+### Session Storage [IMPLEMENTED]
 
-            // User preferences — from session
-            EntryMode:           session.Configuration.Prefs["finance.entry_mode"],
-            ShowAccountCodes:    session.Configuration.Prefs["finance.show_account_codes"] == "true",
-        }
+```
+Redis key: "session:{sha256hex(rawToken)}"
+  Value: JSON-serialized ResolvedSession
+  TTL: session.expires_at - now
 
-        return c.JSON(buildTransactionForm(cfg))
-    }
-}
+Redis key: "user_sessions:{userID}"
+  Value: JSON array of token hashes for this user
+  TTL: longest session TTL for this user
+  Used by: InvalidateByUser() to find and evict all user's cached sessions
+
+Redis key: "mfa:login:pending:{pendingToken}"
+  Value: userID string
+  TTL: 5 minutes
+  Used by: MFA step 1→2 handoff
+  Note: consumed atomically via GETDEL (prevents replay)
+
+DB table: user_sessions
+  Authoritative record. Redis is cache-aside — DB is the source of truth.
+  TouchAndGetSession atomically touches last_seen_at and reads the row.
 ```
 
 ---
 
-Next: [UI Navigation](./11b-ui-navigation.md)
+### Session Invalidation [IMPLEMENTED]
+
+| Trigger | Call | Redis behavior |
+|---------|------|----------------|
+| Logout | `repo.Invalidate(hash)` | DELETE "session:{hash}" immediately |
+| Role revoked | `SessionInvalidator.InvalidateByUser(userID)` (wired in RevokeRole) | Evict all user's hashes from Redis |
+| Explicit user suspension | `repo.InvalidateByUser(userID)` | Evict all user's hashes from Redis |
+| Tenant-wide event | `repo.InvalidateByTenant(tenantID)` | DB only; Redis expires naturally |
+| Session TTL expires | `expires_at < NOW()` in DB | Redis entry TTL also expires |
+
+**Note on role assignment**: Assigning a new role does NOT require session invalidation in the Casbin model. Since `Enforce()` is always called live, the new role takes effect immediately on the next request.
+
+---
+
+### Login Performance [IMPLEMENTED]
+
+```
+At login (one-time cost):
+  ResolveEntityScope:          ~1ms   (entity level/path DB query)
+  LoadLoginConfig:             ~2ms   (flags + settings + prefs queries)
+  INSERT user_sessions:        ~1ms
+  CacheResolved (Redis SET):   <1ms
+  Total:                       ~4-5ms
+
+Per request (hot path):
+  Redis cache hit (GET):       <1ms
+  FeatureEnabled/SettingRead:  <0.1ms  (map lookup)
+  authzService.Enforce():      ~0.1ms  (in-memory Casbin)
+  Total auth overhead:         ~1-2ms
+```
+
+---
+
+Next: [Middleware & HTTP Integration](./11-middleware-and-http.md)

@@ -2,218 +2,195 @@
 
 ## Role Management
 
+> **[IMPLEMENTED]** — describes the v1.0 role model as built.
+> The `roles` table (migration 000405) is reserved for v2.0 ABAC and is NOT active.
+> In v1.0, roles are Casbin string names (no `roles` table row required).
+
+---
+
 ### What Is a Role?
 
-A role is a named collection of permissions. Instead of assigning 50 individual policies to each user, you assign a role and the role carries all its policies. Roles are domain-scoped — the same role name in Tenant A is completely independent from Tenant B.
+A role is a named string used in Casbin g-rules. When you assign `"tenant_admin"` to a user in domain `"{tenantID}"`, Casbin creates:
 
-```markdown
-ROLE ASSIGNMENT FLOW:
-
-1. Platform admin defines role and its policies:
-   AddPolicy(ctx, Policy{
-       Subject: "role:finance-manager",
-       Domain:  tenantID,
-       Object:  "invoice/*",
-       Action:  "*",
-       Effect:  "allow",
-   })
-
-2. Tenant admin assigns user to role:
-   AssignRole(ctx, tenantID, "tenant:usr_001", "role:finance-manager", domain)
-
-3. User makes request:
-   Enforce(ctx, Request{
-       Subject: "tenant:usr_001",
-       Domain:  tenantID,
-       Object:  "invoice/inv_123",
-       Action:  "read",
-   })
-   → Casbin checks: does usr_001 have role:finance-manager?
-   → Yes → does role:finance-manager allow invoice/* read?
-   → Yes → ALLOW
+```
+g | tenant:<userID> | tenant_admin | {tenantID}
 ```
 
-### AssignRole
+When you add a policy for `"tenant_admin"`:
 
-**Signature:**
+```
+p | tenant_admin | {tenantID} | * | * | allow
+```
+
+Then `Enforce("tenant:<userID>", "{tenantID}", "invoice/123", "read")` returns `true` because:
+1. The user has role `tenant_admin` in `{tenantID}` (g-rule).
+2. `tenant_admin` has a wildcard allow policy in `{tenantID}` (p-rule).
+3. No deny rule overrides it.
+
+Roles are **domain-scoped**. The same role name in Tenant A is completely independent from Tenant B.
+
+---
+
+### System Roles vs Custom Roles [IMPLEMENTED]
+
+In v1.0 there is no formal `roles` DB table. "System roles" are a convention:
+
+- `tenant_admin` is seeded by `BootstrapTenantAdmin()` with a wildcard allow policy.
+- Other role names are arbitrary strings — no validation exists at the service layer that a role name is "registered."
+- **[PLANNED - NOT IN v1.0]**: The `roles` table (migration 000405) provides typed role definitions with `is_system_role`, `role_type`, and `parent_role_id`. This enables formal immutability enforcement and UI role management. Not active in v1.0.
+
+---
+
+### AssignRole [IMPLEMENTED]
+
 ```go
-AssignRole(ctx context.Context, tenantID, subject, role, domain string, opts ...AssignOpt) error
+AuthzService.AssignRole(ctx, tenantID, subject, role, domainName string, opts ...AssignOpt) error
 ```
 
-**What it does (transactionally):**
-```markdown
-1. Upsert into role_assignments:
-   → Sets is_active=TRUE
-   → Records assigned_by and delegated_by if provided
-   → Sets expires_at if time-limited
-   → ON CONFLICT → updates the existing row (idempotent)
+**What happens:**
 
-2. Adds Casbin g-rule:
-   → AddRoleForUserInDomain(subject, role, domain)
-   → Updates in-memory enforcer immediately
+1. `enforcer.AddGroupingPolicy(subject, role, domainName)` — adds g-rule to Casbin in-memory model and writes to `casbin_rule` via AutoSave.
+2. `repo.UpsertRoleAssignment(ctx, ...)` — writes metadata to `role_assignments` table.
 
-Both steps in sequence (metadata first, then Casbin).
-If Casbin step fails, metadata is already committed
-but enforcer reload will restore consistency on next startup.
-```
+On conflict (same subject+role+domain already exists): upsert updates the existing row (idempotent).
 
 **Functional options:**
-```go
-// Permanent assignment (default)
-svc.AssignRole(ctx, tenantID, sub, "role:sales-rep", dom)
 
-// Time-limited: expires at contract end date
-expiry := time.Date(2026, 6, 30, 23, 59, 59, 0, time.UTC)
-svc.AssignRole(ctx, tenantID, sub, "role:auditor", dom,
-    authz.WithExpiry(expiry),
-    authz.WithAssignedBy("platform:admin-1"),
+```go
+// Permanent (default)
+svc.AssignRole(ctx, tenantID.String(), "tenant:usr_001", "finance-manager", domain)
+
+// Time-limited
+svc.AssignRole(ctx, tenantID.String(), "tenant:usr_001", "auditor", domain,
+    iam.WithExpiry(time.Now().Add(30*24*time.Hour)),
+    iam.WithAssignedBy("tenant:manager-5"),
 )
 
-// Delegated: tenant manager assigned on behalf of another
-svc.AssignRole(ctx, tenantID, sub, "role:sales-rep", dom,
-    authz.WithAssignedBy("tenant:manager-5"),
-    authz.WithDelegatedBy("tenant:ceo-1"),
+// Delegated
+svc.AssignRole(ctx, tenantID.String(), "tenant:usr_001", "sales-rep", domain,
+    iam.WithAssignedBy("tenant:manager-5"),
+    iam.WithDelegatedBy("tenant:ceo-1"),
 )
 ```
 
-### RevokeRole
+**Session cache eviction on assignment**: Not performed automatically. The user's existing sessions remain valid. Since authorization is live via Casbin, the new role takes effect on the next `Enforce()` call — no re-login needed.
 
-**Signature:**
-```go
-RevokeRole(ctx context.Context, subject, role, domain string) error
-```
+---
 
-**What it does:**
-```markdown
-1. UPDATE role_assignments SET is_active = FALSE
-   → Keeps the row for audit trail
-   → Just marks it inactive
-
-2. DeleteRoleForUserInDomain(subject, role, domain)
-   → Removes g-rule from Casbin in-memory model
-   → Adapter removes from casbin_rule on next SavePolicy or
-     directly via auto-save
-```
-
-**Important:** Revoking a role does NOT delete the `role_assignments` row. The row is preserved with `is_active = FALSE` for the audit trail. This means a compliance auditor can query:
-```sql
-SELECT * FROM role_assignments
-WHERE subject = 'tenant:usr_001'
-ORDER BY created_at DESC;
--- Shows full history: all roles ever held, when, by whom
-```
-
-### GetRoles
+### RevokeRole [IMPLEMENTED]
 
 ```go
-GetRoles(ctx context.Context, subject, domain string) ([]string, error)
+AuthzService.RevokeRole(ctx, subject, role, domainName string) error
 ```
 
-Returns the roles held by subject in domain **from the Casbin in-memory model**. This is fast (no DB query) and reflects the current effective state.
+**What happens:**
+
+1. `enforcer.DeleteRoleForUserInDomain(subject, role, domainName)` — removes g-rule from in-memory model immediately.
+2. `repo.DeactivateRoleAssignment(ctx, ...)` — sets `is_active=false` in `role_assignments` (row preserved for audit trail).
+3. If `SessionInvalidator` is wired: `InvalidateByUser(userID)` — evicts all cached sessions for the user.
+
+The `role_assignments` row is **not deleted** — it is kept inactive for compliance audit.
+
+---
+
+### GetRoles vs GetImplicitRoles [IMPLEMENTED]
 
 ```go
-roles, _ := svc.GetRoles(ctx, "tenant:usr_001", tenantDomain)
-// ["role:finance-manager", "role:report-viewer"]
-// (includes inherited roles if g-rules chain upward)
+GetRoles(ctx, subject, domainName) ([]string, error)
 ```
-
-### HasRole
+Returns directly assigned roles only (no inheritance). Uses Casbin in-memory model — no DB query.
 
 ```go
-HasRole(ctx context.Context, subject, role, domain string) (bool, error)
+GetImplicitRoles(ctx, subject, domainName) ([]string, error)
 ```
+Returns all effective roles including those inherited through role-to-role g-rules. Use this when you need the complete effective permission set (e.g. for UI display).
 
-Checks whether a subject currently holds a specific role in a domain. Uses Casbin's in-memory check — no DB query.
+---
+
+### HasRole [IMPLEMENTED]
 
 ```go
-ok, _ := svc.HasRole(ctx, "tenant:usr_001", "role:finance-manager", dom)
-// true → user has the role
-// false → user does not have the role (not assigned, or expired)
+AuthzService.HasRole(ctx, subject, role, domainName) (bool, error)
 ```
+Checks whether subject directly holds a role in a domain. In-memory, no DB query.
 
-### GetAssignments
+---
+
+### GetAssignments [IMPLEMENTED]
 
 ```go
-GetAssignments(ctx context.Context, subject, domain string) ([]RoleAssignment, error)
+AuthzService.GetAssignments(ctx, subject, domainName) ([]RoleAssignment, error)
+```
+Queries `role_assignments` table (not Casbin) for full metadata: active and inactive rows, assigned_by, delegated_by, expires_at. Use for audit UI.
+
+---
+
+### Role Inheritance [IMPLEMENTED]
+
+Role-to-role inheritance is expressed with a g-rule where both user and role are role names:
+
+```
+g | finance-manager | finance-viewer | {domain}
 ```
 
-Queries `role_assignments` (not Casbin) for full metadata. Returns all rows — active and inactive — for a full audit view.
+This means `finance-manager` inherits all policies of `finance-viewer`. You can chain:
 
-```go
-assignments, _ := svc.GetAssignments(ctx, "tenant:usr_001", dom)
-for _, a := range assignments {
-    fmt.Printf("Role: %s, Active: %v, Expires: %v, AssignedBy: %s\n",
-        a.Role, a.IsActive, a.ExpiresAt, a.AssignedBy)
-}
+```
+g | finance-manager | finance-viewer  | {dom}
+g | finance-viewer  | report-viewer   | {dom}
+
+User assigned: tenant:usr_cfo → finance-manager
+Effective policies:
+  finance-manager (direct) + finance-viewer (inherited) + report-viewer (inherited)
 ```
 
-### Role Naming Conventions
+**Cycle prevention**: The domain model documents cycle prevention as a concern, but no Go-level cycle detection is implemented in v1.0. Avoid circular role inheritance — Casbin would loop indefinitely.
 
-```markdown
-RECOMMENDED NAMING:
+---
 
-System roles (defined once, apply per-tenant):
-  role:tenant-admin          Full access within tenant
-  role:finance-manager       Full finance access
-  role:finance-viewer        Read-only finance
-  role:sales-manager         Full sales + discount approval
-  role:sales-rep             Create orders, view customers
-  role:hr-admin              Payroll, employee records, hiring
-  role:hr-viewer             Read-only HR
-  role:inventory-manager     Stock adjust, PO create, cost view
-  role:auditor               Read-only, all modules (time-limited typically)
-  role:report-viewer         Download/view reports, no data mutation
+### Temporal Assignments [IMPLEMENTED]
 
-Portal roles:
-  role:portal-customer       View own invoices, pay, download statements
-  role:portal-supplier       View POs, submit invoices, track payments
+Assignments with `WithExpiry(t)` are lazily expired: on every `Enforce()` call, `revokeExpiredRoles()` checks if any roles for the subject have `expires_at < NOW()` and removes them. The removal is best-effort (logged but non-fatal on failure).
 
-API roles:
-  role:api-readonly          GET all resources
-  role:api-full-access       All actions (trusted service accounts)
-  role:api-invoice-submit    POST invoice/*, read customer/*
+---
 
-Platform roles:
-  role:platform-admin        Everything in _platform_
-  role:platform-support      Read tenant data, cannot modify
-  role:platform-billing      Manage subscriptions and plans only
+### Role Naming in v1.0
+
+No formal role registry. Seeded roles by convention:
+
+```
+tenant_admin     — wildcard allow for all objects/actions in tenant domain (seeded by BootstrapTenantAdmin)
 ```
 
-### Role Hierarchy Example
+Custom role names are free-form strings. By convention use lowercase kebab-case:
 
-```markdown
-FINANCE ROLE HIERARCHY:
-
-         role:report-viewer
-               │
-     ┌─────────┘
-     │
-role:finance-viewer
-  (inherits from report-viewer)
-  + invoice/* read allow
-  + payment/* read allow
-     │
-     └───────────────────┐
-                         │
-               role:finance-manager
-                 (inherits from finance-viewer)
-                 + invoice/* * allow
-                 + payment/* * allow
-                 + journal/* * allow
-                         │
-                         └──────────────────┐
-                                            │
-                                   role:cfo
-                                     (inherits from finance-manager)
-                                     + invoice/*/approve execute allow
-                                     + budget/* * allow
-                                     + period/*/close execute allow
-
-g-rules to define this hierarchy:
-  g | role:finance-viewer  | role:report-viewer   | {dom}
-  g | role:finance-manager | role:finance-viewer  | {dom}
-  g | role:cfo             | role:finance-manager | {dom}
 ```
+finance-manager
+finance-viewer
+sales-rep
+auditor
+portal-customer
+api-readonly
+```
+
+Platform domain roles:
+```
+platform-admin       — use for cross-tenant admin subjects
+platform-support     — read-only cross-tenant access
+```
+
+---
+
+### Roles Table (V2.0 Reserved) [PLANNED - NOT IN v1.0]
+
+Migration `000405_auth_create_roles.up.sql` creates a `roles` table with:
+- `is_system_role BOOLEAN` — immutability flag
+- `parent_role_id UUID` — DB-level hierarchy
+- `role_type` (SYSTEM, TENANT, ENTITY, CUSTOM, FUNCTIONAL)
+- `conditions JSONB` — time/location/device conditions (ABAC)
+- `permissions JSONB` — cached permissions
+
+This table is **deployed** (migration runs) but **not connected** to any service code in v1.0. The `//go:build ignore` gate on `internal/core/access/` means no code reads or writes this table at runtime.
 
 ---
 
