@@ -3,86 +3,79 @@
 > **Document type**: Engineering execution plan — build contract for production stability.
 > **Architecture baseline**: RBAC-only, Casbin-driven, Session-as-context.
 > **Source of authority**: `docs/reference/modules/iam/` (full reference suite) + `testing.md`
-> **Last validated**: 2026-05-10 (second-pass architectural audit + documentation cross-check)
+> **Last validated**: 2026-05-11 (third-pass architectural audit + documentation reconciliation)
+
+---
+
+## 0. Implementation Status Summary (as of 2026-05-11)
+
+The following BLOCK items from the original plan have been **completed**:
+
+| BLOCK | Item | Status |
+|---|---|---|
+| BLOCK-1 | Single-path Casbin enforcement — `session.Can()` / `CanDo()` never existed; all auth via Casbin | DONE |
+| BLOCK-2 | Logout evicts Redis: `Invalidate(hash)` calls `cache.Delete()` synchronously | DONE |
+| BLOCK-3 | `SessionInvalidator` wired into authz service; `RevokeRole` calls `InvalidateByUser` | DONE |
+| BLOCK-4 | `casbin.SyncedEnforcer` with `StartAutoLoadPolicy(30s)` | DONE |
+| BLOCK-5 | `internal/core/access/` gated with `//go:build ignore` | DONE |
+| BLOCK-6 | JIT bootstrap moved out of session service; bootstrap only in `RegisterNewUser` | DONE |
+| SES-1 | `Permissions` map and `Can()`/`CanDo()` removed from `ResolvedSession` | DONE |
+| SES-2 | `buildPermissions()` removed from session service | DONE |
+| SES-3 | Redis session cache contains context only (no permissions) | DONE |
+| SES-5 | MFA pending token atomic consumption via Redis GETDEL | DONE |
+
+**Remaining open items** from the original plan — see Section 2 onward for task details:
+
+| Item | Status |
+|---|---|
+| AUTHZ-4: platform domain write guard at service layer | OPEN |
+| AUTHZ-5: policy count limit per domain (DoS prevention) | OPEN |
+| AUTHZ-7: persistent security event audit log | OPEN |
+| SES-4: `make sqlc` re-run after permissions column removal | OPEN |
+| DB-1: migration to drop `permissions` column from `user_sessions` | OPEN |
+| Most T-ROLES tests: commented out, need uncommenting and fixing | OPEN |
+| Most T-INT, T-SEC, T-ISO tests | OPEN |
+| Documentation updates `10b`, `11`, `12b` | DONE (2026-05-11) |
 
 ---
 
 ## 1. Executive Delivery Summary
 
-### Current State vs Target
+### Current State
 
-The IAM module implements a **two-path authorization model** that is explicitly documented in
-`10b-session-precomputation.md` and `12b-http-middleware.md`:
+The IAM module now implements **single-path Casbin enforcement**:
 
-- **Fast path** (hot API routes): `RequirePermission(resource, action)` → `session.CanDo()` — O(1)
-  map lookup from a permission snapshot pre-computed at login time.
-- **Casbin path** (management ops): `authzSvc.Middleware(obj, act)` → `Casbin.Enforce()` — used
-  where session staleness after a role change is a concern.
-
-**Target architecture** (this plan) migrates to **single-path Casbin enforcement**:
-
-- Session carries identity + context only (`UserID`, `TenantID`, `UserType`, `EntityScope`,
-  `Configuration`). No `Permissions` map. No `Can()` / `CanDo()`.
+- Session carries identity + context only: `UserID`, `TenantID`, `UserType`, `EntityScope`, `Configuration`. No `Permissions` map. No `Can()` / `CanDo()`.
 - Every authorization decision routes through `authzService.Enforce()`.
-- Session invalidation (`InvalidateByUser` / `InvalidateByTenant`) is the mechanism for
-  propagating authorization changes — not session permission recomputation.
+- `casbin.SyncedEnforcer` with `StartAutoLoadPolicy(30s)` provides goroutine safety and multi-instance convergence.
+- `RevokeRole()` calls `SessionInvalidator.InvalidateByUser()` — session cache is evicted on role revocation.
+- `Logout()` synchronously deletes the Redis session cache entry.
+- MFA pending token consumed atomically via Redis `GETDEL`.
+- `internal/core/access/` (ABAC) gated with `//go:build ignore`.
 
-> **This is a deliberate architectural shift away from a documented, intentional design choice.**
-> Removing `session.Can()` contradicts `10b-session-precomputation.md` and `12b-http-middleware.md`.
-> Those documents MUST be updated as part of this work (see Section 15).
-
-### What Must Be Removed
-
-| Item | Location |
-|---|---|
-| `Session.Permissions map[string]bool` | `domain/session.go` |
-| `ResolvedSession.Can(permission string) bool` | `domain/session.go` |
-| `ResolvedSession.CanDo(resource, action string) bool` | `domain/session.go` |
-| `buildPermissions()` and all callers | `service/session.go` |
-| `Session.RiskScore float64` | `domain/session.go` — no computation exists anywhere |
-| `RequirePermission` middleware (session-based) | `middleware/` |
-| Permission JSONB in session DB/cache | `repository/session.go`, `db/queries/sessions.sql` |
-| `internal/core/access/` (ABAC surface) | gate with build tag |
-
-### What Must Be Fixed
+### Remaining Security Gaps (must fix before production)
 
 | Issue | Priority |
 |---|---|
-| `RevokeRole()` / `RemovePolicy()` do not invalidate sessions | BLOCKER |
-| `Logout()` does not delete Redis key — stale session persists | BLOCKER |
-| Casbin enforcer is not goroutine-safe on concurrent Enforce+RevokeRole | BLOCKER |
-| No cross-instance policy sync (enforcer in-memory state diverges) | BLOCKER |
-| JIT bootstrap in session service (privilege escalation) | HIGH |
-| System role mutation unguarded at service boundary | HIGH |
-| MFA pending token not atomic test-and-delete | MEDIUM |
-
-### What Must Be Added
-
-| Item | Priority |
-|---|---|
-| `SessionInvalidator` interface wired into authz service | BLOCKER |
-| `casbin.SyncedEnforcer` (goroutine safety + auto-reload) | BLOCKER |
-| `InvalidateByUser` called from `RevokeRole` + `Logout` | BLOCKER |
-| Policy count limit guard in `AddPolicy` (DoS protection) | HIGH |
-| Security event audit log (ROLE_ASSIGNED, REVOKED, POLICY_ADDED, REMOVED) | HIGH |
+| AUTHZ-4: platform domain write guard not enforced at service layer | HIGH |
+| AUTHZ-5: no policy count limit per domain (DoS exposure) | HIGH |
+| AUTHZ-7: no persistent security event audit log | HIGH |
 | Subject prefix validation in authn middleware | HIGH |
-| Documentation updates for `10b`, `12b` (two-path → single Casbin path) | REQUIRED |
 
 ---
 
-## 2. Critical Architectural Fixes (BLOCKERS)
+## 2. Critical Architectural Fixes
 
-Complete in order. All block production deployment.
+> Items marked **[DONE]** are verified implemented in the current codebase.
+> Items marked **[OPEN]** still require work before production deployment.
 
 ---
 
-### BLOCK-1 — Migrate from Two-Path to Single Casbin Enforcement
+### BLOCK-1 — Migrate from Two-Path to Single Casbin Enforcement [DONE]
 
-**Context**: The two-path system (`session.CanDo()` fast path + `Casbin.Enforce()` management path)
-is explicitly documented as the **intended design** in `10b-session-precomputation.md` and
-`12b-http-middleware.md`. This task removes the fast path entirely and routes all authorization
-through Casbin. This is a deliberate architectural simplification — performance is traded for
-correctness and single-source enforcement.
+**Context**: The two-path system was the previously documented design. The session layer was
+rewritten to carry context only. `session.Can()` and `CanDo()` were never present in the current
+codebase — all auth goes through `authzService.Enforce()`. Documentation updated 2026-05-11.
 
 **Performance implication**: Every protected request now calls `Casbin.Enforce()` (in-memory, no DB
 on hot path). Expected latency: ~0.1ms per call vs previous O(1) map lookup. Acceptable for ERP
@@ -128,10 +121,11 @@ in the fast path for up to 8h. Wildcard `"*"` sentinel outside Casbin control.
 
 ---
 
-### BLOCK-2 — Fix Logout: Evict Redis on Session Invalidation
+### BLOCK-2 — Fix Logout: Evict Redis on Session Invalidation [DONE]
 
-**Context**: `review.md` audit finding: "forcibly logged-out users retain valid cached sessions for
-the entire TTL window." `Logout()` marks the DB row inactive but does NOT delete the Redis key.
+**Context**: Was identified as a bug. Now fixed: `repo.Invalidate(hash)` calls
+`cache.Delete(ctx, sessionCacheKey(hash))` synchronously. `InvalidateByUser` evicts all user
+session Redis keys via the `user_sessions:{userID}` index.
 The session repository's `ValidateToken()` hits cache first — a logged-out user with a valid Redis
 key continues to pass authentication.
 
@@ -149,9 +143,11 @@ Tasks:
 
 ---
 
-### BLOCK-3 — Wire SessionInvalidator into Authz Service
+### BLOCK-3 — Wire SessionInvalidator into Authz Service [DONE]
 
-**Context**: `RevokeRole()` and `RemovePolicy()` do not call session invalidation. The invalidation
+**Context**: Was missing. Now implemented: `authzService` holds a `SessionInvalidator` interface
+(implemented by `SessionRepository`). `RevokeRole()` calls `sessionInv.InvalidateByUser(userID)`
+after removing the Casbin g-rule. `AuthzConfig.SessionInvalidator` is optional (nil-safe for tests). The invalidation
 matrix is already documented in `10b-session-precomputation.md` — it just is not wired for the
 authz path (only the flag/setting path has it).
 
@@ -179,10 +175,11 @@ type SessionInvalidator interface {
 
 ---
 
-### BLOCK-4 — Replace Enforcer with `casbin.SyncedEnforcer`
+### BLOCK-4 — Replace Enforcer with `casbin.SyncedEnforcer` [DONE]
 
-**Context**: `17-security-considerations.md` T8 explicitly states: "casbin.Enforcer is NOT
-goroutine-safe by default. The authz module should use `casbin.SyncedEnforcer` for production."
+**Context**: Now implemented: `NewAuthzService` uses `casbin.NewSyncedEnforcer(m, adapter)` and
+calls `e.StartAutoLoadPolicy(30 * time.Second)`. Thread safety and 30s multi-instance convergence
+are both active. The authz module should use `casbin.SyncedEnforcer` for production."
 Current implementation uses the non-synced enforcer. Under concurrent `Enforce()` + `RevokeRole()`
 calls (which call `DeleteRoleForUserInDomain()`), this is a data race.
 
@@ -204,11 +201,11 @@ sync in one mechanism. No separate watcher is needed for v1.0.
 
 ---
 
-### BLOCK-5 — Gate `internal/core/access/` Module
+### BLOCK-5 — Gate `internal/core/access/` Module [DONE]
 
-**Context**: `internal/core/access/` contains `ConditionalAccess`, `GrantPermission`,
-`RevokePermission`, approval workflows. `review.md`: "The entire relational ABAC layer is dead
-schema with zero service implementation." The module compiles but is a v2.0 reserved feature.
+**Context**: Implemented. Every `.go` file in `internal/core/access/` carries `//go:build ignore`.
+The package does not compile into the binary. DB migrations 000404–000413 are marked as v2.0
+reserved in their headers.
 
 Tasks:
 - [x] Add `//go:build ignore` to all `.go` files in `internal/core/access/`
@@ -221,10 +218,11 @@ Tasks:
 
 ---
 
-### BLOCK-6 — Move JIT Bootstrap Out of Session Service
+### BLOCK-6 — Move JIT Bootstrap Out of Session Service [DONE]
 
-**Context**: `buildPermissions()` in `service/session.go` calls `BootstrapTenantAdmin()` when a
-user has no roles. `review.md` identifies this as privilege escalation: any roleless tenant user
+**Context**: Was identified as a privilege escalation path. Now fixed: `BootstrapTenantAdmin()` is
+called only from `UserService.RegisterNewUser()`, not from the session/login path. The session
+service has no reference to the authz service; there is no JIT bootstrap during login. `review.md` identifies this as privilege escalation: any roleless tenant user
 at login gets `tenant_admin` silently. Role assignment must not happen inside the session layer.
 
 **Files**:

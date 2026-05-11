@@ -1,8 +1,14 @@
 # IAM Module — Identity, Authentication & Authorization
 
-> **Comprehensive guide covering the full IAM platform: Module/Resource/Action registry, feature flags, tenant settings, authentication, Casbin-based authorization, session management, entity hierarchy, and UI generation.**
+> **Comprehensive guide covering the full IAM platform: authentication, RBAC via Casbin, session management, entity hierarchy, MFA, SSO, and API keys.**
 >
-> **Packages:** `internal/platform` (IAM platform) · `internal/core/authz` (Casbin engine)
+> **Package:** `internal/core/iam` (single unified package as of v1.0)
+>
+> **Architecture baseline**: RBAC-only, Casbin-driven, Session-as-context.
+> All authorization decisions go through `authzService.Enforce()`.
+> Session carries identity and configuration context only — no permission map.
+>
+> **Last reconciled**: 2026-05-11 — all docs verified against implementation.
 
 ## Table of Contents
 
@@ -50,6 +56,12 @@
 34. [API Reference](./21-api-reference.md)
 35. [Summary](./22-summary.md)
 36. [Test Cases](./testing.md)
+
+### v1.0 Architecture Reference (NEW — reconciled 2026-05-11)
+
+37. [RBAC Enforcement — Single-Path Model](./rbac-enforcement.md)
+38. [Deferred Features — Not Active in v1.0](./deferred-features.md)
+39. [Delivery Task Plan](./tasks.md)
 
 ---
 

@@ -2,22 +2,26 @@
 
 ## Security Considerations
 
+> **[IMPLEMENTED]** — describes the v1.0 security model as implemented.
+> Items marked **[OPEN]** are known gaps that must be addressed before full production deployment.
+> Items marked **[PLANNED]** are future-version features.
+
+---
+
 ### Threat Model
 
-The authz module must resist the following threat categories:
-
-```markdown
-THREAT MODEL:
-
-T1: Privilege escalation — tenant user gains platform rights
-T2: Cross-tenant access — Tenant A reads Tenant B's data
-T3: Stale authorization — ex-employee retains access after termination
-T4: Policy injection — attacker adds allow policies via API
-T5: Domain confusion — portal actor triggers tenant-domain policies
-T6: Denial-of-service — policy flooding exhausts memory/DB
-T7: Insider threat — platform admin abuses cross-tenant access
-T8: Race condition — role revoked during in-flight request
-```
+| ID | Threat |
+|---|---|
+| T1 | Privilege escalation — tenant user gains platform rights |
+| T2 | Cross-tenant access — Tenant A reads Tenant B's data |
+| T3 | Stale authorization — ex-employee retains access after termination |
+| T4 | Policy injection — attacker adds allow policies via API |
+| T5 | Domain confusion — portal actor triggers tenant-domain policies |
+| T6 | Denial-of-service — policy flooding exhausts memory/DB |
+| T7 | Insider threat — platform admin abuses cross-tenant access |
+| T8 | Race condition — role revoked during in-flight request |
+| T9 | MFA code replay |
+| T10 | Stale cached session — logged-out user retains Redis entry |
 
 ### T1: Privilege Escalation Prevention
 
@@ -215,89 +219,100 @@ Real-time alerts:
   Alert: platform:* access to sensitive resources (payroll/*, salary/*)
 ```
 
-### T8: Race Conditions
+### T8: Race Conditions [IMPLEMENTED]
 
-```markdown
-RACE CONDITION: Role revoked while request is in-flight
+**Goroutine safety**: `casbin.SyncedEnforcer` is used in production. Concurrent `Enforce()` and `RevokeRole()` / `DeleteRoleForUserInDomain()` calls are goroutine-safe.
 
-Timeline:
-  T=0ms: Request arrives, authn passes, authz Enforce() called
-  T=1ms: Enforce() reads in-memory model → role exists → ALLOW
-  T=2ms: Admin revokes role (RevokeRole called on another goroutine)
-  T=3ms: Route handler executes → user performs action
-  → User completed the action despite revocation
+**In-flight request race**: The window between `Enforce()` returning `true` and the route handler completing is 1–10ms. A role revocation arriving during that window allows the handler to complete with its already-granted access. This is a known property of in-process authorization and is acceptable for ERP workloads.
 
-ANALYSIS:
-  This is a known property of in-process authorization.
-  The window is 1-10ms (time between Enforce and handler completion).
-  This is ACCEPTABLE for an ERP system.
+For financial operations that require zero-race tolerance, re-check authorization inside the DB transaction (optimistic locking). This is not in scope for v1.0.
 
-  For financial operations requiring zero-race tolerance:
-    → Re-check inside the DB transaction (optimistic locking)
-    → SELECT ... WHERE user_has_active_role(subject, role, domain)
-      (custom DB function, not in current scope)
+**Multi-instance convergence**: `StartAutoLoadPolicy(30s)` ensures all instances converge within 30 seconds of a policy change. The 30-second window is accepted for v1.0.
 
-  For standard operations:
-    → 1-10ms window is negligible
-    → Next request will correctly return DENY
-    → JWT expires within hours — outer bound on any stale access
+### T9: MFA Code Replay Prevention [IMPLEMENTED]
 
-CASBIN THREAD SAFETY:
-  casbin.Enforcer is NOT goroutine-safe by default.
-  The authz module should use casbin.SyncedEnforcer for production:
+TOTP window tolerance is ±1 period (90 second total window). After each successful TOTP verify, `CheckAndMarkMFAReplay()` stores the window index in Redis for 90 seconds. A second use of the same code within the window is rejected as a replay.
 
-  // In service.go (future improvement):
-  e, err := casbin.NewSyncedEnforcer(m, adapter)
-  e.StartAutoLoadPolicy(30 * time.Second)  // periodic reload
+MFA pending tokens are consumed atomically via Redis `GETDEL`. A second concurrent `CompleteMFALogin` call with the same pending token fails — only one session is ever created per MFA flow.
 
-  OR use a sync.RWMutex wrapper around Enforce() calls.
-  Current implementation: single instance, acceptable for Phase 1.
-```
+---
+
+### T10: Stale Cached Session [IMPLEMENTED]
+
+- `Logout()` calls `repo.Invalidate(hash)`, which synchronously deletes `"session:{hash}"` from Redis before returning. Logout is not cosmetic.
+- `RevokeRole()` calls `SessionInvalidator.InvalidateByUser()`, which evicts all Redis session cache entries for the user.
+- Cache TTL matches `session.expires_at − time.Now()`. A cached session cannot outlive its DB record.
+- **Known gap**: Revoked API keys remain cached up to 5 minutes (the `"apikey:{hash}"` TTL). For emergency revocation, manually evict the Redis key or wait for TTL expiry.
+
+---
 
 ### IAM-Level Threat Mitigations
 
-| Threat | Key Mitigations |
-|---|---|
-| Password brute-force | bcrypt cost 12 (~4 guesses/sec); lockout after 5 fails (15m→30m→1h→2h backoff); 10/min/IP rate limit; HIBP top-10k check; generic errors (no user enumeration) |
-| Session token theft | HttpOnly+Secure+SameSite=Lax; 24h absolute TTL; SHA-256 hash stored, not plaintext; instant deletion on logout/suspend |
-| Privilege escalation | Guard 1 (namespace) + Guard 2 (tenant scope) + Guard 3 (delegation) — all atomic, all audited |
-| Cross-tenant data access | Casbin `r.dom==p.dom` + DB RLS + service-layer tenantID — three independent layers |
-| MFA code replay | Used codes cached 90s; one code valid once per 30-second window |
-| Flag/setting manipulation | Require explicit `settings.*` permissions; system flags require `platform.*`; all changes audit-logged + session invalidated |
-| Entity scope bypass | `entity_scope` from authenticated session only — never from request params; DB WHERE uses session's path prefix |
-| Casbin rule injection | Validates subject prefix, domain ownership; cannot write `_platform_` from tenant JWT; all additions audit-logged |
-| Account takeover via reset | 32-byte token (256-bit entropy); 1h expiry; stored hashed; one-time use; all sessions invalidated on success |
+| Threat | Key Mitigations | Status |
+|---|---|---|
+| Password brute-force | bcrypt; 5-attempt lockout (15min); generic error messages | Implemented |
+| Session token theft | HttpOnly+Secure cookie; SHA-256 hash stored; synchronous Redis eviction on logout | Implemented |
+| Privilege escalation | Casbin domain isolation (r.dom==p.dom); subject prefix from session, not request | Implemented; service-layer guard (AUTHZ-4) open |
+| Cross-tenant data access | Casbin domain match + DB RLS + tenant_id in ctx — three independent layers | Implemented |
+| MFA code replay | TOTP window tracking in Redis; GETDEL for pending token | Implemented |
+| Policy injection | Effect validation; parameterised queries | Partial — domain write guard (AUTHZ-4) open |
+| Policy flooding | Rate-limit on management endpoints | Policy count limit (AUTHZ-5) open |
+| Stale session after logout | Synchronous Redis DELETE in Invalidate() | Implemented |
+| Stale session after role revoke | InvalidateByUser() called from RevokeRole() | Implemented |
+| Entity scope bypass | EntityScope from authenticated session only; never from request params | Implemented |
+| API key stale-after-revoke | 5-min TTL window; document as known limitation | Known gap — acceptable for v1.0 |
+| Password reset takeover | 32-byte token; 1h expiry; stored hashed; single-use | Implemented |
+| Goroutine race in Casbin | SyncedEnforcer | Implemented |
+| Multi-instance policy drift | StartAutoLoadPolicy(30s) | Implemented — 30s max drift |
+| Security event audit log | OTel span attributes | Persistent audit log (AUTHZ-7) open |
 
 ### Security Checklist
 
-```markdown
-DEPLOYMENT SECURITY CHECKLIST:
+```
+DEPLOYMENT SECURITY CHECKLIST (v1.0):
 
 Database:
-  ✓ casbin_rule RLS enabled
-  ✓ role_assignments RLS enabled
-  ✓ Only application_role and admin_role have access
-  ✓ DB credentials rotated regularly
-  ✓ VPN / network policy restricts direct DB access
+  [x] casbin_rule — RLS present but set to full-access for application_role (required by Casbin)
+  [x] role_assignments — RLS enforced per tenant_id
+  [x] user_sessions — RLS enforced per tenant_id
+  [x] users — RLS enforced per tenant_id
+  [ ] Verify DB credentials are in secrets manager (not environment variables)
+  [ ] Verify VPN / network policy restricts direct DB access
 
 Application:
-  ✓ All routes protected with authn + authz middleware
-  ✓ Default deny: routes with no authz middleware are explicitly reviewed
-  ✓ Policy management endpoints rate-limited
-  ✓ Policy count limits per domain enforced
-  ✓ InvalidateCache called after bulk DB changes
+  [x] SyncedEnforcer — goroutine-safe concurrent enforcement
+  [x] StartAutoLoadPolicy(30s) — multi-instance convergence
+  [x] Logout() evicts Redis session cache synchronously
+  [x] RevokeRole() calls InvalidateByUser() — session cache evicted
+  [x] MFA pending tokens consumed atomically (GETDEL)
+  [x] access/ module gated with //go:build ignore
+  [ ] AUTHZ-4: platform domain write guard at service layer
+  [ ] AUTHZ-5: policy count limit per domain (DoS prevention)
+  [ ] AUTHZ-7: persistent security event audit log
 
 Monitoring:
-  ✓ Alert on unusual deny spike (> X% deny rate for a domain)
-  ✓ Alert on new platform-domain policy additions
-  ✓ Alert on platform actor accessing sensitive resources
-  ✓ Log every ROLE_ASSIGNED, ROLE_REVOKED, POLICY_ADDED, POLICY_REMOVED
+  [ ] Alert on deny spike (> threshold% deny rate for a domain)
+  [ ] Alert on new _platform_ domain policy additions
+  [ ] Alert on platform:* actor accessing sensitive resources
+  [ ] Alert on ROLE_ASSIGNED with platform subject
 
 Incident Response:
-  ✓ Terminate employee: RevokeRole + AddPolicy(deny) within 5 minutes
-  ✓ API key compromised: RevokeRole api:cli_{key} + AddPolicy(deny)
-  ✓ Tenant suspended: Block at authn layer (don't modify authz policies)
-  ✓ Security breach: InvalidateCache + policy audit on all instances
+  Terminate employee:
+    1. authzSvc.RevokeRole() for all roles (in-memory takes effect immediately)
+    2. authzSvc.AddPolicy(deny, *, *) as defence-in-depth
+    3. InvalidateByUser() called automatically by RevokeRole()
+
+  API key compromised:
+    1. APIKeyService.RevokeAPIKey(keyID)
+    2. Wait ≤ 5 minutes for cache expiry
+    3. Emergency: manually DELETE Redis key "apikey:{sha256(rawKey)}"
+
+  Tenant suspended:
+    Block at Authenticate middleware (check tenant status)
+    Do NOT modify Casbin policies — tenant suspension is transient
+
+  Policy store compromised:
+    InvalidateCache() on all instances → audit casbin_rule → revoke affected rules
 ```
 
 ---
