@@ -41,13 +41,14 @@ Completed BLOCK items:
 | Casbin model wildcard subject fix (`p.sub == "*"` in matcher) | DONE |
 | AUTHZ-2: `Authorize` middleware single Casbin path; bug fix (503→500 on Enforce error) | DONE |
 | T-MIDDLEWARE: AZ-MID-030 + post-refactor suite (authorize_test.go) | DONE |
+| AUTHZ-3: audit confirms no bypass paths; 4 regression guard tests added | DONE |
 
 **Remaining open items** — see Section 2 onward:
 
 | Item | Status |
 |---|---|
 | AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | DONE |
-| AUTHZ-3: audit no handler bypasses auth via direct DB role query | OPEN |
+| AUTHZ-3: audit no handler bypasses auth via direct DB role query | DONE |
 | AUTHZ-6: subject prefix validation in authn middleware | OPEN |
 | T-INT: integration tests (DB + Redis required) | OPEN |
 | T-ADAPTER (AZ-ADP-001..050): DB required | OPEN |
@@ -354,13 +355,19 @@ Tasks:
 
 ---
 
-### AUTHZ-3 — Remove All Enforcement Bypass Paths
+### AUTHZ-3 — Remove All Enforcement Bypass Paths [DONE]
 
 Tasks:
-- [ ] No handler may check authorization via direct DB role query
-- [ ] No handler may inspect `session.UserType` to bypass authorization
-- [ ] No service may make authorization decisions based on role strings — all decisions via `Enforce()`
-- [ ] `UserService` must not make authorization decisions; identity only
+- [x] No handler may check authorization via direct DB role query — verified, none found
+- [x] No handler may inspect `session.UserType` to bypass authorization — verified, none found
+- [x] No service may make authorization decisions based on role strings — verified, all decisions via `Enforce()`
+- [x] `UserService` must not make authorization decisions — verified; identity-only interface confirmed via reflection
+
+**Implementation notes (2026-05-17)**:
+- Audit: comprehensive scan of `internal/api/handlers/`, `internal/api/middleware/`, `internal/core/` — no bypass patterns found
+- `UserService` interface has no `Enforce`/`AddPolicy`/`GetPolicies` methods — confirmed via reflection test
+- `AssignUserRole`/`RevokeUserRole` on `UserService` are HR-layer identity ops, not Casbin enforcement — separate concern (ROLE-3)
+- Added: `internal/core/iam/bypass_audit_test.go` — 4 regression guard tests (TestAUTHZ3_*) that catch future bypass patterns
 
 ---
 
