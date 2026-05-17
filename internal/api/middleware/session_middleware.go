@@ -110,19 +110,19 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 // Must run after Authenticate (requires LocalsKeySession and LocalsKeyPrincipal).
 // Returns 403 if the permission is denied or cfg.AuthzService is nil.
 func Authorize(cfg AuthConfig, permission string) fiber.Handler {
+	obj, act := splitPermission(permission) // computed once at registration, not per-request
 	return func(c *fiber.Ctx) error {
 		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
 		if cfg.AuthzService == nil {
-			return fiber.NewError(fiber.StatusForbidden, "permission denied")
+			return fiber.NewError(fiber.StatusInternalServerError, "authorization service not configured")
 		}
 		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
 		if !ok {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
-		obj, act := splitPermission(permission)
 		allowed, err := cfg.AuthzService.Enforce(c.Context(), iam.Request{
 			Subject: principal.Subject,
 			Domain:  principal.Domain,

@@ -157,7 +157,6 @@ func DevelopmentCORSConfig(localhostPorts []int) *CORSConfig {
 		"http://localhost:8080",
 		"http://127.0.0.1:3000",
 		"http://127.0.0.1:8080",
-		"null", // Allow file:// origin for local development
 	}
 
 	// Add custom localhost ports

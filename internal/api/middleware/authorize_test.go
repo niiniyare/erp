@@ -251,11 +251,6 @@ func TestAuthorize_EnforceError_Returns500(t *testing.T) {
 		Authorize(cfg, "finance.invoices.read"),
 		okHandler,
 	)
-	// Error handler — convert fiber.Error to its HTTP status.
-	app.Use(func(c *fiber.Ctx) error {
-		return c.Next()
-	})
-
 	status := doGetStatus(app, "/test")
 	assert.Equal(t, fiber.StatusInternalServerError, status,
 		"Enforce error must produce 500, not 403")
