@@ -42,6 +42,8 @@ Completed BLOCK items:
 | AUTHZ-2: `Authorize` middleware single Casbin path; bug fix (503→500 on Enforce error) | DONE |
 | T-MIDDLEWARE: AZ-MID-030 + post-refactor suite (authorize_test.go) | DONE |
 | AUTHZ-3: audit confirms no bypass paths; 4 regression guard tests added | DONE |
+| IAM contract layer (`iam/contract/`): SessionContext, AuthService, InjectSessionContext, adapter, tests | DONE |
+| System-wide boundary audit: `contract-adoption-audit.md` — 3 CRITICAL violations found in finance + shared | DONE |
 
 **Remaining open items** — see Section 2 onward:
 
@@ -49,6 +51,10 @@ Completed BLOCK items:
 |---|---|
 | AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | DONE |
 | AUTHZ-3: audit no handler bypasses auth via direct DB role query | DONE |
+| CONTRACT-FIN-1: remove iam.Service from finance/service.go + account.go | OPEN |
+| CONTRACT-FIN-2: replace featureflag.Service with SessionContext.FeatureEnabled in account.go | OPEN |
+| CONTRACT-FIN-3: delete planned Enforce() TODO in account.go:159-164 | OPEN |
+| CONTRACT-SHARED-1: audit + remove CapabilityContext.Permissions from shared/context.go | OPEN |
 | AUTHZ-6: subject prefix validation in authn middleware | OPEN |
 | T-INT: integration tests (DB + Redis required) | OPEN |
 | T-ADAPTER (AZ-ADP-001..050): DB required | OPEN |
