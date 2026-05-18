@@ -74,7 +74,8 @@ Decision tree:
 Checklist:
 
 - [ ] [Page Registration Pattern](03-implementation/02-page-registration-pattern.md)
-- [ ] [Go Schema Builder](03-implementation/01-go-schema-builder.md) — pick builders
+- [ ] [Page Patterns](03-implementation/04-page-patterns.md) — pick List / Document Form / Settings / Dashboard
+- [ ] [DSL Blocks](03-implementation/07-dsl-blocks.md) — reusable blocks for document forms and dashboards
 - [ ] [IAM Integration](02-architecture/03-iam-integration.md) — wire permissions
 - [ ] [Pipeline Deep Dive](02-architecture/02-pipeline-deep-dive.md) — understand caching
 - [ ] [Migration Guide](appendices/B-migration-guide.md) — if touching an existing legacy page
