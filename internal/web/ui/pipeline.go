@@ -62,8 +62,17 @@ const (
 	// DataKeyCacheHit is set true by CacheStage on a cache hit.
 	DataKeyCacheHit = "ui.cache.hit"
 
-	// DataKeyPageFn is the resolved PageFn set by RegistryStage.
+	// DataKeyPageFn is the resolved PageFn set by RegistryStage (legacy path).
 	DataKeyPageFn = "ui.registry.page_fn"
+
+	// DataKeyASTPageFn is the resolved ASTPageFn set by RegistryStage (typed AST path).
+	// CompileStage checks this key first; falls back to DataKeyPageFn when absent.
+	DataKeyASTPageFn = "ui.registry.ast_page_fn"
+
+	// DataKeyASTCompiled is set true by CompileStage when the schema was produced
+	// via ASTPageFn + CompileTree. NormalizeStage skips structural rules that are
+	// already guaranteed by the typed AST (syncLocation, transparent bg) when this is true.
+	DataKeyASTCompiled = "ui.compile.ast_compiled"
 
 	// DataKeySessionCtx is the UISessionContext set by AuthzStage.
 	// Stored as ui.UISessionContext (value, not pointer — immutable).

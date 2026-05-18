@@ -5,31 +5,27 @@ import (
 	"runtime/debug"
 
 	"awo.so/internal/pipeline"
+	"awo.so/internal/web/ast"
 	"awo.so/internal/web/ui"
 )
 
-// ─── TASK 5 — COMPILE STAGE ──────────────────────────────────────────────────
+// ─── COMPILE STAGE ────────────────────────────────────────────────────────────
 //
-// CompileStage executes the PageFn with the UISessionContext to produce the
-// AMIS schema. This is the only stage that calls PageFn.
+// CompileStage executes the PageFn (or ASTPageFn) with the UISessionContext to
+// produce the compiled AMIS schema.
 //
-// DESCRIPTION:
-// Reads DataKeyPageFn (ui.PageFn) and DataKeySessionCtx (ui.UISessionContext)
-// from opCtx.Data. Calls fn(sess) and writes the result to DataKeySchema.
-// Recovers from panics in PageFn — a panicking page function returns an error
-// that aborts the pipeline with HTTP 500, but does not crash the server.
+// Dispatch order:
+//  1. ASTPageFn (DataKeyASTPageFn) — typed AST path.
+//     fn(sess) returns ast.Node → ast.CompileTree(node) → Schema.
+//     Validation happens inside CompileTree before JSON emission.
+//     Sets DataKeyASTCompiled = true so NormalizeStage can skip redundant checks.
 //
-// WHY:
-// PageFn is user-land code. Isolating its execution in a recoverable stage
-// prevents a buggy page function from taking down the process.
+//  2. PageFn (DataKeyPageFn) — legacy path.
+//     fn(sess) returns Schema directly.
+//     NormalizeStage applies full structural rule set.
 //
-// INVARIANTS enforced by this stage (not checked here — NormalizeStage checks):
-//   - PageFn must return a non-nil, non-empty Schema.
-//   - PageFn must be pure: same UISessionContext → same Schema.
-//
-// RISKS:
-// Panics are recovered but the underlying PageFn bug is not fixed — it will
-// panic on every cache miss until fixed. Log the stack trace at ERROR level.
+// Recovers from panics in both paths — a panicking function returns an error
+// that aborts the pipeline with HTTP 500 but does not crash the server.
 
 // CompileStage is Priority 50, Required true.
 type CompileStage struct {
@@ -48,23 +44,43 @@ func NewCompileStage() *CompileStage {
 	}
 }
 
-// Execute calls the PageFn with the UISessionContext. Recovers panics.
+// Execute dispatches to ASTPageFn or PageFn and writes the compiled schema to
+// DataKeySchema. Sets DataKeyASTCompiled when the AST path was used.
 func (s *CompileStage) Execute(opCtx *pipeline.OperationContext) (pipeline.StageResult, error) {
-	pageFn, ok := opCtx.Data[ui.DataKeyPageFn].(ui.PageFn)
-	if !ok || pageFn == nil {
-		return pipeline.StageResult{}, fmt.Errorf("ui.compile: DataKeyPageFn missing or wrong type — RegistryStage must run first")
-	}
-
 	sess, ok := opCtx.Data[ui.DataKeySessionCtx].(ui.UISessionContext)
 	if !ok {
 		return pipeline.StageResult{}, fmt.Errorf("ui.compile: DataKeySessionCtx missing — AuthzStage must run first")
+	}
+
+	// ── AST path ──────────────────────────────────────────────────────────────
+	if astFn, ok := opCtx.Data[ui.DataKeyASTPageFn].(ui.ASTPageFn); ok && astFn != nil {
+		schema, err := safeCompileAST(astFn, sess)
+		if err != nil {
+			return pipeline.StageResult{}, fmt.Errorf("ui.compile: ASTPageFn failed: %w", err)
+		}
+		if len(schema) == 0 {
+			return pipeline.StageResult{}, fmt.Errorf("ui.compile: ASTPageFn produced empty schema")
+		}
+		return pipeline.StageResult{
+			Status:  "completed",
+			Message: fmt.Sprintf("AST-compiled schema with %d top-level keys", len(schema)),
+			Outputs: map[string]any{
+				ui.DataKeySchema:      schema,
+				ui.DataKeyASTCompiled: true,
+			},
+		}, nil
+	}
+
+	// ── Legacy PageFn path ────────────────────────────────────────────────────
+	pageFn, ok := opCtx.Data[ui.DataKeyPageFn].(ui.PageFn)
+	if !ok || pageFn == nil {
+		return pipeline.StageResult{}, fmt.Errorf("ui.compile: neither DataKeyASTPageFn nor DataKeyPageFn found — RegistryStage must run first")
 	}
 
 	schema, err := safeCompile(pageFn, sess)
 	if err != nil {
 		return pipeline.StageResult{}, fmt.Errorf("ui.compile: PageFn panicked: %w", err)
 	}
-
 	if len(schema) == 0 {
 		return pipeline.StageResult{}, fmt.Errorf("ui.compile: PageFn returned empty schema")
 	}
@@ -76,6 +92,28 @@ func (s *CompileStage) Execute(opCtx *pipeline.OperationContext) (pipeline.Stage
 			ui.DataKeySchema: schema,
 		},
 	}, nil
+}
+
+// safeCompileAST calls the ASTPageFn, asserts the return value to ast.Node,
+// runs CompileTree, and recovers any panic.
+func safeCompileAST(fn ui.ASTPageFn, sess ui.UISessionContext) (schema ui.Schema, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("panic: %v\nstack:\n%s", r, debug.Stack())
+		}
+	}()
+
+	raw := fn(sess)
+	if raw == nil {
+		return nil, fmt.Errorf("ASTPageFn returned nil")
+	}
+
+	node, ok := raw.(ast.Node)
+	if !ok {
+		return nil, fmt.Errorf("ASTPageFn return value does not implement ast.Node (got %T)", raw)
+	}
+
+	return ast.CompileTree(node)
 }
 
 // safeCompile calls fn(sess) and recovers any panic into an error.

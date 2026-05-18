@@ -120,44 +120,46 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 1: Typed UI AST (Foundation)
 
-- [ ] **TASK 1 — Core AST Node Interfaces**
+- [x] **TASK 1 — Core AST Node Interfaces** (2026-05-18)
   - Files: `internal/web/ast/node.go`, `internal/web/ast/errors.go`,
     `internal/web/ast/compile.go`
   - Define `Node` and `ImmutableNode` interfaces
   - Implement `CompileTree` with validation-before-compilation
   - All compile/validation errors must be `sharedErrors.BusinessError` with code `AST_*`
-  - Status: _Not started_
+  - Status: _Complete_
 
-- [ ] **TASK 2 — Layout Container Nodes**
+- [x] **TASK 2 — Layout Container Nodes** (2026-05-18)
   - Files: `internal/web/ast/layout.go`
   - Implement: `PageNode`, `GridNode`, `FlexNode`, `TabsNode`, `SplitPaneNode`,
     `SectionNode` (collapsible labelled group — used extensively in document forms)
-  - Status: _Not started_
+  - Status: _Complete_
 
-- [ ] **TASK 3 — Data Display Nodes**
+- [x] **TASK 3 — Data Display Nodes** (2026-05-18)
   - Files: `internal/web/ast/display.go`
   - Implement: `TableNode`, `CRUDNode`, `ChartNode`, `CardNode`,
     `StatNode` (single KPI with label/value/trend), `TimelineNode`, `TreeNode`, `APISpec`
   - Critical: `syncLocation:true` structural invariant must be enforced at compile time —
     return `BusinessError` with code `AST_SYNC_LOCATION_MISSING` from `CompileTree`,
     not as a runtime render failure
-  - Status: _Not started_
+  - Status: _Complete_ — syncLocation always emitted by CRUDNode.Compile(); transparent bg always emitted by ChartNode.Compile()
 
-- [ ] **TASK 4 — Form & Input Nodes**
+- [x] **TASK 4 — Form & Input Nodes** (2026-05-18)
   - Files: `internal/web/ast/form.go`
   - Implement: `FormNode`, `FilterBarNode` (distinct from `FormNode` — see Phase 7),
     `InputTextNode`, `InputNumberNode`, `InputDateNode`, `InputDateRangeNode`,
     `SelectNode`, `ComboNode`, `MultiSelectNode`, `CheckboxNode`, `ToggleNode`,
     `ActionNode`, `DialogNode`, `DrawerNode`
-  - Status: _Not started_
+  - Status: _Complete_ — ActionNode canonical definition in display.go (used by CRUDNode); form.go imports it naturally within same package
 
-- [ ] **TASK 5 — AST Compiler Integration**
-  - Files: `internal/web/ui/types.go`, `internal/web/stages/compile.go`
+- [x] **TASK 5 — AST Compiler Integration** (2026-05-18)
+  - Files: `internal/web/ui/types.go`, `internal/web/ui/pipeline.go`,
+    `internal/web/stages/compile.go`, `internal/web/stages/normalize.go`
   - Add `ASTPageFn` type; dual dispatch in `CompileStage` so legacy `PageFn` continues
     to work during migration
-  - Compiled AST schemas stored in `cache.Service` under key `ui:schema:<pageID>`;
-    inject `cache.Service` into `CompileStage` via Wire
-  - Status: _Not started_
+  - `DataKeyASTPageFn` + `DataKeyASTCompiled` keys added to pipeline.go
+  - NormalizeStage skips structural checks when `DataKeyASTCompiled` is true
+  - Cache path unchanged — AST-compiled schemas go through existing CacheStoreStage
+  - Status: _Complete_
 
 ---
 

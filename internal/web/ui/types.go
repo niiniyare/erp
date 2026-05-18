@@ -28,7 +28,25 @@ type Schema = M
 //
 // Violations are caught by SchemaValidator at compile time (CI) or
 // at request time (NormalizeStage aborts the pipeline).
+//
+// Deprecated migration path: new pages should use ASTPageFn. Existing PageFn
+// pages continue to work unchanged during the migration window.
 type PageFn func(sess UISessionContext) Schema
+
+// ASTPageFn is the successor to PageFn for pages migrated to the typed AST.
+// Returns an ast.Node (the root of the typed node tree) instead of a raw Schema.
+//
+// CompileStage dispatches to ASTPageFn first (via DataKeyASTPageFn). If the
+// registry provides an ASTPageFn, CompileStage calls ast.CompileTree(node) and
+// validation happens before JSON emission. If only a PageFn is registered,
+// CompileStage falls back to the legacy path.
+//
+// Same purity invariants as PageFn.
+//
+// The return type uses `any` to avoid a circular import between the ui package
+// and the ast package. CompileStage asserts the value to ast.Node at runtime.
+// Registry implementations must store the actual ast.Node-returning function.
+type ASTPageFn func(sess UISessionContext) any // returns ast.Node
 
 // NavFn builds the permission-filtered navigation tree for the app shell.
 // Same purity invariants as PageFn.

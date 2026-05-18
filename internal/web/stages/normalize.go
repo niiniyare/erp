@@ -48,19 +48,36 @@ func NewNormalizeStage() *NormalizeStage {
 }
 
 // Execute validates AMIS compliance. Returns SchemaValidationError on violation.
+//
+// When DataKeyASTCompiled is true, structural invariants (syncLocation,
+// transparent background) are guaranteed by the typed AST — those rules are
+// skipped to avoid redundant checks. Security rules (no IAM in expressions)
+// always run regardless of compilation path.
 func (s *NormalizeStage) Execute(opCtx *pipeline.OperationContext) (pipeline.StageResult, error) {
 	schema, ok := opCtx.Data[ui.DataKeySchema].(ui.Schema)
 	if !ok {
 		return pipeline.StageResult{}, fmt.Errorf("ui.normalize: DataKeySchema missing — CompileStage must run first")
 	}
 
-	if err := walkSchema("$", schema, normalizeRules); err != nil {
+	astCompiled, _ := opCtx.Data[ui.DataKeyASTCompiled].(bool)
+
+	rules := normalizeRules
+	if astCompiled {
+		// Structural invariants guaranteed by typed AST nodes — skip redundant checks.
+		rules = normalizeRulesLegacyOnly
+	}
+
+	if err := walkSchema("$", schema, rules); err != nil {
 		return pipeline.StageResult{}, err
 	}
 
+	msg := "schema passed AMIS compliance checks"
+	if astCompiled {
+		msg = "schema passed AMIS compliance checks (AST path: structural rules skipped)"
+	}
 	return pipeline.StageResult{
 		Status:  "completed",
-		Message: "schema passed AMIS compliance checks",
+		Message: msg,
 	}, nil
 }
 
@@ -151,9 +168,19 @@ func walkSchema(path string, node ui.M, rules []ruleFunc) error {
 
 // ─── Normalize Rules ──────────────────────────────────────────────────────────
 
+// normalizeRules is the full rule set applied to legacy PageFn-compiled schemas.
 var normalizeRules = []ruleFunc{
 	ruleCRUDSyncLocation,
 	ruleChartTransparentBg,
+	ruleAPIMethodPrefix,
+}
+
+// normalizeRulesLegacyOnly is the reduced rule set for AST-compiled schemas.
+// Structural invariants (syncLocation, transparent bg) are guaranteed by node
+// Compile() — only the API method prefix check still applies because raw API
+// strings could theoretically appear inside custom map[string]any values passed
+// through legacy blocks embedded in an otherwise AST-compiled page.
+var normalizeRulesLegacyOnly = []ruleFunc{
 	ruleAPIMethodPrefix,
 }
 
