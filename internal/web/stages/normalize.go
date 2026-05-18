@@ -2,34 +2,71 @@ package stages
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"awo.so/internal/pipeline"
+	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/web/ui"
 )
 
-// ─── TASK 6 — NORMALIZE STAGE ────────────────────────────────────────────────
+// ─── INVARIANT: Normalize vs Validate ────────────────────────────────────────
 //
-// NormalizeStage enforces AMIS structural compliance rules on the compiled schema.
-// It runs after CompileStage and before ValidateStage.
+// NormalizeStage and ValidateStage have strictly separate contracts:
 //
-// DESCRIPTION:
-// Reads DataKeySchema. Walks the schema tree. Enforces:
-//   1. CRUD components must have syncLocation: true
-//   2. Chart components must have style.background: "transparent"
-//   3. All API strings must carry an HTTP method prefix (get:/post:/put:/delete:/patch:)
+//   NormalizeStage (priority 60):
+//     - Pure canonicalization. Mutates the schema to a standard form.
+//     - MUST NEVER return an error. If something cannot be silently corrected,
+//       it is NOT canonicalization — it belongs in ValidateStage.
+//     - Runs unconditionally on both legacy PageFn and AST-compiled schemas.
+//       Canonicalization is idempotent; the typed AST already emits canonical
+//       output, so the pass is a no-op on clean schemas.
 //
-// Why these rules:
-//   - syncLocation: prevents URL state loss on CRUD pagination.
-//   - transparent chart bg: required for dark-mode compatibility.
-//   - method prefix: AMIS sends GET for unprefixed APIs; explicit prefix prevents silent mistakes.
+//   ValidateStage (priority 70):
+//     - Enforcement only. Reads the canonicalized schema and rejects violations.
+//     - All errors are *sharedErrors.BusinessError with code prefix VALIDATE_*.
+//     - Errors wrap ui.ErrSchemaInvalid so errors.Is(err, ui.ErrSchemaInvalid)
+//       continues to work in SchemaHandler.
+//     - When DataKeyASTCompiled is true, structural invariants (syncLocation,
+//       transparent background) are guaranteed by the typed AST — those rules
+//       are skipped. Security rules always run regardless of path.
 //
-// RISKS:
-// Required: a non-compliant schema aborts the pipeline. This is intentional —
-// catching structural bugs at request time is better than shipping broken UI.
-// In CI, NormalizeStage can be called directly against test schemas to catch
-// issues before deployment.
+// Rule of thumb: "Can I fix this silently without guessing intent?" → Normalize.
+//                "Is this a programmer error that must be rejected?"  → Validate.
 
+// ─── VALIDATE ERROR CODES ────────────────────────────────────────────────────
+
+const (
+	// CodeValidateCRUDSyncLocation is returned when a CRUD component is missing
+	// syncLocation:true. This prevents URL state loss on pagination.
+	CodeValidateCRUDSyncLocation = "VALIDATE_CRUD_SYNC_LOCATION"
+
+	// CodeValidateChartTransparentBg is returned when a chart component is
+	// missing style.background:"transparent". Required for dark-mode compatibility.
+	CodeValidateChartTransparentBg = "VALIDATE_CHART_TRANSPARENT_BG"
+
+	// CodeValidateAPIMethodPrefix is returned when an api string lacks an HTTP
+	// method prefix (get:/post:/put:/delete:/patch:). AMIS silently uses GET for
+	// unprefixed strings — explicit prefix prevents invisible misrouting.
+	CodeValidateAPIMethodPrefix = "VALIDATE_API_METHOD_PREFIX"
+
+	// CodeValidateIAMInExpression is returned when a visibleOn/disabledOn/hiddenOn/
+	// requiredOn expression contains an IAM keyword. IAM decisions belong in Go;
+	// AMIS expressions execute in the browser without access to the authoritative
+	// permission store.
+	CodeValidateIAMInExpression = "VALIDATE_IAM_IN_EXPRESSION"
+)
+
+// ─── NORMALIZE STAGE ─────────────────────────────────────────────────────────
+
+// NormalizeStage canonicalizes the compiled schema to a standard form.
+// It MUST NEVER return an error — see the Invariant block above.
+//
+// Canonicalization applied:
+//   - Trims leading/trailing whitespace from "api" string values.
+//   - Lowercases "type" field values (AMIS type identifiers are case-sensitive
+//     lower-case; a PageFn that emits "CRUD" instead of "crud" would break).
+//
 // NormalizeStage is Priority 60, Required true.
 type NormalizeStage struct {
 	pipeline.BaseStage
@@ -48,60 +85,64 @@ func NewNormalizeStage() *NormalizeStage {
 	}
 }
 
-// Execute validates AMIS compliance. Returns SchemaValidationError on violation.
-//
-// When DataKeyASTCompiled is true, structural invariants (syncLocation,
-// transparent background) are guaranteed by the typed AST — those rules are
-// skipped to avoid redundant checks. Security rules (no IAM in expressions)
-// always run regardless of compilation path.
+// Execute canonicalizes the schema. Always succeeds.
 func (s *NormalizeStage) Execute(opCtx *pipeline.OperationContext) (pipeline.StageResult, error) {
 	schema, ok := opCtx.Data[ui.DataKeySchema].(ui.Schema)
 	if !ok {
-		return pipeline.StageResult{}, fmt.Errorf("ui.normalize: DataKeySchema missing — CompileStage must run first")
+		// Schema absent — nothing to canonicalize. ValidateStage will catch the missing key.
+		return pipeline.StageResult{Status: "skipped", Message: "DataKeySchema missing — nothing to canonicalize"}, nil
 	}
 
-	astCompiled, _ := opCtx.Data[ui.DataKeyASTCompiled].(bool)
+	canonicalizeSchema("$", schema)
 
-	rules := normalizeRules
-	if astCompiled {
-		// Structural invariants guaranteed by typed AST nodes — skip redundant checks.
-		rules = normalizeRulesLegacyOnly
-	}
-
-	if err := walkSchema("$", schema, rules); err != nil {
-		return pipeline.StageResult{}, err
-	}
-
-	msg := "schema passed AMIS compliance checks"
-	if astCompiled {
-		msg = "schema passed AMIS compliance checks (AST path: structural rules skipped)"
-	}
 	return pipeline.StageResult{
 		Status:  "completed",
-		Message: msg,
+		Message: "schema canonicalized",
 	}, nil
 }
 
-// ─── TASK 7 — VALIDATE STAGE ─────────────────────────────────────────────────
-//
-// ValidateStage enforces security rules: no IAM expressions in AMIS conditionals.
-//
-// DESCRIPTION:
-// Reads DataKeySchema. Walks schema looking for visibleOn/disabledOn/hiddenOn
-// expressions containing IAM keywords (role:, permission:, .roles, .permissions).
-//
-// WHY:
-// AMIS expressions execute in the browser. If a PageFn embeds raw permission
-// data in expressions (e.g. "${user.role === 'ADMIN'}"), it leaks IAM structure
-// to the client and creates a second unauthorized decision point.
-// The contract: Go decides what to show. AMIS renders it. Never the reverse.
-//
-// ALLOWED:   "${can_approve_invoice}"  — boolean pre-set by Go
-// FORBIDDEN: "${user.role === 'ADMIN'}" — role check in browser
-//
-// RISKS:
-// Required: a forbidden expression aborts the pipeline.
+// canonicalizeSchema walks the schema tree and mutates nodes to canonical form.
+func canonicalizeSchema(path string, node ui.M) {
+	// Lowercase the "type" field — AMIS type identifiers are always lower-case.
+	if t, ok := node["type"].(string); ok && t != strings.ToLower(t) {
+		node["type"] = strings.ToLower(t)
+	}
 
+	// Trim whitespace from "api" string values.
+	if api, ok := node["api"].(string); ok {
+		trimmed := strings.TrimSpace(api)
+		if trimmed != api {
+			node["api"] = trimmed
+		}
+	}
+
+	for k, v := range node {
+		childPath := path + "." + k
+		switch val := v.(type) {
+		case ui.M:
+			canonicalizeSchema(childPath, val)
+		case []any:
+			for i, item := range val {
+				if m, ok := item.(ui.M); ok {
+					canonicalizeSchema(fmt.Sprintf("%s[%d]", childPath, i), m)
+				}
+			}
+		}
+	}
+}
+
+// ─── VALIDATE STAGE ──────────────────────────────────────────────────────────
+
+// ValidateStage enforces structural and security rules on the canonicalized schema.
+// All violations are returned as *sharedErrors.BusinessError with code VALIDATE_*.
+// Errors wrap ui.ErrSchemaInvalid so SchemaHandler can map them to HTTP 500.
+//
+// Rule sets:
+//   - Structural rules: CRUD syncLocation, chart transparent background, API method prefix.
+//     Skipped when DataKeyASTCompiled is true — the typed AST guarantees these invariants.
+//   - Security rules: no IAM keyword in AMIS conditional expressions.
+//     Always runs regardless of compilation path.
+//
 // ValidateStage is Priority 70, Required true.
 type ValidateStage struct {
 	pipeline.BaseStage
@@ -120,29 +161,44 @@ func NewValidateStage() *ValidateStage {
 	}
 }
 
-// Execute scans for forbidden IAM expressions in schema conditionals.
+// Execute validates the schema against structural and security rules.
 func (s *ValidateStage) Execute(opCtx *pipeline.OperationContext) (pipeline.StageResult, error) {
 	schema, ok := opCtx.Data[ui.DataKeySchema].(ui.Schema)
 	if !ok {
-		return pipeline.StageResult{}, fmt.Errorf("ui.validate: DataKeySchema missing")
+		return pipeline.StageResult{}, fmt.Errorf("ui.validate: DataKeySchema missing — NormalizeStage must run first")
 	}
 
-	if err := walkSchema("$", schema, securityRules); err != nil {
+	astCompiled, _ := opCtx.Data[ui.DataKeyASTCompiled].(bool)
+
+	// Structural rules: skipped for AST-compiled schemas (invariants guaranteed by node.Compile()).
+	if !astCompiled {
+		if err := walkAndValidate("$", schema, structuralRules); err != nil {
+			return pipeline.StageResult{}, err
+		}
+	}
+
+	// Security rules: always run.
+	if err := walkAndValidate("$", schema, securityRules); err != nil {
 		return pipeline.StageResult{}, err
 	}
 
+	msg := "schema passed structural and security validation"
+	if astCompiled {
+		msg = "schema passed security validation (AST path: structural rules skipped)"
+	}
 	return pipeline.StageResult{
 		Status:  "completed",
-		Message: "schema passed security expression checks",
+		Message: msg,
 	}, nil
 }
 
 // ─── Schema Walker ────────────────────────────────────────────────────────────
 
-type ruleFunc func(path string, node ui.M) error
+type validateFunc func(path string, node ui.M) error
 
-// walkSchema recursively visits every M node in the schema tree and applies rules.
-func walkSchema(path string, node ui.M, rules []ruleFunc) error {
+// walkAndValidate recursively visits every M node and applies rules.
+// Returns on first violation.
+func walkAndValidate(path string, node ui.M, rules []validateFunc) error {
 	for _, rule := range rules {
 		if err := rule(path, node); err != nil {
 			return err
@@ -152,13 +208,13 @@ func walkSchema(path string, node ui.M, rules []ruleFunc) error {
 		childPath := path + "." + k
 		switch val := v.(type) {
 		case ui.M:
-			if err := walkSchema(childPath, val, rules); err != nil {
+			if err := walkAndValidate(childPath, val, rules); err != nil {
 				return err
 			}
 		case []any:
 			for i, item := range val {
 				if m, ok := item.(ui.M); ok {
-					if err := walkSchema(fmt.Sprintf("%s[%d]", childPath, i), m, rules); err != nil {
+					if err := walkAndValidate(fmt.Sprintf("%s[%d]", childPath, i), m, rules); err != nil {
 						return err
 					}
 				}
@@ -168,57 +224,57 @@ func walkSchema(path string, node ui.M, rules []ruleFunc) error {
 	return nil
 }
 
-// ─── Normalize Rules ──────────────────────────────────────────────────────────
+// ─── Structural Rules ─────────────────────────────────────────────────────────
 
-// normalizeRules is the full rule set applied to legacy PageFn-compiled schemas.
-var normalizeRules = []ruleFunc{
-	ruleCRUDSyncLocation,
-	ruleChartTransparentBg,
-	ruleAPIMethodPrefix,
+// structuralRules are applied to legacy PageFn-compiled schemas.
+// Skipped on AST-compiled schemas — typed nodes enforce these at compile time.
+var structuralRules = []validateFunc{
+	ruleValidateCRUDSyncLocation,
+	ruleValidateChartTransparentBg,
+	ruleValidateAPIMethodPrefix,
 }
 
-// normalizeRulesLegacyOnly is the reduced rule set for AST-compiled schemas.
-// Structural invariants (syncLocation, transparent bg) are guaranteed by node
-// Compile() — only the API method prefix check still applies because raw API
-// strings could theoretically appear inside custom map[string]any values passed
-// through legacy blocks embedded in an otherwise AST-compiled page.
-var normalizeRulesLegacyOnly = []ruleFunc{
-	ruleAPIMethodPrefix,
-}
-
-func ruleCRUDSyncLocation(path string, node ui.M) error {
+func ruleValidateCRUDSyncLocation(path string, node ui.M) error {
 	if node["type"] != "crud" {
 		return nil
 	}
 	sync, ok := node["syncLocation"].(bool)
 	if !ok || !sync {
-		return &ui.SchemaValidationError{
-			Rule:    "crud-sync-location",
-			Path:    path,
-			Message: "CRUD component missing syncLocation:true — add it via amis.CRUD() builder",
-		}
+		return sharedErrors.NewBusinessError(
+			CodeValidateCRUDSyncLocation,
+			"CRUD component missing syncLocation:true — prevents URL state loss on pagination",
+		).
+			WithHTTPStatus(http.StatusInternalServerError).
+			WithCategory(sharedErrors.CategoryValidation).
+			WithDetail("path", path).
+			WithDetail("fix", "use CRUDNode from the typed AST, or set syncLocation:true in the PageFn").
+			WithCause(ui.ErrSchemaInvalid)
 	}
 	return nil
 }
 
-func ruleChartTransparentBg(path string, node ui.M) error {
+func ruleValidateChartTransparentBg(path string, node ui.M) error {
 	if node["type"] != "chart" {
 		return nil
 	}
 	style, _ := node["style"].(ui.M)
 	if style == nil || style["background"] != "transparent" {
-		return &ui.SchemaValidationError{
-			Rule:    "chart-transparent-bg",
-			Path:    path,
-			Message: "chart missing style.background:\"transparent\" — required for dark mode compatibility",
-		}
+		return sharedErrors.NewBusinessError(
+			CodeValidateChartTransparentBg,
+			`chart missing style.background:"transparent" — required for dark-mode compatibility`,
+		).
+			WithHTTPStatus(http.StatusInternalServerError).
+			WithCategory(sharedErrors.CategoryValidation).
+			WithDetail("path", path).
+			WithDetail("fix", `set style:{"background":"transparent"} on every chart node`).
+			WithCause(ui.ErrSchemaInvalid)
 	}
 	return nil
 }
 
 var methodPrefixes = []string{"get:", "post:", "put:", "delete:", "patch:"}
 
-func ruleAPIMethodPrefix(path string, node ui.M) error {
+func ruleValidateAPIMethodPrefix(path string, node ui.M) error {
 	apiStr, ok := node["api"].(string)
 	if !ok || apiStr == "" {
 		return nil
@@ -228,21 +284,27 @@ func ruleAPIMethodPrefix(path string, node ui.M) error {
 			return nil
 		}
 	}
-	return &ui.SchemaValidationError{
-		Rule:    "api-method-prefix",
-		Path:    path,
-		Message: fmt.Sprintf("api %q missing method prefix — use get:/post:/put:/delete:/patch:", apiStr),
-	}
+	return sharedErrors.NewBusinessError(
+		CodeValidateAPIMethodPrefix,
+		fmt.Sprintf("api %q missing HTTP method prefix — AMIS silently uses GET for unprefixed strings", apiStr),
+	).
+		WithHTTPStatus(http.StatusInternalServerError).
+		WithCategory(sharedErrors.CategoryValidation).
+		WithDetail("path", path).
+		WithDetail("api", apiStr).
+		WithDetail("fix", "prefix with get:/post:/put:/delete:/patch:").
+		WithCause(ui.ErrSchemaInvalid)
 }
 
 // ─── Security Rules ───────────────────────────────────────────────────────────
 
-var securityRules = []ruleFunc{
+// securityRules always run regardless of compilation path.
+var securityRules = []validateFunc{
 	ruleNoIAMExpressions,
 }
 
 // iamKeywords are banned inside AMIS conditional expressions.
-// They indicate that IAM data is being embedded in client-side logic.
+// They indicate IAM data being embedded in client-side logic.
 var iamKeywords = []string{
 	"role:", "role ==", "role===", ".roles", ".role ",
 	"permission:", ".permissions", "Can(", "CanDo(",
@@ -257,15 +319,17 @@ func ruleNoIAMExpressions(path string, node ui.M) error {
 		}
 		for _, kw := range iamKeywords {
 			if strings.Contains(expr, kw) {
-				return &ui.SchemaValidationError{
-					Rule: "no-iam-in-expressions",
-					Path: path + "." + key,
-					Message: fmt.Sprintf(
-						"expression %q contains IAM keyword %q — "+
-							"use a boolean data variable set by Go (e.g. ${can_approve_invoice}) instead",
-						expr, kw,
-					),
-				}
+				return sharedErrors.NewBusinessError(
+					CodeValidateIAMInExpression,
+					fmt.Sprintf("expression in %q contains IAM keyword %q", key, kw),
+				).
+					WithHTTPStatus(http.StatusInternalServerError).
+					WithCategory(sharedErrors.CategorySecurity).
+					WithDetail("path", path+"."+key).
+					WithDetail("expression", expr).
+					WithDetail("keyword", kw).
+					WithDetail("fix", "use a boolean data variable set by Go — e.g. ${can_approve_invoice}").
+					WithCause(ui.ErrSchemaInvalid)
 			}
 		}
 	}

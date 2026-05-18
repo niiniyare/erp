@@ -201,13 +201,17 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 4: Normalisation / Validation Separation
 
-- [ ] **TASK 9 — Strict `NormalizeStage` Scope Reduction**
+- [x] **TASK 9 — Strict `NormalizeStage` Scope Reduction** (2026-05-18)
   - Files: `internal/web/stages/normalize.go`
-  - Move structural checks into `ValidateStage`; `NormalizeStage` must be pure
-    canonicalisation with no error return path
-  - `ValidateStage` errors use `BusinessError` with code prefix `VALIDATE_*`
-  - Add a documentation comment block explaining the invariant
-  - Status: _Not started_
+  - `NormalizeStage`: pure canonicalization (lowercase type, trim api whitespace);
+    Execute always returns nil error; skips schema missing gracefully
+  - `ValidateStage`: absorbs all structural rules (CRUD syncLocation, chart bg,
+    API method prefix) + security rules (no IAM expressions); all errors are
+    `*sharedErrors.BusinessError` with `VALIDATE_*` codes + `WithCause(ui.ErrSchemaInvalid)`
+    so `errors.Is(err, ui.ErrSchemaInvalid)` in SchemaHandler continues to work
+  - Structural rules still skip on `DataKeyASTCompiled=true`; security rules always run
+  - Large invariant comment block at top of file explains Normalize vs Validate boundary
+  - Status: _Complete_
 
 ---
 
