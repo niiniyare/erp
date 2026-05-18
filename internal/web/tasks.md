@@ -165,19 +165,20 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 2: Stage DAG Validation
 
-- [ ] **TASK 6 — DAG Validator at Pipeline Startup**
-  - Files: `internal/pipeline/stage_registry.go`, `internal/pipeline/dag.go`,
-    `internal/web/wire.go`
-  - Implement `ValidateDAG` with cycle detection; server refuses to start on invalid DAG
-  - Failure returns `BusinessError` code `DAG_CYCLE_DETECTED`,
-    category `sharedErrors.CategorySystem`
-  - Status: _Not started_
+- [x] **TASK 6 — DAG Validator at Pipeline Startup** (2026-05-18)
+  - Files: `internal/pipeline/dag.go`, `internal/web/wire.go`
+  - `ValidateDAG` added to StageRegistry; DFS cycle detection + missing-dep checks
+  - Returns `*DAGError` aggregating all violations
+  - Called in `wire.go` after registration; panics on invalid graph
+  - Validates `ui.OperationKey` only (AppOperationKey has different stage set)
+  - Status: _Complete_
 
-- [ ] **TASK 7 — Wire `DependsOn` into All UI Stages**
+- [x] **TASK 7 — Wire `DependsOn` into All UI Stages** (2026-05-18)
   - Files: `authz.go`, `cache.go`, `registry.go`, `compile.go`, `normalize.go`,
-    `response.go` (all 9 stage files)
-  - Populate `StageDependsOn` on every stage so the DAG validator can reason about order
-  - Status: _Not started_
+    `response.go`
+  - session(root) → authz → cache_lookup, registry → compile → normalize → validate → cache_store
+  - response has no DependsOn (priority-ordered last; cache-hit uses NextStageID)
+  - Status: _Complete_
 
 ---
 

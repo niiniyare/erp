@@ -56,6 +56,7 @@ func NewCacheLookupStage(svc cache.Service) *CacheLookupStage {
 			StageOperations: []string{ui.OperationKey, ui.AppOperationKey},
 			StagePriority:   ui.PriorityCache,
 			StageRequired:   false, // cache failure must not abort pipeline
+			StageDependsOn:  []string{"ui.authz"},
 		},
 		cacheSvc: svc,
 	}
@@ -147,6 +148,7 @@ func NewCacheStoreStage(svc cache.Service) *CacheStoreStage {
 			StageOperations: []string{ui.OperationKey, ui.AppOperationKey},
 			StagePriority:   ui.PriorityCacheStore,
 			StageRequired:   false,
+			StageDependsOn:  []string{"ui.validate"},
 		},
 		cacheSvc: svc,
 		ttl:      schemaCacheTTL,

@@ -51,6 +51,7 @@ func NewAuthzStage(svc authz.UIAuthzService) *AuthzStage {
 			StageOperations: []string{ui.OperationKey, ui.AppOperationKey},
 			StagePriority:   ui.PriorityAuthz,
 			StageRequired:   true,
+			StageDependsOn:  []string{"ui.session"},
 		},
 		authzSvc: svc,
 	}

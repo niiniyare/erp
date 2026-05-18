@@ -40,6 +40,7 @@ func NewCompileStage() *CompileStage {
 			StageOperations: []string{ui.OperationKey},
 			StagePriority:   ui.PriorityCompile,
 			StageRequired:   true,
+			StageDependsOn:  []string{"ui.registry"},
 		},
 	}
 }

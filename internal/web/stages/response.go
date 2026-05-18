@@ -41,6 +41,8 @@ func NewResponseStage() *ResponseStage {
 			StageOperations: []string{ui.OperationKey, ui.AppOperationKey},
 			StagePriority:   ui.PriorityResponse,
 			StageRequired:   true,
+			// No explicit DependsOn — priority 90 (highest) guarantees this runs last.
+			// The cache-hit short-circuit jumps here via NextStageID, not DependsOn.
 		},
 	}
 }

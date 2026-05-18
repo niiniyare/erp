@@ -39,6 +39,7 @@ func NewRegistryStage() *RegistryStage {
 			StageOperations: []string{ui.OperationKey},
 			StagePriority:   ui.PriorityRegistry,
 			StageRequired:   true,
+			StageDependsOn:  []string{"ui.authz"},
 		},
 	}
 }

@@ -43,6 +43,7 @@ func NewNormalizeStage() *NormalizeStage {
 			StageOperations: []string{ui.OperationKey},
 			StagePriority:   ui.PriorityNormalize,
 			StageRequired:   true,
+			StageDependsOn:  []string{"ui.compile"},
 		},
 	}
 }
@@ -114,6 +115,7 @@ func NewValidateStage() *ValidateStage {
 			StageOperations: []string{ui.OperationKey},
 			StagePriority:   ui.PriorityValidate,
 			StageRequired:   true,
+			StageDependsOn:  []string{"ui.normalize"},
 		},
 	}
 }

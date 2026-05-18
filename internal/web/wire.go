@@ -17,6 +17,8 @@
 package web
 
 import (
+	"fmt"
+
 	"awo.so/internal/pipeline"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
@@ -24,6 +26,7 @@ import (
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/web/authz"
 	"awo.so/internal/web/stages"
+	"awo.so/internal/web/ui"
 )
 
 // NewUIPipeline builds a StageRegistry populated with all UI pipeline stages
@@ -67,6 +70,13 @@ func NewUIPipeline(
 			instrument(stages.NewCacheLookupStage(cacheSvc)),
 			instrument(stages.NewCacheStoreStage(cacheSvc)),
 		)
+	}
+
+	// Validate the stage dependency graph at startup.
+	// Panics if any stage declares a dependency on an unregistered stage or
+	// if a cycle exists — an invalid DAG must never reach production.
+	if err := reg.ValidateDAG(ui.OperationKey); err != nil {
+		panic(fmt.Sprintf("UI pipeline DAG invalid: %v", err))
 	}
 
 	return pipeline.NewPipelineBuilder(reg, nil) // nil txRunner: UI has no DB transactions
