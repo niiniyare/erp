@@ -1037,8 +1037,6 @@
   <script src="../utils/locale-en.js"></script>
   <script>
     (function () {
-      var API_BASE = 'http://localhost:8080/';
-
       var amis = amisRequire('amis/embed');
       var currentInstance = null;
 
@@ -1216,11 +1214,6 @@
         document.getElementById('sidebar-backdrop').classList.remove('visible');
       };
 
-      // ── Click outside sidebar → collapse on desktop ──
-      document.getElementById('main').addEventListener('click', function () {
-        collapseSidebar();
-      });
-
       // ── Update Active Menu & Breadcrumb ──
       function updateNav(route) {
         // Update active state
@@ -1268,12 +1261,23 @@
 
         if (!pageName) pageName = route.charAt(0).toUpperCase() + route.slice(1);
 
+        breadcrumb.textContent = '';
         if (groupName) {
-          breadcrumb.innerHTML = '<span>' + groupName + '</span>'
-            + '<i class="fa fa-chevron-right bc-separator"></i>'
-            + '<span class="bc-current">' + pageName + '</span>';
+          var groupSpan = document.createElement('span');
+          groupSpan.textContent = groupName;
+          var sep = document.createElement('i');
+          sep.className = 'fa fa-chevron-right bc-separator';
+          var pageSpan = document.createElement('span');
+          pageSpan.className = 'bc-current';
+          pageSpan.textContent = pageName;
+          breadcrumb.appendChild(groupSpan);
+          breadcrumb.appendChild(sep);
+          breadcrumb.appendChild(pageSpan);
         } else {
-          breadcrumb.innerHTML = '<span class="bc-current">' + pageName + '</span>';
+          var pageSpan = document.createElement('span');
+          pageSpan.className = 'bc-current';
+          pageSpan.textContent = pageName;
+          breadcrumb.appendChild(pageSpan);
         }
       }
 
@@ -1283,10 +1287,6 @@
 
         fetcher: function (api) {
           var url = api.url;
-          if (url && !/^https?:\/\//.test(url)) {
-            // Strip leading slash to avoid double-slash with API_BASE
-            url = API_BASE + url.replace(/^\//, '');
-          }
 
           // Convert AMIS pagination (page/perPage) to backend (offset/limit)
           var urlObj = new URL(url, window.location.origin);
@@ -1317,6 +1317,11 @@
               if (res.status === 204) {
                 return {status: 0, msg: ''};
               }
+              // Session expired — redirect to login
+              if (res.status === 401) {
+                window.location.href = '/login';
+                return Promise.reject(new Error('Session expired'));
+              }
               if (!res.ok) {
                 // Try to parse error body for backend message
                 return res.json().catch(function () { return {}; }).then(function (body) {
@@ -1343,7 +1348,6 @@
                     status: 0,
                     data: {
                       items: json.data,
-                      options: json.data,
                       count: json.meta.pagination.total_records
                     }
                   };
@@ -1363,7 +1367,7 @@
           console.log('[' + type + ']', msg);
         },
         alert: function (msg) {
-          alert(msg);
+          amisEnv.notify('error', msg);
         },
         copy: function (text) {
           if (navigator.clipboard) navigator.clipboard.writeText(text);

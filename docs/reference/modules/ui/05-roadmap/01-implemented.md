@@ -103,19 +103,25 @@
 
 ---
 
-## Known Production Issues (Not Yet Fixed)
+## Known Production Issues
 
 | Issue | Severity | Location | Description |
 |-------|----------|----------|-------------|
-| `API_BASE` hardcoded to localhost | 🔴 Critical | `index.html:1040` | Breaks all non-localhost deploys |
-| 401 → login redirect missing | 🔴 Critical | `index.html:1314` | Session expiry shows broken toasts |
-| XSS in breadcrumb (`innerHTML`) | 🔴 Critical | `index.html:1272` | Pre-planted for Go-driven nav |
-| Font Awesome on external CDN | 🔴 Critical | `index.html:11` | Breaks offline; no SRI |
+| Font Awesome on external CDN | 🔴 Critical | `index.html:11` | Breaks offline; no SRI — needs bundling into `web/sdk/` |
 | CSRF protection absent | 🟠 High | Fiber middleware | Cookie auth + no CSRF token |
-| `alert()` native dialog in amisEnv | 🟠 High | `index.html:1365` | Freezes JS thread on error |
-| Sidebar collapses on main click | 🟡 Medium | `index.html:1220` | Every table row click collapses sidebar |
 | `max-height: 500px` menu ceiling | 🟡 Medium | `index.html:305` | Clips at ~12 items per group |
 | Sidebar search cosmetic (no impl) | 🟡 Medium | `index.html` | Click handler missing |
+
+## Fixed (2026-05-18)
+
+| Issue | Was | Fix |
+|-------|-----|-----|
+| `API_BASE` hardcoded to localhost | 🔴 Critical | Removed; fetcher uses relative URLs |
+| 401 → login redirect missing | 🔴 Critical | Added `window.location.href = '/login'` on 401 |
+| XSS in breadcrumb (`innerHTML`) | 🔴 Critical | Replaced with `createElement`+`textContent` |
+| `alert()` native dialog in amisEnv | 🟠 High | Replaced with `amisEnv.notify('error', msg)` |
+| Sidebar collapses on main click | 🟡 Medium | Removed `#main` click→collapseSidebar listener |
+| `options: json.data` in list bridge | 🟡 Medium | Removed — conflated list and select-options responses |
 
 ---
 
