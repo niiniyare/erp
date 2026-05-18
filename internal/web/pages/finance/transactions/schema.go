@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/finance/transactions", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/finance/transactions",
+		Module:      "finance",
+		Title:       "Transaction History",
+		Description: "Browse and filter ledger transactions",
+		Fn:          Schema,
+	})
 }
 
 var mockTransactions = amis.A{

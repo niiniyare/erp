@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/organizations", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/organizations",
+		Module:      "tenant",
+		Title:       "Organizations",
+		Description: "Tenant / organization management",
+		Fn:          Schema,
+	})
 }
 
 var mockTenants = amis.A{

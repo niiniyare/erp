@@ -1,52 +1,225 @@
-// Package registry maps route paths to schema builder functions.
-// Every page schema is registered here once. The handler dispatches by path.
+// Package registry maps route paths to page schema builders.
+//
+// Every page registers exactly one PageRegistration in its init() function.
+// Call ValidateRegistry() at startup (after all init() functions have run,
+// before the HTTP server starts) to catch misconfigured registrations early.
 //
 // Usage:
 //
 //	func init() {
-//	    registry.Register("/dashboard", dashboard.Schema)
-//	    registry.Register("/finance/invoices", invoices.Schema)
+//	    registry.RegisterPage(registry.PageRegistration{
+//	        Route:  "/finance/invoices",
+//	        Module: "finance",
+//	        Title:  "Invoices",
+//	        Fn:     Schema,           // legacy PageFn
+//	        // ASTFn: ASTSchema,      // preferred once migrated
+//	    })
 //	}
 package registry
 
 import (
 	"fmt"
+	"net/http"
+	"strings"
 	"sync"
 
+	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/web/ui"
 )
 
-var (
-	mu       sync.RWMutex
-	handlers = map[string]ui.PageFn{}
+// ─── REGISTRY_* ERROR CODES ───────────────────────────────────────────────────
+
+const (
+	// CodeRegistryDuplicateRoute is returned when two init() functions register the same route.
+	CodeRegistryDuplicateRoute = "REGISTRY_DUPLICATE_ROUTE"
+
+	// CodeRegistryInvalidRoute is returned when a route does not start with "/" or has a trailing slash.
+	CodeRegistryInvalidRoute = "REGISTRY_INVALID_ROUTE"
+
+	// CodeRegistryMissingModule is returned when Module is empty.
+	CodeRegistryMissingModule = "REGISTRY_MISSING_MODULE"
+
+	// CodeRegistryMissingTitle is returned when Title is empty.
+	CodeRegistryMissingTitle = "REGISTRY_MISSING_TITLE"
+
+	// CodeRegistryMissingFn is returned when neither Fn nor ASTFn is set.
+	CodeRegistryMissingFn = "REGISTRY_MISSING_FN"
+
+	// CodeRegistryValidationFailed is the aggregate error returned by ValidateRegistry
+	// when one or more registrations are invalid.
+	CodeRegistryValidationFailed = "REGISTRY_VALIDATION_FAILED"
 )
 
-// Register adds a schema function for a route path.
-// path should match the URL segment after /schema/, e.g. "/dashboard".
-// Panics on duplicate registration to catch typos at startup.
-func Register(path string, fn ui.PageFn) {
-	mu.Lock()
-	defer mu.Unlock()
-	if _, exists := handlers[path]; exists {
-		panic(fmt.Sprintf("ui/registry: duplicate schema registration for %q", path))
-	}
-	handlers[path] = fn
+// ─── PageRegistration ─────────────────────────────────────────────────────────
+
+// PageRegistration describes a single page in the UI registry.
+//
+// Route, Module, and Title are required. At least one of Fn or ASTFn must be set.
+// Prefer ASTFn for new pages — the typed AST gives compile-time guarantees that
+// the legacy PageFn cannot provide.
+//
+// ValidateRegistry() checks all registrations at startup. A missing or invalid
+// registration causes a panic before the HTTP server accepts any traffic.
+type PageRegistration struct {
+	// Route is the URL path served by this page, e.g. "/finance/invoices".
+	// Must start with "/" and must not have a trailing slash.
+	Route string
+
+	// Module groups related pages for cache invalidation and observability.
+	// Use the top-level domain name: "finance", "iam", "inventory", "dashboard".
+	Module string
+
+	// Title is the human-readable page title used in logs, traces, and the nav tree.
+	Title string
+
+	// Description is optional documentation surfaced in the registry debug endpoint.
+	Description string
+
+	// Fn is the legacy schema builder. Nil if ASTFn is set.
+	// Kept for backward compatibility during migration to the typed AST.
+	Fn ui.PageFn
+
+	// ASTFn is the preferred typed AST builder. Returns ast.Node (typed as any
+	// to avoid the circular import between ui and ast packages).
+	// When both Fn and ASTFn are set, CompileStage uses ASTFn and ignores Fn.
+	ASTFn ui.ASTPageFn
 }
 
-// Get looks up the schema function for path. Returns nil if not registered.
+// validate checks all required fields and returns a list of violation strings.
+func (r PageRegistration) validate() []string {
+	var v []string
+	if r.Route == "" || !strings.HasPrefix(r.Route, "/") {
+		v = append(v, fmt.Sprintf("route %q: must start with \"/\"", r.Route))
+	} else if r.Route != "/" && strings.HasSuffix(r.Route, "/") {
+		v = append(v, fmt.Sprintf("route %q: trailing slash not allowed", r.Route))
+	}
+	if r.Module == "" {
+		v = append(v, fmt.Sprintf("route %q: Module is required", r.Route))
+	}
+	if r.Title == "" {
+		v = append(v, fmt.Sprintf("route %q: Title is required", r.Route))
+	}
+	if r.Fn == nil && r.ASTFn == nil {
+		v = append(v, fmt.Sprintf("route %q: at least one of Fn or ASTFn must be set", r.Route))
+	}
+	return v
+}
+
+// ─── Registry ─────────────────────────────────────────────────────────────────
+
+var (
+	mu            sync.RWMutex
+	registrations = map[string]PageRegistration{}
+)
+
+// RegisterPage adds a PageRegistration to the registry.
+// Panics on duplicate route to catch init() ordering bugs at startup.
+// Call ValidateRegistry() after all init() functions have run to validate fields.
+func RegisterPage(reg PageRegistration) {
+	mu.Lock()
+	defer mu.Unlock()
+	if _, exists := registrations[reg.Route]; exists {
+		panic(fmt.Sprintf("ui/registry: duplicate registration for route %q", reg.Route))
+	}
+	registrations[reg.Route] = reg
+}
+
+// Register is the legacy API kept for backward compatibility.
+// New pages must use RegisterPage with full metadata.
+//
+// Deprecated: use RegisterPage.
+func Register(path string, fn ui.PageFn) {
+	RegisterPage(PageRegistration{
+		Route:  path,
+		Module: "unknown",
+		Title:  path,
+		Fn:     fn,
+	})
+}
+
+// GetRegistration returns the full PageRegistration for path, or nil if not registered.
+func GetRegistration(path string) *PageRegistration {
+	mu.RLock()
+	defer mu.RUnlock()
+	reg, ok := registrations[path]
+	if !ok {
+		return nil
+	}
+	return &reg
+}
+
+// Get returns the legacy PageFn for path. Returns nil if not registered or if the
+// page uses ASTFn only. Kept for DevSchemaHandler backward compatibility.
 func Get(path string) ui.PageFn {
 	mu.RLock()
 	defer mu.RUnlock()
-	return handlers[path]
+	reg, ok := registrations[path]
+	if !ok {
+		return nil
+	}
+	return reg.Fn
 }
 
-// Paths returns all registered paths.
+// Paths returns all registered routes.
 func Paths() []string {
 	mu.RLock()
 	defer mu.RUnlock()
-	out := make([]string, 0, len(handlers))
-	for p := range handlers {
+	out := make([]string, 0, len(registrations))
+	for p := range registrations {
 		out = append(out, p)
 	}
 	return out
+}
+
+// Registrations returns a snapshot of all PageRegistrations, keyed by route.
+func Registrations() map[string]PageRegistration {
+	mu.RLock()
+	defer mu.RUnlock()
+	out := make(map[string]PageRegistration, len(registrations))
+	for k, v := range registrations {
+		out[k] = v
+	}
+	return out
+}
+
+// ValidateRegistry checks every registered PageRegistration for required fields.
+// Returns *sharedErrors.BusinessError with code REGISTRY_VALIDATION_FAILED if any
+// registration is invalid. Returns nil when all registrations are valid.
+//
+// Call this at application startup after all init() functions have run:
+//
+//	if err := registry.ValidateRegistry(); err != nil {
+//	    panic(err)
+//	}
+func ValidateRegistry() error {
+	mu.RLock()
+	defer mu.RUnlock()
+
+	var violations []string
+	for _, reg := range registrations {
+		violations = append(violations, reg.validate()...)
+	}
+
+	if len(violations) == 0 {
+		return nil
+	}
+
+	details := make(map[string]any, len(violations))
+	for i, v := range violations {
+		details[fmt.Sprintf("violation_%d", i+1)] = v
+	}
+
+	err := sharedErrors.NewBusinessError(
+		CodeRegistryValidationFailed,
+		fmt.Sprintf("UI page registry has %d invalid registration(s)", len(violations)),
+	).
+		WithHTTPStatus(http.StatusInternalServerError).
+		WithCategory(sharedErrors.CategorySystem).
+		WithDetail("violation_count", len(violations))
+
+	for k, v := range details {
+		err = err.WithDetail(k, v)
+	}
+
+	return err
 }

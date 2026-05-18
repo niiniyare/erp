@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/settings", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/settings",
+		Module:      "platform",
+		Title:       "Settings",
+		Description: "Platform and tenant configuration settings",
+		Fn:          Schema,
+	})
 }
 
 func Schema(_ ui.UISessionContext) ui.Schema {

@@ -217,12 +217,19 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 5: Registry Dependency Graph
 
-- [ ] **TASK 10 — Page Registry with Module Declarations**
-  - Files: `internal/web/registry/registry.go`, `internal/web/wire.go`,
-    all `page/*/init()` functions
-  - Add `PageRegistration` struct with metadata; implement `ValidateRegistry` startup check
-  - Update all 6 existing pages; resolution errors use code prefix `REGISTRY_*`
-  - Status: _Not started_
+- [x] **TASK 10 — Page Registry with Module Declarations** (2026-05-18)
+  - Files: `internal/web/registry/registry.go`, `internal/web/stages/registry.go`,
+    `internal/web/wire.go`, all 6 `pages/*/init()` functions
+  - `PageRegistration` struct: Route, Module, Title, Description, Fn, ASTFn
+  - `RegisterPage` replaces `Register` (legacy `Register` kept as deprecated wrapper)
+  - `ValidateRegistry()` aggregates all field violations into one REGISTRY_VALIDATION_FAILED
+    BusinessError; called in `NewUIPipeline` before DAG validation — panics on failure
+  - `GetRegistration` returns full struct; `stages/registry.go` now sets DataKeyASTPageFn
+    when ASTFn is present (enables AST path without touching RegistryStage logic)
+  - All 6 pages updated: dashboard(dashboard), accounts+transactions(finance),
+    organizations(tenant), settings(platform), users(iam)
+  - REGISTRY_* error code constants defined in registry.go
+  - Status: _Complete_
 
 ---
 

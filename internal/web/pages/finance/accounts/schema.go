@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/finance/accounts", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/finance/accounts",
+		Module:      "finance",
+		Title:       "Chart of Accounts",
+		Description: "View and manage the general ledger chart of accounts",
+		Fn:          Schema,
+	})
 }
 
 var mockAccounts = amis.A{

@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/users", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/users",
+		Module:      "iam",
+		Title:       "Users",
+		Description: "User management — list, create, edit, deactivate",
+		Fn:          Schema,
+	})
 }
 
 var mockUsers = amis.A{

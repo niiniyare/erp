@@ -7,7 +7,13 @@ import (
 )
 
 func init() {
-	registry.Register("/dashboard", Schema)
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/dashboard",
+		Module:      "dashboard",
+		Title:       "Dashboard",
+		Description: "Main dashboard with KPI cards, charts, and recent activity",
+		Fn:          Schema,
+	})
 }
 
 func Schema(_ ui.UISessionContext) ui.Schema {

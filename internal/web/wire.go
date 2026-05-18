@@ -26,6 +26,7 @@ import (
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/web/authz"
 	uicache "awo.so/internal/web/cache"
+	"awo.so/internal/web/registry"
 	"awo.so/internal/web/stages"
 	"awo.so/internal/web/ui"
 )
@@ -48,7 +49,7 @@ func NewUIPipeline(
 	tracer tracing.Service,
 	mp metrics.MetricsProvider,
 	log logger.Logger,
-) *pipeline.PipelineBuilder {
+) *UIPipeline {
 	reg := pipeline.NewStageRegistry()
 
 	instrument := func(s pipeline.Stage) pipeline.Stage {
@@ -74,6 +75,12 @@ func NewUIPipeline(
 			instrument(stages.NewCacheLookupStage(cacheSvc)),
 			instrument(stages.NewCacheStoreStage(cacheSvc)),
 		)
+	}
+
+	// Validate the page registry — all RegisterPage() calls must have complete metadata.
+	// Panics if any registration is missing Module, Title, or both Fn and ASTFn.
+	if err := registry.ValidateRegistry(); err != nil {
+		panic(fmt.Sprintf("UI page registry invalid: %v", err))
 	}
 
 	// Validate the stage dependency graph at startup.
