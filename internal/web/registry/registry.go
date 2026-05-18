@@ -13,34 +13,34 @@ import (
 	"fmt"
 	"sync"
 
-	"awo.so/internal/web/amis"
+	"awo.so/internal/web/ui"
 )
 
 var (
 	mu       sync.RWMutex
-	handlers = map[string]amis.SchemaFn{}
+	handlers = map[string]ui.PageFn{}
 )
 
 // Register adds a schema function for a route path.
 // path should match the URL segment after /schema/, e.g. "/dashboard".
 // Panics on duplicate registration to catch typos at startup.
-func Register(path string, fn amis.SchemaFn) {
+func Register(path string, fn ui.PageFn) {
 	mu.Lock()
 	defer mu.Unlock()
 	if _, exists := handlers[path]; exists {
-		panic(fmt.Sprintf("amis/registry: duplicate schema registration for %q", path))
+		panic(fmt.Sprintf("ui/registry: duplicate schema registration for %q", path))
 	}
 	handlers[path] = fn
 }
 
 // Get looks up the schema function for path. Returns nil if not registered.
-func Get(path string) amis.SchemaFn {
+func Get(path string) ui.PageFn {
 	mu.RLock()
 	defer mu.RUnlock()
 	return handlers[path]
 }
 
-// Paths returns all registered paths, sorted.
+// Paths returns all registered paths.
 func Paths() []string {
 	mu.RLock()
 	defer mu.RUnlock()

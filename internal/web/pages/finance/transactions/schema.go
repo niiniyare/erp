@@ -3,6 +3,7 @@ package transactions
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
@@ -20,7 +21,7 @@ var mockTransactions = amis.A{
 	amis.M{"id": "txn-008", "reference_number": "PMT-2026-012", "transaction_type": "PAYMENT", "transaction_date": "2026-04-11", "description": "Utility bills payment", "amount": 28500, "currency": "KES", "status": "VOIDED"},
 }
 
-func Schema(_ amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("").
 		Toolbar(
 			amis.M{

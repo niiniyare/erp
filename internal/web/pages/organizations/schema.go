@@ -3,6 +3,7 @@ package organizations
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
@@ -17,7 +18,7 @@ var mockTenants = amis.A{
 	amis.M{"id": "ten-005", "name": "Nairobi Digital Media", "slug": "nairobi-digital", "industry": "Media", "company_size": "MEDIUM", "status": "SUSPENDED", "subscription_tier": "STARTER", "created_at": "2026-01-20"},
 }
 
-func Schema(_ amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("").
 		Toolbar(
 			amis.M{

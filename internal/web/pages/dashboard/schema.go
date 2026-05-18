@@ -3,13 +3,14 @@ package dashboard
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
 	registry.Register("/dashboard", Schema)
 }
 
-func Schema(_ amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("").
 		Body([]any{
 			// ── Header row ──

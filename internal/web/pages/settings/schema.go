@@ -3,13 +3,14 @@ package settings
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
 	registry.Register("/settings", Schema)
 }
 
-func Schema(ctx amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("Settings").
 		Body(
 			amis.Tabs().

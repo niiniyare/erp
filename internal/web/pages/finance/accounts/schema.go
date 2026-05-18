@@ -3,6 +3,7 @@ package accounts
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
@@ -20,7 +21,7 @@ var mockAccounts = amis.A{
 	amis.M{"id": "acc-008", "code": "5000", "name": "Cost of Goods Sold", "account_type": "EXPENSE", "currency": "KES", "balance": 2100000, "is_active": true},
 }
 
-func Schema(_ amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("").
 		Toolbar(
 			amis.M{

@@ -3,6 +3,7 @@ package users
 import (
 	"awo.so/internal/web/amis"
 	"awo.so/internal/web/registry"
+	"awo.so/internal/web/ui"
 )
 
 func init() {
@@ -18,7 +19,7 @@ var mockUsers = amis.A{
 	amis.M{"id": "usr-006", "username": "frank.ouma", "email": "frank@awoerp.com", "role": "staff", "status": "SUSPENDED", "created_at": "2026-03-20"},
 }
 
-func Schema(ctx amis.Ctx) amis.Schema {
+func Schema(_ ui.UISessionContext) ui.Schema {
 	return amis.Page("").
 		Toolbar(
 			amis.M{
