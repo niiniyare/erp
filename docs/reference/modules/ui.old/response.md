@@ -1,7 +1,3 @@
-> **📌 AUDIT DOCUMENT.** This is a formal architecture audit, not a response format guide.
-> For response format and error handling, see [Response and Error Handling](02-architecture/05-response-and-error-handling.md).
-> For the issue tracker derived from this audit, see [Implemented Features](05-roadmap/01-implemented.md#known-production-issues-not-yet-fixed).
-
 # AWO ERP — Architecture Audit Response
 
 **Date:** 2026-05-17 | **Reviewer:** Principal Architect / AMIS Compliance Auditor

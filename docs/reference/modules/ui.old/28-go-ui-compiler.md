@@ -1,16 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **🚫 SUPERSEDED.** This document describes a design specification that has since been implemented
-> differently. The directory structure, type names (`UIContext`), and compilation model here do not
-> match the current codebase.
->
-> **Read instead:**
-> - [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md) — actual 9-stage pipeline
-> - [Page Registration Pattern](../03-implementation/02-page-registration-pattern.md) — how to register pages
-> - [IAM Integration](../02-architecture/03-iam-integration.md) — `UISessionContext` and permission resolution
->
-> This file is kept as an **Architecture Decision Record** showing the original design intent.
-
 # Go-First UI Compiler — Production Architecture
 
 Go functions are the source code of the UI.

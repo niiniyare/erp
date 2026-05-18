@@ -1,19 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **🚫 SUPERSEDED.** This document describes the design specification for IAM integration. The
-> implemented system differs in key ways: `SessionContext` is `contract.SessionContext` (not
-> `iam/session/session.go`), `UIContext` does not exist (use `UISessionContext`), and the
-> `PolicyEngine`/`FeatureEngine` interfaces are internal to the pipeline stages.
->
-> The directory structure shown here does not match `internal/web/`.
->
-> **Read instead:**
-> - [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md) — `AuthzStage` and `SessionStage`
-> - [IAM Integration](../02-architecture/03-iam-integration.md) — correct type hierarchy
-> - [Glossary](../appendices/A-glossary.md) — `contract.SessionContext` vs `UISessionContext`
->
-> This file is kept as an **Architecture Decision Record** showing the original design intent.
-
 # IAM/Session-Aware UI Compiler — Production Architecture
 
 Extends [§28 Go-First UI Compiler](./28-go-ui-compiler.md).

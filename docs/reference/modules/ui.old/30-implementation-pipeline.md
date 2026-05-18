@@ -1,17 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **⚠️ STATUS: IMPLEMENTED — NOT A TODO LIST.**
-> This document was written as an implementation task checklist. All core phases are now **complete**.
-> Reading it as a roadmap will give a false picture of current state.
->
-> The pipeline described here (SessionContext, permission resolver, cache, validator) exists in
-> `internal/web/stages/` and `internal/web/ui/pipeline.go`.
->
-> **For the actual implemented pipeline, read:**
-> - [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md) — authoritative reference
->
-> This file is kept as **historical context** showing how the pipeline was designed.
-
 ## UI Services Implementation Pipeline — Zero → Hero
 
 Reference architecture: [§28 Go-First UI Compiler](28-go-ui-compiler.md) · [§29 IAM/Session Compiler](29-iam-session-compiler.md)

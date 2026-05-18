@@ -1,22 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **⚠️ PARTIALLY OUTDATED.** The schema route section below shows the **old approach** (per-route
-> handler functions). The current system uses a **single `SchemaHandler`** that dispatches via the
-> page registry and runs a 9-stage pipeline. Key differences:
->
-> | Aspect | Old (in this doc) | Current (in code) |
-> |--------|------------------|-------------------|
-> | Schema routes | One handler per page | Single handler + registry lookup |
-> | Permission check (schema) | `RequirePermission` middleware | `AuthzStage` (priority 20) inside pipeline |
-> | Page registration | Per-route in `RegisterRoutes()` | `registry.RegisterPage()` in `init()` |
-> | Handler signature | `func(c *fiber.Ctx) error` per page | `func(sess UISessionContext) any` |
->
-> `RequirePermission` middleware is **correct** for `/api/v1/` data routes — do not remove it there.
-> For schema routes, permission resolution happens automatically in the pipeline.
->
-> See [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md) and
-> [Page Registration Pattern](../03-implementation/02-page-registration-pattern.md) for current approach.
-
 ## Routes & Auth
 
 ### Route Groups in Fiber

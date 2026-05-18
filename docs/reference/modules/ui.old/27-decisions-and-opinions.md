@@ -1,13 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **📌 DECISION STATUS** (last reviewed 2026-05-18):
-> | Decision | Original State | Current State |
-> |----------|---------------|---------------|
-> | 1: Custom Shell vs AMIS `app` | Custom HTML shell | Still custom HTML — trigger not yet hit |
-> | 2: Static JSON vs Go-driven schemas | Static JSON | **Go-driven — trigger was hit** |
-> | 3: One Envelope Format | Two formats (fetcher bridges) | **Data APIs standardised on AMIS envelope** |
-> | Others | See below | Verify against current code |
-
 ## Decisions & Opinions
 
 This document is the architecture decision record for the UI layer. These are not suggestions. They are the decisions made, with the reasoning. Future decisions that contradict these need an explicit reason for the reversal.

@@ -1,14 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **📌 PARTIALLY CURRENT.** This document corrects earlier design specs (§28–§30) with actual
-> implementation findings. Sections 1–3 are accurate. Later sections may describe patterns not
-> yet implemented. The referenced docs (§28, §29, §30) are superseded.
->
-> **For current authoritative docs:**
-> - [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md) — 9-stage pipeline
-> - [IAM Integration](../02-architecture/03-iam-integration.md) — `contract.SessionContext` usage
-> - [Glossary](../appendices/A-glossary.md) — type disambiguation
-
 ## UI Compiler + Pipeline + IAM Contract Integration
 
 Reference: [§28 Go-First UI Compiler](28-go-ui-compiler.md) · [§29 IAM/Session Compiler](29-iam-session-compiler.md) · [§30 Implementation Pipeline](30-implementation-pipeline.md)

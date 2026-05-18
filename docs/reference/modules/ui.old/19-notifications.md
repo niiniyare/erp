@@ -1,12 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **🚫 NOT IMPLEMENTED.** This entire feature (inline alerts, toast notifications, notification
-> panel, push notifications) does not exist in the current codebase. There is no backend handler,
-> no frontend component, no database table, and no API endpoint for notifications.
->
-> This document is the **design specification** for when notifications are built.
-> See [Planned Features](../05-roadmap/02-planned.md#notification-system) for roadmap status.
-
 ## Notifications & Alerts
 
 ### The Four Notification Types

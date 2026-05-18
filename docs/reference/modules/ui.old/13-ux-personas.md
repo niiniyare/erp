@@ -1,18 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **⚠️ GAP: DESIGN INTENT vs CURRENT IMPLEMENTATION.**
-> This document describes the intended 5-persona design. The current codebase implements
-> **2 modes** only (`IsPlatform()` / `IsPortal()` booleans on `UISessionContext`).
->
-> Features listed as persona "delights" (keyboard shortcuts, saved views, dense layouts) are
-> **not yet implemented**. See [Planned Features](../05-roadmap/02-planned.md).
->
-> For current implementation reality, read:
-> [UX Principles and Personas](../01-theory/03-ux-principles-and-personas.md) — includes gap analysis
-> table and developer guidance for working with the 2-mode system.
->
-> This file is kept as the **canonical persona design spec** for when full persona detection is built.
-
 ## UX Personas
 
 Every screen, layout, and default in Awo ERP is filtered through five personas. Before building any page, ask: which persona is the primary user of this surface?

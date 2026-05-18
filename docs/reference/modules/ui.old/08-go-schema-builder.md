@@ -1,21 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **📌 TWO APPROACHES EXIST.** This document describes the `amis.Ctx` / `SchemaFn` approach — the
-> original, still-supported pattern. A newer approach uses `UISessionContext` + `ASTPageFn` +
-> `PageRegistration`, which provides full IAM integration, typed AST nodes, and pipeline caching.
->
-> | | Legacy (`amis.Ctx`) | Modern (`UISessionContext` + `ASTPageFn`) |
-> |--|--|--|
-> | Type safety | Partial | Full (typed AST nodes) |
-> | IAM integration | Manual `Can()` closure | Pre-resolved by `AuthzStage` |
-> | Cache support | None | Redis + fingerprint cache |
-> | Permission key format | `Can("create", "invoice")` | `sess.Can("create", "invoice")` → checks `"invoice.create"` |
-> | Registration | `registry.Register(path, fn)` | `registry.RegisterPage(PageRegistration{...})` |
->
-> **New pages should use the modern approach.**
-> See [Page Registration Pattern](../03-implementation/02-page-registration-pattern.md) and
-> [Pipeline Deep Dive](../02-architecture/02-pipeline-deep-dive.md).
-
 ## Go Schema Builder
 
 ### Why a Builder Package

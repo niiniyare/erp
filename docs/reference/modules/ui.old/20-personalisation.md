@@ -1,19 +1,5 @@
 [<-- Back to Index](README.md)
 
-> **⚠️ MIXED STATUS.** Parts of this document describe implemented features; others are roadmap.
->
-> | Feature | Status |
-> |---------|--------|
-> | User preferences (`Pref()` / `Setting()` access) | `[IMPLEMENTED]` — pre-loaded at login into `UISessionContext` |
-> | Feature flag snapshot at login | `[IMPLEMENTED]` — `FeatureEnabled()` on `UISessionContext` |
-> | Tenant currency/timezone/locale config | `[IMPLEMENTED]` — via `contract.SessionContext` |
-> | Saved views / filter persistence | `[ROADMAP]` — not implemented |
-> | Module navigation ordering | `[ROADMAP]` — not implemented |
-> | Recent items / search history | `[ROADMAP]` — not implemented |
-> | Dashboard widget layout | `[ROADMAP]` — not implemented |
->
-> For implemented preference access, see [Glossary — UISessionContext](../appendices/A-glossary.md#uisessioncontext).
-
 ## Personalisation
 
 ### Two Types of Personalisation

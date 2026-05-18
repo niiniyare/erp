@@ -44,12 +44,6 @@ RESPONSE TRANSLATION (204 No Content):
 
 ### If You Standardise to AMIS Envelope in Go
 
-> **⚠️ DATA API HANDLERS ONLY.** The `AmisResponse` pattern below applies to `/api/v1/` data endpoints only.
-> **Do NOT return `AmisResponse` from page/schema builder functions** (`PageFn` / `ASTPageFn`).
-> `SchemaHandler` already wraps the schema output in `{status:0, data:...}` — returning `AmisResponse`
-> from a page function produces nested envelopes: `{status:0, data:{status:0, data:{...}}}`.
-> See [Page Registration Pattern](../03-implementation/02-page-registration-pattern.md#return-value) for correct page function return.
-
 When Go handlers return AMIS format directly, the fetcher passes it through unchanged:
 
 ```go
