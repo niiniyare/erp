@@ -128,6 +128,27 @@ func (f *LoggerFactory) NewLogger(config Config) (Logger, error) {
 	}
 }
 
+// noopLogger discards all log output. Used in tests that need a Logger but
+// do not care about log output.
+type noopLogger struct{}
+
+func (noopLogger) Debug(_ string, _ ...Fields)                    {}
+func (noopLogger) Info(_ string, _ ...Fields)                     {}
+func (noopLogger) Warn(_ string, _ ...Fields)                     {}
+func (noopLogger) Error(_ string, _ ...Fields)                    {}
+func (noopLogger) Fatal(_ string, _ ...Fields)                    {}
+func (noopLogger) DebugContext(_ context.Context, _ string, _ ...Fields) {}
+func (noopLogger) InfoContext(_ context.Context, _ string, _ ...Fields)  {}
+func (noopLogger) WarnContext(_ context.Context, _ string, _ ...Fields)  {}
+func (noopLogger) ErrorContext(_ context.Context, _ string, _ ...Fields) {}
+func (noopLogger) WithFields(_ Fields) Logger                     { return noopLogger{} }
+func (noopLogger) WithContext(_ context.Context) Logger           { return noopLogger{} }
+func (noopLogger) SetLevel(_ LogLevel)                            {}
+func (noopLogger) Close() error                                   { return nil }
+
+// NewNoOp returns a Logger that discards all output. Useful for tests.
+func NewNoOp() Logger { return noopLogger{} }
+
 // Global logger instance
 var globalLogger Logger
 

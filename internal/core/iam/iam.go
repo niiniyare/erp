@@ -8,6 +8,7 @@ import (
 	"awo.so/internal/core/iam/domain"
 	"awo.so/internal/core/iam/repository"
 	iamservice "awo.so/internal/core/iam/service"
+	"awo.so/internal/core/iam/watcher"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
@@ -170,6 +171,20 @@ type (
 // Config is the constructor config for the AuthzService (Casbin).
 type Config = iamservice.AuthzConfig
 
+// Re-export: PolicyWatcher
+
+// PolicyWatcher is the interface for reactive Casbin policy synchronisation.
+// See internal/core/iam/watcher for implementations (PgWatcher, NoopWatcher).
+type PolicyWatcher = watcher.PolicyWatcher
+
+// NoopWatcher is a PolicyWatcher that does nothing.
+// Use for single-instance deployments or tests that don't need cross-node sync.
+type NoopWatcher = watcher.NoopWatcher
+
+// NewPgWatcher creates a PostgreSQL LISTEN/NOTIFY-based PolicyWatcher.
+// pool must not be nil; log and metrics are optional.
+var NewPgWatcher = watcher.NewPgWatcher
+
 // UserConfig holds brute-force protection thresholds for the UserService.
 type UserConfig = iamservice.UserConfig
 
@@ -205,6 +220,18 @@ func New(cfg Config) (AuthzService, error) {
 // See service.NewInMemoryAuthzService for details.
 func NewInMemoryAuthzService(repo AuthzRepository, log logger.Logger) (AuthzService, error) {
 	return iamservice.NewInMemoryAuthzService(repo, log)
+}
+
+// NewInMemoryAuthzServiceWithSessionInv creates an in-memory AuthzService for
+// unit tests with a session invalidator but no policy watcher.
+func NewInMemoryAuthzServiceWithSessionInv(repo AuthzRepository, log logger.Logger, inv SessionInvalidator) (AuthzService, error) {
+	return iamservice.NewInMemoryAuthzServiceFull(repo, log, nil, inv)
+}
+
+// NewInMemoryAuthzServiceFull creates an in-memory AuthzService for unit tests
+// with optional watcher and session invalidator dependencies.
+func NewInMemoryAuthzServiceFull(repo AuthzRepository, log logger.Logger, w PolicyWatcher, inv SessionInvalidator) (AuthzService, error) {
+	return iamservice.NewInMemoryAuthzServiceFull(repo, log, w, inv)
 }
 
 // NewSessionRepository constructs a cache-backed Postgres SessionRepository.

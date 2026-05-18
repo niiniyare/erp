@@ -243,7 +243,7 @@ func (s *AccountServiceSuite) TestCreateAccount_HappyPath() {
 
 func (s *AccountServiceSuite) TestCreateAccount_ValidationFailure_BadCode() {
 	req := domain.CreateAccountRequest{
-		AccountCode:   "BADCODE",     // not 8 numeric digits
+		AccountCode:   "BADCODE", // not 8 numeric digits
 		AccountName:   "Cash",
 		AccountType:   "Current Asset",
 		RootType:      domain.RootTypeAsset,

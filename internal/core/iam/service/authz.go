@@ -14,6 +14,7 @@ import (
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/iam/domain"
 	"awo.so/internal/core/iam/repository"
+	"awo.so/internal/core/iam/watcher"
 	"awo.so/internal/platform/cache"
 	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
@@ -22,10 +23,15 @@ import (
 )
 
 // SessionInvalidator is a narrow port that AuthzService uses to evict cached
-// sessions when a role is revoked.  Implemented by SessionRepository so that
-// the authz service does not import the session service package.
+// sessions when roles or policies change.  Implemented by SessionRepository so
+// that the authz service does not import the session service package.
 type SessionInvalidator interface {
+	// InvalidateByUser evicts all cached sessions for a single user.
+	// Called after role revocation so the revocation takes effect immediately.
 	InvalidateByUser(ctx context.Context, userID uuid.UUID) error
+	// InvalidateByTenant evicts all sessions in a tenant domain.
+	// Called after policy removal to ensure no stale access windows remain.
+	InvalidateByTenant(ctx context.Context, tenantID uuid.UUID) error
 }
 
 // Port (interface)
@@ -79,6 +85,13 @@ type AuthzConfig struct {
 	Metrics            metrics.MetricsProvider // optional
 	Tracer             tracing.Service         // optional
 	SessionInvalidator SessionInvalidator      // optional; enables cache eviction on role revocation
+	// Watcher enables reactive policy reloads across replicas.
+	// When set, the authz service calls Notify after each successful mutation
+	// (AddPolicy, RemovePolicy, AssignRole, RevokeRole, BootstrapTenantAdmin)
+	// so peer nodes reload their Casbin state immediately rather than waiting
+	// for the next 30-second auto-reload tick.
+	// nil → mutations propagate only via StartAutoLoadPolicy (eventual, ≤ 30 s).
+	Watcher watcher.PolicyWatcher
 	// MaxPoliciesPerDomain caps the number of Casbin p-rules per domain.
 	// Zero means use DefaultMaxPoliciesPerDomain.
 	MaxPoliciesPerDomain int
@@ -87,13 +100,14 @@ type AuthzConfig struct {
 // Implementation
 
 type authzService struct {
-	enforcer     *casbin.SyncedEnforcer
-	repo         repository.AuthzRepository
-	sessionInv   SessionInvalidator // may be nil
-	log          logger.Logger
-	metrics      metrics.MetricsProvider
-	tracer       tracing.Service
-	maxPolicies  int // per-domain p-rule cap; 0 means DefaultMaxPoliciesPerDomain
+	enforcer    *casbin.SyncedEnforcer
+	repo        repository.AuthzRepository
+	sessionInv  SessionInvalidator      // may be nil
+	policyWatch watcher.PolicyWatcher   // may be nil — see notifyPeers
+	log         logger.Logger
+	metrics     metrics.MetricsProvider
+	tracer      tracing.Service
+	maxPolicies int // per-domain p-rule cap; 0 means DefaultMaxPoliciesPerDomain
 }
 
 // NewAuthzService creates a fully initialised AuthzService backed by PostgreSQL via Casbin.
@@ -131,15 +145,37 @@ func NewAuthzService(cfg AuthzConfig) (AuthzService, error) {
 		maxPolicies = DefaultMaxPoliciesPerDomain
 	}
 
-	return &authzService{
+	svc := &authzService{
 		enforcer:    e,
 		repo:        repo,
 		sessionInv:  cfg.SessionInvalidator,
+		policyWatch: cfg.Watcher,
 		log:         log,
 		metrics:     cfg.Metrics,
 		tracer:      cfg.Tracer,
 		maxPolicies: maxPolicies,
-	}, nil
+	}
+
+	// Start watching for peer mutations so this instance reloads immediately
+	// when another node mutates policy or roles.
+	if cfg.Watcher != nil {
+		if err := cfg.Watcher.Watch(context.Background(), func() {
+			if err := e.LoadPolicy(); err != nil {
+				log.Warn("authz watcher: policy reload failed", logger.Fields{"error": err.Error()})
+				svc.metrics.IncrementCounter("iam.watcher.reload_error", nil)
+			} else {
+				svc.metrics.IncrementCounter("iam.watcher.reload_ok", nil)
+				log.Debug("authz watcher: policy reloaded from peer signal")
+			}
+		}); err != nil {
+			// Non-fatal: degraded to periodic 30-second reload only.
+			log.Warn("authz watcher: Watch setup failed; using 30s periodic reload only", logger.Fields{
+				"error": err.Error(),
+			})
+		}
+	}
+
+	return svc, nil
 }
 
 // NewInMemoryAuthzService creates an AuthzService backed by a pure in-memory
@@ -162,6 +198,31 @@ func NewInMemoryAuthzService(repo repository.AuthzRepository, log logger.Logger)
 		enforcer:    e,
 		repo:        repo,
 		sessionInv:  nil, // no session invalidation in tests
+		log:         scopedLog,
+		metrics:     metrics.NewNoOpMetricsProvider(),
+		tracer:      tracing.NewNoOpService(),
+		maxPolicies: DefaultMaxPoliciesPerDomain,
+	}, nil
+}
+
+// NewInMemoryAuthzServiceWithSessionInv is like NewInMemoryAuthzService but
+// accepts a SessionInvalidator for unit tests that verify session eviction on
+// role revocation. Pass nil for sessionInv to disable session eviction.
+func NewInMemoryAuthzServiceWithSessionInv(repo repository.AuthzRepository, log logger.Logger, sessionInv SessionInvalidator) (AuthzService, error) {
+	m, err := casbinmodel.NewModelFromString(domain.CasbinModel)
+	if err != nil {
+		return nil, fmt.Errorf("authz: build casbin model: %w", err)
+	}
+	e, err := casbin.NewSyncedEnforcer(m)
+	if err != nil {
+		return nil, fmt.Errorf("authz: create in-memory enforcer: %w", err)
+	}
+	e.EnableAutoSave(false)
+	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
+	return &authzService{
+		enforcer:    e,
+		repo:        repo,
+		sessionInv:  sessionInv,
 		log:         scopedLog,
 		metrics:     metrics.NewNoOpMetricsProvider(),
 		tracer:      tracing.NewNoOpService(),
@@ -194,6 +255,38 @@ func NewInMemoryAuthzServiceWithLimit(repo repository.AuthzRepository, log logge
 		metrics:     metrics.NewNoOpMetricsProvider(),
 		tracer:      tracing.NewNoOpService(),
 		maxPolicies: maxPolicies,
+	}, nil
+}
+
+// NewInMemoryAuthzServiceFull creates an in-memory AuthzService with all
+// optional dependencies injectable. Intended for unit tests that need to verify
+// watcher notifications, session invalidation, or compensation logic without a
+// real database or Redis instance.
+func NewInMemoryAuthzServiceFull(
+	repo repository.AuthzRepository,
+	log logger.Logger,
+	w watcher.PolicyWatcher,
+	inv SessionInvalidator,
+) (AuthzService, error) {
+	m, err := casbinmodel.NewModelFromString(domain.CasbinModel)
+	if err != nil {
+		return nil, fmt.Errorf("authz: build casbin model: %w", err)
+	}
+	e, err := casbin.NewSyncedEnforcer(m)
+	if err != nil {
+		return nil, fmt.Errorf("authz: create in-memory enforcer: %w", err)
+	}
+	e.EnableAutoSave(false)
+	scopedLog := log.WithFields(logger.Fields{"component": "iam.authz"})
+	return &authzService{
+		enforcer:    e,
+		repo:        repo,
+		sessionInv:  inv,
+		policyWatch: w,
+		log:         scopedLog,
+		metrics:     metrics.NewNoOpMetricsProvider(),
+		tracer:      tracing.NewNoOpService(),
+		maxPolicies: DefaultMaxPoliciesPerDomain,
 	}, nil
 }
 
@@ -349,6 +442,9 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 				"error":    err.Error(),
 				"trace_id": s.tracer.GetTraceID(ctx),
 			})
+			// AUTHZ-TXN-1: compensate — remove the Casbin grouping policy so
+			// in-memory state stays consistent with the database.
+			s.enforcer.DeleteRoleForUserInDomain(subject, role, domainName)
 			return err
 		}
 	}
@@ -376,6 +472,8 @@ func (s *authzService) AssignRole(ctx context.Context, tenantID, subject, role, 
 		attribute.String("audit.event", "ROLE_ASSIGNED"),
 		attribute.String("audit.assigned_by", ao.AssignedBy),
 	)
+
+	s.notifyPeers(ctx)
 	return nil
 }
 
@@ -408,6 +506,9 @@ func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName
 				"error":    err.Error(),
 				"trace_id": s.tracer.GetTraceID(ctx),
 			})
+			// AUTHZ-TXN-2: compensate — restore the Casbin grouping policy so
+			// in-memory state stays consistent with the database (role still active).
+			s.enforcer.AddGroupingPolicy(subject, role, domainName)
 			return err
 		}
 	}
@@ -441,6 +542,7 @@ func (s *authzService) RevokeRole(ctx context.Context, subject, role, domainName
 		}
 	}
 
+	s.notifyPeers(ctx)
 	return nil
 }
 
@@ -610,6 +712,8 @@ func (s *authzService) AddPolicy(ctx context.Context, p domain.Policy) error {
 		s.log.InfoContext(ctx, "SECURITY_EVENT: POLICY_ADDED", policyAddFields)
 	}
 	span.SetAttributes(attribute.String("audit.event", "POLICY_ADDED"))
+
+	s.notifyPeers(ctx)
 	return nil
 }
 
@@ -664,6 +768,22 @@ func (s *authzService) RemovePolicy(ctx context.Context, p domain.Policy) error 
 		s.log.InfoContext(ctx, "SECURITY_EVENT: POLICY_REMOVED", policyRemoveFields)
 	}
 	span.SetAttributes(attribute.String("audit.event", "POLICY_REMOVED"))
+
+	// SES-INV-2: Evict sessions for the affected tenant so removed access
+	// takes effect immediately rather than waiting for the session TTL.
+	// Skipped for platform domain (no single tenant to invalidate).
+	// Best-effort: failure is logged but does not fail the mutation.
+	if s.sessionInv != nil && p.Domain != domain.DomainPlatform {
+		if tenantID, err := uuid.Parse(p.Domain); err == nil {
+			if err := s.sessionInv.InvalidateByTenant(ctx, tenantID); err != nil {
+				s.log.WarnContext(ctx, "authz: tenant session eviction after policy removal failed", logger.Fields{
+					"domain": p.Domain, "error": err.Error(),
+				})
+			}
+		}
+	}
+
+	s.notifyPeers(ctx)
 	return nil
 }
 
@@ -757,6 +877,21 @@ func (s *authzService) BootstrapTenantAdmin(ctx context.Context, tenantID, userI
 }
 
 // Internal helpers
+
+// notifyPeers signals all peer nodes to reload their Casbin policy state.
+// Called after every successful mutation. Best-effort: errors are logged and
+// metered but do NOT fail the mutation that triggered them.
+func (s *authzService) notifyPeers(ctx context.Context) {
+	if s.policyWatch == nil {
+		return
+	}
+	if err := s.policyWatch.Notify(ctx); err != nil {
+		s.log.WarnContext(ctx, "authz: notify peers failed", logger.Fields{
+			"error": err.Error(),
+		})
+		s.metrics.IncrementCounter("iam.watcher.notify_error", nil)
+	}
+}
 
 // subjectToUserID extracts the UUID from a Casbin subject string.
 // Subject format: "<prefix>:<uuid>" (e.g. "tenant:abc-123", "portal:abc-123").

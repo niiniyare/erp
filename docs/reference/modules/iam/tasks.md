@@ -4,7 +4,7 @@
 > **Architecture baseline**: RBAC-only, Casbin-driven, Session-as-context.
 > **Source of authority**: `docs/reference/modules/iam/` (full reference suite) + `testing.md`
 > **Last validated**: 2026-05-11 (third-pass architectural audit + documentation reconciliation)
-> **Last updated**: 2026-05-18 (sixth-pass — CONTRACT enforcement, GUARD, AUTHZ-6 complete)
+> **Last updated**: 2026-05-18 (eighth-pass — RUNTIME-P5 transactional authz compensation complete)
 
 ---
 
@@ -58,10 +58,10 @@ Completed BLOCK items:
 | GUARD: iam/guard/ package — 8 static boundary tests enforcing contract rules | DONE |
 | AUTHZ-6: subject prefix validation in authn middleware | DONE |
 | RUNTIME-P1: session-as-authority audit + AUTHZ-RUNTIME-1..4 guard tests | DONE |
-| RUNTIME-P2: Casbin distributed sync (watcher / LISTEN-NOTIFY) | OPEN |
-| RUNTIME-P3: session invalidation bridge (RevokeRole → evict, Tenant suspend → evict all) | OPEN |
-| RUNTIME-P4: middleware enforcement integrity audit | OPEN |
-| RUNTIME-P5: transactional authz mutations (Casbin + DB atomic) | OPEN |
+| RUNTIME-P2: Casbin distributed sync (watcher / LISTEN-NOTIFY) | DONE |
+| RUNTIME-P3: session invalidation bridge (RevokeRole → evict, Tenant suspend → evict all) | DONE |
+| RUNTIME-P4: middleware enforcement integrity audit | DONE |
+| RUNTIME-P5: transactional authz mutations (Casbin + DB atomic) | DONE |
 | RUNTIME-P6: observability + startup readiness gate | OPEN |
 | RUNTIME-P7: documentation sync (operational guarantees section) | OPEN |
 | T-INT: integration tests (DB + Redis required) | OPEN |

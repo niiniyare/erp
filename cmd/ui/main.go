@@ -73,7 +73,7 @@ func main() {
 
 	// ── Schema API — no auth in dev; schemas contain no sensitive data ──
 	// Auth is enforced by the API server on actual data endpoints.
-	schemaH := webHandler.NewSchemaHandler()
+	schemaH := webHandler.NewDevSchemaHandler(nil)
 	app.Get("/schema/*", schemaH.Handle)
 
 	// ── API proxy — forward /api/* to the main API server ──

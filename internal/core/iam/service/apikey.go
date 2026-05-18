@@ -19,10 +19,11 @@ import (
 )
 
 const (
-	apiKeyPrefix    = "eak_" // ERP API Key prefix — makes keys recognisable in logs
+	apiKeyPrefix    = "eak_"       // ERP API Key prefix — makes keys recognisable in logs
 	apiKeyCacheTTL  = 5 * time.Minute
-	apiKeyCacheNS   = "apikey:" // Redis key namespace: apikey:{sha256hex(rawToken)}
-	apiKeyRawLength = 32        // bytes of random entropy; 64 hex chars after encoding
+	apiKeyCacheNS   = "apikey:"    // Redis key namespace: apikey:{sha256hex(rawToken)}
+	apiKeyIDIndexNS = "apikey:id:" // secondary index: keyID → primary cache key (for revocation)
+	apiKeyRawLength = 32           // bytes of random entropy; 64 hex chars after encoding
 )
 
 // Port (interface)
@@ -126,8 +127,10 @@ func (s *apiKeyService) ValidateAPIKey(ctx context.Context, rawToken string) (*d
 	// 3. Build minimal ResolvedSession from the key's scopes
 	resolved := buildAPIKeySession(key)
 
-	// 4. Cache the session
+	// 4. Cache the session (primary) and store a secondary index (keyID → cacheKey)
+	// so RevokeAPIKey can find and evict the entry without knowing the raw token.
 	_ = s.cache.Set(ctx, cacheKey, resolved, apiKeyCacheTTL)
+	_ = s.cache.Set(ctx, apiKeyIDIndexNS+key.ID.String(), cacheKey, apiKeyCacheTTL)
 
 	s.metrics.IncrementCounter("iam.apikey.validate.ok", nil)
 	span.SetAttributes(
@@ -148,9 +151,19 @@ func (s *apiKeyService) RevokeAPIKey(ctx context.Context, keyID uuid.UUID) error
 		return fmt.Errorf("apikey: revoke: %w", err)
 	}
 
-	// Best-effort cache eviction — we don't know the raw token so we can't
-	// derive the cache key here.  The cached entry expires naturally after TTL.
-	// For immediate invalidation, callers should store key_hash → cache_key mapping.
+	// Immediate cache eviction via secondary index set during ValidateAPIKey.
+	// If the key was never validated (not cached), the Get returns a miss and
+	// nothing is deleted — correct behaviour.
+	// Best-effort: cache errors are silently swallowed; the 5-minute TTL acts
+	// as the safety net if the index is absent.
+	indexKey := apiKeyIDIndexNS + keyID.String()
+	var primaryCacheKey string
+	if err := s.cache.Get(ctx, indexKey, &primaryCacheKey); err == nil {
+		_ = s.cache.Delete(ctx, primaryCacheKey)
+		_ = s.cache.Delete(ctx, indexKey)
+		s.metrics.IncrementCounter("iam.apikey.cache_evicted", nil)
+	}
+
 	s.metrics.IncrementCounter("iam.apikey.revoked", nil)
 	return nil
 }

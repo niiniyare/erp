@@ -6,25 +6,20 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	authHandler "awo.so/internal/api/handlers/auth"
 	auditHandler "awo.so/internal/api/handlers/audit"
+	authHandler "awo.so/internal/api/handlers/auth"
 	financeHandler "awo.so/internal/api/handlers/finance"
 	"awo.so/internal/api/handlers/health"
 	schemaHandler "awo.so/internal/api/handlers/schema"
 	webHandler "awo.so/internal/web/handler"
+
 	// Blank imports register page schemas into the registry via init().
 	// Add one line here per new page — nothing else changes.
-	_ "awo.so/internal/web/pages/dashboard"
-	_ "awo.so/internal/web/pages/users"
-	_ "awo.so/internal/web/pages/organizations"
-	_ "awo.so/internal/web/pages/finance/accounts"
-	_ "awo.so/internal/web/pages/finance/transactions"
-	_ "awo.so/internal/web/pages/settings"
+	db "awo.so/db/sqlc"
 	tenantHandler "awo.so/internal/api/handlers/tenant"
 	uiHandler "awo.so/internal/api/handlers/ui"
 	userHandler "awo.so/internal/api/handlers/user"
 	middlewarePkg "awo.so/internal/api/middleware"
-	db "awo.so/db/sqlc"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/entity"
 	financeService "awo.so/internal/core/finance/service"
@@ -34,6 +29,12 @@ import (
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	_ "awo.so/internal/web/pages/dashboard"
+	_ "awo.so/internal/web/pages/finance/accounts"
+	_ "awo.so/internal/web/pages/finance/transactions"
+	_ "awo.so/internal/web/pages/organizations"
+	_ "awo.so/internal/web/pages/settings"
+	_ "awo.so/internal/web/pages/users"
 	workflowsTenant "awo.so/internal/workflows/tenant"
 	temporalclient "go.temporal.io/sdk/client"
 )
@@ -362,7 +363,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 func (r *Router) registerUIRoutes(app *fiber.App) error {
 	// Dynamic page schemas — /schema/<route> returns AMIS page schema JSON.
 	// Requires auth but lives outside /api so the frontend URL stays clean.
-	pageSchemaHandler := webHandler.NewSchemaHandler()
+	pageSchemaHandler := webHandler.NewDevSchemaHandler(r.registry.logger)
 	schemaGroup := app.Group("/schema")
 	schemaGroup.Use(r.authenticateMiddleware())
 	schemaGroup.Get("/*", pageSchemaHandler.Handle)
@@ -523,8 +524,8 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	// Transaction management endpoints — require finance.transactions.read
 	transactionsGroup := financeGroup.Group("/transactions")
 	transactionsGroup.Use(r.authorizeMiddleware("finance.transactions.read"))
-	transactionsGroup.Post("/", handler.CreateTransaction)              // POST   /api/v1/finance/transactions
-	transactionsGroup.Get("/", handler.ListTransactions)                // GET    /api/v1/finance/transactions
+	transactionsGroup.Post("/", handler.CreateTransaction)             // POST   /api/v1/finance/transactions
+	transactionsGroup.Get("/", handler.ListTransactions)               // GET    /api/v1/finance/transactions
 	transactionsGroup.Get("/:id", handler.GetTransaction)              // GET    /api/v1/finance/transactions/:id
 	transactionsGroup.Post("/:id/submit", handler.SubmitTransaction)   // POST   /api/v1/finance/transactions/:id/submit
 	transactionsGroup.Post("/:id/approve", handler.ApproveTransaction) // POST   /api/v1/finance/transactions/:id/approve
@@ -533,81 +534,81 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	// Fiscal year and period management
 	fiscalYearsGroup := financeGroup.Group("/fiscal-years")
 	fiscalYearsGroup.Use(r.authorizeMiddleware("finance.periods.read"))
-	fiscalYearsGroup.Post("/", handler.CreateFiscalYear)                        // POST /api/v1/finance/fiscal-years
-	fiscalYearsGroup.Get("/", handler.ListFiscalYears)                          // GET  /api/v1/finance/fiscal-years
-	fiscalYearsGroup.Get("/:id", handler.GetFiscalYear)                         // GET  /api/v1/finance/fiscal-years/:id
-	fiscalYearsGroup.Post("/:id/periods", handler.CreatePeriod)                 // POST /api/v1/finance/fiscal-years/:id/periods
-	fiscalYearsGroup.Get("/:id/periods", handler.ListPeriods)                   // GET  /api/v1/finance/fiscal-years/:id/periods
+	fiscalYearsGroup.Post("/", handler.CreateFiscalYear)        // POST /api/v1/finance/fiscal-years
+	fiscalYearsGroup.Get("/", handler.ListFiscalYears)          // GET  /api/v1/finance/fiscal-years
+	fiscalYearsGroup.Get("/:id", handler.GetFiscalYear)         // GET  /api/v1/finance/fiscal-years/:id
+	fiscalYearsGroup.Post("/:id/periods", handler.CreatePeriod) // POST /api/v1/finance/fiscal-years/:id/periods
+	fiscalYearsGroup.Get("/:id/periods", handler.ListPeriods)   // GET  /api/v1/finance/fiscal-years/:id/periods
 
 	periodsGroup := financeGroup.Group("/periods")
 	periodsGroup.Use(r.authorizeMiddleware("finance.periods.read"))
-	periodsGroup.Get("/current", handler.GetCurrentPeriod)                      // GET   /api/v1/finance/periods/current
-	periodsGroup.Get("/:id", handler.GetPeriod)                                 // GET   /api/v1/finance/periods/:id
-	periodsGroup.Patch("/:id/status", handler.ChangePeriodStatus)               // PATCH /api/v1/finance/periods/:id/status
+	periodsGroup.Get("/current", handler.GetCurrentPeriod)        // GET   /api/v1/finance/periods/current
+	periodsGroup.Get("/:id", handler.GetPeriod)                   // GET   /api/v1/finance/periods/:id
+	periodsGroup.Patch("/:id/status", handler.ChangePeriodStatus) // PATCH /api/v1/finance/periods/:id/status
 
 	// Currency management
 	currenciesGroup := financeGroup.Group("/currencies")
 	currenciesGroup.Use(r.authorizeMiddleware("finance.currencies.read"))
-	currenciesGroup.Post("/", handler.CreateCurrency)    // POST /api/v1/finance/currencies
-	currenciesGroup.Get("/", handler.ListCurrencies)     // GET  /api/v1/finance/currencies
-	currenciesGroup.Put("/:id", handler.UpdateCurrency)  // PUT  /api/v1/finance/currencies/:id
+	currenciesGroup.Post("/", handler.CreateCurrency)   // POST /api/v1/finance/currencies
+	currenciesGroup.Get("/", handler.ListCurrencies)    // GET  /api/v1/finance/currencies
+	currenciesGroup.Put("/:id", handler.UpdateCurrency) // PUT  /api/v1/finance/currencies/:id
 
 	// Exchange rate management
 	ratesGroup := financeGroup.Group("/exchange-rates")
 	ratesGroup.Use(r.authorizeMiddleware("finance.currencies.read"))
-	ratesGroup.Post("/", handler.UpsertExchangeRate)         // POST /api/v1/finance/exchange-rates (upsert)
-	ratesGroup.Get("/", handler.GetExchangeRate)             // GET  /api/v1/finance/exchange-rates?from=&to=&date=
-	ratesGroup.Get("/history", handler.ListExchangeRates)    // GET  /api/v1/finance/exchange-rates/history
+	ratesGroup.Post("/", handler.UpsertExchangeRate)      // POST /api/v1/finance/exchange-rates (upsert)
+	ratesGroup.Get("/", handler.GetExchangeRate)          // GET  /api/v1/finance/exchange-rates?from=&to=&date=
+	ratesGroup.Get("/history", handler.ListExchangeRates) // GET  /api/v1/finance/exchange-rates/history
 
 	// Budget management
 	budgetsGroup := financeGroup.Group("/budgets")
 	budgetsGroup.Use(r.authorizeMiddleware("finance.budgets.read"))
-	budgetsGroup.Post("/", handler.CreateBudget)                    // POST   /api/v1/finance/budgets
-	budgetsGroup.Get("/", handler.ListBudgets)                      // GET    /api/v1/finance/budgets?fiscal_year_id=
-	budgetsGroup.Get("/:id", handler.GetBudget)                     // GET    /api/v1/finance/budgets/:id
-	budgetsGroup.Get("/:id/lines", handler.GetBudgetLines)          // GET    /api/v1/finance/budgets/:id/lines
-	budgetsGroup.Post("/:id/submit", handler.SubmitBudget)          // POST   /api/v1/finance/budgets/:id/submit
-	budgetsGroup.Post("/:id/approve", handler.ApproveBudget)        // POST   /api/v1/finance/budgets/:id/approve
-	budgetsGroup.Post("/:id/reject", handler.RejectBudget)          // POST   /api/v1/finance/budgets/:id/reject
-	budgetsGroup.Post("/:id/close", handler.CloseBudget)            // POST   /api/v1/finance/budgets/:id/close
+	budgetsGroup.Post("/", handler.CreateBudget)             // POST   /api/v1/finance/budgets
+	budgetsGroup.Get("/", handler.ListBudgets)               // GET    /api/v1/finance/budgets?fiscal_year_id=
+	budgetsGroup.Get("/:id", handler.GetBudget)              // GET    /api/v1/finance/budgets/:id
+	budgetsGroup.Get("/:id/lines", handler.GetBudgetLines)   // GET    /api/v1/finance/budgets/:id/lines
+	budgetsGroup.Post("/:id/submit", handler.SubmitBudget)   // POST   /api/v1/finance/budgets/:id/submit
+	budgetsGroup.Post("/:id/approve", handler.ApproveBudget) // POST   /api/v1/finance/budgets/:id/approve
+	budgetsGroup.Post("/:id/reject", handler.RejectBudget)   // POST   /api/v1/finance/budgets/:id/reject
+	budgetsGroup.Post("/:id/close", handler.CloseBudget)     // POST   /api/v1/finance/budgets/:id/close
 
 	// Cost centre management
 	costCentersGroup := financeGroup.Group("/cost-centers")
 	costCentersGroup.Use(r.authorizeMiddleware("finance.cost_centers.read"))
-	costCentersGroup.Post("/", handler.CreateCostCenter)       // POST   /api/v1/finance/cost-centers
-	costCentersGroup.Get("/", handler.ListCostCenters)         // GET    /api/v1/finance/cost-centers
-	costCentersGroup.Get("/:id", handler.GetCostCenter)        // GET    /api/v1/finance/cost-centers/:id
-	costCentersGroup.Put("/:id", handler.UpdateCostCenter)     // PUT    /api/v1/finance/cost-centers/:id
-	costCentersGroup.Delete("/:id", handler.DeleteCostCenter)  // DELETE /api/v1/finance/cost-centers/:id
+	costCentersGroup.Post("/", handler.CreateCostCenter)      // POST   /api/v1/finance/cost-centers
+	costCentersGroup.Get("/", handler.ListCostCenters)        // GET    /api/v1/finance/cost-centers
+	costCentersGroup.Get("/:id", handler.GetCostCenter)       // GET    /api/v1/finance/cost-centers/:id
+	costCentersGroup.Put("/:id", handler.UpdateCostCenter)    // PUT    /api/v1/finance/cost-centers/:id
+	costCentersGroup.Delete("/:id", handler.DeleteCostCenter) // DELETE /api/v1/finance/cost-centers/:id
 
 	// Tax authority and code management
 	taxGroup := financeGroup.Group("/tax")
 	taxGroup.Use(r.authorizeMiddleware("finance.tax.read"))
 
 	taxAuthGroup := taxGroup.Group("/authorities")
-	taxAuthGroup.Post("/", handler.CreateTaxAuthority)       // POST   /api/v1/finance/tax/authorities
-	taxAuthGroup.Get("/", handler.ListTaxAuthorities)        // GET    /api/v1/finance/tax/authorities
-	taxAuthGroup.Get("/:id", handler.GetTaxAuthority)        // GET    /api/v1/finance/tax/authorities/:id
-	taxAuthGroup.Put("/:id", handler.UpdateTaxAuthority)     // PUT    /api/v1/finance/tax/authorities/:id
+	taxAuthGroup.Post("/", handler.CreateTaxAuthority)   // POST   /api/v1/finance/tax/authorities
+	taxAuthGroup.Get("/", handler.ListTaxAuthorities)    // GET    /api/v1/finance/tax/authorities
+	taxAuthGroup.Get("/:id", handler.GetTaxAuthority)    // GET    /api/v1/finance/tax/authorities/:id
+	taxAuthGroup.Put("/:id", handler.UpdateTaxAuthority) // PUT    /api/v1/finance/tax/authorities/:id
 
 	taxCodeGroup := taxGroup.Group("/codes")
-	taxCodeGroup.Post("/", handler.CreateTaxCode)            // POST   /api/v1/finance/tax/codes
-	taxCodeGroup.Get("/", handler.ListTaxCodes)              // GET    /api/v1/finance/tax/codes
-	taxCodeGroup.Get("/:id", handler.GetTaxCode)             // GET    /api/v1/finance/tax/codes/:id
-	taxCodeGroup.Put("/:id", handler.UpdateTaxCode)          // PUT    /api/v1/finance/tax/codes/:id
+	taxCodeGroup.Post("/", handler.CreateTaxCode)   // POST   /api/v1/finance/tax/codes
+	taxCodeGroup.Get("/", handler.ListTaxCodes)     // GET    /api/v1/finance/tax/codes
+	taxCodeGroup.Get("/:id", handler.GetTaxCode)    // GET    /api/v1/finance/tax/codes/:id
+	taxCodeGroup.Put("/:id", handler.UpdateTaxCode) // PUT    /api/v1/finance/tax/codes/:id
 
 	// Bank reconciliation
 	reconGroup := financeGroup.Group("/reconciliation")
 	reconGroup.Use(r.authorizeMiddleware("finance.reconciliation.read"))
 
 	statementsGroup := reconGroup.Group("/statements")
-	statementsGroup.Post("/", handler.ImportBankStatement)                                // POST   /api/v1/finance/reconciliation/statements
-	statementsGroup.Get("/", handler.ListBankStatements)                                  // GET    /api/v1/finance/reconciliation/statements
-	statementsGroup.Get("/:id", handler.GetBankStatement)                                 // GET    /api/v1/finance/reconciliation/statements/:id
-	statementsGroup.Get("/:id/lines", handler.ListStatementLines)                         // GET    /api/v1/finance/reconciliation/statements/:id/lines
-	statementsGroup.Post("/:id/lines/:line_id/match", handler.MatchStatementLine)         // POST   /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
-	statementsGroup.Delete("/:id/lines/:line_id/match", handler.UnmatchStatementLine)     // DELETE /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
-	statementsGroup.Post("/:id/complete", handler.CompleteReconciliation)                 // POST   /api/v1/finance/reconciliation/statements/:id/complete
+	statementsGroup.Post("/", handler.ImportBankStatement)                            // POST   /api/v1/finance/reconciliation/statements
+	statementsGroup.Get("/", handler.ListBankStatements)                              // GET    /api/v1/finance/reconciliation/statements
+	statementsGroup.Get("/:id", handler.GetBankStatement)                             // GET    /api/v1/finance/reconciliation/statements/:id
+	statementsGroup.Get("/:id/lines", handler.ListStatementLines)                     // GET    /api/v1/finance/reconciliation/statements/:id/lines
+	statementsGroup.Post("/:id/lines/:line_id/match", handler.MatchStatementLine)     // POST   /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+	statementsGroup.Delete("/:id/lines/:line_id/match", handler.UnmatchStatementLine) // DELETE /api/v1/finance/reconciliation/statements/:id/lines/:line_id/match
+	statementsGroup.Post("/:id/complete", handler.CompleteReconciliation)             // POST   /api/v1/finance/reconciliation/statements/:id/complete
 
 	// Reporting endpoints
 	reportsGroup := financeGroup.Group("/reports")
