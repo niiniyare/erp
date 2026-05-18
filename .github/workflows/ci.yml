@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Architecture Guards ─────────────────────────────────────────────────────
+  # Must pass before build or test. Catches structural violations early —
+  # a failed arch guard is a design error, not a runtime bug.
+  arch:
+    name: Architecture Guards
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run architecture guards
+        run: |
+          chmod +x scripts/check-arch.sh
+          bash scripts/check-arch.sh
+
+  # ── Build ───────────────────────────────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: arch
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build
+        run: go build ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  # ── Unit & Integration Tests ────────────────────────────────────────────────
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    needs: arch
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: erp_test
+          POSTGRES_USER: erp
+          POSTGRES_PASSWORD: erp
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TEST_DATABASE_URL: postgres://erp:erp@localhost:5432/erp_test?sslmode=disable
+      TEST_REDIS_URL: redis://localhost:6379/0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Run migrations
+        run: go run ./cmd/migrate up
+
+      - name: Test
+        run: go test -race -count=1 ./...
+
+      - name: Upload coverage
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.out
+          retention-days: 7
+
+  # ── UI Pipeline Smoke Test ──────────────────────────────────────────────────
+  # Verifies the pipeline DAG, registry validation, and metric registration
+  # all pass at startup without requiring a running database.
+  ui-pipeline:
+    name: UI Pipeline Smoke
+    runs-on: ubuntu-latest
+    needs: arch
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Build UI pipeline packages
+        run: go build ./internal/web/... ./internal/web/dsl/...
+
+      - name: Test UI pipeline packages
+        run: go test -race -count=1 ./internal/web/...
+
+      - name: Test DSL packages
+        run: go test -race -count=1 ./internal/web/dsl/...

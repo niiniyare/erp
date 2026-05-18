@@ -709,7 +709,7 @@ if sess.HasPermission("finance.invoices.write") {
 
 ## Phase 8: Strict Architectural Enforcement (CI Guards)
 
-- [ ] **TASK 13 — CI Architecture Guards**
+- [x] **TASK 13 — CI Architecture Guards** (2026-05-18)
   - Files: `scripts/check-arch.sh`, `.github/workflows/ci.yml`
   - Guard 1: No `map[string]any` in `internal/web/` — zero tolerance
   - Guard 2: No direct IAM imports from `dsl/` — only via `domain.UISessionContext`
@@ -728,7 +728,7 @@ if sess.HasPermission("finance.invoices.write") {
 
 ## Phase 9: Documentation
 
-- [ ] **TASK 14 — Architecture and DSL Docs**
+- [x] **TASK 14 — Architecture and DSL Docs** (2026-05-18)
   - Files: `docs/reference/modules/ui/architecture.md`, `ast.md`, `pipeline.md`,
     `cache.md`, `dsl.md`, `contributing.md`
   - No references to `map[string]any` as a schema type anywhere
