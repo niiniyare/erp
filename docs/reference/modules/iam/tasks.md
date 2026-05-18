@@ -51,10 +51,11 @@ Completed BLOCK items:
 |---|---|
 | AUTHZ-2: verify production `AuthorizeCasbin` middleware calls `Enforce()` | DONE |
 | AUTHZ-3: audit no handler bypasses auth via direct DB role query | DONE |
-| CONTRACT-FIN-1: remove iam.Service from finance/service.go + account.go | OPEN |
-| CONTRACT-FIN-2: replace featureflag.Service with SessionContext.FeatureEnabled in account.go | OPEN |
-| CONTRACT-FIN-3: delete planned Enforce() TODO in account.go:159-164 | OPEN |
-| CONTRACT-SHARED-1: audit + remove CapabilityContext.Permissions from shared/context.go | OPEN |
+| CONTRACT-FIN-1: remove iam.Service from finance/service.go + account.go | DONE |
+| CONTRACT-FIN-2: replace featureflag.Service with SessionContext.FeatureEnabled in account.go | DONE |
+| CONTRACT-FIN-3: delete all TODO(authz) planned bypasses (9 found across account.go) | DONE |
+| CONTRACT-SHARED-1: remove CapabilityContext.Permissions/Features/Modules from shared/context.go | DONE |
+| GUARD: iam/guard/ package — 8 static boundary tests enforcing contract rules | DONE |
 | AUTHZ-6: subject prefix validation in authn middleware | OPEN |
 | T-INT: integration tests (DB + Redis required) | OPEN |
 | T-ADAPTER (AZ-ADP-001..050): DB required | OPEN |

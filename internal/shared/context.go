@@ -101,15 +101,15 @@ func GetRequestContext(ctx context.Context) (*RequestContext, bool) {
 	return reqCtx, ok
 }
 
+// CapabilityContext carries non-authorization context about the request actor.
+// Permissions, features, and module flags have been removed — use
+// contract.SessionContext.FeatureEnabled / middleware.Authorize instead.
 type CapabilityContext struct {
-	UserID      string
-	Role        string
-	Scope       string
-	TenantID    *string
-	CustomerID  *string
-	Modules     map[string]bool
-	Features    map[string]bool
-	Permissions map[string]bool
+	UserID     string
+	Role       string
+	Scope      string
+	TenantID   *string
+	CustomerID *string
 }
 
 // WithCapabilityContext stores a CapabilityContext in the context.

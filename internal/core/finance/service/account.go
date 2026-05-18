@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
-	"awo.so/internal/core/iam"
-	"awo.so/internal/shared"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
@@ -84,13 +82,11 @@ type AccountService interface {
 }
 
 type accountService struct {
-	accountRepo        domain.AccountsRepository
-	accountGroupRepo   domain.AccountGroupRepository
-	tracing            tracing.Service
-	metrics            metrics.MetricsProvider
-	settingsHelper     *SettingsHelper
-	iamService         iam.Service
-	featureFlagService featureflag.Service
+	accountRepo      domain.AccountsRepository
+	accountGroupRepo domain.AccountGroupRepository
+	tracing          tracing.Service
+	metrics          metrics.MetricsProvider
+	settingsHelper   *SettingsHelper
 }
 
 func NewAccountService(
@@ -98,17 +94,13 @@ func NewAccountService(
 	accountGroupRepo domain.AccountGroupRepository,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
-	iamService iam.Service,
-	featureFlagService featureflag.Service,
 ) AccountService {
 	return &accountService{
-		accountRepo:        accountRepo,
-		accountGroupRepo:   accountGroupRepo,
-		tracing:            tracing,
-		metrics:            metrics,
-		settingsHelper:     NewSettingsHelper(),
-		iamService:         iamService,
-		featureFlagService: featureFlagService,
+		accountRepo:      accountRepo,
+		accountGroupRepo: accountGroupRepo,
+		tracing:          tracing,
+		metrics:          metrics,
+		settingsHelper:   NewSettingsHelper(),
 	}
 }
 
@@ -156,13 +148,6 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 			"account_type": string(req.AccountType),
 		})
 
-	// TODO(authz): enforce finance.accounts.create via iam.Service.Enforce() once
-	// the session principal is wired into ctx. Example:
-	//   if userID, ok := shared.GetUserID(ctx); ok {
-	//       ok, _ := s.iamService.Enforce(ctx, iam.Request{Subject: ..., Object: "finance.accounts", Action: "create"})
-	//       if !ok { return nil, errors.NewBusinessError("UNAUTHORIZED", "Cannot create account") }
-	//   }
-
 	// Settings-driven defaults - apply if not specified
 	if req.CurrencyCode == nil || *req.CurrencyCode == "" {
 		currency := domain.DefaultBaseCurrency
@@ -171,25 +156,8 @@ func (s *accountService) CreateAccount(ctx context.Context, req domain.CreateAcc
 
 	// Feature Flag - Use enhanced validation if enabled
 	useEnhancedValidation := false
-	tenantID, _ := shared.GetTenantID(ctx)
-	userID, _ := shared.GetUserID(ctx)
-
-	evalCtx := &featureflag.EvaluationContext{
-		TenantID:    tenantID,
-		UserID:      &userID,
-		Environment: "production", // TODO: Get from config
-		Attributes: map[string]string{
-			"module":        "finance",
-			"resource_type": "account",
-		},
-	}
-
-	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_validation", evalCtx); err == nil {
-		useEnhancedValidation = evalResult
-		logger.DebugContext(ctx, "Feature flag evaluated", logger.Fields{
-			"flag":    "enhanced_account_validation",
-			"enabled": useEnhancedValidation,
-		})
+	if sc, ok := contract.FromContext(ctx); ok {
+		useEnhancedValidation = sc.FeatureEnabled("enhanced_account_validation")
 	}
 
 	if err := req.Validate(); err != nil {
@@ -391,9 +359,6 @@ func (s *accountService) GetAccountByCode(ctx context.Context, code string) (*do
 	logger.DebugContext(ctx, "Getting account by code",
 		logger.Fields{"account_code": code})
 
-	// TODO(authz): enforce finance.accounts.read via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// TODO: Get entityID from context or parameter
 	account, err := s.accountRepo.GetByCode(ctx, nil, code)
 	if err != nil {
@@ -430,9 +395,6 @@ func (s *accountService) UpdateAccount(ctx context.Context, id uuid.UUID, req do
 
 	logger.InfoContext(ctx, "Starting account update",
 		logger.Fields{"account_id": id.String()})
-
-	// TODO(authz): enforce finance.accounts.update via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
 
 	existingAccount, err := s.accountRepo.GetByID(ctx, id)
 	if err != nil {
@@ -541,26 +503,10 @@ func (s *accountService) DeleteAccount(ctx context.Context, id uuid.UUID) error 
 	logger.InfoContext(ctx, "Starting account deletion",
 		logger.Fields{"account_id": id.String()})
 
-	// TODO(authz): enforce finance.accounts.delete via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// Feature Flag - Check if enhanced deletion checks are enabled
-	tenantID, _ := shared.GetTenantID(ctx)
-	userID, _ := shared.GetUserID(ctx)
-
-	evalCtx := &featureflag.EvaluationContext{
-		TenantID:    tenantID,
-		UserID:      &userID,
-		Environment: "production",
-		Attributes: map[string]string{
-			"module":    "finance",
-			"operation": "delete",
-		},
-	}
-
 	useEnhancedDeletionChecks := false
-	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_deletion", evalCtx); err == nil {
-		useEnhancedDeletionChecks = evalResult
+	if sc, ok := contract.FromContext(ctx); ok {
+		useEnhancedDeletionChecks = sc.FeatureEnabled("enhanced_account_deletion")
 	}
 
 	account, err := s.accountRepo.GetByID(ctx, id)
@@ -684,27 +630,9 @@ func (s *accountService) ListAccounts(ctx context.Context, filter *domain.Accoun
 			"offset": getIntValue(filter.Offset),
 		})
 
-	// TODO(authz): filter accounts based on user permissions via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// Feature Flag - Use enhanced listing if enabled
-	tenantID, _ := shared.GetTenantID(ctx)
-	userID, _ := shared.GetUserID(ctx)
-
-	evalCtx := &featureflag.EvaluationContext{
-		TenantID:    tenantID,
-		UserID:      &userID,
-		Environment: "production",
-		Attributes: map[string]string{
-			"module":    "finance",
-			"operation": "list",
-		},
-	}
-
-	useEnhancedListing := false
-	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_listing", evalCtx); err == nil {
-		useEnhancedListing = evalResult
-		if useEnhancedListing {
+	if sc, ok := contract.FromContext(ctx); ok {
+		if sc.FeatureEnabled("enhanced_account_listing") {
 			logger.DebugContext(ctx, "Using enhanced account listing", logger.Fields{"enhanced": true})
 		}
 	}
@@ -857,26 +785,10 @@ func (s *accountService) SearchAccounts(ctx context.Context, query string, limit
 			"limit": limit,
 		})
 
-	// TODO(authz): enforce finance.accounts.search via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// Feature Flag - Enhanced search capabilities
-	tenantID, _ := shared.GetTenantID(ctx)
-	userID, _ := shared.GetUserID(ctx)
-
-	evalCtx := &featureflag.EvaluationContext{
-		TenantID:    tenantID,
-		UserID:      &userID,
-		Environment: "production",
-		Attributes: map[string]string{
-			"module":    "finance",
-			"operation": "search",
-		},
-	}
-
 	useEnhancedSearch := false
-	if evalResult, err := s.featureFlagService.IsEnabled(ctx, "enhanced_account_search", evalCtx); err == nil {
-		useEnhancedSearch = evalResult
+	if sc, ok := contract.FromContext(ctx); ok {
+		useEnhancedSearch = sc.FeatureEnabled("enhanced_account_search")
 		if useEnhancedSearch {
 			logger.DebugContext(ctx, "Using enhanced account search", logger.Fields{"enhanced": true})
 		}
@@ -1080,27 +992,6 @@ func (s *accountService) shouldRequireApproval(ctx context.Context, entityID *uu
 	return operation == "delete" // Only require approval for deletions
 }
 
-func (s *accountService) isEnhancedFeatureEnabled(ctx context.Context, featureName string, entityID *uuid.UUID) bool {
-	// Feature flag evaluation with proper context
-	tenantID, _ := shared.GetTenantID(ctx)
-	userID, _ := shared.GetUserID(ctx)
-
-	evalCtx := &featureflag.EvaluationContext{
-		TenantID:    tenantID,
-		UserID:      &userID,
-		Environment: "production",
-		Attributes: map[string]string{
-			"module":    "finance",
-			"entity_id": entityID.String(),
-		},
-	}
-
-	if evalResult, err := s.featureFlagService.IsEnabled(ctx, featureName, evalCtx); err == nil {
-		return evalResult
-	}
-	return false
-}
-
 // ============================================================================
 // Account Groups Management Methods
 // ============================================================================
@@ -1120,9 +1011,6 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 			"group_name": req.GroupName,
 		})
 
-	// TODO(authz): enforce finance.account_groups.create via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// Validate account group code uniqueness
 	if err := s.accountGroupRepo.ValidateGroupCode(ctx, req.GroupCode, nil); err != nil {
 		return nil, fmt.Errorf("account group validation failed: %w", err)
@@ -1140,7 +1028,10 @@ func (s *accountService) CreateAccountGroup(ctx context.Context, req domain.Crea
 	}
 
 	// Get current user for audit
-	userID, _ := shared.GetUserID(ctx)
+	var userID uuid.UUID
+	if sc, ok := contract.FromContext(ctx); ok {
+		userID = sc.UserID()
+	}
 
 	// Create account group entity
 	group := &domain.AccountGroup{
@@ -1281,9 +1172,6 @@ func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, r
 		return nil, fmt.Errorf("failed to get existing account group: %w", err)
 	}
 
-	// TODO(authz): enforce finance.account_groups.update via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
-
 	// Apply updates
 	if req.GroupName != nil {
 		existingGroup.GroupName = *req.GroupName
@@ -1320,7 +1208,10 @@ func (s *accountService) UpdateAccountGroup(ctx context.Context, id uuid.UUID, r
 	}
 
 	// Update audit fields
-	userID, _ := shared.GetUserID(ctx)
+	var userID uuid.UUID
+	if sc, ok := contract.FromContext(ctx); ok {
+		userID = sc.UserID()
+	}
 	existingGroup.UpdatedAt = time.Now()
 	existingGroup.UpdatedBy = userID
 
@@ -1366,9 +1257,6 @@ func (s *accountService) DeleteAccountGroup(ctx context.Context, id uuid.UUID) e
 	if err != nil {
 		return fmt.Errorf("failed to get account group: %w", err)
 	}
-
-	// TODO(authz): enforce finance.account_groups.delete via iam.Service.Enforce() once
-	// the session principal is wired into ctx.
 
 	// Check if group can be deleted
 	canDelete, err := s.accountGroupRepo.CanDeleteGroup(ctx, id)
@@ -1900,9 +1788,8 @@ func (s *accountService) analyzeActivityPatterns(ctx context.Context, activities
 	s.metrics.SetGauge("account.activity.total_entries_30d", float64(totalActivity), metrics.Fields{})
 }
 
-// checkAccountReadPermission validates if the user has permission to read accounts.
-// TODO(authz): enforce finance.accounts.read via iam.Service.Enforce() once
-// the session principal is wired into ctx.
+// checkAccountReadPermission is a hook for future per-resource read guards.
+// Authorization for the route is enforced by middleware.Authorize at registration time.
 func (s *accountService) checkAccountReadPermission(ctx context.Context) error {
 	return nil
 }
