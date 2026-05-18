@@ -60,22 +60,23 @@ func buildCtx(c *fiber.Ctx) amis.Ctx {
 	userID, _ := shared.GetUserID(goCtx)
 	tenantID, _ := shared.GetTenantID(goCtx)
 
-	// CapabilityContext is set by the auth middleware when present.
+	// CapabilityContext carries non-auth identity metadata (role label, scope).
 	cap, _ := shared.GetCapabilityContext(goCtx)
 
 	ctx := amis.Ctx{
-		Flags: cap.Features,
+		// Feature flags are evaluated per-feature via contract.SessionContext.FeatureEnabled;
+		// a bulk flags map is not exposed here to prevent schema functions from making
+		// authorization decisions.
+		Flags: nil,
 		User: amis.CtxUser{
 			ID:       userID.String(),
 			TenantID: tenantID.String(),
 			Role:     cap.Role,
 		},
+		// Can always returns false — authorization is enforced by middleware.Authorize
+		// at route registration, not inside AMIS schema functions.
 		Can: func(action, resource string) bool {
-			if cap.Permissions == nil {
-				return false
-			}
-			key := action + ":" + resource
-			return cap.Permissions[key]
+			return false
 		},
 	}
 

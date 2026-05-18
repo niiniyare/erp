@@ -5,9 +5,7 @@ package service
 
 import (
 	"awo.so/internal/core/audit"
-	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
-	"awo.so/internal/core/iam"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
@@ -43,10 +41,8 @@ type Dependencies struct {
 	// Provided by the infrastructure wiring layer (pgx pool adapter).
 	// nil → reversal uses best-effort cleanup on failure.
 	TxRunner           domain.TxRunner
-	Tracing            tracing.Service
-	Metrics            metrics.MetricsProvider
-	IAMService         iam.Service
-	FeatureFlagService featureflag.Service
+	Tracing  tracing.Service
+	Metrics  metrics.MetricsProvider
 	// AuditService is the single audit sink for all finance mutations.
 	// nil → audit calls are silently skipped (safe for tests that don't need audit).
 	AuditService audit.Service
@@ -156,8 +152,6 @@ func NewServices(deps Dependencies) *Services {
 		deps.AccountGroupRepo,
 		deps.Tracing,
 		deps.Metrics,
-		deps.IAMService,
-		deps.FeatureFlagService,
 	)
 
 	periodService := NewPeriodService(deps.PeriodRepo, deps.Tracing, deps.Metrics, aw, escalation)

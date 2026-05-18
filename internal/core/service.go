@@ -273,12 +273,10 @@ func (sc *ServiceContainer) initializeBusinessServices(ctx context.Context) erro
 	transactionRepo := financeRepo.NewTransactionRepository(sc.deps.Store, sc.deps.Tracing, sc.deps.Logger, sc.deps.Metrics)
 
 	financeServiceDeps := financeService.Dependencies{
-		AccountRepo:        accountRepo,
-		TransactionRepo:    transactionRepo,
-		Tracing:            sc.deps.Tracing,
-		Metrics:            sc.deps.Metrics,
-		IAMService:         nil, // sc.IAMService,
-		FeatureFlagService: sc.FeatureFlagService,
+		AccountRepo:     accountRepo,
+		TransactionRepo: transactionRepo,
+		Tracing:         sc.deps.Tracing,
+		Metrics:         sc.deps.Metrics,
 	}
 
 	if err := financeServiceDeps.Validate(); err != nil {
