@@ -49,6 +49,8 @@ Required reading order:
 4. [Go Schema Builder](03-implementation/01-go-schema-builder.md) — 20 min
 5. [Pipeline Deep Dive](02-architecture/02-pipeline-deep-dive.md) — reference as needed
 
+If working on existing pages: [Migration Guide](appendices/B-migration-guide.md) — legacy `amis.Ctx` → modern `UISessionContext`
+
 ## Path 3: Fixing a Bug
 
 **Goal**: Diagnose why a page is not rendering.
@@ -72,10 +74,10 @@ Decision tree:
 Checklist:
 
 - [ ] [Page Registration Pattern](03-implementation/02-page-registration-pattern.md)
-- [ ] [Component Reference](04-reference/01-component-catalog.md) — pick components
-- [ ] [Page Patterns](03-implementation/04-page-patterns.md) — pick pattern (CRUD/Form/Dashboard)
+- [ ] [Go Schema Builder](03-implementation/01-go-schema-builder.md) — pick builders
 - [ ] [IAM Integration](02-architecture/03-iam-integration.md) — wire permissions
 - [ ] [Pipeline Deep Dive](02-architecture/02-pipeline-deep-dive.md) — understand caching
+- [ ] [Migration Guide](appendices/B-migration-guide.md) — if touching an existing legacy page
 
 ## Current Implementation Status
 
