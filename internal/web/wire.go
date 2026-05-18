@@ -26,6 +26,7 @@ import (
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/web/authz"
 	uicache "awo.so/internal/web/cache"
+	uimetrics "awo.so/internal/web/metrics"
 	"awo.so/internal/web/registry"
 	"awo.so/internal/web/stages"
 	"awo.so/internal/web/ui"
@@ -50,6 +51,9 @@ func NewUIPipeline(
 	mp metrics.MetricsProvider,
 	log logger.Logger,
 ) *UIPipeline {
+	// Pre-register UI histograms with precise bucket boundaries.
+	uimetrics.RegisterUIMetrics(mp)
+
 	reg := pipeline.NewStageRegistry()
 
 	instrument := func(s pipeline.Stage) pipeline.Stage {

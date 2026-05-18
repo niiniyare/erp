@@ -235,15 +235,21 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 6: Distributed Observability
 
-- [ ] **TASK 11 — Stage Span Attributes and Metrics**
+- [x] **TASK 11 — Stage Span Attributes and Metrics** (2026-05-18)
   - Files: `internal/web/stages/instrument.go`, `internal/web/metrics/ui.go`,
     `internal/web/wire.go`
-  - Add `UIStageAttributes` for trace spans via the existing `tracing.Service` interface
-  - Define 6 metrics via the existing `metrics.MetricsProvider` (not a new library):
-    `ui_compile_duration_ms`, `stage_execution_duration_ms`,
-    `schema_validation_failures_total`, `cache_generation_mismatch_total`,
-    `invalidation_events_total`, `registry_resolution_failures_total`
-  - Status: _Not started_
+  - `InstrumentedStage` wraps any Stage: OTel span per Execute, stage duration
+    histogram, failure counters for validate/registry, warn on slow stages (>50ms)
+  - `UIStageAttributes` struct: stage, route, tenant_id, operation_key, cache_hit,
+    ast_compiled — emitted as OTel span attributes via `toKeyValues()`
+  - 6 metrics defined in `internal/web/metrics/ui.go` with name constants:
+    `ui_compile_duration_ms`, `ui_stage_execution_duration_ms`,
+    `ui_schema_validation_failures_total`, `ui_cache_generation_mismatch_total`,
+    `ui_invalidation_events_total`, `ui_registry_resolution_failures_total`
+  - `RegisterUIMetrics(mp)` pre-registers histograms with appropriate buckets;
+    called in `NewUIPipeline` before stage registration
+  - `stages.Instrument(s, tracer, mp, log)` already wired in wire.go
+  - Status: _Complete_
 
 ---
 
