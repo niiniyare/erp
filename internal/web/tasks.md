@@ -676,7 +676,7 @@ if sess.HasPermission("finance.invoices.write") {
 
 ---
 
-- [ ] **TASK 12 — Implement All DSL Building Blocks and Screen Layouts**
+- [x] **TASK 12 — Implement All DSL Building Blocks and Screen Layouts** (2026-05-18)
   - Files: `internal/web/dsl/blocks/*.go`, `internal/web/dsl/screens/*.go`,
     `internal/web/dsl/builders/*.go`
   - **Step 1 — Document blocks:** Start with `ProductServiceLineBlock`

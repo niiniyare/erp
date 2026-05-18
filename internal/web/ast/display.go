@@ -208,7 +208,8 @@ type CRUDNode struct {
 	API        APISpec
 	Columns    []TableColumn
 	// Filter is the filter form shown above the table. nil = no filter.
-	Filter     *FormNode
+	// Accepts any Node — typically FilterBarNode or FormNode.
+	Filter     Node
 	// Toolbar nodes appear in the top-right of the CRUD header.
 	Toolbar    []Node
 	// BulkActions appear when rows are selected.
@@ -298,7 +299,7 @@ func (c CRUDNode) Children() []Node {
 	var all []Node
 	all = append(all, c.Toolbar...)
 	all = append(all, c.BulkActions...)
-	if c.Filter != nil {
+	if c.Filter != nil && c.Filter != Node(nil) {
 		all = append(all, c.Filter)
 	}
 	return all
