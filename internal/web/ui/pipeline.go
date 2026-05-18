@@ -74,6 +74,11 @@ const (
 	// already guaranteed by the typed AST (syncLocation, transparent bg) when this is true.
 	DataKeyASTCompiled = "ui.compile.ast_compiled"
 
+	// DataKeyCacheVersions holds the CacheVersions struct injected at startup.
+	// Set by NewUIPipeline into opCtx before Run() — CacheLookupStage reads it
+	// to build the generation-aware cache key.
+	DataKeyCacheVersions = "ui.cache.versions"
+
 	// DataKeySessionCtx is the UISessionContext set by AuthzStage.
 	// Stored as ui.UISessionContext (value, not pointer — immutable).
 	DataKeySessionCtx = "ui.authz.session_ctx"

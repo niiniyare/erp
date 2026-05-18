@@ -9,6 +9,7 @@ import (
 	"awo.so/internal/pipeline"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/web/authz"
+	uicache "awo.so/internal/web/cache"
 	"awo.so/internal/web/ui"
 )
 
@@ -78,7 +79,7 @@ func (s *CacheLookupStage) Execute(opCtx *pipeline.OperationContext) (pipeline.S
 		return pipeline.StageResult{Status: "skipped", Message: "fingerprints not set — AuthzStage must run before CacheLookupStage"}, nil
 	}
 
-	cacheKey := authz.CacheKey(opCtx.TenantID.String(), input.Route, permFP, flagFP)
+	cacheKey := buildCacheKey(opCtx, input.Route, permFP, flagFP)
 
 	// Inject tenant context required by cache.Service.
 	cacheCtx := withTenantContext(opCtx.Ctx, opCtx.TenantID.String())
@@ -185,6 +186,19 @@ func (s *CacheStoreStage) Execute(opCtx *pipeline.OperationContext) (pipeline.St
 		Status:  "completed",
 		Message: fmt.Sprintf("schema cached at key %s ttl=%s", cacheKey, s.ttl),
 	}, nil
+}
+
+// buildCacheKey constructs the cache key for the current request.
+// Uses the generation-aware 8-component key when CacheVersions are injected
+// (DataKeyCacheVersions set by wire.go). Falls back to the legacy 5-component
+// key when versions are absent — safe during the migration window.
+func buildCacheKey(opCtx *pipeline.OperationContext, route, permFP, flagFP string) string {
+	tenantID := opCtx.TenantID.String()
+	if v, ok := opCtx.Data[ui.DataKeyCacheVersions].(uicache.CacheVersions); ok {
+		return uicache.Key(tenantID, route, permFP, flagFP, v)
+	}
+	// Legacy fallback — remove once all deployments inject CacheVersions.
+	return authz.CacheKey(tenantID, route, permFP, flagFP)
 }
 
 // withTenantContext injects the tenant ID into ctx for cache.Service operations.

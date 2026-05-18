@@ -259,31 +259,28 @@ var UIFlagList = []UIPermission{
 	"finance.auto_reconcile",
 }
 
-// SchemaVersion is incremented when the AMIS builder or validator changes
-// in a backward-incompatible way. Including this in the cache key ensures
-// old cached schemas are invalidated after a deploy.
+// SchemaVersion is kept for backward compatibility with existing cached keys.
+// New code must use uicache.Key() with CacheVersions instead.
 //
-// Increment this constant in the same commit as the breaking builder change.
+// Deprecated: use internal/web/cache.Key with CacheVersions.
 const SchemaVersion = "v1"
 
-// CacheKey builds the canonical schema cache key.
-// Components: tenantID + route + permFingerprint + flagFingerprint + SchemaVersion
-// All five components are required. Missing any one risks:
-//   - Missing tenantID: cross-tenant schema serving (security defect)
-//   - Missing permFingerprint: wrong schema for different permission sets (security defect)
-//   - Missing flagFingerprint: wrong schema for different feature sets
-//   - Missing version: stale schemas after builder updates
+// CacheKey builds a schema cache key using only static version components.
+//
+// Deprecated: use internal/web/cache.Key(tenantID, route, permFP, flagFP, versions)
+// which includes PolicyGeneration and SchemaGeneration for runtime soft-invalidation.
+// This function remains for test helpers and migration path only.
 func CacheKey(tenantID, route, permFP, flagFP string) string {
-	// Sanitise route: remove leading slash, replace / with :
 	route = strings.TrimPrefix(route, "/")
 	route = strings.ReplaceAll(route, "/", ":")
-
 	return fmt.Sprintf("ui:schema:%s:%s:%s:%s:%s",
 		tenantID, route, permFP, flagFP, SchemaVersion)
 }
 
 // InvalidationPattern returns the Redis key pattern to delete all schema
 // cache entries for a given tenant. Used when roles change.
+//
+// Deprecated: use internal/web/cache.TenantPattern(tenantID.String()).
 func InvalidationPattern(tenantID uuid.UUID) string {
 	return fmt.Sprintf("ui:schema:%s:*", tenantID.String())
 }

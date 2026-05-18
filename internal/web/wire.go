@@ -1,7 +1,7 @@
 // Package web wires the UI pipeline: stages → registry → pipeline builder.
 //
-// Call NewUIPipeline at application startup to get a configured *pipeline.PipelineBuilder
-// ready to serve AMIS schema requests. Pass the builder to handler.NewSchemaHandler.
+// Call NewUIPipeline at application startup to get a configured *UIPipeline
+// ready to serve AMIS schema requests. Pass it to handler.NewSchemaHandler.
 //
 // Dependency graph:
 //
@@ -25,6 +25,7 @@ import (
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/web/authz"
+	uicache "awo.so/internal/web/cache"
 	"awo.so/internal/web/stages"
 	"awo.so/internal/web/ui"
 )
@@ -35,12 +36,15 @@ import (
 // Parameters:
 //   - authzSvc: resolves permissions per request via Casbin (required)
 //   - cacheSvc: tenant-aware Redis+memory cache (required; pass nil to disable caching)
+//   - versions: generation-aware cache key components (pass uicache.DefaultVersions()
+//               in tests/dev; production must inject real values from config/env)
 //   - tracer:   OTel tracing service (optional; nil = no tracing)
 //   - mp:       metrics provider (optional; nil = no metrics)
 //   - log:      structured logger (optional; nil = no logging)
 func NewUIPipeline(
 	authzSvc authz.UIAuthzService,
 	cacheSvc cache.Service,
+	versions uicache.CacheVersions,
 	tracer tracing.Service,
 	mp metrics.MetricsProvider,
 	log logger.Logger,
@@ -79,5 +83,26 @@ func NewUIPipeline(
 		panic(fmt.Sprintf("UI pipeline DAG invalid: %v", err))
 	}
 
-	return pipeline.NewPipelineBuilder(reg, nil) // nil txRunner: UI has no DB transactions
+	pb := pipeline.NewPipelineBuilder(reg, nil) // nil txRunner: UI has no DB transactions
+	return &UIPipeline{builder: pb, versions: versions}
+}
+
+// UIPipeline wraps PipelineBuilder to automatically inject CacheVersions into
+// every OperationContext before Run() is called. This keeps the versions
+// concern out of SchemaHandler — the handler just calls Run as before.
+type UIPipeline struct {
+	builder  *pipeline.PipelineBuilder
+	versions uicache.CacheVersions
+}
+
+// Run pre-populates DataKeyCacheVersions then delegates to the underlying builder.
+func (p *UIPipeline) Run(opCtx *pipeline.OperationContext) error {
+	opCtx.Data[ui.DataKeyCacheVersions] = p.versions
+	return p.builder.Run(opCtx)
+}
+
+// Builder exposes the underlying PipelineBuilder for callers that need it
+// (e.g. RunFrom for suspended pipeline resumption).
+func (p *UIPipeline) Builder() *pipeline.PipelineBuilder {
+	return p.builder
 }

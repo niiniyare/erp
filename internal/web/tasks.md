@@ -184,12 +184,18 @@ recurring concern, so that assembling a new screen is composition, not construct
 
 ## Phase 3: Cache Generation Versioning
 
-- [ ] **TASK 8 — Generation-Aware Cache Key**
+- [x] **TASK 8 — Generation-Aware Cache Key** (2026-05-18)
   - Files: `internal/web/cache/version.go`, `internal/web/cache/invalidation.go`,
-    `internal/web/authz/service.go`, `internal/web/wire.go`
-  - Create `CacheVersions` struct with 7 components; implement 4 invalidation scope types
-  - All invalidation uses `cache.Service.DeletePattern` — never call Redis directly
-  - Status: _Not started_
+    `internal/web/authz/service.go`, `internal/web/wire.go`,
+    `internal/web/handler/schema.go`
+  - `CacheVersions` struct (CompilerVersion, ASTVersion, PolicyGeneration, SchemaGeneration);
+    8-component key via `uicache.Key`; 4 invalidation scopes via `InvalidateSchemaCache`
+  - `UIPipeline` wrapper auto-injects `DataKeyCacheVersions` into every `opCtx.Data`
+  - `SchemaHandler` now accepts `PipelineRunner` interface — satisfied by both `*UIPipeline`
+    and `*pipeline.PipelineBuilder`; `NewUIPipeline` returns `*UIPipeline`
+  - `authz.CacheKey` and `authz.InvalidationPattern` deprecated; point to `internal/web/cache`
+  - All invalidation uses `cache.Service.DeletePattern` — never direct Redis
+  - Status: _Complete_
 
 ---
 

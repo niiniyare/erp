@@ -17,6 +17,12 @@ import (
 	"awo.so/internal/web/ui"
 )
 
+// PipelineRunner is the minimal interface SchemaHandler needs from the pipeline.
+// Both *web.UIPipeline and *pipeline.PipelineBuilder satisfy this interface.
+type PipelineRunner interface {
+	Run(opCtx *pipeline.OperationContext) error
+}
+
 // SchemaHandler serves AMIS page schemas via the UI pipeline.
 // Mount it at /schema/* — any sub-path resolves via the page registry.
 //
@@ -30,16 +36,16 @@ import (
 // SchemaHandler never reads Fiber Locals directly. All identity data arrives
 // via contract.FromContext(c.UserContext()).
 type SchemaHandler struct {
-	pipeline *pipeline.PipelineBuilder
+	pipeline PipelineRunner
 	tracer   tracing.Service
 	metrics  metrics.MetricsProvider
 	log      logger.Logger
 }
 
-// NewSchemaHandler constructs a SchemaHandler. pipeline must not be nil.
+// NewSchemaHandler constructs a SchemaHandler. pb must not be nil.
 // tracer, metrics, and log are optional — nil providers are skipped.
 func NewSchemaHandler(
-	pb *pipeline.PipelineBuilder,
+	pb PipelineRunner,
 	tracer tracing.Service,
 	mp metrics.MetricsProvider,
 	log logger.Logger,
