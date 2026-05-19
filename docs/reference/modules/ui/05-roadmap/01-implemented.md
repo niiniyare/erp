@@ -109,8 +109,6 @@
 |-------|----------|----------|-------------|
 | Font Awesome on external CDN | 🔴 Critical | `index.html:11` | Breaks offline; no SRI — needs bundling into `web/sdk/` |
 | CSRF protection absent | 🟠 High | Fiber middleware | Cookie auth + no CSRF token |
-| `max-height: 500px` menu ceiling | 🟡 Medium | `index.html:305` | Clips at ~12 items per group |
-| Sidebar search cosmetic (no impl) | 🟡 Medium | `index.html` | Click handler missing |
 
 ## Fixed (2026-05-18)
 
@@ -122,6 +120,8 @@
 | `alert()` native dialog in amisEnv | 🟠 High | Replaced with `amisEnv.notify('error', msg)` |
 | Sidebar collapses on main click | 🟡 Medium | Removed `#main` click→collapseSidebar listener |
 | `options: json.data` in list bridge | 🟡 Medium | Removed — conflated list and select-options responses |
+| `max-height: 500px` menu ceiling | 🟡 Medium | Bumped to `2000px` — no group clips |
+| Sidebar search cosmetic only | 🟡 Medium | Real `<input>` + live JS filter wired in |
 
 ---
 

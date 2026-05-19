@@ -258,14 +258,22 @@ func (m *RouteSecurityManager) ConfigureUIRoutes(router fiber.Router) {
 		}))
 	}
 
-	// CSRF protection for UI
+	// CSRF protection for UI.
+	// CookieHTTPOnly MUST be false: JS reads the cookie value and sends it as
+	// X-Csrf-Token header (double-submit cookie pattern). HttpOnly blocks that.
+	// Cookie name avoids __Secure- prefix when SecureCookies is false — browsers
+	// silently reject __Secure- cookies without Secure+HTTPS.
 	if m.config.UI.EnableCSRF {
+		cookieName := "csrf_token"
+		if m.config.UI.SecureCookies {
+			cookieName = "__Secure-csrf_"
+		}
 		router.Use(csrf.New(csrf.Config{
 			KeyLookup:      "header:X-Csrf-Token",
-			CookieName:     "__Secure-csrf_",
+			CookieName:     cookieName,
 			CookieSameSite: "Strict",
 			CookieSecure:   m.config.UI.SecureCookies,
-			CookieHTTPOnly: true,
+			CookieHTTPOnly: false, // JS must read this to send X-Csrf-Token header
 			Expiration:     1 * time.Hour,
 			KeyGenerator:   csrf.ConfigDefault.KeyGenerator,
 		}))

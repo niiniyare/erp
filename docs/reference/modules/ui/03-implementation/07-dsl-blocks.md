@@ -1,8 +1,8 @@
 # DSL Blocks Reference
 
-> Last verified: 2026-05-18 | Code pointer: `internal/web/dsl/blocks/`, `internal/web/ast/`
+> Last verified: 2026-05-19 | Code pointer: `internal/web/dsl/blocks/`, `internal/web/ast/`
 
-> **Partial listing.** This file documents 12 confirmed blocks. Run `ls internal/web/dsl/blocks/*.go` for the full list (~26 total). Add new blocks here when you add new files.
+> **Complete listing.** All 27 blocks documented. Add new blocks here when you add new files.
 
 ---
 
@@ -157,6 +157,102 @@ No config. Always adds `internal_notes` field.
 
 ---
 
+### `PartyBlock`
+
+Source: `internal/web/dsl/blocks/party.go`
+
+Party (customer / supplier / employee) selector section. Three presets provided — use these rather than passing a raw `PartyConfig`.
+
+```go
+// Customer
+blocks.PartyBlock(sess, blocks.DefaultCustomerConfig())
+
+// Supplier
+blocks.PartyBlock(sess, blocks.DefaultSupplierConfig())
+
+// Employee
+blocks.PartyBlock(sess, blocks.DefaultEmployeeConfig())
+
+// Custom
+blocks.PartyBlock(sess, blocks.PartyConfig{
+    Label:      "Vendor",
+    FieldName:  "vendor_id",
+    OptionsURL: "/api/v1/procurement/vendors/options",
+    Required:   true,
+    ReadOnly:   !sess.Can("update", "purchase_order"),
+})
+```
+
+| Preset | `FieldName` | `OptionsURL` |
+|---|---|---|
+| `DefaultCustomerConfig()` | `customer_id` | `/api/v1/crm/customers/options` |
+| `DefaultSupplierConfig()` | `supplier_id` | `/api/v1/procurement/suppliers/options` |
+| `DefaultEmployeeConfig()` | `employee_id` | `/api/v1/hr/employees/options` |
+
+---
+
+### `AttachmentsBlock`
+
+Source: `internal/web/dsl/blocks/attachments.go`
+
+Collapsible file attachment section. Collapsed by default. Files are uploaded via multipart to the document's attachments endpoint. Field name: `attachments`.
+
+```go
+blocks.AttachmentsBlock(sess)
+```
+
+No config. Always renders collapsed.
+
+---
+
+### `PaymentTermsBlock`
+
+Source: `internal/web/dsl/blocks/payment_terms.go`
+
+Payment terms selector + due date inputs. Terms options sourced from `/api/v1/finance/payment-terms/options`.
+
+```go
+blocks.PaymentTermsBlock(sess, blocks.PaymentTermsConfig{
+    ReadOnly: !sess.Can("update", "invoice"),
+})
+```
+
+Field names: `payment_terms_id`, `payment_due_date`.
+
+---
+
+### `TaxSummaryBlock`
+
+Source: `internal/web/dsl/blocks/tax_summary.go`
+
+Read-only tax breakdown card. Sourced from `${tax_lines}` in the AMIS data scope — no extra API call. Backend must populate `tax_lines` as an array of `{tax_name, taxable_amount, tax_amount, rate_pct}`.
+
+```go
+blocks.TaxSummaryBlock(sess)
+```
+
+No config. Always reads `${tax_lines}` from page data.
+
+---
+
+### `ActivityFeedBlock`
+
+Source: `internal/web/dsl/blocks/activity_feed.go`
+
+Chronological audit trail for a specific document / resource. Calls `/api/v1/audit/{resource}/activity` or `/api/v1/audit/activity` if resource is empty.
+
+```go
+blocks.ActivityFeedBlock(sess, blocks.ActivityFeedConfig{
+    Title:        "Invoice History",
+    Resource:     "invoices",   // → /api/v1/audit/invoices/activity
+    ResourceID:   "${id}",      // available in AMIS scope
+    ShowComments: true,
+    Limit:        20,
+})
+```
+
+---
+
 ## Dashboard / Analytics Blocks
 
 ### `StatCardBlock`
@@ -252,6 +348,64 @@ All fields optional — defaults to generic "No results" / "No records found mat
 
 ---
 
+### `ActivityPanelBlock`
+
+Source: `internal/web/dsl/blocks/activity_panel.go`
+
+Recent activity card for dashboard widgets. Calls `/api/v1/{resource}/recent` or `/api/v1/audit/recent` if resource is empty.
+
+```go
+blocks.ActivityPanelBlock(sess, blocks.ActivityPanelConfig{
+    Title:    "Recent Transactions",
+    Resource: "transactions",   // → /api/v1/transactions/recent
+    Limit:    10,
+})
+```
+
+---
+
+### `ChartPanelBlock`
+
+Source: `internal/web/dsl/blocks/chart_panel.go`
+
+Card-wrapped ECharts chart with optional period picker. Use `ChartType` constants: `ChartTypeBar`, `ChartTypeLine`, `ChartTypePie`.
+
+```go
+blocks.ChartPanelBlock(sess, blocks.ChartPanelConfig{
+    Title:        "Revenue by Month",
+    ChartType:    blocks.ChartTypeLine,
+    APIURL:       "/api/v1/finance/reports/revenue-trend",
+    PeriodPicker: true,    // adds Month/Quarter/Year selector above chart
+    Height:       300,     // default 300
+})
+```
+
+When `PeriodPicker: true`, adds `chart_period` select with options: `"month"` (default), `"quarter"`, `"year"`.
+
+---
+
+### `DetailCardBlock`
+
+Source: `internal/web/dsl/blocks/detail_card.go`
+
+Read-only label:value field group card. Backed by `${record}` in AMIS data scope.
+
+```go
+blocks.DetailCardBlock(sess, blocks.DetailCardConfig{
+    Title: "Invoice Details",
+    Fields: []blocks.FieldDef{
+        {Label: "Customer",   Key: "customer_name"},
+        {Label: "Issued",     Key: "document_date", Format: "date"},
+        {Label: "Total",      Key: "total_amount",  Format: "currency"},
+        {Label: "Tax",        Key: "tax_amount",    Format: "currency"},
+    },
+})
+```
+
+`Format` values: `""` / `"text"` (default), `"date"`, `"currency"`, `"percent"`, `"number"`.
+
+---
+
 ## Navigation / Actions Blocks
 
 ### `QuickActionsBlock`
@@ -268,6 +422,20 @@ blocks.QuickActionsBlock(sess, []blocks.QuickAction{
 ```
 
 `Permission` format: `"resource.action"` — same format as `AllUIPermissions`. Empty string = always visible.
+
+---
+
+### `EntityBreadcrumbBlock`
+
+Source: `internal/web/dsl/blocks/entity_breadcrumb.go`
+
+Hierarchy path for an entity. Reads `${breadcrumbs}` from AMIS data scope as an array of `{label, url}`. Backend must populate `breadcrumbs` in the page init API response.
+
+```go
+blocks.EntityBreadcrumbBlock(sess)
+```
+
+No config.
 
 ---
 
@@ -323,6 +491,169 @@ blocks.DataTableBlock(sess, blocks.DataTableConfig{
 | `"image"` | Thumbnail image |
 
 `BulkActionDef.Permission` is checked structurally in Go — users without the permission never see the button in the schema.
+
+---
+
+### `FilterBarBlock`
+
+Source: `internal/web/dsl/blocks/filter_bar.go`
+
+Filter header for every listing page. **Never write a custom filter form in a screen file** — always use this block.
+
+```go
+blocks.FilterBarBlock(sess, blocks.FilterBarConfig{
+    ShowSearch:        true,
+    SearchPlaceholder: "Search invoices…",
+    ShowDateRange:     true,
+    ShowStatus:        true,
+    StatusOptions: []ast.SelectOption{
+        {Label: "Draft",  Value: "draft"},
+        {Label: "Sent",   Value: "sent"},
+        {Label: "Paid",   Value: "paid"},
+        {Label: "Overdue", Value: "overdue"},
+    },
+    ShowEntityPicker:  true,
+    EntityURL:         "/api/v1/crm/customers/options",
+    EntityFieldName:   "customer_id",
+    EntityLabel:       "Customer",
+    ShowCurrency:      false,
+    ShowAmountRange:   true,
+    Collapsible:       true,
+})
+```
+
+| Config Field | Type | Default | Purpose |
+|---|---|---|---|
+| `ShowSearch` | `bool` | `false` | Keyword search input (`keywords` field) |
+| `SearchPlaceholder` | `string` | `"Search…"` | Input placeholder |
+| `ShowDateRange` | `bool` | `false` | Date range picker (`date_range` field) |
+| `ShowStatus` | `bool` | `false` | Multi-select status filter |
+| `StatusOptions` | `[]ast.SelectOption` | — | Required when `ShowStatus: true` |
+| `ShowEntityPicker` | `bool` | `false` | Searchable select for related entity |
+| `EntityURL` | `string` | — | Options API URL |
+| `EntityFieldName` | `string` | `"entity_id"` | Filter field name |
+| `ShowCurrency` | `bool` | `false` | Currency select (options from platform API) |
+| `ShowAmountRange` | `bool` | `false` | `amount_min` + `amount_max` number inputs |
+| `ShowTypeFilter` | `bool` | `false` | Type select (configure `TypeOptions`, `TypeFieldName`) |
+| `Collapsible` | `bool` | `false` | Wraps in collapsible section |
+
+When all flags are false, falls back to a single keyword search input.
+
+---
+
+### `BulkActionsBlock`
+
+Source: `internal/web/dsl/blocks/bulk_actions.go`
+
+Permission-filtered bulk action buttons. Returns `[]ast.Node` (not a single node). Pass directly to `DataTableConfig.BulkActions` or a CRUD toolbar.
+
+```go
+actions := blocks.BulkActionsBlock(sess, []blocks.BulkActionDef{
+    {
+        Label:      "Approve Selected",
+        Permission: "invoice.approve",
+        APIURL:     "/api/v1/finance/invoices/bulk-approve",
+        APIMethod:  "post",
+        Level:      "primary",
+        Confirm:    "Approve all selected invoices?",
+    },
+    {
+        Label:      "Void Selected",
+        Permission: "invoice.delete",
+        APIURL:     "/api/v1/finance/invoices/bulk-void",
+        APIMethod:  "post",
+        Level:      "danger",
+        Confirm:    "Void selected invoices? This cannot be undone.",
+    },
+})
+```
+
+Actions with `Permission` not held by the session are **structurally excluded** — never sent to the browser. Empty `Permission` = always included.
+
+Returns empty slice (never nil) if no actions pass the permission check.
+
+---
+
+## Report Blocks
+
+Use these blocks on financial report pages (P&L, balance sheet, ledger reports). Never use `DataTableBlock` on a report page — use `ReportTableBlock`.
+
+### `ReportHeaderBlock`
+
+Source: `internal/web/dsl/blocks/report_header.go`
+
+Report title and metadata card.
+
+```go
+blocks.ReportHeaderBlock(sess, blocks.ReportHeaderConfig{
+    Title:       "Profit & Loss Statement",
+    Description: "Net income for the selected period",
+})
+```
+
+---
+
+### `ReportFilterBlock`
+
+Source: `internal/web/dsl/blocks/report_filter.go`
+
+Filter form for report pages. Always include `ShowPeriod: true` — period is required for all financial reports.
+
+```go
+blocks.ReportFilterBlock(sess, blocks.ReportFilterConfig{
+    ShowPeriod:       true,
+    ShowEntityPicker: true,
+    EntityURL:        "/api/v1/crm/customers/options",
+    ShowCurrency:     true,
+    ShowComparison:   true,   // adds "Compare With" prior period / prior year
+})
+```
+
+`ShowComparison` adds `compare_period` select: `"prior"`, `"prior_year"`, `"none"` (default).
+
+---
+
+### `ReportTableBlock`
+
+Source: `internal/web/dsl/blocks/report_table.go`
+
+Data table for financial reports. Supports grouping, subtotals, grand total, and CSV/PDF export.
+
+```go
+blocks.ReportTableBlock(sess, blocks.ReportTableConfig{
+    Columns: []blocks.ReportColumnDef{
+        {Name: "account_name", Label: "Account",  Type: "text",     Sortable: true},
+        {Name: "debit",        Label: "Debit",    Type: "currency", Sortable: false},
+        {Name: "credit",       Label: "Credit",   Type: "currency", Sortable: false},
+        {Name: "balance",      Label: "Balance",  Type: "currency", Sortable: true},
+    },
+    GroupBy:        []string{"account_type"},
+    ShowSubtotals:  true,
+    ShowGrandTotal: true,
+    Exportable:     sess.Can("export", "report"),
+})
+```
+
+Export buttons use `${api_url}/export?format=csv` and `${api_url}/export?format=pdf` — `api_url` must be in the page `Data`.
+
+`Column.Type` values: `"text"`, `"number"`, `"currency"`.
+
+---
+
+### `ReportChartBlock`
+
+Source: `internal/web/dsl/blocks/report_chart.go`
+
+Bare ECharts node for embedding inside a report page. Lighter than `ChartPanelBlock` — no card wrapper, no period picker.
+
+```go
+blocks.ReportChartBlock(sess, blocks.ReportChartConfig{
+    Type:   blocks.ChartTypeLine,
+    Height: 250,
+})
+```
+
+`ChartType` constants: `ChartTypeBar`, `ChartTypeLine`, `ChartTypePie`.
 
 ---
 

@@ -49,6 +49,8 @@ Required reading order:
 4. [Go Schema Builder](03-implementation/01-go-schema-builder.md) — 20 min
 5. [Pipeline Deep Dive](02-architecture/02-pipeline-deep-dive.md) — reference as needed
 
+5. [Authorization Patterns](03-implementation/03-authorization-patterns.md) — 4 gating patterns, AllUIPermissions, debug checklist
+
 If working on existing pages: [Migration Guide](appendices/B-migration-guide.md) — legacy `amis.Ctx` → modern `UISessionContext`
 
 ## Path 3: Fixing a Bug

@@ -1320,6 +1320,16 @@
 
           var method = (api.method || 'get').toLowerCase();
           var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {});
+
+          // Attach CSRF token for state-changing requests (double-submit cookie pattern)
+          if (method !== 'get' && method !== 'head' && method !== 'options') {
+            var csrfToken = document.cookie.split('; ').reduce(function (val, part) {
+              var kv = part.split('=');
+              return kv[0] === 'csrf_token' ? decodeURIComponent(kv[1]) : val;
+            }, '');
+            if (csrfToken) headers['X-Csrf-Token'] = csrfToken;
+          }
+
           var opts = {method: method, headers: headers};
 
           if (method !== 'get' && method !== 'head' && api.data) {
