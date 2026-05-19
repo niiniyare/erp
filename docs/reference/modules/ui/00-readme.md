@@ -64,6 +64,7 @@ Decision tree:
 - Permission denied → [IAM Integration](02-architecture/03-iam-integration.md#debugging)
 - Dark mode broken → [Theming Troubleshooting](04-reference/04-troubleshooting.md#dark-mode)
 - Cache stale → [Caching Strategy](02-architecture/04-caching-strategy.md#invalidation)
+- AMIS data not loading → [API Contracts](04-reference/02-api-contracts.md#4-common-contract-mistakes)
 
 ## Path 4: Implementing a New Page
 
@@ -75,6 +76,7 @@ Checklist:
 
 - [ ] [Page Registration Pattern](03-implementation/02-page-registration-pattern.md)
 - [ ] [Page Patterns](03-implementation/04-page-patterns.md) — pick List / Document Form / Settings / Dashboard
+- [ ] [Component Catalog](04-reference/01-component-catalog.md) — all amis.* and ast.* components
 - [ ] [DSL Blocks](03-implementation/07-dsl-blocks.md) — reusable blocks for document forms and dashboards
 - [ ] [IAM Integration](02-architecture/03-iam-integration.md) — wire permissions
 - [ ] [Pipeline Deep Dive](02-architecture/02-pipeline-deep-dive.md) — understand caching

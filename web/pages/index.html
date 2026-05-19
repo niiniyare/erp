@@ -213,11 +213,26 @@
       white-space: nowrap;
     }
 
+    .sidebar-search .search-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text-color);
+      font-size: 13px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-search .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
     .collapsed .sidebar-search {
       padding: 12px 8px;
     }
 
-    .collapsed .sidebar-search .search-box span {
+    .collapsed .sidebar-search .search-box span,
+    .collapsed .sidebar-search .search-box input {
       display: none;
     }
 
@@ -302,7 +317,7 @@
     }
 
     .menu-group.expanded .menu-group-items {
-      max-height: 500px;
+      max-height: 2000px;
     }
 
     /* Collapsed sidebar: hide labels & chevrons */
@@ -991,7 +1006,7 @@
       <div class="sidebar-search">
         <div class="search-box">
           <i class="fa fa-search"></i>
-          <span>Search tools</span>
+          <input type="search" id="sidebarSearch" placeholder="Search tools" autocomplete="off">
         </div>
       </div>
 
@@ -1404,8 +1419,43 @@
         }
       }
 
+      // ── Sidebar Search Filter ──
+      function filterMenu(query) {
+        var q = query.trim().toLowerCase();
+        var menu = document.getElementById('sidebarMenu');
+        if (!q) {
+          // Restore normal render
+          renderMenu();
+          var route = window.location.hash.replace('#', '');
+          if (route) updateNav(route);
+          return;
+        }
+        // Show only matching items; expand groups that have matches
+        menu.querySelectorAll('.menu-item.top-level').forEach(function (el) {
+          var label = (el.getAttribute('data-tooltip') || '').toLowerCase();
+          el.style.display = label.indexOf(q) >= 0 ? '' : 'none';
+        });
+        menu.querySelectorAll('.menu-group').forEach(function (group) {
+          var hasMatch = false;
+          group.querySelectorAll('.menu-item').forEach(function (el) {
+            var label = (el.getAttribute('data-tooltip') || '').toLowerCase();
+            var match = label.indexOf(q) >= 0;
+            el.style.display = match ? '' : 'none';
+            if (match) hasMatch = true;
+          });
+          group.style.display = hasMatch ? '' : 'none';
+          if (hasMatch) {
+            group.classList.add('expanded');
+          }
+        });
+      }
+
       // ── Init ──
       renderMenu();
+      var searchInput = document.getElementById('sidebarSearch');
+      if (searchInput) {
+        searchInput.addEventListener('input', function () {filterMenu(this.value);});
+      }
       window.addEventListener('hashchange', navigate);
 
       if (!window.location.hash) {
