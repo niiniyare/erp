@@ -327,7 +327,7 @@ func (s *COAIntegrityService) checkCycles(
 		visited[a.ID] = true
 		cur := a
 
-		for steps := 0; steps < maxDepth; steps++ {
+		for range maxDepth {
 			if cur.ParentAccountID == nil {
 				break // reached root — no cycle
 			}

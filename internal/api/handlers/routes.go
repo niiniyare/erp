@@ -124,7 +124,8 @@ func (r *RouteRegistry) RegisterModuleWithMiddleware(
 			observabilityConfig.ServiceName = "erp-api"
 			observabilityConfig.DetailedLogging = true
 			router.Use(middlewarePkg.CreateObservabilityMiddleware(
-				r.logger, r.metrics, r.tracer, &observabilityConfig))
+				r.logger, r.metrics, r.tracer, &observabilityConfig,
+			))
 		case "cors":
 			corsConfig := middlewarePkg.DevelopmentCORSConfig([]int{3000, 8080})
 			router.Use(middlewarePkg.NewCORSMiddleware(corsConfig))
@@ -611,8 +612,9 @@ func (r *Router) registerFinanceAPI(apiRouter fiber.Router) error {
 	statementsGroup.Post("/:id/complete", handler.CompleteReconciliation)             // POST   /api/v1/finance/reconciliation/statements/:id/complete
 
 	// Reporting endpoints
-	reportsGroup := financeGroup.Group("/reports")
-	reportsGroup.Get("/trial-balance", handler.GetTrialBalance) // GET /api/v1/finance/reports/trial-balance - Trial balance report
+	// FIXNE: what is the correct deps for this
+	// reportsGroup := financeGroup.Group("/reports")
+	// reportsGroup.Get("/trial-balance", handler.GetTrialBalance) // GET /api/v1/finance/reports/trial-balance - Trial balance report
 
 	r.deps.Logger.Info("registered finance API endpoints")
 	return nil

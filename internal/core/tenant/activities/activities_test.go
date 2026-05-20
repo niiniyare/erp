@@ -8,13 +8,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/activities"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/service"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"go.opentelemetry.io/otel/attribute"
@@ -36,7 +36,12 @@ func TestActivitySuite(t *testing.T) { suite.Run(t, new(ActivitySuite)) }
 
 func (s *ActivitySuite) SetupTest() {
 	s.repo = newMockRepo()
-	tenantSvc := service.NewTenantService(s.repo, newMockCache(), noopTracer{}, noopLogger{})
+	tenantSvc := service.NewTenantService(
+		s.repo,
+		newMockCache(),
+		noopTracer{},
+		noopLogger{},
+	)
 	provSvc := service.NewProvisioningService(s.repo, noopTracer{})
 	s.acts = activities.New(activities.Deps{
 		TenantService:       tenantSvc,
@@ -352,6 +357,7 @@ func (r *mockRepo) CreateDefaultConfig(ctx context.Context, id uuid.UUID) error 
 func (r *mockRepo) GetConfig(context.Context, uuid.UUID) (*domain.TenantConfiguration, error) {
 	return nil, nil
 }
+
 func (r *mockRepo) GetUsage(context.Context, uuid.UUID) (*domain.TenantUsage, error) {
 	return nil, nil
 }
@@ -387,6 +393,7 @@ func (r *mockRepo) BulkSoftDelete(ctx context.Context, ids []uuid.UUID) error {
 func (r *mockRepo) GetGrowthStats(context.Context, int) ([]domain.GrowthStat, error) {
 	return nil, nil
 }
+
 func (r *mockRepo) GetStatusDistribution(context.Context) (*domain.StatusCount, error) {
 	return nil, nil
 }
@@ -415,37 +422,39 @@ func (c *mockCache) Get(_ context.Context, key string, _ any) error {
 	}
 	return nil
 }
+
 func (c *mockCache) Set(_ context.Context, key string, value any, _ time.Duration) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.data[key] = value
 	return nil
 }
+
 func (c *mockCache) Delete(_ context.Context, key string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	delete(c.data, key)
 	return nil
 }
-func (c *mockCache) Flush(context.Context) error                                        { return nil }
-func (c *mockCache) MGet(context.Context, []string) ([]cache.Result, error)             { return nil, nil }
-func (c *mockCache) MSet(context.Context, map[string]any, time.Duration) error          { return nil }
-func (c *mockCache) MDelete(context.Context, []string) error                            { return nil }
-func (c *mockCache) DeletePattern(context.Context, string) error                        { return nil }
-func (c *mockCache) Keys(context.Context, string) ([]string, error)                     { return nil, nil }
-func (c *mockCache) Exists(context.Context, string) (bool, error)                       { return false, nil }
-func (c *mockCache) TTL(context.Context, string) (time.Duration, error)                 { return 0, nil }
-func (c *mockCache) Expire(context.Context, string, time.Duration) error                { return nil }
-func (c *mockCache) GetMemory(context.Context, string, any) error                       { return cache.ErrCacheMiss }
-func (c *mockCache) SetMemory(context.Context, string, any, time.Duration) error        { return nil }
-func (c *mockCache) DeleteMemory(context.Context, string) error                         { return nil }
-func (c *mockCache) GetGlobalMemory(string, any) error                                  { return cache.ErrCacheMiss }
-func (c *mockCache) SetGlobalMemory(string, any, time.Duration) error                   { return nil }
-func (c *mockCache) DeleteGlobalMemory(string) error                                    { return nil }
-func (c *mockCache) Ping(context.Context) error                                         { return nil }
-func (c *mockCache) Stats() cache.CacheStats                                            { return cache.CacheStats{} }
-func (c *mockCache) Reset()                                                             {}
-func (c *mockCache) Close() error                                                       { return nil }
+func (c *mockCache) Flush(context.Context) error                                 { return nil }
+func (c *mockCache) MGet(context.Context, []string) ([]cache.Result, error)      { return nil, nil }
+func (c *mockCache) MSet(context.Context, map[string]any, time.Duration) error   { return nil }
+func (c *mockCache) MDelete(context.Context, []string) error                     { return nil }
+func (c *mockCache) DeletePattern(context.Context, string) error                 { return nil }
+func (c *mockCache) Keys(context.Context, string) ([]string, error)              { return nil, nil }
+func (c *mockCache) Exists(context.Context, string) (bool, error)                { return false, nil }
+func (c *mockCache) TTL(context.Context, string) (time.Duration, error)          { return 0, nil }
+func (c *mockCache) Expire(context.Context, string, time.Duration) error         { return nil }
+func (c *mockCache) GetMemory(context.Context, string, any) error                { return cache.ErrCacheMiss }
+func (c *mockCache) SetMemory(context.Context, string, any, time.Duration) error { return nil }
+func (c *mockCache) DeleteMemory(context.Context, string) error                  { return nil }
+func (c *mockCache) GetGlobalMemory(string, any) error                           { return cache.ErrCacheMiss }
+func (c *mockCache) SetGlobalMemory(string, any, time.Duration) error            { return nil }
+func (c *mockCache) DeleteGlobalMemory(string) error                             { return nil }
+func (c *mockCache) Ping(context.Context) error                                  { return nil }
+func (c *mockCache) Stats() cache.CacheStats                                     { return cache.CacheStats{} }
+func (c *mockCache) Reset()                                                      {}
+func (c *mockCache) Close() error                                                { return nil }
 
 // ---------------------------------------------------------------------------
 // No-op Tracing / Logger
@@ -456,39 +465,42 @@ type noopTracer struct{}
 func (noopTracer) StartSpan(ctx context.Context, _ string, _ ...tracing.SpanOption) (context.Context, tracing.Span) {
 	return ctx, &noopSpan{}
 }
-func (noopTracer) SpanFromContext(context.Context) tracing.Span                           { return &noopSpan{} }
-func (noopTracer) InjectHTTPHeaders(context.Context, http.Header)                         {}
-func (noopTracer) ExtractHTTPHeaders(ctx context.Context, _ http.Header) context.Context  { return ctx }
-func (noopTracer) SetAttributes(context.Context, ...attribute.KeyValue)                   {}
-func (noopTracer) RecordError(context.Context, error, ...tracing.ErrorOption)             {}
-func (noopTracer) AddEvent(context.Context, string, ...attribute.KeyValue)                {}
-func (noopTracer) GetTraceID(context.Context) string                                      { return "" }
-func (noopTracer) GetSpanID(context.Context) string                                       { return "" }
-func (noopTracer) Shutdown(context.Context) error                                         { return nil }
+
+func (noopTracer) SpanFromContext(context.Context) tracing.Span                          { return &noopSpan{} }
+func (noopTracer) InjectHTTPHeaders(context.Context, http.Header)                        {}
+func (noopTracer) ExtractHTTPHeaders(ctx context.Context, _ http.Header) context.Context { return ctx }
+func (noopTracer) SetAttributes(context.Context, ...attribute.KeyValue)                  {}
+func (noopTracer) RecordError(context.Context, error, ...tracing.ErrorOption)            {}
+func (noopTracer) AddEvent(context.Context, string, ...attribute.KeyValue)               {}
+func (noopTracer) GetTraceID(context.Context) string { return "" }
+
+func (noopTracer) GetSpanID(context.Context) string { return "" }
+
+func (noopTracer) Shutdown(context.Context) error { return nil }
 
 type noopSpan struct{}
 
-func (*noopSpan) End(...tracing.SpanEndOption)        {}
-func (*noopSpan) SetAttributes(...attribute.KeyValue)  {}
-func (*noopSpan) SetStatus(codes.Code, string)         {}
+func (*noopSpan) End(...tracing.SpanEndOption)            {}
+func (*noopSpan) SetAttributes(...attribute.KeyValue)     {}
+func (*noopSpan) SetStatus(codes.Code, string)            {}
 func (*noopSpan) RecordError(error, ...trace.EventOption) {}
-func (*noopSpan) AddEvent(string, ...attribute.KeyValue) {}
-func (*noopSpan) IsRecording() bool                    { return false }
-func (*noopSpan) SpanContext() trace.SpanContext        { return trace.SpanContext{} }
-func (*noopSpan) SetName(string)                       {}
+func (*noopSpan) AddEvent(string, ...attribute.KeyValue)  {}
+func (*noopSpan) IsRecording() bool                       { return false }
+func (*noopSpan) SpanContext() trace.SpanContext          { return trace.SpanContext{} }
+func (*noopSpan) SetName(string)                          {}
 
 type noopLogger struct{}
 
-func (noopLogger) Debug(string, ...logger.Fields)                        {}
-func (noopLogger) Info(string, ...logger.Fields)                         {}
-func (noopLogger) Warn(string, ...logger.Fields)                         {}
-func (noopLogger) Error(string, ...logger.Fields)                        {}
-func (noopLogger) Fatal(string, ...logger.Fields)                        {}
+func (noopLogger) Debug(string, ...logger.Fields)                         {}
+func (noopLogger) Info(string, ...logger.Fields)                          {}
+func (noopLogger) Warn(string, ...logger.Fields)                          {}
+func (noopLogger) Error(string, ...logger.Fields)                         {}
+func (noopLogger) Fatal(string, ...logger.Fields)                         {}
 func (noopLogger) DebugContext(context.Context, string, ...logger.Fields) {}
 func (noopLogger) InfoContext(context.Context, string, ...logger.Fields)  {}
 func (noopLogger) WarnContext(context.Context, string, ...logger.Fields)  {}
 func (noopLogger) ErrorContext(context.Context, string, ...logger.Fields) {}
-func (l noopLogger) WithFields(logger.Fields) logger.Logger              { return l }
-func (l noopLogger) WithContext(context.Context) logger.Logger           { return l }
-func (noopLogger) SetLevel(logger.LogLevel)                              {}
-func (noopLogger) Close() error                                          { return nil }
+func (l noopLogger) WithFields(logger.Fields) logger.Logger               { return l }
+func (l noopLogger) WithContext(context.Context) logger.Logger            { return l }
+func (noopLogger) SetLevel(logger.LogLevel)                               {}
+func (noopLogger) Close() error                                           { return nil }

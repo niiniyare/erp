@@ -18,44 +18,33 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	db "awo.so/db/sqlc"
-	// "awo.so/internal/api/gen/auth"
-	"awo.so/internal/api/handlers"
-	"awo.so/internal/core/iam/authn"
-	"awo.so/internal/core/iam/model"
-	"awo.so/internal/core/iam/repo"
+	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/core/tenant"
+	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 )
 
-// AuthAPIIntegrationTestSuite defines authentication API integration tests
-// Tests cover: AUTH-API-001 through AUTH-API-015 with full authentication workflow validation
-// NOTE: These tests validate JWT authentication, user management, and security workflows
-// TODO: Add OAuth2 integration testing and external identity provider validation
+// AuthAPIIntegrationTestSuite defines authentication API integration tests.
+// Tests cover: AUTH-API-001 through AUTH-API-005.
 type AuthAPIIntegrationTestSuite struct {
 	suite.Suite
-	ctx         context.Context
-	runner      *tenant.DatabaseTestRunner
-	server      *httptest.Server
-	client      *http.Client
-	authService authn.Service
-	iamRepo     repo.IAMRepository
-	tenantA     *db.Tenant
-	tenantB     *db.Tenant
-
-	// Test users and credentials
-	testUserA       *model.User
-	testUserB       *model.User
+	ctx            context.Context
+	runner         *tenant.DatabaseTestRunner
+	client         *http.Client
+	authSvc        contract.AuthService
+	userSvc        iam.UserService
+	tenantA        *db.Tenant
+	tenantB        *db.Tenant
+	testUserA      *iam.User
+	testUserB      *iam.User
 	validPassword   string
 	invalidPassword string
-
-	// Test configuration
-	baseURL        string
-	defaultTimeout time.Duration
+	defaultTimeout  time.Duration
 }
 
-// SetupSuite initializes the authentication test environment
 func (s *AuthAPIIntegrationTestSuite) SetupSuite() {
 	var err error
 	s.runner, err = tenant.NewDatabaseTestRunner()
@@ -65,47 +54,34 @@ func (s *AuthAPIIntegrationTestSuite) SetupSuite() {
 	s.validPassword = "TestPassword123!"
 	s.invalidPassword = "wrongpassword"
 
-	// Setup infrastructure
-	logger := logger.WithFields(logger.Fields{"component": "auth_api_integration_test"})
-	metrics := &metrics.MetricsService{}
+	log := logger.NewNoOp()
+	mp := metrics.NewNoOpMetricsProvider()
 	tracer := tracing.NewNoOpTracingService()
+	noopCache := &noopCacheImpl{}
 
-	// Setup repositories and services
-	s.iamRepo = repo.NewIAMRepository(s.runner.GetStore(), logger, metrics, tracer)
-	s.authService = authn.NewAuthenticationService(s.iamRepo, s.runner.GetStore(), logger, metrics, tracer)
+	userRepo := iam.NewUserRepository(s.runner.GetStore(), noopCache, tracer, mp)
+	s.userSvc = iam.NewUserService(userRepo, tracer, mp, log)
 
-	// Setup test data
+	sessionRepo := iam.NewSessionRepository(s.runner.GetStore(), noopCache, tracer, mp)
+	sessionSvc := iam.NewSessionService(s.userSvc, sessionRepo, tracer, mp, log)
+	s.authSvc = contract.NewServiceAdapter(sessionSvc)
+
 	s.setupTestData()
-
-	// Setup HTTP client
-	s.client = &http.Client{
-		Timeout: s.defaultTimeout,
-	}
-
-	s.T().Logf("Auth API Integration Test Suite initialized successfully")
+	s.client = &http.Client{Timeout: s.defaultTimeout}
 }
 
-// TearDownSuite cleans up after all authentication tests
 func (s *AuthAPIIntegrationTestSuite) TearDownSuite() {
-	if s.server != nil {
-		s.server.Close()
-	}
-
-	// Cleanup test data
 	s.cleanupTestData()
-
 	if s.runner != nil {
 		s.runner.Close()
 	}
 }
 
-// setupTestData creates test tenants and users for authentication testing
 func (s *AuthAPIIntegrationTestSuite) setupTestData() {
 	superuserStore := db.NewStore(s.runner.GetPool())
 	uniqueID := uuid.New().String()[0:8]
-
-	// Create test tenants
 	var err error
+
 	s.tenantA, err = superuserStore.CreateTenant(s.ctx, db.CreateTenantParams{
 		Name:        fmt.Sprintf("Auth API Test Tenant A %s", uniqueID),
 		Slug:        fmt.Sprintf("auth-api-tenant-a-%s", uniqueID),
@@ -122,332 +98,211 @@ func (s *AuthAPIIntegrationTestSuite) setupTestData() {
 	})
 	s.Require().NoError(err, "Failed to create test tenant B")
 
-	// Create test users within tenant contexts
-	ctx := context.WithValue(s.ctx, "tenant_id", s.tenantA.ID)
-
-	s.testUserA, err = s.authService.CreateUser(ctx, &authn.CreateUserRequest{
-		Email:       fmt.Sprintf("testuser-a-%s@authtest.com", uniqueID),
-		Password:    s.validPassword,
-		FirstName:   "Test",
-		LastName:    "User A",
-		PhoneNumber: &[]string{"+1234567890"}[0],
+	ctxA := context.WithValue(s.ctx, "tenant_id", s.tenantA.ID)
+	s.testUserA, err = s.userSvc.RegisterNewUser(ctxA, &iam.CreateUserRequest{
+		EntityID: s.tenantA.ID, // root entity for test purposes
+		Username: fmt.Sprintf("testuser-a-%s", uniqueID),
+		Email:    fmt.Sprintf("testuser-a-%s@authtest.com", uniqueID),
+		Password: s.validPassword,
+		UserType: "INTERNAL",
 	})
 	s.Require().NoError(err, "Failed to create test user A")
 
-	ctx = context.WithValue(s.ctx, "tenant_id", s.tenantB.ID)
-
-	s.testUserB, err = s.authService.CreateUser(ctx, &authn.CreateUserRequest{
-		Email:       fmt.Sprintf("testuser-b-%s@authtest.com", uniqueID),
-		Password:    s.validPassword,
-		FirstName:   "Test",
-		LastName:    "User B",
-		PhoneNumber: &[]string{"+1987654321"}[0],
+	ctxB := context.WithValue(s.ctx, "tenant_id", s.tenantB.ID)
+	s.testUserB, err = s.userSvc.RegisterNewUser(ctxB, &iam.CreateUserRequest{
+		EntityID: s.tenantB.ID,
+		Username: fmt.Sprintf("testuser-b-%s", uniqueID),
+		Email:    fmt.Sprintf("testuser-b-%s@authtest.com", uniqueID),
+		Password: s.validPassword,
+		UserType: "INTERNAL",
 	})
 	s.Require().NoError(err, "Failed to create test user B")
-
-	s.T().Logf("Created test users: %s (%s), %s (%s)",
-		s.testUserA.ID, s.testUserA.Email,
-		s.testUserB.ID, s.testUserB.Email)
 }
 
-// cleanupTestData removes test data
 func (s *AuthAPIIntegrationTestSuite) cleanupTestData() {
 	if s.tenantA != nil {
-		superuserStore := db.NewStore(s.runner.GetPool())
-		if err := superuserStore.SoftDeleteTenant(s.ctx, s.tenantA.ID); err != nil {
+		store := db.NewStore(s.runner.GetPool())
+		if err := store.SoftDeleteTenant(s.ctx, s.tenantA.ID); err != nil {
 			s.T().Logf("Warning: Failed to cleanup tenant A: %v", err)
 		}
 	}
 	if s.tenantB != nil {
-		superuserStore := db.NewStore(s.runner.GetPool())
-		if err := superuserStore.SoftDeleteTenant(s.ctx, s.tenantB.ID); err != nil {
+		store := db.NewStore(s.runner.GetPool())
+		if err := store.SoftDeleteTenant(s.ctx, s.tenantB.ID); err != nil {
 			s.T().Logf("Warning: Failed to cleanup tenant B: %v", err)
 		}
 	}
 }
 
 // Test Specification: AUTH-API-001
-// Description: Validate successful user authentication with valid credentials
 func (s *AuthAPIIntegrationTestSuite) TestSuccessfulAuthentication() {
 	s.T().Log("Running AUTH-API-001: Successful User Authentication")
 
-	// Create test server with auth handler
-	authHandler := handlers.NewAuthGoaHandler(s.authService,
-		tracing.NewNoOpTracingService(),
-		&metrics.MetricsService{})
-
-	server := s.createAuthTestServer(authHandler)
+	server := s.createAuthTestServer()
 	defer server.Close()
 
-	// Prepare authentication request
 	authRequest := map[string]any{
 		"email":    s.testUserA.Email,
 		"password": s.validPassword,
 	}
-
 	requestBody, err := json.Marshal(authRequest)
-	s.Require().NoError(err, "Failed to marshal auth request")
+	s.Require().NoError(err)
 
-	// Send authentication request
 	req, err := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
-	s.Require().NoError(err, "Failed to create auth request")
+	s.Require().NoError(err)
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Tenant-ID", s.tenantA.ID.String())
 
 	resp, err := s.client.Do(req)
-	s.Require().NoError(err, "Authentication request failed")
+	s.Require().NoError(err)
 	defer resp.Body.Close()
 
-	// Validate response
-	s.Assert().Equal(http.StatusOK, resp.StatusCode, "Authentication should succeed")
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
 
 	var authResponse map[string]any
-	err = json.NewDecoder(resp.Body).Decode(&authResponse)
-	s.Require().NoError(err, "Failed to decode auth response")
+	s.Require().NoError(json.NewDecoder(resp.Body).Decode(&authResponse))
+	s.Assert().Contains(authResponse, "access_token")
+	s.Assert().NotEmpty(authResponse["access_token"])
 
-	// Validate response structure
-	s.Assert().Contains(authResponse, "access_token", "Response should contain access token")
-	s.Assert().Contains(authResponse, "refresh_token", "Response should contain refresh token")
-	s.Assert().Contains(authResponse, "expires_at", "Response should contain expiration")
-	s.Assert().Contains(authResponse, "user", "Response should contain user information")
-
-	// Validate token is not empty
-	accessToken, ok := authResponse["access_token"].(string)
-	s.Assert().True(ok, "Access token should be a string")
-	s.Assert().NotEmpty(accessToken, "Access token should not be empty")
-
-	s.T().Log("✅ AUTH-API-001 passed: Successful authentication working correctly")
+	s.T().Log("✅ AUTH-API-001 passed")
 }
 
 // Test Specification: AUTH-API-002
-// Description: Validate authentication failure with invalid credentials
 func (s *AuthAPIIntegrationTestSuite) TestAuthenticationFailure() {
 	s.T().Log("Running AUTH-API-002: Authentication Failure with Invalid Credentials")
 
-	// Create test server with auth handler
-	authHandler := handlers.NewAuthGoaHandler(s.authService,
-		tracing.NewNoOpTracingService(),
-		&metrics.MetricsService{})
-
-	server := s.createAuthTestServer(authHandler)
+	server := s.createAuthTestServer()
 	defer server.Close()
 
-	// Test cases for authentication failures
 	testCases := []struct {
 		name           string
 		email          string
 		password       string
 		expectedStatus int
-		description    string
 	}{
-		{
-			name:           "InvalidPassword",
-			email:          s.testUserA.Email,
-			password:       s.invalidPassword,
-			expectedStatus: http.StatusUnauthorized,
-			description:    "Wrong password should be rejected",
-		},
-		{
-			name:           "InvalidEmail",
-			email:          "nonexistent@test.com",
-			password:       s.validPassword,
-			expectedStatus: http.StatusUnauthorized,
-			description:    "Non-existent user should be rejected",
-		},
-		{
-			name:           "EmptyCredentials",
-			email:          "",
-			password:       "",
-			expectedStatus: http.StatusBadRequest,
-			description:    "Empty credentials should be rejected",
-		},
+		{"InvalidPassword", s.testUserA.Email, s.invalidPassword, http.StatusUnauthorized},
+		{"InvalidEmail", "nonexistent@test.com", s.validPassword, http.StatusUnauthorized},
+		{"EmptyCredentials", "", "", http.StatusBadRequest},
 	}
 
 	for _, tc := range testCases {
-		s.T().Logf("Testing %s: %s", tc.name, tc.description)
-
-		authRequest := map[string]any{
-			"email":    tc.email,
-			"password": tc.password,
-		}
-
-		requestBody, err := json.Marshal(authRequest)
-		s.Require().NoError(err, "Failed to marshal auth request")
-
-		req, err := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
-		s.Require().NoError(err, "Failed to create auth request")
+		s.T().Logf("Testing %s", tc.name)
+		requestBody, _ := json.Marshal(map[string]any{"email": tc.email, "password": tc.password})
+		req, _ := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("X-Tenant-ID", s.tenantA.ID.String())
 
 		resp, err := s.client.Do(req)
-		s.Require().NoError(err, "Authentication request failed")
+		s.Require().NoError(err)
 		resp.Body.Close()
 
-		s.Assert().Equal(tc.expectedStatus, resp.StatusCode,
-			"%s: Expected status %d, got %d", tc.description, tc.expectedStatus, resp.StatusCode)
+		s.Assert().Equal(tc.expectedStatus, resp.StatusCode, tc.name)
 	}
 
-	s.T().Log("✅ AUTH-API-002 passed: Authentication failure handling working correctly")
+	s.T().Log("✅ AUTH-API-002 passed")
 }
 
 // Test Specification: AUTH-API-003
-// Description: Validate JWT token validation and protected endpoint access
 func (s *AuthAPIIntegrationTestSuite) TestJWTTokenValidation() {
-	s.T().Log("Running AUTH-API-003: JWT Token Validation")
+	s.T().Log("Running AUTH-API-003: Token Validation")
 
-	// First, authenticate to get a valid token
-	authHandler := handlers.NewAuthGoaHandler(s.authService,
-		tracing.NewNoOpTracingService(),
-		&metrics.MetricsService{})
-
-	server := s.createAuthTestServer(authHandler)
+	server := s.createAuthTestServer()
 	defer server.Close()
 
-	// Get valid token
-	token := s.authenticateAndGetToken(server, s.testUserA.Email, s.validPassword, s.tenantA.ID)
-	s.Require().NotEmpty(token, "Failed to get authentication token")
+	token := s.loginAndGetToken(server, s.testUserA.Email, s.validPassword, s.tenantA.ID)
+	s.Require().NotEmpty(token)
 
-	// Test accessing protected endpoint with valid token
-	req, err := http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
-	s.Require().NoError(err, "Failed to create protected request")
+	// Valid token → 200
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("X-Tenant-ID", s.tenantA.ID.String())
-
 	resp, err := s.client.Do(req)
-	s.Require().NoError(err, "Protected request failed")
+	s.Require().NoError(err)
 	defer resp.Body.Close()
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusOK, resp.StatusCode, "Protected endpoint should be accessible with valid token")
-
-	// Test accessing protected endpoint without token
-	req, err = http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
-	s.Require().NoError(err, "Failed to create unprotected request")
-
+	// No token → 401
+	req, _ = http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
 	resp, err = s.client.Do(req)
-	s.Require().NoError(err, "Unprotected request failed")
+	s.Require().NoError(err)
 	resp.Body.Close()
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode, "Protected endpoint should reject requests without token")
-
-	// Test accessing protected endpoint with invalid token
-	req, err = http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
-	s.Require().NoError(err, "Failed to create invalid token request")
+	// Invalid token → 401
+	req, _ = http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
 	req.Header.Set("Authorization", "Bearer invalid-token")
-
 	resp, err = s.client.Do(req)
-	s.Require().NoError(err, "Invalid token request failed")
+	s.Require().NoError(err)
 	resp.Body.Close()
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode, "Protected endpoint should reject invalid tokens")
-
-	s.T().Log("✅ AUTH-API-003 passed: JWT token validation working correctly")
+	s.T().Log("✅ AUTH-API-003 passed")
 }
 
 // Test Specification: AUTH-API-004
-// Description: Validate multi-tenant isolation in authentication
 func (s *AuthAPIIntegrationTestSuite) TestMultiTenantAuthenticationIsolation() {
 	s.T().Log("Running AUTH-API-004: Multi-Tenant Authentication Isolation")
 
-	authHandler := handlers.NewAuthGoaHandler(s.authService,
-		tracing.NewNoOpTracingService(),
-		&metrics.MetricsService{})
-
-	server := s.createAuthTestServer(authHandler)
+	server := s.createAuthTestServer()
 	defer server.Close()
 
-	// Test: User from Tenant A cannot authenticate in Tenant B context
-	authRequest := map[string]any{
-		"email":    s.testUserA.Email, // User from Tenant A
+	// Tenant A user logging into Tenant B context → 401
+	requestBody, _ := json.Marshal(map[string]any{
+		"email":    s.testUserA.Email,
 		"password": s.validPassword,
-	}
-
-	requestBody, err := json.Marshal(authRequest)
-	s.Require().NoError(err, "Failed to marshal auth request")
-
-	req, err := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
-	s.Require().NoError(err, "Failed to create cross-tenant auth request")
+	})
+	req, _ := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", s.tenantB.ID.String()) // Try to authenticate in Tenant B
-
+	req.Header.Set("X-Tenant-ID", s.tenantB.ID.String())
 	resp, err := s.client.Do(req)
-	s.Require().NoError(err, "Cross-tenant authentication request failed")
+	s.Require().NoError(err)
 	defer resp.Body.Close()
+	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusUnauthorized, resp.StatusCode,
-		"User from Tenant A should not be able to authenticate in Tenant B context")
-
-	// Test: User can authenticate in their own tenant context
-	req, err = http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
-	s.Require().NoError(err, "Failed to create same-tenant auth request")
+	// Tenant A user logging into Tenant A context → 200
+	requestBody, _ = json.Marshal(map[string]any{
+		"email":    s.testUserA.Email,
+		"password": s.validPassword,
+	})
+	req, _ = http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("X-Tenant-ID", s.tenantA.ID.String()) // Authenticate in correct tenant
-
+	req.Header.Set("X-Tenant-ID", s.tenantA.ID.String())
 	resp, err = s.client.Do(req)
-	s.Require().NoError(err, "Same-tenant authentication request failed")
+	s.Require().NoError(err)
 	defer resp.Body.Close()
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusOK, resp.StatusCode,
-		"User should be able to authenticate in their own tenant context")
-
-	s.T().Log("✅ AUTH-API-004 passed: Multi-tenant authentication isolation working correctly")
+	s.T().Log("✅ AUTH-API-004 passed")
 }
 
 // Test Specification: AUTH-API-005
-// Description: Validate token refresh functionality
-func (s *AuthAPIIntegrationTestSuite) TestTokenRefresh() {
-	s.T().Log("Running AUTH-API-005: Token Refresh Functionality")
+// Session tokens in this IAM implementation are single-use validated tokens
+// (not refresh-token pairs). This test validates that a valid token can be
+// re-validated, simulating what a refresh flow would require.
+func (s *AuthAPIIntegrationTestSuite) TestTokenValidationAfterLogin() {
+	s.T().Log("Running AUTH-API-005: Token Validation After Login")
 
-	authHandler := handlers.NewAuthGoaHandler(s.authService,
-		tracing.NewNoOpTracingService(),
-		&metrics.MetricsService{})
-
-	server := s.createAuthTestServer(authHandler)
+	server := s.createAuthTestServer()
 	defer server.Close()
 
-	// First, authenticate to get tokens
-	authResponse := s.authenticateAndGetFullResponse(server, s.testUserA.Email, s.validPassword, s.tenantA.ID)
-	refreshToken, ok := authResponse["refresh_token"].(string)
-	s.Require().True(ok, "Refresh token should be present")
-	s.Require().NotEmpty(refreshToken, "Refresh token should not be empty")
+	token := s.loginAndGetToken(server, s.testUserA.Email, s.validPassword, s.tenantA.ID)
+	s.Require().NotEmpty(token)
 
-	// Test token refresh
-	refreshRequest := map[string]any{
-		"refresh_token": refreshToken,
-	}
-
-	requestBody, err := json.Marshal(refreshRequest)
-	s.Require().NoError(err, "Failed to marshal refresh request")
-
-	req, err := http.NewRequest("POST", server.URL+"/api/v1/auth/refresh", bytes.NewBuffer(requestBody))
-	s.Require().NoError(err, "Failed to create refresh request")
-	req.Header.Set("Content-Type", "application/json")
+	// Validate session via /me endpoint
+	req, _ := http.NewRequest("GET", server.URL+"/api/v1/auth/me", nil)
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("X-Tenant-ID", s.tenantA.ID.String())
-
 	resp, err := s.client.Do(req)
-	s.Require().NoError(err, "Token refresh request failed")
+	s.Require().NoError(err)
 	defer resp.Body.Close()
+	s.Assert().Equal(http.StatusOK, resp.StatusCode)
 
-	s.Assert().Equal(http.StatusOK, resp.StatusCode, "Token refresh should succeed")
-
-	var refreshResponse map[string]any
-	err = json.NewDecoder(resp.Body).Decode(&refreshResponse)
-	s.Require().NoError(err, "Failed to decode refresh response")
-
-	// Validate new tokens are provided
-	s.Assert().Contains(refreshResponse, "access_token", "Refresh response should contain new access token")
-	s.Assert().Contains(refreshResponse, "refresh_token", "Refresh response should contain new refresh token")
-
-	newAccessToken, ok := refreshResponse["access_token"].(string)
-	s.Assert().True(ok, "New access token should be a string")
-	s.Assert().NotEmpty(newAccessToken, "New access token should not be empty")
-
-	s.T().Log("✅ AUTH-API-005 passed: Token refresh functionality working correctly")
+	s.T().Log("✅ AUTH-API-005 passed")
 }
 
-// Helper Methods
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
-// createAuthTestServer creates a test server with authentication endpoints
-func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Service) *httptest.Server {
+func (s *AuthAPIIntegrationTestSuite) createAuthTestServer() *httptest.Server {
 	mux := http.NewServeMux()
 
 	// Login endpoint
@@ -463,137 +318,120 @@ func (s *AuthAPIIntegrationTestSuite) createAuthTestServer(authHandler auth.Serv
 			return
 		}
 
-		email, ok := loginReq["email"].(string)
-		if !ok || email == "" {
-			http.Error(w, "Email required", http.StatusBadRequest)
+		email, _ := loginReq["email"].(string)
+		password, _ := loginReq["password"].(string)
+		if email == "" || password == "" {
+			http.Error(w, "Email and password required", http.StatusBadRequest)
 			return
 		}
 
-		password, ok := loginReq["password"].(string)
-		if !ok || password == "" {
-			http.Error(w, "Password required", http.StatusBadRequest)
-			return
-		}
-
-		// Set tenant context
 		ctx := r.Context()
-		if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
-			if uuid, err := uuid.Parse(tenantID); err == nil {
-				ctx = context.WithValue(ctx, "tenant_id", uuid)
+		if tenantIDStr := r.Header.Get("X-Tenant-ID"); tenantIDStr != "" {
+			if tid, err := uuid.Parse(tenantIDStr); err == nil {
+				ctx = context.WithValue(ctx, "tenant_id", tid)
 			}
 		}
 
-		result, err := s.authService.Authenticate(ctx, &authn.AuthenticationRequest{
-			Email:    email,
-			Password: password,
-		})
+		result, err := s.authSvc.Login(ctx, email, password)
 		if err != nil {
 			http.Error(w, "Authentication failed", http.StatusUnauthorized)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		json.NewEncoder(w).Encode(map[string]any{
+			"access_token": result.Token,
+			"user": map[string]any{
+				"id": result.Session.UserID(),
+			},
+		})
 	})
 
-	// Protected endpoint for token validation testing
+	// Protected endpoint
 	mux.HandleFunc("/api/v1/auth/me", func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "Authorization header required", http.StatusUnauthorized)
-			return
-		}
-
-		// Simple bearer token validation (in real implementation, this would validate JWT)
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "Invalid authorization format", http.StatusUnauthorized)
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			http.Error(w, "Authorization required", http.StatusUnauthorized)
 			return
 		}
 
 		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token == "invalid-token" {
-			http.Error(w, "Invalid token", http.StatusUnauthorized)
-			return
-		}
-
-		// Return user info (simplified)
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]any{
-			"user_id": s.testUserA.ID,
-			"email":   s.testUserA.Email,
-		})
-	})
-
-	// Token refresh endpoint
-	mux.HandleFunc("/api/v1/auth/refresh", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-			return
-		}
-
-		var refreshReq map[string]any
-		if err := json.NewDecoder(r.Body).Decode(&refreshReq); err != nil {
-			http.Error(w, "Invalid JSON", http.StatusBadRequest)
-			return
-		}
-
-		refreshToken, ok := refreshReq["refresh_token"].(string)
-		if !ok || refreshToken == "" {
-			http.Error(w, "Refresh token required", http.StatusBadRequest)
-			return
-		}
-
-		// Set tenant context
 		ctx := r.Context()
-		if tenantID := r.Header.Get("X-Tenant-ID"); tenantID != "" {
-			if uuid, err := uuid.Parse(tenantID); err == nil {
-				ctx = context.WithValue(ctx, "tenant_id", uuid)
+		if tenantIDStr := r.Header.Get("X-Tenant-ID"); tenantIDStr != "" {
+			if tid, err := uuid.Parse(tenantIDStr); err == nil {
+				ctx = context.WithValue(ctx, "tenant_id", tid)
 			}
 		}
 
-		result, err := s.authService.RefreshToken(ctx, refreshToken)
-		if err != nil {
-			http.Error(w, "Token refresh failed", http.StatusUnauthorized)
+		sc, ok := s.authSvc.ValidateSession(ctx, token)
+		if !ok {
+			http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(result)
+		json.NewEncoder(w).Encode(map[string]any{
+			"user_id": sc.UserID(),
+		})
 	})
 
 	return httptest.NewServer(mux)
 }
 
-// authenticateAndGetToken performs authentication and returns access token
-func (s *AuthAPIIntegrationTestSuite) authenticateAndGetToken(server *httptest.Server, email, password string, tenantID uuid.UUID) string {
-	authResponse := s.authenticateAndGetFullResponse(server, email, password, tenantID)
-	if token, ok := authResponse["access_token"].(string); ok {
-		return token
-	}
-	return ""
-}
-
-// authenticateAndGetFullResponse performs authentication and returns full response
-func (s *AuthAPIIntegrationTestSuite) authenticateAndGetFullResponse(server *httptest.Server, email, password string, tenantID uuid.UUID) map[string]any {
-	authRequest := map[string]any{
-		"email":    email,
-		"password": password,
-	}
-
-	requestBody, _ := json.Marshal(authRequest)
+func (s *AuthAPIIntegrationTestSuite) loginAndGetToken(server *httptest.Server, email, password string, tenantID uuid.UUID) string {
+	requestBody, _ := json.Marshal(map[string]any{"email": email, "password": password})
 	req, _ := http.NewRequest("POST", server.URL+"/api/v1/auth/login", bytes.NewBuffer(requestBody))
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-Tenant-ID", tenantID.String())
 
-	resp, _ := s.client.Do(req)
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return ""
+	}
 	defer resp.Body.Close()
 
 	var authResponse map[string]any
-	json.NewDecoder(resp.Body).Decode(&authResponse)
-	return authResponse
+	if err := json.NewDecoder(resp.Body).Decode(&authResponse); err != nil {
+		return ""
+	}
+	token, _ := authResponse["access_token"].(string)
+	return token
 }
 
-// RunAuthAPIIntegrationTests is the test suite runner
 func TestAuthAPIIntegrationSuite(t *testing.T) {
 	suite.Run(t, new(AuthAPIIntegrationTestSuite))
 }
+
+// ─── No-op cache for integration test setup ───────────────────────────────────
+
+type noopCacheImpl struct{}
+
+func (n *noopCacheImpl) Get(_ context.Context, _ string, _ any) error { return cache.ErrCacheMiss }
+func (n *noopCacheImpl) GetAndDelete(_ context.Context, _ string, _ any) error {
+	return cache.ErrCacheMiss
+}
+func (n *noopCacheImpl) Set(_ context.Context, _ string, _ any, _ time.Duration) error { return nil }
+func (n *noopCacheImpl) Delete(_ context.Context, _ string) error                      { return nil }
+func (n *noopCacheImpl) Flush(_ context.Context) error                                 { return nil }
+func (n *noopCacheImpl) MGet(_ context.Context, _ []string) ([]cache.Result, error)    { return nil, nil }
+func (n *noopCacheImpl) MSet(_ context.Context, _ map[string]any, _ time.Duration) error {
+	return nil
+}
+func (n *noopCacheImpl) MDelete(_ context.Context, _ []string) error            { return nil }
+func (n *noopCacheImpl) DeletePattern(_ context.Context, _ string) error        { return nil }
+func (n *noopCacheImpl) Keys(_ context.Context, _ string) ([]string, error)     { return nil, nil }
+func (n *noopCacheImpl) Exists(_ context.Context, _ string) (bool, error)       { return false, nil }
+func (n *noopCacheImpl) TTL(_ context.Context, _ string) (time.Duration, error) { return 0, nil }
+func (n *noopCacheImpl) Expire(_ context.Context, _ string, _ time.Duration) error { return nil }
+func (n *noopCacheImpl) GetMemory(_ context.Context, _ string, _ any) error { return cache.ErrCacheMiss }
+func (n *noopCacheImpl) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
+	return nil
+}
+func (n *noopCacheImpl) DeleteMemory(_ context.Context, _ string) error      { return nil }
+func (n *noopCacheImpl) GetGlobalMemory(_ string, _ any) error               { return cache.ErrCacheMiss }
+func (n *noopCacheImpl) SetGlobalMemory(_ string, _ any, _ time.Duration) error { return nil }
+func (n *noopCacheImpl) DeleteGlobalMemory(_ string) error                   { return nil }
+func (n *noopCacheImpl) Ping(_ context.Context) error                        { return nil }
+func (n *noopCacheImpl) Stats() cache.CacheStats                             { return cache.CacheStats{} }
+func (n *noopCacheImpl) Reset()                                              {}
+func (n *noopCacheImpl) Close() error                                        { return nil }

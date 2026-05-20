@@ -172,8 +172,9 @@ func (s *AccountServiceSuite) SetupTest() {
 		s.groupRepo,
 		tracing.NewNoOpService(),
 		metrics.NewNoOpMetricsProvider(),
-		s.iamSvc,
-		s.featureSvc,
+		// FIXNE: what is the correct deps for this
+		// s.iamSvc,
+		// s.featureSvc,
 	)
 }
 
