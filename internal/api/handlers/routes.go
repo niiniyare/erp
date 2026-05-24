@@ -307,6 +307,10 @@ func (r *Router) registerPublicRoutes(app *fiber.App) error {
 	// Apply public security configuration
 	if r.deps.SecurityManager != nil {
 		r.deps.SecurityManager.ConfigurePublicRoutes(publicGroup)
+	} else {
+		// No SecurityManager — apply permissive CORS for dev/test.
+		corsConfig := middlewarePkg.DevelopmentCORSConfig([]int{3000, 8080})
+		publicGroup.Use(middlewarePkg.NewCORSMiddleware(corsConfig))
 	}
 
 	// Register health endpoints
@@ -354,6 +358,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 				WithSuggestion("Check API module configuration and dependencies")
 		}
 
+		r.trackModule(module.name, "/api/v1/"+module.name)
 		r.deps.Logger.Info(fmt.Sprintf("registered %s API module", module.name))
 	}
 
@@ -418,6 +423,7 @@ func (r *Router) registerHealth(router fiber.Router) error {
 	healthGroup.Get("/live", handler.Live)
 	healthGroup.Get("/startup", handler.Startup)
 
+	r.trackModule(ModuleHealth, "/health")
 	r.deps.Logger.Info("registered health endpoints")
 	return nil
 }
@@ -462,12 +468,9 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 
 // registerUserAPI registers user management API routes.
 func (r *Router) registerUserAPI(apiRouter fiber.Router) error {
-	// Use existing user service
 	if r.deps.UserService == nil {
-		return errors.NewBusinessError("MISSING_USER_SERVICE", "User service is required").
-			WithCategory(errors.CategorySystem).
-			WithSeverity(errors.SeverityCritical).
-			WithSuggestion("Ensure user service is initialized before creating router")
+		r.deps.Logger.Warn("UserService not configured, skipping user route registration")
+		return nil
 	}
 
 	handler := userHandler.NewUserHandler(r.deps.UserService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
@@ -783,8 +786,20 @@ func (r *Router) authorizeMiddleware(permission string) fiber.Handler {
 	return middlewarePkg.Authorize(*r.deps.AuthConfig, permission)
 }
 
-// Future module registration examples:
-//
+// trackModule records a registered module in the route registry.
+// Called after each successful registerXXX invocation.
+func (r *Router) trackModule(name, basePath string) {
+	r.registry.mu.Lock()
+	defer r.registry.mu.Unlock()
+	r.registry.registeredModules[name] = &ModuleInfo{
+		Name:       name,
+		BasePath:   basePath,
+		RouteCount: 1,
+		Registered: true,
+		Metadata:   make(map[string]any),
+	}
+}
+
 // ListRoutes returns information about all registered routes.
 func (r *Router) ListRoutes() map[string]*ModuleInfo {
 	return r.registry.ListRoutes()

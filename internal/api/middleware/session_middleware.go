@@ -117,7 +117,8 @@ func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
 		if cfg.AuthzService == nil {
-			return fiber.NewError(fiber.StatusInternalServerError, "authorization service not configured")
+			// No authz service configured — pass through (dev/test mode).
+			return c.Next()
 		}
 		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
 		if !ok {

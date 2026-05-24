@@ -95,6 +95,8 @@ func (suite *RouterTestSuite) setupDefaultMockExpectations() {
 	// Logger expectations
 	suite.mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	suite.mockLogger.EXPECT().InfoContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	suite.mockLogger.EXPECT().Warn(gomock.Any(), gomock.Any()).AnyTimes()
+	suite.mockLogger.EXPECT().WarnContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	suite.mockLogger.EXPECT().ErrorContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	suite.mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
 

@@ -56,24 +56,38 @@ func (m *mockSessionSvc) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.Reso
 	return nil, "", nil
 }
 
+// mockAuthzSvc is a minimal AuthzService stub for pipeline tests.
+// Only Enforce is wired; all other methods panic if unexpectedly called.
+type mockAuthzSvc struct {
+	iam.AuthzService        // satisfies remaining interface methods
+	enforce          bool   // return value for Enforce
+}
+
+func (m *mockAuthzSvc) Enforce(_ context.Context, _ iam.Request) (bool, error) {
+	return m.enforce, nil
+}
+
 // suite setup
 
 type PipelineSuite struct {
 	suite.Suite
-	svc *mockSessionSvc
-	app *fiber.App
+	svc      *mockSessionSvc
+	authzSvc *mockAuthzSvc
+	app      *fiber.App
 }
 
 func TestPipelineSuite(t *testing.T) { suite.Run(t, new(PipelineSuite)) }
 
 func (s *PipelineSuite) SetupTest() {
 	s.svc = &mockSessionSvc{}
+	s.authzSvc = &mockAuthzSvc{} // enforce=false by default
 
 	// Use non-secure cookies so plain HTTP test requests work.
 	loginCfg := authHandler.DefaultLoginConfig()
 	loginCfg.SecureCookie = false
 
 	authCfg := mw.DefaultAuthConfig(s.svc)
+	authCfg.AuthzService = s.authzSvc
 
 	app := fiber.New(fiber.Config{
 		// Return JSON for Fiber-level errors so status codes are reliable.
@@ -145,13 +159,12 @@ func (s *PipelineSuite) TestV1_Login_Returns200_WithCookieAndPermissions() {
 	require.True(s.T(), sessionCookie.HttpOnly, "session cookie must be HttpOnly")
 	require.Equal(s.T(), "raw-test-token", sessionCookie.Value)
 
-	// Response body must contain non-empty permissions.
-	// ResolvedSession has no json tags so fields serialize with their Go names.
+	// Response body must contain user identity fields.
 	var result map[string]any
 	require.NoError(s.T(), json.NewDecoder(resp.Body).Decode(&result))
-	perms, ok := result["Permissions"]
-	require.True(s.T(), ok, "response must include Permissions field")
-	require.NotEmpty(s.T(), perms, "Permissions must be non-empty")
+	userID, ok := result["user_id"]
+	require.True(s.T(), ok, "response must include user_id field")
+	require.NotEmpty(s.T(), userID, "user_id must be non-empty")
 }
 
 // V2 — Protected route end-to-end
@@ -164,11 +177,11 @@ func (s *PipelineSuite) TestV2_NoToken_Returns401() {
 }
 
 func (s *PipelineSuite) TestV2_ValidSession_WrongPermission_Returns403() {
+	// authzSvc.enforce=false (default) — Casbin denies finance.accounts.read
 	s.svc.validateSess = &iam.ResolvedSession{
-		UserID:   uuid.New(),
-		UserType: "INTERNAL",
-		TenantID: uuid.New(),
-		// Permissions:   map[string]bool{}, // lacks finance.accounts.read
+		UserID:        uuid.New(),
+		UserType:      "INTERNAL",
+		TenantID:      uuid.New(),
 		Configuration: iam.DefaultConfiguration(),
 	}
 
@@ -181,11 +194,11 @@ func (s *PipelineSuite) TestV2_ValidSession_WrongPermission_Returns403() {
 }
 
 func (s *PipelineSuite) TestV2_ValidSession_CorrectPermission_Returns200() {
+	s.authzSvc.enforce = true // Casbin grants finance.accounts.read for this session
 	s.svc.validateSess = &iam.ResolvedSession{
-		UserID:   uuid.New(),
-		UserType: "INTERNAL",
-		TenantID: uuid.New(),
-		// Permissions:   map[string]bool{"finance.accounts.read": true},
+		UserID:        uuid.New(),
+		UserType:      "INTERNAL",
+		TenantID:      uuid.New(),
 		Configuration: iam.DefaultConfiguration(),
 	}
 

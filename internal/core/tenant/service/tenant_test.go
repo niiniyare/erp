@@ -5,11 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/service"
+	"awo.so/internal/platform/cache"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/mock/gomock"
 )
 
 // ---------------------------------------------------------------------------
@@ -19,7 +21,8 @@ import (
 type TenantServiceSuite struct {
 	suite.Suite
 	repo  *mockRepo
-	cache *mockCache
+	mock  *gomock.Controller
+	cache *cache.MockService
 	svc   *service.TenantService
 }
 
@@ -27,7 +30,8 @@ func TestTenantServiceSuite(t *testing.T) { suite.Run(t, new(TenantServiceSuite)
 
 func (s *TenantServiceSuite) SetupTest() {
 	s.repo = newMockRepo()
-	s.cache = newMockCache()
+	ctrl := gomock.NewController(s.T())
+	s.cache = cache.NewMockService(ctrl)
 	s.svc = service.NewTenantService(s.repo, s.cache, noopTracer{}, noopLogger{})
 }
 

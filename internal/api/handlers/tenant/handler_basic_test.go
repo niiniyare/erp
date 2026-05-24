@@ -3,7 +3,6 @@ package tenant
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http/httptest"
 	"strings"
@@ -17,8 +16,6 @@ import (
 	"go.uber.org/mock/gomock"
 
 	"awo.so/internal/core/tenant"
-	tenant_repo "awo.so/internal/core/tenant/repository"
-	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
@@ -29,15 +26,12 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Setup mocks
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
 	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
-	mockRepo := tenant_repo.NewMockRepository(ctrl)
-	mockCache := cache.NewMockService(ctrl)
+	mockSvc := tenant.NewMockService(ctrl)
 
-	// Setup basic expectations
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockSpan.EXPECT().End(gomock.Any()).AnyTimes()
@@ -45,46 +39,43 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	mockSpan.EXPECT().RecordError(gomock.Any()).AnyTimes()
 	mockSpan.EXPECT().SetStatus(gomock.Any(), gomock.Any()).AnyTimes()
 
+	mockLogger.EXPECT().Info(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().InfoContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Debug(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().DebugContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Warn(gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().WarnContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Error(gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().ErrorContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 
 	mockMetrics.EXPECT().IncrementCounter(gomock.Any(), gomock.Any()).AnyTimes()
 
-	// Cache expectations (cache miss for new tenant)
-	mockCache.EXPECT().Get(gomock.Any(), gomock.Any(), gomock.Any()).Return(cache.ErrCacheMiss).AnyTimes()
-	mockCache.EXPECT().Set(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Return(nil).AnyTimes()
+	tenantID := uuid.New()
+	now := time.Now()
+	mockSvc.EXPECT().CreateTenant(gomock.Any(), gomock.Any()).Return(&tenant.Tenant{
+		ID:           tenantID,
+		Name:         "Test Company",
+		Email:        "test@company.com",
+		Status:       tenant.StatusPending,
+		Slug:         "test-company",
+		Timezone:     "UTC",
+		CurrencyCode: "USD",
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}, nil).AnyTimes()
 
-	// Repository expectations - service will call these internally
-	// We only set up what the service needs, don't call repository directly
-	mockRepo.EXPECT().Create(gomock.Any(), gomock.Any()).DoAndReturn(func(ctx context.Context, t *tenant.Tenant) error {
-		// Service calls this internally - simulate successful creation
-		return nil
-	}).AnyTimes()
+	handler := NewTenantHandler(mockSvc, mockLogger, mockMetrics, mockTracer, nil)
 
-	// Service may call these for subdomain validation
-	mockRepo.EXPECT().GetBySubdomain(gomock.Any(), gomock.Any()).Return(nil, fmt.Errorf("tenant not found")).AnyTimes()
-
-	// Create service with mocks
-	service := tenant.NewService(tenant.Dependencies{
-		Store:  nil,
-		Cache:  mockCache,
-		Tracer: mockTracer,
-		Logger: mockLogger,
-	})
-	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer, nil)
-
-	// Create Fiber app
 	app := fiber.New()
 	app.Post("/tenants", handler.Create)
 
-	// Test data
 	payload := `{
 		"name": "Test Company",
-		"email": "test@company.com"
+		"email": "test@company.com",
+		"country_code": "US",
+		"currency_code": "USD"
 	}`
 
-	// Make request
 	req := httptest.NewRequest("POST", "/tenants", strings.NewReader(payload))
 	req.Header.Set("Content-Type", "application/json")
 
@@ -92,7 +83,6 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	// Verify response
 	assert.Equal(t, 201, resp.StatusCode)
 
 	body, err := io.ReadAll(resp.Body)
@@ -102,7 +92,6 @@ func TestTenantHandler_CreateBasic(t *testing.T) {
 	err = json.Unmarshal(body, &response)
 	require.NoError(t, err)
 
-	// Check response has expected fields
 	assert.Contains(t, response, "id")
 	assert.Contains(t, response, "name")
 	assert.Contains(t, response, "email")
@@ -115,15 +104,12 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 
-	// Setup mocks
 	mockLogger := logger.NewMockLogger(ctrl)
 	mockMetrics := metrics.NewMockMetricsProvider(ctrl)
 	mockTracer := tracing.NewMockService(ctrl)
 	mockSpan := tracing.NewMockSpan(ctrl)
-	mockRepo := tenant_repo.NewMockRepository(ctrl)
-	mockCache := cache.NewMockService(ctrl)
+	mockSvc := tenant.NewMockService(ctrl)
 
-	// Setup basic expectations
 	mockTracer.EXPECT().StartSpan(gomock.Any(), gomock.Any(), gomock.Any()).
 		Return(context.Background(), mockSpan).AnyTimes()
 	mockSpan.EXPECT().End(gomock.Any()).AnyTimes()
@@ -131,9 +117,10 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 
 	mockLogger.EXPECT().InfoContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockLogger.EXPECT().DebugContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().Warn(gomock.Any(), gomock.Any()).AnyTimes()
+	mockLogger.EXPECT().WarnContext(gomock.Any(), gomock.Any(), gomock.Any()).AnyTimes()
 	mockMetrics.EXPECT().IncrementCounter(gomock.Any(), gomock.Any()).AnyTimes()
 
-	// Mock repository to return test tenants
 	testTenants := []*tenant.Tenant{
 		{
 			ID:           uuid.New(),
@@ -159,26 +146,18 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 		},
 	}
 
-	// Repository expectations - service will call these internally
-	mockRepo.EXPECT().
-		List(gomock.Any(), 20).
-		Return(testTenants, nil).AnyTimes()
+	mockSvc.EXPECT().ListTenants(gomock.Any(), gomock.Any()).Return(testTenants, int64(2), nil).AnyTimes()
 
-	// Create service with mocks
-	service := tenant.NewService(tenant.Dependencies{Store: nil, Cache: mockCache, Tracer: mockTracer, Logger: mockLogger})
-	handler := NewTenantHandler(service, mockLogger, mockMetrics, mockTracer, nil)
+	handler := NewTenantHandler(mockSvc, mockLogger, mockMetrics, mockTracer, nil)
 
-	// Create Fiber app
 	app := fiber.New()
 	app.Get("/tenants", handler.List)
 
-	// Make request
 	req := httptest.NewRequest("GET", "/tenants", nil)
 	resp, err := app.Test(req, -1)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
-	// Verify response
 	assert.Equal(t, 200, resp.StatusCode)
 
 	body, err := io.ReadAll(resp.Body)
@@ -188,7 +167,6 @@ func TestTenantHandler_ListBasic(t *testing.T) {
 	err = json.Unmarshal(body, &response)
 	require.NoError(t, err)
 
-	// Check response structure
 	assert.Contains(t, response, "data")
 	assert.Contains(t, response, "pagination")
 
