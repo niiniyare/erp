@@ -18,6 +18,15 @@ func JournalEntryScreen(sess ui.UISessionContext, cfg JournalEntryScreenConfig) 
 
 	return ast.PageNode{
 		Title: "Journal Entry",
+		InitAPI: &ast.APISpec{
+			Method: "get",
+			URL:    "/api/v1/finance/journal-entries/:id",
+			SendOn: "${params.id}",
+			ResponseData: map[string]any{
+				"can_approve":     "${data.permissions.can_approve|default:false}",
+				"tenant_currency": "${data.tenant_currency|default:''}",
+			},
+		},
 		Body: []ast.Node{
 			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
 				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Posted", Value: "posted"}, {Label: "Reversed", Value: "reversed"}}}),

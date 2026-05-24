@@ -13,6 +13,8 @@ import (
 //
 // Required: Title.
 // Body is the main content area. AsideBody renders in the left column when set.
+// InitAPI fetches record data on page mount — required for detail/edit screens.
+// Data provides static values merged into page scope (e.g. tenant currency, flags).
 type PageNode struct {
 	Title     string
 	Body      []Node
@@ -23,6 +25,13 @@ type PageNode struct {
 	SubTitle string
 	// Remark is a tooltip text placed next to the title.
 	Remark string
+	// InitAPI fetches initial page data on mount (e.g. GET /api/v1/finance/invoices/:id).
+	// When set, the API response data is merged into page scope, making fields like
+	// ${record.id}, ${can_approve}, ${tenant_currency} available to child nodes.
+	InitAPI *APISpec
+	// Data is static key-value data merged into page scope at render time.
+	// Use for compile-time constants (e.g. default currency, feature flags).
+	Data map[string]any
 }
 
 func (p PageNode) NodeType() string { return "page" }
@@ -30,6 +39,11 @@ func (p PageNode) NodeType() string { return "page" }
 func (p PageNode) Validate() error {
 	if p.Title == "" {
 		return ErrRequiredField("page", "Title")
+	}
+	if p.InitAPI != nil {
+		if err := p.InitAPI.Validate("page.initApi"); err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -47,6 +61,12 @@ func (p PageNode) Compile() ui.M {
 	}
 	if p.CSSClass != "" {
 		m["className"] = p.CSSClass
+	}
+	if p.InitAPI != nil {
+		m["initApi"] = p.InitAPI.Compile()
+	}
+	if len(p.Data) > 0 {
+		m["data"] = p.Data
 	}
 	if len(p.Body) > 0 {
 		m["body"] = compileNodes(p.Body)
@@ -199,9 +219,12 @@ type TabsNode struct {
 	Tabs []Tab
 	// Mode controls tab visual style: "line" (default) | "card" | "radio" | "tiled"
 	Mode string
-	// Mountable controls whether inactive tab bodies are mounted in the DOM.
-	// false = lazy-mount (better performance for large schemas).
-	Mountable bool
+	// MountOnEnter defers rendering a tab's body until the tab is first activated.
+	// Improves initial load performance for heavy tabs. Maps to AMIS mountOnEnter.
+	MountOnEnter bool
+	// UnmountOnExit destroys a tab's body when the user switches away from it.
+	// Forces re-fetch on re-entry. Use with MountOnEnter for volatile data tabs.
+	UnmountOnExit bool
 }
 
 // Tab is a single tab item within a TabsNode.
@@ -258,8 +281,11 @@ func (t TabsNode) Compile() ui.M {
 	if t.Mode != "" {
 		m["mode"] = t.Mode
 	}
-	if t.Mountable {
-		m["mountable"] = true
+	if t.MountOnEnter {
+		m["mountOnEnter"] = true
+	}
+	if t.UnmountOnExit {
+		m["unmountOnExit"] = true
 	}
 	return m
 }

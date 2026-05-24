@@ -85,8 +85,12 @@ type TableColumn struct {
 	// Label is the column header text. Defaults to Name when empty.
 	Label string
 	// Type is the AMIS column type: "text" (default) | "date" | "number" |
-	// "currency" | "status" | "mapping" | "image" | "link" | "operation"
+	// "currency" | "mapping" | "image" | "link" | "operation"
 	Type string
+	// Map holds value→HTML entries for Type "mapping" columns.
+	// Each value must be a non-empty string; HTML templates are supported.
+	// Ignored when Type is not "mapping".
+	Map map[string]string
 	// Width in pixels. 0 = auto.
 	Width int
 	// Sortable enables server-side sort for this column.
@@ -108,6 +112,14 @@ func (c TableColumn) compile() ui.M {
 	m["label"] = label
 	if c.Type != "" {
 		m["type"] = c.Type
+	}
+	if c.Type == "mapping" && len(c.Map) > 0 {
+		// Convert map[string]string to map[string]any for JSON serialisation.
+		mapped := make(map[string]any, len(c.Map))
+		for k, v := range c.Map {
+			mapped[k] = v
+		}
+		m["map"] = mapped
 	}
 	if c.Width > 0 {
 		m["width"] = c.Width
@@ -301,6 +313,10 @@ func (c CRUDNode) Children() []Node {
 	all = append(all, c.BulkActions...)
 	if c.Filter != nil && c.Filter != Node(nil) {
 		all = append(all, c.Filter)
+	}
+	// Include RowActions so CompileTree validates them (e.g. dialog/drawer children).
+	for _, ra := range c.RowActions {
+		all = append(all, ra)
 	}
 	return all
 }
@@ -600,6 +616,132 @@ func (t TreeNode) Compile() ui.M {
 
 var _ Node = TreeNode{}
 
+// ─── MappingNode ──────────────────────────────────────────────────────────────
+
+// MappingNode renders a value mapped to a display string (typically styled HTML).
+// Maps to AMIS type "mapping".
+//
+// Use for status badges, label chips, and any enum field that needs colour coding.
+// Each entry in Map is: data-value → HTML string (e.g. badge markup).
+// A "*" key acts as the catch-all fallback when no key matches the data value.
+//
+// Required: Name and at least one entry in Map.
+type MappingNode struct {
+	// Name is the data field key whose value is looked up in Map.
+	Name      string
+	// Label is the field label (used in form layout or table header).
+	Label     string
+	// Map is the value→display mapping. Values are HTML strings.
+	// Example: {"draft": "<span class='badge badge-warning'>Draft</span>", "*": "${value}"}
+	Map       map[string]string
+	// VisibleOn is a boolean AMIS expression controlling visibility.
+	VisibleOn string
+}
+
+func (m MappingNode) NodeType() string { return "mapping" }
+
+func (m MappingNode) Validate() error {
+	if m.Name == "" {
+		return ErrRequiredField("mapping", "Name")
+	}
+	if len(m.Map) == 0 {
+		return ErrRequiredField("mapping", "Map")
+	}
+	return nil
+}
+
+func (m MappingNode) Compile() ui.M {
+	mapped := make(map[string]any, len(m.Map))
+	for k, v := range m.Map {
+		mapped[k] = v
+	}
+	out := ui.M{
+		"type": "mapping",
+		"name": m.Name,
+		"map":  mapped,
+	}
+	if m.Label != "" {
+		out["label"] = m.Label
+	}
+	if m.VisibleOn != "" {
+		out["visibleOn"] = m.VisibleOn
+	}
+	return out
+}
+
+var _ Node = MappingNode{}
+
+// ─── PropertyNode ─────────────────────────────────────────────────────────────
+
+// PropertyNode renders a read-only key-value description list.
+// Maps to AMIS type "property".
+//
+// Use for document detail views, record summary panels, and any read-only
+// field group. Each item is a label + AMIS expression string.
+//
+// Required: at least one Item.
+type PropertyNode struct {
+	// Title is an optional panel heading rendered above the property grid.
+	Title string
+	// Column is the number of label-value pairs per row (default: 3).
+	Column int
+	// Items are the label-value pairs. Content is an AMIS expression string.
+	// Example: PropertyItem{Label: "Amount", Content: "${amount|number}"}
+	Items []PropertyItem
+}
+
+// PropertyItem is one label-value row in a PropertyNode.
+type PropertyItem struct {
+	// Label is the field name displayed on the left.
+	Label string
+	// Content is an AMIS expression rendered on the right.
+	// Plain data keys: "${ref_number}"
+	// With format filters: "${amount|number}", "${date|date:YYYY-MM-DD}", "${rate|percent}"
+	Content string
+}
+
+func (p PropertyNode) NodeType() string { return "property" }
+
+func (p PropertyNode) Validate() error {
+	if len(p.Items) == 0 {
+		return ErrRequiredField("property", "Items")
+	}
+	for i, item := range p.Items {
+		if item.Label == "" {
+			return ErrInvalidField("property", "Items", formatColumnErr(i, "Label must not be empty"))
+		}
+		if item.Content == "" {
+			return ErrInvalidField("property", "Items", formatColumnErr(i, "Content must not be empty"))
+		}
+	}
+	return nil
+}
+
+func (p PropertyNode) Compile() ui.M {
+	items := make(ui.A, 0, len(p.Items))
+	for _, item := range p.Items {
+		items = append(items, ui.M{
+			"label":   item.Label,
+			"content": item.Content,
+		})
+	}
+	col := p.Column
+	if col <= 0 {
+		col = 3
+	}
+	m := ui.M{
+		"type":   "property",
+		"column": col,
+		"items":  items,
+	}
+	if p.Title != "" {
+		m["title"] = p.Title
+	}
+	return m
+}
+
+var _ Node = PropertyNode{}
+
 // ─── ActionNode (display helper) ─────────────────────────────────────────────
 // ActionNode is defined here (before form.go) because CRUDNode uses it in
 // RowActions. The full form-oriented ActionNode definition lives in form.go.
@@ -609,6 +751,8 @@ var _ Node = TreeNode{}
 // Maps to AMIS type "button".
 //
 // Required: Label and ActionType.
+// For "dialog" ActionType: set Dialog (inline) or Target (named reference).
+// For "drawer" ActionType: set Drawer (inline) or Target (named reference).
 type ActionNode struct {
 	Label       string
 	// ActionType: "ajax" | "dialog" | "drawer" | "link" | "submit" | "reset" |
@@ -616,7 +760,14 @@ type ActionNode struct {
 	ActionType  string
 	// API is required when ActionType is "ajax".
 	API         *APISpec
-	// Target is a dialog/drawer name or URL for link/dialog/drawer types.
+	// Dialog is an inline dialog definition for ActionType "dialog".
+	// Takes precedence over Target when both are set.
+	Dialog      *DialogNode
+	// Drawer is an inline drawer definition for ActionType "drawer".
+	// Takes precedence over Target when both are set.
+	Drawer      *DrawerNode
+	// Target is a named dialog/drawer reference or URL for link types.
+	// Use Dialog/Drawer fields instead for inline definitions.
 	Target      string
 	// Level controls button colour: "primary" | "success" | "warning" | "danger" |
 	//                               "info" | "default" | "link"
@@ -645,8 +796,24 @@ func (a ActionNode) Validate() error {
 	if a.ActionType == "ajax" && a.API == nil {
 		return ErrInvalidField("button", "API", "required when ActionType is \"ajax\"")
 	}
+	if a.ActionType == "dialog" && a.Dialog == nil && a.Target == "" {
+		return ErrInvalidField("button", "Dialog", "required when ActionType is \"dialog\" (or set Target for named reference)")
+	}
+	if a.ActionType == "drawer" && a.Drawer == nil && a.Target == "" {
+		return ErrInvalidField("button", "Drawer", "required when ActionType is \"drawer\" (or set Target for named reference)")
+	}
 	if a.API != nil {
 		if err := a.API.Validate("button"); err != nil {
+			return err
+		}
+	}
+	if a.Dialog != nil {
+		if err := a.Dialog.Validate(); err != nil {
+			return err
+		}
+	}
+	if a.Drawer != nil {
+		if err := a.Drawer.Validate(); err != nil {
 			return err
 		}
 	}
@@ -662,7 +829,12 @@ func (a ActionNode) Compile() ui.M {
 	if a.API != nil {
 		m["api"] = a.API.Compile()
 	}
-	if a.Target != "" {
+	// Inline dialog/drawer take precedence over Target string reference.
+	if a.Dialog != nil {
+		m["dialog"] = a.Dialog.Compile()
+	} else if a.Drawer != nil {
+		m["drawer"] = a.Drawer.Compile()
+	} else if a.Target != "" {
 		m["target"] = a.Target
 	}
 	if a.Level != "" {

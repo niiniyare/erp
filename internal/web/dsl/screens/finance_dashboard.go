@@ -10,6 +10,12 @@ import (
 func FinanceDashboardScreen(sess ui.UISessionContext) ast.Node {
 	return ast.PageNode{
 		Title: "Finance Dashboard",
+		// InitAPI loads KPI summary data into page scope.
+		// Child StatNodes reference ${revenue}, ${ar_balance}, etc. directly.
+		InitAPI: &ast.APISpec{
+			Method: "get",
+			URL:    "/api/v1/finance/dashboard/summary",
+		},
 		Body: []ast.Node{
 			blocks.KPIRowBlock(sess, []blocks.StatCardConfig{
 				{Label: "Total Revenue", ValueKey: "revenue", Format: "currency", Trend: blocks.TrendUp},

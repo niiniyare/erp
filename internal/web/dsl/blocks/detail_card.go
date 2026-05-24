@@ -16,22 +16,42 @@ type FieldDef struct {
 type DetailCardConfig struct {
 	Title  string
 	Fields []FieldDef
+	// Column controls how many label-value pairs appear per row (default: 3).
+	Column int
+}
+
+// fieldContent converts a FieldDef to an AMIS expression string using format filters.
+func fieldContent(f FieldDef) string {
+	switch f.Format {
+	case "currency":
+		// number filter adds thousand separators and decimal places.
+		return "${" + f.Key + "|number}"
+	case "date":
+		return "${" + f.Key + "|date:YYYY-MM-DD}"
+	case "percent":
+		return "${" + f.Key + "|percent}"
+	default:
+		return "${" + f.Key + "}"
+	}
 }
 
 // DetailCardBlock renders a read-only field group (label: value pairs).
-func DetailCardBlock(sess ui.UISessionContext, cfg DetailCardConfig) ast.Node {
-	cols := make([]ast.TableColumn, 0, len(cfg.Fields))
+// Emits an AMIS property node — a description list, not a table.
+func DetailCardBlock(_ ui.UISessionContext, cfg DetailCardConfig) ast.Node {
+	items := make([]ast.PropertyItem, 0, len(cfg.Fields))
 	for _, f := range cfg.Fields {
-		colType := f.Format
-		if colType == "" {
-			colType = "text"
-		}
-		cols = append(cols, ast.TableColumn{Name: f.Key, Label: f.Label, Type: colType})
+		items = append(items, ast.PropertyItem{
+			Label:   f.Label,
+			Content: fieldContent(f),
+		})
 	}
 	return ast.CardNode{
 		Title: cfg.Title,
 		Body: []ast.Node{
-			ast.TableNode{Source: "${record}", Columns: cols},
+			ast.PropertyNode{
+				Column: cfg.Column,
+				Items:  items,
+			},
 		},
 	}
 }

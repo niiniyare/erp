@@ -46,7 +46,26 @@ func InvoiceScreen(sess ui.UISessionContext, cfg InvoiceScreenConfig) ast.Node {
 	if cfg.ShowInternalNotes {
 		body = append(body, blocks.InternalNotesBlock(sess))
 	}
-	return ast.PageNode{Title: pageTitle(cfg.IsPurchase, "Invoice", "Bill"), Body: body}
+	docType := "invoices"
+	if cfg.IsPurchase {
+		docType = "bills"
+	}
+	return ast.PageNode{
+		Title: pageTitle(cfg.IsPurchase, "Invoice", "Bill"),
+		// InitAPI loads the document record when editing (:id in URL).
+		// SendOn skips the call on the new-document route (no id param).
+		InitAPI: &ast.APISpec{
+			Method: "get",
+			URL:    "/api/v1/finance/" + docType + "/:id",
+			SendOn: "${params.id}",
+			// Hoist can_approve and tenant_currency into page scope.
+			ResponseData: map[string]any{
+				"can_approve":     "${data.permissions.can_approve|default:false}",
+				"tenant_currency": "${data.tenant_currency|default:''}",
+			},
+		},
+		Body: body,
+	}
 }
 
 func invoiceStatusOptions() []ast.SelectOption {

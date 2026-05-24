@@ -1,6 +1,8 @@
 package blocks
 
 import (
+	"fmt"
+
 	"awo.so/internal/web/ast"
 	"awo.so/internal/web/ui"
 )
@@ -19,26 +21,54 @@ type StatusBadgeConfig struct {
 	Mappings  []StatusMapping
 }
 
+// colorClass converts a StatusMapping Color to a Bootstrap badge CSS class.
+func colorClass(color string) string {
+	switch color {
+	case "success":
+		return "badge-success"
+	case "warning":
+		return "badge-warning"
+	case "danger":
+		return "badge-danger"
+	case "info":
+		return "badge-info"
+	default:
+		return "badge-default"
+	}
+}
+
+// buildMap converts StatusMappings to the AMIS mapping map[string]string.
+// Each value maps to an HTML badge span. A "*" fallback renders the raw value.
+func buildMap(mappings []StatusMapping) map[string]string {
+	m := make(map[string]string, len(mappings)+1)
+	for _, sm := range mappings {
+		m[sm.Value] = fmt.Sprintf(
+			`<span class="badge %s">%s</span>`,
+			colorClass(sm.Color), sm.Label,
+		)
+	}
+	// Fallback: render raw value when no mapping matches.
+	m["*"] = `<span class="badge badge-default">${value}</span>`
+	return m
+}
+
 // StatusBadgeColumn returns a TableColumn configured as a colour-mapped status badge.
-// Use this inside DataTableConfig.Columns rather than creating raw TableColumns.
+// Use inside DataTableConfig.Columns rather than creating raw TableColumns.
 func StatusBadgeColumn(cfg StatusBadgeConfig) ast.TableColumn {
 	return ast.TableColumn{
 		Name:  cfg.FieldName,
 		Label: cfg.Label,
-		Type:  "status",
+		Type:  "mapping",
+		Map:   buildMap(cfg.Mappings),
 	}
 }
 
 // StatusBadgeBlock renders a standalone status indicator (not in a table).
+// Emits an AMIS mapping node — colour-coded badge, read-only display.
 func StatusBadgeBlock(_ ui.UISessionContext, cfg StatusBadgeConfig) ast.Node {
-	opts := make([]ast.SelectOption, 0, len(cfg.Mappings))
-	for _, m := range cfg.Mappings {
-		opts = append(opts, ast.SelectOption{Label: m.Label, Value: m.Value})
-	}
-	return ast.SelectNode{
-		Name:       cfg.FieldName,
-		Label:      cfg.Label,
-		Options:    opts,
-		DisabledOn: "true",
+	return ast.MappingNode{
+		Name:  cfg.FieldName,
+		Label: cfg.Label,
+		Map:   buildMap(cfg.Mappings),
 	}
 }

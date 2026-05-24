@@ -9,7 +9,10 @@ import (
 type ColumnDef struct {
 	Name     string
 	Label    string
-	Type     string // "text"|"date"|"number"|"currency"|"status"|"link"|"image"
+	Type     string // "text"|"date"|"number"|"currency"|"mapping"|"link"|"image"
+	// Map holds value→HTML entries for Type "mapping" columns.
+	// Prefer StatusBadgeColumn() to build this correctly.
+	Map      map[string]string
 	Width    int
 	Sortable bool
 	Fixed    string // ""|"left"|"right"
@@ -48,6 +51,7 @@ func DataTableBlock(sess ui.UISessionContext, cfg DataTableConfig) ast.Node {
 			Name:     c.Name,
 			Label:    c.Label,
 			Type:     c.Type,
+			Map:      c.Map,
 			Width:    c.Width,
 			Sortable: c.Sortable,
 			Fixed:    c.Fixed,
