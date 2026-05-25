@@ -69,6 +69,11 @@ const (
 	// CompileStage checks this key first; falls back to DataKeyPageFn when absent.
 	DataKeyASTPageFn = "ui.registry.ast_page_fn"
 
+	// DataKeyRouteParams is the map[string]string of URL params extracted by RegistryStage.
+	// Example: pattern "/finance/invoices/:id" matched against "/finance/invoices/abc-123"
+	// produces map{"id": "abc-123"}. Empty map when route has no param segments.
+	DataKeyRouteParams = "ui.registry.route_params"
+
 	// DataKeyASTCompiled is set true by CompileStage when the schema was produced
 	// via ASTPageFn + CompileTree. NormalizeStage skips structural rules that are
 	// already guaranteed by the typed AST (syncLocation, transparent bg) when this is true.

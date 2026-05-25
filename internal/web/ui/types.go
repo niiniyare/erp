@@ -81,6 +81,13 @@ type UISessionContext struct {
 	Timezone string // e.g. "Africa/Nairobi"
 	Currency string // e.g. "KES"
 
+	// Params holds URL route parameters extracted by RegistryStage.
+	// Example: route pattern "/finance/invoices/:id" matched against
+	// "/finance/invoices/abc-123" produces Params{"id": "abc-123"}.
+	// Nil / empty on listing pages, new-form pages, and dashboards.
+	// Injected by CompileStage after RegistryStage resolves the match.
+	Params map[string]string
+
 	// private: populated by AuthzStage only
 	permissions  map[string]bool
 	featureFlags map[string]bool
@@ -125,6 +132,16 @@ func (u UISessionContext) Flag(name string) bool {
 // Source: contract.SessionContext.Preference() — pre-resolved at login.
 func (u UISessionContext) Pref(key, fallback string) string {
 	if v, ok := u.prefs[key]; ok {
+		return v
+	}
+	return fallback
+}
+
+// Param returns the URL route parameter for key, or fallback if absent.
+// Route params are extracted from patterns like /finance/invoices/:id.
+// Returns fallback on listing pages and new-form pages where no params exist.
+func (u UISessionContext) Param(key, fallback string) string {
+	if v, ok := u.Params[key]; ok {
 		return v
 	}
 	return fallback

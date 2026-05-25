@@ -77,4 +77,45 @@ func init() {
 			return TrialBalanceScreen(sess)
 		},
 	})
+
+	// ── Invoice edit (param route) ────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/finance/invoices/:id",
+		Module:      "finance",
+		Title:       "Invoice",
+		Description: "View or edit an existing sales invoice",
+		ASTFn: func(sess ui.UISessionContext) any {
+			return InvoiceScreen(sess, InvoiceScreenConfig{
+				ShowPaymentTerms:  true,
+				ShowAttachments:   true,
+				ShowInternalNotes: true,
+			})
+		},
+	})
+
+	// ── Bill edit (param route) ───────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/finance/bills/:id",
+		Module:      "finance",
+		Title:       "Bill",
+		Description: "View or edit an existing supplier bill",
+		ASTFn: func(sess ui.UISessionContext) any {
+			return InvoiceScreen(sess, InvoiceScreenConfig{
+				IsPurchase:       true,
+				ShowPaymentTerms: true,
+				ShowAttachments:  true,
+			})
+		},
+	})
+
+	// ── Journal entry edit (param route) ─────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/finance/journal-entries/:id",
+		Module:      "finance",
+		Title:       "Journal Entry",
+		Description: "View or edit an existing journal entry",
+		ASTFn: func(sess ui.UISessionContext) any {
+			return JournalEntryScreen(sess, JournalEntryScreenConfig{})
+		},
+	})
 }

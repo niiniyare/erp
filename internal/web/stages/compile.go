@@ -53,6 +53,12 @@ func (s *CompileStage) Execute(opCtx *pipeline.OperationContext) (pipeline.Stage
 		return pipeline.StageResult{}, fmt.Errorf("ui.compile: DataKeySessionCtx missing — AuthzStage must run first")
 	}
 
+	// Inject URL route params resolved by RegistryStage into the session context.
+	// UISessionContext is a value type — assignment copies it; no mutation of shared state.
+	if params, ok := opCtx.Data[ui.DataKeyRouteParams].(map[string]string); ok && len(params) > 0 {
+		sess.Params = params
+	}
+
 	// ── AST path ──────────────────────────────────────────────────────────────
 	if astFn, ok := opCtx.Data[ui.DataKeyASTPageFn].(ui.ASTPageFn); ok && astFn != nil {
 		schema, err := safeCompileAST(astFn, sess)

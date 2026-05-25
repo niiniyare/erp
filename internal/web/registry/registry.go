@@ -107,21 +107,42 @@ func (r PageRegistration) validate() []string {
 
 // ─── Registry ─────────────────────────────────────────────────────────────────
 
+// paramRoute holds a pre-parsed parameterised route pattern (contains ":").
+type paramRoute struct {
+	pattern  string   // original pattern, e.g. "/finance/invoices/:id"
+	segments []string // split on "/", e.g. ["finance", "invoices", ":id"]
+	reg      PageRegistration
+}
+
 var (
 	mu            sync.RWMutex
-	registrations = map[string]PageRegistration{}
+	registrations = map[string]PageRegistration{} // exact-match routes only
+	paramRoutes   []paramRoute                     // param-pattern routes (contain ":")
+	patternSet    = map[string]bool{}              // all registered patterns for de-dup
 )
 
 // RegisterPage adds a PageRegistration to the registry.
-// Panics on duplicate route to catch init() ordering bugs at startup.
+// Routes containing ":" are treated as param patterns (e.g. "/finance/invoices/:id")
+// and matched via Match() at request time. Exact routes use O(1) map lookup.
+// Panics on duplicate route/pattern to catch init() ordering bugs at startup.
 // Call ValidateRegistry() after all init() functions have run to validate fields.
 func RegisterPage(reg PageRegistration) {
 	mu.Lock()
 	defer mu.Unlock()
-	if _, exists := registrations[reg.Route]; exists {
+	if patternSet[reg.Route] {
 		panic(fmt.Sprintf("ui/registry: duplicate registration for route %q", reg.Route))
 	}
-	registrations[reg.Route] = reg
+	patternSet[reg.Route] = true
+	if strings.Contains(reg.Route, ":") {
+		segs := strings.Split(strings.TrimPrefix(reg.Route, "/"), "/")
+		paramRoutes = append(paramRoutes, paramRoute{
+			pattern:  reg.Route,
+			segments: segs,
+			reg:      reg,
+		})
+	} else {
+		registrations[reg.Route] = reg
+	}
 }
 
 // Register is the legacy API kept for backward compatibility.
@@ -137,15 +158,49 @@ func Register(path string, fn ui.PageFn) {
 	})
 }
 
-// GetRegistration returns the full PageRegistration for path, or nil if not registered.
-func GetRegistration(path string) *PageRegistration {
+// Match returns the PageRegistration and extracted URL params for path.
+// Tries exact lookup first (O(1)), then param pattern matching (O(n) over param routes).
+// Params map is always non-nil on a match; empty for exact routes with no segments.
+// Returns nil, nil when no registration matches.
+func Match(path string) (*PageRegistration, map[string]string) {
 	mu.RLock()
 	defer mu.RUnlock()
-	reg, ok := registrations[path]
-	if !ok {
-		return nil
+
+	// Exact match — O(1).
+	if reg, ok := registrations[path]; ok {
+		return &reg, map[string]string{}
 	}
-	return &reg
+
+	// Param pattern matching — O(n) over param routes.
+	pathSegs := strings.Split(strings.TrimPrefix(path, "/"), "/")
+	for i := range paramRoutes {
+		pr := &paramRoutes[i]
+		if len(pr.segments) != len(pathSegs) {
+			continue
+		}
+		params := make(map[string]string, len(pr.segments))
+		matched := true
+		for j, seg := range pr.segments {
+			if strings.HasPrefix(seg, ":") {
+				params[seg[1:]] = pathSegs[j]
+			} else if seg != pathSegs[j] {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			return &pr.reg, params
+		}
+	}
+	return nil, nil
+}
+
+// GetRegistration returns the full PageRegistration for path, or nil if not registered.
+// Supports both exact routes and param patterns (e.g. "/finance/invoices/:id").
+// Use Match() directly when you also need the extracted URL params.
+func GetRegistration(path string) *PageRegistration {
+	reg, _ := Match(path)
+	return reg
 }
 
 // Get returns the legacy PageFn for path. Returns nil if not registered or if the
@@ -160,24 +215,30 @@ func Get(path string) ui.PageFn {
 	return reg.Fn
 }
 
-// Paths returns all registered routes.
+// Paths returns all registered routes and patterns (exact + param).
 func Paths() []string {
 	mu.RLock()
 	defer mu.RUnlock()
-	out := make([]string, 0, len(registrations))
+	out := make([]string, 0, len(registrations)+len(paramRoutes))
 	for p := range registrations {
 		out = append(out, p)
+	}
+	for _, pr := range paramRoutes {
+		out = append(out, pr.pattern)
 	}
 	return out
 }
 
-// Registrations returns a snapshot of all PageRegistrations, keyed by route.
+// Registrations returns a snapshot of all PageRegistrations, keyed by route/pattern.
 func Registrations() map[string]PageRegistration {
 	mu.RLock()
 	defer mu.RUnlock()
-	out := make(map[string]PageRegistration, len(registrations))
+	out := make(map[string]PageRegistration, len(registrations)+len(paramRoutes))
 	for k, v := range registrations {
 		out[k] = v
+	}
+	for _, pr := range paramRoutes {
+		out[pr.pattern] = pr.reg
 	}
 	return out
 }
@@ -198,6 +259,9 @@ func ValidateRegistry() error {
 	var violations []string
 	for _, reg := range registrations {
 		violations = append(violations, reg.validate()...)
+	}
+	for _, pr := range paramRoutes {
+		violations = append(violations, pr.reg.validate()...)
 	}
 
 	if len(violations) == 0 {

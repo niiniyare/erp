@@ -54,22 +54,23 @@ func (s *RegistryStage) Execute(opCtx *pipeline.OperationContext) (pipeline.Stag
 		return pipeline.StageResult{}, fmt.Errorf("ui.registry: no UISchemaInput in opCtx.Input")
 	}
 
-	reg := registry.GetRegistration(input.Route)
+	reg, params := registry.Match(input.Route)
 	if reg == nil {
 		return pipeline.StageResult{}, &ui.PageNotFoundError{Route: input.Route}
 	}
 
-	outputs := make(map[string]any, 3)
+	outputs := make(map[string]any, 4)
 	if reg.ASTFn != nil {
 		outputs[ui.DataKeyASTPageFn] = reg.ASTFn
 	}
 	if reg.Fn != nil {
 		outputs[ui.DataKeyPageFn] = reg.Fn
 	}
+	outputs[ui.DataKeyRouteParams] = params
 
 	return pipeline.StageResult{
 		Status:  "completed",
-		Message: fmt.Sprintf("resolved registration for route %s (module=%s)", input.Route, reg.Module),
+		Message: fmt.Sprintf("resolved registration for route %s (module=%s, params=%d)", input.Route, reg.Module, len(params)),
 		Outputs: outputs,
 	}, nil
 }
