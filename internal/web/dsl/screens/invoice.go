@@ -58,11 +58,8 @@ func InvoiceScreen(sess ui.UISessionContext, cfg InvoiceScreenConfig) ast.Node {
 			Method: "get",
 			URL:    "/api/v1/finance/" + docType + "/:id",
 			SendOn: "${params.id}",
-			// Hoist can_approve and tenant_currency into page scope.
-			ResponseData: map[string]any{
-				"can_approve":     "${data.permissions.can_approve|default:false}",
-				"tenant_currency": "${data.tenant_currency|default:''}",
-			},
+			// No ResponseData — full API response data lands in page scope.
+			// Backend must return: can_approve, tenant_currency, totals[], tax_lines[].
 		},
 		Body: body,
 	}

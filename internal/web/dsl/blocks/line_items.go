@@ -14,7 +14,13 @@ type LineItemConfig struct {
 	ShowUnitPrice     bool
 	ShowDiscount      bool
 	ShowTaxRate       bool
-	ShowSubtotal      bool
+	// ShowSubtotal renders a computed subtotal column (qty × unit_price × discount).
+	// Use for commercial documents (invoice, bill, PO, SO).
+	ShowSubtotal bool
+	// ShowDebit renders a debit amount input. Use for journal entry lines only.
+	ShowDebit bool
+	// ShowCredit renders a credit amount input. Use for journal entry lines only.
+	ShowCredit bool
 	ShowAccount       bool
 	AllowFreeTextItem bool
 	DefaultCurrency   string
@@ -44,12 +50,15 @@ func GRNLineItemConfig() LineItemConfig {
 	}
 }
 
-// JournalLineItemConfig returns config for journal entries (account + debit/credit).
+// JournalLineItemConfig returns config for journal entries.
+// Journal lines use explicit debit/credit fields — not subtotal.
+// Server validates that sum(debit) == sum(credit) before posting.
 func JournalLineItemConfig() LineItemConfig {
 	return LineItemConfig{
 		ShowDescription: true,
 		ShowAccount:     true,
-		ShowSubtotal:    true,
+		ShowDebit:       true,
+		ShowCredit:      true,
 	}
 }
 
@@ -91,7 +100,8 @@ func buildLineItemFields(cfg LineItemConfig) []ast.Node {
 	}
 	if cfg.ShowUnitOfMeasure {
 		fields = append(fields, ast.SelectNode{
-			Name: "uom", Label: "UOM",
+			Name:   "uom",
+			Label:  "UOM",
 			Source: &ast.APISpec{Method: "get", URL: "/api/v1/inventory/uom/options"},
 		})
 	}
@@ -109,7 +119,34 @@ func buildLineItemFields(cfg LineItemConfig) []ast.Node {
 		})
 	}
 	if cfg.ShowSubtotal {
-		fields = append(fields, ast.InputNumberNode{Name: "subtotal", Label: "Subtotal", Precision: 2, DisabledOn: "true"})
+		// FormulaNode writes the computed value into "subtotal".
+		// The disabled InputNumberNode reads the same field for display.
+		// Condition guards against computing before required fields are entered.
+		fields = append(fields,
+			ast.FormulaNode{
+				Name:      "subtotal",
+				Formula:   "qty * unit_price * (1 - (discount_pct || 0) / 100)",
+				InitSet:   true,
+				Condition: "${qty && unit_price}",
+			},
+			ast.InputNumberNode{Name: "subtotal", Label: "Subtotal", Precision: 2, DisabledOn: "true"},
+		)
+	}
+	if cfg.ShowDebit {
+		fields = append(fields, ast.InputNumberNode{
+			Name:       "debit",
+			Label:      "Debit",
+			Precision:  2,
+			DisabledOn: boolExpr(cfg.ReadOnly),
+		})
+	}
+	if cfg.ShowCredit {
+		fields = append(fields, ast.InputNumberNode{
+			Name:       "credit",
+			Label:      "Credit",
+			Precision:  2,
+			DisabledOn: boolExpr(cfg.ReadOnly),
+		})
 	}
 	return fields
 }

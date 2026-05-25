@@ -22,10 +22,8 @@ func JournalEntryScreen(sess ui.UISessionContext, cfg JournalEntryScreenConfig) 
 			Method: "get",
 			URL:    "/api/v1/finance/journal-entries/:id",
 			SendOn: "${params.id}",
-			ResponseData: map[string]any{
-				"can_approve":     "${data.permissions.can_approve|default:false}",
-				"tenant_currency": "${data.tenant_currency|default:''}",
-			},
+			// No ResponseData — full API response data lands in page scope.
+			// Backend must return: can_approve, tenant_currency, totals[].
 		},
 		Body: []ast.Node{
 			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,

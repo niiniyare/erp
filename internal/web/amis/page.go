@@ -204,10 +204,16 @@ func (b *StatBuilder) MarshalJSON() ([]byte, error) { return b.marshalJSON() }
 type ChartBuilder struct{ base }
 
 // Chart creates a new chart builder. Pass an empty string for static (config-only) charts.
+// Always emits both:
+//   - config.backgroundColor:"transparent" — ECharts canvas background
+//   - style.background:"transparent"       — AMIS wrapper div (required by ValidateStage)
 func Chart(api string) *ChartBuilder {
 	s := M{
 		"type":   "chart",
 		"config": M{"backgroundColor": "transparent"},
+		// style.background is checked by ruleValidateChartTransparentBg.
+		// Without this the ValidateStage rejects every legacy chart page with HTTP 500.
+		"style": M{"background": "transparent"},
 	}
 	if api != "" {
 		s["api"] = api

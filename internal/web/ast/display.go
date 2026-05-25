@@ -441,7 +441,13 @@ var _ ContainerNode = CardNode{}
 // ─── StatNode ─────────────────────────────────────────────────────────────────
 
 // StatNode renders a single KPI metric with label, value, and optional trend.
-// Maps to AMIS type "statistic" (custom wrapper around AMIS tpl for ERP use).
+// Maps to AMIS type "tpl" — emits inline-styled HTML using AMIS SDK CSS custom
+// properties (--Panel-bg-color, --colors-neutral-text-*, --colors-neutral-line-8)
+// with hardcoded fallbacks for robustness.
+//
+// Trend arrow colour is controlled by TrendMode:
+//   - "up_is_good" (default): rising = green, falling = red
+//   - "down_is_good": rising = red, falling = green (use for costs and debt KPIs)
 //
 // Required: Label and ValueKey.
 type StatNode struct {
@@ -474,17 +480,59 @@ func (s StatNode) Validate() error {
 }
 
 func (s StatNode) Compile() ui.M {
-	// Emit as AMIS "tpl" — the CSS class drives the ERP stat card styling.
-	// Values are bound via AMIS data expressions.
-	tpl := fmt.Sprintf(`<div class="erp-stat-card">`)
-	if s.IconClass != "" {
-		tpl += fmt.Sprintf(`<i class="%s erp-stat-icon"></i>`, s.IconClass)
+	// Build value expression with AMIS format filter.
+	var valueExpr string
+	switch s.Format {
+	case "currency":
+		prefix := s.Currency
+		if prefix == "" {
+			// Falls back to tenant_currency injected into page scope by PageNode.InitAPI.
+			prefix = "${tenant_currency}"
+		}
+		valueExpr = prefix + " ${" + s.ValueKey + "|number}"
+	case "percent":
+		valueExpr = "${" + s.ValueKey + "}%"
+	default: // "number" or ""
+		valueExpr = "${" + s.ValueKey + "|number}"
 	}
-	tpl += fmt.Sprintf(`<div class="erp-stat-label">%s</div>`, s.Label)
-	tpl += fmt.Sprintf(`<div class="erp-stat-value">${%s}</div>`, s.ValueKey)
+
+	// Inline styles use AMIS SDK CSS custom properties with safe fallbacks.
+	// These vars are set by the cxd theme and our dark-mode overrides.
+	tpl := `<div style="padding:16px 20px;border-radius:4px;` +
+		`background:var(--Panel-bg-color,#fff);` +
+		`border:1px solid var(--colors-neutral-line-8,#e8e8e8);">`
+	if s.IconClass != "" {
+		tpl += fmt.Sprintf(
+			`<i class="%s" style="font-size:18px;`+
+				`color:var(--colors-neutral-text-4,#8c8c8c);`+
+				`margin-bottom:8px;display:block;"></i>`,
+			s.IconClass,
+		)
+	}
+	tpl += fmt.Sprintf(
+		`<div style="font-size:13px;color:var(--colors-neutral-text-4,#8c8c8c);margin-bottom:8px;">%s</div>`,
+		s.Label,
+	)
+	tpl += fmt.Sprintf(
+		`<div style="font-size:24px;font-weight:600;`+
+			`color:var(--colors-neutral-text-2,#262626);line-height:1.2;">%s</div>`,
+		valueExpr,
+	)
 	if s.TrendKey != "" {
-		tpl += fmt.Sprintf(`<div class="erp-stat-trend erp-stat-trend--%s">${%s}</div>`,
-			s.TrendMode, s.TrendKey)
+		// "up_is_good"   → rising green (#52c41a), falling red (#f5222d)
+		// "down_is_good" → rising red  (#f5222d), falling green (#52c41a) — for costs/debt
+		upColor, downColor := "#52c41a", "#f5222d"
+		if s.TrendMode == "down_is_good" {
+			upColor, downColor = "#f5222d", "#52c41a"
+		}
+		tpl += fmt.Sprintf(
+			`<div style="font-size:12px;margin-top:8px;`+
+				`color:${%s > 0 ? '%s' : '%s'};">`+
+				`${%s > 0 ? '↑' : '↓'} ${Math.abs(%s)}%%</div>`,
+			s.TrendKey, upColor, downColor,
+			s.TrendKey,
+			s.TrendKey,
+		)
 	}
 	tpl += `</div>`
 
@@ -495,6 +543,64 @@ func (s StatNode) Compile() ui.M {
 }
 
 var _ Node = StatNode{}
+
+// ─── FormulaNode ──────────────────────────────────────────────────────────────
+
+// FormulaNode is a hidden computation node that writes a derived value into a
+// named field in the current data scope.
+// Maps to AMIS type "formula".
+//
+// FormulaNode renders no visible UI — place it alongside the display field that
+// shows the computed result (e.g. a disabled InputNumberNode with the same Name).
+//
+// The Formula is a plain JS expression evaluated in AMIS data scope.
+// All sibling field names in the same form/combo are directly accessible.
+// Example: "qty * unit_price * (1 - (discount_pct || 0) / 100)"
+//
+// Required: Name and Formula.
+type FormulaNode struct {
+	// Name is the field key that receives the computed value.
+	Name string
+	// Formula is a JS expression. Field names from the enclosing form/combo
+	// are in scope directly (no ${} wrapper needed).
+	Formula string
+	// InitSet computes the value on mount, not just on user input.
+	// Should be true for all ERP computed fields so initial data is correct.
+	InitSet bool
+	// Condition is an AMIS expression (with ${}) that gates computation.
+	// Formula only runs when Condition is truthy.
+	// Example: "${qty && unit_price}" — skip when either input is missing.
+	Condition string
+}
+
+func (f FormulaNode) NodeType() string { return "formula" }
+
+func (f FormulaNode) Validate() error {
+	if f.Name == "" {
+		return ErrRequiredField("formula", "Name")
+	}
+	if f.Formula == "" {
+		return ErrRequiredField("formula", "Formula")
+	}
+	return nil
+}
+
+func (f FormulaNode) Compile() ui.M {
+	m := ui.M{
+		"type":    "formula",
+		"name":    f.Name,
+		"formula": f.Formula,
+	}
+	if f.InitSet {
+		m["initSet"] = true
+	}
+	if f.Condition != "" {
+		m["condition"] = f.Condition
+	}
+	return m
+}
+
+var _ Node = FormulaNode{}
 
 // ─── TimelineNode ─────────────────────────────────────────────────────────────
 
