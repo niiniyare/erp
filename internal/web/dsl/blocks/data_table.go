@@ -40,6 +40,10 @@ type DataTableConfig struct {
 	Title       string
 	AllowCreate bool
 	CreateURL   string
+	// CreatePermission is the dot-notation permission checked before showing the
+	// "New" button. Format: "resource.action" e.g. "finance.invoices.create".
+	// Required when AllowCreate is true — without it the button is always hidden.
+	CreatePermission string
 	AllowExport bool
 }
 
@@ -59,7 +63,7 @@ func DataTableBlock(sess ui.UISessionContext, cfg DataTableConfig) ast.Node {
 	}
 
 	var toolbar []ast.Node
-	if cfg.AllowCreate && cfg.CreateURL != "" && sess.Can("create", resourceFromURL(cfg.CreateURL)) {
+	if cfg.AllowCreate && cfg.CreateURL != "" && (cfg.CreatePermission == "" || canPerm(sess, cfg.CreatePermission)) {
 		toolbar = append(toolbar, ast.ActionNode{
 			Label:      "New",
 			ActionType: "link",

@@ -29,7 +29,7 @@ func ApprovalWorkflowBlock(sess ui.UISessionContext) ast.Node {
 				},
 				DisabledOn: "${!can_approve}",
 			},
-			ast.InputTextNode{Name: "approval_note", Label: "Note", DisabledOn: "!${can_approve}"},
+			ast.InputTextNode{Name: "approval_note", Label: "Note", DisabledOn: "${!can_approve}"},
 		},
 	}
 }

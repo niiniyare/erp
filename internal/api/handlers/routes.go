@@ -35,6 +35,8 @@ import (
 	_ "awo.so/internal/web/pages/organizations"
 	_ "awo.so/internal/web/pages/settings"
 	_ "awo.so/internal/web/pages/users"
+	// DSL screens — typed AST path (ASTFn), dominant execution path.
+	_ "awo.so/internal/web/dsl/screens"
 	workflowsTenant "awo.so/internal/workflows/tenant"
 	temporalclient "go.temporal.io/sdk/client"
 )

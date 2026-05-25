@@ -23,11 +23,6 @@ func newTestSession(flags map[string]bool, settings map[string]string) *iamdomai
 	return &iamdomain.ResolvedSession{
 		TenantID: uuid.New(),
 		UserID:   uuid.New(),
-		Permissions: map[string]bool{
-			"ap.invoices.read":    true,
-			"ap.invoices.create":  true,
-			"ap.invoices.process": true,
-		},
 		Configuration: iamdomain.Configuration{
 			Flags:    flags,
 			Settings: settings,
@@ -122,24 +117,6 @@ func TestOperationContext_RegisterTxHook(t *testing.T) {
 	assert.Len(t, o.TxHooks, 2)
 	assert.Equal(t, "hook-a", o.TxHooks[0].Name)
 	assert.Equal(t, "hook-b", o.TxHooks[1].Name)
-}
-
-// ── Can ───────────────────────────────────────────────────────────────────────
-
-func TestOperationContext_Can_PermissionPresent(t *testing.T) {
-	o := newTestOpCtx()
-	assert.True(t, o.Can("ap.invoices", "read"))
-}
-
-func TestOperationContext_Can_PermissionAbsent(t *testing.T) {
-	o := newTestOpCtx()
-	assert.False(t, o.Can("finance.journals", "post"))
-}
-
-func TestOperationContext_Can_NilSession(t *testing.T) {
-	o := newTestOpCtx()
-	o.Session = nil
-	assert.False(t, o.Can("ap.invoices", "read"))
 }
 
 // ── FeatureEnabled ────────────────────────────────────────────────────────────

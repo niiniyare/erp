@@ -260,6 +260,16 @@ type mockCache struct {
 
 func newMockCache() *mockCache { return &mockCache{data: make(map[string]any)} }
 
+func (c *mockCache) GetAndDelete(_ context.Context, key string, _ any) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if _, ok := c.data[key]; !ok {
+		return cache.ErrCacheMiss
+	}
+	delete(c.data, key)
+	return nil
+}
+
 func (c *mockCache) Get(_ context.Context, key string, dest any) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
