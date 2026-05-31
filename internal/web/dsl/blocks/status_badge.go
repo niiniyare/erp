@@ -52,6 +52,17 @@ func buildMap(mappings []StatusMapping) map[string]string {
 	return m
 }
 
+// StatusBadgeColumnDef returns a ColumnDef for use in DataTableConfig.Columns.
+// Equivalent to StatusBadgeColumn but fits DataTableBlock's Columns slice type.
+func StatusBadgeColumnDef(cfg StatusBadgeConfig) ColumnDef {
+	return ColumnDef{
+		Name:  cfg.FieldName,
+		Label: cfg.Label,
+		Type:  "mapping",
+		Map:   buildMap(cfg.Mappings),
+	}
+}
+
 // StatusBadgeColumn returns a TableColumn configured as a colour-mapped status badge.
 // Use inside DataTableConfig.Columns rather than creating raw TableColumns.
 func StatusBadgeColumn(cfg StatusBadgeConfig) ast.TableColumn {

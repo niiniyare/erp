@@ -2,6 +2,7 @@ package organizations
 
 import (
 	"awo.so/internal/web/amis"
+	dslscreens "awo.so/internal/web/dsl/screens"
 	"awo.so/internal/web/registry"
 	"awo.so/internal/web/ui"
 )
@@ -13,6 +14,9 @@ func init() {
 		Title:       "Organizations",
 		Description: "Tenant / organization management",
 		Fn:          Schema,
+		ASTFn: func(sess ui.UISessionContext) any {
+			return dslscreens.OrganizationsScreen(sess)
+		},
 	})
 }
 

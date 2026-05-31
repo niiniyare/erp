@@ -1123,8 +1123,13 @@
           icon: 'fa-calculator',
           expanded: false,
           items: [
+            {id: 'finance/dashboard', label: 'Overview', hash: '#finance/dashboard'},
             {id: 'finance/accounts', label: 'Chart of Accounts', hash: '#finance/accounts'},
-            {id: 'finance/transactions', label: 'Transactions', hash: '#finance/transactions'}
+            {id: 'finance/transactions', label: 'Transactions', hash: '#finance/transactions'},
+            {id: 'finance/invoices/new', label: 'New Invoice', hash: '#finance/invoices/new'},
+            {id: 'finance/bills/new', label: 'New Bill', hash: '#finance/bills/new'},
+            {id: 'finance/journal-entries/new', label: 'New Journal Entry', hash: '#finance/journal-entries/new'},
+            {id: 'finance/reports/trial-balance', label: 'Trial Balance', hash: '#finance/reports/trial-balance'}
           ]
         },
         {
@@ -1135,7 +1140,7 @@
           expanded: false,
           items: [
             {id: 'users', label: 'Users', hash: '#users'},
-            {id: 'organizations', label: 'Tenants', hash: '#organizations'}
+            {id: 'organizations', label: 'Organizations', hash: '#organizations'}
           ]
         },
         {
@@ -1231,17 +1236,38 @@
 
       // ── Update Active Menu & Breadcrumb ──
       function updateNav(route) {
-        // Update active state
+        // Update active state — exact match first
         var items = document.querySelectorAll('.menu-item');
+        var exactMatch = false;
         for (var i = 0; i < items.length; i++) {
           var itemRoute = items[i].getAttribute('data-route');
-          items[i].classList.toggle('active', itemRoute === route);
+          var active = itemRoute === route;
+          items[i].classList.toggle('active', active);
+          if (active) exactMatch = true;
+        }
+
+        // Prefix-match fallback for parameterised sub-routes
+        // e.g. finance/invoices/abc-123 highlights finance/invoices/new (longest prefix wins)
+        if (!exactMatch) {
+          var bestLen = 0, bestEl = null;
+          for (var j = 0; j < items.length; j++) {
+            var ir = items[j].getAttribute('data-route') || '';
+            var base = ir.replace(/\/new$/, ''); // strip trailing /new for prefix compare
+            if (base && route.indexOf(base) === 0 && base.length > bestLen) {
+              bestLen = base.length;
+              bestEl = items[j];
+            }
+          }
+          if (bestEl) bestEl.classList.add('active');
         }
 
         // Auto-expand only the group containing the active route (collapse others)
         menuConfig.forEach(function (entry) {
           if (entry.type === 'group') {
-            var hasActive = entry.items.some(function (item) {return item.id === route;});
+            var hasActive = entry.items.some(function (item) {
+              var base = item.id.replace(/\/new$/, '');
+              return item.id === route || route.indexOf(base) === 0;
+            });
             entry.expanded = hasActive;
             var group = document.querySelector('[data-group="' + entry.id + '"]');
             if (group) group.classList.toggle('expanded', hasActive);
@@ -1344,7 +1370,7 @@
               }
               // Session expired — redirect to login
               if (res.status === 401) {
-                window.location.href = '/login';
+                window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
                 return Promise.reject(new Error('Session expired'));
               }
               if (!res.ok) {
@@ -1387,6 +1413,12 @@
               return {status: 1, msg: 'Network error: ' + err.message};
             });
         },
+        // Intercept AMIS navigation so link-type actions use hash routing
+        // instead of full-page redirects. Handles both "/route" and "#route" targets.
+        jumpTo: function (to) {
+          var route = (to || '').replace(/^#/, '').replace(/^\//, '');
+          if (route) window.location.hash = '#' + route;
+        },
         isCancel: function () {return false;},
         notify: function (type, msg) {
           console.log('[' + type + ']', msg);
@@ -1414,8 +1446,23 @@
 
         try {
           var res = await fetch('/schema/' + route, {headers: {'Accept': 'application/json'}});
+
+          // Auth middleware may return 401 before the pipeline runs
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
+            return;
+          }
+
           if (!res.ok) throw new Error('Schema not found: ' + route);
+
           var envelope = await res.json();
+
+          // Handle auth error embedded in response body (middleware JSON format)
+          if (envelope.error === true || envelope.status === 401) {
+            window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
+            return;
+          }
+
           var schema = (envelope.status === 0 && envelope.data) ? envelope.data : envelope;
           contentEl.innerHTML = '';
           currentInstance = amis.embed(contentEl, schema, {locale: 'en-US'}, amisEnv);

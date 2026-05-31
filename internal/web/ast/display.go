@@ -941,7 +941,13 @@ func (a ActionNode) Compile() ui.M {
 	} else if a.Drawer != nil {
 		m["drawer"] = a.Drawer.Compile()
 	} else if a.Target != "" {
-		m["target"] = a.Target
+		// "link" actionType uses the "link" property — AMIS calls env.jumpTo(link).
+		// All other types use "target" (named container reference).
+		if a.ActionType == "link" {
+			m["link"] = a.Target
+		} else {
+			m["target"] = a.Target
+		}
 	}
 	if a.Level != "" {
 		m["level"] = a.Level

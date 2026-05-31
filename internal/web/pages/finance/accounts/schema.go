@@ -2,6 +2,7 @@ package accounts
 
 import (
 	"awo.so/internal/web/amis"
+	dslscreens "awo.so/internal/web/dsl/screens"
 	"awo.so/internal/web/registry"
 	"awo.so/internal/web/ui"
 )
@@ -13,6 +14,9 @@ func init() {
 		Title:       "Chart of Accounts",
 		Description: "View and manage the general ledger chart of accounts",
 		Fn:          Schema,
+		ASTFn: func(sess ui.UISessionContext) any {
+			return dslscreens.AccountsScreen(sess)
+		},
 	})
 }
 

@@ -2,6 +2,7 @@ package users
 
 import (
 	"awo.so/internal/web/amis"
+	dslscreens "awo.so/internal/web/dsl/screens"
 	"awo.so/internal/web/registry"
 	"awo.so/internal/web/ui"
 )
@@ -13,6 +14,9 @@ func init() {
 		Title:       "Users",
 		Description: "User management — list, create, edit, deactivate",
 		Fn:          Schema,
+		ASTFn: func(sess ui.UISessionContext) any {
+			return dslscreens.UsersListScreen(sess)
+		},
 	})
 }
 
