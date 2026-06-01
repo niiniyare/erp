@@ -5,6 +5,9 @@ section: 04-backend-engineering
 audience: [backend-engineer]
 related:
   - "[What This Guide Covers](../01-overview/01-what-this-guide-covers.md)"
+  - "[State Machine Design](02-state-machine-design.md)"
+  - "[Domain Events](03-domain-events.md)"
+  - "[Domain Errors](04-domain-errors.md)"
   - "[Repository Layer](../05-repository-layer/01-repository-overview.md)"
   - "[Worked Example: Domain Layer](../23-worked-example/02-domain-layer.md)"
 ---

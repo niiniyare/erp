@@ -7,6 +7,8 @@ related:
   - "[Web UI Architecture](../01-web-ui-architecture/01-web-ui-overview.md)"
   - "[CRUD Patterns](02-crud-patterns.md)"
   - "[Form Patterns](03-form-patterns.md)"
+  - "[Detail View Patterns](04-detail-patterns.md)"
+  - "[Dashboard Patterns](05-dashboard-patterns.md)"
   - "[Dark Mode](../03-theming/01-dark-mode.md)"
 ---
 

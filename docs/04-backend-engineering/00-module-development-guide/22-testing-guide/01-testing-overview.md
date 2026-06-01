@@ -1,15 +1,12 @@
 ---
 title: Testing Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/22-testing-guide
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-domain-tests.md
-    title: Domain Tests
-  - path: ./03-repository-tests.md
-    title: Repository Tests
-  - path: ./04-service-tests.md
-    title: Service Tests
+  - "[Testing Overview (18-testing)](../18-testing/01-testing-overview.md)"
+  - "[Integration Test Setup](../18-testing/02-integration-test-setup.md)"
+  - "[Repository Testing](../05-repository-layer/03-repository-testing.md)"
 ---
 
 # Testing Overview

@@ -1,7 +1,7 @@
 ---
 title: Provider Patterns
 portal: 3 — Platform Architecture
-section: 03-platform-architecture
+section: 06-dependency-injection
 audience: [architect, backend-engineer]
 related:
   - "[Wire Overview](01-wire-overview.md)"

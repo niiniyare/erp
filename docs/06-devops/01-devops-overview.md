@@ -8,6 +8,7 @@ related:
   - "[Kubernetes Deployment](03-kubernetes-deployment.md)"
   - "[CI/CD Pipeline](04-cicd-pipeline.md)"
   - "[Local Development](05-local-development.md)"
+  - "[Monitoring and Alerting](06-monitoring.md)"
 ---
 
 # DevOps Overview

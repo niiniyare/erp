@@ -7,6 +7,7 @@ related:
   - "[SQLC Layer](../04-sqlc-layer/01-sqlc-overview.md)"
   - "[Service Layer](../06-service-layer/01-service-overview.md)"
   - "[RLS and Tenant Isolation](02-rls-and-tenant-isolation.md)"
+  - "[Repository Testing](03-repository-testing.md)"
   - "[Worked Example: Repository Layer](../23-worked-example/05-repository-layer.md)"
 ---
 
