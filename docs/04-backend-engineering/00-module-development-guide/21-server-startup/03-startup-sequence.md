@@ -1,13 +1,12 @@
 ---
 title: Startup Sequence
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/21-server-startup
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-startup-overview.md
-    title: Startup Overview
-  - path: ./02-wire-app.md
-    title: Wire App Initialization
+  - "[Startup Overview](01-startup-overview.md)"
+  - "[Wire App Initialization](02-wire-app.md)"
+  - "[Graceful Shutdown](07-graceful-shutdown.md)"
 ---
 
 # Startup Sequence

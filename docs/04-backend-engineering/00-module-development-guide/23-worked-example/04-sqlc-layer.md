@@ -1,11 +1,12 @@
 ---
 title: Worked Example — SQLC Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../04-sqlc-queries/06-complete-query-file.md
-    title: Complete Query File
+  - "[SQLC Layer Overview](../04-sqlc-layer/01-sqlc-overview.md)"
+  - "[SQLC Advanced Patterns](../04-sqlc-layer/02-sqlc-advanced.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — SQLC Layer

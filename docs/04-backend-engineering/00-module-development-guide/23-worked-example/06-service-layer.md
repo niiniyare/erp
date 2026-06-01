@@ -1,13 +1,12 @@
 ---
 title: Worked Example — Service Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../06-service-layer/03-write-operations.md
-    title: Write Operations
-  - path: ../06-service-layer/05-state-transitions.md
-    title: State Transitions
+  - "[Service Layer Overview](../06-service-layer/01-service-overview.md)"
+  - "[Service Patterns](../06-service-layer/02-service-patterns.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Service Layer

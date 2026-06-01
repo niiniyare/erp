@@ -1,11 +1,12 @@
 ---
 title: Worked Example — Contracts Module
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../01-overview/03-development-sequence.md
-    title: Development Sequence
+  - "[What This Guide Covers](../01-overview/01-what-this-guide-covers.md)"
+  - "[MDG Quick Checklist](../01-overview/03-mdg-checklist.md)"
+  - "[Domain Layer](02-domain-layer.md)"
 ---
 
 # Worked Example — Contracts Module

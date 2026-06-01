@@ -1,13 +1,11 @@
 ---
 title: Worker Registration
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/11-temporal-workflows
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-temporal-overview.md
-    title: Temporal Overview
-  - path: ../20-wire-registration/01-wire-overview.md
-    title: Wire Overview
+  - "[Temporal Overview](01-temporal-overview.md)"
+  - "[Wire Registration](../09-wire-registration/01-wire-registration-overview.md)"
 ---
 
 # Worker Registration

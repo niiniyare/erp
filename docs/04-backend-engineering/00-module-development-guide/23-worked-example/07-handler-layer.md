@@ -1,11 +1,12 @@
 ---
 title: Worked Example — Handler Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../15-fiber-handlers/02-handler-implementation.md
-    title: Handler Implementation
+  - "[Handler Layer Overview](../07-handler-layer/01-handler-overview.md)"
+  - "[Handler Testing](../07-handler-layer/02-handler-testing.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Handler Layer

@@ -1,13 +1,11 @@
 ---
 title: Request ID and Logging Middleware
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-middleware-overview.md
-    title: Middleware Overview
-  - path: ../08-instrumentation/02-logging.md
-    title: Logging
+  - "[Middleware Overview](01-middleware-overview.md)"
+  - "[Structured Logging Guide](../19-observability/02-structured-logging-guide.md)"
 ---
 
 # Request ID and Logging Middleware

@@ -1,15 +1,13 @@
 ---
 title: Middleware Chain Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-auth-middleware.md
-    title: Auth Middleware
-  - path: ./03-authz-middleware.md
-    title: Authz Middleware
-  - path: ../15-fiber-handlers/05-route-registration.md
-    title: Route Registration
+  - "[Middleware Reference](09-middleware-reference.md)"
+  - "[CORS Middleware](08-cors-middleware.md)"
+  - "[Handler Layer](../07-handler-layer/01-handler-overview.md)"
+  - "[Security Guide](../../../07-security/03-authorization-guide.md)"
 ---
 
 # Middleware Chain Overview

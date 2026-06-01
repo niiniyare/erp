@@ -1,13 +1,11 @@
 ---
 title: Workflow Design
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/11-temporal-workflows
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-temporal-overview.md
-    title: Temporal Overview
-  - path: ./03-activity-design.md
-    title: Activity Design
+  - "[Temporal Overview](01-temporal-overview.md)"
+  - "[Activity Design](03-activity-design.md)"
 ---
 
 # Workflow Design

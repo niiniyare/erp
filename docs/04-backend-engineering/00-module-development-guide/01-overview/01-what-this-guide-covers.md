@@ -1,13 +1,12 @@
 ---
 title: What This Guide Covers
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/01-overview
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-module-anatomy.md
-    title: Module Anatomy
-  - path: ./03-development-sequence.md
-    title: Development Sequence
+  - "[Guide Conventions](02-guide-conventions.md)"
+  - "[MDG Quick Checklist](03-mdg-checklist.md)"
+  - "[Domain Layer](../02-domain-layer/01-domain-overview.md)"
 ---
 
 # What This Guide Covers

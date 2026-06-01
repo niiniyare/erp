@@ -1,11 +1,12 @@
 ---
 title: Worked Example — Repository Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../05-repository-layer/02-sqlc-adapter.md
-    title: SQLC Adapter
+  - "[Repository Layer Overview](../05-repository-layer/01-repository-overview.md)"
+  - "[Repository Patterns](../05-repository-layer/02-repository-patterns.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Repository Layer

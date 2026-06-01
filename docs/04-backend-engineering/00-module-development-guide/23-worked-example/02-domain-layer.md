@@ -1,13 +1,12 @@
 ---
 title: Worked Example — Domain Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../02-ddd-domain-design/02-entity-design.md
-    title: Entity Design
-  - path: ../02-ddd-domain-design/03-state-machine.md
-    title: State Machine
+  - "[Domain Layer Overview](../02-domain-layer/01-domain-overview.md)"
+  - "[State Machine Design](../02-domain-layer/02-state-machine-design.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Domain Layer

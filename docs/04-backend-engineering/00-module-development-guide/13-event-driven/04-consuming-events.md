@@ -1,11 +1,12 @@
 ---
 title: Consuming Events
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/13-event-driven
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-publishing-events.md
-    title: Publishing Events
+  - "[Publishing Events](03-publishing-events.md)"
+  - "[Event Bus](02-event-bus.md)"
+  - "[Event Patterns Reference](06-event-patterns-reference.md)"
 ---
 
 # Consuming Events

@@ -1,15 +1,12 @@
 ---
 title: Server Startup Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/21-server-startup
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-wire-app.md
-    title: Wire App Initialization
-  - path: ./03-startup-sequence.md
-    title: Startup Sequence
-  - path: ../20-wire-registration/01-wire-overview.md
-    title: Wire Overview
+  - "[Graceful Shutdown](07-graceful-shutdown.md)"
+  - "[Wire Registration](../09-wire-registration/01-wire-registration-overview.md)"
+  - "[Deployment Checklist](../22-deployment-checklist/01-deployment-checklist.md)"
 ---
 
 # Server Startup Overview

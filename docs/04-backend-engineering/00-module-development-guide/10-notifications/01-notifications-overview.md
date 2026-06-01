@@ -1,13 +1,12 @@
 ---
 title: Notifications Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/10-notifications
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-notification-types.md
-    title: Notification Types
-  - path: ../07-core-integrations/06-notification-integration.md
-    title: Notification Integration
+  - "[Notification Channels](06-notification-channels.md)"
+  - "[Service Layer](../06-service-layer/01-service-overview.md)"
+  - "[Event-Driven Patterns](../13-event-driven/06-event-patterns-reference.md)"
 ---
 
 # Notifications Overview

@@ -1,15 +1,13 @@
 ---
 title: Instrumentation Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/08-instrumentation
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-logging.md
-    title: Logging
-  - path: ./03-tracing.md
-    title: Tracing
-  - path: ./04-metrics.md
-    title: Metrics
+  - "[Logging](02-logging.md)"
+  - "[Tracing](03-tracing.md)"
+  - "[Metrics](04-metrics.md)"
+  - "[Observability Architecture](../../../03-platform-architecture/05-observability/01-observability-overview.md)"
 ---
 
 # Instrumentation Overview

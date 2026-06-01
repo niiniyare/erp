@@ -1,11 +1,12 @@
 ---
 title: Rate Limiting
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-middleware-overview.md
-    title: Middleware Overview
+  - "[Middleware Overview](01-middleware-overview.md)"
+  - "[Middleware Reference](09-middleware-reference.md)"
+  - "[Security Overview](../../../07-security/01-security-overview.md)"
 ---
 
 # Rate Limiting

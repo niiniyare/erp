@@ -1,11 +1,11 @@
 ---
 title: Worked Example — Wire Registration
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../20-wire-registration/02-contracts-wire.md
-    title: Contracts Wire Setup
+  - "[Wire Registration Overview](../09-wire-registration/01-wire-registration-overview.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Wire Registration

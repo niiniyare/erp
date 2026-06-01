@@ -1,15 +1,12 @@
 ---
 title: API Design Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/14-api-design
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-url-conventions.md
-    title: URL Conventions
-  - path: ./03-request-response.md
-    title: Request / Response Design
-  - path: ../15-fiber-handlers/01-handler-overview.md
-    title: Handler Overview
+  - "[API Design Checklist](06-api-design-checklist.md)"
+  - "[Handler Layer Overview](../07-handler-layer/01-handler-overview.md)"
+  - "[API Reference](../../../08-api-reference/01-api-overview.md)"
 ---
 
 # API Design Overview

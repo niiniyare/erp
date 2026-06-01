@@ -1,13 +1,11 @@
 ---
 title: Wire App Initialization
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/21-server-startup
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-startup-overview.md
-    title: Startup Overview
-  - path: ../20-wire-registration/01-wire-overview.md
-    title: Wire Overview
+  - "[Startup Overview](01-startup-overview.md)"
+  - "[Wire Registration](../09-wire-registration/01-wire-registration-overview.md)"
 ---
 
 # Wire App Initialization

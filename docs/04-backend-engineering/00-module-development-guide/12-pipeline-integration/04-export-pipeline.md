@@ -1,11 +1,11 @@
 ---
 title: Export Pipeline
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/12-pipeline-integration
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-pipeline-overview.md
-    title: Pipeline Overview
+  - "[Pipeline Overview](01-pipeline-overview.md)"
+  - "[Pipeline Design](02-pipeline-design.md)"
 ---
 
 # Export Pipeline

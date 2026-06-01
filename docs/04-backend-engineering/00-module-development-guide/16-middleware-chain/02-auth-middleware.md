@@ -1,13 +1,12 @@
 ---
 title: Authentication Middleware
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-middleware-overview.md
-    title: Middleware Overview
-  - path: ./03-authz-middleware.md
-    title: Authz Middleware
+  - "[Middleware Overview](01-middleware-overview.md)"
+  - "[Authz Middleware](03-authz-middleware.md)"
+  - "[Session Architecture](../../../03-platform-architecture/02-iam/02-session-architecture.md)"
 ---
 
 # Authentication Middleware

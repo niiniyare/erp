@@ -1,13 +1,12 @@
 ---
 title: Event Bus
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/13-event-driven
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-event-driven-overview.md
-    title: Event-Driven Overview
-  - path: ./03-publishing-events.md
-    title: Publishing Events
+  - "[Event-Driven Overview](01-event-driven-overview.md)"
+  - "[Publishing Events](03-publishing-events.md)"
+  - "[Event Bus Internals](../../../03-platform-architecture/04-event-architecture/02-event-bus-internals.md)"
 ---
 
 # Event Bus

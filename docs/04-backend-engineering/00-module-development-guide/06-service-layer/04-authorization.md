@@ -1,13 +1,12 @@
 ---
 title: Authorization in the Service Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/06-service-layer
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-service-overview.md
-    title: Service Layer Overview
-  - path: ../07-core-integrations/02-iam-integration.md
-    title: IAM Integration
+  - "[Service Layer Overview](01-service-overview.md)"
+  - "[Authorization Model](../../../03-platform-architecture/02-iam/03-authorization-model.md)"
+  - "[Authz Middleware](../16-middleware-chain/03-authz-middleware.md)"
 ---
 
 # Authorization in the Service Layer

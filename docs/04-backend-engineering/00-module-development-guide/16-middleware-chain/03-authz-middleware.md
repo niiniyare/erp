@@ -1,13 +1,12 @@
 ---
 title: Authorization Middleware
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-auth-middleware.md
-    title: Authentication Middleware
-  - path: ../06-service-layer/04-authorization.md
-    title: Service-Level Authorization
+  - "[Auth Middleware](02-auth-middleware.md)"
+  - "[Service Layer](../06-service-layer/01-service-overview.md)"
+  - "[Authorization Model](../../../03-platform-architecture/02-iam/03-authorization-model.md)"
 ---
 
 # Authorization Middleware

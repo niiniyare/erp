@@ -1,13 +1,11 @@
 ---
 title: URL Conventions
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/14-api-design
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-api-design-overview.md
-    title: API Design Overview
-  - path: ./04-pagination.md
-    title: Pagination
+  - "[API Design Overview](01-api-design-overview.md)"
+  - "[Pagination](04-pagination.md)"
 ---
 
 # URL Conventions

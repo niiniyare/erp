@@ -1,13 +1,12 @@
 ---
 title: Pipeline Integration Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/12-pipeline-integration
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-pipeline-design.md
-    title: Pipeline Design
-  - path: ../13-event-driven/01-event-driven-overview.md
-    title: Event-Driven Overview
+  - "[Pipeline Patterns Reference](06-pipeline-patterns-reference.md)"
+  - "[Event-Driven Patterns](../13-event-driven/06-event-patterns-reference.md)"
+  - "[Service Layer](../06-service-layer/01-service-overview.md)"
 ---
 
 # Pipeline Integration Overview

@@ -1,13 +1,12 @@
 ---
 title: Pipeline Design
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/12-pipeline-integration
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-pipeline-overview.md
-    title: Pipeline Overview
-  - path: ./03-import-pipeline.md
-    title: Import Pipeline
+  - "[Pipeline Overview](01-pipeline-overview.md)"
+  - "[Import Pipeline](03-import-pipeline.md)"
+  - "[Export Pipeline](04-export-pipeline.md)"
 ---
 
 # Pipeline Design

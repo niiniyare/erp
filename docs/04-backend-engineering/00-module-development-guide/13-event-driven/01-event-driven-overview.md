@@ -1,13 +1,12 @@
 ---
 title: Event-Driven Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/13-event-driven
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-event-bus.md
-    title: Event Bus
-  - path: ../02-ddd-domain-design/06-domain-events.md
-    title: Domain Events
+  - "[Event Patterns Reference](06-event-patterns-reference.md)"
+  - "[Domain Layer](../02-domain-layer/01-domain-overview.md)"
+  - "[Redis Architecture](../../../03-platform-architecture/08-redis-architecture/01-redis-overview.md)"
 ---
 
 # Event-Driven Overview

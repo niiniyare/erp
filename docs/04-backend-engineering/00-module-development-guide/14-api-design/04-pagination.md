@@ -1,11 +1,11 @@
 ---
 title: Pagination
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/14-api-design
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-request-response.md
-    title: Request / Response Design
+  - "[API Design Overview](01-api-design-overview.md)"
+  - "[URL Conventions](02-url-conventions.md)"
 ---
 
 # Pagination

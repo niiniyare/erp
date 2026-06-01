@@ -1,13 +1,12 @@
 ---
 title: Metrics
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/08-instrumentation
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-instrumentation-overview.md
-    title: Instrumentation Overview
-  - path: ./03-tracing.md
-    title: Tracing
+  - "[Instrumentation Overview](01-instrumentation-overview.md)"
+  - "[Tracing](03-tracing.md)"
+  - "[Metrics Architecture](../../../03-platform-architecture/05-observability/04-metrics.md)"
 ---
 
 # Metrics

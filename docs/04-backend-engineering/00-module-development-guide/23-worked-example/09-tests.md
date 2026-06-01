@@ -1,15 +1,13 @@
 ---
 title: Worked Example — Tests
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../22-testing-guide/02-domain-tests.md
-    title: Domain Tests
-  - path: ../22-testing-guide/03-repository-tests.md
-    title: Repository Tests
-  - path: ../22-testing-guide/04-service-tests.md
-    title: Service Unit Tests
+  - "[Testing Overview](../18-testing/01-testing-overview.md)"
+  - "[Integration Test Setup](../18-testing/02-integration-test-setup.md)"
+  - "[Service Testing](../06-service-layer/03-service-testing.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Tests

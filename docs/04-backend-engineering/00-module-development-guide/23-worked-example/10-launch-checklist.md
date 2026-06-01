@@ -1,11 +1,12 @@
 ---
 title: Worked Example — Launch Checklist
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../21-server-startup/06-startup-checklist.md
-    title: Startup Checklist
+  - "[MDG Quick Checklist](../01-overview/03-mdg-checklist.md)"
+  - "[Deployment Checklist](../22-deployment-checklist/01-deployment-checklist.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Launch Checklist

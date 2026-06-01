@@ -1,15 +1,13 @@
 ---
 title: Service Layer Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/06-service-layer
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-service-interface.md
-    title: Service Interface
-  - path: ./03-write-operations.md
-    title: Write Operations
-  - path: ./04-authorization.md
-    title: Authorization
+  - "[Service Patterns](02-service-patterns.md)"
+  - "[Service Testing](03-service-testing.md)"
+  - "[Repository Layer](../05-repository-layer/01-repository-overview.md)"
+  - "[Handler Layer](../07-handler-layer/01-handler-overview.md)"
 ---
 
 # Service Layer Overview

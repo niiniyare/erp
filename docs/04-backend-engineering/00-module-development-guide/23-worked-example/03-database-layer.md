@@ -1,13 +1,12 @@
 ---
 title: Worked Example — Database Layer
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/23-worked-example
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../03-database-design/02-primary-table.md
-    title: Primary Table
-  - path: ../03-database-design/03-rls-policies.md
-    title: RLS Policies
+  - "[Database Layer Overview](../03-database-layer/01-database-overview.md)"
+  - "[Migration Cookbook](../03-database-layer/02-migration-cookbook.md)"
+  - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 
 # Worked Example — Database Layer

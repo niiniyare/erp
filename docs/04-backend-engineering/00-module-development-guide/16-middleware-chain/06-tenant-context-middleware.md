@@ -1,13 +1,12 @@
 ---
 title: Tenant Context Middleware
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-auth-middleware.md
-    title: Authentication Middleware
-  - path: ../07-core-integrations/01-tenant-integration.md
-    title: Tenant Integration
+  - "[Auth Middleware](02-auth-middleware.md)"
+  - "[Middleware Reference](09-middleware-reference.md)"
+  - "[Tenancy Model](../../../03-platform-architecture/01-multi-tenancy/01-tenancy-model.md)"
 ---
 
 # Tenant Context Middleware

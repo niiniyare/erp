@@ -1,13 +1,12 @@
 ---
 title: Database Setup
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/21-server-startup
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-startup-overview.md
-    title: Startup Overview
-  - path: ../03-database-design/01-schema-overview.md
-    title: Schema Overview
+  - "[Startup Overview](01-startup-overview.md)"
+  - "[Database Layer](../03-database-layer/01-database-overview.md)"
+  - "[Migration Strategy](../../../03-platform-architecture/03-data-architecture/03-migration-strategy.md)"
 ---
 
 # Database Setup

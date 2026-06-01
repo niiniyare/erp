@@ -1,13 +1,12 @@
 ---
 title: Temporal Workflows Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/11-temporal-workflows
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-workflow-design.md
-    title: Workflow Design
-  - path: ./03-activity-design.md
-    title: Activity Design
+  - "[Workflow Patterns Reference](08-workflow-patterns-reference.md)"
+  - "[Temporal Architecture](../../../03-platform-architecture/07-temporal-architecture/01-temporal-overview.md)"
+  - "[Wire Registration](../09-wire-registration/01-wire-registration-overview.md)"
 ---
 
 # Temporal Workflows Overview

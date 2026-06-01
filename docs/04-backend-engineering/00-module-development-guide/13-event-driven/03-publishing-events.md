@@ -1,13 +1,12 @@
 ---
 title: Publishing Events
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/13-event-driven
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-event-bus.md
-    title: Event Bus
-  - path: ../02-ddd-domain-design/06-domain-events.md
-    title: Domain Events
+  - "[Event Bus](02-event-bus.md)"
+  - "[Domain Events](../02-domain-layer/03-domain-events.md)"
+  - "[Outbox Pattern](../../../03-platform-architecture/04-event-architecture/03-outbox-pattern.md)"
 ---
 
 # Publishing Events

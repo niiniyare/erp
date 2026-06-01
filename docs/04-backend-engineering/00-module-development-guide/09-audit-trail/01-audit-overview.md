@@ -1,13 +1,12 @@
 ---
 title: Audit Trail Overview
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/09-audit-trail
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ../07-core-integrations/05-audit-integration.md
-    title: Audit Integration
-  - path: ./02-audit-events.md
-    title: Audit Events
+  - "[Audit Logging Overview](../15-audit-logging/01-audit-overview.md)"
+  - "[Audit Implementation](../15-audit-logging/02-audit-implementation.md)"
+  - "[Service Layer](../06-service-layer/01-service-overview.md)"
 ---
 
 # Audit Trail Overview

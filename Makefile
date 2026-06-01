@@ -482,12 +482,16 @@ migrate-status: ##  Show current migration version
 #  Documentation
 # =============================================================================
 
-.PHONY: docs
+.PHONY: docs docs-build
 docs: ##  Serve documentation (MkDocs + schema)
+	@echo "$(BLUE)Starting building AWO ERP Documentation Server...$(NC)"
+	# @echo "  Schema  : http://localhost:$(DOC_PORT)/schema/"
+	@mkdocs build 
 	@echo "$(BLUE)Starting AWO ERP Documentation Server...$(NC)"
-	@echo "  MkDocs  : http://localhost:$(DOC_PORT)/"
-	@echo "  Schema  : http://localhost:$(DOC_PORT)/schema/"
-	cd $(DOCS_PATH) && ./start-docs.sh $(DOC_PORT)
+	@echo "  MkDocs  : http://localhost:8000/"
+
+
+	@cd $(DOCS_PATH) && python3 -m http.server 8000 --directory site
 
 .PHONY: docs-build
 docs-build: ## ️  Build MkDocs static site

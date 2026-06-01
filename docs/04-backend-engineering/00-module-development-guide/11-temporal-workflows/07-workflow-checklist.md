@@ -1,11 +1,12 @@
 ---
 title: Workflow Checklist
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/11-temporal-workflows
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-temporal-overview.md
-    title: Temporal Overview
+  - "[Temporal Overview](01-temporal-overview.md)"
+  - "[Workflow Design](02-workflow-design.md)"
+  - "[Activity Design](03-activity-design.md)"
 ---
 
 # Workflow Checklist
