@@ -1,13 +1,11 @@
 ---
 title: Sending Notifications
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/10-notifications
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-notification-types.md
-    title: Notification Types
-  - path: ../06-service-layer/05-state-transitions.md
-    title: State Transitions
+  - "[Notification Types](02-notification-types.md)"
+  - "[Service Layer Overview](../06-service-layer/01-service-overview.md)"
 ---
 
 # Sending Notifications

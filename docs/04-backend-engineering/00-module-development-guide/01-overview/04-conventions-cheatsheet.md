@@ -1,13 +1,11 @@
 ---
 title: Conventions Cheatsheet
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/01-overview
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-module-anatomy.md
-    title: Module Anatomy
-  - path: ./03-development-sequence.md
-    title: Development Sequence
+  - "[Module Anatomy](02-module-anatomy.md)"
+  - "[Development Sequence](03-development-sequence.md)"
 ---
 
 # Conventions Cheatsheet

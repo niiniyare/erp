@@ -1,13 +1,12 @@
 ---
 title: Development Sequence
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/01-overview
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./02-module-anatomy.md
-    title: Module Anatomy
-  - path: ./04-conventions-cheatsheet.md
-    title: Conventions Cheatsheet
+  - "[Module Anatomy](02-module-anatomy.md)"
+  - "[Conventions Cheatsheet](04-conventions-cheatsheet.md)"
+  - "[Worked Example](../23-worked-example/01-worked-example-overview.md)"
 ---
 
 # Development Sequence

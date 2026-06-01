@@ -6,7 +6,7 @@ audience: [backend-engineer, tech-lead]
 related:
   - "[API Design Checklist](06-api-design-checklist.md)"
   - "[Handler Layer Overview](../07-handler-layer/01-handler-overview.md)"
-  - "[API Reference](../../../08-api-reference/01-api-overview.md)"
+  - "[API Reference](../../../08-api-reference/01-api-reference-overview.md)"
 ---
 
 # API Design Overview

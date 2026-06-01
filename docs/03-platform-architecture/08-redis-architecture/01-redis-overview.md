@@ -1,7 +1,7 @@
 ---
 title: Redis Architecture
 portal: 3 — Platform Architecture
-section: 03-platform-architecture
+section: 08-redis-architecture
 audience: [architect, backend-engineer, devops]
 related:
   - "[Session Architecture](../02-iam/02-session-architecture.md)"

@@ -1,13 +1,12 @@
 ---
 title: Module Anatomy
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/01-overview
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-development-sequence.md
-    title: Development Sequence
-  - path: ./04-conventions-cheatsheet.md
-    title: Conventions Cheatsheet
+  - "[What This Guide Covers](01-what-this-guide-covers.md)"
+  - "[Development Sequence](03-development-sequence.md)"
+  - "[Conventions Cheatsheet](04-conventions-cheatsheet.md)"
 ---
 
 # Module Anatomy

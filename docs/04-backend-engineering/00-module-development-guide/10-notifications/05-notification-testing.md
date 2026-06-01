@@ -1,13 +1,12 @@
 ---
 title: Notification Testing
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/10-notifications
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-sending-notifications.md
-    title: Sending Notifications
-  - path: ../22-testing-guide/04-service-tests.md
-    title: Service Unit Tests
+  - "[Sending Notifications](03-sending-notifications.md)"
+  - "[Service Testing](../06-service-layer/03-service-testing.md)"
+  - "[Testing Overview](../18-testing/01-testing-overview.md)"
 ---
 
 # Notification Testing

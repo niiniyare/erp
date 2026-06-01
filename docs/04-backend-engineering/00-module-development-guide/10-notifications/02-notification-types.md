@@ -1,13 +1,12 @@
 ---
 title: Notification Types
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/10-notifications
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-notifications-overview.md
-    title: Notifications Overview
-  - path: ./03-sending-notifications.md
-    title: Sending Notifications
+  - "[Notifications Overview](01-notifications-overview.md)"
+  - "[Sending Notifications](03-sending-notifications.md)"
+  - "[Notification Channels](06-notification-channels.md)"
 ---
 
 # Notification Types

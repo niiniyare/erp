@@ -1,13 +1,12 @@
 ---
 title: Event Testing
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/13-event-driven
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-publishing-events.md
-    title: Publishing Events
-  - path: ./04-consuming-events.md
-    title: Consuming Events
+  - "[Publishing Events](03-publishing-events.md)"
+  - "[Consuming Events](04-consuming-events.md)"
+  - "[Event Patterns Reference](06-event-patterns-reference.md)"
 ---
 
 # Event Testing

@@ -8446,44 +8446,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#1-check-pool-status" class="md-nav__link">
+  <a href="#symptom-high-response-latency" class="md-nav__link">
     <span class="md-ellipsis">
       
-        1. Check Pool Status
+        Symptom: High Response Latency
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#2-check-db-connectivity" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        2. Check DB Connectivity
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#3-diagnose-slow-queries" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        3. Diagnose Slow Queries
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="3. Diagnose Slow Queries">
+    <nav class="md-nav" aria-label="Symptom: High Response Latency">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#find-long-running-queries" class="md-nav__link">
+  <a href="#check-active-queries" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Find Long-Running Queries
+        Check Active Queries
       
     </span>
   </a>
@@ -8491,21 +8469,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#check-for-lock-contention" class="md-nav__link">
+  <a href="#check-for-lock-waits" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Check for Lock Contention
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#kill-long-running-query" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Kill Long-Running Query
+        Check for Lock Waits
       
     </span>
   </a>
@@ -8518,10 +8485,49 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#4-connection-pool-exhaustion" class="md-nav__link">
+  <a href="#symptom-connection-pool-exhaustion" class="md-nav__link">
     <span class="md-ellipsis">
       
-        4. Connection Pool Exhaustion
+        Symptom: Connection Pool Exhaustion
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Symptom: Connection Pool Exhaustion">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#check-connection-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Check Connection Count
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fix-options" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fix Options
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#symptom-replication-lag-read-replicas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Symptom: Replication Lag (Read Replicas)
       
     </span>
   </a>
@@ -8529,10 +8535,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#5-rls-set-local-issues" class="md-nav__link">
+  <a href="#symptom-table-bloat" class="md-nav__link">
     <span class="md-ellipsis">
       
-        5. RLS / SET LOCAL Issues
+        Symptom: Table Bloat
       
     </span>
   </a>
@@ -8540,10 +8546,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#6-replication-lag-if-using-replicas" class="md-nav__link">
+  <a href="#symptom-index-not-being-used" class="md-nav__link">
     <span class="md-ellipsis">
       
-        6. Replication Lag (if using replicas)
+        Symptom: Index Not Being Used
       
     </span>
   </a>
@@ -8551,10 +8557,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#7-disk-space" class="md-nav__link">
+  <a href="#emergency-db-unreachable" class="md-nav__link">
     <span class="md-ellipsis">
       
-        7. Disk Space
+        Emergency: DB Unreachable
       
     </span>
   </a>
@@ -8562,10 +8568,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#8-escalation" class="md-nav__link">
+  <a href="#metrics-to-watch" class="md-nav__link">
     <span class="md-ellipsis">
       
-        8. Escalation
+        Metrics to Watch
       
     </span>
   </a>
@@ -8718,153 +8724,124 @@
 
 
 <h1 id="database-issues-runbook">Database Issues Runbook</h1>
-<p><strong>Trigger</strong>: DB connection errors in logs, <code>db_pool_idle_connections &lt; 2</code> alert, slow query alert, readiness probe failing.</p>
-<h2 id="1-check-pool-status">1. Check Pool Status</h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># Pool metrics via Prometheus endpoint</span>
-kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deploy/awoerp-server<span class="w"> </span>-n<span class="w"> </span>production<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>curl<span class="w"> </span>-s<span class="w"> </span>localhost:9090/metrics<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span>db_pool
-
-<span class="c1"># Expected output:</span>
-<span class="c1"># db_pool_open_connections 18</span>
-<span class="c1"># db_pool_idle_connections 5</span>
-<span class="c1"># db_pool_wait_count 0</span>
-</code></pre></div>
-<p><strong>Alert if</strong>:
-- <code>idle_connections &lt; 2</code> — pool near exhaustion
-- <code>wait_count &gt; 0</code> — requests queuing for connections</p>
-<h2 id="2-check-db-connectivity">2. Check DB Connectivity</h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># From application pod</span>
-kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deploy/awoerp-server<span class="w"> </span>-n<span class="w"> </span>production<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>psql<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DATABASE_URL</span><span class="s2">&quot;</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT version(), now()&quot;</span>
-
-<span class="c1"># Check connection count from Postgres side</span>
-kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deploy/postgres<span class="w"> </span>-n<span class="w"> </span>production<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>psql<span class="w"> </span>-U<span class="w"> </span>postgres<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;SELECT count(*), state FROM pg_stat_activity GROUP BY state&quot;</span>
-</code></pre></div>
-<h2 id="3-diagnose-slow-queries">3. Diagnose Slow Queries</h2>
-<h3 id="find-long-running-queries">Find Long-Running Queries</h3>
-<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">pid</span><span class="p">,</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">pg_stat_activity</span><span class="p">.</span><span class="n">query_start</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">duration</span><span class="p">,</span>
+<p>Use when: slow queries, high connection count, pool exhaustion, replication lag, migration errors.</p>
+<h2 id="symptom-high-response-latency">Symptom: High Response Latency</h2>
+<h3 id="check-active-queries">Check Active Queries</h3>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Queries running longer than 5 seconds</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">pid</span><span class="p">,</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">pg_stat_activity</span><span class="p">.</span><span class="n">query_start</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">duration</span><span class="p">,</span>
 <span class="w">       </span><span class="n">query</span><span class="p">,</span><span class="w"> </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">wait_event_type</span><span class="p">,</span><span class="w"> </span><span class="n">wait_event</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_activity</span>
 <span class="k">WHERE</span><span class="w"> </span><span class="p">(</span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">pg_stat_activity</span><span class="p">.</span><span class="n">query_start</span><span class="p">)</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;5 seconds&#39;</span>
 <span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">state</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="s1">&#39;idle&#39;</span>
 <span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">duration</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
-<h3 id="check-for-lock-contention">Check for Lock Contention</h3>
-<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">blocked_pid</span><span class="p">,</span>
-<span class="w">       </span><span class="n">blocked_activity</span><span class="p">.</span><span class="n">query</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">blocked_query</span><span class="p">,</span>
-<span class="w">       </span><span class="n">blocking_locks</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">blocking_pid</span><span class="p">,</span>
-<span class="w">       </span><span class="n">blocking_activity</span><span class="p">.</span><span class="n">query</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">blocking_query</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">pg_catalog</span><span class="p">.</span><span class="n">pg_locks</span><span class="w"> </span><span class="n">blocked_locks</span>
-<span class="k">JOIN</span><span class="w"> </span><span class="n">pg_catalog</span><span class="p">.</span><span class="n">pg_stat_activity</span><span class="w"> </span><span class="n">blocked_activity</span>
-<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="n">blocked_activity</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="n">pid</span>
-<span class="k">JOIN</span><span class="w"> </span><span class="n">pg_catalog</span><span class="p">.</span><span class="n">pg_locks</span><span class="w"> </span><span class="n">blocking_locks</span>
-<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="n">blocking_locks</span><span class="p">.</span><span class="n">locktype</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="n">locktype</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">blocking_locks</span><span class="p">.</span><span class="n">relation</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="n">relation</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">blocking_locks</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="o">!=</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="n">pid</span>
-<span class="k">JOIN</span><span class="w"> </span><span class="n">pg_catalog</span><span class="p">.</span><span class="n">pg_stat_activity</span><span class="w"> </span><span class="n">blocking_activity</span>
-<span class="w">  </span><span class="k">ON</span><span class="w"> </span><span class="n">blocking_activity</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">blocking_locks</span><span class="p">.</span><span class="n">pid</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="n">blocked_locks</span><span class="p">.</span><span class="k">granted</span><span class="p">;</span>
+<h3 id="check-for-lock-waits">Check for Lock Waits</h3>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">blocked</span><span class="p">.</span><span class="n">pid</span><span class="w">     </span><span class="k">AS</span><span class="w"> </span><span class="n">blocked_pid</span><span class="p">,</span>
+<span class="w">       </span><span class="n">blocked</span><span class="p">.</span><span class="n">query</span><span class="w">   </span><span class="k">AS</span><span class="w"> </span><span class="n">blocked_query</span><span class="p">,</span>
+<span class="w">       </span><span class="n">blocking</span><span class="p">.</span><span class="n">pid</span><span class="w">    </span><span class="k">AS</span><span class="w"> </span><span class="n">blocking_pid</span><span class="p">,</span>
+<span class="w">       </span><span class="n">blocking</span><span class="p">.</span><span class="n">query</span><span class="w">  </span><span class="k">AS</span><span class="w"> </span><span class="n">blocking_query</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_activity</span><span class="w"> </span><span class="n">blocked</span>
+<span class="k">JOIN</span><span class="w"> </span><span class="n">pg_stat_activity</span><span class="w"> </span><span class="n">blocking</span><span class="w"> </span><span class="k">ON</span><span class="w"> </span><span class="n">blocking</span><span class="p">.</span><span class="n">pid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">ANY</span><span class="p">(</span><span class="n">pg_blocking_pids</span><span class="p">(</span><span class="n">blocked</span><span class="p">.</span><span class="n">pid</span><span class="p">))</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="k">cardinality</span><span class="p">(</span><span class="n">pg_blocking_pids</span><span class="p">(</span><span class="n">blocked</span><span class="p">.</span><span class="n">pid</span><span class="p">))</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 </code></pre></div>
-<h3 id="kill-long-running-query">Kill Long-Running Query</h3>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Terminate gracefully (sends SIGTERM to query)</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_cancel_backend</span><span class="p">(</span><span class="err">{</span><span class="n">pid</span><span class="err">}</span><span class="p">);</span>
+<p>If a long-running transaction is blocking others:</p>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Cancel (graceful)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_cancel_backend</span><span class="p">(</span><span class="o">&lt;</span><span class="n">blocking_pid</span><span class="o">&gt;</span><span class="p">);</span>
 
-<span class="c1">-- Force kill (only if pg_cancel_backend fails)</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_terminate_backend</span><span class="p">(</span><span class="err">{</span><span class="n">pid</span><span class="err">}</span><span class="p">);</span>
+<span class="c1">-- Terminate (hard kill — use only if cancel fails after 30s)</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">pg_terminate_backend</span><span class="p">(</span><span class="o">&lt;</span><span class="n">blocking_pid</span><span class="o">&gt;</span><span class="p">);</span>
 </code></pre></div>
-<h2 id="4-connection-pool-exhaustion">4. Connection Pool Exhaustion</h2>
-<p>If pool is exhausted (<code>idle_connections = 0</code>, <code>wait_count &gt; 0</code>):</p>
-<p><strong>Immediate relief</strong>:</p>
-<div class="highlight"><pre><span></span><code><span class="c1"># Increase pool size temporarily</span>
-kubectl<span class="w"> </span><span class="nb">set</span><span class="w"> </span>env<span class="w"> </span>deployment/awoerp-server<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span><span class="nv">DATABASE_MAX_CONNS</span><span class="o">=</span><span class="m">30</span><span class="w"> </span>-n<span class="w"> </span>production
-
-<span class="c1"># This triggers rolling restart — monitor</span>
-kubectl<span class="w"> </span>rollout<span class="w"> </span>status<span class="w"> </span>deployment/awoerp-server<span class="w"> </span>-n<span class="w"> </span>production
-</code></pre></div>
-<p><strong>Find the leak</strong> (connections held without being returned):</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Find application connections that have been idle &gt; 5 minutes</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="n">pid</span><span class="p">,</span><span class="w"> </span><span class="n">usename</span><span class="p">,</span><span class="w"> </span><span class="n">application_name</span><span class="p">,</span><span class="w"> </span><span class="n">client_addr</span><span class="p">,</span>
-<span class="w">       </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">state_change</span><span class="p">,</span><span class="w"> </span><span class="n">query</span>
+<h2 id="symptom-connection-pool-exhaustion">Symptom: Connection Pool Exhaustion</h2>
+<p>Application logs: <code>failed to acquire connection from pool</code> or pool wait timeout.</p>
+<h3 id="check-connection-count">Check Connection Count</h3>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="k">count</span><span class="p">(</span><span class="o">*</span><span class="p">),</span><span class="w"> </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">wait_event_type</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_activity</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">datname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;awoerp&#39;</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="k">state</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;idle in transaction&#39;</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">state_change</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;5 minutes&#39;</span><span class="p">;</span>
+<span class="k">GROUP</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">wait_event_type</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="k">count</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
-<p>Idle-in-transaction connections indicate a service that opened a transaction but did not commit/rollback. Check application code for <code>WithTenant</code> calls that return without closing.</p>
-<h2 id="5-rls-set-local-issues">5. RLS / SET LOCAL Issues</h2>
-<p>If errors mention <code>app.tenant_id</code> or tenants seeing each other's data:</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Check current GUC in a session</span>
-<span class="k">SHOW</span><span class="w"> </span><span class="n">app</span><span class="p">.</span><span class="n">tenant_id</span><span class="p">;</span>
-
-<span class="c1">-- Verify RLS is enabled on tables</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="n">tablename</span><span class="p">,</span><span class="w"> </span><span class="n">rowsecurity</span>
-<span class="k">FROM</span><span class="w"> </span><span class="n">pg_tables</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">schemaname</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;public&#39;</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">rowsecurity</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">false</span><span class="p">;</span><span class="w">  </span><span class="c1">-- should return 0 rows for business tables</span>
-</code></pre></div>
-<p><strong>Never</strong> call <code>SET LOCAL app.tenant_id</code> outside of a transaction — it has no effect. All tenant DB access must go through <code>store.WithTenant()</code>.</p>
-<h2 id="6-replication-lag-if-using-replicas">6. Replication Lag (if using replicas)</h2>
+<p>Healthy: most connections <code>idle</code>, few <code>active</code>.</p>
+<p>Problem signs:
+- Many connections in <code>idle in transaction</code> — transaction not committed
+- Count near <code>max_connections</code> (default 100 on small instances)</p>
+<h3 id="fix-options">Fix Options</h3>
+<ol>
+<li>Reduce <code>DB_POOL_MAX</code> per pod (check env: <code>kubectl exec ... env | grep DB_POOL</code>)</li>
+<li>Add PgBouncer in front of PostgreSQL</li>
+<li>Increase <code>max_connections</code> in PostgreSQL (requires restart)</li>
+</ol>
+<h2 id="symptom-replication-lag-read-replicas">Symptom: Replication Lag (Read Replicas)</h2>
 <div class="highlight"><pre><span></span><code><span class="c1">-- On primary</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="n">client_addr</span><span class="p">,</span><span class="w"> </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">sent_lsn</span><span class="p">,</span><span class="w"> </span><span class="n">write_lsn</span><span class="p">,</span>
-<span class="w">       </span><span class="n">flush_lsn</span><span class="p">,</span><span class="w"> </span><span class="n">replay_lsn</span><span class="p">,</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">client_addr</span><span class="p">,</span><span class="w"> </span><span class="k">state</span><span class="p">,</span><span class="w"> </span><span class="n">sent_lsn</span><span class="p">,</span><span class="w"> </span><span class="n">replay_lsn</span><span class="p">,</span>
 <span class="w">       </span><span class="p">(</span><span class="n">sent_lsn</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">replay_lsn</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">replication_lag_bytes</span>
 <span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_replication</span><span class="p">;</span>
 </code></pre></div>
-<p>If lag exceeds 10 MB, route read queries back to primary until replica catches up.</p>
-<h2 id="7-disk-space">7. Disk Space</h2>
-<div class="highlight"><pre><span></span><code><span class="c1"># Check Postgres data directory size</span>
-kubectl<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>deploy/postgres<span class="w"> </span>-n<span class="w"> </span>production<span class="w"> </span>--<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>df<span class="w"> </span>-h<span class="w"> </span>/var/lib/postgresql/data
-
-<span class="c1"># Find bloated tables</span>
-psql<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$DATABASE_URL</span><span class="s2">&quot;</span><span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;</span>
-<span class="s2">  SELECT relname, pg_size_pretty(pg_total_relation_size(oid)) AS size</span>
-<span class="s2">  FROM pg_class</span>
-<span class="s2">  WHERE relkind = &#39;r&#39;</span>
-<span class="s2">  ORDER BY pg_total_relation_size(oid) DESC</span>
-<span class="s2">  LIMIT 10;&quot;</span>
+<p>Lag &gt; 100 MB: investigate replica I/O.
+Lag &gt; 1 GB: pause reads to replica until caught up.</p>
+<h2 id="symptom-table-bloat">Symptom: Table Bloat</h2>
+<div class="highlight"><pre><span></span><code><span class="k">SELECT</span><span class="w"> </span><span class="n">schemaname</span><span class="p">,</span><span class="w"> </span><span class="n">relname</span><span class="p">,</span><span class="w"> </span><span class="n">n_dead_tup</span><span class="p">,</span><span class="w"> </span><span class="n">n_live_tup</span><span class="p">,</span>
+<span class="w">       </span><span class="n">round</span><span class="p">(</span><span class="n">n_dead_tup</span><span class="p">::</span><span class="nb">numeric</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="k">nullif</span><span class="p">(</span><span class="n">n_live_tup</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">n_dead_tup</span><span class="p">,</span><span class="w"> </span><span class="mi">0</span><span class="p">)</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="p">,</span><span class="w"> </span><span class="mi">1</span><span class="p">)</span><span class="w"> </span><span class="k">AS</span><span class="w"> </span><span class="n">dead_pct</span><span class="p">,</span>
+<span class="w">       </span><span class="n">last_autovacuum</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_user_tables</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">n_dead_tup</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10000</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">dead_pct</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
 </code></pre></div>
-<p>If <code>event_outbox</code> is large:</p>
-<div class="highlight"><pre><span></span><code><span class="c1">-- Check undelivered count</span>
-<span class="k">SELECT</span><span class="w"> </span><span class="k">COUNT</span><span class="p">(</span><span class="o">*</span><span class="p">)</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">event_outbox</span><span class="w"> </span><span class="k">WHERE</span><span class="w"> </span><span class="n">delivered_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
-
-<span class="c1">-- Safe to delete delivered events older than 30 days</span>
-<span class="k">DELETE</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">event_outbox</span>
-<span class="k">WHERE</span><span class="w"> </span><span class="n">delivered_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NOT</span><span class="w"> </span><span class="k">NULL</span>
-<span class="w">  </span><span class="k">AND</span><span class="w"> </span><span class="n">delivered_at</span><span class="w"> </span><span class="o">&lt;</span><span class="w"> </span><span class="n">now</span><span class="p">()</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="nb">interval</span><span class="w"> </span><span class="s1">&#39;30 days&#39;</span><span class="p">;</span>
+<p>Force vacuum on bloated table (non-blocking):</p>
+<div class="highlight"><pre><span></span><code><span class="k">VACUUM</span><span class="w"> </span><span class="p">(</span><span class="k">ANALYZE</span><span class="p">,</span><span class="w"> </span><span class="k">VERBOSE</span><span class="p">)</span><span class="w"> </span><span class="n">contracts</span><span class="p">;</span>
 </code></pre></div>
-<h2 id="8-escalation">8. Escalation</h2>
-<p>If DB is unresponsive or data integrity issues are suspected, escalate to database admin immediately. Do not attempt manual data fixes without DBA review.</p>
+<h2 id="symptom-index-not-being-used">Symptom: Index Not Being Used</h2>
+<div class="highlight"><pre><span></span><code><span class="c1">-- Tables with high seq scan ratio</span>
+<span class="k">SELECT</span><span class="w"> </span><span class="n">schemaname</span><span class="p">,</span><span class="w"> </span><span class="n">relname</span><span class="p">,</span><span class="w"> </span><span class="n">seq_scan</span><span class="p">,</span><span class="w"> </span><span class="n">idx_scan</span>
+<span class="k">FROM</span><span class="w"> </span><span class="n">pg_stat_user_tables</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">seq_scan</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">100</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">n_live_tup</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">10000</span>
+<span class="k">ORDER</span><span class="w"> </span><span class="k">BY</span><span class="w"> </span><span class="n">seq_scan</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="n">idx_scan</span><span class="w"> </span><span class="k">DESC</span><span class="p">;</span>
+</code></pre></div>
+<p>Analyze query plan:</p>
+<div class="highlight"><pre><span></span><code><span class="k">EXPLAIN</span><span class="w"> </span><span class="p">(</span><span class="k">ANALYZE</span><span class="p">,</span><span class="w"> </span><span class="n">BUFFERS</span><span class="p">)</span><span class="w"> </span><span class="k">SELECT</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="k">FROM</span><span class="w"> </span><span class="n">contracts</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">tenant_id</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;...&#39;</span><span class="w"> </span><span class="k">AND</span><span class="w"> </span><span class="n">status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s1">&#39;active&#39;</span><span class="w"> </span><span class="k">LIMIT</span><span class="w"> </span><span class="mi">20</span><span class="p">;</span>
+</code></pre></div>
+<p>Add missing index without lock:</p>
+<div class="highlight"><pre><span></span><code><span class="k">CREATE</span><span class="w"> </span><span class="k">INDEX</span><span class="w"> </span><span class="n">CONCURRENTLY</span><span class="w"> </span><span class="n">contracts_tenant_status</span>
+<span class="k">ON</span><span class="w"> </span><span class="n">contracts</span><span class="w"> </span><span class="p">(</span><span class="n">tenant_id</span><span class="p">,</span><span class="w"> </span><span class="n">status</span><span class="p">)</span>
+<span class="k">WHERE</span><span class="w"> </span><span class="n">deleted_at</span><span class="w"> </span><span class="k">IS</span><span class="w"> </span><span class="k">NULL</span><span class="p">;</span>
+</code></pre></div>
+<h2 id="emergency-db-unreachable">Emergency: DB Unreachable</h2>
+<ol>
+<li>Check RDS console — is instance running?</li>
+<li>Check VPC security groups</li>
+<li>Verify DB password not rotated without updating k8s secret:
+   <div class="highlight"><pre><span></span><code>kubectl<span class="w"> </span>get<span class="w"> </span>secret<span class="w"> </span>-n<span class="w"> </span>awo-erp<span class="w"> </span>awo-db-credentials<span class="w"> </span>-o<span class="w"> </span><span class="nv">jsonpath</span><span class="o">=</span><span class="s1">&#39;{.data.url}&#39;</span><span class="w"> </span><span class="p">|</span><span class="w"> </span>base64<span class="w"> </span>-d
+</code></pre></div></li>
+<li>Check disk space on DB host — full disk causes connection refusal</li>
+</ol>
+<h2 id="metrics-to-watch">Metrics to Watch</h2>
 <table>
 <thead>
 <tr>
-<th>Severity</th>
-<th>Condition</th>
-<th>Escalate to</th>
+<th>Metric</th>
+<th>Warning</th>
+<th>Critical</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>P1</td>
-<td>DB down or unresponsive</td>
-<td>DBA + backend lead immediately</td>
+<td>Active connections</td>
+<td>&gt; 60% of max</td>
+<td>&gt; 80% of max</td>
 </tr>
 <tr>
-<td>P1</td>
-<td>Data corruption suspected</td>
-<td>DBA + CTO</td>
+<td>Query duration p99</td>
+<td>&gt; 500ms</td>
+<td>&gt; 2s</td>
 </tr>
 <tr>
-<td>P2</td>
-<td>Sustained high latency &gt; 5 min</td>
-<td>DBA</td>
+<td>Replication lag</td>
+<td>&gt; 50 MB</td>
+<td>&gt; 500 MB</td>
 </tr>
 <tr>
-<td>P3</td>
-<td>Slow queries, no user impact</td>
-<td>Backend lead during business hours</td>
+<td>Dead tuple ratio</td>
+<td>&gt; 10%</td>
+<td>&gt; 30%</td>
 </tr>
 </tbody>
 </table>

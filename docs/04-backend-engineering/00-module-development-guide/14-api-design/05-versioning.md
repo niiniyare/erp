@@ -1,11 +1,11 @@
 ---
 title: API Versioning
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/14-api-design
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-api-design-overview.md
-    title: API Design Overview
+  - "[API Design Overview](01-api-design-overview.md)"
+  - "[URL Conventions](02-url-conventions.md)"
 ---
 
 # API Versioning

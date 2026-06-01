@@ -1,7 +1,7 @@
 ---
 title: Temporal Architecture Overview
 portal: 3 — Platform Architecture
-section: 03-platform-architecture
+section: 07-temporal-architecture
 audience: [architect, backend-engineer]
 related:
   - "[Event Architecture](../04-event-architecture/01-event-architecture.md)"

@@ -1,13 +1,11 @@
 ---
 title: Middleware Testing
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/16-middleware-chain
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./01-middleware-overview.md
-    title: Middleware Overview
-  - path: ../22-testing-guide/01-testing-overview.md
-    title: Testing Overview
+  - "[Middleware Overview](01-middleware-overview.md)"
+  - "[Testing Overview](../18-testing/01-testing-overview.md)"
 ---
 
 # Middleware Testing

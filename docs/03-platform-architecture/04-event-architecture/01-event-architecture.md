@@ -1,7 +1,7 @@
 ---
 title: Event Architecture
 portal: 3 — Platform Architecture
-section: 03-platform-architecture
+section: 04-event-architecture
 audience: [architect, backend-engineer, tech-lead]
 related:
   - "[Redis Architecture](../08-redis-architecture/01-redis-overview.md)"

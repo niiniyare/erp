@@ -6,7 +6,7 @@ audience: [architect, backend-engineer, tech-lead]
 related:
   - "[Data Overview](01-data-overview.md)"
   - "[Migration Strategy](03-migration-strategy.md)"
-  - "[Primary Table Design](../../04-backend-engineering/00-module-development-guide/03-database-design/02-primary-table.md)"
+  - "[Database Layer](../../04-backend-engineering/00-module-development-guide/03-database-layer/01-database-overview.md)"
 ---
 
 # Schema Conventions

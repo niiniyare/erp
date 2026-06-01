@@ -1,11 +1,11 @@
 ---
 title: Notification Preferences
 portal: 4 — Backend Engineering
-section: 00-module-development-guide/10-notifications
+section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
-  - path: ./03-sending-notifications.md
-    title: Sending Notifications
+  - "[Sending Notifications](03-sending-notifications.md)"
+  - "[Notification Channels](06-notification-channels.md)"
 ---
 
 # Notification Preferences

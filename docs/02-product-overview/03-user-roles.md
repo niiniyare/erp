@@ -6,7 +6,7 @@ audience: [all]
 related:
   - "[Product Overview](01-product-overview.md)"
   - "[Module Overview](02-module-overview.md)"
-  - "[IAM API](../08-api-reference/05-iam-api.md)"
+  - "[IAM API](../08-api-reference/06-iam-api.md)"
 ---
 
 # User Roles Reference

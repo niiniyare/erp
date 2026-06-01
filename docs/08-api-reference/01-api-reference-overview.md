@@ -110,3 +110,5 @@ All list endpoints accept:
 - [Contracts API](03-contracts-api.md)
 - [Tenants API](04-tenants-api.md)
 - [Entities API](05-entities-api.md)
+- [IAM API](06-iam-api.md)
+- [Finance API](07-finance-api.md)
