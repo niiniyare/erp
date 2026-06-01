@@ -351,13 +351,18 @@
         pwIcon.className = show ? 'fa fa-eye-slash' : 'fa fa-eye';
       });
 
-      // ── Redirect target ────────────────────────────────────────────────────
+      // ── URL params ─────────────────────────────────────────────────────────
+      var urlParams = new URLSearchParams(window.location.search);
+
       function nextUrl() {
-        var params = new URLSearchParams(window.location.search);
-        var next = params.get('next');
+        var next = urlParams.get('next');
         // Only allow same-origin paths
         if (next && next.startsWith('/')) return next;
         return '/ui/demo';
+      }
+
+      function tenantID() {
+        return urlParams.get('tenant_id') || '';
       }
 
       // ── Form submit ────────────────────────────────────────────────────────
@@ -399,7 +404,7 @@
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             credentials: 'same-origin',
-            body: JSON.stringify({email: email, password: password})
+            body: JSON.stringify({email: email, password: password, tenant_id: tenantID()})
           });
 
           var body = await res.json().catch(function () { return {}; });

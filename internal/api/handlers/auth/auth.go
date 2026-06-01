@@ -7,7 +7,9 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"awo.so/internal/core/iam"
+	"awo.so/internal/shared"
 	sharedErrors "awo.so/internal/shared/errors"
 )
 
@@ -34,6 +36,9 @@ func DefaultLoginConfig() LoginConfig {
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	// TenantID is required when the X-Tenant-ID header is absent.
+	// Pass the tenant UUID to scope authentication to a specific tenant.
+	TenantID string `json:"tenant_id"`
 }
 
 // LoginHandler handles POST /auth/login.
@@ -57,6 +62,18 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "email and password are required",
 			})
+		}
+
+		// Inject tenant context so IAM repository can scope the user lookup.
+		// Priority: X-Tenant-ID header, then request body tenant_id.
+		tenantIDStr := strings.TrimSpace(c.Get("X-Tenant-ID"))
+		if tenantIDStr == "" {
+			tenantIDStr = strings.TrimSpace(req.TenantID)
+		}
+		if tenantIDStr != "" {
+			if tid, parseErr := uuid.Parse(tenantIDStr); parseErr == nil {
+				c.SetUserContext(shared.WithTenantID(c.UserContext(), tid))
+			}
 		}
 
 		resolved, rawToken, err := svc.Login(c.UserContext(), req.Email, req.Password)

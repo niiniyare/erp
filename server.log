@@ -1,36 +1,36 @@
 config: loaded /data/data/com.termux/files/home/project/erp/config.yaml
-[90m2026-05-25T18:22:41Z[0m DBG Connection keep-alive settings configured [36mapp=[0mAwoERP [36mkeep_alive_time=[0m30000000000 [36mkeep_alive_timeout=[0m5000000000 [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m✅ Temporal Client Connected[0m [36mapp=[0mAwoERP [36mhost_port=[0mlocalhost:7233 [36midentity=[0mawo-erp [36mnamespace=[0mdefault [36mstatus=[0mconnected [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered health endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered public routes[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mAuth middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mTenant middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mJWT middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered auth API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered auth API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered tenant API endpoints as /tenants[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered tenant API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered user API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered user API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered entity API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered entity API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered finance API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered finance API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered schema API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered schema API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered audit API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered audit API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mSession middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered UI routes with static assets[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1mregistered routes:[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - entity: &{entity /api/v1/entity [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - finance: &{finance /api/v1/finance [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - schema: &{schema /api/v1/schema [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - audit: &{audit /api/v1/audit [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - health: &{health /health [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - auth: &{auth /api/v1/auth [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - tenant: &{tenant /api/v1/tenant [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
-[90m2026-05-25T18:22:41Z[0m [32mINF[0m [1m  - user: &{user /api/v1/user [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m DBG Connection keep-alive settings configured [36mapp=[0mAwoERP [36mkeep_alive_time=[0m30000000000 [36mkeep_alive_timeout=[0m5000000000 [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m✅ Temporal Client Connected[0m [36mapp=[0mAwoERP [36mhost_port=[0mlocalhost:7233 [36midentity=[0mawo-erp [36mnamespace=[0mdefault [36mstatus=[0mconnected [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered health endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered public routes[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mAuth middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mTenant middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mJWT middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered auth API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered auth API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered tenant API endpoints as /tenants[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered tenant API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered user API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered user API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered entity API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered entity API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered finance API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered finance API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered schema API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered schema API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered audit API endpoints[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered audit API module[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mSession middleware would be applied here[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered UI routes with static assets[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1mregistered routes:[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - tenant: &{tenant /api/v1/tenant [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - user: &{user /api/v1/user [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - entity: &{entity /api/v1/entity [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - finance: &{finance /api/v1/finance [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - schema: &{schema /api/v1/schema [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - audit: &{audit /api/v1/audit [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - health: &{health /health [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:38Z[0m [32mINF[0m [1m  - auth: &{auth /api/v1/auth [] 1 true map[]}[0m [36mapp=[0mAwoERP [36mversion=[0m1.0.0
  Server starting on 0.0.0.0:8080
  Environment: local
  Application: AwoERP v0.1.0 beta
@@ -45,12 +45,52 @@ config: loaded /data/data/com.termux/files/home/project/erp/config.yaml
  │       (bound on host 0.0.0.0 and port 8080)       │ 
  │                                                   │ 
  │ Handlers ........... 192  Processes ........... 1 │ 
- │ Prefork ....... Disabled  PID ............. 27398 │ 
+ │ Prefork ....... Disabled  PID .............. 4319 │ 
  └───────────────────────────────────────────────────┘ 
 
-[90m2026-05-25T18:23:26Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /sdk/thirds/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/sdk/thirds/@fortawesome/fontawesome-free/webfonts/fa-solid-900.woff2 [36mversion=[0m1.0.0
-[90m2026-05-25T18:23:26Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /sdk/thirds/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/sdk/thirds/@fortawesome/fontawesome-free/webfonts/fa-solid-900.ttf [36mversion=[0m1.0.0
-[90m2026-05-25T18:23:26Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/schema/dashboard [36mversion=[0m1.0.0
-[90m2026-05-25T18:23:42Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m0 [36mcontent_type=[0m [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0md945d1bf-e048-48dc-bf46-150a8b735641 [36mservice=[0mfinance [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
-[90m2026-05-25T18:23:42Z[0m [31mERR[0m [1mRequest failed[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mapp=[0mAwoERP [36mduration_ms=[0m6 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mrequest_id=[0md945d1bf-e048-48dc-bf46-150a8b735641 [36mresponse_length=[0m0 [36mservice=[0mfinance [36mstatus_code=[0m200 [36mversion=[0m1.0.0
-[90m2026-05-25T18:23:42Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:53Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m0 [36mcontent_type=[0m [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0mf06adf35-097f-4118-9a9d-36005c032644 [36mservice=[0mfinance [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:53Z[0m [31mERR[0m [1mRequest failed[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mapp=[0mAwoERP [36mduration_ms=[0m0 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mrequest_id=[0mf06adf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m0 [36mservice=[0mfinance [36mstatus_code=[0m200 [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:53Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"authentication required"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/api/v1/finance/accounts [36mversion=[0m1.0.0
+[90m2026-05-31T21:42:54Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /favicon.ico"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/favicon.ico [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:02Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Cannot GET /"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/ [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:23Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Request Timeout"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/ [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:40Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m60 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0mf66adf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:40Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m1 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0mf66adf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:42Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m60 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0mf86adf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:42Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m0 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0mf86adf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:47Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m60 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0mfa6adf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:43:47Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m0 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0mfa6adf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:54Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m96 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0mfe6adf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:54Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:44:55Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m102 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0mfe6adf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:12Z[0m [31mERR[0m [1mFiber error[0m [36merror=[0m[31m[1m"Request Timeout"[0m[0m [36mapp=[0mAwoERP [36mip=[0m127.0.0.1 [36mmethod=[0mGET [36mpath=[0m/ [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m96 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0m006bdf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:28Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m30 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0m006bdf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m [32mINF[0m [1mRequest started[0m [36mapp=[0mAwoERP [36mcontent_length=[0m96 [36mcontent_type=[0mapplication/json [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mremote_addr=[0m127.0.0.1 [36mrequest_id=[0m026bdf35-097f-4118-9a9d-36005c032644 [36mservice=[0mauth [36muser_agent=[0m"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Mobile Safari/537.36" [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Starting tenant-scoped transaction [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant context set [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m DBG Tenant-scoped transaction completed [36mapp=[0mAwoERP [36mcomponent=[0mdb [36mtenant_id=[0maf5b3541-0334-4af8-b3d1-a8fd5651782d [36mversion=[0m1.0.0
+[90m2026-05-31T21:45:29Z[0m [33mWRN[0m [1mRequest completed with client error[0m [36mapp=[0mAwoERP [36mduration_ms=[0m25 [36mmethod=[0mPOST [36mpath=[0m/api/v1/auth/login [36mrequest_id=[0m026bdf35-097f-4118-9a9d-36005c032644 [36mresponse_length=[0m37 [36mservice=[0mauth [36mstatus_code=[0m401 [36mversion=[0m1.0.0
