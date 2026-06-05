@@ -29,10 +29,9 @@ theme:
       primary: indigo
       accent: indigo
 
-# Add this section to exclude the reference directory
-# exclude_docs:
   excluded_docs:
-    - ./reference/**/*
+    - './reference/*'
+    - .'/09-reference/*'
 
 plugins:
   - search:
@@ -55,235 +54,305 @@ nav:
   - 'README': 'README.md'
   - 'GLOSSARY': 'GLOSSARY.md'
   - 'CHANGELOG': 'CHANGELOG.md'
-  - 'Product Overview':
-      - 'Product Overview': '02-product-overview/01-product-overview.md'
-      - 'Module Overview': '02-product-overview/02-module-overview.md'
-      - 'User Roles': '02-product-overview/03-user-roles.md'
-      - 'Data Model Overview': '02-product-overview/04-data-model-overview.md'
-  - 'Platform Architecture':
-      - 'Overview':
-          - 'System Overview': '03-platform-architecture/00-overview/01-system-overview.md'
-          - 'Architecture Principles': '03-platform-architecture/00-overview/02-architecture-principles.md'
-          - 'Module Map': '03-platform-architecture/00-overview/03-module-map.md'
-      - 'Multi-tenancy':
-          - 'Tenancy Model': '03-platform-architecture/01-multi-tenancy/01-tenancy-model.md'
-          - 'RLS Enforcement': '03-platform-architecture/01-multi-tenancy/02-rls-enforcement.md'
-          - 'Entity Scope': '03-platform-architecture/01-multi-tenancy/03-entity-scope.md'
-      - 'IAM':
-          - 'IAM Overview': '03-platform-architecture/02-iam/01-iam-overview.md'
-          - 'Session Architecture': '03-platform-architecture/02-iam/02-session-architecture.md'
-          - 'Authorization Model': '03-platform-architecture/02-iam/03-authorization-model.md'
-          - 'IAM Session Data': '03-platform-architecture/02-iam/04-iam-session-data.md'
-      - 'Data Architecture':
-          - 'Data Overview': '03-platform-architecture/03-data-architecture/01-data-overview.md'
-          - 'Schema Conventions': '03-platform-architecture/03-data-architecture/02-schema-conventions.md'
-          - 'Migration Strategy': '03-platform-architecture/03-data-architecture/03-migration-strategy.md'
-          - 'Query Patterns': '03-platform-architecture/03-data-architecture/04-query-patterns.md'
-      - 'Event Architecture':
-          - 'Event Architecture Overview': '03-platform-architecture/04-event-architecture/01-event-architecture-overview.md'
-          - 'Event Bus Internals': '03-platform-architecture/04-event-architecture/02-event-bus-internals.md'
-          - 'Outbox Pattern': '03-platform-architecture/04-event-architecture/03-outbox-pattern.md'
-      - 'Observability':
-          - 'Observability Overview': '03-platform-architecture/05-observability/01-observability-overview.md'
-          - 'Logging': '03-platform-architecture/05-observability/02-logging.md'
-          - 'Tracing': '03-platform-architecture/05-observability/03-tracing.md'
-          - 'Metrics': '03-platform-architecture/05-observability/04-metrics.md'
-          - 'Alerting': '03-platform-architecture/05-observability/05-alerting.md'
-      - 'Dependency Injection':
-          - 'Wire Overview': '03-platform-architecture/06-dependency-injection/01-wire-overview.md'
-          - 'Provider Patterns': '03-platform-architecture/06-dependency-injection/02-provider-patterns.md'
-      - 'Temporal Architecture':
-          - 'Temporal Overview': '03-platform-architecture/07-temporal-architecture/01-temporal-overview.md'
-          - 'Workflow Patterns': '03-platform-architecture/07-temporal-architecture/02-workflow-patterns.md'
-      - 'Redis Architecture':
-          - 'Redis Overview': '03-platform-architecture/08-redis-architecture/01-redis-overview.md'
-      - 'Module Group Allocation':
-          - 'Module Groups': '03-platform-architecture/09-module-group-allocation/01-module-groups.md'
-  - 'Performance':
-      - 'Performance Optimization Plan': 'performance-optimization-plan.md'
-      - 'Pipeline Architecture': 'pipeline_arch.md'
-  - 'Backend Engineering Guide':
-      - 'Module Development Guide':
-          - 'Overview':
-              - 'What This Guide Covers': '04-backend-engineering/00-module-development-guide/01-overview/01-what-this-guide-covers.md'
-              - 'Guide Conventions': '04-backend-engineering/00-module-development-guide/01-overview/02-guide-conventions.md'
-              - 'Module Anatomy': '04-backend-engineering/00-module-development-guide/01-overview/02-module-anatomy.md'
-              - 'Development Sequence': '04-backend-engineering/00-module-development-guide/01-overview/03-development-sequence.md'
-              - 'Conventions Cheatsheet': '04-backend-engineering/00-module-development-guide/01-overview/04-conventions-cheatsheet.md'
-          - 'DDD Domain Design':
-              - 'Bounded Context': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/01-bounded-context.md'
-              - 'Entity Design': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/02-entity-design.md'
-              - 'State Machine': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/03-state-machine.md'
-              - 'Value Objects': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/04-value-objects.md'
-              - 'Domain Errors': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/05-domain-errors.md'
-              - 'Domain Events': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/06-domain-events.md'
-          - 'Database Design':
-              - 'Schema Overview': '04-backend-engineering/00-module-development-guide/03-database-design/01-schema-overview.md'
-              - 'Primary Table': '04-backend-engineering/00-module-development-guide/03-database-design/02-primary-table.md'
-              - 'RLS Policies': '04-backend-engineering/00-module-development-guide/03-database-design/03-rls-policies.md'
-              - 'Indexes': '04-backend-engineering/00-module-development-guide/03-database-design/04-indexes.md'
-              - 'Child Tables': '04-backend-engineering/00-module-development-guide/03-database-design/05-child-tables.md'
-              - 'Views': '04-backend-engineering/00-module-development-guide/03-database-design/06-views.md'
-              - 'Optimistic Locking': '04-backend-engineering/00-module-development-guide/03-database-design/07-optimistic-locking.md'
-              - 'Soft Delete': '04-backend-engineering/00-module-development-guide/03-database-design/08-soft-delete.md'
-              - 'Migration Checklist': '04-backend-engineering/00-module-development-guide/03-database-design/09-migration-checklist.md'
-          - 'SQLC Queries':
-              - 'Query Overview': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/01-query-overview.md'
-              - 'Read Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/02-read-queries.md'
-              - 'List Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/03-list-queries.md'
-              - 'Update Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/04-update-queries.md'
-              - 'Delete Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/05-delete-queries.md'
-              - 'Complete Query File': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/06-complete-query-file.md'
-          - 'Repository Layer':
-              - 'Repository Interface': '04-backend-engineering/00-module-development-guide/05-repository-layer/01-repository-interface.md'
-              - 'SQLC Adapter': '04-backend-engineering/00-module-development-guide/05-repository-layer/02-sqlc-adapter.md'
-              - 'With Tenant Pattern': '04-backend-engineering/00-module-development-guide/05-repository-layer/03-with-tenant-pattern.md'
-              - 'Error Mapping': '04-backend-engineering/00-module-development-guide/05-repository-layer/04-error-mapping.md'
-              - 'Type Mapping': '04-backend-engineering/00-module-development-guide/05-repository-layer/05-type-mapping.md'
-          - 'Service Layer':
-              - 'Service Overview': '04-backend-engineering/00-module-development-guide/06-service-layer/01-service-overview.md'
-              - 'Service Interface': '04-backend-engineering/00-module-development-guide/06-service-layer/02-service-interface.md'
-              - 'Write Operations': '04-backend-engineering/00-module-development-guide/06-service-layer/03-write-operations.md'
-              - 'Authorization': '04-backend-engineering/00-module-development-guide/06-service-layer/04-authorization.md'
-              - 'State Transitions': '04-backend-engineering/00-module-development-guide/06-service-layer/05-state-transitions.md'
-              - 'Read Operations': '04-backend-engineering/00-module-development-guide/06-service-layer/06-read-operations.md'
-          - 'Core Integrations':
-              - 'Tenant Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/01-tenant-integration.md'
-              - 'IAM Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/02-iam-integration.md'
-              - 'Settings Flags': '04-backend-engineering/00-module-development-guide/07-core-integrations/03-settings-flags.md'
-              - 'Metadata': '04-backend-engineering/00-module-development-guide/07-core-integrations/04-metadata.md'
-              - 'Audit Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/05-audit-integration.md'
-              - 'Notification Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/06-notification-integration.md'
-              - 'Cross-module Calls': '04-backend-engineering/00-module-development-guide/07-core-integrations/07-cross-module-calls.md'
-          - 'Instrumentation':
-              - 'Instrumentation Overview': '04-backend-engineering/00-module-development-guide/08-instrumentation/01-instrumentation-overview.md'
-              - 'Logging': '04-backend-engineering/00-module-development-guide/08-instrumentation/02-logging.md'
-              - 'Tracing': '04-backend-engineering/00-module-development-guide/08-instrumentation/03-tracing.md'
-              - 'Metrics': '04-backend-engineering/00-module-development-guide/08-instrumentation/04-metrics.md'
-              - 'Health and Readiness': '04-backend-engineering/00-module-development-guide/08-instrumentation/05-health-and-readiness.md'
-          - 'Audit Trail':
-              - 'Audit Overview': '04-backend-engineering/00-module-development-guide/09-audit-trail/01-audit-overview.md'
-              - 'Audit Events': '04-backend-engineering/00-module-development-guide/09-audit-trail/02-audit-events.md'
-              - 'Querying Audit': '04-backend-engineering/00-module-development-guide/09-audit-trail/03-querying-audit.md'
-              - 'Audit Testing': '04-backend-engineering/00-module-development-guide/09-audit-trail/04-audit-testing.md'
-              - 'Compliance Notes': '04-backend-engineering/00-module-development-guide/09-audit-trail/05-compliance-notes.md'
-          - 'Wire Registration':
-              - 'Wire Registration Overview': '04-backend-engineering/00-module-development-guide/09-wire-registration/01-wire-registration-overview.md'
-          - 'Notifications':
-              - 'Notifications Overview': '04-backend-engineering/00-module-development-guide/10-notifications/01-notifications-overview.md'
-              - 'Notification Types': '04-backend-engineering/00-module-development-guide/10-notifications/02-notification-types.md'
-              - 'Sending Notifications': '04-backend-engineering/00-module-development-guide/10-notifications/03-sending-notifications.md'
-              - 'Notification Preferences': '04-backend-engineering/00-module-development-guide/10-notifications/04-notification-preferences.md'
-              - 'Notification Testing': '04-backend-engineering/00-module-development-guide/10-notifications/05-notification-testing.md'
-              - 'Notification Channels': '04-backend-engineering/00-module-development-guide/10-notifications/06-notification-channels.md'
-          - 'Temporal Workflows':
-              - 'Temporal Overview': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/01-temporal-overview.md'
-              - 'Workflow Design': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/02-workflow-design.md'
-              - 'Activity Design': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/03-activity-design.md'
-              - 'Worker Registration': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/04-worker-registration.md'
-              - 'Workflow Testing': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/05-workflow-testing.md'
-              - 'Error Handling': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/06-error-handling.md'
-              - 'Workflow Checklist': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/07-workflow-checklist.md'
-              - 'Workflow Patterns Reference': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/08-workflow-patterns-reference.md'
-          - 'Pipeline Integration':
-              - 'Pipeline Overview': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/01-pipeline-overview.md'
-              - 'Pipeline Design': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/02-pipeline-design.md'
-              - 'Import Pipeline': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/03-import-pipeline.md'
-              - 'Export Pipeline': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/04-export-pipeline.md'
-              - 'Pipeline Testing': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/05-pipeline-testing.md'
-              - 'Pipeline Patterns Reference': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/06-pipeline-patterns-reference.md'
-          - 'Event-Driven':
-              - 'Event-Driven Overview': '04-backend-engineering/00-module-development-guide/13-event-driven/01-event-driven-overview.md'
-              - 'Event Bus': '04-backend-engineering/00-module-development-guide/13-event-driven/02-event-bus.md'
-              - 'Publishing Events': '04-backend-engineering/00-module-development-guide/13-event-driven/03-publishing-events.md'
-              - 'Consuming Events': '04-backend-engineering/00-module-development-guide/13-event-driven/04-consuming-events.md'
-              - 'Event Testing': '04-backend-engineering/00-module-development-guide/13-event-driven/05-event-testing.md'
-              - 'Event Patterns Reference': '04-backend-engineering/00-module-development-guide/13-event-driven/06-event-patterns-reference.md'
-          - 'API Design':
-              - 'API Design Overview': '04-backend-engineering/00-module-development-guide/14-api-design/01-api-design-overview.md'
-              - 'URL Conventions': '04-backend-engineering/00-module-development-guide/14-api-design/02-url-conventions.md'
-              - 'Request-Response': '04-backend-engineering/00-module-development-guide/14-api-design/03-request-response.md'
-              - 'Pagination': '04-backend-engineering/00-module-development-guide/14-api-design/04-pagination.md'
-              - 'Versioning': '04-backend-engineering/00-module-development-guide/14-api-design/05-versioning.md'
-              - 'API Design Checklist': '04-backend-engineering/00-module-development-guide/14-api-design/06-api-design-checklist.md'
-          - 'Fiber Handlers':
-              - 'Handler Overview': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/01-handler-overview.md'
-              - 'Handler Struct': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/02-handler-struct.md'
-              - 'Request DTOs': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/03-request-dtos.md'
-              - 'Response DTOs': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/04-response-dtos.md'
-              - 'Routes': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/05-routes.md'
-              - 'Error Handling': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/06-error-handling.md'
-              - 'Handler Testing': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/07-handler-testing.md'
-          - 'Middleware Chain':
-              - 'Middleware Overview': '04-backend-engineering/00-module-development-guide/16-middleware-chain/01-middleware-overview.md'
-              - 'Auth Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/02-auth-middleware.md'
-              - 'Authz Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/03-authz-middleware.md'
-              - 'Request ID Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/04-request-id-middleware.md'
-              - 'Rate Limiting': '04-backend-engineering/00-module-development-guide/16-middleware-chain/05-rate-limiting.md'
-              - 'Tenant Context Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/06-tenant-context-middleware.md'
-              - 'Middleware Testing': '04-backend-engineering/00-module-development-guide/16-middleware-chain/07-middleware-testing.md'
-              - 'CORS Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/08-cors-middleware.md'
-              - 'Middleware Reference': '04-backend-engineering/00-module-development-guide/16-middleware-chain/09-middleware-reference.md'
-          - 'Error Handling':
-              - 'Error Handling Overview': '04-backend-engineering/00-module-development-guide/17-error-handling/01-error-handling-overview.md'
-              - 'Error Catalog': '04-backend-engineering/00-module-development-guide/17-error-handling/02-error-catalog.md'
-          - 'Testing':
-              - 'Testing Overview': '04-backend-engineering/00-module-development-guide/18-testing/01-testing-overview.md'
-              - 'Integration Test Setup': '04-backend-engineering/00-module-development-guide/18-testing/02-integration-test-setup.md'
-          - 'Observability':
-              - 'Observability Guide': '04-backend-engineering/00-module-development-guide/19-observability/01-observability-guide.md'
-              - 'Structured Logging Guide': '04-backend-engineering/00-module-development-guide/19-observability/02-structured-logging-guide.md'
-          - 'Configuration':
-              - 'Configuration Overview': '04-backend-engineering/00-module-development-guide/20-configuration/01-configuration-overview.md'
-          - 'Testing Guide':
-              - 'Testing Overview': '04-backend-engineering/00-module-development-guide/22-testing-guide/01-testing-overview.md'
-              - 'Domain Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/02-domain-tests.md'
-              - 'Repository Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/03-repository-tests.md'
-              - 'Service Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/04-service-tests.md'
-              - 'Test Coverage': '04-backend-engineering/00-module-development-guide/22-testing-guide/05-test-coverage.md'
-              - 'Test Helpers': '04-backend-engineering/00-module-development-guide/22-testing-guide/06-test-helpers.md'
-          - 'Worked Example':
-              - 'Worked Example Overview': '04-backend-engineering/00-module-development-guide/23-worked-example/01-worked-example-overview.md'
-              - 'Domain Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/02-domain-layer.md'
-              - 'Database Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/03-database-layer.md'
-              - 'SQLC Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/04-sqlc-layer.md'
-              - 'Repository Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/05-repository-layer.md'
-              - 'Service Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/06-service-layer.md'
-              - 'Handler Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/07-handler-layer.md'
-              - 'Wire Registration': '04-backend-engineering/00-module-development-guide/23-worked-example/08-wire-registration.md'
-              - 'Tests': '04-backend-engineering/00-module-development-guide/23-worked-example/09-tests.md'
-              - 'Launch Checklist': '04-backend-engineering/00-module-development-guide/23-worked-example/10-launch-checklist.md'
-  - 'Frontend Engineering':
-      - 'Frontend Overview': '05-frontend-engineering/01-frontend-overview.md'
-      - 'Amis Schema Guide': '05-frontend-engineering/02-amis-schema-guide.md'
-      - 'Dark Theme Guide': '05-frontend-engineering/03-dark-theme-guide.md'
-      - 'Component Patterns': '05-frontend-engineering/04-component-patterns.md'
-      - 'Schema Conventions': '05-frontend-engineering/05-schema-conventions.md'
-      - 'Mobile Considerations': '05-frontend-engineering/06-mobile-considerations.md'
-  - 'DevOps':
-      - 'DevOps Overview': '06-devops/01-devops-overview.md'
-      - 'Environment Variables': '06-devops/02-environment-variables.md'
-      - 'Kubernetes Deployment': '06-devops/03-kubernetes-deployment.md'
-      - 'CI/CD Pipeline': '06-devops/04-cicd-pipeline.md'
-      - 'Local Development': '06-devops/05-local-development.md'
-  - 'Security':
-      - 'Security Overview': '07-security/01-security-overview.md'
-      - 'Authentication Flows': '07-security/02-authentication-flows.md'
-      - 'Authorization Guide': '07-security/03-authorization-guide.md'
-      - 'Data Security': '07-security/04-data-security.md'
-      - 'Incident Response': '07-security/05-incident-response.md'
-  - 'API Reference':
-      - 'API Reference Overview': '08-api-reference/01-api-reference-overview.md'
-      - 'Authentication': '08-api-reference/02-authentication.md'
-      - 'Contracts API': '08-api-reference/03-contracts-api.md'
-      - 'Finance API': '08-api-reference/04-finance-api.md'
-      - 'IAM API': '08-api-reference/05-iam-api.md'
-      - 'Tenant API': '08-api-reference/06-tenant-api.md'
-  - 'Operations':
-      - 'Runbook Overview': '09-operations/01-runbook-overview.md'
-      - 'Service Down': '09-operations/02-service-down.md'
-      - 'Database Issues': '09-operations/03-database-issues.md'
-      - 'High Error Rate': '09-operations/04-high-error-rate.md'
-      - 'Migration Failure': '09-operations/05-migration-failure.md'
-      - 'Temporal Worker': '09-operations/06-temporal-worker.md'
-      - 'Event Outbox': '09-operations/07-event-outbox.md'
+  
+  - '01. Product Overview':
+      - '01. Product Overview': '02-product-overview/01-product-overview.md'
+      - '02. Module Overview': '02-product-overview/02-module-overview.md'
+      - '03. User Roles': '02-product-overview/03-user-roles.md'
+      - '04. Data Model Overview': '02-product-overview/04-data-model-overview.md'
+  
+  - '02. Platform Architecture':
+      - '00. Overview':
+          - '01. System Overview': '03-platform-architecture/00-overview/01-system-overview.md'
+          - '02. Architecture Principles': '03-platform-architecture/00-overview/02-architecture-principles.md'
+          - '03. Module Map': '03-platform-architecture/00-overview/03-module-map.md'
+      - '01. Multi-tenancy':
+          - '01. Tenancy Model': '03-platform-architecture/01-multi-tenancy/01-tenancy-model.md'
+          - '02. RLS Enforcement': '03-platform-architecture/01-multi-tenancy/02-rls-enforcement.md'
+          - '03. Entity Scope': '03-platform-architecture/01-multi-tenancy/03-entity-scope.md'
+          - '04. Feature Flags': '03-platform-architecture/01-multi-tenancy/04-feature-flags.md'
+      - '02. IAM':
+          - '01. IAM Overview': '03-platform-architecture/02-iam/01-iam-overview.md'
+          - '02. Session Architecture': '03-platform-architecture/02-iam/02-session-architecture.md'
+          - '03. Authorization Model': '03-platform-architecture/02-iam/03-authorization-model.md'
+          - '04. IAM Session Data': '03-platform-architecture/02-iam/04-iam-session-data.md'
+      - '03. Data Architecture':
+          - '01. Data Overview': '03-platform-architecture/03-data-architecture/01-data-overview.md'
+          - '02. Schema Conventions': '03-platform-architecture/03-data-architecture/02-schema-conventions.md'
+          - '03. Migration Strategy': '03-platform-architecture/03-data-architecture/03-migration-strategy.md'
+          - '04. Query Patterns': '03-platform-architecture/03-data-architecture/04-query-patterns.md'
+      - '04. Event Architecture':
+          - '01. Event Architecture Overview': '03-platform-architecture/04-event-architecture/01-event-architecture-overview.md'
+          - '02. Event Bus Internals': '03-platform-architecture/04-event-architecture/02-event-bus-internals.md'
+          - '03. Outbox Pattern': '03-platform-architecture/04-event-architecture/03-outbox-pattern.md'
+      - '05. Observability':
+          - '01. Observability Overview': '03-platform-architecture/05-observability/01-observability-overview.md'
+          - '02. Logging Standards': '03-platform-architecture/05-observability/02-logging-standards.md'
+          - '03. Tracing': '03-platform-architecture/05-observability/03-tracing.md'
+          - '04. Metrics': '03-platform-architecture/05-observability/04-metrics.md'
+          - '05. Alerting': '03-platform-architecture/05-observability/05-alerting.md'
+      - '06. Dependency Injection':
+          - '01. Wire Overview': '03-platform-architecture/06-dependency-injection/01-wire-overview.md'
+          - '02. Provider Patterns': '03-platform-architecture/06-dependency-injection/02-provider-patterns.md'
+      - '07. Temporal Architecture':
+          - '01. Temporal Overview': '03-platform-architecture/07-temporal-architecture/01-temporal-overview.md'
+          - '02. Workflow Patterns': '03-platform-architecture/07-temporal-architecture/02-workflow-patterns.md'
+      - '08. Redis Architecture':
+          - '01. Redis Overview': '03-platform-architecture/08-redis-architecture/01-redis-overview.md'
+      - '09. Module Group Allocation':
+          - '01. Module Groups': '03-platform-architecture/09-module-group-allocation/01-module-groups.md'
+      - '10. Performance':
+          - '01. Performance Guide': '03-platform-architecture/10-performance/01-performance-guide.md'
+  
+  - '03. Backend Engineering Guide':
+      - '00. Module Development Guide':
+          - '01. Overview':
+              - '01. What This Guide Covers': '04-backend-engineering/00-module-development-guide/01-overview/01-what-this-guide-covers.md'
+              - '02. Guide Conventions': '04-backend-engineering/00-module-development-guide/01-overview/02-guide-conventions.md'
+              - '03. Module Anatomy': '04-backend-engineering/00-module-development-guide/01-overview/02-module-anatomy.md'
+              - '04. Development Sequence': '04-backend-engineering/00-module-development-guide/01-overview/03-development-sequence.md'
+              - '05. MDG Checklist': '04-backend-engineering/00-module-development-guide/01-overview/03-mdg-checklist.md'
+              - '06. Conventions Cheatsheet': '04-backend-engineering/00-module-development-guide/01-overview/04-conventions-cheatsheet.md'
+          - '02. Domain Layer':
+              - '01. Domain Overview': '04-backend-engineering/00-module-development-guide/02-domain-layer/01-domain-overview.md'
+              - '02. State Machine Design': '04-backend-engineering/00-module-development-guide/02-domain-layer/02-state-machine-design.md'
+              - '03. Domain Events': '04-backend-engineering/00-module-development-guide/02-domain-layer/03-domain-events.md'
+              - '04. Domain Errors': '04-backend-engineering/00-module-development-guide/02-domain-layer/04-domain-errors.md'
+          - '03. DDD Domain Design':
+              - '01. Bounded Context': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/01-bounded-context.md'
+              - '02. Entity Design': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/02-entity-design.md'
+              - '03. State Machine': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/03-state-machine.md'
+              - '04. Value Objects': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/04-value-objects.md'
+              - '05. Domain Errors': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/05-domain-errors.md'
+              - '06. Domain Events': '04-backend-engineering/00-module-development-guide/02-ddd-domain-design/06-domain-events.md'
+          - '04. Database Layer':
+              - '01. Database Overview': '04-backend-engineering/00-module-development-guide/03-database-layer/01-database-overview.md'
+              - '02. Migration Cookbook': '04-backend-engineering/00-module-development-guide/03-database-layer/02-migration-cookbook.md'
+          - '05. Database Design':
+              - '01. Schema Overview': '04-backend-engineering/00-module-development-guide/03-database-design/01-schema-overview.md'
+              - '02. Primary Table': '04-backend-engineering/00-module-development-guide/03-database-design/02-primary-table.md'
+              - '03. RLS Policies': '04-backend-engineering/00-module-development-guide/03-database-design/03-rls-policies.md'
+              - '04. Indexes': '04-backend-engineering/00-module-development-guide/03-database-design/04-indexes.md'
+              - '05. Child Tables': '04-backend-engineering/00-module-development-guide/03-database-design/05-child-tables.md'
+              - '06. Views': '04-backend-engineering/00-module-development-guide/03-database-design/06-views.md'
+              - '07. Optimistic Locking': '04-backend-engineering/00-module-development-guide/03-database-design/07-optimistic-locking.md'
+              - '08. Soft Delete': '04-backend-engineering/00-module-development-guide/03-database-design/08-soft-delete.md'
+              - '09. Migration Checklist': '04-backend-engineering/00-module-development-guide/03-database-design/09-migration-checklist.md'
+          - '06. SQLC Layer':
+              - '01. SQLC Overview': '04-backend-engineering/00-module-development-guide/04-sqlc-layer/01-sqlc-overview.md'
+              - '02. SQLC Advanced': '04-backend-engineering/00-module-development-guide/04-sqlc-layer/02-sqlc-advanced.md'
+          - '07. SQLC Queries':
+              - '01. Query Overview': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/01-query-overview.md'
+              - '02. Read Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/02-read-queries.md'
+              - '03. List Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/03-list-queries.md'
+              - '04. Update Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/04-update-queries.md'
+              - '05. Delete Queries': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/05-delete-queries.md'
+              - '06. Complete Query File': '04-backend-engineering/00-module-development-guide/04-sqlc-queries/06-complete-query-file.md'
+          - '08. Repository Layer':
+              - '01. Repository Overview': '04-backend-engineering/00-module-development-guide/05-repository-layer/01-repository-overview.md'
+              - '02. Repository Interface': '04-backend-engineering/00-module-development-guide/05-repository-layer/01-repository-interface.md'
+              - '03. Repository Patterns': '04-backend-engineering/00-module-development-guide/05-repository-layer/02-repository-patterns.md'
+              - '04. SQLC Adapter': '04-backend-engineering/00-module-development-guide/05-repository-layer/02-sqlc-adapter.md'
+              - '05. RLS and Tenant Isolation': '04-backend-engineering/00-module-development-guide/05-repository-layer/02-rls-and-tenant-isolation.md'
+              - '06. With Tenant Pattern': '04-backend-engineering/00-module-development-guide/05-repository-layer/03-with-tenant-pattern.md'
+              - '07. Repository Testing': '04-backend-engineering/00-module-development-guide/05-repository-layer/03-repository-testing.md'
+              - '08. Error Mapping': '04-backend-engineering/00-module-development-guide/05-repository-layer/04-error-mapping.md'
+              - '09. Type Mapping': '04-backend-engineering/00-module-development-guide/05-repository-layer/05-type-mapping.md'
+          - '09. Service Layer':
+              - '01. Service Overview': '04-backend-engineering/00-module-development-guide/06-service-layer/01-service-overview.md'
+              - '02. Service Interface': '04-backend-engineering/00-module-development-guide/06-service-layer/02-service-interface.md'
+              - '03. Service Patterns': '04-backend-engineering/00-module-development-guide/06-service-layer/02-service-patterns.md'
+              - '04. Write Operations': '04-backend-engineering/00-module-development-guide/06-service-layer/03-write-operations.md'
+              - '05. Service Testing': '04-backend-engineering/00-module-development-guide/06-service-layer/03-service-testing.md'
+              - '06. Authorization': '04-backend-engineering/00-module-development-guide/06-service-layer/04-authorization.md'
+              - '07. State Transitions': '04-backend-engineering/00-module-development-guide/06-service-layer/05-state-transitions.md'
+              - '08. Read Operations': '04-backend-engineering/00-module-development-guide/06-service-layer/06-read-operations.md'
+          - '10. Core Integrations':
+              - '01. Core Integrations Overview': '04-backend-engineering/00-module-development-guide/07-core-integrations/01-core-integrations-overview.md'
+              - '02. Tenant Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/01-tenant-integration.md'
+              - '03. IAM Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/02-iam-integration.md'
+              - '04. Settings & Flags': '04-backend-engineering/00-module-development-guide/07-core-integrations/03-settings-flags.md'
+              - '05. Metadata': '04-backend-engineering/00-module-development-guide/07-core-integrations/04-metadata.md'
+              - '06. Audit Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/05-audit-integration.md'
+              - '07. Notification Integration': '04-backend-engineering/00-module-development-guide/07-core-integrations/06-notification-integration.md'
+              - '08. Cross-module Calls': '04-backend-engineering/00-module-development-guide/07-core-integrations/07-cross-module-calls.md'
+          - '11. Handler Layer':
+              - '01. Handler Overview': '04-backend-engineering/00-module-development-guide/07-handler-layer/01-handler-overview.md'
+              - '02. Handler Testing': '04-backend-engineering/00-module-development-guide/07-handler-layer/02-handler-testing.md'
+          - '12. Instrumentation':
+              - '01. Instrumentation Overview': '04-backend-engineering/00-module-development-guide/08-instrumentation/01-instrumentation-overview.md'
+              - '02. Logging': '04-backend-engineering/00-module-development-guide/08-instrumentation/02-logging.md'
+              - '03. Tracing': '04-backend-engineering/00-module-development-guide/08-instrumentation/03-tracing.md'
+              - '04. Metrics': '04-backend-engineering/00-module-development-guide/08-instrumentation/04-metrics.md'
+              - '05. Health and Readiness': '04-backend-engineering/00-module-development-guide/08-instrumentation/05-health-and-readiness.md'
+          - '13. Audit Trail':
+              - '01. Audit Overview': '04-backend-engineering/00-module-development-guide/09-audit-trail/01-audit-overview.md'
+              - '02. Audit Events': '04-backend-engineering/00-module-development-guide/09-audit-trail/02-audit-events.md'
+              - '03. Querying Audit': '04-backend-engineering/00-module-development-guide/09-audit-trail/03-querying-audit.md'
+              - '04. Audit Testing': '04-backend-engineering/00-module-development-guide/09-audit-trail/04-audit-testing.md'
+              - '05. Compliance Notes': '04-backend-engineering/00-module-development-guide/09-audit-trail/05-compliance-notes.md'
+          - '14. Wire Registration':
+              - '01. Wire Registration Overview': '04-backend-engineering/00-module-development-guide/09-wire-registration/01-wire-registration-overview.md'
+          - '15. Notifications':
+              - '01. Notifications Overview': '04-backend-engineering/00-module-development-guide/10-notifications/01-notifications-overview.md'
+              - '02. Notification Types': '04-backend-engineering/00-module-development-guide/10-notifications/02-notification-types.md'
+              - '03. Sending Notifications': '04-backend-engineering/00-module-development-guide/10-notifications/03-sending-notifications.md'
+              - '04. Notification Preferences': '04-backend-engineering/00-module-development-guide/10-notifications/04-notification-preferences.md'
+              - '05. Notification Testing': '04-backend-engineering/00-module-development-guide/10-notifications/05-notification-testing.md'
+              - '06. Notification Channels': '04-backend-engineering/00-module-development-guide/10-notifications/06-notification-channels.md'
+          - '16. Temporal Workflows':
+              - '01. Temporal Overview': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/01-temporal-overview.md'
+              - '02. Workflow Design': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/02-workflow-design.md'
+              - '03. Activity Design': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/03-activity-design.md'
+              - '04. Worker Registration': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/04-worker-registration.md'
+              - '05. Workflow Testing': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/05-workflow-testing.md'
+              - '06. Error Handling': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/06-error-handling.md'
+              - '07. Workflow Checklist': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/07-workflow-checklist.md'
+              - '08. Workflow Patterns Reference': '04-backend-engineering/00-module-development-guide/11-temporal-workflows/08-workflow-patterns-reference.md'
+          - '17. Pipeline Integration':
+              - '01. Pipeline Overview': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/01-pipeline-overview.md'
+              - '02. Pipeline Design': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/02-pipeline-design.md'
+              - '03. Import Pipeline': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/03-import-pipeline.md'
+              - '04. Export Pipeline': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/04-export-pipeline.md'
+              - '05. Pipeline Testing': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/05-pipeline-testing.md'
+              - '06. Pipeline Patterns Reference': '04-backend-engineering/00-module-development-guide/12-pipeline-integration/06-pipeline-patterns-reference.md'
+          - '18. Event-Driven':
+              - '01. Event-Driven Overview': '04-backend-engineering/00-module-development-guide/13-event-driven/01-event-driven-overview.md'
+              - '02. Event Bus': '04-backend-engineering/00-module-development-guide/13-event-driven/02-event-bus.md'
+              - '03. Publishing Events': '04-backend-engineering/00-module-development-guide/13-event-driven/03-publishing-events.md'
+              - '04. Consuming Events': '04-backend-engineering/00-module-development-guide/13-event-driven/04-consuming-events.md'
+              - '05. Event Testing': '04-backend-engineering/00-module-development-guide/13-event-driven/05-event-testing.md'
+              - '06. Event Patterns Reference': '04-backend-engineering/00-module-development-guide/13-event-driven/06-event-patterns-reference.md'
+          - '19. API Design':
+              - '01. API Design Overview': '04-backend-engineering/00-module-development-guide/14-api-design/01-api-design-overview.md'
+              - '02. URL Conventions': '04-backend-engineering/00-module-development-guide/14-api-design/02-url-conventions.md'
+              - '03. Request-Response': '04-backend-engineering/00-module-development-guide/14-api-design/03-request-response.md'
+              - '04. Pagination': '04-backend-engineering/00-module-development-guide/14-api-design/04-pagination.md'
+              - '05. Versioning': '04-backend-engineering/00-module-development-guide/14-api-design/05-versioning.md'
+              - '06. API Design Checklist': '04-backend-engineering/00-module-development-guide/14-api-design/06-api-design-checklist.md'
+          - '20. Fiber Handlers':
+              - '01. Handler Overview': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/01-handler-overview.md'
+              - '02. Handler Struct': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/02-handler-struct.md'
+              - '03. Request DTOs': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/03-request-dtos.md'
+              - '04. Response DTOs': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/04-response-dtos.md'
+              - '05. Routes': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/05-routes.md'
+              - '06. Error Handling': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/06-error-handling.md'
+              - '07. Handler Testing': '04-backend-engineering/00-module-development-guide/15-fiber-handlers/07-handler-testing.md'
+          - '21. Middleware Chain':
+              - '01. Middleware Overview': '04-backend-engineering/00-module-development-guide/16-middleware-chain/01-middleware-overview.md'
+              - '02. Auth Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/02-auth-middleware.md'
+              - '03. Authz Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/03-authz-middleware.md'
+              - '04. Request ID Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/04-request-id-middleware.md'
+              - '05. Rate Limiting': '04-backend-engineering/00-module-development-guide/16-middleware-chain/05-rate-limiting.md'
+              - '06. Tenant Context Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/06-tenant-context-middleware.md'
+              - '07. Middleware Testing': '04-backend-engineering/00-module-development-guide/16-middleware-chain/07-middleware-testing.md'
+              - '08. CORS Middleware': '04-backend-engineering/00-module-development-guide/16-middleware-chain/08-cors-middleware.md'
+              - '09. Middleware Reference': '04-backend-engineering/00-module-development-guide/16-middleware-chain/09-middleware-reference.md'
+          - '22. Error Handling':
+              - '01. Error Handling Overview': '04-backend-engineering/00-module-development-guide/17-error-handling/01-error-handling-overview.md'
+              - '02. Error Catalog': '04-backend-engineering/00-module-development-guide/17-error-handling/02-error-catalog.md'
+          - '23. UI Schema':
+              - '01. UI Schema Overview': '04-backend-engineering/00-module-development-guide/17-ui-schema/01-ui-schema-overview.md'
+          - '24. Testing':
+              - '01. Testing Overview': '04-backend-engineering/00-module-development-guide/18-testing/01-testing-overview.md'
+              - '02. Integration Test Setup': '04-backend-engineering/00-module-development-guide/18-testing/02-integration-test-setup.md'
+          - '25. Flutter Mobile':
+              - '01. Flutter Overview': '04-backend-engineering/00-module-development-guide/19-flutter-mobile/01-flutter-overview.md'
+          - '26. Observability':
+              - '01. Observability Guide': '04-backend-engineering/00-module-development-guide/19-observability/01-observability-guide.md'
+              - '02. Structured Logging Guide': '04-backend-engineering/00-module-development-guide/19-observability/02-structured-logging-guide.md'
+          - '27. AMIS Web Schemas':
+              - '01. AMIS Schemas Overview': '04-backend-engineering/00-module-development-guide/20-amis-web-schemas/01-amis-schemas-overview.md'
+          - '28. Configuration':
+              - '01. Configuration Overview': '04-backend-engineering/00-module-development-guide/20-configuration/01-configuration-overview.md'
+          - '29. Wire Registration':
+              - '01. Wire Overview': '04-backend-engineering/00-module-development-guide/20-wire-registration/01-wire-overview.md'
+              - '02. Module Facade': '04-backend-engineering/00-module-development-guide/20-wire-registration/02-module-facade.md'
+              - '03. Provider Sets': '04-backend-engineering/00-module-development-guide/20-wire-registration/03-provider-sets.md'
+              - '04. Application Wire': '04-backend-engineering/00-module-development-guide/20-wire-registration/04-application-wire.md'
+              - '05. Wire Troubleshooting': '04-backend-engineering/00-module-development-guide/20-wire-registration/05-wire-troubleshooting.md'
+          - '30. Server Startup':
+              - '01. Server Startup Overview': '04-backend-engineering/00-module-development-guide/21-server-startup/01-server-startup-overview.md'
+              - '02. Wire App': '04-backend-engineering/00-module-development-guide/21-server-startup/02-wire-app.md'
+              - '03. Startup Sequence': '04-backend-engineering/00-module-development-guide/21-server-startup/03-startup-sequence.md'
+              - '04. Health Checks': '04-backend-engineering/00-module-development-guide/21-server-startup/04-health-checks.md'
+              - '05. Database Setup': '04-backend-engineering/00-module-development-guide/21-server-startup/05-database-setup.md'
+              - '06. Startup Checklist': '04-backend-engineering/00-module-development-guide/21-server-startup/06-startup-checklist.md'
+              - '07. Graceful Shutdown': '04-backend-engineering/00-module-development-guide/21-server-startup/07-graceful-shutdown.md'
+          - '31. Deployment Checklist':
+              - '01. Deployment Checklist': '04-backend-engineering/00-module-development-guide/22-deployment-checklist/01-deployment-checklist.md'
+          - '32. Testing Guide':
+              - '01. Testing Overview': '04-backend-engineering/00-module-development-guide/22-testing-guide/01-testing-overview.md'
+              - '02. Domain Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/02-domain-tests.md'
+              - '03. Repository Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/03-repository-tests.md'
+              - '04. Service Tests': '04-backend-engineering/00-module-development-guide/22-testing-guide/04-service-tests.md'
+              - '05. Test Coverage': '04-backend-engineering/00-module-development-guide/22-testing-guide/05-test-coverage.md'
+              - '06. Test Helpers': '04-backend-engineering/00-module-development-guide/22-testing-guide/06-test-helpers.md'
+          - '33. Worked Example':
+              - '01. Worked Example Overview': '04-backend-engineering/00-module-development-guide/23-worked-example/01-worked-example-overview.md'
+              - '02. Domain Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/02-domain-layer.md'
+              - '03. Database Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/03-database-layer.md'
+              - '04. SQLC Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/04-sqlc-layer.md'
+              - '05. Repository Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/05-repository-layer.md'
+              - '06. Service Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/06-service-layer.md'
+              - '07. Handler Layer': '04-backend-engineering/00-module-development-guide/23-worked-example/07-handler-layer.md'
+              - '08. Wire Registration': '04-backend-engineering/00-module-development-guide/23-worked-example/08-wire-registration.md'
+              - '09. Tests': '04-backend-engineering/00-module-development-guide/23-worked-example/09-tests.md'
+              - '10. Launch Checklist': '04-backend-engineering/00-module-development-guide/23-worked-example/10-launch-checklist.md'
+  
+  - '04. Frontend Engineering':
+      - '01. Frontend Overview': '05-frontend-engineering/01-frontend-overview.md'
+      - '02. Web UI Architecture':
+          - '01. Web UI Overview': '05-frontend-engineering/01-web-ui-architecture/01-web-ui-overview.md'
+      - '03. AMIS Schema Guide': '05-frontend-engineering/02-amis-schema-guide.md'
+      - '04. AMIS Schemas':
+          - '01. AMIS Schema Overview': '05-frontend-engineering/02-amis-schemas/01-amis-schema-overview.md'
+          - '02. CRUD Patterns': '05-frontend-engineering/02-amis-schemas/02-crud-patterns.md'
+          - '03. Form Patterns': '05-frontend-engineering/02-amis-schemas/03-form-patterns.md'
+          - '04. Detail Patterns': '05-frontend-engineering/02-amis-schemas/04-detail-patterns.md'
+          - '05. Dashboard Patterns': '05-frontend-engineering/02-amis-schemas/05-dashboard-patterns.md'
+      - '05. Dark Theme Guide': '05-frontend-engineering/03-dark-theme-guide.md'
+      - '06. Theming':
+          - '01. Dark Mode': '05-frontend-engineering/03-theming/01-dark-mode.md'
+      - '07. Component Patterns': '05-frontend-engineering/04-component-patterns.md'
+      - '08. Schema Conventions': '05-frontend-engineering/05-schema-conventions.md'
+      - '09. Mobile Considerations': '05-frontend-engineering/06-mobile-considerations.md'
+  
+  - '05. DevOps':
+      - '01. DevOps Overview': '06-devops/01-devops-overview.md'
+      - '02. Environment Variables': '06-devops/02-environment-variables.md'
+      - '03. Kubernetes Deployment': '06-devops/03-kubernetes-deployment.md'
+      - '04. CI/CD Pipeline': '06-devops/04-cicd-pipeline.md'
+      - '05. Local Development': '06-devops/05-local-development.md'
+      - '06. Monitoring': '06-devops/06-monitoring.md'
+  
+  - '06. Security':
+      - '01. Security Overview': '07-security/01-security-overview.md'
+      - '02. Authentication Flows': '07-security/02-authentication-flows.md'
+      - '03. Authorization Guide': '07-security/03-authorization-guide.md'
+      - '04. Data Security': '07-security/04-data-security.md'
+      - '05. Incident Response': '07-security/05-incident-response.md'
+  
+  - '07. API Reference':
+      - '01. API Reference Overview': '08-api-reference/01-api-reference-overview.md'
+      - '02. Authentication': '08-api-reference/02-authentication.md'
+      - '03. Contracts API': '08-api-reference/03-contracts-api.md'
+      - '04. Finance API': '08-api-reference/04-finance-api.md'
+      - '05. Tenants API': '08-api-reference/04-tenants-api.md'
+      - '06. Entities API': '08-api-reference/05-entities-api.md'
+      - '07. IAM API': '08-api-reference/05-iam-api.md'
+      - '08. Tenant API': '08-api-reference/06-tenant-api.md'
+  
+  - '08. Operations':
+      - '01. Operations Overview': '09-operations/01-operations-overview.md'
+      - '02. Runbook Overview': '09-operations/01-runbook-overview.md'
+      - '03. Service Down': '09-operations/02-service-down.md'
+      - '04. Database Issues': '09-operations/03-database-issues.md'
+      - '05. High Error Rate': '09-operations/04-high-error-rate.md'
+      - '06. Migration Failure': '09-operations/05-migration-failure.md'
+      - '07. Temporal Worker': '09-operations/06-temporal-worker.md'
+      - '08. Event Outbox': '09-operations/07-event-outbox.md'
+  
+  - '09. Performance':
+      - '01. Performance Optimization Plan': 'performance-optimization-plan.md'
+      - '02. Pipeline Architecture': 'pipeline_arch.md'

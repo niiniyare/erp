@@ -17,6 +17,7 @@ import (
 	"awo.so/internal/api/handlers"
 	"awo.so/internal/api/middleware"
 	"awo.so/internal/core/audit"
+	"awo.so/internal/core/contracts"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/iam"
 	"awo.so/internal/core/tenant"
@@ -257,6 +258,7 @@ func NewHandlerDependencies(
 	userSvc iam.UserService,
 	sessionSvc iam.SessionService,
 	financeServices *financeService.Services,
+	contractSvc contracts.Service,
 	tenantMiddleware fiber.Handler,
 	securityMgr *middleware.RouteSecurityManager,
 	auditSvc audit.Service,
@@ -273,6 +275,7 @@ func NewHandlerDependencies(
 		TenantService:    tenantService,
 		UserService:      userSvc,
 		FinanceServices:  financeServices,
+		ContractService:  contractSvc,
 		TenantMiddleware: tenantMiddleware,
 		SecurityManager:  securityMgr,
 		SessionService:   sessionSvc,

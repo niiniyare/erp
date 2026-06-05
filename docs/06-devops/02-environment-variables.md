@@ -5,8 +5,7 @@ section: 06-devops
 audience: [devops, sre, backend-engineer]
 related:
   - "[DevOps Overview](01-devops-overview.md)"
-  - "[Startup Sequence](../04-backend-engineering/00-module-development-guide/21-server-startup/03-startup-sequence.md)"
-  - "[Database Setup](../04-backend-engineering/00-module-development-guide/21-server-startup/05-database-setup.md)"
+  - "[Server Startup](../04-backend-engineering/00-module-development-guide/21-server-startup/01-server-startup-overview.md)"
 ---
 
 # Environment Variables Reference

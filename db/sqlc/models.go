@@ -336,6 +336,32 @@ type ConfigurationTemplate struct {
 	CreatedBy uuid.UUID `json:"created_by"`
 }
 
+type Contract struct {
+	ID                uuid.UUID      `json:"id"`
+	TenantID          uuid.UUID      `json:"tenant_id"`
+	EntityID          uuid.UUID      `json:"entity_id"`
+	Number            string         `json:"number"`
+	Title             string         `json:"title"`
+	Status            string         `json:"status"`
+	ContractType      string         `json:"contract_type"`
+	CounterpartyName  string         `json:"counterparty_name"`
+	CounterpartyEmail *string        `json:"counterparty_email"`
+	StartDate         time.Time      `json:"start_date"`
+	EndDate           time.Time      `json:"end_date"`
+	Value             pgtype.Numeric `json:"value"`
+	CurrencyCode      string         `json:"currency_code"`
+	Description       *string        `json:"description"`
+	Terms             *string        `json:"terms"`
+	SignedBy          *uuid.UUID     `json:"signed_by"`
+	SignedAt          sql.NullTime   `json:"signed_at"`
+	Metadata          []byte         `json:"metadata"`
+	Version           int32          `json:"version"`
+	CreatedBy         *uuid.UUID     `json:"created_by"`
+	CreatedAt         time.Time      `json:"created_at"`
+	UpdatedAt         time.Time      `json:"updated_at"`
+	DeletedAt         sql.NullTime   `json:"deleted_at"`
+}
+
 // Employee records extending persons with employment-specific data, organizational hierarchy, and security levels for access control.
 type Employee struct {
 	// UUID primary key for the employee record.

@@ -89,7 +89,7 @@ func (s *slogLogger) WithContext(ctx context.Context) Logger {
 
 func (s *slogLogger) SetLevel(level LogLevel) {
 	s.level = level
-	// Note: slog level is set at handler creation, can't be changed dynamically
+	// NOTE: slog level is set at handler creation, can't be changed dynamically
 }
 
 func (s *slogLogger) Close() error {

@@ -8,6 +8,7 @@ import (
 
 	auditHandler "awo.so/internal/api/handlers/audit"
 	authHandler "awo.so/internal/api/handlers/auth"
+	contractHandler "awo.so/internal/api/handlers/contracts"
 	financeHandler "awo.so/internal/api/handlers/finance"
 	"awo.so/internal/api/handlers/health"
 	schemaHandler "awo.so/internal/api/handlers/schema"
@@ -21,6 +22,7 @@ import (
 	userHandler "awo.so/internal/api/handlers/user"
 	middlewarePkg "awo.so/internal/api/middleware"
 	"awo.so/internal/core/audit"
+	"awo.so/internal/core/contracts"
 	"awo.so/internal/core/entity"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/iam"
@@ -227,6 +229,10 @@ type Dependencies struct {
 	// Optional — audit routes are skipped when nil.
 	AuditService audit.Service
 
+	// ContractService enables contract lifecycle endpoints.
+	// Optional — contract routes are skipped when nil.
+	ContractService contracts.Service
+
 	// TemporalClient enables async workflow endpoints (e.g. tenant onboarding).
 	// Optional — workflow-backed routes gracefully return 503 when nil.
 	TemporalClient temporalclient.Client
@@ -344,6 +350,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		{ModuleUser, r.registerUserAPI},
 		{"entity", r.registerEntityAPI},
 		{ModuleFinance, r.registerFinanceAPI},
+		{"contracts", r.registerContractsAPI},
 		{"schema", r.registerSchemaAPI},
 		{"audit", r.registerAuditAPI},
 	}
@@ -764,6 +771,35 @@ func (r *Router) registerAuditAPI(apiRouter fiber.Router) error {
 	auditGroup.Get("/", auditHandler.ListAuditEventsHandler(r.deps.AuditService, auditAuthzSvc))
 
 	r.deps.Logger.Info("registered audit API endpoints")
+	return nil
+}
+
+// registerContractsAPI registers contract lifecycle API routes.
+// Requires authenticate + tenant middleware; Casbin authorization is enforced
+// by the IAM middleware chain before any handler runs.
+func (r *Router) registerContractsAPI(apiRouter fiber.Router) error {
+	if r.deps.ContractService == nil {
+		r.deps.Logger.Warn("ContractService not configured, skipping contracts route registration")
+		return nil
+	}
+
+	handler := contractHandler.New(
+		r.deps.ContractService,
+		r.deps.Logger,
+		r.deps.Metrics,
+		r.deps.Tracer,
+	)
+
+	contractsGroup := apiRouter.Group("/v1")
+	contractsGroup.Use(r.authenticateMiddleware())
+	if r.deps.TenantMiddleware != nil {
+		contractsGroup.Use(r.deps.TenantMiddleware)
+	}
+
+	// Delegates full route registration to the handler (CRUD + transitions).
+	handler.Routes(contractsGroup)
+
+	r.deps.Logger.Info("registered contracts API endpoints")
 	return nil
 }
 

@@ -50,6 +50,7 @@ func InitializeApplication() (*Application, error) {
 	v4 := wire.NewSessionRepository(store, cacheService, service, metricsProvider)
 	v5 := wire.NewSessionService(v3, v4, service, metricsProvider, logger, configConfig)
 	services := wire.NewFinanceServices(store, cacheService, logger, metricsProvider, service)
+	contractsService := wire.NewContractService(store, cacheService, service, logger)
 	tenantMiddlewareConfig := wire.NewTenantMiddlewareConfig(tenantService, store)
 	v6 := wire.NewTenantMiddleware(tenantMiddlewareConfig)
 	routeSecurityManager := wire.NewRouteSecurityManager(logger, metricsProvider, service)
@@ -63,7 +64,7 @@ func InitializeApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v3, v5, services, v6, routeSecurityManager, auditService, v8, v10, client, store)
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v3, v5, services, contractsService, v6, routeSecurityManager, auditService, v8, v10, client, store)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err

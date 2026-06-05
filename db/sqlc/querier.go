@@ -56,6 +56,7 @@ type Querier interface {
 	// Policy Evaluations CRUD Operations and Cache Management for ABAC
 	CacheEvaluationResult(ctx context.Context, arg CacheEvaluationResultParams) error
 	CheckCircularReference(ctx context.Context, arg CheckCircularReferenceParams) (bool, error)
+	CheckContractNumberExists(ctx context.Context, number string) (bool, error)
 	// =====================================================
 	// UTILITY QUERIES
 	// =====================================================
@@ -94,6 +95,7 @@ type Querier interface {
 	CountActionsByRiskLevel(ctx context.Context, tenantID *uuid.UUID) ([]*CountActionsByRiskLevelRow, error)
 	CountActiveSessionsByUser(ctx context.Context, userID uuid.UUID) (int64, error)
 	CountAttributeDefinitions(ctx context.Context, arg CountAttributeDefinitionsParams) (int64, error)
+	CountContracts(ctx context.Context, arg CountContractsParams) (int64, error)
 	CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error)
 	CountEntityStatesByEntity(ctx context.Context, entityID uuid.UUID) (int64, error)
 	CountEntityStatesByKey(ctx context.Context, key string) (int64, error)
@@ -154,6 +156,10 @@ type Querier interface {
 	// Configuration Templates Queries
 	// ==========================================
 	CreateConfigurationTemplate(ctx context.Context, arg CreateConfigurationTemplateParams) (*ConfigurationTemplate, error)
+	// =====================================================
+	// CONTRACT QUERIES (RLS-aware: current_tenant_id())
+	// =====================================================
+	CreateContract(ctx context.Context, arg CreateContractParams) (*Contract, error)
 	CreateDefaultTenantConfiguration(ctx context.Context) error
 	CreateEmployee(ctx context.Context, arg CreateEmployeeParams) (*Employee, error)
 	// Entity CRUD Operations
@@ -481,6 +487,9 @@ type Querier interface {
 	GetConfigurationAuditByCorrelation(ctx context.Context, correlationID *string) ([]*ConfigurationAudit, error)
 	GetConfigurationHistory(ctx context.Context, arg GetConfigurationHistoryParams) ([]*ConfigurationAudit, error)
 	GetConfigurationTemplate(ctx context.Context, templateID uuid.UUID) (*ConfigurationTemplate, error)
+	GetContractByID(ctx context.Context, id uuid.UUID) (*Contract, error)
+	GetContractByIDForUpdate(ctx context.Context, id uuid.UUID) (*Contract, error)
+	GetContractByNumber(ctx context.Context, number string) (*Contract, error)
 	GetControlAccounts(ctx context.Context, entityID *uuid.UUID) ([]*FinanceAccount, error)
 	//=====================================================
 	// CURRENT TENANT QUERIES (RLS-Aware)
@@ -1046,6 +1055,7 @@ type Querier interface {
 	ListConfigDefinitions(ctx context.Context, moduleName *string) ([]*ConfigDefinition, error)
 	// Returns SYSTEM templates + current tenant's TENANT templates (RLS enforces the TENANT filter).
 	ListConfigurationTemplates(ctx context.Context, arg ListConfigurationTemplatesParams) ([]*ConfigurationTemplate, error)
+	ListContracts(ctx context.Context, arg ListContractsParams) ([]*Contract, error)
 	// ============================================================
 	// NAV QUERY — powers BootService.BuildAppShell
 	// Returns only modules+resources that are enabled for the tenant
@@ -1196,6 +1206,7 @@ type Querier interface {
 	// Soft delete account group with proper tenant/entity isolation
 	SoftDeleteAccountGroup(ctx context.Context, arg SoftDeleteAccountGroupParams) error
 	SoftDeleteAttributeDefinition(ctx context.Context, id uuid.UUID) error
+	SoftDeleteContract(ctx context.Context, id uuid.UUID) error
 	SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeleteEntityState(ctx context.Context, argUuid uuid.UUID) error
 	SoftDeletePolicy(ctx context.Context, id uuid.UUID) error
@@ -1226,6 +1237,7 @@ type Querier interface {
 	UpdateConfigDefinition(ctx context.Context, arg UpdateConfigDefinitionParams) (*ConfigDefinition, error)
 	// TENANT before SYSTEM so tenant customisations appear first
 	UpdateConfigurationTemplate(ctx context.Context, arg UpdateConfigurationTemplateParams) (*ConfigurationTemplate, error)
+	UpdateContract(ctx context.Context, arg UpdateContractParams) (*Contract, error)
 	UpdateCurrentTenant(ctx context.Context, arg UpdateCurrentTenantParams) (*Tenant, error)
 	UpdateDefaultSettings(ctx context.Context, settings []byte) error
 	UpdateEntity(ctx context.Context, arg UpdateEntityParams) (*Entity, error)

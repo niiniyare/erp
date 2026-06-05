@@ -69,6 +69,9 @@ var CoreServiceProviderSet = wire.NewSet(
 
 	// Finance services
 	NewFinanceServices,
+
+	// Contracts service
+	NewContractService,
 )
 
 // ============================================================================

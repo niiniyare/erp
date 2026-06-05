@@ -5,7 +5,7 @@ section: 04-backend-engineering
 audience: [backend-engineer, tech-lead]
 related:
   - "[MDG Quick Checklist](../01-overview/03-mdg-checklist.md)"
-  - "[Deployment Checklist](../22-deployment-checklist/01-deployment-checklist.md)"
+  - "[MDG Testing Overview](../18-testing/01-testing-overview.md)"
   - "[Worked Example Overview](01-worked-example-overview.md)"
 ---
 

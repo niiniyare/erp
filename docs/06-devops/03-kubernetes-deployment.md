@@ -6,7 +6,7 @@ audience: [devops, sre]
 related:
   - "[DevOps Overview](01-devops-overview.md)"
   - "[Environment Variables](02-environment-variables.md)"
-  - "[Health Checks](../04-backend-engineering/00-module-development-guide/21-server-startup/04-health-checks.md)"
+  - "[Server Startup](../04-backend-engineering/00-module-development-guide/21-server-startup/01-server-startup-overview.md)"
 ---
 
 # Kubernetes Deployment Guide

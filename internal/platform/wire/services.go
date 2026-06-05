@@ -10,6 +10,7 @@ import (
 	"awo.so/internal/shared/tracing"
 
 	// Core services
+	"awo.so/internal/core/contracts"
 	financeRepo "awo.so/internal/core/finance/repository"
 	financeService "awo.so/internal/core/finance/service"
 	"awo.so/internal/core/tenant"
@@ -31,6 +32,25 @@ func NewTenantService(
 	return tenant.NewService(tenant.Dependencies{
 		Store:  store,
 		Cache:  cache,
+		Tracer: tracer,
+		Logger: log,
+	})
+}
+
+// ============================================================================
+// CONTRACTS SERVICE
+// ============================================================================
+
+// NewContractService wires the contracts service with its repository and cache.
+func NewContractService(
+	store db.Store,
+	cacheSvc cache.Service,
+	tracer tracing.Service,
+	log logger.Logger,
+) contracts.Service {
+	return contracts.NewService(contracts.Dependencies{
+		Store:  store,
+		Cache:  cacheSvc,
 		Tracer: tracer,
 		Logger: log,
 	})

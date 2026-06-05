@@ -408,6 +408,21 @@ func (mr *MockStoreMockRecorder) CheckCircularReference(ctx, arg any) *gomock.Ca
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCircularReference", reflect.TypeOf((*MockStore)(nil).CheckCircularReference), ctx, arg)
 }
 
+// CheckContractNumberExists mocks base method.
+func (m *MockStore) CheckContractNumberExists(ctx context.Context, number string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckContractNumberExists", ctx, number)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckContractNumberExists indicates an expected call of CheckContractNumberExists.
+func (mr *MockStoreMockRecorder) CheckContractNumberExists(ctx, number any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckContractNumberExists", reflect.TypeOf((*MockStore)(nil).CheckContractNumberExists), ctx, number)
+}
+
 // CheckCurrentTenantExists mocks base method.
 func (m *MockStore) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
@@ -791,6 +806,21 @@ func (mr *MockStoreMockRecorder) CountAttributeDefinitions(ctx, arg any) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountAttributeDefinitions", reflect.TypeOf((*MockStore)(nil).CountAttributeDefinitions), ctx, arg)
 }
 
+// CountContracts mocks base method.
+func (m *MockStore) CountContracts(ctx context.Context, arg CountContractsParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountContracts", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountContracts indicates an expected call of CountContracts.
+func (mr *MockStoreMockRecorder) CountContracts(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountContracts", reflect.TypeOf((*MockStore)(nil).CountContracts), ctx, arg)
+}
+
 // CountEntitiesWithFilters mocks base method.
 func (m *MockStore) CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -1134,6 +1164,21 @@ func (m *MockStore) CreateConfigurationTemplate(ctx context.Context, arg CreateC
 func (mr *MockStoreMockRecorder) CreateConfigurationTemplate(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).CreateConfigurationTemplate), ctx, arg)
+}
+
+// CreateContract mocks base method.
+func (m *MockStore) CreateContract(ctx context.Context, arg CreateContractParams) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateContract", ctx, arg)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateContract indicates an expected call of CreateContract.
+func (mr *MockStoreMockRecorder) CreateContract(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContract", reflect.TypeOf((*MockStore)(nil).CreateContract), ctx, arg)
 }
 
 // CreateDefaultTenantConfiguration mocks base method.
@@ -3131,6 +3176,51 @@ func (m *MockStore) GetConfigurationTemplate(ctx context.Context, templateID uui
 func (mr *MockStoreMockRecorder) GetConfigurationTemplate(ctx, templateID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).GetConfigurationTemplate), ctx, templateID)
+}
+
+// GetContractByID mocks base method.
+func (m *MockStore) GetContractByID(ctx context.Context, id uuid.UUID) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByID", ctx, id)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByID indicates an expected call of GetContractByID.
+func (mr *MockStoreMockRecorder) GetContractByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByID", reflect.TypeOf((*MockStore)(nil).GetContractByID), ctx, id)
+}
+
+// GetContractByIDForUpdate mocks base method.
+func (m *MockStore) GetContractByIDForUpdate(ctx context.Context, id uuid.UUID) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByIDForUpdate", ctx, id)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByIDForUpdate indicates an expected call of GetContractByIDForUpdate.
+func (mr *MockStoreMockRecorder) GetContractByIDForUpdate(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByIDForUpdate", reflect.TypeOf((*MockStore)(nil).GetContractByIDForUpdate), ctx, id)
+}
+
+// GetContractByNumber mocks base method.
+func (m *MockStore) GetContractByNumber(ctx context.Context, number string) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByNumber", ctx, number)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByNumber indicates an expected call of GetContractByNumber.
+func (mr *MockStoreMockRecorder) GetContractByNumber(ctx, number any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByNumber", reflect.TypeOf((*MockStore)(nil).GetContractByNumber), ctx, number)
 }
 
 // GetControlAccounts mocks base method.
@@ -6793,6 +6883,21 @@ func (mr *MockStoreMockRecorder) ListConfigurationTemplates(ctx, arg any) *gomoc
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigurationTemplates", reflect.TypeOf((*MockStore)(nil).ListConfigurationTemplates), ctx, arg)
 }
 
+// ListContracts mocks base method.
+func (m *MockStore) ListContracts(ctx context.Context, arg ListContractsParams) ([]*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListContracts", ctx, arg)
+	ret0, _ := ret[0].([]*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListContracts indicates an expected call of ListContracts.
+func (mr *MockStoreMockRecorder) ListContracts(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContracts", reflect.TypeOf((*MockStore)(nil).ListContracts), ctx, arg)
+}
+
 // ListEnabledModulesWithResources mocks base method.
 func (m *MockStore) ListEnabledModulesWithResources(ctx context.Context, tenantID uuid.UUID) ([]*ListEnabledModulesWithResourcesRow, error) {
 	m.ctrl.T.Helper()
@@ -7941,6 +8046,20 @@ func (mr *MockStoreMockRecorder) SoftDeleteAttributeDefinition(ctx, id any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteAttributeDefinition", reflect.TypeOf((*MockStore)(nil).SoftDeleteAttributeDefinition), ctx, id)
 }
 
+// SoftDeleteContract mocks base method.
+func (m *MockStore) SoftDeleteContract(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SoftDeleteContract", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SoftDeleteContract indicates an expected call of SoftDeleteContract.
+func (mr *MockStoreMockRecorder) SoftDeleteContract(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteContract", reflect.TypeOf((*MockStore)(nil).SoftDeleteContract), ctx, id)
+}
+
 // SoftDeleteEntity mocks base method.
 func (m *MockStore) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -8244,6 +8363,21 @@ func (m *MockStore) UpdateConfigurationTemplate(ctx context.Context, arg UpdateC
 func (mr *MockStoreMockRecorder) UpdateConfigurationTemplate(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationTemplate", reflect.TypeOf((*MockStore)(nil).UpdateConfigurationTemplate), ctx, arg)
+}
+
+// UpdateContract mocks base method.
+func (m *MockStore) UpdateContract(ctx context.Context, arg UpdateContractParams) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateContract", ctx, arg)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateContract indicates an expected call of UpdateContract.
+func (mr *MockStoreMockRecorder) UpdateContract(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContract", reflect.TypeOf((*MockStore)(nil).UpdateContract), ctx, arg)
 }
 
 // UpdateCurrentTenant mocks base method.
@@ -9593,6 +9727,21 @@ func (mr *MockTxStoreMockRecorder) CheckCircularReference(ctx, arg any) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckCircularReference", reflect.TypeOf((*MockTxStore)(nil).CheckCircularReference), ctx, arg)
 }
 
+// CheckContractNumberExists mocks base method.
+func (m *MockTxStore) CheckContractNumberExists(ctx context.Context, number string) (bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CheckContractNumberExists", ctx, number)
+	ret0, _ := ret[0].(bool)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckContractNumberExists indicates an expected call of CheckContractNumberExists.
+func (mr *MockTxStoreMockRecorder) CheckContractNumberExists(ctx, number any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckContractNumberExists", reflect.TypeOf((*MockTxStore)(nil).CheckContractNumberExists), ctx, number)
+}
+
 // CheckCurrentTenantExists mocks base method.
 func (m *MockTxStore) CheckCurrentTenantExists(ctx context.Context) (bool, error) {
 	m.ctrl.T.Helper()
@@ -9990,6 +10139,21 @@ func (mr *MockTxStoreMockRecorder) CountAttributeDefinitions(ctx, arg any) *gomo
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountAttributeDefinitions", reflect.TypeOf((*MockTxStore)(nil).CountAttributeDefinitions), ctx, arg)
 }
 
+// CountContracts mocks base method.
+func (m *MockTxStore) CountContracts(ctx context.Context, arg CountContractsParams) (int64, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CountContracts", ctx, arg)
+	ret0, _ := ret[0].(int64)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CountContracts indicates an expected call of CountContracts.
+func (mr *MockTxStoreMockRecorder) CountContracts(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CountContracts", reflect.TypeOf((*MockTxStore)(nil).CountContracts), ctx, arg)
+}
+
 // CountEntitiesWithFilters mocks base method.
 func (m *MockTxStore) CountEntitiesWithFilters(ctx context.Context, arg CountEntitiesWithFiltersParams) (int64, error) {
 	m.ctrl.T.Helper()
@@ -10333,6 +10497,21 @@ func (m *MockTxStore) CreateConfigurationTemplate(ctx context.Context, arg Creat
 func (mr *MockTxStoreMockRecorder) CreateConfigurationTemplate(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).CreateConfigurationTemplate), ctx, arg)
+}
+
+// CreateContract mocks base method.
+func (m *MockTxStore) CreateContract(ctx context.Context, arg CreateContractParams) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CreateContract", ctx, arg)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CreateContract indicates an expected call of CreateContract.
+func (mr *MockTxStoreMockRecorder) CreateContract(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CreateContract", reflect.TypeOf((*MockTxStore)(nil).CreateContract), ctx, arg)
 }
 
 // CreateDefaultTenantConfiguration mocks base method.
@@ -12330,6 +12509,51 @@ func (m *MockTxStore) GetConfigurationTemplate(ctx context.Context, templateID u
 func (mr *MockTxStoreMockRecorder) GetConfigurationTemplate(ctx, templateID any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).GetConfigurationTemplate), ctx, templateID)
+}
+
+// GetContractByID mocks base method.
+func (m *MockTxStore) GetContractByID(ctx context.Context, id uuid.UUID) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByID", ctx, id)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByID indicates an expected call of GetContractByID.
+func (mr *MockTxStoreMockRecorder) GetContractByID(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByID", reflect.TypeOf((*MockTxStore)(nil).GetContractByID), ctx, id)
+}
+
+// GetContractByIDForUpdate mocks base method.
+func (m *MockTxStore) GetContractByIDForUpdate(ctx context.Context, id uuid.UUID) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByIDForUpdate", ctx, id)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByIDForUpdate indicates an expected call of GetContractByIDForUpdate.
+func (mr *MockTxStoreMockRecorder) GetContractByIDForUpdate(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByIDForUpdate", reflect.TypeOf((*MockTxStore)(nil).GetContractByIDForUpdate), ctx, id)
+}
+
+// GetContractByNumber mocks base method.
+func (m *MockTxStore) GetContractByNumber(ctx context.Context, number string) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetContractByNumber", ctx, number)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetContractByNumber indicates an expected call of GetContractByNumber.
+func (mr *MockTxStoreMockRecorder) GetContractByNumber(ctx, number any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetContractByNumber", reflect.TypeOf((*MockTxStore)(nil).GetContractByNumber), ctx, number)
 }
 
 // GetControlAccounts mocks base method.
@@ -16006,6 +16230,21 @@ func (mr *MockTxStoreMockRecorder) ListConfigurationTemplates(ctx, arg any) *gom
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListConfigurationTemplates", reflect.TypeOf((*MockTxStore)(nil).ListConfigurationTemplates), ctx, arg)
 }
 
+// ListContracts mocks base method.
+func (m *MockTxStore) ListContracts(ctx context.Context, arg ListContractsParams) ([]*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ListContracts", ctx, arg)
+	ret0, _ := ret[0].([]*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// ListContracts indicates an expected call of ListContracts.
+func (mr *MockTxStoreMockRecorder) ListContracts(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ListContracts", reflect.TypeOf((*MockTxStore)(nil).ListContracts), ctx, arg)
+}
+
 // ListEnabledModulesWithResources mocks base method.
 func (m *MockTxStore) ListEnabledModulesWithResources(ctx context.Context, tenantID uuid.UUID) ([]*ListEnabledModulesWithResourcesRow, error) {
 	m.ctrl.T.Helper()
@@ -17168,6 +17407,20 @@ func (mr *MockTxStoreMockRecorder) SoftDeleteAttributeDefinition(ctx, id any) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteAttributeDefinition", reflect.TypeOf((*MockTxStore)(nil).SoftDeleteAttributeDefinition), ctx, id)
 }
 
+// SoftDeleteContract mocks base method.
+func (m *MockTxStore) SoftDeleteContract(ctx context.Context, id uuid.UUID) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SoftDeleteContract", ctx, id)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// SoftDeleteContract indicates an expected call of SoftDeleteContract.
+func (mr *MockTxStoreMockRecorder) SoftDeleteContract(ctx, id any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SoftDeleteContract", reflect.TypeOf((*MockTxStore)(nil).SoftDeleteContract), ctx, id)
+}
+
 // SoftDeleteEntity mocks base method.
 func (m *MockTxStore) SoftDeleteEntity(ctx context.Context, argUuid uuid.UUID) error {
 	m.ctrl.T.Helper()
@@ -17471,6 +17724,21 @@ func (m *MockTxStore) UpdateConfigurationTemplate(ctx context.Context, arg Updat
 func (mr *MockTxStoreMockRecorder) UpdateConfigurationTemplate(ctx, arg any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateConfigurationTemplate", reflect.TypeOf((*MockTxStore)(nil).UpdateConfigurationTemplate), ctx, arg)
+}
+
+// UpdateContract mocks base method.
+func (m *MockTxStore) UpdateContract(ctx context.Context, arg UpdateContractParams) (*Contract, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "UpdateContract", ctx, arg)
+	ret0, _ := ret[0].(*Contract)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// UpdateContract indicates an expected call of UpdateContract.
+func (mr *MockTxStoreMockRecorder) UpdateContract(ctx, arg any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateContract", reflect.TypeOf((*MockTxStore)(nil).UpdateContract), ctx, arg)
 }
 
 // UpdateCurrentTenant mocks base method.
