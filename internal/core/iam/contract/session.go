@@ -158,11 +158,17 @@ func (sc SessionContext) Preference(key, fallback string) string {
 
 // ── Go Context Helpers ────────────────────────────────────────────────────────
 
+// NewSessionContext wraps a validated ResolvedSession for injection into Go context.
+// Called by authentication middleware; other callers should read from context via FromContext.
+func NewSessionContext(s *iam.ResolvedSession) SessionContext {
+	return newSessionContext(s)
+}
+
 // WithContext stores sc in ctx so that downstream service-layer code can
 // retrieve it via FromContext without depending on *fiber.Ctx.
 //
-// Called by [InjectSessionContext] Fiber middleware — callers outside of
-// middleware orchestration should not need this directly.
+// Called by authentication middleware — callers outside of middleware
+// orchestration should not need this directly.
 func WithContext(ctx context.Context, sc SessionContext) context.Context {
 	return context.WithValue(ctx, contextKey{}, sc)
 }

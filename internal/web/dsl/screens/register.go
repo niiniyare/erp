@@ -139,7 +139,7 @@ func init() {
 		Module:      "sell",
 		Title:       "New Delivery Note",
 		Description: "Create a goods delivery confirmation",
-		ASTFn:       func(sess ui.UISessionContext) any { return DeliveryNoteScreen(sess) },
+		ASTFn:       func(sess ui.UISessionContext) any { return DeliveryNoteScreen(sess, DeliveryNoteScreenConfig{}) },
 	})
 
 	// ── Buy module ────────────────────────────────────────────────────────────
@@ -162,7 +162,7 @@ func init() {
 		Module:      "buy",
 		Title:       "New Goods Receipt",
 		Description: "Record goods received against a purchase order",
-		ASTFn:       func(sess ui.UISessionContext) any { return GoodsReceiptScreen(sess) },
+		ASTFn:       func(sess ui.UISessionContext) any { return GoodsReceiptScreen(sess, GoodsReceiptScreenConfig{}) },
 	})
 
 	// ── Inventory module ──────────────────────────────────────────────────────

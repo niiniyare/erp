@@ -100,7 +100,18 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 			Expires:  time.Now().Add(8 * time.Hour), // TODO(settings): use session TTL from config
 		})
 
-		return c.Status(fiber.StatusOK).JSON(resolved)
+		// Include redirect_to so the browser login page can navigate back to
+		// the originally requested URL after a successful sign-in.
+		// Only echo back relative paths (starts with "/") to prevent open redirect.
+		redirectTo := "/ui/demo" // safe fallback
+		if r := c.Query("redirect"); strings.HasPrefix(r, "/") && !strings.HasPrefix(r, "//") {
+			redirectTo = r
+		}
+
+		return c.Status(fiber.StatusOK).JSON(fiber.Map{
+			"data":        resolved,
+			"redirect_to": redirectTo,
+		})
 	}
 }
 

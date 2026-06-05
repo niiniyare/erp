@@ -84,30 +84,3 @@ func salesOrderStatusOptions() []ast.SelectOption {
 	}
 }
 
-// DeliveryNoteScreen composes the goods delivery confirmation form.
-func DeliveryNoteScreen(sess ui.UISessionContext) ast.Node {
-	lineCfg := blocks.GRNLineItemConfig()
-	return ast.PageNode{
-		Title: "New Delivery Note",
-		InitAPI: &ast.APISpec{
-			Method: "get",
-			URL:    "/api/v1/sell/delivery-notes/:id",
-			SendOn: "${params.id}",
-		},
-		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
-				ShowStatus: true,
-				StatusOptions: []ast.SelectOption{
-					{Label: "Draft", Value: "draft"},
-					{Label: "Dispatched", Value: "dispatched"},
-					{Label: "Delivered", Value: "delivered"},
-				},
-			}),
-			blocks.PartyBlock(sess, blocks.DefaultCustomerConfig()),
-			blocks.AddressBlock(sess, blocks.AddressConfig{ShowShipping: true}),
-			blocks.ProductServiceLineBlock(sess, lineCfg),
-			blocks.AttachmentsBlock(sess),
-			blocks.InternalNotesBlock(sess),
-		},
-	}
-}

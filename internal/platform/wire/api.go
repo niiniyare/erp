@@ -262,12 +262,14 @@ func NewHandlerDependencies(
 	tenantMiddleware fiber.Handler,
 	securityMgr *middleware.RouteSecurityManager,
 	auditSvc audit.Service,
+	authzSvc iam.AuthzService,
 	apiKeySvc iam.APIKeyService,
 	ssoSvc iam.SSOService,
 	temporalClient temporalclient.Client,
 	store db.Store,
 ) *handlers.Dependencies {
 	authCfg := middleware.DefaultAuthConfig(sessionSvc)
+	authCfg.AuthzService = authzSvc
 	return &handlers.Dependencies{
 		Logger:           log,
 		Metrics:          m,

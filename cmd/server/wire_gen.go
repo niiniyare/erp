@@ -64,7 +64,7 @@ func InitializeApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v3, v5, services, contractsService, v6, routeSecurityManager, auditService, v8, v10, client, store)
+	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v3, v5, services, contractsService, v6, routeSecurityManager, auditService, v2, v8, v10, client, store)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err

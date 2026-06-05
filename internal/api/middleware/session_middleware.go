@@ -2,11 +2,13 @@ package middleware
 
 import (
 	"context"
+	"net/url"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared"
 )
@@ -64,7 +66,9 @@ func DefaultAuthConfig(svc iam.SessionService) AuthConfig {
 // the cookie (or Authorization: Bearer header) and stores the ResolvedSession
 // in c.Locals(iam.LocalsKeySession).
 //
-// Returns 401 if the token is missing or invalid.
+// On failure:
+//   - Browser requests (Accept: text/html) → 302 redirect to /ui/login?redirect=<path>
+//   - API / machine requests              → 401 JSON
 func Authenticate(cfg AuthConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := c.Cookies(cfg.CookieName)
@@ -74,34 +78,48 @@ func Authenticate(cfg AuthConfig) fiber.Handler {
 			}
 		}
 		if token == "" {
-			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+			return unauthenticated(c)
 		}
 
 		// API key path: "eak_" prefix identifies a machine-to-machine bearer token.
 		if cfg.APIKeyService != nil && strings.HasPrefix(token, "eak_") {
 			resolved, err := cfg.APIKeyService.ValidateAPIKey(c.Context(), token)
 			if err != nil || resolved == nil {
-				return fiber.NewError(fiber.StatusUnauthorized, "invalid or revoked API key")
+				return unauthenticated(c)
+			}
+			if !isValidSubject(resolved.ToPrincipal().Subject) {
+				return unauthenticated(c)
 			}
 			setSessionLocals(c, resolved)
-			if !isValidSubject(resolved.ToPrincipal().Subject) {
-				return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
-			}
 			return c.Next()
 		}
 
 		// Session cookie / bearer token path.
 		resolved, err := cfg.SessionService.ValidateSession(c.Context(), token)
 		if err != nil || resolved == nil {
-			return fiber.NewError(fiber.StatusUnauthorized, "invalid or expired session")
+			return unauthenticated(c)
 		}
-
-		setSessionLocals(c, resolved)
 		if !isValidSubject(resolved.ToPrincipal().Subject) {
-			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
+			return unauthenticated(c)
 		}
+		setSessionLocals(c, resolved)
 		return c.Next()
 	}
+}
+
+// unauthenticated sends a 302 redirect for browser navigation or a 401 JSON
+// response for API / machine clients.
+// Browser detection: Accept header contains "text/html".
+// Open-redirect prevention: only relative paths (start with "/", not "//") are echoed.
+func unauthenticated(c *fiber.Ctx) error {
+	if strings.Contains(c.Get(fiber.HeaderAccept), "text/html") {
+		target := "/ui/login"
+		if orig := c.OriginalURL(); strings.HasPrefix(orig, "/") && !strings.HasPrefix(orig, "//") && orig != "/ui/login" {
+			target += "?redirect=" + url.QueryEscape(orig)
+		}
+		return c.Redirect(target, fiber.StatusFound)
+	}
+	return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 }
 
 // Authorize returns a Fiber middleware that enforces the given permission via
@@ -166,10 +184,12 @@ func RequireFlag(flagKey string) fiber.Handler {
 func setSessionLocals(c *fiber.Ctx, resolved *iam.ResolvedSession) {
 	c.Locals(iam.LocalsKeySession, resolved)
 	c.Locals(iam.LocalsKeyPrincipal, resolved.ToPrincipal())
-	// Wrap the existing user context (from tenant middleware) preserving prior values.
-	// Set shared.TenantIDKey (uuid.UUID) for WithTenantFromCtx / DB layer.
-	// Set cache.TenantIDKey (string) for the cache service's tenant namespace lookup.
+	// Build enriched Go context preserving any prior values (e.g. from TenantMiddleware).
+	// shared.TenantIDKey  (uuid.UUID) — DB layer / WithTenantFromCtx
+	// cache.TenantIDKey   (string)    — cache namespace lookup
+	// contract.contextKey (SessionContext) — SchemaHandler pipeline
 	ctx := shared.WithTenantID(c.UserContext(), resolved.TenantID)
 	ctx = context.WithValue(ctx, cache.TenantIDKey, resolved.TenantID.String())
+	ctx = contract.WithContext(ctx, contract.NewSessionContext(resolved))
 	c.SetUserContext(ctx)
 }

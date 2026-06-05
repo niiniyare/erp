@@ -35,7 +35,7 @@ func startServer(app *Application) error {
 	}
 
 	// Print registered routes for debugging
-	app.Router.PrintRoutes()
+	app.Router.PrintModules()
 
 	// Set up graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
