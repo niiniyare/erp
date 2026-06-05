@@ -23,6 +23,7 @@ type TemporalConfig struct {
 	Service        Service
 	TemporalClient client.Client
 	Logger         loggerPkg.Logger
+	AuthzService   iam.AuthzService // optional — IAM role seeding skipped when nil
 }
 
 // NewTemporalIntegration creates a new Temporal integration for the tenant module.
@@ -45,6 +46,7 @@ func NewTemporalIntegration(cfg TemporalConfig) (*TemporalIntegration, error) {
 		ProvisioningService: adapter.provisioning,
 		Repo:                adapter.repo,
 		Tracer:              adapter.tracer,
+		AuthzService:        cfg.AuthzService,
 	})
 
 	return &TemporalIntegration{
@@ -74,14 +76,15 @@ func (ti *TemporalIntegration) RegisterWithPlatform(platform *temporal.Platform)
 
 	// Register activities
 	registrar.RegisterActivities(map[string]any{
-		"ProvisionTenantActivity":          ti.activities.ProvisionTenantActivity,
-		"CreateDefaultConfigActivity":      ti.activities.CreateDefaultConfigActivity,
-		"InitUsageActivity":                ti.activities.InitUsageActivity,
-		"ActivateTenantActivity":           ti.activities.ActivateTenantActivity,
-		"CleanupTenantActivity":            ti.activities.CleanupTenantActivity,
-		"SendWelcomeNotificationActivity":  ti.activities.SendWelcomeNotificationActivity,
-		"BulkUpdateStatusActivity":         ti.activities.BulkUpdateStatusActivity,
-		"BulkSoftDeleteActivity":           ti.activities.BulkSoftDeleteActivity,
+		"ProvisionTenantActivity":         ti.activities.ProvisionTenantActivity,
+		"CreateDefaultConfigActivity":     ti.activities.CreateDefaultConfigActivity,
+		"InitUsageActivity":               ti.activities.InitUsageActivity,
+		"ActivateTenantActivity":          ti.activities.ActivateTenantActivity,
+		"SeedIAMRolesActivity":            ti.activities.SeedIAMRolesActivity,
+		"CleanupTenantActivity":           ti.activities.CleanupTenantActivity,
+		"SendWelcomeNotificationActivity": ti.activities.SendWelcomeNotificationActivity,
+		"BulkUpdateStatusActivity":        ti.activities.BulkUpdateStatusActivity,
+		"BulkSoftDeleteActivity":          ti.activities.BulkSoftDeleteActivity,
 	})
 
 	ti.logger.Info("Tenant module registered with Temporal", loggerPkg.Fields{

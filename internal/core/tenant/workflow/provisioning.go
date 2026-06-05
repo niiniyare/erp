@@ -58,7 +58,14 @@ func ProvisioningWorkflow(ctx workflow.Context, input domain.ProvisioningInput) 
 		return nil, fmt.Errorf("activate tenant failed: %w", err)
 	}
 
-	// Step 5: Send welcome notification (best-effort)
+	// Step 5: Seed IAM roles (idempotent; no-op when authz service not wired)
+	if err := workflow.ExecuteActivity(ctx, "SeedIAMRolesActivity", result.TenantID).Get(ctx, nil); err != nil {
+		// Non-fatal: tenant is already active. Log and continue so onboarding
+		// succeeds. Operators can re-run seeding manually if needed.
+		logger.Warn("Seed IAM roles failed (non-fatal)", "error", err, "tenant_id", result.TenantID.String())
+	}
+
+	// Step 6: Send welcome notification (best-effort)
 	if err := workflow.ExecuteActivity(ctx, "SendWelcomeNotificationActivity", result.TenantID).Get(ctx, nil); err != nil {
 		logger.Warn("Welcome notification failed (non-fatal)", "error", err)
 	}

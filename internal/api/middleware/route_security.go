@@ -208,29 +208,6 @@ func (m *RouteSecurityManager) ConfigureAPIRoutes(router fiber.Router) {
 		router.Use(CreateRateLimitMiddleware(&rateLimitConfig, nil, m.logger)) // cache would be injected
 	}
 
-	// Authentication middleware (placeholder - would be implemented based on your auth system)
-	if m.config.API.RequireAuth {
-		// router.Use(m.createAuthMiddleware())
-		if m.logger != nil {
-			m.logger.Info("Auth middleware would be applied here")
-		}
-	}
-
-	// Tenant isolation middleware
-	if m.config.API.RequireTenant {
-		// This would use your existing tenant middleware
-		if m.logger != nil {
-			m.logger.Info("Tenant middleware would be applied here")
-		}
-	}
-
-	// JWT validation middleware
-	if m.config.API.ValidateJWT {
-		// router.Use(m.createJWTMiddleware())
-		if m.logger != nil {
-			m.logger.Info("JWT middleware would be applied here")
-		}
-	}
 }
 
 // ConfigureUIRoutes applies security middleware for UI routes
@@ -277,14 +254,6 @@ func (m *RouteSecurityManager) ConfigureUIRoutes(router fiber.Router) {
 			Expiration:     1 * time.Hour,
 			KeyGenerator:   csrf.ConfigDefault.KeyGenerator,
 		}))
-	}
-
-	// Session-based authentication
-	if m.config.UI.RequireSession {
-		// router.Use(m.createSessionMiddleware())
-		if m.logger != nil {
-			m.logger.Info("Session middleware would be applied here")
-		}
 	}
 
 	// Request timeout for UI

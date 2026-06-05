@@ -13,6 +13,7 @@ import (
 	"awo.so/internal/core/contracts"
 	financeRepo "awo.so/internal/core/finance/repository"
 	financeService "awo.so/internal/core/finance/service"
+	"awo.so/internal/core/iam"
 	"awo.so/internal/core/tenant"
 
 	db "awo.so/db/sqlc"
@@ -65,11 +66,13 @@ func NewTenantTemporalIntegration(
 	tenantService tenant.Service,
 	temporalClient temporalclient.Client,
 	log logger.Logger,
+	authzSvc iam.AuthzService,
 ) (*tenant.TemporalIntegration, error) {
 	return tenant.NewTemporalIntegration(tenant.TemporalConfig{
 		Service:        tenantService,
 		TemporalClient: temporalClient,
 		Logger:         log,
+		AuthzService:   authzSvc,
 	})
 }
 
