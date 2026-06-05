@@ -758,6 +758,184 @@ func (d DrawerNode) Children() []Node { return d.Body }
 var _ Node = DrawerNode{}
 var _ ContainerNode = DrawerNode{}
 
+// ─── WizardNode ───────────────────────────────────────────────────────────────
+
+// WizardNode renders a multi-step form wizard.
+// Maps to AMIS type "wizard".
+//
+// Required: at least two Steps and API.
+// Each step renders its own Body fields; the wizard advances on "Next".
+// The final step's submit calls API.
+type WizardNode struct {
+	// API is the submit endpoint called on final step completion. Required.
+	API    APISpec
+	// Steps are the ordered wizard panels. Required: at least 2.
+	Steps  []WizardStep
+	// Mode: "horizontal" (default) | "vertical"
+	Mode   string
+	// StartStep is the initial step index (0-based). Default: 0.
+	StartStep int
+}
+
+// WizardStep is one panel in a WizardNode.
+type WizardStep struct {
+	// Title is the step label in the wizard progress bar. Required.
+	Title       string
+	// SubTitle is optional descriptive text under the title.
+	SubTitle    string
+	// Body is the form fields rendered in this step.
+	Body        []Node
+	// API is an optional per-step submit endpoint (overrides wizard-level API for this step only).
+	API         *APISpec
+	// VisibleOn is a boolean AMIS expression; hides the step when false.
+	VisibleOn   string
+}
+
+func (w WizardNode) NodeType() string { return "wizard" }
+
+func (w WizardNode) Validate() error {
+	if err := w.API.Validate("wizard"); err != nil {
+		return err
+	}
+	if len(w.Steps) < 2 {
+		return ErrInvalidField("wizard", "Steps", "wizard must have at least 2 steps")
+	}
+	for i, step := range w.Steps {
+		if step.Title == "" {
+			return ErrInvalidField("wizard", "Steps", formatColumnErr(i, "Title must not be empty"))
+		}
+	}
+	return nil
+}
+
+func (w WizardNode) Compile() ui.M {
+	steps := make(ui.A, 0, len(w.Steps))
+	for _, step := range w.Steps {
+		s := ui.M{"title": step.Title}
+		if step.SubTitle != "" {
+			s["subTitle"] = step.SubTitle
+		}
+		if len(step.Body) > 0 {
+			s["body"] = compileNodes(step.Body)
+		}
+		if step.API != nil {
+			s["api"] = step.API.Compile()
+		}
+		if step.VisibleOn != "" {
+			s["visibleOn"] = step.VisibleOn
+		}
+		steps = append(steps, s)
+	}
+	mode := w.Mode
+	if mode == "" {
+		mode = "horizontal"
+	}
+	m := ui.M{
+		"type":  "wizard",
+		"api":   w.API.Compile(),
+		"steps": steps,
+		"mode":  mode,
+	}
+	if w.StartStep > 0 {
+		m["startStep"] = w.StartStep
+	}
+	return m
+}
+
+func (w WizardNode) Children() []Node {
+	var all []Node
+	for _, step := range w.Steps {
+		all = append(all, step.Body...)
+	}
+	return all
+}
+
+var _ Node = WizardNode{}
+var _ ContainerNode = WizardNode{}
+
+// ─── PickerNode ───────────────────────────────────────────────────────────────
+
+// PickerNode renders a pop-up entity selector (cross-entity reference picker).
+// Maps to AMIS type "picker".
+//
+// Used for cross-entity selectors: "Select Supplier", "Select Customer", etc.
+// Opens a CRUD list in a dialog; the selected row value is written to Name.
+//
+// Required: Name and Source.
+type PickerNode struct {
+	// Name is the field key that receives the selected value. Required.
+	Name        string
+	// Label is the field label shown in the form.
+	Label       string
+	// Source is the API URL that powers the picker's CRUD list. Required.
+	Source      string
+	// Columns are the columns shown in the picker dialog.
+	Columns     []TableColumn
+	// ValueField is the field from the selected row used as the submitted value (default: "id").
+	ValueField  string
+	// LabelField is the field shown as the selected item label (default: "name").
+	LabelField  string
+	// Multiple allows selecting multiple items.
+	Multiple    bool
+	// Required marks the field as mandatory.
+	Required    bool
+	// VisibleOn is a boolean AMIS expression controlling visibility.
+	VisibleOn   string
+	// DisabledOn is a boolean AMIS expression controlling disabled state.
+	DisabledOn  string
+	// Embed renders the CRUD list inline instead of in a dialog when true.
+	Embed       bool
+}
+
+func (p PickerNode) NodeType() string { return "picker" }
+
+func (p PickerNode) Validate() error {
+	if p.Name == "" {
+		return ErrRequiredField("picker", "Name")
+	}
+	if p.Source == "" {
+		return ErrRequiredField("picker", "Source")
+	}
+	return nil
+}
+
+func (p PickerNode) Compile() ui.M {
+	m := ui.M{
+		"type":   "picker",
+		"name":   p.Name,
+		"source": p.Source,
+	}
+	setLabel(m, p.Label, p.Name)
+	vf := p.ValueField
+	if vf == "" {
+		vf = "id"
+	}
+	m["valueField"] = vf
+	lf := p.LabelField
+	if lf == "" {
+		lf = "name"
+	}
+	m["labelField"] = lf
+	setBool(m, "multiple", p.Multiple)
+	setBool(m, "required", p.Required)
+	setBool(m, "embed", p.Embed)
+	setStr(m, "visibleOn", p.VisibleOn)
+	setStr(m, "disabledOn", p.DisabledOn)
+	if len(p.Columns) > 0 {
+		cols := make(ui.A, 0, len(p.Columns))
+		for _, col := range p.Columns {
+			cols = append(cols, col.compile())
+		}
+		m["pickerSchema"] = ui.M{
+			"type":    "crud",
+			"columns": cols,
+		}
+	}
+	return m
+}
+
+var _ Node = PickerNode{}
+
 // ─── field helper utilities ───────────────────────────────────────────────────
 
 // setLabel sets m["label"] if label is non-empty, otherwise falls back to fallback.

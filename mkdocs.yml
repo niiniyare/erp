@@ -356,3 +356,67 @@ nav:
   - '09. Performance':
       - '01. Performance Optimization Plan': 'performance-optimization-plan.md'
       - '02. Pipeline Architecture': 'pipeline_arch.md'
+
+  - '10. SDUI Platform':
+      - 'Overview': 'ui/README.md'
+      - 'Vol I — Vision':
+          - '01. Introduction': 'ui/vol-01-vision/01-introduction.md'
+          - '02. Design Philosophy': 'ui/vol-01-vision/02-design-philosophy.md'
+          - '03. Architectural Principles': 'ui/vol-01-vision/03-architectural-principles.md'
+          - '04. System Overview': 'ui/vol-01-vision/04-system-overview.md'
+      - 'Vol II — DSL and AST':
+          - '05. SDUI Fundamentals': 'ui/vol-02-dsl-and-ast/05-sdui-fundamentals.md'
+          - '06. UI DSL Architecture': 'ui/vol-02-dsl-and-ast/06-ui-dsl-architecture.md'
+          - '07. AST Design': 'ui/vol-02-dsl-and-ast/07-ast-design.md'
+          - '08. Compilation Pipeline': 'ui/vol-02-dsl-and-ast/08-compilation-pipeline.md'
+      - 'Vol III — Component System':
+          - '09. Component System': 'ui/vol-03-component-system/09-component-system.md'
+          - '10. Layout System': 'ui/vol-03-component-system/10-layout-system.md'
+          - '11. Forms Framework': 'ui/vol-03-component-system/11-forms-framework.md'
+          - '12. Tables and Data Grids': 'ui/vol-03-component-system/12-tables-and-data-grids.md'
+          - '13. Dashboard Framework': 'ui/vol-03-component-system/13-dashboard-framework.md'
+          - '14. Charts and Analytics': 'ui/vol-03-component-system/14-charts-and-analytics.md'
+          - '15. Workflow and Approval': 'ui/vol-03-component-system/15-workflow-and-approval-components.md'
+          - '16. ERP-Specific Components': 'ui/vol-03-component-system/16-erp-specific-components.md'
+      - 'Vol IV — Rendering':
+          - '17. Mobile Rendering': 'ui/vol-04-rendering/17-mobile-rendering-architecture.md'
+          - '18. Web Rendering': 'ui/vol-04-rendering/18-web-rendering-architecture.md'
+          - '19. Navigation Framework': 'ui/vol-04-rendering/19-navigation-framework.md'
+          - '20. Action System': 'ui/vol-04-rendering/20-action-system.md'
+          - '21. Event System': 'ui/vol-04-rendering/21-event-system.md'
+      - 'Vol V — Runtime and State':
+          - '22. State Management': 'ui/vol-05-runtime/22-state-management.md'
+          - '23. Validation Framework': 'ui/vol-05-runtime/23-validation-framework.md'
+          - '24. Data Sources': 'ui/vol-05-runtime/24-data-sources.md'
+      - 'Vol VI — Platform and API':
+          - '25. API Contracts': 'ui/vol-06-platform/25-api-contracts.md'
+          - '26. Security Model': 'ui/vol-06-platform/26-security-model.md'
+          - '27. Authorization Integration': 'ui/vol-06-platform/27-authorization-integration.md'
+          - '28. Multi-Tenant Architecture': 'ui/vol-06-platform/28-multi-tenant-architecture.md'
+          - '29. Feature Flag Architecture': 'ui/vol-06-platform/29-feature-flag-architecture.md'
+          - '30. Customization Framework': 'ui/vol-06-platform/30-customization-framework.md'
+          - '31. Extension and Plugin Architecture': 'ui/vol-06-platform/31-extension-and-plugin-architecture.md'
+      - 'Vol VII — Reliability':
+          - '32. Performance Optimization': 'ui/vol-07-reliability/32-performance-optimization.md'
+          - '33. Offline Support': 'ui/vol-07-reliability/33-offline-support.md'
+          - '34. Caching Strategies': 'ui/vol-07-reliability/34-caching-strategies.md'
+          - '35. Synchronization': 'ui/vol-07-reliability/35-synchronization.md'
+      - 'Vol VIII — Developer Experience':
+          - '36. Internationalization': 'ui/vol-08-dx/36-internationalization.md'
+          - '37. Accessibility': 'ui/vol-08-dx/37-accessibility.md'
+          - '38. Observability': 'ui/vol-08-dx/38-observability.md'
+          - '39. Telemetry': 'ui/vol-08-dx/39-telemetry.md'
+          - '40. Logging': 'ui/vol-08-dx/40-logging.md'
+      - 'Vol IX — Engineering Excellence':
+          - '41. Testing Strategy': 'ui/vol-09-engineering/41-testing-strategy.md'
+          - '42. CI/CD Considerations': 'ui/vol-09-engineering/42-cicd-considerations.md'
+          - '43. Versioning Strategy': 'ui/vol-09-engineering/43-versioning-strategy.md'
+          - '44. Migration Strategy': 'ui/vol-09-engineering/44-migration-strategy.md'
+          - '45. Governance Model': 'ui/vol-09-engineering/45-governance-model.md'
+      - 'Vol X — Reference':
+          - '46. Best Practices': 'ui/vol-10-reference/46-best-practices.md'
+          - '47. Anti-Patterns': 'ui/vol-10-reference/47-anti-patterns.md'
+          - '48. Reference Architecture': 'ui/vol-10-reference/48-reference-architecture.md'
+          - '49. End-to-End Examples': 'ui/vol-10-reference/49-end-to-end-examples.md'
+          - '50. SDK Development': 'ui/vol-10-reference/50-sdk-development.md'
+          - '51. Future Roadmap': 'ui/vol-10-reference/51-future-roadmap.md'

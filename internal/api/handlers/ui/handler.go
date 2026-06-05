@@ -28,10 +28,10 @@ func NewUIHandler(logger logger.Logger, metrics metrics.MetricsProvider, tracer 
 	}
 }
 
-// ServeDemo serves the main AMIS SPA shell page.
+// ServeDemo serves the SDUI showcase shell — hardcoded nav, real /schema/* pipeline.
 func (h *UIHandler) ServeDemo(c *fiber.Ctx) error {
 	h.metrics.IncrementCounter("ui_page_views_total", metrics.Fields{"page": "demo"})
-	return c.SendFile("./web/pages/index.html")
+	return c.SendFile("./web/pages/demo.html")
 }
 
 // ServeComponents serves the components demo page.

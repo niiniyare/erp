@@ -118,4 +118,119 @@ func init() {
 			return JournalEntryScreen(sess, JournalEntryScreenConfig{})
 		},
 	})
+
+	// ── Sell module ───────────────────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/sell/quotations/new",
+		Module:      "sell",
+		Title:       "New Quotation",
+		Description: "Create a new sales quotation",
+		ASTFn:       func(sess ui.UISessionContext) any { return QuotationScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/sell/orders/new",
+		Module:      "sell",
+		Title:       "New Sales Order",
+		Description: "Create a new sales order",
+		ASTFn:       func(sess ui.UISessionContext) any { return SalesOrderScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/sell/delivery-notes/new",
+		Module:      "sell",
+		Title:       "New Delivery Note",
+		Description: "Create a goods delivery confirmation",
+		ASTFn:       func(sess ui.UISessionContext) any { return DeliveryNoteScreen(sess) },
+	})
+
+	// ── Buy module ────────────────────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/buy/requisitions/new",
+		Module:      "buy",
+		Title:       "New Requisition",
+		Description: "Create an internal purchase requisition",
+		ASTFn:       func(sess ui.UISessionContext) any { return RequisitionScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/buy/purchase-orders/new",
+		Module:      "buy",
+		Title:       "New Purchase Order",
+		Description: "Create a purchase order to send to a supplier",
+		ASTFn:       func(sess ui.UISessionContext) any { return PurchaseOrderScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/buy/goods-receipts/new",
+		Module:      "buy",
+		Title:       "New Goods Receipt",
+		Description: "Record goods received against a purchase order",
+		ASTFn:       func(sess ui.UISessionContext) any { return GoodsReceiptScreen(sess) },
+	})
+
+	// ── Inventory module ──────────────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/inventory/stock-ledger",
+		Module:      "inventory",
+		Title:       "Stock Ledger",
+		Description: "Paginated stock movement ledger with warehouse and item filters",
+		ASTFn:       func(sess ui.UISessionContext) any { return StockLedgerScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/inventory/warehouses",
+		Module:      "inventory",
+		Title:       "Warehouses",
+		Description: "Warehouse list with current stock levels",
+		ASTFn:       func(sess ui.UISessionContext) any { return WarehouseScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/inventory/items",
+		Module:      "inventory",
+		Title:       "Item Catalog",
+		Description: "Item master data: UOM, reorder point, supplier links",
+		ASTFn:       func(sess ui.UISessionContext) any { return ItemCatalogScreen(sess) },
+	})
+
+	// ── HR module ─────────────────────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/hr/employees/new",
+		Module:      "hr",
+		Title:       "New Employee",
+		Description: "Employee detail: personal info, department, position, contract dates",
+		ASTFn:       func(sess ui.UISessionContext) any { return EmployeeScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/hr/leave-requests/new",
+		Module:      "hr",
+		Title:       "New Leave Request",
+		Description: "Leave request form with type, date range, and approval chain",
+		ASTFn:       func(sess ui.UISessionContext) any { return LeaveRequestScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/hr/payroll",
+		Module:      "hr",
+		Title:       "Payroll Summary",
+		Description: "Dashboard: headcount, total payroll, pending approvals",
+		ASTFn:       func(sess ui.UISessionContext) any { return PayrollSummaryScreen(sess) },
+	})
+
+	// ── IAM / AuthZ module ────────────────────────────────────────────────────
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/iam/roles/new",
+		Module:      "iam",
+		Title:       "New Role",
+		Description: "Role detail: name, description, assigned permissions, members",
+		ASTFn:       func(sess ui.UISessionContext) any { return RoleScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/iam/policies",
+		Module:      "iam",
+		Title:       "Authorization Policies",
+		Description: "Casbin policy list: subject, domain, object, action",
+		ASTFn:       func(sess ui.UISessionContext) any { return PolicyScreen(sess) },
+	})
+	registry.RegisterPage(registry.PageRegistration{
+		Route:       "/iam/users/:id",
+		Module:      "iam",
+		Title:       "User",
+		Description: "User detail: profile, active roles, session history",
+		ASTFn:       func(sess ui.UISessionContext) any { return UserScreen(sess) },
+	})
 }

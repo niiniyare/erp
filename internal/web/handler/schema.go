@@ -14,6 +14,7 @@ import (
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"awo.so/internal/web/ast"
 	"awo.so/internal/web/ui"
 )
 
@@ -192,29 +193,38 @@ func (h *SchemaHandler) logWarn(c *fiber.Ctx, route, msg string, err error) {
 }
 
 // unauthenticatedEnvelope returns an AMIS-compatible 401 response.
-// Returning an AMIS envelope (not a plain error) means the browser can render
-// a "session expired" page with a Login button instead of a blank screen.
+// Returning an AMIS envelope (not a plain error) means the browser renders
+// a "Session Expired" page with a Login button instead of a blank screen.
+//
+// Schema is built via typed ast.PageNode + ast.CompileTree so it passes
+// ValidateStage and obeys the no-raw-map rule in the handler layer.
 func unauthenticatedEnvelope() fiber.Map {
-	return fiber.Map{
-		"status": 401,
-		"msg":    "Session expired. Please log in.",
-		"data": fiber.Map{
-			"type": "page",
-			"body": fiber.Map{
-				"type": "alert",
-				"body": "Your session has expired.",
-				"level": "warning",
-			},
-			"toolbar": []fiber.Map{
-				{
-					"type":       "button",
-					"label":      "Log In",
-					"level":      "primary",
-					"actionType": "url",
-					"url":        "/login",
-				},
+	page := ast.PageNode{
+		Title:    "Session Expired",
+		SubTitle: "Your session has expired. Please log in to continue.",
+		Toolbar: []ast.Node{
+			ast.ActionNode{
+				Label:      "Log In",
+				ActionType: "link",
+				Target:     "/ui/login",
+				Level:      "primary",
+				Icon:       "fa fa-sign-in-alt",
 			},
 		},
+	}
+	schema, err := ast.CompileTree(page)
+	if err != nil {
+		// Hardcoded schema — CompileTree should never fail here.
+		// Fallback keeps the 401 semantics without a schema body.
+		return fiber.Map{
+			"status": 401,
+			"msg":    "Session expired. Please log in.",
+		}
+	}
+	return fiber.Map{
+		"status": 401,
+		"msg":    "Session expired.",
+		"data":   schema,
 	}
 }
 

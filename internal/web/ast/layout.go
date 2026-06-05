@@ -403,6 +403,145 @@ func (s SectionNode) Children() []Node { return s.Body }
 var _ Node = SectionNode{}
 var _ ContainerNode = SectionNode{}
 
+// ─── NavNode ──────────────────────────────────────────────────────────────────
+
+// NavNode renders a navigation link list.
+// Maps to AMIS type "nav".
+//
+// Required: at least one Link.
+type NavNode struct {
+	Links      []NavLink
+	// Stacked renders links vertically (true) or horizontally (false, default).
+	Stacked    bool
+	// Accordion makes only one sub-menu expandable at a time.
+	Accordion  bool
+	// VisibleOn is a boolean AMIS expression controlling visibility.
+	VisibleOn  string
+}
+
+// NavLink is a single item (or group) in a NavNode.
+type NavLink struct {
+	// Label is the display text. Required.
+	Label    string
+	// To is the navigation target URL or hash route.
+	To       string
+	// Icon is an optional icon class (e.g. "fa fa-home").
+	Icon     string
+	// Children are nested sub-links (creates a collapsible group).
+	Children []NavLink
+	// Active is an AMIS expression; marks the link as active when truthy.
+	Active   string
+}
+
+func (n NavNode) NodeType() string { return "nav" }
+
+func (n NavNode) Validate() error {
+	if len(n.Links) == 0 {
+		return ErrRequiredField("nav", "Links")
+	}
+	return nil
+}
+
+func (n NavNode) Compile() ui.M {
+	m := ui.M{
+		"type":  "nav",
+		"links": compileNavLinks(n.Links),
+	}
+	if n.Stacked {
+		m["stacked"] = true
+	}
+	if n.Accordion {
+		m["accordion"] = true
+	}
+	if n.VisibleOn != "" {
+		m["visibleOn"] = n.VisibleOn
+	}
+	return m
+}
+
+func compileNavLinks(links []NavLink) ui.A {
+	out := make(ui.A, 0, len(links))
+	for _, l := range links {
+		item := ui.M{"label": l.Label}
+		if l.To != "" {
+			item["to"] = l.To
+		}
+		if l.Icon != "" {
+			item["icon"] = l.Icon
+		}
+		if l.Active != "" {
+			item["active"] = l.Active
+		}
+		if len(l.Children) > 0 {
+			item["children"] = compileNavLinks(l.Children)
+		}
+		out = append(out, item)
+	}
+	return out
+}
+
+var _ Node = NavNode{}
+
+// ─── BreadcrumbNode ───────────────────────────────────────────────────────────
+
+// BreadcrumbNode renders a breadcrumb navigation trail.
+// Maps to AMIS type "breadcrumb".
+//
+// Required: at least one Item.
+type BreadcrumbNode struct {
+	Items []BreadcrumbItem
+	// Separator is the character between items (default: "/").
+	Separator string
+}
+
+// BreadcrumbItem is a single step in a breadcrumb trail.
+type BreadcrumbItem struct {
+	// Label is the display text. Required.
+	Label string
+	// Href is an optional URL. Leave empty for the current (last) item.
+	Href  string
+	// Icon is an optional icon class.
+	Icon  string
+}
+
+func (b BreadcrumbNode) NodeType() string { return "breadcrumb" }
+
+func (b BreadcrumbNode) Validate() error {
+	if len(b.Items) == 0 {
+		return ErrRequiredField("breadcrumb", "Items")
+	}
+	for i, item := range b.Items {
+		if item.Label == "" {
+			return ErrInvalidField("breadcrumb", "Items", formatColumnErr(i, "Label must not be empty"))
+		}
+	}
+	return nil
+}
+
+func (b BreadcrumbNode) Compile() ui.M {
+	items := make(ui.A, 0, len(b.Items))
+	for _, item := range b.Items {
+		entry := ui.M{"label": item.Label}
+		if item.Href != "" {
+			entry["href"] = item.Href
+		}
+		if item.Icon != "" {
+			entry["icon"] = item.Icon
+		}
+		items = append(items, entry)
+	}
+	m := ui.M{
+		"type":  "breadcrumb",
+		"items": items,
+	}
+	if b.Separator != "" {
+		m["separator"] = b.Separator
+	}
+	return m
+}
+
+var _ Node = BreadcrumbNode{}
+
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
 // compileNodes emits a []Node as an AMIS array.
