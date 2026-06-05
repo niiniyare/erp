@@ -3,6 +3,7 @@ package tenant
 import (
 	"fmt"
 
+	"awo.so/internal/core/iam"
 	"awo.so/internal/core/tenant/activities"
 	"awo.so/internal/core/tenant/workflow"
 	"awo.so/internal/platform/temporal"

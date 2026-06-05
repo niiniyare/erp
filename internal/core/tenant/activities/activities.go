@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
+	"awo.so/internal/core/iam"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/repository"
 	"awo.so/internal/core/tenant/service"
@@ -13,10 +14,11 @@ import (
 
 // Activities holds all tenant Temporal activity implementations.
 type Activities struct {
-	tenant *service.TenantService
-	prov   *service.ProvisioningService
-	repo   repository.Repository
-	tracer tracing.Service
+	tenant  *service.TenantService
+	prov    *service.ProvisioningService
+	repo    repository.Repository
+	tracer  tracing.Service
+	authzSvc iam.AuthzService // optional — IAM role seeding skipped when nil
 }
 
 // Deps contains dependencies for tenant activities.
@@ -25,15 +27,17 @@ type Deps struct {
 	ProvisioningService *service.ProvisioningService
 	Repo                repository.Repository
 	Tracer              tracing.Service
+	AuthzService        iam.AuthzService // optional
 }
 
 // New creates a new Activities instance.
 func New(deps Deps) *Activities {
 	return &Activities{
-		tenant: deps.TenantService,
-		prov:   deps.ProvisioningService,
-		repo:   deps.Repo,
-		tracer: deps.Tracer,
+		tenant:   deps.TenantService,
+		prov:     deps.ProvisioningService,
+		repo:     deps.Repo,
+		tracer:   deps.Tracer,
+		authzSvc: deps.AuthzService,
 	}
 }
 
@@ -124,6 +128,23 @@ func (a *Activities) BulkSoftDeleteActivity(ctx context.Context, ids []uuid.UUID
 	if err := a.repo.BulkSoftDelete(ctx, ids); err != nil {
 		span.RecordError(err)
 		return fmt.Errorf("bulk soft delete activity failed: %w", err)
+	}
+	return nil
+}
+
+// SeedIAMRolesActivity provisions the built-in Casbin policies for a new tenant.
+// Idempotent — duplicate policies are silently skipped.
+// Skipped (no-op) when AuthzService was not wired in.
+func (a *Activities) SeedIAMRolesActivity(ctx context.Context, tenantID uuid.UUID) error {
+	if a.authzSvc == nil {
+		return nil
+	}
+	ctx, span := a.tracer.StartSpan(ctx, "activity.SeedIAMRoles")
+	defer span.End()
+
+	if err := iam.SeedDefaultRoles(ctx, a.authzSvc, tenantID.String()); err != nil {
+		span.RecordError(err)
+		return fmt.Errorf("seed IAM roles activity failed: %w", err)
 	}
 	return nil
 }
