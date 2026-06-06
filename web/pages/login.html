@@ -355,9 +355,9 @@
       var urlParams = new URLSearchParams(window.location.search);
 
       function nextUrl() {
-        var next = urlParams.get('next');
+        var next = urlParams.get('redirect');
         // Only allow same-origin paths
-        if (next && next.startsWith('/')) return next;
+        if (next && next.startsWith('/') && !next.startsWith('//')) return next;
         return '/ui/demo';
       }
 
@@ -411,7 +411,11 @@
 
           if (res.status === 200) {
             // Login success — session cookie is set by server (HttpOnly).
-            window.location.href = nextUrl();
+            // Prefer server-provided redirect (validated server-side) over URL param.
+            var dest = (body.redirect_to && body.redirect_to.startsWith('/') && !body.redirect_to.startsWith('//'))
+              ? body.redirect_to
+              : nextUrl();
+            window.location.href = dest;
             return;
           }
 

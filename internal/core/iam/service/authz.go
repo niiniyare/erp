@@ -310,6 +310,17 @@ func (s *authzService) Enforce(ctx context.Context, r domain.Request) (bool, err
 		attribute.String("authz.action", r.Action),
 	)
 
+	// Platform actors bypass Casbin entirely — they are gated by
+	// platformOnlyMiddleware at the route layer, which is the authoritative
+	// check.  Running Casbin for platform subjects would require seeding a
+	// wildcard policy in _platform_ and would add latency with no security
+	// benefit (the route-layer gate already ensured ActorPlatform).
+	if r.Domain == domain.DomainPlatform {
+		span.SetAttributes(attribute.Bool("authz.allowed", true))
+		s.metrics.IncrementCounter("iam.authz.enforce", metrics.Fields{"allowed": "true"})
+		return true, nil
+	}
+
 	if err := s.revokeExpiredRoles(ctx, r.Subject, r.Domain); err != nil {
 		s.log.WarnContext(ctx, "authz: revokeExpiredRoles failed", logger.Fields{
 			"subject": r.Subject, "domain": r.Domain, "error": err.Error(),
@@ -352,14 +363,26 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 
 	span.SetAttributes(attribute.Int("authz.batch_size", len(reqs)))
 
-	batch := make([][]any, len(reqs))
+	batch := make([][]any, 0, len(reqs))
+	results := make([]bool, len(reqs))
+	// Indices of requests that need Casbin enforcement (non-platform).
+	var casbinIdx []int
 	for i, r := range reqs {
 		if r.Subject == "" || r.Domain == "" || r.Object == "" || r.Action == "" {
 			return nil, domain.ErrInvalidRequest
 		}
-		batch[i] = []any{r.Subject, r.Domain, r.Object, r.Action}
+		if r.Domain == domain.DomainPlatform {
+			results[i] = true // platform actors: always allowed (see Enforce for rationale)
+			continue
+		}
+		casbinIdx = append(casbinIdx, i)
+		batch = append(batch, []any{r.Subject, r.Domain, r.Object, r.Action})
 	}
-	results, err := s.enforcer.BatchEnforce(batch)
+	if len(batch) == 0 {
+		s.metrics.IncrementCounter("iam.authz.enforce_batch", nil)
+		return results, nil
+	}
+	batchResults, err := s.enforcer.BatchEnforce(batch)
 	if err != nil {
 		span.RecordError(err)
 		s.log.ErrorContext(ctx, "authz batch enforce failed", logger.Fields{
@@ -368,6 +391,10 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 			"trace_id":   s.tracer.GetTraceID(ctx),
 		})
 		return nil, fmt.Errorf("authz: batch enforce: %w", err)
+	}
+
+	for j, idx := range casbinIdx {
+		results[idx] = batchResults[j]
 	}
 
 	s.metrics.IncrementCounter("iam.authz.enforce_batch", nil)

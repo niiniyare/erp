@@ -9,6 +9,7 @@ package main
 import (
 	"awo.so/internal/api/handlers"
 	"awo.so/internal/platform/config"
+	"awo.so/internal/platform/temporal"
 	"awo.so/internal/platform/wire"
 	"github.com/gofiber/fiber/v2"
 )
@@ -64,12 +65,23 @@ func InitializeApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
+	temporalPlatform, err := wire.NewTemporalPlatform(configConfig, logger)
+	if err != nil {
+		return nil, err
+	}
+	tenantTemporalIntegration, err := wire.NewTenantTemporalIntegration(tenantService, client, logger, v2)
+	if err != nil {
+		return nil, err
+	}
+	if err := tenantTemporalIntegration.RegisterWithPlatform(temporalPlatform); err != nil {
+		return nil, err
+	}
 	dependencies := wire.NewHandlerDependencies(logger, metricsProvider, service, tenantService, v3, v5, services, contractsService, v6, routeSecurityManager, auditService, v2, v8, v10, client, store)
 	router, err := wire.NewRouter(dependencies)
 	if err != nil {
 		return nil, err
 	}
-	application := NewApplication(configConfig, app, router)
+	application := NewApplication(configConfig, app, router, temporalPlatform)
 	return application, nil
 }
 
@@ -77,9 +89,10 @@ func InitializeApplication() (*Application, error) {
 
 // Application represents the fully wired application
 type Application struct {
-	Config *config.Config
-	App    *fiber.App
-	Router *handlers.Router
+	Config          *config.Config
+	App             *fiber.App
+	Router          *handlers.Router
+	TemporalPlatform *temporal.Platform
 }
 
 // NewApplication creates a new application instance
@@ -87,10 +100,12 @@ func NewApplication(
 	cfg *config.Config,
 	app *fiber.App,
 	router *handlers.Router,
+	temporalPlatform *temporal.Platform,
 ) *Application {
 	return &Application{
-		Config: cfg,
-		App:    app,
-		Router: router,
+		Config:          cfg,
+		App:             app,
+		Router:          router,
+		TemporalPlatform: temporalPlatform,
 	}
 }

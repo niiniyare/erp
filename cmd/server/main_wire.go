@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"awo.so/internal/platform/bootstrap"
 	"awo.so/internal/platform/config"
 )
 
@@ -19,6 +20,12 @@ func main() {
 	app, err := InitializeApplication()
 	if err != nil {
 		log.Fatal("Failed to initialize application:", err)
+	}
+
+	// Bootstrap platform admin from env vars (idempotent — no-op when user exists
+	// or when PLATFORM_ADMIN_EMAIL / PLATFORM_ADMIN_PASSWORD are not set).
+	if err := bootstrap.Run(context.Background(), app.Config); err != nil {
+		log.Printf("Warning: platform admin bootstrap failed: %v", err)
 	}
 
 	// Start the server
@@ -36,6 +43,16 @@ func startServer(app *Application) error {
 
 	// Print registered routes for debugging
 	app.Router.PrintModules()
+
+	// Start Temporal workers before accepting HTTP traffic so that workflow
+	// tasks queued during startup are processed immediately.
+	if app.TemporalPlatform != nil {
+		if err := app.TemporalPlatform.Start(context.Background()); err != nil {
+			// Non-fatal: HTTP server still serves requests; only async
+			// provisioning workflows are unavailable.
+			log.Printf("Warning: Temporal platform failed to start: %v", err)
+		}
+	}
 
 	// Set up graceful shutdown
 	ctx, cancel := context.WithCancel(context.Background())
@@ -75,6 +92,14 @@ func startServer(app *Application) error {
 
 	shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer shutdownCancel()
+
+	// Stop Temporal workers before closing the HTTP server so in-flight
+	// activity executions can complete within the shutdown window.
+	if app.TemporalPlatform != nil {
+		if err := app.TemporalPlatform.Stop(shutdownCtx); err != nil {
+			log.Printf("Temporal platform stop error: %v", err)
+		}
+	}
 
 	if err := app.App.ShutdownWithContext(shutdownCtx); err != nil {
 		return fmt.Errorf("server shutdown error: %w", err)

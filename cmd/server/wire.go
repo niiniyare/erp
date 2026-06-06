@@ -10,6 +10,7 @@ import (
 
 	"awo.so/internal/api/handlers"
 	"awo.so/internal/platform/config"
+	"awo.so/internal/platform/temporal"
 	wirepkg "awo.so/internal/platform/wire"
 )
 
@@ -19,9 +20,10 @@ import (
 
 // Application represents the fully wired application
 type Application struct {
-	Config *config.Config
-	App    *fiber.App
-	Router *handlers.Router
+	Config           *config.Config
+	App              *fiber.App
+	Router           *handlers.Router
+	TemporalPlatform *temporal.Platform
 }
 
 // InitializeApplication creates a fully configured application with all dependencies
@@ -41,10 +43,12 @@ func NewApplication(
 	cfg *config.Config,
 	app *fiber.App,
 	router *handlers.Router,
+	temporalPlatform *temporal.Platform,
 ) *Application {
 	return &Application{
-		Config: cfg,
-		App:    app,
-		Router: router,
+		Config:           cfg,
+		App:              app,
+		Router:           router,
+		TemporalPlatform: temporalPlatform,
 	}
 }

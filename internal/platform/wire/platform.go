@@ -164,3 +164,9 @@ func NewTemporalClient(cfg *config.Config, log logger.Logger) (temporalclient.Cl
 	}
 	return clientManager.GetClient(), nil
 }
+
+// NewTemporalPlatform creates the Temporal platform (worker manager + client).
+// Modules must register their workflows/activities before calling Platform.Start().
+func NewTemporalPlatform(cfg *config.Config, log logger.Logger) (*temporal.Platform, error) {
+	return temporal.NewPlatform(&cfg.Temporal, log)
+}
