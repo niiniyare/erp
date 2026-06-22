@@ -475,3 +475,21 @@ Write an explicit test that:
 5. Asserts that tenant A's records are not in the result
 
 Run this test on every entity that has cross-tenant data risk. It should be in your CI pipeline.
+
+---
+
+## Chapter Summary
+
+Chapter 9 establishes why RBAC (operation permission) and privacy policies (row and field visibility) are separate concerns (§9.1), explains why application-level WHERE clauses are architecturally insufficient (§9.1.3), and documents the full policy enforcement mechanism at the `EntityRepository` interface layer (§9.1.4).
+
+The three most critical concepts:
+
+- **Fail closed** (§9.6 / common mistakes): a policy that cannot extract user or tenant context from `ctx` must return `ErrDeny`, never `nil, nil`. Silent allow-all is the worst possible bug in a privacy policy.
+- **`Get` returns `ErrNotFound` for policy-restricted records** — not a permission error. This prevents information leakage about what records exist.
+- **`Or` compositions produce OR WHERE clauses** — test with `EXPLAIN ANALYZE` on large tables. A nil-returning branch (admin full access) in an `Or` correctly produces no filter; verify every nil branch is an intentional "allow all" decision.
+
+**Next chapters to read:**
+
+- [§16 — RBAC](../part-03-api/16-rbac.md) — the role-based access control layer that runs before privacy policies; both systems must be understood together
+- [§10 — Custom Fields](10-custom-fields.md) — custom entity fields stored as JSONB use path predicates in policy filter returns; understanding custom field filters requires reading both chapters
+- [§3 — Architecture Overview](../part-01-foundations/03-architecture-overview.md) — §3.4.3 documents the RLS enforcement model (shared schema, `set_tenant_context()`) that the `TenantIsolation` policy builds on

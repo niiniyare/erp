@@ -35,6 +35,18 @@ field.String("full_name").
 
 Use `Data` when the value has bounded, known length and will be indexed or used in WHERE clauses.
 
+Declare `Searchable()` on a `Data` field to enable substring full-text search. The framework creates a GIN index using `pg_trgm` automatically:
+
+```go
+entity.Field("customer_name").
+    Type(entity.Data).
+    MaxLen(100).
+    Searchable()
+// → creates: CREATE INDEX ... USING GIN (customer_name gin_trgm_ops)
+```
+
+This supports efficient `ILIKE '%kamau%'` queries without a sequential scan. Do not declare `Searchable()` on `LongText` fields — use PostgreSQL `tsvector` for those.
+
 #### `SmallText` — Unindexed, Up to 1024 Characters
 
 For medium prose that does not need a B-tree index: notes, short descriptions, rejection reasons. Stored as `varchar(1024)`. Index creation is blocked by the framework to prevent accidental oversized indexes.
@@ -90,6 +102,8 @@ field.Other("unit_price", schema.Currency{}).
 ```
 
 When currency fields are read from the DB, the framework returns them as `decimal.Decimal`, never as `float64`.
+
+> **Important:** Currency values are serialised as **strings** in JSON API responses (`"4500.0000"`, not `4500.0`). This is intentional: JavaScript's `Number` type is IEEE 754 `double`, which cannot represent all `numeric(20,4)` values exactly. Clients must parse the string with a decimal library, not with `parseFloat()`.
 
 #### `Bool` — Boolean, Never Nullable
 
@@ -569,3 +583,21 @@ Retroactive renumbering is acceptable only for:
 - Internal reference codes that carry no legal weight
 
 To renumber a draft series, use `awo naming resequence --entity=Invoice --status=draft --confirm`. This command requires platform-admin privilege and leaves an audit log entry.
+
+---
+
+## Chapter Summary
+
+Chapter 5 documents the complete field type system (§5.1), the full option and constraint vocabulary (§5.2), the four-tier validator execution pipeline including async validators (§5.3), and the naming series system with its sequence management and reset policies (§5.4).
+
+The three most critical concepts:
+
+- **`Currency` type serialises as a string in JSON** (`"4500.0000"`) to preserve `numeric(20,4)` precision across JavaScript clients that use IEEE 754. Never store monetary amounts as `Float`.
+- **`Searchable()` fields get a GIN index via `pg_trgm`** automatically — declare it on `Data` fields that need ILIKE-style substring search, not on `LongText` fields.
+- **Naming series sequence `nextval` runs inside the INSERT transaction** — a rolled-back create consumes a sequence value, creating a gap. Gaps are normal; auditors should be informed.
+
+**Next chapters to read:**
+
+- [§6 — Edges](06-edges.md) — builds on `Link`, `DynamicLink`, and `Table` field types to express entity relationships
+- [§7 — Entity Record Lifecycle](07-entity-record-lifecycle.md) — hook execution order and transaction boundaries that interact with field validation
+- [§10 — Custom Fields](10-custom-fields.md) — how `CustomFieldDef` extends system entity field lists at runtime using the types from this chapter

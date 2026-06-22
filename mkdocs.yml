@@ -357,6 +357,64 @@ nav:
       - '01. Performance Optimization Plan': 'performance-optimization-plan.md'
       - '02. Pipeline Architecture': 'pipeline_arch.md'
 
+  - '11. Awo Framework':
+      - 'Table of Contents': 'framework/toc.md'
+      - 'Part I — Foundations':
+          - '01. Introduction': 'framework/part-01-foundations/01-introduction.md'
+          - '02. EntityDefinition': 'framework/part-01-foundations/02-entity-definition.md'
+          - '03. Architecture Overview': 'framework/part-01-foundations/03-architecture-overview.md'
+          - '04. Quick Start': 'framework/part-01-foundations/04-quick-start.md'
+      - 'Part II — Entity System':
+          - '05. Field System': 'framework/part-02-entity-system/05-field-system.md'
+          - '06. Edges': 'framework/part-02-entity-system/06-edges.md'
+          - '07. Entity Record Lifecycle': 'framework/part-02-entity-system/07-entity-record-lifecycle.md'
+          - '08. Persistence Interface': 'framework/part-02-entity-system/08-persistence-interface.md'
+          - '09. Privacy Policies': 'framework/part-02-entity-system/09-privacy-policies.md'
+          - '10. Custom Fields': 'framework/part-02-entity-system/10-custom-fields.md'
+          - '11. Database Migrations': 'framework/part-02-entity-system/11-database-migrations.md'
+      - 'Part III — The API Layer':
+          - '12. Server Setup': 'framework/part-03-api/12-server-setup.md'
+          - '13. Middleware Pipeline': 'framework/part-03-api/13-middleware-pipeline.md'
+          - '14. Multi-Tenancy Middleware': 'framework/part-03-api/14-multitenancy-middleware.md'
+          - '15. Auth and Sessions': 'framework/part-03-api/15-auth-sessions.md'
+          - '16. RBAC': 'framework/part-03-api/16-rbac.md'
+          - '17. REST API Conventions': 'framework/part-03-api/17-rest-api-conventions.md'
+          - '18. Error Handling': 'framework/part-03-api/18-error-handling.md'
+          - '19. API Versioning': 'framework/part-03-api/19-api-versioning.md'
+          - '20. Feature Flags': 'framework/part-03-api/20-feature-flags.md'
+      - 'Part IV — Server-Driven UI':
+          - '21. SDUI Philosophy': 'framework/part-04-sdui/21-sdui-philosophy.md'
+          - '22. Foundation Components': 'framework/part-04-sdui/22-foundation-components.md'
+          - '23. Composite Blocks': 'framework/part-04-sdui/23-composite-blocks.md'
+          - '24. Theming': 'framework/part-04-sdui/24-theming.md'
+          - '25. Custom Renderers': 'framework/part-04-sdui/25-custom-renderers.md'
+      - 'Part V — Workflow Engine':
+          - '26. Temporal Fundamentals': 'framework/part-05-workflow/26-temporal-fundamentals.md'
+          - '27. Defining Workflows': 'framework/part-05-workflow/27-defining-workflows.md'
+          - '28. Defining Activities': 'framework/part-05-workflow/28-defining-activities.md'
+          - '29. Saga Pattern': 'framework/part-05-workflow/29-saga-pattern.md'
+          - '30. Signals and Queries': 'framework/part-05-workflow/30-signals-queries.md'
+          - '31. Schedules and Cron': 'framework/part-05-workflow/31-schedules-cron.md'
+          - '32. Workflow Observability': 'framework/part-05-workflow/32-workflow-observability.md'
+      - 'Part VI — Built-In Modules':
+          - '33. Finance Module': 'framework/part-06-modules/33-finance-module.md'
+          - '34. Forecourt Module': 'framework/part-06-modules/34-forecourt-module.md'
+          - '35. Inventory Module': 'framework/part-06-modules/35-inventory-module.md'
+          - '36. HR Module': 'framework/part-06-modules/36-hr-module.md'
+          - '37. CRM Module': 'framework/part-06-modules/37-crm-module.md'
+      - 'Part VII — Multi-Tenancy':
+          - '38. Tenant Lifecycle': 'framework/part-07-multitenancy/38-tenant-lifecycle.md'
+          - '39. Tenant Configuration': 'framework/part-07-multitenancy/39-tenant-configuration.md'
+          - '40. Feature Flag Deep Dive': 'framework/part-07-multitenancy/40-feature-flag-deep-dive.md'
+          - '41. Redis Usage Patterns': 'framework/part-07-multitenancy/41-redis-usage.md'
+      - 'Part VIII — Deployment':
+          - '42. Environment Architecture': 'framework/part-08-deployment/42-environment-architecture.md'
+          - '43. Docker Containerisation': 'framework/part-08-deployment/43-docker-containerisation.md'
+          - '44. CI/CD Pipeline': 'framework/part-08-deployment/44-cicd-pipeline.md'
+          - '45. PostgreSQL Operations': 'framework/part-08-deployment/45-postgresql-operations.md'
+          - '46. Observability Stack': 'framework/part-08-deployment/46-observability-stack.md'
+          - '47. Security Hardening': 'framework/part-08-deployment/47-security-hardening.md'
+
   - '10. SDUI Platform':
       - 'Overview': 'ui/README.md'
       - 'Vol I — Vision':

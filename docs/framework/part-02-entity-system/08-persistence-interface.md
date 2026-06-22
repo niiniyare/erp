@@ -638,28 +638,18 @@ client := ent.NewClient(ent.Driver(drv))
 
 Pool sizing: `MaxConns = (number of cores * 2) + number of disks` is a common heuristic. For most ERP workloads, 20 connections per application instance is sufficient. Avoid very large pools — PostgreSQL's connection overhead is significant above ~100 connections per database.
 
-### 8.6.5. Per-Tenant Schema Routing in the ent Client
+### 8.6.5. RLS Tenant Routing in the ent Client
 
-For system entities that live in the platform schema (e.g. the Tenant entity itself), the ent client uses the default `search_path`. For tenant-specific entities, the search_path is set per-request via middleware:
+Awo uses a shared schema with PostgreSQL Row-Level Security (RLS) rather than schema-per-tenant. All tenant data lives in the same schema; RLS policies restrict each query to the current tenant's rows.
 
-```go
-// In tenant middleware, after resolving the tenant:
-conn, err := pool.Acquire(ctx)
-if err != nil {
-    return err
-}
-defer conn.Release()
+Tenant routing is set by `store.SetTenantContextFromCtx(ctx)` in the tenant middleware. This calls the `set_tenant_context($1)` stored procedure, which sets the transaction-local `app.current_tenant_id` variable via `set_config('app.current_tenant_id', $1, TRUE)`. All RLS policies on tenant-scoped tables read this variable via `current_tenant_id()`:
 
-_, err = conn.Exec(ctx,
-    fmt.Sprintf("SET search_path TO tenant_%s,public", tenantID.String()))
-if err != nil {
-    return err
-}
-// Store the connection in ctx for the request lifetime
-ctx = pgxconn.WithConn(ctx, conn)
+```sql
+CREATE POLICY tenant_isolation ON invoices
+    USING (tenant_id = current_tenant_id());
 ```
 
-The ent implementation reads the pinned connection from context and uses it for all queries in the request lifecycle.
+The ent implementation uses a shared pgx connection pool (via PgBouncer in transaction mode). No per-tenant connection pool exists; the `is_local = TRUE` flag ensures the tenant context resets at transaction end so connections are clean for the next request.
 
 ### 8.6.6. Known Limitations of the ent Implementation
 
@@ -731,3 +721,21 @@ func main() {
 ```
 
 Entity types registered with a custom implementation use that implementation for all framework operations. Unregistered types fall back to the default ent implementation, allowing incremental migration.
+
+---
+
+## Chapter Summary
+
+Chapter 8 defines the complete `EntityRepository` interface contract (§8.1), all read and write methods with usage patterns and error semantics (§8.2–8.3), the transaction support methods and savepoint semantics (§8.4), the full Filter and Query DSL including cursor pagination and JSONB predicates (§8.5), and the ent reference implementation with its RLS-based tenant routing (§8.6).
+
+The three most critical concepts:
+
+- **Interface-only dependency** (§8.1.4): all module code depends on `entity.EntityRepository`, never on `*ent.Client` or pgx directly. This is structurally enforced by Go module visibility.
+- **`entity.ErrNotFound` is the canonical not-found sentinel** — check with `errors.Is(err, entity.ErrNotFound)`, not with type assertion. Privacy policies returning `ErrDeny` also surface as `ErrNotFound` to avoid information leakage.
+- **`BulkUpdate` bypasses all hooks** (§8.3.5) — it is an administrative tool, not a general-purpose update method. Restrict its use to privileged code paths.
+
+**Next chapters to read:**
+
+- [§9 — Privacy Policies](09-privacy-policies.md) — the row and field visibility policies injected by the `EntityRepository` at query time; both chapters must be understood together to reason about data access
+- [§11 — Database Migrations](11-database-migrations.md) — the Atlas migration workflow that keeps the schema in sync with `EntityDefinition` declarations
+- [§17 — REST API Conventions](../part-03-api/17-rest-api-conventions.md) — how URL query parameters are translated into `Filter` structs and `QueryOption` values

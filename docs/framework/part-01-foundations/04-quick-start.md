@@ -609,3 +609,22 @@ temporal workflow terminate \
   --workflow-id="tenant-uuid.contact.contact-uuid.after_create" \
   --reason="Development cleanup"
 ```
+
+---
+
+## Chapter Summary
+
+Chapter 4 walked through the complete framework loop: installing tooling (§4.1), starting the local dependency stack (§4.2), defining a system entity with fields, edges, naming series, and a custom action (§4.3), generating and applying a reviewed Atlas migration (§4.4), verifying the auto-generated API routes (§4.5), registering an amis page builder (§4.6), and binding a Temporal workflow trigger (§4.7).
+
+The three most important patterns demonstrated:
+
+- **EntityDefinition → migration pipeline** (§4.3–4.4): every schema change flows through a reviewed Atlas migration file — no ad-hoc `ALTER TABLE`.
+- **Auto-generated CRUD routes** (§4.5): registering an `EntityDefinition` is sufficient to generate list, get, create, update, delete, and lifecycle action routes. No boilerplate route handler code.
+- **Workflow trigger binding** (§4.7.2): the `after_save` / `on_submit` trigger pattern connects synchronous persistence to durable asynchronous processing without coupling the HTTP handler to the workflow logic.
+
+**Next chapters to read:**
+
+- [§5 — Field System](../part-02-entity-system/05-field-system.md) — the complete field type and constraint reference; §4.3 used a subset of field types
+- [§7 — Entity Record Lifecycle](../part-02-entity-system/07-entity-record-lifecycle.md) — the complete hook execution model and transaction boundaries
+- [§21 — SDUI Philosophy](../part-04-sdui/21-sdui-philosophy.md) — the full page builder pipeline; §4.6 showed a minimal registration
+- [§27 — Defining Workflows](../part-05-workflow/27-defining-workflows.md) — retry policies, versioning, signals, and saga compensation

@@ -715,3 +715,25 @@ func (h NotificationHook) BeforeSave(ctx context.Context, r *schema.EntityRecord
 ```
 
 Use typed context keys (not string keys) to avoid collisions between hooks from different modules.
+
+---
+
+## Chapter Summary
+
+Chapter 7 defines the five lifecycle stages and their transaction boundaries (§7.1), then documents each hook type with real patterns:
+
+- **`before_validate`** (outside TX) — normalise and compute derived fields before validators run
+- **`before_save`** (outside TX by default) — enforce business rules with the fully validated record; cheap to abort
+- **`after_save`** (inside TX) — transactional side effects; errors cause full rollback; must be fast (< 50ms)
+- **`before_delete`** — guard deletion; soft-delete pattern returns `hook.ErrSoftDeleted`
+- **`on_submit` / `on_cancel`** — document finalisation and compensating reversal
+
+The two most critical rules:
+1. **Never make external API calls inside `before_save` or `after_save`** — they hold the DB transaction open and cause connection exhaustion under load. Move all I/O to Temporal activities.
+2. **`after_save` errors roll back the entire transaction** — the primary record write and all side effects undo atomically. Design `after_save` to fail rarely; move conditional guards to `before_save` where aborts are cheaper.
+
+**Next chapters to read:**
+
+- [§8 — The Persistence Interface](08-persistence-interface.md) — the `EntityRepository` methods called throughout this chapter fully specified with their filter DSL and error types
+- [§27 — Defining Workflows](../part-05-workflow/27-defining-workflows.md) — the Temporal workflows triggered from `on_submit` and `after_save` hooks: retry policies, versioning, signals
+- [§29 — Saga Pattern](../part-05-workflow/29-saga-pattern.md) — the reversal workflows triggered by `on_cancel` hooks follow the saga pattern with compensating transactions

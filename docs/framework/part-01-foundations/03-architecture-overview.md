@@ -58,7 +58,7 @@ The middleware pipeline executes in a fixed sequence before the route handler. T
 2. **Structured logging** — attaches the request ID, HTTP method, and path to the logger context so all downstream log entries carry these fields automatically.
 3. **Panic recovery** — wraps the remaining pipeline in a recover() handler so unexpected panics return a 500 response rather than crashing the goroutine.
 4. **CORS** — validates the `Origin` header against the allowed origin list for the tenant subdomain.
-5. **Tenant resolution** — extracts the tenant identifier from `X-Tenant-ID` header (first priority), `tenant_id` query parameter (second priority, development only), or subdomain parsing (fallback). Validates the tenant exists and is active. Stores the tenant UUID in `c.Locals("tenant_id")` and calls `store.SetTenantContextFromCtx(ctx)` to set the PostgreSQL `search_path` session variable for the request's database connection.
+5. **Tenant resolution** — extracts the tenant identifier from `X-Tenant-ID` header (first priority), `tenant_id` query parameter (second priority, development only), or subdomain parsing (fallback). Validates the tenant exists and is active. Stores the resolved `*tenant.Tenant` in the request context and calls `store.SetTenantContextFromCtx(ctx)`, which executes `SELECT set_tenant_context($1)` to set the transaction-local `app.current_tenant_id` PostgreSQL variable that RLS policies read.
 6. **Session validation** — extracts the session cookie, looks up the session in Redis, validates expiry, and stores the resolved user identity in the Fiber context.
 7. **Rate limiting** — applies per-tenant and per-user rate limits using a Redis sliding window counter.
 
@@ -123,9 +123,9 @@ func (h *EntityHandler) GetOne(c *fiber.Ctx) error {
 
 ### 3.2.6 EntityRepository.Query() called — implementation dispatches to SQL or JSONB engine
 
-The route handler calls `repo.Get(ctx, entityType, id)`. The EntityRepository implementation executes a generated SQL query against the tenant's PostgreSQL schema: `SELECT * FROM invoice WHERE id = $1 AND deleted_at IS NULL`. The result is deserialized into an `*EntityRecord` with the field map populated from the typed SQL column values.
+The route handler calls `repo.Get(ctx, entityType, id)`. The EntityRepository implementation executes a generated SQL query: `SELECT * FROM invoice WHERE id = $1 AND deleted_at IS NULL`. The RLS policy on `invoice` automatically restricts results to the current tenant — no explicit `WHERE tenant_id = ?` is needed in the query. The result is deserialized into an `*EntityRecord` with the field map populated from the typed SQL column values.
 
-The privacy policies registered on the EntityDefinition are applied by the EntityRepository implementation as additional WHERE predicates on the query. A `TenantIsolation` privacy policy that requires `tenant_id = $tenant_id` is compiled into every query by the implementation. The policy predicates run at the database level, not at the application level.
+Privacy policies registered on the EntityDefinition may add further WHERE predicates on top of the RLS filter — for example, `OwnerOnly` adds `assigned_to = $current_user_id`. The policy predicates run at the database level, not the application level.
 
 ### 3.2.7 Privacy policy applied to result set
 
@@ -195,15 +195,26 @@ After extracting the raw tenant identifier, the middleware validates the tenant 
 
 Each tenant maintains its own sub-registry within the global EntityRegistry. The sub-registry holds the tenant's custom EntityDefinition records loaded from the tenant's database schema during tenant boot. System entity definitions are shared across all tenants from the global registry. The EntityResolver always checks the global system entity registry first, then falls back to the tenant's custom entity sub-registry.
 
-### 3.4.3 Per-tenant database schema — schema-per-tenant in PostgreSQL
+### 3.4.3 Shared schema with Row-Level Security — RLS enforces tenant isolation
 
-Each tenant has a dedicated PostgreSQL schema named after the tenant UUID (e.g., `tenant_550e8400-e29b-41d4-a716-446655440000`). All of the tenant's system entity tables (`invoice`, `customer`, `journal_entry`, etc.) and custom entity tables (`custom_entity_records`, `entity_definitions`, `entity_field_definitions`) live within this schema. The `search_path` session variable is set to the tenant's schema at connection acquisition time via `store.SetTenantContextFromCtx(ctx)`, which executes `SET search_path = tenant_{id}` on the connection.
+All tenants share the same PostgreSQL schema. Every tenant-scoped table has a `tenant_id uuid NOT NULL` column, and every table has `FORCE ROW LEVEL SECURITY` enabled with a policy that restricts rows to the current tenant:
 
-This schema-per-tenant isolation means that a query referencing the `invoice` table without a schema prefix will only ever see invoices in the current tenant's schema. There is no `WHERE tenant_id = ?` clause that could be forgotten. The database enforces the isolation structurally.
+```sql
+CREATE POLICY tenant_isolation ON invoice
+    USING (tenant_id = current_tenant_id());
+```
 
-### 3.4.4 Per-tenant connection pool — pgx pool per schema
+The `current_tenant_id()` function reads the transaction-local setting `app.current_tenant_id` that is set at the start of every request by `store.SetTenantContextFromCtx(ctx)`. That method calls the `set_tenant_context($1)` stored procedure, which validates that the tenant exists and has `status = 'ACTIVE'` before calling `set_config('app.current_tenant_id', $1, TRUE)`. The `TRUE` flag makes the setting transaction-local: it resets automatically on `COMMIT` or `ROLLBACK`, so no cleanup is needed between requests.
 
-The store layer maintains a separate pgx connection pool per tenant schema. Connections in a pool are pre-configured with the tenant's `search_path`, so acquiring a connection from the tenant's pool is equivalent to getting a connection already pointed at the correct schema. Pool size per tenant is bounded by a global ceiling on total connections across all tenant pools, preventing any single high-traffic tenant from exhausting the PostgreSQL connection limit.
+This means a query like `SELECT * FROM invoice` never needs a `WHERE tenant_id = ?` clause — the RLS policy injects it at the database level. Even if application code forgets the filter, the database enforces it.
+
+**Global tables** (platform-wide, no RLS): `tenants`, `audit_log`, `timezones`, `currencies`, `countries`, `paye_bands`, `platform_admins`. These are read-only for the application role and require no tenant filter.
+
+**PgBouncer transaction mode** is required because the `set_config` call uses `is_local = TRUE`, which resets at transaction end. This is safe: each request opens a transaction, sets the tenant context, executes queries, and commits — the context is always fresh.
+
+### 3.4.4 Shared connection pool — PgBouncer in front of PostgreSQL
+
+The store layer uses a single shared pgx connection pool (via PgBouncer in transaction mode). There is no per-tenant pool. Tenant isolation is enforced by the RLS policies, not by connection routing. This model scales to thousands of tenants without creating thousands of connection pools. Pool size is bounded by the PgBouncer `max_client_conn` and `default_pool_size` settings in `config/pgbouncer.ini`.
 
 ### 3.4.5 Per-tenant feature flags — Redis-backed, per-tenant overrides
 
@@ -258,3 +269,21 @@ Temporal failure prevents new workflows from starting and prevents running workf
 The PostgreSQL database is a hard dependency. If the connection pool cannot establish connections at startup, the process fails to start. If the pool exhausts all connections during operation, requests that require database access fail with 503 until connections become available. The Fiber process itself remains running; it does not exit on database errors during operation.
 
 The EntityRegistry is a hard dependency only during startup. If system entity registration fails (e.g., a module's Register function returns an error), the process fails to start. After startup, the EntityRegistry is read-only and cannot fail — it is an in-memory data structure.
+
+---
+
+## Chapter Summary
+
+Chapter 3 defines the five-layer architecture (§3.1), the read and write request lifecycles (§3.2 and §3.3), the multi-tenant runtime model (§3.4), and the component dependency graph (§3.5).
+
+The most important concepts for day-to-day development are:
+
+- **The write path transaction boundary** (§3.3.5–3.3.8) — determines what is atomic and what is eventually consistent. `after_save` hooks are inside the transaction; Temporal workflow starts are outside it.
+- **RLS-based tenant isolation** (§3.4.3) — `set_tenant_context()` at request start is the single enforcement point. Every tenant-scoped table has `FORCE ROW LEVEL SECURITY`. Global tables have no RLS.
+- **The startup order** (§3.5.1) — config → PostgreSQL → Redis → EntityRegistry → Fiber → Temporal. Registry failures are fatal; Temporal failures are not.
+
+**Next chapters to read:**
+
+- [§13 — Middleware Pipeline](../part-03-api/13-middleware-pipeline.md) — expands §3.2.2 into the full middleware reference, including canonical execution order and each middleware's failure behaviour
+- [§14 — Multi-Tenancy Middleware](../part-03-api/14-multitenancy-middleware.md) — expands §3.4 into the RLS implementation details: `set_tenant_context()`, global vs. tenant-scoped tables, and `validate_tenant_context()` for long-running activities
+- [§8 — The Persistence Interface](../part-02-entity-system/08-persistence-interface.md) — expands §3.1.5 into the full `EntityRepository` contract, the Filter DSL, and transaction scoping
