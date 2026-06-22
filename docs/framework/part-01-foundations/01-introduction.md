@@ -123,7 +123,7 @@ type RecordMeta struct {
     DeletedBy *string
 }
 
-type `EntityRepository` interface {
+type EntityRepository interface {
     Get(ctx context.Context, entityType, id string) (*EntityRecord, error)
     Query(ctx context.Context, q EntityQuery) ([]*EntityRecord, error)
     Create(ctx context.Context, entityType string, fields map[string]any) (*EntityRecord, error)
