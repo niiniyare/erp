@@ -2,10 +2,16 @@ package tenant
 
 import (
 	"fmt"
+	"strings"
+	"unicode"
 
 	"github.com/gofiber/fiber/v2"
+	"awo.so/internal/core/entity"
+	"awo.so/internal/core/iam/contract"
+	iamDomain "awo.so/internal/core/iam/domain"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/core/tenant/domain"
+	"awo.so/internal/shared"
 	"go.opentelemetry.io/otel/attribute"
 )
 
@@ -97,4 +103,161 @@ func (h *TenantHandler) Onboard(c *fiber.Ctx) error {
 		"status":      "provisioning",
 		"message":     "Tenant provisioning started. Poll GET /api/v1/tenants once the workflow completes.",
 	})
+}
+
+// syncOnboardRequest is the payload for the synchronous onboarding endpoint.
+type syncOnboardRequest struct {
+	Name          string  `json:"name"           validate:"required,min=2,max=255"`
+	Email         string  `json:"email"          validate:"required,email"`
+	CountryCode   string  `json:"country_code"   validate:"required,len=2"`
+	CurrencyCode  string  `json:"currency_code"  validate:"required,len=3"`
+	AdminPassword string  `json:"admin_password" validate:"required,min=8"`
+	AdminUsername string  `json:"admin_username" validate:"omitempty,min=3,max=50"`
+	Subdomain     *string `json:"subdomain,omitempty"`
+	Industry      *string `json:"industry,omitempty"`
+	CompanySize   *string `json:"company_size,omitempty"`
+}
+
+// OnboardSync provisions a tenant and its first admin user in a single
+// synchronous request. No Temporal required.
+//
+// POST /api/v1/tenants/onboard/sync
+//
+// Flow:
+//  1. Create tenant (status = PENDING).
+//  2. Activate tenant → ACTIVE.
+//  3. Seed default IAM roles for the new tenant.
+//  4. Create root COMPANY entity for the tenant.
+//  5. Create the first admin user scoped to the tenant + root entity.
+//  6. Assign role:tenant.admin to the new user.
+//
+// Returns 201 with tenant_id, user_id, and email on success.
+func (h *TenantHandler) OnboardSync(c *fiber.Ctx) error {
+	ctx, span := h.tracer.StartSpan(c.Context(), "tenant.handler.OnboardSync")
+	defer span.End()
+
+	var req syncOnboardRequest
+	if err := h.validateRequest(c, &req); err != nil {
+		return h.handleError(c, err)
+	}
+
+	// ── Step 1: Create tenant ────────────────────────────────────────────────
+	username := strings.ToLower(strings.ReplaceAll(req.AdminUsername, " ", "_"))
+	if username == "" {
+		// derive from email local part
+		parts := strings.SplitN(req.Email, "@", 2)
+		username = strings.ToLower(parts[0])
+	}
+
+	createReq := coreTenant.CreateTenantRequest{
+		Name:         req.Name,
+		Email:        req.Email,
+		CountryCode:  req.CountryCode,
+		CurrencyCode: req.CurrencyCode,
+		Subdomain:    req.Subdomain,
+		Industry:     req.Industry,
+		CompanySize:  req.CompanySize,
+	}
+
+	t, err := h.service.CreateTenant(ctx, createReq)
+	if err != nil {
+		span.RecordError(err)
+		return h.handleError(c, err)
+	}
+	span.SetAttributes(attribute.String("tenant.id", t.ID.String()))
+
+	// ── Step 2: Activate tenant ──────────────────────────────────────────────
+	if err := h.service.ActivateTenant(ctx, t.ID); err != nil {
+		span.RecordError(err)
+		return h.handleError(c, err)
+	}
+
+	// Inject tenant context so subsequent service calls use the correct RLS.
+	ctx = shared.WithTenantID(ctx, t.ID)
+	c.SetUserContext(ctx)
+
+	// ── Step 3: Seed default IAM roles ───────────────────────────────────────
+	if h.authzSvc != nil {
+		if err := contract.SeedDefaultRoles(ctx, h.authzSvc, t.ID.String()); err != nil {
+			span.RecordError(err)
+			h.logger.Error("OnboardSync: seed roles failed")
+			return h.handleError(c, err)
+		}
+	}
+
+	// ── Step 4: Create root entity ───────────────────────────────────────────
+	if h.userSvc == nil || h.entitySvc == nil {
+		return h.created(c, fiber.Map{
+			"tenant_id": t.ID,
+			"status":    "active",
+			"message":   "Tenant created. User/entity service not configured — create admin manually.",
+		})
+	}
+
+	rootEntity, err := h.entitySvc.CreateEntity(ctx, entity.CreateEntityRequest{
+		Name:     req.Name,
+		Code:     toEntityCode(req.Name),
+		Type:     entity.EntityTypeCompany,
+		IsActive: true,
+	})
+	if err != nil {
+		span.RecordError(err)
+		return h.handleError(c, err)
+	}
+	span.SetAttributes(attribute.String("entity.id", rootEntity.ID.String()))
+
+	// ── Step 5: Create admin user ────────────────────────────────────────────
+	displayName := req.Name + " Admin"
+	userReq := &iamDomain.CreateUserRequest{
+		EntityID:      rootEntity.ID,
+		Username:      username,
+		Email:         req.Email,
+		DisplayName:   &displayName,
+		Password:      req.AdminPassword,
+		UserType:      "INTERNAL",
+		AccountStatus: string(iamDomain.AccountStatusActive),
+	}
+
+	adminUser, err := h.userSvc.RegisterNewUser(ctx, userReq)
+	if err != nil {
+		span.RecordError(err)
+		return h.handleError(c, err)
+	}
+	span.SetAttributes(attribute.String("user.id", adminUser.ID.String()))
+
+	// ── Step 6: Assign tenant.admin role ─────────────────────────────────────
+	if h.authzSvc != nil {
+		if err := contract.AssignAdminRole(ctx, h.authzSvc, t.ID.String(), adminUser.ID.String()); err != nil {
+			span.RecordError(err)
+			h.logger.Error("OnboardSync: assign admin role failed")
+			return h.handleError(c, err)
+		}
+	}
+
+	return h.created(c, fiber.Map{
+		"tenant_id": t.ID,
+		"entity_id": rootEntity.ID,
+		"user_id":   adminUser.ID,
+		"email":     adminUser.Email,
+		"username":  adminUser.Username,
+		"status":    "active",
+	})
+}
+
+// toEntityCode converts a company name to a short uppercase entity code.
+// "Acme Corp" → "ACMECORP" (letters only, max 10 chars, uppercase).
+func toEntityCode(name string) string {
+	var b strings.Builder
+	for _, r := range strings.ToUpper(name) {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			b.WriteRune(r)
+		}
+		if b.Len() >= 10 {
+			break
+		}
+	}
+	if b.Len() == 0 {
+		return "ROOT"
+	}
+	return b.String()
 }

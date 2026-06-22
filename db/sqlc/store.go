@@ -308,10 +308,21 @@ func (s *SQLStore) clearTenantContext(ctx context.Context) error {
 }
 
 // getTenantIDFromContext extracts the tenant UUID from ctx.
+//
+// Uses ctx.Value(shared.TenantIDKey) directly — bypasses shared.GetTenantID
+// so that uuid.Nil is treated as a valid "platform context" value rather than
+// "not set". Platform (SYSADMIN) users have tenant_id = nil UUID in the DB;
+// passing nil UUID through triggers the raw SET LOCAL path in withTenantTransaction.
+//
+// Only a completely absent key (v == nil) is treated as an error.
 func (s *SQLStore) getTenantIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	tenantID, ok := shared.GetTenantID(ctx)
-	if !ok || tenantID == uuid.Nil {
+	v := ctx.Value(shared.TenantIDKey)
+	if v == nil {
 		return uuid.Nil, fmt.Errorf("tenant ID not found in context")
+	}
+	tenantID, ok := v.(uuid.UUID)
+	if !ok {
+		return uuid.Nil, fmt.Errorf("tenant ID in context has unexpected type %T", v)
 	}
 	return tenantID, nil
 }
@@ -416,8 +427,21 @@ func (s *SQLStore) withTenantTransaction(ctx context.Context, tenantID uuid.UUID
 		}
 	}()
 
-	if err := s.setTenantContext(ctx, tx, tenantID); err != nil {
-		return err
+	if tenantID == uuid.Nil {
+		// Platform context: use raw SET LOCAL to bypass set_tenant_context()
+		// which validates that the tenant exists in the tenants table.
+		// Platform users (SYSADMIN) have tenant_id = nil UUID and are not
+		// real tenants — they pre-date any tenant row.
+		if _, err := tx.Exec(ctx, "SET LOCAL awo.tenant_id = '00000000-0000-0000-0000-000000000000'"); err != nil {
+			s.logger.ErrorContext(ctx, "Failed to set platform tenant context",
+				logger.Fields{"error": err.Error()},
+			)
+			return fmt.Errorf("failed to set platform context: %w", err)
+		}
+	} else {
+		if err := s.setTenantContext(ctx, tx, tenantID); err != nil {
+			return err
+		}
 	}
 
 	txStore := &SQLStore{

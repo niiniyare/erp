@@ -8,10 +8,9 @@ import (
 	"github.com/shopspring/decimal"
 
 	"awo.so/internal/core/audit"
-	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/core/finance/service"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	settingsService "awo.so/internal/core/settings/service"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
@@ -26,9 +25,7 @@ type TransactionActivities struct {
 	transactionService      service.TransactionService
 	transactionEntryService service.TransactionEntryService
 	accountService          service.AccountService
-	iamService              iam.Service
 	auditService            audit.Service
-	featureFlagService      featureflag.Service
 	settingsService         settingsService.ConfigurationService
 	cacheService            cache.Service
 	logger                  logger.Logger
@@ -41,9 +38,7 @@ type TransactionActivityDeps struct {
 	TransactionService      service.TransactionService
 	TransactionEntryService service.TransactionEntryService
 	AccountService          service.AccountService
-	IAMService              iam.Service
 	AuditService            audit.Service
-	FeatureFlagService      featureflag.Service
 	SettingsService         settingsService.ConfigurationService
 	CacheService            cache.Service
 	Logger                  logger.Logger
@@ -57,9 +52,7 @@ func NewTransactionActivities(deps TransactionActivityDeps) *TransactionActiviti
 		transactionService:      deps.TransactionService,
 		transactionEntryService: deps.TransactionEntryService,
 		accountService:          deps.AccountService,
-		iamService:              deps.IAMService,
 		auditService:            deps.AuditService,
-		featureFlagService:      deps.FeatureFlagService,
 		settingsService:         deps.SettingsService,
 		cacheService:            deps.CacheService,
 		logger:                  deps.Logger,
@@ -197,8 +190,8 @@ func (t *TransactionActivities) ValidateTransactionActivity(ctx context.Context,
 	}
 
 	// Check feature flags for advanced validation
-	advancedValidationEnabled, _ := t.featureFlagService.IsEnabled(ctx, domain.FeatureFlagApprovalWorkflow, nil)
-	if advancedValidationEnabled {
+	sc, _ := contract.FromContext(ctx)
+	if sc.FeatureEnabled(domain.FeatureFlagApprovalWorkflow) {
 		activityLogger.InfoContext(ctx, "Performing advanced transaction validation")
 		// Additional advanced validation logic
 	}
@@ -573,8 +566,7 @@ func (t *TransactionActivities) CheckTransactionPermissionsActivity(ctx context.
 		}, nil
 	}
 
-	// TODO(authz): enforce finance.transaction permissions via iam.Service.Enforce()
-	// once the session principal is wired into ctx.
+	// Permission check deferred — session principal must be wired into ctx first.
 	_ = userID
 	_ = action
 

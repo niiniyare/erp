@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 )
 
 // AuthorizationConfig configures legacy authorization middleware behaviour.
@@ -30,8 +30,8 @@ func DefaultAuthorizationConfig() AuthorizationConfig {
 
 // ContextSession returns the ResolvedSession stored by Authenticate middleware.
 // Panics on unauthenticated routes — that is a programming error.
-func ContextSession(c *fiber.Ctx) *iam.ResolvedSession {
-	sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+func ContextSession(c *fiber.Ctx) *contract.ResolvedSession {
+	sess, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 	if !ok || sess == nil {
 		panic("middleware: ContextSession called on unauthenticated route")
 	}
@@ -50,8 +50,8 @@ func ContextUserID(c *fiber.Ctx) uuid.UUID {
 
 // ContextPrincipal returns the Casbin Principal from the resolved session.
 // Use this when calling AuthorizeCasbin manually inside a handler.
-func ContextPrincipal(c *fiber.Ctx) iam.Principal {
-	p, _ := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+func ContextPrincipal(c *fiber.Ctx) contract.Principal {
+	p, _ := c.Locals(contract.LocalsKeyPrincipal).(contract.Principal)
 	return p
 }
 
@@ -60,7 +60,7 @@ func ContextPrincipal(c *fiber.Ctx) iam.Principal {
 // =============================================================================
 
 // AuthorizeCasbin enforces object+action using the full Casbin engine.
-// Reads the Principal from c.Locals(iam.LocalsKeyPrincipal).
+// Reads the Principal from c.Locals(contract.LocalsKeyPrincipal).
 //
 // For hot-path API routes prefer Authorize() from session_middleware.go.
 // Use AuthorizeCasbin only for management operations where a live Casbin
@@ -72,11 +72,11 @@ func ContextPrincipal(c *fiber.Ctx) iam.Principal {
 //	    middleware.Authenticate(authCfg),
 //	    middleware.AuthorizeCasbin(authzSvc, "role", "assign"),
 //	    handler.AssignRole)
-func AuthorizeCasbin(svc iam.AuthzService, object, action string) fiber.Handler {
+func AuthorizeCasbin(svc contract.AuthzService, object, action string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		p, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		p, ok := c.Locals(contract.LocalsKeyPrincipal).(contract.Principal)
 		if !ok || p.Subject == "" {
-			return fiber.NewError(fiber.StatusUnauthorized, iam.ErrUnauthorized.Error())
+			return fiber.NewError(fiber.StatusUnauthorized, contract.ErrUnauthorized.Error())
 		}
 
 		obj := object
@@ -84,7 +84,7 @@ func AuthorizeCasbin(svc iam.AuthzService, object, action string) fiber.Handler 
 			obj = object + "/" + id
 		}
 
-		allowed, err := svc.Enforce(c.Context(), iam.Request{
+		allowed, err := svc.Enforce(c.Context(), contract.Request{
 			Subject: p.Subject,
 			Domain:  p.Domain,
 			Object:  obj,
@@ -94,7 +94,7 @@ func AuthorizeCasbin(svc iam.AuthzService, object, action string) fiber.Handler 
 			return err
 		}
 		if !allowed {
-			return fiber.NewError(fiber.StatusForbidden, iam.ErrForbidden.Error())
+			return fiber.NewError(fiber.StatusForbidden, contract.ErrForbidden.Error())
 		}
 		return c.Next()
 	}

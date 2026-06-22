@@ -5,29 +5,30 @@
 //
 //  1. Feature flag: sess.Configuration.Flags["{module}.enabled"] must be true
 //     (or the key must be absent, which means "not explicitly disabled").
-//  2. Permission: authzSvc.Enforce(principal, "{module}.{resource}", "read") must return true.
+//  2. Permission: checker.Check(principal, "{module}.{resource}", "read") must return true.
 //
-// The feature flag check is fast (in-memory). The permission check calls Casbin
-// in-process (no extra DB round-trips per resource beyond the two module/resource queries).
+// The feature flag check is fast (in-memory). The permission check delegates to
+// contract.PolicyChecker which wraps AuthzService — direct .Enforce() calls are
+// forbidden in handler code by the contract boundary guard.
 package schema
 
 import (
 	"github.com/gofiber/fiber/v2"
 
 	db "awo.so/db/sqlc"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 )
 
 // BootHandler returns the AMIS app shell schema for the authenticated user.
 //
 // Route: GET /schema/boot  (requires Authenticate middleware)
-func BootHandler(store db.Store, authzSvc iam.AuthzService) fiber.Handler {
+func BootHandler(store db.Store, checker contract.PolicyChecker) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		sess, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
-		principal, _ := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		principal, _ := c.Locals(contract.LocalsKeyPrincipal).(contract.Principal)
 
 		modules, err := store.ListActiveSystemModules(c.Context())
 		if err != nil {
@@ -52,14 +53,17 @@ func BootHandler(store db.Store, authzSvc iam.AuthzService) fiber.Handler {
 			children := make([]fiber.Map, 0, len(resources))
 			for _, res := range resources {
 				// 2. Permission gate: user must have at least read on this resource.
-				allowed, err := authzSvc.Enforce(c.Context(), iam.Request{
-					Subject: principal.Subject,
-					Domain:  principal.Domain,
-					Object:  mod.Slug + "." + res.Slug,
-					Action:  "read",
-				})
-				if err != nil || !allowed {
-					continue
+				//    checker may be nil when authz is not configured (dev/test).
+				if checker != nil {
+					allowed, err := checker.Check(c.Context(), contract.Request{
+						Subject: principal.Subject,
+						Domain:  principal.Domain,
+						Object:  mod.Slug + "." + res.Slug,
+						Action:  "read",
+					})
+					if err != nil || !allowed {
+						continue
+					}
 				}
 
 				child := fiber.Map{

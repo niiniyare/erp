@@ -16,7 +16,7 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 )
 
 // AccessExecutionType represents the type of access execution
@@ -81,8 +81,8 @@ type AccessExecutionService interface {
 
 // accessExecutionService implements AccessExecutionService
 type accessExecutionService struct {
-	userRepo    iam.UserRepository
-	userService iam.UserService
+	userRepo    contract.UserRepository
+	userService contract.UserService
 	tracing     tracing.Service
 	metrics     metrics.MetricsProvider
 	// TODO: Add temporary access repository when implemented
@@ -91,8 +91,8 @@ type accessExecutionService struct {
 
 // NewAccessExecutionService creates a new access execution service
 func NewAccessExecutionService(
-	userRepo iam.UserRepository,
-	userService iam.UserService,
+	userRepo contract.UserRepository,
+	userService contract.UserService,
 	tracing tracing.Service,
 	metrics metrics.MetricsProvider,
 ) AccessExecutionService {
@@ -521,7 +521,7 @@ func (s *accessExecutionService) ValidateAccessExecution(ctx context.Context, re
 		return fmt.Errorf("target user not found: %w", err)
 	}
 
-	if !targetUser.IsActive || targetUser.AccountStatus != iam.AccountStatusActive {
+	if !targetUser.IsActive || targetUser.AccountStatus != "ACTIVE" {
 		return fmt.Errorf("target user account is not active")
 	}
 

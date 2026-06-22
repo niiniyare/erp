@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/repository"
 	"awo.so/internal/core/tenant/service"
@@ -18,7 +18,7 @@ type Activities struct {
 	prov    *service.ProvisioningService
 	repo    repository.Repository
 	tracer  tracing.Service
-	authzSvc iam.AuthzService // optional — IAM role seeding skipped when nil
+	authzSvc contract.AuthzService // optional — IAM role seeding skipped when nil
 }
 
 // Deps contains dependencies for tenant activities.
@@ -27,7 +27,7 @@ type Deps struct {
 	ProvisioningService *service.ProvisioningService
 	Repo                repository.Repository
 	Tracer              tracing.Service
-	AuthzService        iam.AuthzService // optional
+	AuthzService        contract.AuthzService // optional
 }
 
 // New creates a new Activities instance.
@@ -142,7 +142,7 @@ func (a *Activities) SeedIAMRolesActivity(ctx context.Context, tenantID uuid.UUI
 	ctx, span := a.tracer.StartSpan(ctx, "activity.SeedIAMRoles")
 	defer span.End()
 
-	if err := iam.SeedDefaultRoles(ctx, a.authzSvc, tenantID.String()); err != nil {
+	if err := contract.SeedDefaultRoles(ctx, a.authzSvc, tenantID.String()); err != nil {
 		span.RecordError(err)
 		return fmt.Errorf("seed IAM roles activity failed: %w", err)
 	}

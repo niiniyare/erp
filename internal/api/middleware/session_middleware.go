@@ -7,7 +7,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"awo.so/internal/core/iam"
 	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared"
@@ -43,19 +42,19 @@ func splitPermission(perm string) (object, action string) {
 // AuthConfig holds configuration for session-based authentication middleware.
 type AuthConfig struct {
 	// SessionService validates tokens and returns ResolvedSessions.
-	SessionService iam.SessionService
+	SessionService contract.SessionService
 	// AuthzService enforces permission checks in Authorize middleware.
 	// Required when using Authorize; optional otherwise.
-	AuthzService iam.AuthzService
+	AuthzService contract.AuthzService
 	// APIKeyService validates "eak_" prefixed bearer tokens.
 	// Optional — API key auth is skipped when nil.
-	APIKeyService iam.APIKeyService
+	APIKeyService contract.APIKeyService
 	// CookieName is the HttpOnly cookie that carries the raw session token.
 	CookieName string
 }
 
 // DefaultAuthConfig returns an AuthConfig with safe defaults backed by svc.
-func DefaultAuthConfig(svc iam.SessionService) AuthConfig {
+func DefaultAuthConfig(svc contract.SessionService) AuthConfig {
 	return AuthConfig{
 		SessionService: svc,
 		CookieName:     "session",
@@ -64,7 +63,7 @@ func DefaultAuthConfig(svc iam.SessionService) AuthConfig {
 
 // Authenticate is a Fiber middleware that validates the session token from
 // the cookie (or Authorization: Bearer header) and stores the ResolvedSession
-// in c.Locals(iam.LocalsKeySession).
+// in c.Locals(contract.LocalsKeySession).
 //
 // On failure:
 //   - Browser requests (Accept: text/html) → 302 redirect to /ui/login?redirect=<path>
@@ -130,7 +129,7 @@ func unauthenticated(c *fiber.Ctx) error {
 func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 	obj, act := splitPermission(permission) // computed once at registration, not per-request
 	return func(c *fiber.Ctx) error {
-		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		sess, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
@@ -138,11 +137,11 @@ func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 			// No authz service configured — pass through (dev/test mode).
 			return c.Next()
 		}
-		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
+		principal, ok := c.Locals(contract.LocalsKeyPrincipal).(contract.Principal)
 		if !ok {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
-		allowed, err := cfg.AuthzService.Enforce(c.Context(), iam.Request{
+		allowed, err := cfg.AuthzService.Enforce(c.Context(), contract.Request{
 			Subject: principal.Subject,
 			Domain:  principal.Domain,
 			Object:  obj,
@@ -165,7 +164,7 @@ func Authorize(cfg AuthConfig, permission string) fiber.Handler {
 // flag is absent or false.
 func RequireFlag(flagKey string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		sess, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
 		}
@@ -178,12 +177,12 @@ func RequireFlag(flagKey string) fiber.Handler {
 
 // setSessionLocals populates all Fiber Locals and Go context values required
 // by downstream handlers and authorization middleware:
-//   - iam.LocalsKeySession   → *iam.ResolvedSession  (permissions, flags, settings)
-//   - iam.LocalsKeyPrincipal → iam.Principal         (Casbin subject + domain)
-//   - cache.TenantIDKey      → tenant UUID string     (RLS context for SQLC queries)
-func setSessionLocals(c *fiber.Ctx, resolved *iam.ResolvedSession) {
-	c.Locals(iam.LocalsKeySession, resolved)
-	c.Locals(iam.LocalsKeyPrincipal, resolved.ToPrincipal())
+//   - contract.LocalsKeySession   → *contract.ResolvedSession  (permissions, flags, settings)
+//   - contract.LocalsKeyPrincipal → contract.Principal         (Casbin subject + domain)
+//   - cache.TenantIDKey           → tenant UUID string          (RLS context for SQLC queries)
+func setSessionLocals(c *fiber.Ctx, resolved *contract.ResolvedSession) {
+	c.Locals(contract.LocalsKeySession, resolved)
+	c.Locals(contract.LocalsKeyPrincipal, resolved.ToPrincipal())
 	// Build enriched Go context preserving any prior values (e.g. from TenantMiddleware).
 	// shared.TenantIDKey  (uuid.UUID) — DB layer / WithTenantFromCtx
 	// cache.TenantIDKey   (string)    — cache namespace lookup

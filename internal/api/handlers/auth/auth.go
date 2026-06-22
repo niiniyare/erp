@@ -8,7 +8,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/shared"
 	sharedErrors "awo.so/internal/shared/errors"
 )
@@ -48,7 +48,7 @@ type loginRequest struct {
 // NOTE(tenant-context): The tenant must already be resolved by the
 // ResolveTenant middleware (which sets cache.TenantIDKey in ctx) before
 // this handler runs.
-func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
+func LoginHandler(svc contract.SessionService, cfg LoginConfig) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var req loginRequest
 		if err := c.BodyParser(&req); err != nil {
@@ -66,15 +66,20 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 
 		// Inject tenant context so IAM repository can scope the user lookup.
 		// Priority: X-Tenant-ID header, then request body tenant_id.
+		// When neither is provided, inject uuid.Nil — this signals the DB store
+		// to use the platform context (SET LOCAL awo.tenant_id = nil UUID),
+		// which allows looking up SYSADMIN users whose tenant_id is also nil UUID.
 		tenantIDStr := strings.TrimSpace(c.Get("X-Tenant-ID"))
 		if tenantIDStr == "" {
 			tenantIDStr = strings.TrimSpace(req.TenantID)
 		}
+		tid := uuid.Nil // platform fallback
 		if tenantIDStr != "" {
-			if tid, parseErr := uuid.Parse(tenantIDStr); parseErr == nil {
-				c.SetUserContext(shared.WithTenantID(c.UserContext(), tid))
+			if parsed, parseErr := uuid.Parse(tenantIDStr); parseErr == nil {
+				tid = parsed
 			}
 		}
+		c.SetUserContext(shared.WithTenantID(c.UserContext(), tid))
 
 		resolved, rawToken, err := svc.Login(c.UserContext(), req.Email, req.Password)
 		if err != nil {
@@ -117,7 +122,7 @@ func LoginHandler(svc iam.SessionService, cfg LoginConfig) fiber.Handler {
 
 // LogoutHandler handles POST /auth/logout.
 // It invalidates the session in the DB + cache and clears the cookie.
-func LogoutHandler(svc iam.SessionService, cookieName string) fiber.Handler {
+func LogoutHandler(svc contract.SessionService, cookieName string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := c.Cookies(cookieName)
 		if token == "" {

@@ -183,7 +183,8 @@ func TenantMiddleware(config TenantMiddlewareConfig) fiber.Handler {
 
 		// 4. Special case: Tenant creation/onboarding endpoints
 		if (method == fiber.MethodPost && path == "/api/v1/tenants") ||
-			(method == fiber.MethodPost && path == "/api/v1/tenant/onboard") {
+			(method == fiber.MethodPost && path == "/api/v1/onboard") ||
+			(method == fiber.MethodPost && path == "/api/v1/onboard/sync") {
 			logger.Debug("Tenant creation endpoint, bypassing tenant middleware", logger.Fields{
 				"method":     method,
 				"path":       path,

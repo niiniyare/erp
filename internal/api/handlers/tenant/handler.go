@@ -2,6 +2,8 @@ package tenant
 
 import (
 	"github.com/go-playground/validator/v10"
+	"awo.so/internal/core/entity"
+	"awo.so/internal/core/iam/contract"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/shared/encryption"
 	"awo.so/internal/shared/logger"
@@ -15,6 +17,9 @@ import (
 // validation, error handling, and response formatting.
 type TenantHandler struct {
 	service        coreTenant.Service
+	userSvc        contract.UserService   // nil = sync onboarding skips user creation
+	authzSvc       contract.AuthzService  // nil = sync onboarding skips IAM seeding
+	entitySvc      entity.Service    // nil = sync onboarding skips root entity creation
 	logger         logger.Logger
 	metrics        metrics.MetricsProvider
 	tracer         tracing.Service
@@ -43,4 +48,13 @@ func NewTenantHandler(
 		encryption:     nil,
 		onboardStarter: onboardStarter,
 	}
+}
+
+// WithOnboardServices injects the user, authz, and entity services needed for
+// synchronous onboarding. Call this after NewTenantHandler when services are available.
+func (h *TenantHandler) WithOnboardServices(userSvc contract.UserService, authzSvc contract.AuthzService, entitySvc entity.Service) *TenantHandler {
+	h.userSvc = userSvc
+	h.authzSvc = authzSvc
+	h.entitySvc = entitySvc
+	return h
 }

@@ -13,7 +13,7 @@ import (
 	"awo.so/internal/core/featureflag"
 	financeRepo "awo.so/internal/core/finance/repository"
 	financeService "awo.so/internal/core/finance/service"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/core/notification"
 	"awo.so/internal/core/settings"
 	"awo.so/internal/core/tenant"
@@ -56,12 +56,12 @@ type ServiceContainer struct {
 	// Core Infrastructure Services
 	TenantService   tenant.Service
 	EntityService   entity.Service
-	IdentityService iam.UserService
+	IdentityService contract.UserService
 
 	// Security & Access Control
-	IAMService   iam.AuthzService
+	IAMService   contract.AuthzService
 	AuditService audit.Service
-	SessionService iam.SessionService
+	SessionService contract.SessionService
 
 	// Feature Management
 	FeatureFlagService      featureflag.Service
@@ -168,8 +168,8 @@ func (sc *ServiceContainer) initializeFoundationalServices(ctx context.Context) 
 	sc.EntityService = entity.NewService(entityRepo, sc.deps.Tracing, sc.deps.Metrics)
 
 	// Identity Service - User management
-	identityRepo := iam.NewUserRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.IdentityService = iam.NewUserService(identityRepo, sc.deps.Tracing, sc.deps.Metrics, sc.deps.Logger)
+	identityRepo := contract.NewUserRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.IdentityService = contract.NewUserService(identityRepo, sc.deps.Tracing, sc.deps.Metrics, sc.deps.Logger)
 
 	// Audit Service - Required by other services for logging
 	auditRepo := audit.NewRepository(sc.deps.Store, sc.deps.Logger, sc.deps.Tracing, sc.deps.Metrics)
@@ -203,7 +203,7 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	// )
 
 	// IAM Service - Casbin-backed role/policy engine
-	iamSvc, err := iam.New(iam.Config{
+	iamSvc, err := contract.New(contract.Config{
 		Store:   sc.deps.Store,
 		Cache:   sc.deps.Cache,
 		Logger:  sc.deps.Logger,
@@ -216,8 +216,8 @@ func (sc *ServiceContainer) initializeSecurityServices(ctx context.Context) erro
 	sc.IAMService = iamSvc
 
 	// Session Service - Login / ValidateSession / Logout
-	sessionRepo := iam.NewSessionRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
-	sc.SessionService = iam.NewSessionService(
+	sessionRepo := contract.NewSessionRepository(sc.deps.Store, sc.deps.Cache, sc.deps.Tracing, sc.deps.Metrics)
+	sc.SessionService = contract.NewSessionService(
 		sc.IdentityService,
 		sessionRepo,
 		sc.deps.Tracing,
@@ -418,7 +418,7 @@ func (sc *ServiceContainer) GetEntityService() entity.Service {
 	return sc.EntityService
 }
 
-func (sc *ServiceContainer) GetIdentityService() iam.UserService {
+func (sc *ServiceContainer) GetIdentityService() contract.UserService {
 	return sc.IdentityService
 }
 
@@ -426,15 +426,15 @@ func (sc *ServiceContainer) GetIdentityService() iam.UserService {
 // 	return sc.ABACService
 // }
 
-func (sc *ServiceContainer) GetAuthzService() iam.Service {
+func (sc *ServiceContainer) GetAuthzService() contract.Service {
 	return sc.IAMService
 }
 
-func (sc *ServiceContainer) GetSessionService() iam.SessionService {
+func (sc *ServiceContainer) GetSessionService() contract.SessionService {
 	return sc.SessionService
 }
 
-func (sc *ServiceContainer) GetIAMService() iam.Service {
+func (sc *ServiceContainer) GetIAMService() contract.Service {
 	return sc.IAMService
 }
 

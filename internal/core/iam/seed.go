@@ -11,46 +11,51 @@ import (
 //
 // Call this from the tenant provisioning flow after the tenant row is created.
 //
+// Objects and actions match the authorizeMiddleware calls in the route layer
+// exactly — splitPermission("finance.accounts.read") → ("finance.accounts","read").
+//
 // Permissions granted to role:tenant.admin:
-//   - finance.*.*   read/create/update/delete/approve/export
-//   - people.*.*    read/create/update/delete
-//   - settings.*.*  read/update
+//   - finance.accounts          read / write
+//   - finance.transactions      read / write
+//   - finance.periods           read / write
+//   - finance.currencies        read / write
+//   - finance.budgets           read / write
+//   - finance.cost_centers      read / write
+//   - finance.tax               read / write
+//   - finance.reconciliation    read / write
+//   - iam.policies              read / write
+//   - iam.roles                 read / write
+//   - contracts.*               read / write
 func SeedDefaultRoles(ctx context.Context, svc Service, tenantID string) error {
 	domain := TenantDomain(tenantID)
 	role := "role:tenant.admin"
 
-	policies := []Policy{
-		// Finance module
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "create", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "update", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "delete", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "approve", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.receivables.invoices", Action: "export", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.payables.bills", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.payables.bills", Action: "create", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.payables.bills", Action: "update", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.payables.bills", Action: "approve", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.accounts", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.accounts", Action: "create", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.accounts", Action: "update", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.transactions", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "finance.transactions", Action: "create", Effect: "allow"},
+	// Each entry mirrors one authorizeMiddleware("<object>.<action>") call.
+	// Keeping read and write as separate rows makes it easy to grant read-only
+	// roles later without changing the policy model.
+	objects := []string{
+		// Finance
+		"finance.accounts",
+		"finance.transactions",
+		"finance.periods",
+		"finance.currencies",
+		"finance.budgets",
+		"finance.cost_centers",
+		"finance.tax",
+		"finance.reconciliation",
+		// IAM management (within the tenant's own domain)
+		"iam.policies",
+		"iam.roles",
+		// Contracts
+		"contracts",
+	}
 
-		// People module
-		{Subject: role, Domain: domain, Object: "people.employees", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.employees", Action: "create", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.employees", Action: "update", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.employees", Action: "delete", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.persons", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.persons", Action: "create", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "people.persons", Action: "update", Effect: "allow"},
-
-		// Settings module
-		{Subject: role, Domain: domain, Object: "settings.iam", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "settings.iam", Action: "update", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "settings.general", Action: "read", Effect: "allow"},
-		{Subject: role, Domain: domain, Object: "settings.general", Action: "update", Effect: "allow"},
+	var policies []Policy
+	for _, obj := range objects {
+		policies = append(policies,
+			Policy{Subject: role, Domain: domain, Object: obj, Action: "read", Effect: "allow"},
+			Policy{Subject: role, Domain: domain, Object: obj, Action: "write", Effect: "allow"},
+		)
 	}
 
 	for _, p := range policies {

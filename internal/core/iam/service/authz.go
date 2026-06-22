@@ -315,7 +315,11 @@ func (s *authzService) Enforce(ctx context.Context, r domain.Request) (bool, err
 	// check.  Running Casbin for platform subjects would require seeding a
 	// wildcard policy in _platform_ and would add latency with no security
 	// benefit (the route-layer gate already ensured ActorPlatform).
-	if r.Domain == domain.DomainPlatform {
+	//
+	// The bypass is restricted to subjects with the "platform:" prefix.
+	// A non-platform subject requesting the platform domain must be denied —
+	// the domain boundary must hold regardless of who is requesting.
+	if r.Domain == domain.DomainPlatform && strings.HasPrefix(r.Subject, "platform:") {
 		span.SetAttributes(attribute.Bool("authz.allowed", true))
 		s.metrics.IncrementCounter("iam.authz.enforce", metrics.Fields{"allowed": "true"})
 		return true, nil
@@ -371,7 +375,7 @@ func (s *authzService) EnforceBatch(ctx context.Context, reqs []domain.Request) 
 		if r.Subject == "" || r.Domain == "" || r.Object == "" || r.Action == "" {
 			return nil, domain.ErrInvalidRequest
 		}
-		if r.Domain == domain.DomainPlatform {
+		if r.Domain == domain.DomainPlatform && strings.HasPrefix(r.Subject, "platform:") {
 			results[i] = true // platform actors: always allowed (see Enforce for rationale)
 			continue
 		}
@@ -877,26 +881,46 @@ func (s *authzService) InvalidateCache(ctx context.Context) error {
 
 // Bootstrap
 
+// financeObjects lists every resource object used by authorizeMiddleware in
+// the finance route group.  Kept in sync with registerFinanceAPI in routes.go.
+// splitPermission("finance.accounts.read") → ("finance.accounts", "read").
+var financeObjects = []string{
+	"finance.accounts",
+	"finance.transactions",
+	"finance.periods",
+	"finance.currencies",
+	"finance.budgets",
+	"finance.cost_centers",
+	"finance.tax",
+	"finance.reconciliation",
+}
+
 func (s *authzService) BootstrapTenantAdmin(ctx context.Context, tenantID, userID uuid.UUID) error {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.authz.BootstrapTenantAdmin")
 	defer span.End()
 
 	domainName := domain.TenantDomain(tenantID.String())
 	subject := domain.TenantSubject(userID.String())
-	roleName := "tenant_admin"
+	roleName := "role:tenant.admin"
 
-	// Seed wildcard allow policy for tenant_admin in this domain.
-	// ErrPolicyConflict means it already exists — safe to ignore.
-	if err := s.AddPolicy(ctx, domain.Policy{
-		Subject: roleName,
-		Domain:  domainName,
-		Object:  "*",
-		Action:  "*",
-		Effect:  "allow",
-	}); err != nil && err != domain.ErrPolicyConflict {
-		s.log.WarnContext(ctx, "bootstrap: seed tenant_admin policy failed (non-fatal)", logger.Fields{
-			"domain": domainName, "error": err.Error(),
-		})
+	// Seed granular policies for role:tenant.admin so the user has real
+	// permissions rather than a wildcard.  Inlined here (instead of calling
+	// iam.SeedDefaultRoles) to avoid a circular import between service ↔ iam.
+	// ErrPolicyConflict = already exists — idempotent, safe to skip.
+	for _, obj := range financeObjects {
+		for _, act := range []string{"read", "write"} {
+			if err := s.AddPolicy(ctx, domain.Policy{
+				Subject: roleName,
+				Domain:  domainName,
+				Object:  obj,
+				Action:  act,
+				Effect:  "allow",
+			}); err != nil && err != domain.ErrPolicyConflict {
+				s.log.WarnContext(ctx, "bootstrap: seed policy failed (non-fatal)", logger.Fields{
+					"domain": domainName, "object": obj, "action": act, "error": err.Error(),
+				})
+			}
+		}
 	}
 
 	return s.AssignRole(ctx, tenantID.String(), subject, roleName, domainName,

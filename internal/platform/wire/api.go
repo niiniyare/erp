@@ -19,7 +19,7 @@ import (
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/contracts"
 	financeService "awo.so/internal/core/finance/service"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/core/tenant"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/platform/config"
@@ -145,15 +145,15 @@ func NewRouteSecurityManager(log logger.Logger, m metrics.MetricsProvider, trace
 // ============================================================================
 
 // NewIdentityRepository constructs the IAM user repository.
-func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.UserRepository {
-	return iam.NewUserRepository(store, cacheSvc, tracer, m)
+func NewIdentityRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) contract.UserRepository {
+	return contract.NewUserRepository(store, cacheSvc, tracer, m)
 }
 
 // NewIdentityService constructs the IAM user service with brute-force config from app config.
 // cacheSvc is accepted for wire compatibility but cache is handled by the repository.
 // authzSvc is used to bootstrap tenant_admin role on user creation.
-func NewIdentityService(repo iam.UserRepository, authzSvc iam.AuthzService, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config, log logger.Logger) iam.UserService {
-	return iam.NewUserServiceWithConfig(repo, authzSvc, tracer, m, iam.UserConfig{
+func NewIdentityService(repo contract.UserRepository, authzSvc contract.AuthzService, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider, cfg *config.Config, log logger.Logger) contract.UserService {
+	return contract.NewUserServiceWithConfig(repo, authzSvc, tracer, m, contract.UserConfig{
 		MaxFailedAttempts: cfg.Auth.MaxFailedAttempts,
 		LockoutDuration:   cfg.Auth.LockoutDuration,
 		MFAEncryptionKey:  []byte(cfg.Auth.MFAEncryptionKey),
@@ -162,8 +162,8 @@ func NewIdentityService(repo iam.UserRepository, authzSvc iam.AuthzService, cach
 }
 
 // NewAuthzService constructs the Casbin-backed authorization service.
-func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) (iam.AuthzService, error) {
-	return iam.New(iam.Config{
+func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, m metrics.MetricsProvider, tracer tracing.Service) (contract.AuthzService, error) {
+	return contract.New(contract.Config{
 		Store:   store,
 		Cache:   cacheSvc,
 		Logger:  log,
@@ -173,20 +173,20 @@ func NewAuthzService(store db.Store, cacheSvc cache.Service, log logger.Logger, 
 }
 
 // NewSessionRepository constructs the session repository.
-func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.SessionRepository {
-	return iam.NewSessionRepository(store, cacheSvc, tracer, m)
+func NewSessionRepository(store db.Store, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) contract.SessionRepository {
+	return contract.NewSessionRepository(store, cacheSvc, tracer, m)
 }
 
 // NewSessionService constructs the session service with TTL from app config.
 func NewSessionService(
-	identitySvc iam.UserService,
-	repo iam.SessionRepository,
+	identitySvc contract.UserService,
+	repo contract.SessionRepository,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 	cfg *config.Config,
-) iam.SessionService {
-	return iam.NewSessionServiceWithConfig(identitySvc, repo, tracer, m, log, iam.SessionConfig{
+) contract.SessionService {
+	return contract.NewSessionServiceWithConfig(identitySvc, repo, tracer, m, log, contract.SessionConfig{
 		SessionTTL: cfg.Auth.SessionTTL,
 		CookieName: cfg.Auth.CookieName,
 	})
@@ -211,13 +211,13 @@ func NewAuditService(repo audit.Repository, cacheSvc cache.Service, log logger.L
 // ============================================================================
 
 // NewAPIKeyRepository constructs the API key repository.
-func NewAPIKeyRepository(store db.Store) iam.APIKeyRepository {
-	return iam.NewAPIKeyRepository(store)
+func NewAPIKeyRepository(store db.Store) contract.APIKeyRepository {
+	return contract.NewAPIKeyRepository(store)
 }
 
 // NewAPIKeyService constructs the API key service.
-func NewAPIKeyService(repo iam.APIKeyRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) iam.APIKeyService {
-	return iam.NewAPIKeyService(repo, cacheSvc, tracer, m)
+func NewAPIKeyService(repo contract.APIKeyRepository, cacheSvc cache.Service, tracer tracing.Service, m metrics.MetricsProvider) contract.APIKeyService {
+	return contract.NewAPIKeyService(repo, cacheSvc, tracer, m)
 }
 
 // ============================================================================
@@ -225,21 +225,21 @@ func NewAPIKeyService(repo iam.APIKeyRepository, cacheSvc cache.Service, tracer 
 // ============================================================================
 
 // NewSSORepository constructs a Postgres-backed SSORepository.
-func NewSSORepository(store db.Store) iam.SSORepository {
-	return iam.NewSSORepository(store)
+func NewSSORepository(store db.Store) contract.SSORepository {
+	return contract.NewSSORepository(store)
 }
 
 // NewSSOService constructs the SSOService for OAuth/OIDC login flows.
 func NewSSOService(
-	repo iam.SSORepository,
-	identity iam.UserService,
+	repo contract.SSORepository,
+	identity contract.UserService,
 	cacheSvc cache.Service,
 	tracer tracing.Service,
 	m metrics.MetricsProvider,
 	log logger.Logger,
 	cfg *config.Config,
-) iam.SSOService {
-	return iam.NewSSOService(repo, identity, tracer, m, log, iam.SSOConfig{
+) contract.SSOService {
+	return contract.NewSSOService(repo, identity, tracer, m, log, contract.SSOConfig{
 		EncryptionKey: []byte(cfg.Auth.SSOEncryptionKey),
 		Cache:         cacheSvc,
 	})
@@ -255,16 +255,16 @@ func NewHandlerDependencies(
 	m metrics.MetricsProvider,
 	tracer tracing.Service,
 	tenantService tenant.Service,
-	userSvc iam.UserService,
-	sessionSvc iam.SessionService,
+	userSvc contract.UserService,
+	sessionSvc contract.SessionService,
 	financeServices *financeService.Services,
 	contractSvc contracts.Service,
 	tenantMiddleware fiber.Handler,
 	securityMgr *middleware.RouteSecurityManager,
 	auditSvc audit.Service,
-	authzSvc iam.AuthzService,
-	apiKeySvc iam.APIKeyService,
-	ssoSvc iam.SSOService,
+	authzSvc contract.AuthzService,
+	apiKeySvc contract.APIKeyService,
+	ssoSvc contract.SSOService,
 	temporalClient temporalclient.Client,
 	store db.Store,
 ) *handlers.Dependencies {
@@ -285,6 +285,7 @@ func NewHandlerDependencies(
 		AuditService:     auditSvc,
 		APIKeyService:    apiKeySvc,
 		SSOService:       ssoSvc,
+		IAMService:       authzSvc,
 		TemporalClient:   temporalClient,
 		Store:            store,
 	}

@@ -31,8 +31,10 @@ import (
 	auditHandler "awo.so/internal/api/handlers/audit"
 	authHandler "awo.so/internal/api/handlers/auth"
 	contractHandler "awo.so/internal/api/handlers/contracts"
+	entityHandler "awo.so/internal/api/handlers/entity"
 	financeHandler "awo.so/internal/api/handlers/finance"
 	"awo.so/internal/api/handlers/health"
+	iamHandler "awo.so/internal/api/handlers/iam"
 	schemaHandler "awo.so/internal/api/handlers/schema"
 	webHandler "awo.so/internal/web/handler"
 
@@ -45,7 +47,7 @@ import (
 	"awo.so/internal/core/contracts"
 	"awo.so/internal/core/entity"
 	financeService "awo.so/internal/core/finance/service"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
@@ -86,6 +88,7 @@ const (
 	ModuleContracts = "contracts"
 	ModuleSchema    = "schema"
 	ModuleAudit     = "audit"
+	ModuleIAM       = "iam"
 
 	// apiV1Prefix is the common versioned prefix for all REST API routes.
 	// Change this once to move all API routes to /api/v2.
@@ -218,7 +221,7 @@ type Dependencies struct {
 	TenantService coreTenant.Service
 
 	// UserService manages users within a tenant. Optional.
-	UserService iam.UserService
+	UserService contract.UserService
 
 	// FinanceServices is the bundle of finance sub-services. Optional.
 	FinanceServices *financeService.Services
@@ -234,7 +237,7 @@ type Dependencies struct {
 	// SessionService enables /auth/login, /auth/logout, and session validation
 	// via the Authenticate middleware. Optional — auth routes are skipped and
 	// Authenticate becomes a no-op pass-through when nil.
-	SessionService iam.SessionService
+	SessionService contract.SessionService
 
 	// AuthConfig carries the cookie name, AuthzService, and related settings.
 	// Optional — auth and authz middleware degrade to no-ops when nil.
@@ -245,11 +248,15 @@ type Dependencies struct {
 	AuthConfig *middlewarePkg.AuthConfig
 
 	// SSOService enables OAuth/OIDC login routes. Optional.
-	SSOService iam.SSOService
+	SSOService contract.SSOService
 
 	// APIKeyService enables API key management routes and Bearer token
 	// validation. Optional.
-	APIKeyService iam.APIKeyService
+	APIKeyService contract.APIKeyService
+
+	// IAMService enables IAM management routes (policies, roles, assignments).
+	// Optional — IAM management routes are skipped when nil.
+	IAMService contract.AuthzService
 
 	// ── Infrastructure ───────────────────────────────────────────────────────
 
@@ -445,6 +452,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		{ModuleContracts, r.registerContractsAPI},
 		{ModuleSchema, r.registerSchemaAPI},
 		{ModuleAudit, r.registerAuditAPI},
+		{ModuleIAM, r.registerIAMAPI},
 		// ↑ Add new modules here — one line per module.
 	}
 
@@ -641,6 +649,12 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 	handler := tenantHandler.NewTenantHandler(
 		r.deps.TenantService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer, onboardStarter,
 	)
+	// Inject user + authz + entity services for synchronous onboarding when available.
+	if r.deps.UserService != nil && r.deps.IAMService != nil && r.deps.Store != nil {
+		entityRepo := entity.NewRepository(r.deps.Store, r.deps.Tracer, r.deps.Metrics)
+		entitySvc := entity.NewService(entityRepo, r.deps.Tracer, r.deps.Metrics)
+		handler.WithOnboardServices(r.deps.UserService, r.deps.IAMService, entitySvc)
+	}
 
 	g := apiRouter.Group(apiV1Prefix + "/tenants")
 
@@ -661,11 +675,15 @@ func (r *Router) registerTenantAPI(apiRouter fiber.Router) error {
 	g.Post("/:id/suspend", handler.Suspend)   // POST /api/v1/tenants/:id/suspend
 	g.Post("/:id/archive", handler.Archive)   // POST /api/v1/tenants/:id/archive
 
-	// ── Async onboarding (Temporal workflow) ─────────────────────────────
-	// Returns 503 when TemporalClient is nil (onboardStarter will be nil).
-	apiRouter.Post(apiV1Prefix+"/tenants/onboard", handler.Onboard)
+	// ── Onboarding (public — no auth/platform guard) ─────────────────────
+	// Registered on a separate prefix (/api/v1/onboard/*) so they are NOT
+	// caught by the /api/v1/tenants prefix-based authenticate middleware above.
+	// Async: enqueues a Temporal workflow (503 when Temporal not wired).
+	apiRouter.Post(apiV1Prefix+"/onboard", handler.Onboard) // POST /api/v1/onboard
+	// Sync: provisions tenant + admin user in one request; no Temporal needed.
+	apiRouter.Post(apiV1Prefix+"/onboard/sync", handler.OnboardSync) // POST /api/v1/onboard/sync
 
-	r.registry.track(ModuleTenant, apiV1Prefix+"/tenants", 10)
+	r.registry.track(ModuleTenant, apiV1Prefix+"/tenants", 12)
 	r.deps.Logger.Info("tenant API endpoints registered")
 	return nil
 }
@@ -704,14 +722,11 @@ func (r *Router) registerUserAPI(apiRouter fiber.Router) error {
 	return nil
 }
 
-// registerEntityAPI mounts entity CRUD.
+// registerEntityAPI mounts entity CRUD and hierarchy endpoints.
 //
-// Entity routes run inside tenant context (RLS) but currently do not require
-// an active session — they rely on tenant isolation alone.
-//
-// TODO(entity): Extract inline closures to internal/api/handlers/entity/handler.go
-//
-//	so the canonical handler pattern (metrics + tracing + audit) applies.
+// Security model:
+//   - authenticate: caller must hold a valid session or API key.
+//   - TenantMiddleware: RLS context injected for every request.
 //
 // Optional — skipped when Store is nil.
 func (r *Router) registerEntityAPI(apiRouter fiber.Router) error {
@@ -722,40 +737,24 @@ func (r *Router) registerEntityAPI(apiRouter fiber.Router) error {
 
 	repo := entity.NewRepository(r.deps.Store, r.deps.Tracer, r.deps.Metrics)
 	svc := entity.NewService(repo, r.deps.Tracer, r.deps.Metrics)
+	handler := entityHandler.NewEntityHandler(svc, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
 
 	g := apiRouter.Group(apiV1Prefix + "/entities")
-
 	g.Use(r.authenticateMiddleware())
 	if r.deps.TenantMiddleware != nil {
 		g.Use(r.deps.TenantMiddleware)
 	}
 
-	// POST /api/v1/entities — create entity
-	g.Post("/", func(c *fiber.Ctx) error {
-		var req entity.CreateEntityRequest
-		if err := c.BodyParser(&req); err != nil {
-			return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
-		}
-		if req.Name == "" || req.Code == "" || req.Type == "" {
-			return fiber.NewError(fiber.StatusUnprocessableEntity, "name, code, and type are required")
-		}
-		ent, err := svc.CreateEntity(c.UserContext(), req)
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		return c.Status(fiber.StatusCreated).JSON(fiber.Map{"data": ent})
-	})
+	// Tree must be registered before /:id to avoid Fiber matching "tree" as an ID.
+	g.Get("/tree", handler.GetTree)               // GET    /api/v1/entities/tree
+	g.Post("/", handler.Create)                    // POST   /api/v1/entities
+	g.Get("/", handler.List)                       // GET    /api/v1/entities
+	g.Get("/:id", handler.GetByID)                 // GET    /api/v1/entities/:id
+	g.Put("/:id", handler.Update)                  // PUT    /api/v1/entities/:id
+	g.Delete("/:id", handler.Delete)               // DELETE /api/v1/entities/:id
+	g.Get("/:id/children", handler.GetChildren)    // GET    /api/v1/entities/:id/children
 
-	// GET /api/v1/entities — list entities (limit hardcoded to 100 for now)
-	g.Get("/", func(c *fiber.Ctx) error {
-		entities, err := svc.ListEntities(c.UserContext(), entity.ListEntitiesRequest{Limit: 100})
-		if err != nil {
-			return fiber.NewError(fiber.StatusInternalServerError, err.Error())
-		}
-		return c.JSON(fiber.Map{"data": entities})
-	})
-
-	r.registry.track(ModuleEntity, apiV1Prefix+"/entities", 2)
+	r.registry.track(ModuleEntity, apiV1Prefix+"/entities", 7)
 	r.deps.Logger.Info("entity API endpoints registered")
 	return nil
 }
@@ -944,23 +943,63 @@ func (r *Router) registerSchemaAPI(apiRouter fiber.Router) error {
 	g := apiRouter.Group(apiV1Prefix + "/schema")
 	g.Use(r.authenticateMiddleware())
 
-	// Pass the AuthzService through so the boot handler can filter nav items
-	// by the current user's permissions.
-	var authzSvc iam.AuthzService
-	if r.deps.AuthConfig != nil {
-		authzSvc = r.deps.AuthConfig.AuthzService
+	// Wrap AuthzService in a PolicyChecker so the boot handler can filter nav
+	// items by permission without calling .Enforce() directly (boundary guard).
+	var checker contract.PolicyChecker
+	if r.deps.AuthConfig != nil && r.deps.AuthConfig.AuthzService != nil {
+		checker = contract.NewPolicyChecker(r.deps.AuthConfig.AuthzService)
 	}
-	g.Get("/boot", schemaHandler.BootHandler(r.deps.Store, authzSvc))
+	g.Get("/boot", schemaHandler.BootHandler(r.deps.Store, checker))
 
 	r.registry.track(ModuleSchema, apiV1Prefix+"/schema", 1)
 	r.deps.Logger.Info("schema API endpoints registered")
 	return nil
 }
 
+// registerIAMAPI mounts IAM management endpoints: policies, role assignments.
+//
+// Security model:
+//   - authenticate: session or API key required.
+//   - TenantMiddleware: domain derived from the tenant context.
+//   - Endpoints that mutate policies are restricted to tenant admins via
+//     authorizeMiddleware("iam.policies.write") / ("iam.roles.write").
+//
+// Optional — skipped when IAMService is nil.
+func (r *Router) registerIAMAPI(apiRouter fiber.Router) error {
+	if r.deps.IAMService == nil {
+		r.deps.Logger.Warn("IAMService not configured — IAM management routes skipped") // optional
+		return nil
+	}
+
+	handler := iamHandler.NewIAMHandler(r.deps.IAMService, r.deps.Logger, r.deps.Metrics, r.deps.Tracer)
+
+	g := apiRouter.Group(apiV1Prefix + "/iam")
+	g.Use(r.authenticateMiddleware())
+	if r.deps.TenantMiddleware != nil {
+		g.Use(r.deps.TenantMiddleware)
+	}
+
+	// ── Policies ──────────────────────────────────────────────────────────
+	g.Get("/policies", r.authorizeMiddleware("iam.policies.read"), handler.ListPolicies)    // GET    /api/v1/iam/policies?domain=<tenantID>
+	g.Post("/policies", r.authorizeMiddleware("iam.policies.write"), handler.AddPolicy)     // POST   /api/v1/iam/policies
+	g.Delete("/policies", r.authorizeMiddleware("iam.policies.write"), handler.RemovePolicy) // DELETE /api/v1/iam/policies (body)
+
+	// ── Role assignments ──────────────────────────────────────────────────
+	g.Get("/assignments", r.authorizeMiddleware("iam.roles.read"), handler.ListAssignments)  // GET    /api/v1/iam/assignments?subject=<sub>&domain=<dom>
+	g.Post("/roles/assign", r.authorizeMiddleware("iam.roles.write"), handler.AssignRole)    // POST   /api/v1/iam/roles/assign
+	g.Post("/roles/revoke", r.authorizeMiddleware("iam.roles.write"), handler.RevokeRole)    // POST   /api/v1/iam/roles/revoke
+
+	// ── Roles query ───────────────────────────────────────────────────────
+	g.Get("/roles", r.authorizeMiddleware("iam.roles.read"), handler.GetRoles) // GET /api/v1/iam/roles?subject=<sub>&domain=<dom>
+
+	r.registry.track(ModuleIAM, apiV1Prefix+"/iam", 7)
+	r.deps.Logger.Info("IAM API endpoints registered")
+	return nil
+}
+
 // registerAuditAPI mounts the audit log read endpoint.
 //
-// Only authenticated users with the appropriate permission can read audit logs;
-// the AuthzService check is enforced inside ListAuditEventsHandler.
+// Permission enforced by authorizeMiddleware at the route level.
 //
 // Optional — skipped when AuditService is nil.
 func (r *Router) registerAuditAPI(apiRouter fiber.Router) error {
@@ -972,11 +1011,7 @@ func (r *Router) registerAuditAPI(apiRouter fiber.Router) error {
 	g := apiRouter.Group(apiV1Prefix + "/audit-logs")
 	g.Use(r.authenticateMiddleware())
 
-	var authzSvc iam.AuthzService
-	if r.deps.AuthConfig != nil {
-		authzSvc = r.deps.AuthConfig.AuthzService
-	}
-	g.Get("/", auditHandler.ListAuditEventsHandler(r.deps.AuditService, authzSvc))
+	g.Get("/", r.authorizeMiddleware("iam.sessions.read"), auditHandler.ListAuditEventsHandler(r.deps.AuditService))
 
 	r.registry.track(ModuleAudit, apiV1Prefix+"/audit-logs", 1)
 	r.deps.Logger.Info("audit API endpoints registered")
@@ -1030,7 +1065,7 @@ func (r *Router) authorizeMiddleware(permission string) fiber.Handler {
 // that dev/test mode is not blocked.
 func (r *Router) platformOnlyMiddleware() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		resolved, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		resolved, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 		if !ok || resolved == nil {
 			// Auth disabled (dev/test) — pass through.
 			return c.Next()

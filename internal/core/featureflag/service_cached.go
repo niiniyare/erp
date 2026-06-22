@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
@@ -503,15 +504,8 @@ func (s *CachedFeatureFlagService) buildBulkEvaluationCacheKey(names []string, e
 }
 
 func (s *CachedFeatureFlagService) getTenantIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	// This should be implemented based on how tenant context is stored
-	// For now, we'll use a simple implementation
-	if tenantID := ctx.Value("tenant_id"); tenantID != nil {
-		if id, ok := tenantID.(uuid.UUID); ok {
-			return id, nil
-		}
-		if idStr, ok := tenantID.(string); ok {
-			return uuid.Parse(idStr)
-		}
+	if id, ok := shared.GetTenantID(ctx); ok {
+		return id, nil
 	}
 	return uuid.Nil, fmt.Errorf("tenant ID not found in context")
 }

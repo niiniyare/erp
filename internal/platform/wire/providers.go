@@ -27,8 +27,9 @@ var PlatformProviderSet = wire.NewSet(
 	NewMetricsProvider,
 	NewTracingService,
 
-	// Temporal client
+	// Temporal client + platform (worker manager)
 	NewTemporalClient,
+	NewTemporalPlatform,
 )
 
 // ============================================================================

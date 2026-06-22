@@ -8,7 +8,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
@@ -19,8 +19,8 @@ import (
 
 // Type aliases for external types
 type (
-	User          = iam.User
-	UserService   = iam.UserService
+	User          = contract.User
+	UserService   = contract.UserService
 	AccessRequest = types.AccessRequest
 )
 

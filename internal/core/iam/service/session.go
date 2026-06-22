@@ -14,7 +14,7 @@ import (
 
 	"awo.so/internal/core/iam/domain"
 	"awo.so/internal/core/iam/repository"
-	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
@@ -380,10 +380,8 @@ func sha256hex(s string) string {
 }
 
 func tenantIDFromCtx(ctx context.Context) uuid.UUID {
-	if v, ok := ctx.Value(cache.TenantIDKey).(string); ok && v != "" {
-		if id, err := uuid.Parse(v); err == nil {
-			return id
-		}
+	if id, ok := shared.GetTenantID(ctx); ok {
+		return id
 	}
 	return uuid.Nil
 }

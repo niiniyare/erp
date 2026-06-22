@@ -3,9 +3,7 @@ package activities
 //
 // import (
 // 	"awo.so/internal/core/audit"
-// 	"awo.so/internal/core/featureflag"
 // 	"awo.so/internal/core/finance/service"
-// 	"awo.so/internal/core/iam"
 // 	"awo.so/internal/core/notification"
 // 	settingsService "awo.so/internal/core/settings/service"
 // 	"awo.so/internal/platform/cache"
@@ -32,10 +30,8 @@ package activities
 // 	TransactionEntryService service.TransactionEntryService
 //
 // 	// Platform service dependencies
-// 	IAMService          iam.Service
-// 	AuditService        audit.Service
-// 	FeatureFlagService  featureflag.Service
-// 	SettingsService     settingsService.ConfigurationService
+// 	AuditService    audit.Service
+// 	SettingsService settingsService.ConfigurationService
 // 	NotificationService notification.NotificationService
 // 	CacheService        cache.Service
 //
@@ -49,23 +45,19 @@ package activities
 // func NewActivityRegistry(deps ActivityDependencies) *ActivityRegistry {
 // 	return &ActivityRegistry{
 // 		accountActivities: NewAccountActivities(ActivityDeps{
-// 			AccountService:     deps.AccountService,
-// 			IAMService:         deps.IAMService,
-// 			AuditService:       deps.AuditService,
-// 			FeatureFlagService: deps.FeatureFlagService,
-// 			SettingsService:    deps.SettingsService,
-// 			CacheService:       deps.CacheService,
-// 			Logger:             deps.Logger,
-// 			Metrics:            deps.Metrics,
-// 			Tracer:             deps.Tracer,
+// 			AccountService:  deps.AccountService,
+// 			AuditService:    deps.AuditService,
+// 			SettingsService: deps.SettingsService,
+// 			CacheService:    deps.CacheService,
+// 			Logger:          deps.Logger,
+// 			Metrics:         deps.Metrics,
+// 			Tracer:          deps.Tracer,
 // 		}),
 // 		transactionActivities: NewTransactionActivities(TransactionActivityDeps{
 // 			TransactionService:      deps.TransactionService,
 // 			TransactionEntryService: deps.TransactionEntryService,
 // 			AccountService:          deps.AccountService,
-// 			IAMService:              deps.IAMService,
 // 			AuditService:            deps.AuditService,
-// 			FeatureFlagService:      deps.FeatureFlagService,
 // 			SettingsService:         deps.SettingsService,
 // 			CacheService:            deps.CacheService,
 // 			Logger:                  deps.Logger,
@@ -75,21 +67,18 @@ package activities
 // 		validationActivities: NewValidationActivities(ValidationActivityDeps{
 // 			AccountService:     deps.AccountService,
 // 			TransactionService: deps.TransactionService,
-// 			IAMService:         deps.IAMService,
 // 			SettingsService:    deps.SettingsService,
 // 			Logger:             deps.Logger,
 // 			Metrics:            deps.Metrics,
 // 			Tracer:             deps.Tracer,
 // 		}),
 // 		integrationActivities: NewIntegrationActivities(IntegrationActivityDeps{
-// 			IAMService:         deps.IAMService,
-// 			AuditService:       deps.AuditService,
-// 			FeatureFlagService: deps.FeatureFlagService,
-// 			SettingsService:    deps.SettingsService,
-// 			CacheService:       deps.CacheService,
-// 			Logger:             deps.Logger,
-// 			Metrics:            deps.Metrics,
-// 			Tracer:             deps.Tracer,
+// 			AuditService:    deps.AuditService,
+// 			SettingsService: deps.SettingsService,
+// 			CacheService:    deps.CacheService,
+// 			Logger:          deps.Logger,
+// 			Metrics:         deps.Metrics,
+// 			Tracer:          deps.Tracer,
 // 		}),
 // 		notificationActivities: NewNotificationActivities(NotificationActivityDeps{
 // 			NotificationService: deps.NotificationService,

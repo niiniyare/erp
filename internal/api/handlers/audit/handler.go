@@ -7,38 +7,24 @@ import (
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/internal/core/audit"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	sharedErrors "awo.so/internal/shared/errors"
 )
 
 // ListAuditEventsHandler returns paginated audit events for the authenticated tenant.
 //
-// Route: GET /api/v1/audit-logs  (requires Authenticate middleware)
-// Permission gate: iam.sessions / read
+// Route: GET /api/v1/audit-logs  (requires Authenticate + Authorize middleware)
+// Permission gate: enforced by middleware.Authorize("iam.sessions.read") at route.
 //
 // Query params:
 //
 //	limit  int  — default 50, max 1000
 //	offset int  — default 0
-func ListAuditEventsHandler(svc audit.Service, authzSvc iam.AuthzService) fiber.Handler {
+func ListAuditEventsHandler(svc audit.Service) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		sess, ok := c.Locals(iam.LocalsKeySession).(*iam.ResolvedSession)
+		sess, ok := c.Locals(contract.LocalsKeySession).(*contract.ResolvedSession)
 		if !ok || sess == nil {
 			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
-		}
-		principal, ok := c.Locals(iam.LocalsKeyPrincipal).(iam.Principal)
-		if !ok {
-			return fiber.NewError(fiber.StatusUnauthorized, "authentication required")
-		}
-
-		allowed, err := authzSvc.Enforce(c.Context(), iam.Request{
-			Subject: principal.Subject,
-			Domain:  principal.Domain,
-			Object:  "iam.sessions",
-			Action:  "read",
-		})
-		if err != nil || !allowed {
-			return fiber.NewError(fiber.StatusForbidden, "insufficient permissions")
 		}
 
 		limit := 50

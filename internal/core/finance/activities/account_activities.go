@@ -7,12 +7,12 @@ import (
 	"github.com/google/uuid"
 
 	"awo.so/internal/core/audit"
-	"awo.so/internal/core/featureflag"
 	"awo.so/internal/core/finance/domain"
 	"awo.so/internal/core/finance/service"
-	"awo.so/internal/core/iam"
+	"awo.so/internal/core/iam/contract"
 	settingsService "awo.so/internal/core/settings/service"
 	"awo.so/internal/platform/cache"
+	"awo.so/internal/shared"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
@@ -22,42 +22,36 @@ import (
 
 // AccountActivities handles all account-related Temporal activities
 type AccountActivities struct {
-	accountService     service.AccountService
-	iamService         iam.Service
-	auditService       audit.Service
-	featureFlagService featureflag.Service
-	settingsService    settingsService.ConfigurationService
-	cacheService       cache.Service
-	logger             logger.Logger
-	metrics            metrics.MetricsProvider
-	tracer             tracing.Service
+	accountService  service.AccountService
+	auditService    audit.Service
+	settingsService settingsService.ConfigurationService
+	cacheService    cache.Service
+	logger          logger.Logger
+	metrics         metrics.MetricsProvider
+	tracer          tracing.Service
 }
 
 // ActivityDeps contains dependencies for account activities
 type ActivityDeps struct {
-	AccountService     service.AccountService
-	IAMService         iam.Service
-	AuditService       audit.Service
-	FeatureFlagService featureflag.Service
-	SettingsService    settingsService.ConfigurationService
-	CacheService       cache.Service
-	Logger             logger.Logger
-	Metrics            metrics.MetricsProvider
-	Tracer             tracing.Service
+	AccountService  service.AccountService
+	AuditService    audit.Service
+	SettingsService settingsService.ConfigurationService
+	CacheService    cache.Service
+	Logger          logger.Logger
+	Metrics         metrics.MetricsProvider
+	Tracer          tracing.Service
 }
 
 // NewAccountActivities creates a new account activities instance
 func NewAccountActivities(deps ActivityDeps) *AccountActivities {
 	return &AccountActivities{
-		accountService:     deps.AccountService,
-		iamService:         deps.IAMService,
-		auditService:       deps.AuditService,
-		featureFlagService: deps.FeatureFlagService,
-		settingsService:    deps.SettingsService,
-		cacheService:       deps.CacheService,
-		logger:             deps.Logger,
-		metrics:            deps.Metrics,
-		tracer:             deps.Tracer,
+		accountService:  deps.AccountService,
+		auditService:    deps.AuditService,
+		settingsService: deps.SettingsService,
+		cacheService:    deps.CacheService,
+		logger:          deps.Logger,
+		metrics:         deps.Metrics,
+		tracer:          deps.Tracer,
 	}
 }
 
@@ -149,8 +143,8 @@ func (a *AccountActivities) ValidateAccountCreationActivity(ctx context.Context,
 	}
 
 	// Check feature flags for advanced validation
-	advancedValidationEnabled, _ := a.featureFlagService.IsEnabled(ctx, domain.FeatureFlagAdvancedValidation, nil)
-	if advancedValidationEnabled {
+	sc, _ := contract.FromContext(ctx)
+	if sc.FeatureEnabled(domain.FeatureFlagAdvancedValidation) {
 		activityLogger.InfoContext(ctx, "Performing advanced validation")
 		// Additional advanced validation logic here
 	}
@@ -593,22 +587,16 @@ func wouldCreateCircularReference(ctx context.Context, accountService service.Ac
 
 // Context helper functions
 func getUserIDFromContext(ctx context.Context) uuid.UUID {
-	if userID, ok := ctx.Value("user_id").(uuid.UUID); ok {
-		return userID
-	}
-	return uuid.Nil
+	uid, _ := shared.GetUserID(ctx)
+	return uid
 }
 
 func getTenantIDFromContext(ctx context.Context) uuid.UUID {
-	if tenantID, ok := ctx.Value("tenant_id").(uuid.UUID); ok {
-		return tenantID
-	}
-	return uuid.Nil
+	tid, _ := shared.GetTenantID(ctx)
+	return tid
 }
 
 func getEntityIDFromContext(ctx context.Context) uuid.UUID {
-	if entityID, ok := ctx.Value("entity_id").(uuid.UUID); ok {
-		return entityID
-	}
-	return uuid.Nil
+	eid, _ := shared.GetEntityID(ctx)
+	return eid
 }
