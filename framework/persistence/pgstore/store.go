@@ -242,12 +242,16 @@ func (s *EntityStore) scanListRow(rows pgx.Rows) (*mapRecord, int64, error) {
 	return rec, total, nil
 }
 
-// buildScanDest builds scan destination pointers matching sqlbuilder.columnList order.
+// buildScanDest builds scan destination pointers matching sqlbuilder.columnList order:
+//   id [tenant_id] [org_unit_id] created_at updated_at [deleted_at] <fields…>
 func buildScanDest(def *definition.EntityDefinition, tenantID uuid.UUID) (*mapRecord, []any, []*any) {
 	rec := newMapRecord(def.Name, tenantID)
 	dest := []any{&rec.id}
 	if !def.IsGlobal() {
 		dest = append(dest, &rec.tenantID)
+	}
+	if def.IsUnitScoped() {
+		dest = append(dest, &rec.orgUnitID)
 	}
 
 	var createdAt, updatedAt any
