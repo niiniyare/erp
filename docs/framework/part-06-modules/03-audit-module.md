@@ -61,7 +61,7 @@ Not everything needs to be audited. Here is how the decision is made:
 Here is the complete definition of the audit log entity. Every decision has a reason.
 
 ```go
-// internal/platform/audit/definition.go
+// framework/platform/audit/definition.go
 
 package audit
 

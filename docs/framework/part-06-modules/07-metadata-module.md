@@ -66,7 +66,7 @@ Framework fields (`name`, `email`, `phone`) are typed SQL columns. Custom fields
 ## 47.3 Directory Layout
 
 ```
-internal/platform/metadata/
+framework/platform/metadata/
 ├── metadata.go    ← init() — registers CustomFieldDefDef
 ├── definition.go  ← CustomFieldDefDef
 ├── policy.go      ← policy helpers
@@ -82,7 +82,7 @@ internal/platform/metadata/
 ## 47.4 CustomFieldDef EntityDefinition
 
 ```go
-// internal/platform/metadata/definition.go
+// framework/platform/metadata/definition.go
 package metadata
 
 import (
@@ -242,7 +242,7 @@ var CustomFieldDefDef = definition.EntityDefinition{
 ## 47.5 Hook Implementations
 
 ```go
-// internal/platform/metadata/hooks.go
+// framework/platform/metadata/hooks.go
 package metadata
 
 import (
@@ -383,7 +383,7 @@ WHERE (custom_fields->>'credit_limit')::numeric > 500000
 When the SDUI handler builds a form for any entity, it merges framework fields and custom fields:
 
 ```go
-// internal/framework/sdui/handler.go (simplified)
+// framework/framework/sdui/handler.go (simplified)
 func (s *SDUIHandler) formFields(ctx context.Context, def *definition.EntityDefinition) ([]*FieldSchema, error) {
     // Step 1: framework fields from EntityDefinition.Fields
     // These always come first, in the order declared in the EntityDefinition.
@@ -466,7 +466,7 @@ All rendered automatically, no template changes.
 ## 47.8 Migration
 
 ```sql
--- internal/platform/metadata/migrations/20240101000050_create_custom_fields.up.sql
+-- framework/platform/metadata/migrations/20240101000050_create_custom_fields.up.sql
 
 CREATE TABLE custom_field_defs (
     id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),

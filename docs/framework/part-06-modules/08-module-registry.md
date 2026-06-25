@@ -64,7 +64,7 @@ The key insight: the circuit (module code) exists on the server regardless. The 
 ## 48.3 Directory Layout
 
 ```
-internal/platform/registry/
+framework/platform/registry/
 ├── registry.go    ← init() — registers ModuleDef and TenantModuleDef
 │                    RegisterModule() called by business module init() functions
 ├── definition.go  ← ModuleDef, TenantModuleDef
@@ -82,7 +82,7 @@ internal/platform/registry/
 The `modules` table is the global catalogue of every module installed on this server. It is populated at startup by each module's `init()` function calling `registry.RegisterModule()`.
 
 ```go
-// internal/platform/registry/definition.go
+// framework/platform/registry/definition.go
 package registry
 
 import (
@@ -253,9 +253,9 @@ package finance
 
 import (
     "awo.so/framework/definition"
-    "awo.so/internal/platform/registry"
-    "awo.so/internal/platform/settings"
-    "awo.so/internal/platform/featureflag"
+    "awo.so/framework/platform/registry"
+    "awo.so/framework/platform/settings"
+    "awo.so/framework/platform/featureflag"
 )
 
 func init() {
@@ -331,7 +331,7 @@ The SDUI sidebar is generated dynamically from:
 2. The EntityDefinitions registered to each active module (`definition.All()` filtered by `Module == module_name`).
 
 ```go
-// internal/framework/sdui/nav.go
+// framework/framework/sdui/nav.go
 func buildNavigation(ctx context.Context, tenantID string) (*NavSchema, error) {
     // Get this tenant's active modules
     activeModules, err := tenantModuleStore.List(ctx, pgstore.ListOptions{
@@ -454,7 +454,7 @@ This prevents silent incompatibilities where a module ships new hook signatures 
 ## 48.10 Migration
 
 ```sql
--- internal/platform/registry/migrations/20240101000060_create_module_registry.up.sql
+-- framework/platform/registry/migrations/20240101000060_create_module_registry.up.sql
 
 -- ── Module Catalogue ────────────────────────────────────────────────────────
 -- Global: no tenant_id, no RLS.

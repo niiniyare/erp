@@ -98,7 +98,7 @@ OrgNodes are also used in **Settings** (branch-level config overrides) and **Rep
 ## 42.3 Directory Layout
 
 ```
-internal/platform/tenant/
+framework/platform/tenant/
 ├── tenant.go          ← init() — registers TenantDef and OrgNodeDef
 ├── definition.go      ← EntityDefinition declarations
 ├── policy.go          ← allowTenantViewer, requireRole helpers
@@ -114,7 +114,7 @@ internal/platform/tenant/
 ## 42.4 The Tenant EntityDefinition
 
 ```go
-// internal/platform/tenant/definition.go
+// framework/platform/tenant/definition.go
 package tenant
 
 import (
@@ -332,7 +332,7 @@ var OrgNodeDef = definition.EntityDefinition{
 ## 42.6 Policy Helpers
 
 ```go
-// internal/platform/tenant/policy.go
+// framework/platform/tenant/policy.go
 package tenant
 
 import (
@@ -412,7 +412,7 @@ No recursion. No CTE. One index scan.
 When an org node is created or its `parent_id` changes, the `materialisePath` BeforeHook computes the new path:
 
 ```go
-// internal/platform/tenant/hooks.go
+// framework/platform/tenant/hooks.go
 func materialisePath(ctx context.Context, v definition.ViewerContext, op definition.Op, rec definition.MutableRecord) error {
     parentID, _ := rec.Get("parent_id")
 
@@ -471,7 +471,7 @@ PENDING ──────────────► ACTIVE ◄─────�
 | ARCHIVED | anything | ❌ | Terminal state, no way back |
 
 ```go
-// internal/platform/tenant/hooks.go
+// framework/platform/tenant/hooks.go
 
 var allowedTransitions = map[string][]string{
     "PENDING":   {"ACTIVE", "ARCHIVED"},
@@ -519,7 +519,7 @@ From that moment, users are logged out. New login attempts fail because the IAM 
 ## 42.9 Migration
 
 ```sql
--- internal/platform/tenant/migrations/20240101000001_create_tenants.up.sql
+-- framework/platform/tenant/migrations/20240101000001_create_tenants.up.sql
 
 -- ── Tenants ────────────────────────────────────────────────────────────────
 -- No RLS. No tenant_id column. This is the root table.
@@ -625,7 +625,7 @@ CREATE TRIGGER set_updated_at
 ```
 
 ```sql
--- internal/platform/tenant/migrations/20240101000001_create_tenants.down.sql
+-- framework/platform/tenant/migrations/20240101000001_create_tenants.down.sql
 DROP TABLE IF EXISTS org_nodes;
 DROP FUNCTION IF EXISTS set_tenant_context(uuid);
 DROP TABLE IF EXISTS tenants;

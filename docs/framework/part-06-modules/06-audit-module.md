@@ -73,7 +73,7 @@ Any EntityDefinition that declares `Audited: true` automatically generates audit
 ## 46.3 Directory Layout
 
 ```
-internal/platform/audit/
+framework/platform/audit/
 ├── audit.go      ← init() — registers AuditLogDef
 ├── definition.go ← AuditLogDef
 ├── policy.go     ← requireRole("admin"), requireRole("auditor")
@@ -88,7 +88,7 @@ internal/platform/audit/
 ## 46.4 AuditLog EntityDefinition
 
 ```go
-// internal/platform/audit/definition.go
+// framework/platform/audit/definition.go
 package audit
 
 import (

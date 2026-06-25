@@ -68,7 +68,7 @@ IAM owns steps 1 and 2. Feature Flags (Chapter 44) and Settings (Chapter 45) own
 ## 43.3 Directory Layout
 
 ```
-internal/platform/iam/
+framework/platform/iam/
 ├── iam.go          ← init() — registers all four EntityDefinitions
 ├── definition.go   ← UserDef, RoleDef, UserRoleDef, SessionDef
 ├── policy.go       ← allowSelf, allowTenantViewer, requireRole
@@ -86,7 +86,7 @@ internal/platform/iam/
 The User entity is the most policy-rich in the platform. Different operations have different rules:
 
 ```go
-// internal/platform/iam/definition.go
+// framework/platform/iam/definition.go
 package iam
 
 import (
@@ -381,7 +381,7 @@ var SessionDef = definition.EntityDefinition{
 ## 43.8 Policy Helper Implementations
 
 ```go
-// internal/platform/iam/policy.go
+// framework/platform/iam/policy.go
 package iam
 
 import (
@@ -430,7 +430,7 @@ func requireRole(role string) definition.PolicyFunc {
 The generic CRUD API (auto-generated from EntityDefinitions) handles admin operations like listing users or updating a user's name. But login, logout, password change, and MFA setup are stateful operations that require specific logic. These live in the IAM service.
 
 ```go
-// internal/platform/iam/service.go
+// framework/platform/iam/service.go
 package iam
 
 import (
@@ -619,7 +619,7 @@ Example: a `salesperson` can read invoices (EntityDefinition policy allows it). 
 Casbin's in-memory model is loaded at startup from a PostgreSQL table (`casbin_rules`). When a UserRole is created or deleted, the `reloadCasbinPolicy` AfterHook immediately updates the in-memory model:
 
 ```go
-// internal/platform/iam/hooks.go
+// framework/platform/iam/hooks.go
 func reloadCasbinPolicy(ctx context.Context, v definition.ViewerContext, op definition.Op, rec definition.Record) error {
     tenantID, _ := rec.Get("tenant_id")
 
@@ -634,7 +634,7 @@ func reloadCasbinPolicy(ctx context.Context, v definition.ViewerContext, op defi
 ## 43.12 Migration
 
 ```sql
--- internal/platform/iam/migrations/20240101000010_create_iam.up.sql
+-- framework/platform/iam/migrations/20240101000010_create_iam.up.sql
 
 -- ── Users ──────────────────────────────────────────────────────────────────
 CREATE TABLE users (

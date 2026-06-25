@@ -68,7 +68,7 @@ The same logic as CSS specificity: the most targeted rule wins. A platform engin
 ## 44.3 Directory Layout
 
 ```
-internal/platform/featureflag/
+framework/platform/featureflag/
 ├── featureflag.go   ← init() — registers FeatureFlagDef and FeatureFlagOverrideDef
 ├── definition.go    ← EntityDefinition declarations
 ├── policy.go        ← policy helpers
@@ -86,7 +86,7 @@ internal/platform/featureflag/
 The `feature_flags` table is the **catalogue** — it defines what flags exist and their system-wide defaults. It is a global table (no `tenant_id`) because the catalogue is the same for every deployment.
 
 ```go
-// internal/platform/featureflag/definition.go
+// framework/platform/featureflag/definition.go
 package featureflag
 
 import (
@@ -255,7 +255,7 @@ var FeatureFlagOverrideDef = definition.EntityDefinition{
 The EvalService is the public API that all module code uses to check flags. It hides the three-tier resolution behind simple typed methods.
 
 ```go
-// internal/platform/featureflag/service.go
+// framework/platform/featureflag/service.go
 package featureflag
 
 import (
@@ -459,7 +459,7 @@ Modules register their flags in `init()`:
 
 ```go
 // In awo.so/module/finance — init()
-import "awo.so/internal/platform/featureflag"
+import "awo.so/framework/platform/featureflag"
 
 func init() {
     definition.Register(&InvoiceDef)
@@ -484,7 +484,7 @@ func init() {
 ## 44.9 Migration
 
 ```sql
--- internal/platform/featureflag/migrations/20240101000020_create_feature_flags.up.sql
+-- framework/platform/featureflag/migrations/20240101000020_create_feature_flags.up.sql
 
 -- ── Feature Flags Catalogue ─────────────────────────────────────────────────
 -- Global table: no tenant_id, no RLS.

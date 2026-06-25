@@ -75,7 +75,7 @@ Without the entity level, the Nairobi Airport station would either get the wrong
 ## 45.3 Directory Layout
 
 ```
-internal/platform/settings/
+framework/platform/settings/
 ├── settings.go    ← init() — registers ConfigKeyDef and ConfigValueDef
 ├── definition.go  ← EntityDefinition declarations
 ├── policy.go      ← policy helpers
@@ -94,7 +94,7 @@ internal/platform/settings/
 The `config_keys` table is the **catalogue** of every known configuration key. It is global — the key definitions are the same across all tenants. Module teams register their keys here.
 
 ```go
-// internal/platform/settings/definition.go
+// framework/platform/settings/definition.go
 package settings
 
 import (
@@ -292,7 +292,7 @@ var ConfigValueDef = definition.EntityDefinition{
 ## 45.6 Hook Implementations
 
 ```go
-// internal/platform/settings/hooks.go
+// framework/platform/settings/hooks.go
 package settings
 
 import (
@@ -360,7 +360,7 @@ func assertKeyIsTenantEditable(ctx context.Context, v definition.ViewerContext, 
 ## 45.7 The Settings Service
 
 ```go
-// internal/platform/settings/service.go
+// framework/platform/settings/service.go
 package settings
 
 import (
@@ -480,7 +480,7 @@ Module developers register their settings keys in `init()`, then call the servic
 // In awo.so/module/finance — init()
 package finance
 
-import "awo.so/internal/platform/settings"
+import "awo.so/framework/platform/settings"
 
 func init() {
     // Register all settings this module uses.
@@ -566,7 +566,7 @@ Module developers get this settings page for free — no UI code needed.
 ## 45.10 Migration
 
 ```sql
--- internal/platform/settings/migrations/20240101000030_create_settings.up.sql
+-- framework/platform/settings/migrations/20240101000030_create_settings.up.sql
 
 -- ── Config Keys Catalogue ───────────────────────────────────────────────────
 -- Global: no tenant_id, no RLS. Key definitions are platform-wide.
