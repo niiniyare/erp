@@ -10,6 +10,7 @@ import (
 
 	"awo.so/framework/definition"
 	"awo.so/framework/hooks"
+	"awo.so/framework/org"
 	"awo.so/framework/persistence"
 	"awo.so/framework/privacy"
 )
@@ -31,6 +32,7 @@ type Handler struct {
 	enforcer       *privacy.Enforcer
 	viewer         ViewerFromCtx
 	tenantResolver TenantResolver
+	orgTree        org.Tree
 }
 
 // NewHandler creates a Handler for def.
@@ -59,6 +61,11 @@ type HandlerOption func(*Handler)
 // WithTenantResolver sets a function that resolves tenant slug → UUID.
 func WithTenantResolver(fn TenantResolver) HandlerOption {
 	return func(h *Handler) { h.tenantResolver = fn }
+}
+
+// WithOrgTree sets the org.Tree used by AllowWithinOrgScope policies.
+func WithOrgTree(tree org.Tree) HandlerOption {
+	return func(h *Handler) { h.orgTree = tree }
 }
 
 // Register mounts CRUD routes under prefix on router.
@@ -169,6 +176,11 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	}
 
 	rec := newMutableFromMap(h.def.Name, tenantID, body)
+
+	// Stamp the viewer's org unit onto the record, overwriting any user-supplied
+	// value. For non-unit-scoped entities this is a no-op (uuid.Nil stored but
+	// never written to DB — scopeColumns omits org_unit_id for those entities).
+	rec.Set("org_unit_id", viewer.OrgUnitID())
 
 	if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpCreate, rec); err != nil {
 		return fiber.ErrForbidden
@@ -342,9 +354,16 @@ func fiberErr(err error) error {
 func recordToMap(rec definition.Record, def *definition.EntityDefinition) map[string]any {
 	m := map[string]any{
 		"id":         rec.ID(),
-		"tenant_id":  rec.TenantID(),
 		"created_at": rec.Get("created_at"),
 		"updated_at": rec.Get("updated_at"),
+	}
+	if !def.IsGlobal() {
+		m["tenant_id"] = rec.TenantID()
+	}
+	if def.IsUnitScoped() {
+		if scoped, ok := rec.(interface{ OrgUnitID() uuid.UUID }); ok {
+			m["org_unit_id"] = scoped.OrgUnitID()
+		}
 	}
 	for _, f := range def.Fields {
 		if !f.Hidden {

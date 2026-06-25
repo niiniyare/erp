@@ -19,6 +19,7 @@ import (
 	"awo.so/framework/api"
 	"awo.so/framework/definition"
 	"awo.so/framework/org"
+	orgpgstore "awo.so/framework/org/pgstore"
 	"awo.so/framework/persistence/pgstore"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
@@ -42,6 +43,11 @@ type Options struct {
 	// Example: look up tenants table by slug.
 	TenantResolver api.TenantResolver
 
+	// OrgTree is the org unit tree used by AllowWithinOrgScope policies.
+	// When nil, a default PgTree backed by Pool is constructed automatically.
+	// Supply a custom implementation to use caching or a test double.
+	OrgTree org.Tree
+
 	// TemporalClient enables workflow triggers on entity mutations.
 	// Pass nil to disable workflow integration.
 	TemporalClient tclient.Client
@@ -62,6 +68,9 @@ func Mount(app *fiber.App, opts Options) {
 	if opts.ViewerFn == nil {
 		opts.ViewerFn = anonymousViewer
 	}
+	if opts.OrgTree == nil {
+		opts.OrgTree = orgpgstore.New(opts.Pool)
+	}
 
 	tenantStore := pgstore.NewTenantStore(opts.Pool)
 
@@ -72,7 +81,9 @@ func Mount(app *fiber.App, opts Options) {
 	_ = wfExec // used by modules that register workflow hooks via definition.HookDef
 
 	apiGroup := app.Group(opts.APIPrefix)
-	handlerOpts := []api.HandlerOption{}
+	handlerOpts := []api.HandlerOption{
+		api.WithOrgTree(opts.OrgTree),
+	}
 	if opts.TenantResolver != nil {
 		handlerOpts = append(handlerOpts, api.WithTenantResolver(opts.TenantResolver))
 	}

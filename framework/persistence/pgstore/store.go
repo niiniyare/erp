@@ -126,7 +126,12 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 		case "id":
 			args = append(args, id)
 		case "tenant_id":
+			// Always use the store's tenant, never trust body input.
 			args = append(args, s.tenantID)
+		case "org_unit_id":
+			// Handler stamps viewer.OrgUnitID() onto the record before Create;
+			// we read it back here so the INSERT uses the framework-injected value.
+			args = append(args, rec.Get("org_unit_id"))
 		default:
 			args = append(args, rec.Get(col))
 		}
