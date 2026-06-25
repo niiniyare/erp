@@ -15,16 +15,14 @@ import (
 type sessionViewer struct {
 	actorID    string
 	tenantID   string
-	companyID  string
-	divisionID string
+	orgUnitID  uuid.UUID // parsed from "org_unit_id" local; uuid.Nil = tenant-wide
 	roles      map[string]bool
 	isSystem   bool
 }
 
-func (v *sessionViewer) ActorID() string   { return v.actorID }
-func (v *sessionViewer) TenantID() string  { return v.tenantID }
-func (v *sessionViewer) CompanyID() string { return v.companyID }
-func (v *sessionViewer) DivisionID() string { return v.divisionID }
+func (v *sessionViewer) ActorID() string  { return v.actorID }
+func (v *sessionViewer) TenantID() string { return v.tenantID }
+func (v *sessionViewer) OrgUnitID() uuid.UUID { return v.orgUnitID }
 func (v *sessionViewer) IsSystem() bool        { return v.isSystem }
 func (v *sessionViewer) HasRole(r string) bool { return v.roles[r] }
 
@@ -34,18 +32,10 @@ func (v *sessionViewer) OrgScope() org.Scope {
 	if err != nil {
 		return org.Scope{}
 	}
-	s := org.TenantOnly(tenantID)
-	if v.companyID != "" {
-		if cid, err := uuid.Parse(v.companyID); err == nil {
-			s = org.WithCompany(tenantID, cid)
-		}
+	if v.orgUnitID == uuid.Nil {
+		return org.TenantOnly(tenantID)
 	}
-	if v.divisionID != "" && s.CompanyID != nil {
-		if did, err := uuid.Parse(v.divisionID); err == nil {
-			s = org.WithDivision(tenantID, *s.CompanyID, did)
-		}
-	}
-	return s
+	return org.WithUnit(tenantID, v.orgUnitID)
 }
 
 var _ definition.ViewerContext = (*sessionViewer)(nil)
@@ -54,28 +44,30 @@ var _ definition.ViewerContext = (*sessionViewer)(nil)
 // It reads session locals populated by the authentication middleware.
 //
 // Expected Fiber locals (set by auth middleware before this runs):
-//   - "actor_id"    string   — authenticated user UUID
-//   - "tenant_id"   string   — tenant UUID (from validated session)
-//   - "company_id"  string   — active company UUID (optional)
-//   - "division_id" string   — active division UUID (optional)
+//   - "actor_id"    string — authenticated user UUID
+//   - "tenant_id"   string — tenant UUID (from validated session)
+//   - "org_unit_id" string — active org unit UUID (optional; uuid.Nil = tenant-wide)
 //   - "roles"       []string — role names held by the actor
-//   - "is_system"   bool     — true for machine/service tokens
+//   - "is_system"   bool — true for machine/service tokens
 //
-// Falls back to dev stub when locals are absent (development only).
+// Falls back gracefully when locals are absent (e.g. dev server without auth middleware).
 func ViewerFromFiber() api.ViewerFromCtx {
 	return func(c *fiber.Ctx) (definition.ViewerContext, error) {
 		actorID, _ := c.Locals("actor_id").(string)
 		tenantID, _ := c.Locals("tenant_id").(string)
-		companyID, _ := c.Locals("company_id").(string)
-		divisionID, _ := c.Locals("division_id").(string)
 
-		// If auth middleware hasn't run (e.g. dev server without auth), fall back
-		// to the tenant slug from X-Awo-Tenant header.
+		// Fallback: read tenant from header when middleware hasn't run.
 		if tenantID == "" {
 			tenantID = c.Get("X-Awo-Tenant")
 		}
 		if actorID == "" {
 			actorID = "anonymous"
+		}
+
+		// Parse org_unit_id; uuid.Nil signals tenant-wide scope.
+		var orgUnitID uuid.UUID
+		if raw, _ := c.Locals("org_unit_id").(string); raw != "" {
+			orgUnitID, _ = uuid.Parse(raw)
 		}
 
 		roleList, _ := c.Locals("roles").([]string)
@@ -87,12 +79,11 @@ func ViewerFromFiber() api.ViewerFromCtx {
 		isSystem, _ := c.Locals("is_system").(bool)
 
 		return &sessionViewer{
-			actorID:    actorID,
-			tenantID:   tenantID,
-			companyID:  companyID,
-			divisionID: divisionID,
-			roles:      roles,
-			isSystem:   isSystem,
+			actorID:   actorID,
+			tenantID:  tenantID,
+			orgUnitID: orgUnitID,
+			roles:     roles,
+			isSystem:  isSystem,
 		}, nil
 	}
 }

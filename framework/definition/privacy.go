@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 
+	"github.com/google/uuid"
+
 	"awo.so/framework/org"
 )
 
@@ -40,35 +42,33 @@ type ViewerContext interface {
 	// Returns "anonymous" for unauthenticated requests.
 	ActorID() string
 
-	// TenantID returns the root tenant UUID for this request.
+	// TenantID returns the root tenant UUID string for this request.
+	// Used by the persistence layer to set the Postgres RLS context.
 	// Always non-empty for authenticated requests.
 	TenantID() string
 
-	// CompanyID returns the active company UUID for this request.
-	// Empty string if the request is not company-scoped (tenant-wide viewer).
-	CompanyID() string
-
-	// DivisionID returns the active division UUID for this request.
-	// Empty string if the request is not division-scoped.
-	DivisionID() string
-
-	// OrgScope returns the full parsed org.Scope for this viewer.
-	// Use this for hierarchy-aware policy checks:
+	// OrgUnitID returns the org_units.uuid the viewer is operating as.
+	// uuid.Nil means the viewer is tenant-wide (no specific unit scoping).
 	//
-	//	if err := org.AssertContains(viewer.OrgScope(), recordScope); err != nil {
-	//	    return definition.ErrDeny
-	//	}
+	// Use this in privacy policies for tree-based access control:
+	//
+	//	ok, err := orgTree.IsAncestorOrEqual(ctx, tenantID, viewer.OrgUnitID(), record.OrgUnitID())
+	//	if !ok { return definition.ErrDeny }
+	OrgUnitID() uuid.UUID
+
+	// OrgScope returns the combined tenant + unit scope for this viewer.
+	// Convenience accessor; equivalent to org.WithUnit(tenantID, unitID).
 	OrgScope() org.Scope
 
-	// HasRole reports whether the actor holds the given named role within
-	// the active org scope. Roles are always tenant-scoped; company/division
-	// scoping of roles is the responsibility of the host application.
+	// HasRole reports whether the actor holds the given named role. Roles
+	// are resolved against the viewer's OrgUnit and its ancestors (role grants
+	// at a parent unit propagate down to children).
 	HasRole(role string) bool
 
 	// IsSystem reports true when the operation originates from a machine token,
 	// Temporal workflow, scheduled job, or internal service call. System callers
-	// bypass user-facing privacy policies but are still subject to org-scope
-	// enforcement (they must still supply a valid tenant).
+	// bypass user-facing privacy policies but are still subject to tenant-scope
+	// enforcement (a valid tenant must still be present).
 	IsSystem() bool
 }
 
@@ -141,28 +141,45 @@ func AllowSystem(_ context.Context, viewer ViewerContext, _ Op, _ Record) error 
 	return ErrSkip
 }
 
-// AllowWithinOrgScope grants access when the record's org scope is contained
-// within the viewer's org scope. Requires the record to implement OrgScoped.
-// Use this as a base policy for any company- or division-scoped entity.
+// AllowWithinOrgScope grants access when the record's org unit is a descendant
+// of (or equal to) the viewer's org unit. Requires the record to implement
+// OrgScoped and an org.Tree to be provided for containment lookup.
 //
-// If the record is nil (list check) this policy abstains — pair it with a
-// role-based policy that handles the nil case.
-func AllowWithinOrgScope(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
-	if record == nil {
-		return ErrSkip // list-level check; defer to companion policy
+// If the record is nil (list-level check) this policy abstains — pair it with
+// a role-based or list-filter policy that handles the nil case.
+//
+// Usage:
+//
+//	definition.Policy(definition.OpAll, definition.AllowWithinOrgScope(myTree))
+func AllowWithinOrgScope(tree org.Tree) PolicyFunc {
+	return func(ctx context.Context, viewer ViewerContext, _ Op, record Record) error {
+		if record == nil {
+			return ErrSkip // list-level; defer to companion policy
+		}
+		scoped, ok := record.(OrgScoped)
+		if !ok {
+			return ErrSkip // record carries no unit; not our concern
+		}
+		viewerUnitID := viewer.OrgUnitID()
+		recordUnitID := scoped.RecordOrgUnitID()
+		if viewerUnitID == uuid.Nil {
+			// Tenant-wide viewer: can access all units in this tenant.
+			return ErrAllow
+		}
+		ok, err := tree.IsAncestorOrEqual(ctx, viewer.OrgScope().TenantID, viewerUnitID, recordUnitID)
+		if err != nil {
+			return err // treated as ErrDeny by enforcer
+		}
+		if !ok {
+			return ErrDeny
+		}
+		return ErrAllow
 	}
-	scoped, ok := record.(OrgScoped)
-	if !ok {
-		return ErrSkip // record does not carry org scope; not our concern
-	}
-	if err := org.AssertContains(viewer.OrgScope(), scoped.RecordOrgScope()); err != nil {
-		return ErrDeny
-	}
-	return ErrAllow
 }
 
 // OrgScoped is an optional interface that records may implement to expose their
-// org scope to the AllowWithinOrgScope built-in policy.
+// org unit to the AllowWithinOrgScope built-in policy.
 type OrgScoped interface {
-	RecordOrgScope() org.Scope
+	// RecordOrgUnitID returns the org_unit_id of this record.
+	RecordOrgUnitID() uuid.UUID
 }

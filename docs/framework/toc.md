@@ -7,8 +7,8 @@
 > Part I establishes the mental model every other part depends on. Read it before
 > jumping to any implementation chapter. The DB persistence layer (Parts II–III) is
 > documented against the `EntityRepository` interface; the current reference
-> implementation is `ent`, but the interface is the contract — implementation can be
-> swapped without touching framework consumers.
+> implementation is `pgstore` (raw pgx v5 against PostgreSQL), but the interface is
+> the contract — implementation can be swapped without touching framework consumers.
 
 ---
 
@@ -113,7 +113,7 @@
 ##### 3.1.2. API layer — Fiber HTTP server, middleware pipeline, route handlers
 ##### 3.1.3. Domain layer — EntityDefinition system, hooks, validators, permission policies
 ##### 3.1.4. Workflow layer — Temporal workflows, activities, sagas
-##### 3.1.5. Store layer — EntityRepository interface, current ent implementation, PostgreSQL
+##### 3.1.5. Store layer — EntityRepository interface, current pgstore (pgx v5) implementation, PostgreSQL with RLS
 
 #### 3.2. Request Lifecycle — Read Path
 ##### 3.2.1. HTTP request arrives at Fiber

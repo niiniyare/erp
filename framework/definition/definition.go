@@ -46,21 +46,22 @@ type EntityDefinition struct {
 	// Defaults to "{Name}s" when empty (e.g. "finance_account" → "finance_accounts").
 	Table string
 
-	// OrgScope determines the level of the organisational hierarchy that scopes
-	// this entity's data rows. The persistence layer adds the correct WHERE
-	// clauses and the migration generator creates matching RLS policies.
+	// OrgScope determines how rows are scoped within the organisational hierarchy.
+	// The persistence layer generates the correct columns, WHERE clauses, and RLS
+	// policies based on this value.
 	//
-	//   ScopeLevelGlobal   — no tenant_id column; shared across all tenants.
-	//                         Example: currencies, countries, languages.
+	//   ScopeLevelGlobal — no tenant_id or org_unit_id column.
+	//                       Rows are shared across all tenants.
+	//                       Example: currencies, countries, language codes.
 	//
-	//   ScopeLevelTenant   — rows have tenant_id; visible across all companies.
-	//                         Example: users, roles, feature flags.
+	//   ScopeLevelTenant — rows carry tenant_id only; visible to all org units
+	//                       within the tenant.
+	//                       Example: users, roles, subscription features.
 	//
-	//   ScopeLevelCompany  — rows have tenant_id + company_id.
-	//                         Example: GL accounts, employees, fiscal years.
-	//
-	//   ScopeLevelDivision — rows have tenant_id + company_id + division_id.
-	//                         Example: sales targets, divisional budgets.
+	//   ScopeLevelUnit   — rows carry tenant_id + org_unit_id.
+	//                       Access is tree-based: viewer's unit must be an
+	//                       ancestor-or-equal of the record's unit.
+	//                       Example: GL accounts, invoices, employees, budgets.
 	//
 	// Defaults to ScopeLevelTenant when zero-value.
 	OrgScope org.ScopeLevel
@@ -117,8 +118,7 @@ func (d *EntityDefinition) Validate() error {
 
 	// Validate org scope level.
 	switch d.effectiveOrgScope() {
-	case org.ScopeLevelGlobal, org.ScopeLevelTenant,
-		org.ScopeLevelCompany, org.ScopeLevelDivision:
+	case org.ScopeLevelGlobal, org.ScopeLevelTenant, org.ScopeLevelUnit:
 		// valid
 	default:
 		return fmt.Errorf("%w: %q on entity %q", ErrInvalidOrgScope, d.OrgScope, d.Name)
@@ -181,24 +181,24 @@ func (d *EntityDefinition) EdgeByName(name string) *EdgeDef {
 	return nil
 }
 
-// IsGlobal reports whether this entity has no tenant scoping.
+// IsGlobal reports whether this entity has no tenant or unit scoping.
 // Equivalent to OrgScope == ScopeLevelGlobal.
 func (d *EntityDefinition) IsGlobal() bool {
 	return d.effectiveOrgScope() == org.ScopeLevelGlobal
 }
 
-// IsCompanyScoped reports whether rows carry a company_id column.
-func (d *EntityDefinition) IsCompanyScoped() bool {
-	s := d.effectiveOrgScope()
-	return s == org.ScopeLevelCompany || s == org.ScopeLevelDivision
+// IsUnitScoped reports whether rows carry an org_unit_id column.
+// Tree-based access control applies to unit-scoped entities.
+func (d *EntityDefinition) IsUnitScoped() bool {
+	return d.effectiveOrgScope() == org.ScopeLevelUnit
 }
 
-// IsDivisionScoped reports whether rows carry a division_id column.
-func (d *EntityDefinition) IsDivisionScoped() bool {
-	return d.effectiveOrgScope() == org.ScopeLevelDivision
+// IsTenantScoped reports whether rows carry a tenant_id but no org_unit_id.
+func (d *EntityDefinition) IsTenantScoped() bool {
+	return d.effectiveOrgScope() == org.ScopeLevelTenant
 }
 
-// effectiveOrgScope returns the OrgScope with the zero-value defaulted to Tenant.
+// effectiveOrgScope returns the OrgScope with the zero-value defaulted to ScopeLevelTenant.
 func (d *EntityDefinition) effectiveOrgScope() org.ScopeLevel {
 	if d.OrgScope == "" {
 		return org.ScopeLevelTenant

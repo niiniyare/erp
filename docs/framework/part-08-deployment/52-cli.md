@@ -5,7 +5,7 @@ chapter: 52
 section: "52-cli"
 related:
   - "[Chapter 11: Database Migrations](../part-02-entity-system/11-migrations.md)"
-  - "[Chapter 41: Tenant Lifecycle](../part-07-multitenancy/38-tenant-lifecycle.md)"
+  - "[Chapter 38: Tenant Lifecycle](../part-07-multitenancy/38-tenant-lifecycle.md)"
   - "[Chapter 45: Environment Architecture](../part-08-deployment/45-environment.md)"
 ---
 

@@ -1,18 +1,18 @@
 // Package contextutil provides context helpers for propagating organisational
 // scope and request identity through the Awo Framework call chain.
 //
-// # Org hierarchy context
+// # Org scope context
 //
 // Every authenticated request carries an org.Scope that locates the request
-// within the organisational hierarchy:
+// within the organisational tree:
 //
-//	Tenant → Company → Division
+//	Tenant ──► OrgUnit (any node in the unit tree)
 //
 // Use WithOrgScope at the request entry point (middleware or handler) and
 // GetOrgScope wherever the scope is needed:
 //
 //	// In auth middleware:
-//	ctx = contextutil.WithOrgScope(ctx, org.WithCompany(tenantID, companyID))
+//	ctx = contextutil.WithOrgScope(ctx, org.WithUnit(tenantID, unitID))
 //
 //	// In a service or repository:
 //	scope, ok := contextutil.GetOrgScope(ctx)
@@ -46,9 +46,8 @@ type contextKey string
 
 const (
 	keyOrgScope   contextKey = "awo.org_scope"
-	keyUserID     contextKey = "awo.user_id"
-	keyRequestCtx contextKey = "awo.request_ctx"
 	keyActorID    contextKey = "awo.actor_id"
+	keyRequestCtx contextKey = "awo.request_ctx"
 )
 
 // ── Org scope ─────────────────────────────────────────────────────────────────
@@ -61,7 +60,7 @@ func WithOrgScope(ctx context.Context, scope org.Scope) context.Context {
 }
 
 // GetOrgScope retrieves the org.Scope from the context.
-// Returns (zero, false) if no scope has been set.
+// Returns (zero, false) if no scope has been set or if TenantID is missing.
 func GetOrgScope(ctx context.Context) (org.Scope, bool) {
 	scope, ok := ctx.Value(keyOrgScope).(org.Scope)
 	if !ok || scope.TenantID == uuid.Nil {
@@ -80,8 +79,8 @@ func MustGetOrgScope(ctx context.Context) org.Scope {
 	return scope
 }
 
-// WithTenantID is a convenience wrapper that sets a tenant-only scope.
-// Use WithOrgScope(ctx, org.WithCompany(...)) for company-scoped requests.
+// WithTenantID is a convenience wrapper that sets a tenant-only scope with no
+// specific org unit. Use WithOrgScope(ctx, org.WithUnit(…)) for unit-scoped requests.
 func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
 	return WithOrgScope(ctx, org.TenantOnly(tenantID))
 }
@@ -96,24 +95,14 @@ func GetTenantID(ctx context.Context) (uuid.UUID, bool) {
 	return scope.TenantID, true
 }
 
-// GetCompanyID retrieves the company ID from the org scope.
-// Returns (uuid.Nil, false) when the request is not company-scoped.
-func GetCompanyID(ctx context.Context) (uuid.UUID, bool) {
+// GetOrgUnitID retrieves the org unit ID from the scope.
+// Returns (uuid.Nil, false) when no scope is set or the viewer is tenant-wide.
+func GetOrgUnitID(ctx context.Context) (uuid.UUID, bool) {
 	scope, ok := GetOrgScope(ctx)
-	if !ok || scope.CompanyID == nil {
+	if !ok || scope.UnitID == uuid.Nil {
 		return uuid.Nil, false
 	}
-	return *scope.CompanyID, true
-}
-
-// GetDivisionID retrieves the division ID from the org scope.
-// Returns (uuid.Nil, false) when the request is not division-scoped.
-func GetDivisionID(ctx context.Context) (uuid.UUID, bool) {
-	scope, ok := GetOrgScope(ctx)
-	if !ok || scope.DivisionID == nil {
-		return uuid.Nil, false
-	}
-	return *scope.DivisionID, true
+	return scope.UnitID, true
 }
 
 // ── Actor identity ────────────────────────────────────────────────────────────

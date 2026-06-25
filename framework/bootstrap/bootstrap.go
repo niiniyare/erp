@@ -12,6 +12,7 @@ package bootstrap
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
 	tclient "go.temporal.io/sdk/client"
 
@@ -95,10 +96,9 @@ func anonymousViewer(c *fiber.Ctx) (definition.ViewerContext, error) {
 
 type anonViewer struct{ tenantID string }
 
-func (v *anonViewer) ActorID() string            { return "anonymous" }
-func (v *anonViewer) TenantID() string           { return v.tenantID }
-func (v *anonViewer) CompanyID() string          { return "" }
-func (v *anonViewer) DivisionID() string         { return "" }
-func (v *anonViewer) OrgScope() org.Scope        { return org.Scope{} }
-func (v *anonViewer) IsSystem() bool             { return false }
-func (v *anonViewer) HasRole(_ string) bool      { return false }
+func (v *anonViewer) ActorID() string         { return "anonymous" }
+func (v *anonViewer) TenantID() string        { return v.tenantID }
+func (v *anonViewer) OrgUnitID() uuid.UUID    { return uuid.Nil }
+func (v *anonViewer) OrgScope() org.Scope     { return org.Scope{} }
+func (v *anonViewer) IsSystem() bool          { return false }
+func (v *anonViewer) HasRole(_ string) bool   { return false }

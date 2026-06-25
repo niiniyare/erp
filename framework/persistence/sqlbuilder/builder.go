@@ -70,16 +70,20 @@ func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, int)
 //
 //	INSERT INTO <table> (col1, col2, ...) VALUES ($1, $2, ...) RETURNING id
 func Insert(def *definition.EntityDefinition, fields []string) (query string, cols []string) {
-	cols = make([]string, 0, len(fields)+2)
-	cols = append(cols, "id", "tenant_id")
+	// Start with scope columns; trim based on entity's OrgScope.
+	scopeCols := scopeColumns(def)
+	reserved := map[string]bool{"id": true}
+	for _, sc := range scopeCols {
+		reserved[sc] = true
+	}
+
+	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
+	cols = append(cols, "id")
+	cols = append(cols, scopeCols...)
 	for _, f := range fields {
-		if f != "id" && f != "tenant_id" {
+		if !reserved[f] {
 			cols = append(cols, f)
 		}
-	}
-	if def.IsGlobal() {
-		// Global entities have no tenant_id column.
-		cols = cols[1:] // drop tenant_id
 	}
 
 	placeholders := make([]string, len(cols))
@@ -96,6 +100,14 @@ func Insert(def *definition.EntityDefinition, fields []string) (query string, co
 	return query, cols
 }
 
+// immutableCols are columns that must never be changed after INSERT.
+var immutableCols = map[string]bool{
+	"id":          true,
+	"tenant_id":   true,
+	"org_unit_id": true, // reparenting goes through a dedicated reparent operation
+	"created_at":  true,
+}
+
 // Update builds an UPDATE statement for the given mutable field names.
 // Returns (query, orderedColumns). The last placeholder is always `id`.
 //
@@ -103,7 +115,7 @@ func Insert(def *definition.EntityDefinition, fields []string) (query string, co
 func Update(def *definition.EntityDefinition, fields []string) (query string, cols []string) {
 	cols = make([]string, 0, len(fields))
 	for _, f := range fields {
-		if f != "id" && f != "tenant_id" && f != "created_at" {
+		if !immutableCols[f] {
 			cols = append(cols, f)
 		}
 	}
@@ -155,11 +167,9 @@ func Exists(def *definition.EntityDefinition, filterFields []string) string {
 
 // columnList returns a comma-separated list of all field columns for SELECT.
 func columnList(def *definition.EntityDefinition) string {
-	cols := make([]string, 0, len(def.Fields)+3)
+	cols := make([]string, 0, len(def.Fields)+5)
 	cols = append(cols, "id")
-	if !def.IsGlobal() {
-		cols = append(cols, "tenant_id")
-	}
+	cols = append(cols, scopeColumns(def)...)
 	cols = append(cols, "created_at", "updated_at")
 	if def.SoftDelete {
 		cols = append(cols, "deleted_at")
@@ -168,6 +178,23 @@ func columnList(def *definition.EntityDefinition) string {
 		cols = append(cols, pgIdent(f.Name))
 	}
 	return strings.Join(cols, ", ")
+}
+
+// scopeColumns returns the scope-specific column names for an entity,
+// based on its OrgScope level.
+//
+//   - Global   → [] (no scope columns)
+//   - Tenant   → ["tenant_id"]
+//   - Unit     → ["tenant_id", "org_unit_id"]
+func scopeColumns(def *definition.EntityDefinition) []string {
+	switch {
+	case def.IsGlobal():
+		return nil
+	case def.IsUnitScoped():
+		return []string{"tenant_id", "org_unit_id"}
+	default: // ScopeLevelTenant
+		return []string{"tenant_id"}
+	}
 }
 
 // whereClauses builds AND clauses for filters and soft-delete, returning the
