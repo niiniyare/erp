@@ -33,7 +33,7 @@
 
 #### 1.3. Who This Documentation Is For
 ##### 1.3.1. Framework contributors — building Awo core
-##### 1.3.2. Module developers — building built-in ERP modules on top of Awo
+##### 1.3.2. Module developers — building ERP modules on top of Awo (separate repositories)
 ##### 1.3.3. Application developers — building tenant-specific customisations
 ##### 1.3.4. System integrators — deploying and operating Awo for a client
 ##### 1.3.5. How to navigate this documentation by audience
@@ -78,6 +78,7 @@
 ##### 2.4.6. Workflow trigger bindings
 ##### 2.4.7. UI page builder bindings
 ##### 2.4.8. Naming series configuration
+##### 2.4.9. Print template binding — optional `PrintTemplate` field for PDF generation
 
 #### 2.5. The EntityRegistry
 ##### 2.5.1. Global registry — what it holds and when it is populated
@@ -85,6 +86,23 @@
 ##### 2.5.3. Custom entity loading at tenant boot
 ##### 2.5.4. Registry lookup — by name, by tenant, by type
 ##### 2.5.5. Registry concurrency model — reads vs writes during tenant boot
+
+#### 2.6. Where EntityDefinitions Live
+##### 2.6.1. Framework package (`awo.so/framework`) — platform entities owned by core
+###### 2.6.1.1. Platform entity list: Tenant, OrgNode (Company / Division), User, Role, Permission, UserRole, RolePermission, Session, AuditLog, FeatureFlag, FeatureFlagOverride, Notification, TenantConfig, CustomFieldDef, ReportDefinition
+###### 2.6.1.2. Why these live in the framework — every Awo deployment needs them; they underpin IAM, tenancy, and configurability
+###### 2.6.1.3. Versioning — platform entity schema changes follow the framework semver contract
+##### 2.6.2. Module packages — domain entities owned by separate Go modules
+###### 2.6.2.1. Finance module (separate repository): JournalEntry, Account, CostCentre, FiscalYear, FiscalPeriod, ExchangeRate
+###### 2.6.2.2. CRM module: Customer, Contact, Address, Lead, Opportunity
+###### 2.6.2.3. Inventory module: Item, ItemGroup, Warehouse, Bin, StockEntry, StockEntryLine
+###### 2.6.2.4. HR module: Employee, Department, LeaveType, LeaveAllocation, LeaveRequest, Attendance, PayrollRun, Payslip
+###### 2.6.2.5. Forecourt module: Site, Tank, Pump, Nozzle, Shift, MeterReading, DipReading, FleetCard
+###### 2.6.2.6. Module packages import `awo.so/framework` but are not imported by it — no circular dependency
+##### 2.6.3. Application code — tenant-specific custom entities defined at runtime
+###### 2.6.3.1. Custom entities use the JSONB engine and require no code deploy — defined via API or admin UI
+###### 2.6.3.2. They may extend system entities (extra fields via CustomFieldDef) or stand alone
+###### 2.6.3.3. Custom entities are per-tenant — loaded into the EntityRegistry at tenant boot
 
 ---
 
@@ -121,8 +139,8 @@
 #### 3.4. Multi-Tenant Architecture
 ##### 3.4.1. Tenant identification — subdomain parsing, X-Awo-Tenant header fallback
 ##### 3.4.2. Per-tenant EntityRegistry — custom entities loaded at boot
-##### 3.4.3. Per-tenant database schema — schema-per-tenant in PostgreSQL
-##### 3.4.4. Per-tenant connection pool — pgx pool per schema
+##### 3.4.3. RLS isolation — all tenants share a single PostgreSQL database and schema; isolation is enforced by Row-Level Security (RLS) keyed on `tenant_id`
+##### 3.4.4. `set_tenant_context(uuid)` stored procedure — called at connection acquisition, sets the RLS context variable
 ##### 3.4.5. Per-tenant feature flags — Redis-backed, per-tenant overrides
 ##### 3.4.6. Per-tenant configuration — TenantConfig entity, inheritance from system defaults
 
@@ -139,14 +157,14 @@
 #### 4.1. Prerequisites and Tooling
 ##### 4.1.1. Go 1.22 or later
 ##### 4.1.2. Docker Compose for local dependencies
-##### 4.1.3. Awo CLI installation
-##### 4.1.4. Atlas CLI installation
-##### 4.1.5. Temporal CLI installation
+##### 4.1.3. Awo CLI — `awo` binary distributed with the framework, no separate download
+##### 4.1.4. Temporal CLI installation
 
-#### 4.2. Clone and Run the Starter Project
-##### 4.2.1. Repository layout of the starter
-##### 4.2.2. `docker compose up` — PostgreSQL, Redis, Temporal
-##### 4.2.3. `awo serve` — first run
+#### 4.2. Scaffold and Run the Starter Project
+##### 4.2.1. `awo new <project-name>` — scaffold a new Awo project
+##### 4.2.2. Repository layout of the starter
+##### 4.2.3. `docker compose up` — PostgreSQL, Redis, Temporal
+##### 4.2.4. `awo serve` — first run
 
 #### 4.3. Define a System Entity
 ##### 4.3.1. Run `awo entity create --type=system`
@@ -155,9 +173,9 @@
 ##### 4.3.4. Declare an edge to an existing entity
 
 #### 4.4. Generate and Apply the Migration
-##### 4.4.1. `awo entity migrate --dry-run` — preview the SQL
-##### 4.4.2. Review the generated Atlas migration file
-##### 4.4.3. `awo entity migrate --apply` — execute
+##### 4.4.1. `awo migrate create <description>` — create a new migration file pair
+##### 4.4.2. Edit the generated .up.sql and .down.sql files
+##### 4.4.3. `awo migrate up` — apply pending migrations
 
 #### 4.5. Wire an API Route
 ##### 4.5.1. Auto-generated CRUD routes from EntityDefinition
@@ -358,7 +376,7 @@
 ##### 8.6.2. Schema file layout and conventions
 ##### 8.6.3. How ent predicates are generated from `Filter` structs
 ##### 8.6.4. Connection pool management with pgx
-##### 8.6.5. Per-tenant schema routing in the ent client
+##### 8.6.5. RLS context injection — `set_tenant_context()` called on connection acquisition
 ##### 8.6.6. Known limitations of the ent implementation
 
 #### 8.7. Swapping the Implementation
@@ -412,7 +430,7 @@
 #### 10.1. The Custom Field Model
 ##### 10.1.1. How custom fields extend both system entities and custom entities
 ##### 10.1.2. Storage — the `custom_fields JSONB` column pattern on system entities
-##### 10.1.3. The `CustomFieldDef` system entity — metadata table
+##### 10.1.3. The `CustomFieldDef` platform entity — metadata table
 ##### 10.1.4. Scope — custom fields are per-tenant, per-entity
 
 #### 10.2. Defining Custom Fields
@@ -449,28 +467,30 @@
 
 #### 11.1. Migration Strategy Overview
 ##### 11.1.1. Why manual reviewed migrations, not auto-migrate, in production
-##### 11.1.2. Atlas as the migration tool — what it does vs what the implementation library does
-##### 11.1.3. The migration lifecycle — diff → review → test → apply → verify
+##### 11.1.2. `golang-migrate` as the migration tool — PostgreSQL driver, versioned SQL files
+##### 11.1.3. The migration lifecycle — write → review → test → apply → verify
+##### 11.1.4. RLS-aware migrations — DDL is applied once to the shared schema; no per-tenant DDL is ever needed
 
-#### 11.2. The `awo entity migrate` Command
-##### 11.2.1. What it does — delegates to Atlas under the hood
-##### 11.2.2. `--dry-run` — generates SQL without writing to disk
-##### 11.2.3. `--diff` — generates a new versioned migration file
-##### 11.2.4. `--apply` — executes pending migrations
-##### 11.2.5. `--verify` — checks applied migrations match files (drift detection)
+#### 11.2. Migration File Format
+##### 11.2.1. File naming — `{timestamp}_{description}.up.sql` and `{timestamp}_{description}.down.sql`
+##### 11.2.2. Timestamp format — Unix epoch in seconds (14-digit): `20240615120000_add_customer_tier.up.sql`
+##### 11.2.3. Up migration — forward SQL: CREATE TABLE, ALTER TABLE, CREATE INDEX, etc.
+##### 11.2.4. Down migration — rollback SQL: DROP TABLE, ALTER TABLE DROP COLUMN, DROP INDEX (required, not optional)
+##### 11.2.5. Editing a migration after it has been applied — unsafe; write a new migration instead
 
-#### 11.3. The Versioned Migration File Format
-##### 11.3.1. File naming — timestamp prefix + description slug
-##### 11.3.2. Up migration — forward SQL
-##### 11.3.3. Down migration — rollback SQL (required, not optional)
-##### 11.3.4. Checksum — tamper detection
-##### 11.3.5. Editing a generated migration — safe changes vs unsafe changes
+#### 11.3. CLI Commands
+##### 11.3.1. `awo migrate up` — apply all pending migrations
+##### 11.3.2. `awo migrate down [N]` — roll back N migrations (default 1)
+##### 11.3.3. `awo migrate version` — print the current applied migration version
+##### 11.3.4. `awo migrate create <name>` — create a new timestamped migration file pair
+##### 11.3.5. `awo migrate force <V>` — mark a specific version as applied without running SQL (emergency use)
 
-#### 11.4. Multi-Tenant Migration Strategy
-##### 11.4.1. Schema-per-tenant layout in PostgreSQL
-##### 11.4.2. Migrating all tenant schemas in sequence
-##### 11.4.3. Tenant migration concurrency — parallel vs sequential and why sequential is default
-##### 11.4.4. Handling a failed migration mid-fleet — isolation, remediation, re-run
+#### 11.4. RLS Migration Pattern
+##### 11.4.1. Single shared schema — all tenants' data lives in the same tables
+##### 11.4.2. Every table must include a `tenant_id uuid NOT NULL` column
+##### 11.4.3. RLS policy migration — enabling RLS and creating policies alongside table DDL
+##### 11.4.4. No per-tenant migration — applying a migration once applies it for all tenants
+##### 11.4.5. Per-tenant seed data — seeded via the provisioning workflow, not via migrations
 
 #### 11.5. Rolling Migrations — Zero-Downtime Patterns
 ##### 11.5.1. Expand-contract pattern — adding nullable columns before making them required
@@ -480,18 +500,28 @@
 
 #### 11.6. Drift Detection
 ##### 11.6.1. What drift is — manual DB changes that are not reflected in migration files
-##### 11.6.2. Running drift detection in CI
+##### 11.6.2. Running drift detection in CI — comparing applied schema against migration-derived schema
 ##### 11.6.3. Resolving drift — generating a catch-up migration vs reverting the manual change
 
-#### 11.7. Migration Rollback
-##### 11.7.1. Running a down migration
-##### 11.7.2. Partial rollback — rolling back one tenant
-##### 11.7.3. When rollback is not possible — destructive changes and recovery options
+#### 11.7. Complex DDL — Views, Functions, and Triggers
+##### 11.7.1. SQL views — when to use them (reporting, denormalised read models, cross-entity joins)
+##### 11.7.2. Embedding views in migration files — `CREATE OR REPLACE VIEW` in a `.up.sql` file
+##### 11.7.3. Dropping views in down migrations — always `DROP VIEW IF EXISTS`
+##### 11.7.4. Stored functions — `set_tenant_context(uuid)` for RLS, naming series counter atomics
+##### 11.7.5. `updated_at` auto-update trigger — single trigger function shared across all tables
+##### 11.7.6. Audit log trigger — fires on UPDATE/DELETE, writes to audit_log with old and new values
+##### 11.7.7. RLS policies — `CREATE POLICY`, `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+##### 11.7.8. Pattern: keep all DDL in numbered migration files — never apply DDL manually in production
 
-#### 11.8. Atlas CI Integration
-##### 11.8.1. Running `atlas migrate lint` in CI — detecting dangerous migrations
-##### 11.8.2. Running drift detection in CI
-##### 11.8.3. Gate-keeping merges that include unapproved migrations
+#### 11.8. Testing Migrations
+##### 11.8.1. Migration test helper — applies all migrations to a temporary database
+##### 11.8.2. Round-trip test — up then down, verify schema returns to prior state
+##### 11.8.3. Dangerous migration detection in CI — flag `DROP COLUMN`, `DROP TABLE`, non-concurrent index on large tables
+
+#### 11.9. Migration Rollback Procedures
+##### 11.9.1. Running `awo migrate down N`
+##### 11.9.2. When rollback is not possible — destructive changes and recovery options
+##### 11.9.3. Emergency `migrate force` — marking a migration applied after manual fix
 
 ---
 
@@ -567,21 +597,22 @@
 ##### 14.1.4. Tenant not found — 404 vs 400, and why it matters for information leakage
 
 #### 14.2. Tenant Context Propagation
-##### 14.2.1. What goes into the tenant context — ID, schema name, config, feature flags
+##### 14.2.1. What goes into the tenant context — ID, RLS context variable, config, feature flags
 ##### 14.2.2. Propagating tenant context through `context.Context`
 ##### 14.2.3. Extracting tenant context in route handlers and hooks
 ##### 14.2.4. Propagating tenant context into Temporal workflow starts
 
 #### 14.3. Tenant State Handling
-##### 14.3.1. Active tenant — normal flow
-##### 14.3.2. Suspended tenant — 402 with suspension reason
+##### 14.3.1. Active tenant — normal flow; `set_tenant_context()` sets RLS variable, all queries proceed
+##### 14.3.2. Suspended tenant — 402 with suspension reason; `set_tenant_context()` raises exception if status != ACTIVE
 ##### 14.3.3. Trial tenant — feature flag restrictions applied
-##### 14.3.4. Decommissioned tenant — 410 Gone
+##### 14.3.4. Archived tenant — 410 Gone; middleware rejects before reaching DB
 
-#### 14.4. Per-Tenant Database Connections
-##### 14.4.1. Connection pool per schema — why and how
-##### 14.4.2. Pool sizing — per-tenant limits vs global pool ceiling
-##### 14.4.3. Pool eviction — releasing pools for inactive tenants
+#### 14.4. RLS Context and Connection Management
+##### 14.4.1. `set_tenant_context(uuid)` stored procedure — sets `app.current_tenant_id` session variable
+##### 14.4.2. Called on every connection acquisition before executing any query
+##### 14.4.3. Connection pool behaviour — RLS context reset between requests
+##### 14.4.4. Why RLS is a defence-in-depth measure — application layer also scopes queries
 
 ---
 
@@ -660,8 +691,9 @@
 ##### 17.1.1. `/api/v1/{entity-name}` — auto-generated CRUD
 ##### 17.1.2. `/api/v1/{entity-name}/{id}` — single resource
 ##### 17.1.3. `/api/v1/{entity-name}/{id}/{action}` — entity actions (submit, cancel)
-##### 17.1.4. Tenant context comes from middleware, not the URL
-##### 17.1.5. Custom routes — convention for module-specific endpoints
+##### 17.1.4. `/api/v1/{entity-name}/{id}/pdf` — PDF generation endpoint
+##### 17.1.5. Tenant context comes from middleware, not the URL
+##### 17.1.6. Custom routes — convention for module-specific endpoints
 
 #### 17.2. Standard Response Envelope
 ##### 17.2.1. Success shape — `{ data, meta }`
@@ -865,7 +897,7 @@
 #### 23.4. `AmisDetailPage` — Master + Related Tables
 ##### 23.4.1. Header section — primary entity fields
 ##### 23.4.2. Tab panels — related entities as child tables
-##### 23.4.3. Action toolbar — submit, cancel, amend, print, email
+##### 23.4.3. Action toolbar — submit, cancel, amend, print, email, download PDF
 
 #### 23.5. `AmisDashboard` — Stat Cards and Charts
 ##### 23.5.1. KPI stat cards — value, label, trend indicator
@@ -908,892 +940,975 @@
 #### 24.3. Print Stylesheets
 ##### 24.3.1. Print layout for invoices
 ##### 24.3.2. Print layout for delivery notes and purchase orders
-##### 24.3.3. PDF generation from the print layout
+##### 24.3.3. Relationship to the server-side PDF generation system (see §25)
 
 ---
 
-### 25. Custom Renderers
+### 25. Print and PDF Generation
 
-#### 25.1. When a Custom Renderer Is Justified
-##### 25.1.1. Capability gap — amis built-in components cannot express the UI needed
-##### 25.1.2. Performance gap — a custom renderer can be more efficient
-##### 25.1.3. When to push back — over-customisation cost
+#### 25.1. Overview and Approach
+##### 25.1.1. Server-side PDF via `chromedp` — headless Chrome controlled from Go
+##### 25.1.2. Why not wkhtmltopdf — abandoned project, security vulnerabilities, no modern CSS support
+##### 25.1.3. Why not a PDF library — poor font rendering, no CSS layout engine, complex table handling
 
-#### 25.2. Registering a Custom Renderer
-##### 25.2.1. The amis custom component API
-##### 25.2.2. Serving the custom renderer JS bundle
-##### 25.2.3. Registering the renderer type string
+#### 25.2. HTML Print Templates
+##### 25.2.1. Go `html/template` — one template per document type
+##### 25.2.2. Template types: invoice, delivery note, payslip, purchase order, statement of account
+##### 25.2.3. Template registration on EntityDefinition — the optional `PrintTemplate` field
+##### 25.2.4. Template data binding — entity record + related edges passed as template data
+##### 25.2.5. Tenant branding injection — logo URL, colours, address from TenantConfig
+##### 25.2.6. `@media print` CSS embedded in template — page size, margins, header, footer
+##### 25.2.7. Fonts — system fonts or embedded base64 for consistent cross-environment output
 
-#### 25.3. Worked Examples
-##### 25.3.1. Forecourt pump status renderer — real-time pump state display
-##### 25.3.2. Custom chart renderer with recharts
-##### 25.3.3. Map renderer — site locations with leaflet
+#### 25.3. The PDF Endpoint
+##### 25.3.1. `GET /api/v1/{entity}/{id}/pdf` — render template, convert to PDF, stream response
+##### 25.3.2. Content-Type: `application/pdf`; Content-Disposition: inline or attachment
+##### 25.3.3. Permission check — same permission as `read` on the entity
+##### 25.3.4. Cache header — `ETag` based on record `updated_at`
+
+#### 25.4. PDF Caching
+##### 25.4.1. Generate once, store in object storage (S3-compatible)
+##### 25.4.2. Cache key — `{tenant_id}/{entity}/{id}/{updated_at_hash}.pdf`
+##### 25.4.3. Cache invalidation — on record update, delete cached PDF
+##### 25.4.4. Serving from cache — pre-signed URL redirect vs proxy through API
+
+#### 25.5. Background PDF Generation
+##### 25.5.1. Temporal activity for large or batch documents — payslip run, bulk statements
+##### 25.5.2. `GeneratePDFActivity` — renders template, uploads to object storage, returns S3 URI
+##### 25.5.3. Notification to user when batch PDF is ready — in-app notification with download link
+##### 25.5.4. Concurrency — chromedp instances are pooled, not spawned per request
+
+#### 25.6. CSS Page Layout
+##### 25.6.1. `@page` rule — size (A4), margins
+##### 25.6.2. `page-break-before` / `page-break-after` — controlling breaks in multi-page documents
+##### 25.6.3. Header and footer via CSS `@page` margin boxes
+##### 25.6.4. Table continuation across pages — `thead` repeat behaviour
+
+---
+
+### 26. Custom Renderers
+
+#### 26.1. When a Custom Renderer Is Justified
+##### 26.1.1. Capability gap — amis built-in components cannot express the UI needed
+##### 26.1.2. Performance gap — a custom renderer can be more efficient
+##### 26.1.3. When to push back — over-customisation cost
+
+#### 26.2. Registering a Custom Renderer
+##### 26.2.1. The amis custom component API
+##### 26.2.2. Serving the custom renderer JS bundle
+##### 26.2.3. Registering the renderer type string
+
+#### 26.3. Worked Examples
+##### 26.3.1. Forecourt pump status renderer — real-time pump state display
+##### 26.3.2. Custom chart renderer with recharts
+##### 26.3.3. Map renderer — site locations with leaflet
 
 ---
 
 ## Part V — The Workflow Engine
 
-### 26. Temporal Fundamentals for Awo
+### 27. Temporal Fundamentals for Awo
 
-#### 26.1. Why Temporal Over Queues or Cron
-##### 26.1.1. Durability — workflow state survives process crashes
-##### 26.1.2. Audit trail — complete execution history queryable
-##### 26.1.3. Long-running transactions — approval chains that wait days
-##### 26.1.4. Saga pattern — compensating transactions without distributed locks
+#### 27.1. Why Temporal Over Queues or Cron
+##### 27.1.1. Durability — workflow state survives process crashes
+##### 27.1.2. Audit trail — complete execution history queryable
+##### 27.1.3. Long-running transactions — approval chains that wait days
+##### 27.1.4. Saga pattern — compensating transactions without distributed locks
 
-#### 26.2. Core Temporal Concepts
-##### 26.2.1. Workflow — a durable function that orchestrates activities
-##### 26.2.2. Activity — a function that interacts with the outside world
-##### 26.2.3. Worker — a process that executes workflows and activities
-##### 26.2.4. Task queue — the named channel that routes work to workers
-##### 26.2.5. Workflow ID — the unique, stable identity of a workflow instance
-##### 26.2.6. Temporal namespace — the isolation boundary for workflow history
+#### 27.2. Core Temporal Concepts
+##### 27.2.1. Workflow — a durable function that orchestrates activities
+##### 27.2.2. Activity — a function that interacts with the outside world
+##### 27.2.3. Worker — a process that executes workflows and activities
+##### 27.2.4. Task queue — the named channel that routes work to workers
+##### 27.2.5. Workflow ID — the unique, stable identity of a workflow instance
+##### 27.2.6. Temporal namespace — the isolation boundary for workflow history
 
-#### 26.3. Awo Worker Process Setup
-##### 26.3.1. Running the worker alongside Fiber vs as a separate process
-##### 26.3.2. Task queue naming conventions — `{module}.{entity}.{action}`
-##### 26.3.3. Worker concurrency configuration
-##### 26.3.4. Registering workflows and activities on the worker
-
----
-
-### 27. Defining Workflows
-
-#### 27.1. Workflow Function Anatomy
-##### 27.1.1. Function signature — `(ctx workflow.Context, input WorkflowInput) (WorkflowResult, error)`
-##### 27.1.2. What is allowed inside a workflow — determinism rules
-##### 27.1.3. What is forbidden inside a workflow — system calls, random, time.Now()
-##### 27.1.4. Using `workflow.Now()`, `workflow.Sleep()`, `workflow.SideEffect()`
-
-#### 27.2. Workflow Options
-##### 27.2.1. `WorkflowExecutionTimeout` — the hard outer limit
-##### 27.2.2. `WorkflowRunTimeout` — per-run limit (relevant after continue-as-new)
-##### 27.2.3. `WorkflowTaskTimeout` — how long a workflow task can take to process
-##### 27.2.4. Retry policy — is retrying a workflow appropriate or should only activities retry
-##### 27.2.5. Search attributes — indexable metadata for the Temporal Web UI and queries
-
-#### 27.3. Workflow Versioning
-##### 27.3.1. Why workflow code changes break running workflows
-##### 27.3.2. `workflow.GetVersion()` — the safe way to add branching logic to existing workflows
-##### 27.3.3. Version deprecation — removing old branches after all running instances complete
-##### 27.3.4. The `continue-as-new` pattern — for workflows that run indefinitely
-
-#### 27.4. Child Workflows
-##### 27.4.1. When to decompose into child workflows
-##### 27.4.2. `workflow.ExecuteChildWorkflow()` — fire and wait vs fire and forget
-##### 27.4.3. Parent-child cancellation propagation
-##### 27.4.4. Workflow ID namespacing for child workflows
-
-#### 27.5. Workflow ID Naming Conventions
-##### 27.5.1. The `{tenant}.{entity}.{id}.{action}` pattern
-##### 27.5.2. Idempotency via workflow ID — re-triggering is safe
-##### 27.5.3. Workflow ID uniqueness enforcement — `AllowDuplicate` vs `RejectDuplicate` policies
+#### 27.3. Awo Worker Process Setup
+##### 27.3.1. Running the worker alongside Fiber vs as a separate process
+##### 27.3.2. Task queue naming conventions — `{module}.{entity}.{action}`
+##### 27.3.3. Worker concurrency configuration
+##### 27.3.4. Registering workflows and activities on the worker
 
 ---
 
-### 28. Defining Activities
+### 28. Defining Workflows
 
-#### 28.1. Activity Function Anatomy
-##### 28.1.1. Function signature — `(ctx context.Context, input ActivityInput) (ActivityResult, error)`
-##### 28.1.2. The `Activities` struct pattern — dependency injection for activities
-##### 28.1.3. Accessing the EntityRepository inside an activity
-##### 28.1.4. Accessing the tenant context inside an activity
+#### 28.1. Workflow Function Anatomy
+##### 28.1.1. Function signature — `(ctx workflow.Context, input WorkflowInput) (WorkflowResult, error)`
+##### 28.1.2. What is allowed inside a workflow — determinism rules
+##### 28.1.3. What is forbidden inside a workflow — system calls, random, time.Now()
+##### 28.1.4. Using `workflow.Now()`, `workflow.Sleep()`, `workflow.SideEffect()`
 
-#### 28.2. Activity Options
-##### 28.2.1. `StartToCloseTimeout` — required, always set explicitly
-##### 28.2.2. `ScheduleToStartTimeout` — queue wait timeout
-##### 28.2.3. `HeartbeatTimeout` — for activities that must heartbeat
-##### 28.2.4. Retry policy — `MaxAttempts`, `InitialInterval`, `BackoffCoefficient`, `MaxInterval`, `NonRetryableErrorTypes`
+#### 28.2. Workflow Options
+##### 28.2.1. `WorkflowExecutionTimeout` — the hard outer limit
+##### 28.2.2. `WorkflowRunTimeout` — per-run limit (relevant after continue-as-new)
+##### 28.2.3. `WorkflowTaskTimeout` — how long a workflow task can take to process
+##### 28.2.4. Retry policy — is retrying a workflow appropriate or should only activities retry
+##### 28.2.5. Search attributes — indexable metadata for the Temporal Web UI and queries
 
-#### 28.3. Heartbeating
-##### 28.3.1. When heartbeating is required — long-running, blocking, or batch activities
-##### 28.3.2. `activity.RecordHeartbeat(ctx, details)` — what to pass as details
-##### 28.3.3. Detecting cancellation via heartbeat context
-##### 28.3.4. Heartbeat-based progress reporting
+#### 28.3. Workflow Versioning
+##### 28.3.1. Why workflow code changes break running workflows
+##### 28.3.2. `workflow.GetVersion()` — the safe way to add branching logic to existing workflows
+##### 28.3.3. Version deprecation — removing old branches after all running instances complete
+##### 28.3.4. The `continue-as-new` pattern — for workflows that run indefinitely
 
-#### 28.4. Idempotent Activities
-##### 28.4.1. Why activities must be safe to retry
-##### 28.4.2. Database upsert pattern for idempotent writes
-##### 28.4.3. External API idempotency keys
-##### 28.4.4. Testing retry behaviour
+#### 28.4. Child Workflows
+##### 28.4.1. When to decompose into child workflows
+##### 28.4.2. `workflow.ExecuteChildWorkflow()` — fire and wait vs fire and forget
+##### 28.4.3. Parent-child cancellation propagation
+##### 28.4.4. Workflow ID namespacing for child workflows
 
-#### 28.5. Local Activities
-##### 28.5.1. What local activities are — in-process, no history event
-##### 28.5.2. When to use local activities vs regular activities
-##### 28.5.3. Local activity limitations — no heartbeat, no separate retry from workflow
-
----
-
-### 29. Saga Pattern — Compensating Transactions
-
-#### 29.1. When to Use a Saga
-##### 29.1.1. Multi-service or multi-table operations that must be atomic in business terms
-##### 29.1.2. Operations where database-level transactions are insufficient
-##### 29.1.3. Long-running operations where holding a DB transaction is not feasible
-
-#### 29.2. Saga Implementation in Temporal
-##### 29.2.1. Forward steps — activities that make changes
-##### 29.2.2. Compensation stack — appending compensations as forward steps succeed
-##### 29.2.3. Backward recovery — running compensations in reverse on failure
-##### 29.2.4. The `saga` helper — Awo's built-in compensation manager
-
-#### 29.3. Designing Compensations
-##### 29.3.1. Compensations are not rollbacks — they are forward-moving corrections
-##### 29.3.2. Idempotency requirement — compensations must be safe to re-run
-##### 29.3.3. Compensation failure — when a compensation itself fails
-##### 29.3.4. Storing compensation state — what to record for observability
-
-#### 29.4. Worked Examples
-##### 29.4.1. Sales order submit saga
-###### 29.4.1.1. Step 1 — reserve inventory stock
-###### 29.4.1.2. Step 2 — create GL entries
-###### 29.4.1.3. Step 3 — create delivery note
-###### 29.4.1.4. Compensation for inventory reservation failure
-###### 29.4.1.5. Compensation for GL failure after inventory reserved
-##### 29.4.2. Fuel delivery reconciliation saga
-###### 29.4.2.1. Step 1 — validate meter readings
-###### 29.4.2.2. Step 2 — compute variance
-###### 29.4.2.3. Step 3 — post GL variance entry
-###### 29.4.2.4. Step 4 — update wetstock dip record
-###### 29.4.2.5. Compensation chain on validation failure
+#### 28.5. Workflow ID Naming Conventions
+##### 28.5.1. The `{tenant}.{entity}.{id}.{action}` pattern
+##### 28.5.2. Idempotency via workflow ID — re-triggering is safe
+##### 28.5.3. Workflow ID uniqueness enforcement — `AllowDuplicate` vs `RejectDuplicate` policies
 
 ---
 
-### 30. Signals, Queries, and Human-in-the-Loop
+### 29. Defining Activities
 
-#### 30.1. Signals
-##### 30.1.1. What signals are — external input to a running workflow
-##### 30.1.2. Sending a signal from a Fiber handler
-##### 30.1.3. Receiving a signal inside a workflow — `workflow.GetSignalChannel()`
-##### 30.1.4. Signal delivery guarantees — at-least-once, workflow must be idempotent on signal
-##### 30.1.5. Signal naming conventions
+#### 29.1. Activity Function Anatomy
+##### 29.1.1. Function signature — `(ctx context.Context, input ActivityInput) (ActivityResult, error)`
+##### 29.1.2. The `Activities` struct pattern — dependency injection for activities
+##### 29.1.3. Accessing the EntityRepository inside an activity
+##### 29.1.4. Accessing the tenant context inside an activity
 
-#### 30.2. Queries
-##### 30.2.1. What queries are — synchronous read of workflow state, no side effects
-##### 30.2.2. Defining a query handler inside a workflow
-##### 30.2.3. Calling a query from a Fiber handler
-##### 30.2.4. What to expose via queries — current stage, pending approvals, error details
+#### 29.2. Activity Options
+##### 29.2.1. `StartToCloseTimeout` — required, always set explicitly
+##### 29.2.2. `ScheduleToStartTimeout` — queue wait timeout
+##### 29.2.3. `HeartbeatTimeout` — for activities that must heartbeat
+##### 29.2.4. Retry policy — `MaxAttempts`, `InitialInterval`, `BackoffCoefficient`, `MaxInterval`, `NonRetryableErrorTypes`
 
-#### 30.3. Approval Gate Pattern
-##### 30.3.1. The `WaitForApproval` activity — workflow pauses at a signal channel
-##### 30.3.2. The approval API endpoint — validates permission, sends signal
-##### 30.3.3. Approval timeout — what happens if no signal arrives within the deadline
-##### 30.3.4. Rejection path — separate signal value, compensation triggered
+#### 29.3. Heartbeating
+##### 29.3.1. When heartbeating is required — long-running, blocking, or batch activities
+##### 29.3.2. `activity.RecordHeartbeat(ctx, details)` — what to pass as details
+##### 29.3.3. Detecting cancellation via heartbeat context
+##### 29.3.4. Heartbeat-based progress reporting
 
-#### 30.4. Worked Example — Shift Close Approval Flow
-##### 30.4.1. Cashier submits shift close request
-##### 30.4.2. Workflow starts, notifies supervisor
-##### 30.4.3. Supervisor reviews via AmisDetailPage
-##### 30.4.4. Supervisor approves — signal sent, GL posting activity runs
-##### 30.4.5. Supervisor rejects — signal sent, shift re-opened
+#### 29.4. Idempotent Activities
+##### 29.4.1. Why activities must be safe to retry
+##### 29.4.2. Database upsert pattern for idempotent writes
+##### 29.4.3. External API idempotency keys
+##### 29.4.4. Testing retry behaviour
 
----
-
-### 31. Schedules and Cron
-
-#### 31.1. Temporal Schedules vs Traditional Cron
-##### 31.1.1. Why Temporal schedules — durability, catch-up, observability
-##### 31.1.2. What Temporal schedules cannot do that cron can
-##### 31.1.3. Schedule vs cron expression — calendar-based vs interval-based
-
-#### 31.2. Defining a Schedule
-##### 31.2.1. Schedule ID — naming convention
-##### 31.2.2. Schedule spec — interval, calendar, jitter
-##### 31.2.3. Schedule action — which workflow to start and with what input
-##### 31.2.4. Overlap policy — skip, buffer, allow, terminate previous
-
-#### 31.3. Built-in Scheduled Workflows
-##### 31.3.1. Nightly GL period check
-##### 31.3.2. Daily wetstock reconciliation
-##### 31.3.3. Weekly KPI snapshot
-##### 31.3.4. Monthly tenant usage report
-
-#### 31.4. Managing Schedules
-##### 31.4.1. Creating schedules at service start — idempotent upsert
-##### 31.4.2. Pausing and resuming schedules
-##### 31.4.3. Triggering a schedule manually — backfill and forced trigger
-##### 31.4.4. Deleting a schedule
+#### 29.5. Local Activities
+##### 29.5.1. What local activities are — in-process, no history event
+##### 29.5.2. When to use local activities vs regular activities
+##### 29.5.3. Local activity limitations — no heartbeat, no separate retry from workflow
 
 ---
 
-### 32. Workflow Observability
+### 30. Saga Pattern — Compensating Transactions
 
-#### 32.1. Temporal Web UI
-##### 32.1.1. Reading workflow event history — what each event type means
-##### 32.1.2. Searching workflows by search attribute
-##### 32.1.3. Workflow status states — Running, Completed, Failed, Timed Out, Cancelled, Terminated
+#### 30.1. When to Use a Saga
+##### 30.1.1. Multi-service or multi-table operations that must be atomic in business terms
+##### 30.1.2. Operations where database-level transactions are insufficient
+##### 30.1.3. Long-running operations where holding a DB transaction is not feasible
 
-#### 32.2. OpenTelemetry Integration
-##### 32.2.1. Trace propagation from Fiber into Temporal activities
-##### 32.2.2. Custom spans inside activities
-##### 32.2.3. Correlating Temporal workflow ID with distributed traces
+#### 30.2. Saga Implementation in Temporal
+##### 30.2.1. Forward steps — activities that make changes
+##### 30.2.2. Compensation stack — appending compensations as forward steps succeed
+##### 30.2.3. Backward recovery — running compensations in reverse on failure
+##### 30.2.4. The `saga` helper — Awo's built-in compensation manager
 
-#### 32.3. Workflow Alerting
-##### 32.3.1. Alert on workflow failure rate
-##### 32.3.2. Alert on workflow pending age — stuck workflows
-##### 32.3.3. Alert on schedule not running
+#### 30.3. Designing Compensations
+##### 30.3.1. Compensations are not rollbacks — they are forward-moving corrections
+##### 30.3.2. Idempotency requirement — compensations must be safe to re-run
+##### 30.3.3. Compensation failure — when a compensation itself fails
+##### 30.3.4. Storing compensation state — what to record for observability
 
----
-
-## Part VI — Built-In Modules
-
-### 33. Finance Module
-
-#### 33.1. Chart of Accounts
-##### 33.1.1. Account types — Asset, Liability, Equity, Income, Expense
-##### 33.1.2. Account hierarchy — materialised path storage
-##### 33.1.3. Kenya chart of accounts — KRA-aligned account groups
-##### 33.1.4. Account numbering conventions
-##### 33.1.5. Cost centres — departmental allocation
-
-#### 33.2. Journal Entry and Double-Entry Enforcement
-##### 33.2.1. Journal entry entity — debit and credit lines
-##### 33.2.2. Double-entry validation — debits must equal credits
-##### 33.2.3. GL posting from workflows — the `PostJournalEntry` activity
-##### 33.2.4. Reversal entries — linking a reversal to its source
-
-#### 33.3. Period Management
-##### 33.3.1. Fiscal year and period entities
-##### 33.3.2. Period closing workflow — what happens when a period closes
-##### 33.3.3. Posting into a closed period — blocked by default, override requires permission
-
-#### 33.4. Financial Statements
-##### 33.4.1. Trial balance — balances for every account in a period
-##### 33.4.2. Profit and loss — income and expense accounts
-##### 33.4.3. Balance sheet — assets, liabilities, equity
-##### 33.4.4. Cash flow statement
-
-#### 33.5. Reconciliation Health Subsystem
-##### 33.5.1. What reconciliation health tracks — bank vs GL, dip vs computed stock
-##### 33.5.2. Anomaly detection on GL entries — statistical outlier detection
-##### 33.5.3. Reconciliation health dashboard
-
-#### 33.6. Multi-Currency Support
-##### 33.6.1. KES as the base currency
-##### 33.6.2. Exchange rate entity — daily rate feed
-##### 33.6.3. Currency gain/loss calculation and posting
+#### 30.4. Worked Examples
+##### 30.4.1. Sales order submit saga
+##### 30.4.2. Fuel delivery reconciliation saga
 
 ---
 
-### 34. Forecourt Module
+### 31. Signals, Queries, and Human-in-the-Loop
 
-#### 34.1. Entity Hierarchy
-##### 34.1.1. Site → Tank → Pump → Nozzle
-##### 34.1.2. Product grades — petrol, diesel, kerosene, LPG
-##### 34.1.3. PTS-2 pump controller — electronic interface entity
+#### 31.1. Signals
+##### 31.1.1. What signals are — external input to a running workflow
+##### 31.1.2. Sending a signal from a Fiber handler
+##### 31.1.3. Receiving a signal inside a workflow — `workflow.GetSignalChannel()`
+##### 31.1.4. Signal delivery guarantees — at-least-once, workflow must be idempotent on signal
+##### 31.1.5. Signal naming conventions
 
-#### 34.2. Meter Readings
-##### 34.2.1. Electronic volume reading — from PTS-2
-##### 34.2.2. Electronic cash reading — from PTS-2
-##### 34.2.3. Manual mechanical reading — cashier entry
-##### 34.2.4. Meter cross-validation — detecting fraud and equipment errors
-##### 34.2.5. Cumulative vs incremental reading logic
+#### 31.2. Queries
+##### 31.2.1. What queries are — synchronous read of workflow state, no side effects
+##### 31.2.2. Defining a query handler inside a workflow
+##### 31.2.3. Calling a query from a Fiber handler
+##### 31.2.4. What to expose via queries — current stage, pending approvals, error details
 
-#### 34.3. Dip Readings and Wetstock
-##### 34.3.1. Manual dip reading entity
-##### 34.3.2. Computed theoretical stock — opening + deliveries - sales
-##### 34.3.3. Variance calculation — measured vs theoretical
-##### 34.3.4. NEMA environmental compliance thresholds
-##### 34.3.5. Wetstock report
+#### 31.3. Approval Gate Pattern
+##### 31.3.1. The `WaitForApproval` activity — workflow pauses at a signal channel
+##### 31.3.2. The approval API endpoint — validates permission, sends signal
+##### 31.3.3. Approval timeout — what happens if no signal arrives within the deadline
+##### 31.3.4. Rejection path — separate signal value, compensation triggered
 
-#### 34.4. Shift Management
-##### 34.4.1. Shift open — assign cashier, record opening readings
-##### 34.4.2. Cash events during shift — cash in, cash out, voids
-##### 34.4.3. Shift close — cashier submits readings and cash
-##### 34.4.4. Shift close approval flow — supervisor review via Temporal signal
-##### 34.4.5. Forecourt reconciliation engine — variances by nozzle, by grade
-
-#### 34.5. Fleet Card Management
-##### 34.5.1. Fleet customer entity
-##### 34.5.2. Card authorisation request entity
-##### 34.5.3. Card transaction entity
-##### 34.5.4. Fleet account statement
+#### 31.4. Worked Example — Shift Close Approval Flow
+##### 31.4.1. Cashier submits shift close request
+##### 31.4.2. Workflow starts, notifies supervisor
+##### 31.4.3. Supervisor reviews via AmisDetailPage
+##### 31.4.4. Supervisor approves — signal sent, GL posting activity runs
+##### 31.4.5. Supervisor rejects — signal sent, shift re-opened
 
 ---
 
-### 35. Inventory Module
+### 32. Schedules and Cron
 
-#### 35.1. Item and Warehouse Structure
-##### 35.1.1. Item entity — code, name, unit of measure, valuation method
-##### 35.1.2. Item group hierarchy
-##### 35.1.3. Warehouse entity — physical locations
-##### 35.1.4. Bin entity — warehouse sub-location (rack, shelf)
+#### 32.1. Temporal Schedules vs Traditional Cron
+##### 32.1.1. Why Temporal schedules — durability, catch-up, observability
+##### 32.1.2. What Temporal schedules cannot do that cron can
+##### 32.1.3. Schedule vs cron expression — calendar-based vs interval-based
 
-#### 35.2. Stock Entry Types
-##### 35.2.1. Receipt — goods in from purchase
-##### 35.2.2. Issue — goods out for production or consumption
-##### 35.2.3. Transfer — movement between warehouses
-##### 35.2.4. Adjustment — physical count correction
+#### 32.2. Defining a Schedule
+##### 32.2.1. Schedule ID — naming convention
+##### 32.2.2. Schedule spec — interval, calendar, jitter
+##### 32.2.3. Schedule action — which workflow to start and with what input
+##### 32.2.4. Overlap policy — skip, buffer, allow, terminate previous
 
-#### 35.3. Valuation
-##### 35.3.1. FIFO — first in first out, per-batch cost tracking
-##### 35.3.2. Weighted average — moving average cost
-##### 35.3.3. GL impact of stock entries — cost of goods sold posting
+#### 32.3. Built-in Scheduled Workflows
+##### 32.3.1. Nightly GL period check
+##### 32.3.2. Daily wetstock reconciliation
+##### 32.3.3. Weekly KPI snapshot
+##### 32.3.4. Monthly tenant usage report
 
-#### 35.4. Reorder and Physical Count
-##### 35.4.1. Reorder point and safety stock configuration
-##### 35.4.2. Reorder alert — automated Temporal workflow trigger
-##### 35.4.3. Physical stock count workflow — freeze, count, reconcile
-
----
-
-### 36. HR Module
-
-#### 36.1. Employee and Organisation
-##### 36.1.1. Employee entity
-##### 36.1.2. Department hierarchy
-##### 36.1.3. Reporting lines
-
-#### 36.2. Leave Management
-##### 36.2.1. Leave type entity — annual, sick, maternity, compassionate
-##### 36.2.2. Leave allocation — per year, per employee
-##### 36.2.3. Leave request workflow — apply, approve, reject
-##### 36.2.4. Leave balance computation
-
-#### 36.3. Attendance and Payroll
-##### 36.3.1. Attendance record entity
-##### 36.3.2. Kenya PAYE structure — tax bands, NHIF, NSSF
-##### 36.3.3. Payroll run workflow
-##### 36.3.4. Payslip entity
-
-#### 36.4. Disciplinary Workflow
-##### 36.4.1. Warning entity
-##### 36.4.2. Show-cause notice workflow
-##### 36.4.3. Disciplinary hearing entity
-##### 36.4.4. Termination workflow
+#### 32.4. Managing Schedules
+##### 32.4.1. Creating schedules at service start — idempotent upsert
+##### 32.4.2. Pausing and resuming schedules
+##### 32.4.3. Triggering a schedule manually — backfill and forced trigger
+##### 32.4.4. Deleting a schedule
 
 ---
 
-### 37. CRM Module
+### 33. Workflow Observability
 
-#### 37.1. Customer and Contact
-##### 37.1.1. Customer entity — individual vs organisation
-##### 37.1.2. Contact entity — linked to customer
-##### 37.1.3. Address entity — multiple addresses per customer
-##### 37.1.4. Customer segmentation — tags, tiers
+#### 33.1. Temporal Web UI
+##### 33.1.1. Reading workflow event history — what each event type means
+##### 33.1.2. Searching workflows by search attribute
+##### 33.1.3. Workflow status states — Running, Completed, Failed, Timed Out, Cancelled, Terminated
 
-#### 37.2. Lead and Opportunity Pipeline
-##### 37.2.1. Lead entity — source, status, owner
-##### 37.2.2. Lead to customer conversion workflow
-##### 37.2.3. Opportunity entity — linked to customer, stage, expected value
-##### 37.2.4. Opportunity pipeline report
+#### 33.2. OpenTelemetry Integration
+##### 33.2.1. Trace propagation from Fiber into Temporal activities
+##### 33.2.2. Custom spans inside activities
+##### 33.2.3. Correlating Temporal workflow ID with distributed traces
+
+#### 33.3. Workflow Alerting
+##### 33.3.1. Alert on workflow failure rate
+##### 33.3.2. Alert on workflow pending age — stuck workflows
+##### 33.3.3. Alert on schedule not running
+
+---
+
+## Part VI — Platform Entities
+
+### 34. Tenant and Organisation
+
+#### 34.1. The Tenant Entity
+##### 34.1.1. Tenant as the top-level isolation boundary
+##### 34.1.2. Tenant entity fields — ID, slug, name, domain, plan, status, locale, fiscal settings
+##### 34.1.3. No `db_schema` field — there is no per-tenant schema; RLS provides isolation
+##### 34.1.4. Status machine — PENDING → ACTIVE → SUSPENDED → ARCHIVED
+
+#### 34.2. OrgNode — Company and Division Hierarchy
+##### 34.2.1. OrgNode entity — hierarchical organisational units within a tenant
+##### 34.2.2. Node types: Company (top level), Division, Department, Branch, CostCentre
+##### 34.2.3. Materialised path storage for efficient ancestor/descendant queries
+##### 34.2.4. Linking users and entities to OrgNodes
+##### 34.2.5. OrgNode-scoped permissions — restricting a user's view to their branch
+
+#### 34.3. Tenant Provisioning and Lifecycle
+##### 34.3.1. Provisioning is pure data — no DDL, no CREATE SCHEMA
+##### 34.3.2. Provisioning workflow overview — seed data, admin user, feature flags, activation
+##### 34.3.3. Suspension, reactivation, and archival (see Chapter 38 for full detail)
+
+---
+
+### 35. IAM — Users, Roles, and Permissions
+
+#### 35.1. The User Entity
+##### 35.1.1. User fields — ID, tenant_id, email, name, password_hash, status, mfa_secret
+##### 35.1.2. User status — INVITED, ACTIVE, SUSPENDED, DELETED
+##### 35.1.3. User uniqueness — email is unique per tenant, not globally
+##### 35.1.4. System users — service accounts that do not have login credentials
+
+#### 35.2. The Role Entity
+##### 35.2.1. Role fields — name, description, is_system, tenant_id
+##### 35.2.2. Built-in system roles — admin, accountant, cashier, salesperson, hr_manager, store_keeper, viewer
+##### 35.2.3. Tenant-defined roles — extending the system roles
+##### 35.2.4. Role assignment — UserRole junction entity
+
+#### 35.3. The Permission Entity
+##### 35.3.1. Permission granularity — entity × operation
+##### 35.3.2. RolePermission junction entity — role ID, entity name, operations bitmask
+##### 35.3.3. Field-level permissions — stored as JSON on the RolePermission row
+##### 35.3.4. Permission inheritance — tenant role inherits system role permissions, then adds or restricts
+
+#### 35.4. RBAC Evaluation
+##### 35.4.1. Evaluation inputs — user ID, tenant ID, entity name, operation
+##### 35.4.2. Resolution pipeline — see §16.3 for full detail
+##### 35.4.3. Permission caching — evaluated once per request, cached in Fiber context
+##### 35.4.4. Superuser bypass — tenant admin bypasses permission checks, not RLS
+
+#### 35.5. The Session Entity
+##### 35.5.1. Session fields — ID, user_id, tenant_id, ip, user_agent, created_at, expires_at, last_seen_at
+##### 35.5.2. Sessions stored in Redis (fast path) and PostgreSQL (audit trail)
+##### 35.5.3. Session invalidation events — logout, forced expiry, tenant suspension
+
+---
+
+### 36. Audit Log
+
+#### 36.1. What the Audit Log Tracks
+##### 36.1.1. Every CREATE, UPDATE, DELETE on auditable entities
+##### 36.1.2. AuditLog entity fields — id, tenant_id, entity_name, record_id, operation, user_id, timestamp, previous_value, new_value, ip, request_id
+##### 36.1.3. Auditable entities — all platform entities plus any module entity that declares `Auditable: true`
+
+#### 36.2. Write Path
+##### 36.2.1. DB trigger approach — `audit_log_trigger` fires on INSERT/UPDATE/DELETE, writes to audit_log table
+##### 36.2.2. Application hook approach — `after_save` hook writes via the AuditLog repository
+##### 36.2.3. Trade-offs — trigger approach captures all writes including direct SQL; hook approach captures application context (user, request ID)
+##### 36.2.4. Awo default — both: trigger for completeness, hook for enriched metadata
+
+#### 36.3. Retention and Search
+##### 36.3.1. Retention policy — configurable per tenant, default 7 years (Kenya Companies Act)
+##### 36.3.2. Partitioning strategy — audit_log partitioned by month for efficient expiry
+##### 36.3.3. Search endpoint — `GET /api/v1/audit-log?entity=&record_id=&user_id=&from=&to=`
+##### 36.3.4. Compliance report — full change history for a record
+
+---
+
+### 37. Feature Flags
+
+#### 37.1. The FeatureFlag Entity
+##### 37.1.1. FeatureFlag fields — key, name, description, type (boolean/string/percentage), default_value, status
+##### 37.1.2. FeatureFlagOverride fields — flag_key, tenant_id, user_id (nullable), value, enabled_at
+##### 37.1.3. System flags vs tenant-specific flags
+
+#### 37.2. Evaluation Engine
+##### 37.2.1. Evaluation order — system default → tenant override → user override
+##### 37.2.2. Percentage rollout — `hash(tenant_id + ":" + flag_key) % 100 < threshold`
+##### 37.2.3. Dependency graph — flags that require other flags to be enabled first
+##### 37.2.4. Circular dependency detection at boot
+
+#### 37.3. Redis Caching
+##### 37.3.1. Cache key — `flags:{tenant_id}` — full flag set as a Redis hash
+##### 37.3.2. TTL — 60 seconds; changes propagate within one minute
+##### 37.3.3. Cache miss — load from DB, populate cache, return value
+##### 37.3.4. Cache invalidation on override update
+
+#### 37.4. Telemetry
+##### 37.4.1. Flag evaluation events emitted to OpenTelemetry
+##### 37.4.2. Dead flag detection — weekly job reports flags with no variation in evaluations
+##### 37.4.3. Flag impact analysis — listing entities and page builders that read a given flag
+
+---
+
+### 38. Notifications
+
+#### 38.1. The Notification Entity
+##### 38.1.1. Notification fields — id, tenant_id, user_id, title, body, type, channel, status, read_at, metadata (JSONB)
+##### 38.1.2. Notification types — info, warning, error, success, action_required
+##### 38.1.3. Delivery channels — in-app (SSE), email, SMS
+##### 38.1.4. Delivery status — PENDING, SENT, DELIVERED, FAILED, READ
+
+#### 38.2. In-App Notifications via SSE
+##### 38.2.1. `GET /api/v1/notifications/stream` — persistent SSE connection per user
+##### 38.2.2. Redis pub/sub as the fan-out mechanism — worker publishes, SSE handler subscribes
+##### 38.2.3. amis SSE component — subscribes to the stream, renders notification badges
+##### 38.2.4. Mark as read — `POST /api/v1/notifications/{id}/read`
+
+#### 38.3. Email Notifications
+##### 38.3.1. Email template system — Go `html/template`, one template per notification type
+##### 38.3.2. Email delivery via SMTP or transactional email service (configurable per tenant)
+##### 38.3.3. Delivery tracking — webhook callback updates notification status
+
+#### 38.4. SMS Notifications
+##### 38.4.1. SMS gateway integration — Africa's Talking for Kenya market
+##### 38.4.2. SMS templates — short, action-focused
+##### 38.4.3. Opt-out handling
+
+#### 38.5. Notification Delivery Workflow
+##### 38.5.1. `SendNotificationWorkflow` — Temporal workflow for reliable delivery with retry
+##### 38.5.2. Channel selection — determined by notification type and user preferences
+##### 38.5.3. Failure handling — retry with exponential backoff, escalation on repeated failure
+
+---
+
+### 39. Settings — TenantConfig
+
+#### 39.1. The TenantConfig Entity
+##### 39.1.1. TenantConfig fields — tenant_id, category, key, value (text), updated_at, updated_by
+##### 39.1.2. Configuration categories — locale, modules, integrations, limits, branding, notifications
+##### 39.1.3. System defaults — global rows with tenant_id = NULL; tenant rows override system defaults
+
+#### 39.2. Type-Safe Access
+##### 39.2.1. Typed getter functions — `config.GetString(ctx, "locale.timezone")`, `config.GetBool(ctx, "modules.forecourt.enabled")`
+##### 39.2.2. No key-string lookups at call sites — category constants defined in framework
+##### 39.2.3. Getter caching — config loaded at tenant boot, cached for request lifetime
+
+#### 39.3. Module Enablement
+##### 39.3.1. Enabling and disabling modules per tenant via config keys
+##### 39.3.2. Module feature subset flags — enabling a module but restricting features
+##### 39.3.3. Module dependency — disabling Finance blocks Inventory GL posting
+
+#### 39.4. Locale and Regional Settings
+##### 39.4.1. Timezone — East Africa Time (EAT, UTC+3) as default
+##### 39.4.2. Date format — DD/MM/YYYY for Kenya market
+##### 39.4.3. Currency — KES as base, other currencies as secondary
+##### 39.4.4. Language — English and Swahili supported
+
+#### 39.5. Kenya-Specific Configuration
+##### 39.5.1. KRA eTIMS integration settings — taxpayer PIN, device serial, environment
+##### 39.5.2. NEMA compliance thresholds — tank variance limits
+##### 39.5.3. NHIF and NSSF rates — updated from configuration, not hardcoded
+
+---
+
+### 40. Metadata and Reporting
+
+#### 40.1. CustomFieldDef
+##### 40.1.1. CustomFieldDef entity fields — key, label, entity_name, field_type, options, validation_rules, ui_metadata, tenant_id
+##### 40.1.2. Loading at tenant boot — all CustomFieldDef rows for a tenant are loaded into the EntityRegistry
+##### 40.1.3. Runtime extension of system entities — adding fields without code deployment
+##### 40.1.4. Lifecycle — add, rename (label only), type change (migration needed), deprecate, remove
+
+#### 40.2. ReportDefinition
+##### 40.2.1. ReportDefinition entity fields — name, label, query (SQL or filter DSL), parameters, columns, chart_config, tenant_id
+##### 40.2.2. SQL reports — parameterised queries with `{{.param}}` template syntax, RLS applied automatically via `set_tenant_context()`
+##### 40.2.3. Filter DSL reports — composed from EntityRepository filters, no raw SQL
+##### 40.2.4. Report parameters — date range, entity selectors, grouping
+##### 40.2.5. `GET /api/v1/reports/{name}?{params}` — execute report, return results in standard envelope
+##### 40.2.6. Export — CSV and PDF export from report results
+##### 40.2.7. Report scheduling — run on a Temporal schedule, email results
 
 ---
 
 ## Part VII — Multi-Tenancy and Configuration
 
-### 38. Tenant Lifecycle
+### 41. Tenant Lifecycle
 
-#### 38.1. Tenant Provisioning Workflow
-##### 38.1.1. Registration trigger — new tenant signup or admin creation
-##### 38.1.2. Database schema creation — `CREATE SCHEMA {tenant_slug}`
-##### 38.1.3. Baseline migration run for the new schema
-##### 38.1.4. Seed data — system roles, default chart of accounts, system configuration
-##### 38.1.5. Tenant activation — setting status to active
+#### 41.1. Tenant Provisioning Workflow
+##### 41.1.1. Registration trigger — new tenant signup or admin creation
+##### 41.1.2. No DDL during provisioning — all tables already exist; provisioning inserts seed data rows tagged with `tenant_id`
+##### 41.1.3. Seed data — system roles, default chart of accounts, leave types, PAYE bands, feature flag overrides, tenant config
+##### 41.1.4. Tenant activation — setting status to ACTIVE after provisioning workflow completes
+##### 41.1.5. Idempotency — provisioning workflow ID is `{slug}.provision`, duplicate runs are rejected
 
-#### 38.2. Tenant Suspension and Reactivation
-##### 38.2.1. Suspension trigger — billing lapse, terms violation, manual admin action
-##### 38.2.2. What suspension does — API returns 402, background jobs paused
-##### 38.2.3. Data quarantine — read-only mode vs full lockout
-##### 38.2.4. Reactivation flow
+#### 41.2. Tenant Suspension and Reactivation
+##### 41.2.1. Suspension trigger — billing lapse, terms violation, manual admin action
+##### 41.2.2. What suspension does — API returns 402; `set_tenant_context()` rejects DB access; background jobs paused
+##### 41.2.3. Reactivation flow — set status ACTIVE, resume jobs, notify admin users
 
-#### 38.3. Tenant Offboarding
-##### 38.3.1. Data export — full tenant data in portable format
-##### 38.3.2. Schema drop — irreversible, requires confirmation
-##### 38.3.3. Retention period before deletion — configurable
+#### 41.3. Tenant Offboarding
+##### 41.3.1. Data export — full tenant data extract (SQL/JSON filtered by `WHERE tenant_id = ?`)
+##### 41.3.2. Archive upload — encrypted to S3-compatible object storage
+##### 41.3.3. Mark ARCHIVED — terminal; API returns 410 Gone
+##### 41.3.4. Retention period before physical row deletion — configurable, Kenya minimum 7 years for financial records
 
-#### 38.4. Tenant Cloning
-##### 38.4.1. Use cases — UAT environments, onboarding new tenants from a template
-##### 38.4.2. Clone operation — schema copy + data anonymisation
-##### 38.4.3. Clone limitations — what is not copied
-
----
-
-### 39. Tenant Configuration System
-
-#### 39.1. `TenantConfig` Entity
-##### 39.1.1. Configuration categories — modules, locale, integrations, limits
-##### 39.1.2. Configuration inheritance — system defaults overridden by tenant values
-##### 39.1.3. Type-safe config access — typed getter functions, no key-string lookups
-
-#### 39.2. Module Enablement
-##### 39.2.1. Enabling and disabling built-in modules per tenant
-##### 39.2.2. Module feature subset flags — enabling a module but restricting features
-##### 39.2.3. Module dependency — enabling Finance implicitly enables nothing, but disabling it blocks Inventory GL posting
-
-#### 39.3. Locale and Regional Settings
-##### 39.3.1. Timezone — East Africa Time (EAT, UTC+3) as default
-##### 39.3.2. Date format — DD/MM/YYYY for Kenya market
-##### 39.3.3. Currency — KES as base, other currencies as secondary
-##### 39.3.4. Language — English and Swahili supported
-
-#### 39.4. Kenya-Specific Configuration
-##### 39.4.1. KRA eTIMS integration settings — taxpayer PIN, device serial, environment
-##### 39.4.2. NEMA compliance thresholds — tank variance limits
-##### 39.4.3. NHIF and NSSF rates — updated from configuration, not hardcoded
+#### 41.4. Tenant Cloning
+##### 41.4.1. Use cases — staging environments, franchise template, disaster recovery test
+##### 41.4.2. Clone operation — `INSERT ... SELECT` rewriting `tenant_id`; no schema manipulation
+##### 41.4.3. Clone limitations — does not copy transactional data by default
 
 ---
 
-### 40. Feature Flag System — Deep Dive
+### 42. Tenant Configuration System
 
-#### 40.1. Flag Storage and Loading
-##### 40.1.1. Flag definition entity — system-level, not per-tenant
-##### 40.1.2. Redis key schema for flag values
-##### 40.1.3. Flag loading at tenant context resolution
-##### 40.1.4. TTL and cache refresh
+#### 42.1. `TenantConfig` Entity
+##### 42.1.1. Configuration categories — modules, locale, integrations, limits
+##### 42.1.2. Configuration inheritance — system defaults overridden by tenant values
+##### 42.1.3. Type-safe config access — typed getter functions, no key-string lookups
 
-#### 40.2. Flag Evaluation Engine
-##### 40.2.1. Evaluation order — system default → tenant override → user override
-##### 40.2.2. Percentage rollout — deterministic hash of `{tenant_id}:{flag_name}`
-##### 40.2.3. Flag dependency graph — circular dependency detection at load time
+#### 42.2. Module Enablement
+##### 42.2.1. Enabling and disabling built-in modules per tenant
+##### 42.2.2. Module feature subset flags — enabling a module but restricting features
+##### 42.2.3. Module dependency — enabling Finance implicitly enables nothing, but disabling it blocks Inventory GL posting
 
-#### 40.3. Flag Telemetry
-##### 40.3.1. Flag evaluation events — which flag, which tenant, which outcome
-##### 40.3.2. Dead flag detection — automated report of stale flags
-##### 40.3.3. Flag impact analysis — entities and pages affected by a flag
+#### 42.3. Locale and Regional Settings
+##### 42.3.1. Timezone — East Africa Time (EAT, UTC+3) as default
+##### 42.3.2. Date format — DD/MM/YYYY for Kenya market
+##### 42.3.3. Currency — KES as base, other currencies as secondary
+##### 42.3.4. Language — English and Swahili supported
+
+#### 42.4. Kenya-Specific Configuration
+##### 42.4.1. KRA eTIMS integration settings — taxpayer PIN, device serial, environment
+##### 42.4.2. NEMA compliance thresholds — tank variance limits
+##### 42.4.3. NHIF and NSSF rates — updated from configuration, not hardcoded
 
 ---
 
-### 41. Redis Usage in Awo
+### 43. Feature Flag System — Deep Dive
 
-#### 41.1. Redis as Session Store
-##### 41.1.1. Session key schema — `session:{tenant}:{id}`
-##### 41.1.2. Session data structure
-##### 41.1.3. TTL management — sliding expiry implementation
+#### 43.1. Flag Storage and Loading
+##### 43.1.1. Flag definition entity — system-level, not per-tenant
+##### 43.1.2. Redis key schema for flag values
+##### 43.1.3. Flag loading at tenant context resolution
+##### 43.1.4. TTL and cache refresh
 
-#### 41.2. Redis as Feature Flag Cache
-##### 41.2.1. Flag key schema
-##### 41.2.2. TTL strategy — short TTL for fast rollout, long TTL for stable flags
+#### 43.2. Flag Evaluation Engine
+##### 43.2.1. Evaluation order — system default → tenant override → user override
+##### 43.2.2. Percentage rollout — deterministic hash of `{tenant_id}:{flag_name}`
+##### 43.2.3. Flag dependency graph — circular dependency detection at load time
 
-#### 41.3. Redis as Page Definition Cache
-##### 41.3.1. Cache key — `page:{tenant}:{page_name}:{permissions_hash}:{flags_hash}`
-##### 41.3.2. Invalidation — on role change, on feature flag change, on EntityDefinition change
+#### 43.3. Flag Telemetry
+##### 43.3.1. Flag evaluation events — which flag, which tenant, which outcome
+##### 43.3.2. Dead flag detection — automated report of stale flags
+##### 43.3.3. Flag impact analysis — entities and pages affected by a flag
 
-#### 41.4. Redis Pub/Sub for Real-Time Notifications
-##### 41.4.1. Channel naming conventions
-##### 41.4.2. Server-sent events (SSE) endpoint consuming Redis pub/sub
-##### 41.4.3. amis receiving SSE notifications
+---
 
-#### 41.5. Redis Failure Handling
-##### 41.5.1. Session store failure — graceful degradation vs hard failure
-##### 41.5.2. Feature flag cache failure — fallback to system defaults
-##### 41.5.3. Page cache failure — pass-through to page builder
+### 44. Redis Usage in Awo
 
-#### 41.6. Redis Connection Management
-##### 41.6.1. rueidis client configuration
-##### 41.6.2. Connection pool sizing
-##### 41.6.3. Redis key naming conventions — full reference
+#### 44.1. Redis as Session Store
+##### 44.1.1. Session key schema — `session:{tenant}:{id}`
+##### 44.1.2. Session data structure
+##### 44.1.3. TTL management — sliding expiry implementation
+
+#### 44.2. Redis as Feature Flag Cache
+##### 44.2.1. Flag key schema
+##### 44.2.2. TTL strategy — short TTL for fast rollout, long TTL for stable flags
+
+#### 44.3. Redis as Page Definition Cache
+##### 44.3.1. Cache key — `page:{tenant}:{page_name}:{permissions_hash}:{flags_hash}`
+##### 44.3.2. Invalidation — on role change, on feature flag change, on EntityDefinition change
+
+#### 44.4. Redis Pub/Sub for Real-Time Notifications
+##### 44.4.1. Channel naming conventions
+##### 44.4.2. Server-sent events (SSE) endpoint consuming Redis pub/sub
+##### 44.4.3. amis receiving SSE notifications
+
+#### 44.5. Redis Failure Handling
+##### 44.5.1. Session store failure — graceful degradation vs hard failure
+##### 44.5.2. Feature flag cache failure — fallback to system defaults
+##### 44.5.3. Page cache failure — pass-through to page builder
+
+#### 44.6. Redis Connection Management
+##### 44.6.1. rueidis client configuration
+##### 44.6.2. Connection pool sizing
+##### 44.6.3. Redis key naming conventions — full reference
 
 ---
 
 ## Part VIII — Deployment and Operations
 
-### 42. Environment Architecture
+### 45. Environment Architecture
 
-#### 42.1. Local Development
-##### 42.1.1. Docker Compose stack — PostgreSQL, Redis, Temporal
-##### 42.1.2. `awo serve` with hot reload
-##### 42.1.3. Seeding a dev tenant
+#### 45.1. Local Development
+##### 45.1.1. Docker Compose stack — PostgreSQL, Redis, Temporal
+##### 45.1.2. `awo serve` with hot reload
+##### 45.1.3. Seeding a dev tenant — `awo tenant create` + `awo seed`
 
-#### 42.2. Staging
-##### 42.2.1. Production-parity requirements — same infra, smaller size
-##### 42.2.2. Data anonymisation for staging — no real tenant data
-##### 42.2.3. Staging-specific feature flags
+#### 45.2. Staging
+##### 45.2.1. Production-parity requirements — same infra, smaller size
+##### 45.2.2. Data anonymisation for staging — no real tenant data
+##### 45.2.3. Staging-specific feature flags
 
-#### 42.3. Production
-##### 42.3.1. Single VPS deployment — Nairobi region
-##### 42.3.2. Stateless Fiber processes — horizontal scaling model
-##### 42.3.3. Shared PostgreSQL and Redis — connection pooling requirements
-##### 42.3.4. Load balancer — Caddy configuration
-
----
-
-### 43. Docker and Containerisation
-
-#### 43.1. Multi-Stage Dockerfile
-##### 43.1.1. Build stage — Go binary compilation
-##### 43.1.2. Runtime stage — minimal base image
-##### 43.1.3. Non-root user — security requirement
-##### 43.1.4. Binary size optimisation — `-ldflags "-s -w"`
-
-#### 43.2. Temporal Worker Container
-##### 43.2.1. Shared binary with the API process vs separate binary
-##### 43.2.2. Sidecar deployment vs separate service
-##### 43.2.3. Worker-specific environment variables
-
-#### 43.3. Docker Compose for Local Stack
-##### 43.3.1. Services — `api`, `worker`, `postgres`, `redis`, `temporal`
-##### 43.3.2. Volume mounts — code, migration files
-##### 43.3.3. Environment variable injection from `.env`
-
-#### 43.4. Image Tagging and Secrets
-##### 43.4.1. Tagging convention — `{git_sha}` for production, `latest` never in production
-##### 43.4.2. Secrets in containers — environment variables injected at runtime
-##### 43.4.3. Never baking secrets into images
+#### 45.3. Production
+##### 45.3.1. Single VPS deployment — Nairobi region
+##### 45.3.2. Stateless Fiber processes — horizontal scaling model
+##### 45.3.3. Shared PostgreSQL and Redis — connection pooling requirements
+##### 45.3.4. Load balancer — Caddy configuration
 
 ---
 
-### 44. CI/CD Pipeline
+### 46. Docker and Containerisation
 
-#### 44.1. GitHub Actions Workflow Structure
-##### 44.1.1. Trigger events — push to main, pull request, release tag
-##### 44.1.2. Job dependency graph
+#### 46.1. Multi-Stage Dockerfile
+##### 46.1.1. Build stage — Go binary compilation
+##### 46.1.2. Runtime stage — minimal base image
+##### 46.1.3. Non-root user — security requirement
+##### 46.1.4. Binary size optimisation — `-ldflags "-s -w"`
 
-#### 44.2. Test Stage
-##### 44.2.1. Unit tests — `go test ./...`
-##### 44.2.2. Integration tests — PostgreSQL and Redis service containers
-##### 44.2.3. Temporal workflow tests — Temporal test environment
-##### 44.2.4. Contract tests — API contract verification with `hurl`
-##### 44.2.5. Atlas migration lint — detecting dangerous migrations
+#### 46.2. Temporal Worker Container
+##### 46.2.1. Shared binary with the API process vs separate binary
+##### 46.2.2. Sidecar deployment vs separate service
+##### 46.2.3. Worker-specific environment variables
 
-#### 44.3. Build and Push Stage
-##### 44.3.1. Docker buildx for multi-platform images
-##### 44.3.2. Push to container registry
+#### 46.3. Docker Compose for Local Stack
+##### 46.3.1. Services — `api`, `worker`, `postgres`, `redis`, `temporal`
+##### 46.3.2. Volume mounts — code, migration files
+##### 46.3.3. Environment variable injection from `.env`
 
-#### 44.4. Deploy Stage
-##### 44.4.1. Rolling update strategy — one instance at a time
-##### 44.4.2. Migration run before traffic switches — Atlas apply
-##### 44.4.3. Smoke tests post-deploy
-##### 44.4.4. Automatic rollback on failed smoke tests
-
----
-
-### 45. PostgreSQL Operations
-
-#### 45.1. Schema-Per-Tenant Layout
-##### 45.1.1. Schema naming convention — `t_{tenant_slug}`
-##### 45.1.2. Shared schema — system tables that live outside tenant schemas
-##### 45.1.3. Search path configuration per connection
-
-#### 45.2. Connection Pooling
-##### 45.2.1. PgBouncer configuration — transaction mode
-##### 45.2.2. Per-tenant pool sizing
-##### 45.2.3. Max connections ceiling — PostgreSQL `max_connections`
-
-#### 45.3. Backup Strategy
-##### 45.3.1. `pg_dump` per tenant — daily full backup
-##### 45.3.2. WAL archiving — continuous, enables PITR
-##### 45.3.3. Backup retention policy
-##### 45.3.4. Backup encryption and offsite storage
-
-#### 45.4. Point-in-Time Recovery
-##### 45.4.1. PITR procedure
-##### 45.4.2. Per-tenant PITR — restoring one tenant without affecting others
-
-#### 45.5. Performance Tuning
-##### 45.5.1. Autovacuum tuning for write-heavy ERP tables
-##### 45.5.2. Bloat monitoring — pg_stat_user_tables
-##### 45.5.3. Read replica setup for reporting queries
+#### 46.4. Image Tagging and Secrets
+##### 46.4.1. Tagging convention — `{git_sha}` for production, `latest` never in production
+##### 46.4.2. Secrets in containers — environment variables injected at runtime
+##### 46.4.3. Never baking secrets into images
 
 ---
 
-### 46. Observability Stack
+### 47. CI/CD Pipeline
 
-#### 46.1. Structured Logging
-##### 46.1.1. `slog` setup — JSON output in production, text in development
-##### 46.1.2. Mandatory fields on every log line — tenant_id, request_id, user_id, duration
-##### 46.1.3. Log levels and when to use each
-##### 46.1.4. Log shipping to Loki
+#### 47.1. GitHub Actions Workflow Structure
+##### 47.1.1. Trigger events — push to main, pull request, release tag
+##### 47.1.2. Job dependency graph
 
-#### 46.2. Distributed Tracing
-##### 46.2.1. OpenTelemetry SDK setup
-##### 46.2.2. Trace propagation — Fiber → ent/JSONB engine → Temporal activities
-##### 46.2.3. Custom span attributes — tenant_id, entity_name, workflow_id
-##### 46.2.4. Trace sampling strategy
+#### 47.2. Test Stage
+##### 47.2.1. Unit tests — `go test ./...`
+##### 47.2.2. Integration tests — PostgreSQL and Redis service containers
+##### 47.2.3. Temporal workflow tests — Temporal test environment
+##### 47.2.4. Contract tests — API contract verification with `hurl`
+##### 47.2.5. Migration tests — apply all migrations to a temporary database, verify round-trip
 
-#### 46.3. Metrics
-##### 46.3.1. Prometheus exposition from Fiber — `prometheus.New()` middleware
-##### 46.3.2. Custom business metrics — active tenants, workflows per minute, GL postings per hour
-##### 46.3.3. Grafana dashboard — request rate, error rate, p99 latency, workflow lag
+#### 47.3. Build and Push Stage
+##### 47.3.1. Docker buildx for multi-platform images
+##### 47.3.2. Push to container registry
 
-#### 46.4. Alerting Rules
-##### 46.4.1. SLO-based alerts — error budget burn rate
-##### 46.4.2. Workflow failure rate alert
-##### 46.4.3. DB connection pool saturation alert
-##### 46.4.4. Redis memory pressure alert
-
-#### 46.5. Audit Log
-##### 46.5.1. Audit log entity — who, what, when, from where, previous value, new value
-##### 46.5.2. Write path — `after_save` hook on all auditable entities
-##### 46.5.3. Retention policy
-##### 46.5.4. Audit log search endpoint for compliance
+#### 47.4. Deploy Stage
+##### 47.4.1. Rolling update strategy — one instance at a time
+##### 47.4.2. Migration run before traffic switches — `awo migrate up`
+##### 47.4.3. Smoke tests post-deploy
+##### 47.4.4. Automatic rollback on failed smoke tests
 
 ---
 
-### 47. Security Hardening
+### 48. PostgreSQL Operations
 
-#### 47.1. TLS Configuration
-##### 47.1.1. Certificate management with Caddy — automatic ACME
-##### 47.1.2. TLS version — 1.2 minimum, 1.3 preferred
-##### 47.1.3. HSTS configuration
+#### 48.1. RLS Architecture
+##### 48.1.1. All tenants share a single database and schema — no `CREATE SCHEMA` per tenant
+##### 48.1.2. Every tenant-scoped table has `tenant_id uuid NOT NULL REFERENCES tenants(id)`
+##### 48.1.3. RLS enabled on every tenant-scoped table — `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+##### 48.1.4. Row security policy — `USING (tenant_id = current_setting('app.current_tenant_id')::uuid)`
+##### 48.1.5. `set_tenant_context(uuid)` — sets `app.current_tenant_id`, validates tenant status
+##### 48.1.6. Application role is `ROW SECURITY` enforced — no bypass privilege
 
-#### 47.2. PostgreSQL Access Controls
-##### 47.2.1. Least-privilege DB roles — application user, migration user, backup user
-##### 47.2.2. Row-level security at DB level as a second line of defence
-##### 47.2.3. pg_hba.conf — restrict connections to app server IPs
+#### 48.2. Connection Pooling
+##### 48.2.1. PgBouncer configuration — transaction mode
+##### 48.2.2. Per-tenant pool sizing
+##### 48.2.3. Max connections ceiling — PostgreSQL `max_connections`
+##### 48.2.4. RLS context reset between pooled connections — `set_tenant_context()` called on acquire
 
-#### 47.3. Temporal mTLS
-##### 47.3.1. Certificate generation
-##### 47.3.2. Client certificate configuration in the Temporal Go SDK
+#### 48.3. Backup Strategy
+##### 48.3.1. `pg_dump` — daily full backup of the shared database
+##### 48.3.2. WAL archiving — continuous, enables PITR
+##### 48.3.3. Backup retention policy
+##### 48.3.4. Backup encryption and offsite storage
 
-#### 47.4. Dependency Vulnerability Scanning
-##### 47.4.1. `govulncheck` — runs in CI on every push
-##### 47.4.2. `trivy` — container image scanning
+#### 48.4. Point-in-Time Recovery
+##### 48.4.1. PITR procedure
+##### 48.4.2. Per-tenant data recovery — restore to a staging database, export filtered by `tenant_id`, import
 
-#### 47.5. Penetration Testing Checklist
-##### 47.5.1. Tenant isolation verification — can tenant A read tenant B's data
-##### 47.5.2. Privilege escalation — can a non-admin obtain admin access
-##### 47.5.3. Injection — SQL, JSONB path injection
-##### 47.5.4. Mass assignment — can a client set fields it should not
+#### 48.5. Performance Tuning
+##### 48.5.1. Autovacuum tuning for write-heavy ERP tables
+##### 48.5.2. Bloat monitoring — pg_stat_user_tables
+##### 48.5.3. Read replica setup for reporting queries
 
 ---
 
-### 48. Incident Response Playbooks
+### 49. Observability Stack
 
-#### 48.1. Database Connection Exhaustion
-##### 48.1.1. Symptoms and detection
-##### 48.1.2. Immediate mitigation — PgBouncer pool reset
-##### 48.1.3. Root cause — long-running queries, leaked connections
-##### 48.1.4. Remediation and post-incident
+#### 49.1. Structured Logging
+##### 49.1.1. `slog` setup — JSON output in production, text in development
+##### 49.1.2. Mandatory fields on every log line — tenant_id, request_id, user_id, duration
+##### 49.1.3. Log levels and when to use each
+##### 49.1.4. Log shipping to Loki
 
-#### 48.2. Redis Eviction Under Memory Pressure
-##### 48.2.1. Symptoms — session lookup failures, flag cache misses
-##### 48.2.2. Immediate mitigation — increase memory or evict less critical keys
-##### 48.2.3. Key sizing audit
+#### 49.2. Distributed Tracing
+##### 49.2.1. OpenTelemetry SDK setup
+##### 49.2.2. Trace propagation — Fiber → ent/JSONB engine → Temporal activities
+##### 49.2.3. Custom span attributes — tenant_id, entity_name, workflow_id
+##### 49.2.4. Trace sampling strategy
 
-#### 48.3. Temporal Worker Stopped Processing
-##### 48.3.1. Detection — workflow pending age alert fires
-##### 48.3.2. Diagnosis — worker logs, Temporal Web UI
-##### 48.3.3. Restart procedure
-##### 48.3.4. Workflow backlog clearance
+#### 49.3. Metrics
+##### 49.3.1. Prometheus exposition from Fiber — `prometheus.New()` middleware
+##### 49.3.2. Custom business metrics — active tenants, workflows per minute, GL postings per hour
+##### 49.3.3. Grafana dashboard — request rate, error rate, p99 latency, workflow lag
 
-#### 48.4. Stuck Workflow
-##### 48.4.1. Definition — workflow running longer than expected, not completing
-##### 48.4.2. Diagnosis via Temporal Web UI — event history inspection
-##### 48.4.3. Safe termination — `temporal workflow terminate` with reason
-##### 48.4.4. Compensation — manually triggering compensating actions if needed
+#### 49.4. Alerting Rules
+##### 49.4.1. SLO-based alerts — error budget burn rate
+##### 49.4.2. Workflow failure rate alert
+##### 49.4.3. DB connection pool saturation alert
+##### 49.4.4. Redis memory pressure alert
 
-#### 48.5. Failed Atlas Migration Mid-Fleet
-##### 48.5.1. Detection — migration runner exits non-zero
-##### 48.5.2. Which tenants applied vs which did not
-##### 48.5.3. Per-tenant rollback
-##### 48.5.4. Fixing the migration and re-running
+#### 49.5. Audit Log
+##### 49.5.1. Audit log entity — who, what, when, from where, previous value, new value
+##### 49.5.2. Write path — DB trigger + `after_save` hook enrichment
+##### 49.5.3. Retention policy
+##### 49.5.4. Audit log search endpoint for compliance
 
-#### 48.6. Tenant Data Isolation Breach
-##### 48.6.1. Containment — suspend affected tenants immediately
-##### 48.6.2. Scope assessment — which tenants, which entities, which time window
-##### 48.6.3. Notification obligations — GDPR, tenant contracts
-##### 48.6.4. Remediation — patch, re-test privacy policies, verify with pen test
+---
+
+### 50. Security Hardening
+
+#### 50.1. TLS Configuration
+##### 50.1.1. Certificate management with Caddy — automatic ACME
+##### 50.1.2. TLS version — 1.2 minimum, 1.3 preferred
+##### 50.1.3. HSTS configuration
+
+#### 50.2. PostgreSQL Access Controls
+##### 50.2.1. Least-privilege DB roles — application user, migration user, backup user
+##### 50.2.2. Row-Level Security as the primary tenant isolation mechanism — all tenant data access goes through RLS
+##### 50.2.3. Application DB role has no `BYPASSRLS` privilege
+##### 50.2.4. pg_hba.conf — restrict connections to app server IPs
+
+#### 50.3. Temporal mTLS
+##### 50.3.1. Certificate generation
+##### 50.3.2. Client certificate configuration in the Temporal Go SDK
+
+#### 50.4. Dependency Vulnerability Scanning
+##### 50.4.1. `govulncheck` — runs in CI on every push
+##### 50.4.2. `trivy` — container image scanning
+
+#### 50.5. Penetration Testing Checklist
+##### 50.5.1. Tenant isolation verification — can tenant A read tenant B's data (RLS bypass attempt)
+##### 50.5.2. Privilege escalation — can a non-admin obtain admin access
+##### 50.5.3. Injection — SQL, JSONB path injection
+##### 50.5.4. Mass assignment — can a client set fields it should not
+
+---
+
+### 51. Incident Response Playbooks
+
+#### 51.1. Database Connection Exhaustion
+##### 51.1.1. Symptoms and detection
+##### 51.1.2. Immediate mitigation — PgBouncer pool reset
+##### 51.1.3. Root cause — long-running queries, leaked connections
+##### 51.1.4. Remediation and post-incident
+
+#### 51.2. Redis Eviction Under Memory Pressure
+##### 51.2.1. Symptoms — session lookup failures, flag cache misses
+##### 51.2.2. Immediate mitigation — increase memory or evict less critical keys
+##### 51.2.3. Key sizing audit
+
+#### 51.3. Temporal Worker Stopped Processing
+##### 51.3.1. Detection — workflow pending age alert fires
+##### 51.3.2. Diagnosis — worker logs, Temporal Web UI
+##### 51.3.3. Restart procedure
+##### 51.3.4. Workflow backlog clearance
+
+#### 51.4. Stuck Workflow
+##### 51.4.1. Definition — workflow running longer than expected, not completing
+##### 51.4.2. Diagnosis via Temporal Web UI — event history inspection
+##### 51.4.3. Safe termination — `temporal workflow terminate` with reason
+##### 51.4.4. Compensation — manually triggering compensating actions if needed
+
+#### 51.5. Failed Migration
+##### 51.5.1. Detection — `awo migrate up` exits non-zero
+##### 51.5.2. Single shared schema — a failed migration affects all tenants simultaneously
+##### 51.5.3. Rollback procedure — `awo migrate down 1`, fix the migration, re-run
+##### 51.5.4. Emergency `migrate force` — marking a partially applied migration and fixing manually
+
+#### 51.6. Tenant Data Isolation Breach
+##### 51.6.1. Containment — suspend affected tenants immediately
+##### 51.6.2. Scope assessment — which tenants, which entities, which time window
+##### 51.6.3. Notification obligations — Kenya Data Protection Act 2019, tenant contracts
+##### 51.6.4. Remediation — patch RLS policy, re-test isolation, verify with pen test
+
+---
+
+### 52. CLI Reference — the `awo` binary
+
+#### 52.1. Overview
+##### 52.1.1. `awo` is a standalone binary distributed with the framework — no separate tool download
+##### 52.1.2. Inspired by frappe-bench but simpler — one binary, project-scoped commands
+##### 52.1.3. Configuration — reads `AWO_*` environment variables; `--config` flag overrides
+
+#### 52.2. Project Scaffolding
+##### 52.2.1. `awo new <project-name>` — scaffold a new Awo project with directory layout, go.mod, docker-compose, and starter config
+##### 52.2.2. Scaffolded structure — `cmd/`, `internal/`, `migrations/`, `fixtures/`, `templates/`, `docker-compose.yml`
+
+#### 52.3. `awo serve` — Run the Application
+##### 52.3.1. `awo serve` — start API server and Temporal worker in one process (development default)
+##### 52.3.2. `awo serve --port=8080` — set the HTTP port
+##### 52.3.3. `awo serve --worker` — start API + worker (explicit)
+##### 52.3.4. `awo worker` — start Temporal worker only (production sidecar pattern)
+
+#### 52.4. `awo migrate` — Database Migrations
+##### 52.4.1. `awo migrate up` — apply all pending migrations
+##### 52.4.2. `awo migrate down [N]` — roll back N migrations (default 1)
+##### 52.4.3. `awo migrate version` — print current applied migration version
+##### 52.4.4. `awo migrate create <name>` — create a new timestamped `.up.sql` / `.down.sql` file pair
+##### 52.4.5. `awo migrate force <V>` — mark version V as applied without running SQL (emergency use only)
+
+#### 52.5. `awo tenant` — Tenant Management
+##### 52.5.1. `awo tenant create --name="Name" --slug=slug --email=admin@example.com` — provision a new tenant via the provisioning workflow
+##### 52.5.2. `awo tenant list` — list all tenants with status and plan
+##### 52.5.3. `awo tenant suspend --slug=slug` — suspend a tenant
+##### 52.5.4. `awo tenant activate --slug=slug` — reactivate a suspended tenant
+##### 52.5.5. `awo tenant export --slug=slug --out=dir` — export all tenant rows to JSON files
+
+#### 52.6. `awo entity` — Entity Inspection
+##### 52.6.1. `awo entity list` — list all registered EntityDefinitions (name, type, owner package)
+##### 52.6.2. `awo entity inspect --name=Name` — print full EntityDefinition with fields, edges, hooks, permissions
+
+#### 52.7. `awo seed` — Data Seeding
+##### 52.7.1. `awo seed --module=<module>` — seed a module's default reference data
+##### 52.7.2. `awo seed --module=<module> --tenant=<slug>` — seed into a specific tenant
+
+#### 52.8. `awo console` — Interactive REPL
+##### 52.8.1. What `awo console` provides — Go REPL with framework context loaded (DB, Redis, tenant context)
+##### 52.8.2. Use cases — debugging, ad-hoc queries, scripted data fixes
+##### 52.8.3. Analogous to `bench console` in Frappe
+
+#### 52.9. `awo jobs` — Workflow Management
+##### 52.9.1. `awo jobs list [--tenant=slug]` — list running Temporal workflows for a tenant
+##### 52.9.2. `awo jobs cancel <workflow-id>` — cancel a running workflow
+##### 52.9.3. `awo jobs retry <workflow-id>` — retry a failed workflow
+
+#### 52.10. `awo config` — Tenant Configuration
+##### 52.10.1. `awo config get <key> --tenant=<slug>` — print current value of a config key
+##### 52.10.2. `awo config set <key> <value> --tenant=<slug>` — set a config value
+
+#### 52.11. `awo version`
+##### 52.11.1. Prints framework version, application version (from build-time injection), and Go runtime version
 
 ---
 
 ## Part IX — Internals and Extending the Framework
 
-### 49. Framework Internals
+### 53. Framework Internals
 
-#### 49.1. Server Startup Sequence
-##### 49.1.1. Step 1 — config loaded and validated
-##### 49.1.2. Step 2 — database connection pool established
-##### 49.1.3. Step 3 — Redis connection established
-##### 49.1.4. Step 4 — EntityRegistry populated — system entities registered
-##### 49.1.5. Step 5 — Temporal client connected, worker registered
-##### 49.1.6. Step 6 — Fiber server starts accepting connections
-##### 49.1.7. What happens when any step fails — startup aborts vs degraded mode
+#### 53.1. Server Startup Sequence
+##### 53.1.1. Step 1 — config loaded and validated
+##### 53.1.2. Step 2 — database connection pool established
+##### 53.1.3. Step 3 — Redis connection established
+##### 53.1.4. Step 4 — EntityRegistry populated — system entities registered
+##### 53.1.5. Step 5 — Temporal client connected, worker registered
+##### 53.1.6. Step 6 — Fiber server starts accepting connections
+##### 53.1.7. What happens when any step fails — startup aborts vs degraded mode
 
-#### 49.2. The EntityResolver — Dispatch Logic
-##### 49.2.1. Input — entity name, tenant context
-##### 49.2.2. Registry lookup — is this a system entity or a custom entity for this tenant
-##### 49.2.3. System entity path — resolves to the `EntityRepository` implementation for that entity
-##### 49.2.4. Custom entity path — resolves to the JSONB engine with the `CustomFieldDef` metadata loaded
-##### 49.2.5. What the caller receives — an `EntityRepository` interface, regardless of path
-##### 49.2.6. EntityResolver caching — resolver results cached per tenant boot
+#### 53.2. The EntityResolver — Dispatch Logic
+##### 53.2.1. Input — entity name, tenant context
+##### 53.2.2. Registry lookup — is this a system entity or a custom entity for this tenant
+##### 53.2.3. System entity path — resolves to the `EntityRepository` implementation for that entity
+##### 53.2.4. Custom entity path — resolves to the JSONB engine with the `CustomFieldDef` metadata loaded
+##### 53.2.5. What the caller receives — an `EntityRepository` interface, regardless of path
+##### 53.2.6. EntityResolver caching — resolver results cached per tenant boot
 
-#### 49.3. The Permission Resolution Pipeline
-##### 49.3.1. Input — user, tenant, entity name, operation type
-##### 49.3.2. Step 1 — load role assignments for user
-##### 49.3.3. Step 2 — load permission matrix for each role × entity × operation
-##### 49.3.4. Step 3 — merge permissions across roles
-##### 49.3.5. Step 4 — apply tenant-level overrides
-##### 49.3.6. Step 5 — apply user-level overrides (if enabled for tenant)
-##### 49.3.7. Output — `Permissions` struct passed to hooks, page builders, privacy policies
+#### 53.3. The Permission Resolution Pipeline
+##### 53.3.1. Input — user, tenant, entity name, operation type
+##### 53.3.2. Step 1 — load role assignments for user
+##### 53.3.3. Step 2 — load permission matrix for each role × entity × operation
+##### 53.3.4. Step 3 — merge permissions across roles
+##### 53.3.5. Step 4 — apply tenant-level overrides
+##### 53.3.6. Step 5 — apply user-level overrides (if enabled for tenant)
+##### 53.3.7. Output — `Permissions` struct passed to hooks, page builders, privacy policies
 
-#### 49.4. The Page Builder Pipeline — Internals
-##### 49.4.1. Cache key computation
-##### 49.4.2. Cache hit path — deserialise and return
-##### 49.4.3. Cache miss path — invoke builder function
-##### 49.4.4. Builder function receives — entity metadata, permissions, feature flags, tenant config
-##### 49.4.5. Output — amis JSON struct, serialised and cached
-
----
-
-### 50. Plugin System
-
-#### 50.1. Plugin Interface
-##### 50.1.1. `Plugin` interface definition
-##### 50.1.2. `Name()` and `Version()` — identification
-##### 50.1.3. `Register(framework.App)` — the single registration entry point
-
-#### 50.2. What a Plugin Can Register
-##### 50.2.1. New EntityDefinitions — system or custom
-##### 50.2.2. New workflow types
-##### 50.2.3. New amis page builders
-##### 50.2.4. New amis custom renderers
-##### 50.2.5. New CLI commands
-
-#### 50.3. Plugin Versioning and Compatibility
-##### 50.3.1. Plugin manifest — minimum Awo version, declared dependencies
-##### 50.3.2. Compatibility checking at startup
-##### 50.3.3. Plugin isolation — panics in a plugin must not crash the framework
+#### 53.4. The Page Builder Pipeline — Internals
+##### 53.4.1. Cache key computation
+##### 53.4.2. Cache hit path — deserialise and return
+##### 53.4.3. Cache miss path — invoke builder function
+##### 53.4.4. Builder function receives — entity metadata, permissions, feature flags, tenant config
+##### 53.4.5. Output — amis JSON struct, serialised and cached
 
 ---
 
-### 51. Testing Guide
+### 54. Plugin System
 
-#### 51.1. Unit Testing EntityDefinition Hooks
-##### 51.1.1. The interceptor pattern — injecting mock dependencies
-##### 51.1.2. Testing `before_save` with a mock EntityRepository
-##### 51.1.3. Asserting hook return values and side effects
+#### 54.1. Plugin Interface
+##### 54.1.1. `Plugin` interface definition
+##### 54.1.2. `Name()` and `Version()` — identification
+##### 54.1.3. `Register(framework.App)` — the single registration entry point
 
-#### 51.2. Integration Testing Fiber Handlers
-##### 51.2.1. Using `net/http/httptest` with the Fiber app
-##### 51.2.2. Test database setup — separate schema per test run
-##### 51.2.3. Seeding test fixtures
-##### 51.2.4. Asserting response shape against expected amis envelope
+#### 54.2. What a Plugin Can Register
+##### 54.2.1. New EntityDefinitions — system or custom
+##### 54.2.2. New workflow types
+##### 54.2.3. New amis page builders
+##### 54.2.4. New amis custom renderers
+##### 54.2.5. New CLI commands
 
-#### 51.3. Testing Temporal Workflows
-##### 51.3.1. The Temporal test environment — `testsuite.WorkflowTestSuite`
-##### 51.3.2. Time skipping — `env.Sleep()` advances Temporal's clock
-##### 51.3.3. Mocking activities — isolating workflow logic from external calls
-##### 51.3.4. Testing signals — injecting signals in the test environment
-##### 51.3.5. Testing compensation — triggering activity failures and asserting compensations ran
-
-#### 51.4. Testing Privacy Policies
-##### 51.4.1. Unit testing with mock context
-##### 51.4.2. Integration testing — asserting filtered query results end-to-end
-
-#### 51.5. Contract Testing
-##### 51.5.1. What contract testing tests — API response shape, not behaviour
-##### 51.5.2. `hurl` test files — structure and conventions
-##### 51.5.3. Running contract tests in CI
-##### 51.5.4. Contract tests as backward-compatibility guards
-
-#### 51.6. Multi-Tenant Test Fixtures
-##### 51.6.1. Tenant fixture helper — creates an isolated test tenant
-##### 51.6.2. Cross-tenant isolation tests — asserting tenant A cannot read tenant B's data
-
-#### 51.7. Load Testing
-##### 51.7.1. `k6` scripts for ERP workloads — concurrent form submits, list pagination
-##### 51.7.2. Baseline benchmarks — what acceptable p99 latency looks like
-##### 51.7.3. Identifying bottlenecks — DB queries, page builder, serialisation
-
-#### 51.8. Test Coverage
-##### 51.8.1. Coverage targets — per package
-##### 51.8.2. Enforcement in CI — failing build below threshold
-##### 51.8.3. Coverage exemptions — generated code, main packages
+#### 54.3. Plugin Versioning and Compatibility
+##### 54.3.1. Plugin manifest — minimum Awo version, declared dependencies
+##### 54.3.2. Compatibility checking at startup
+##### 54.3.3. Plugin isolation — panics in a plugin must not crash the framework
 
 ---
 
-### 52. CLI Reference
+### 55. Testing Guide
 
-#### 52.1. Global Flags
-##### 52.1.1. `--env` — target environment (development, staging, production)
-##### 52.1.2. `--tenant` — target tenant slug for tenant-scoped commands
-##### 52.1.3. `--config` — path to config file override
+#### 55.1. Unit Testing EntityDefinition Hooks
+##### 55.1.1. The interceptor pattern — injecting mock dependencies
+##### 55.1.2. Testing `before_save` with a mock EntityRepository
+##### 55.1.3. Asserting hook return values and side effects
 
-#### 52.2. `awo entity` — Entity Management
-##### 52.2.1. `awo entity create --name=Name --type=system|custom` — scaffold a new EntityDefinition
-##### 52.2.2. `awo entity list` — list all registered EntityDefinitions
-##### 52.2.3. `awo entity inspect --name=Name` — print the full EntityDefinition including derived config
-##### 52.2.4. `awo entity validate` — validate all EntityDefinition files without starting the server
+#### 55.2. Integration Testing Fiber Handlers
+##### 55.2.1. Using `net/http/httptest` with the Fiber app
+##### 55.2.2. Test database setup — separate test database with full migrations applied
+##### 55.2.3. Seeding test fixtures
+##### 55.2.4. Asserting response shape against expected amis envelope
 
-#### 52.3. `awo entity migrate` — Database Migrations
-##### 52.3.1. `awo entity migrate --diff --name=description` — generate a new migration file
-##### 52.3.2. `awo entity migrate --dry-run` — preview pending migrations
-##### 52.3.3. `awo entity migrate --apply` — apply pending migrations
-##### 52.3.4. `awo entity migrate --apply --tenant=slug` — apply to a single tenant
-##### 52.3.5. `awo entity migrate --verify` — drift detection
-##### 52.3.6. `awo entity migrate --rollback --steps=1` — revert last N migrations
+#### 55.3. Testing Temporal Workflows
+##### 55.3.1. The Temporal test environment — `testsuite.WorkflowTestSuite`
+##### 55.3.2. Time skipping — `env.Sleep()` advances Temporal's clock
+##### 55.3.3. Mocking activities — isolating workflow logic from external calls
+##### 55.3.4. Testing signals — injecting signals in the test environment
+##### 55.3.5. Testing compensation — triggering activity failures and asserting compensations ran
 
-#### 52.4. `awo entity seed` — Data Seeding
-##### 52.4.1. `awo entity seed --file=fixtures.json` — load fixture data
-##### 52.4.2. `awo entity seed --module=finance` — seed a module's default data
-##### 52.4.3. `awo entity seed --tenant=slug` — seed into a specific tenant
+#### 55.4. Testing Privacy Policies
+##### 55.4.1. Unit testing with mock context
+##### 55.4.2. Integration testing — asserting filtered query results end-to-end
 
-#### 52.5. `awo serve` — Run the Server
-##### 52.5.1. `awo serve` — starts API + worker in one process
-##### 52.5.2. `awo serve --api-only` — start Fiber only
-##### 52.5.3. `awo serve --worker-only` — start Temporal worker only
-##### 52.5.4. `awo serve --hot-reload` — development mode
+#### 55.5. Contract Testing
+##### 55.5.1. What contract testing tests — API response shape, not behaviour
+##### 55.5.2. `hurl` test files — structure and conventions
+##### 55.5.3. Running contract tests in CI
+##### 55.5.4. Contract tests as backward-compatibility guards
 
-#### 52.6. `awo tenant` — Tenant Management
-##### 52.6.1. `awo tenant create --name="Name" --slug=slug` — provision a new tenant
-##### 52.6.2. `awo tenant suspend --slug=slug` — suspend a tenant
-##### 52.6.3. `awo tenant activate --slug=slug` — reactivate a suspended tenant
-##### 52.6.4. `awo tenant export --slug=slug --out=dir` — export tenant data
-##### 52.6.5. `awo tenant clone --source=slug --dest=slug` — clone a tenant
+#### 55.6. Multi-Tenant Test Fixtures
+##### 55.6.1. Tenant fixture helper — creates an isolated test tenant
+##### 55.6.2. Cross-tenant isolation tests — asserting tenant A cannot read tenant B's data (RLS verification)
 
-#### 52.7. `awo test` — Run Tests
-##### 52.7.1. `awo test unit` — go test for unit tests
-##### 52.7.2. `awo test integration` — with DB and Redis
-##### 52.7.3. `awo test contract` — hurl contract tests
-##### 52.7.4. `awo test workflow` — Temporal test suite
+#### 55.7. Load Testing
+##### 55.7.1. `k6` scripts for ERP workloads — concurrent form submits, list pagination
+##### 55.7.2. Baseline benchmarks — what acceptable p99 latency looks like
+##### 55.7.3. Identifying bottlenecks — DB queries, page builder, serialisation
 
-#### 52.8. `awo build` — Build Production Binary
-##### 52.8.1. Compile flags — version injection
-##### 52.8.2. Output path
+#### 55.8. Test Coverage
+##### 55.8.1. Coverage targets — per package
+##### 55.8.2. Enforcement in CI — failing build below threshold
+##### 55.8.3. Coverage exemptions — generated code, main packages
 
 ---
 
 ## Part X — Contributing to Awo
 
-### 53. Repository Structure and Conventions
+### 56. Repository Structure and Conventions
 
-#### 53.1. Repository Layout
-##### 53.1.1. `cmd/` — entry points
-##### 53.1.2. `internal/` — framework core — not importable by external code
-##### 53.1.3. `pkg/` — importable packages — the public framework API
-##### 53.1.4. `modules/` — built-in ERP modules
-##### 53.1.5. `testkit/` — test helpers for framework consumers
-##### 53.1.6. `migrations/` — versioned SQL migration files
+#### 56.1. Repository Layout
+##### 56.1.1. `cmd/` — entry points
+##### 56.1.2. `internal/` — framework core — not importable by external code
+##### 56.1.3. `pkg/` — importable packages — the public framework API
+##### 56.1.4. `testkit/` — test helpers for framework consumers
+##### 56.1.5. `migrations/` — versioned SQL migration files (golang-migrate format)
+##### 56.1.6. `templates/` — print templates for platform entities
 
-#### 53.2. Branch and PR Conventions
-##### 53.2.1. Branch naming — `feat/`, `fix/`, `docs/`, `chore/`
-##### 53.2.2. PR size guidelines — under 400 lines diff preferred
-##### 53.2.3. Required reviewers — framework core changes require two approvals
+#### 56.2. Branch and PR Conventions
+##### 56.2.1. Branch naming — `feat/`, `fix/`, `docs/`, `chore/`
+##### 56.2.2. PR size guidelines — under 400 lines diff preferred
+##### 56.2.3. Required reviewers — framework core changes require two approvals
 
-#### 53.3. Commit Message Format
-##### 53.3.1. Conventional commits — `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
-##### 53.3.2. Breaking changes — `!` suffix and `BREAKING CHANGE:` footer
-##### 53.3.3. Commit scope — `(entity)`, `(api)`, `(workflow)`, `(ui)`, `(ops)`
+#### 56.3. Commit Message Format
+##### 56.3.1. Conventional commits — `feat:`, `fix:`, `docs:`, `refactor:`, `test:`
+##### 56.3.2. Breaking changes — `!` suffix and `BREAKING CHANGE:` footer
+##### 56.3.3. Commit scope — `(entity)`, `(api)`, `(workflow)`, `(ui)`, `(ops)`
 
-#### 53.4. Adding a New Built-In EntityDefinition
-##### 53.4.1. Schema file
-##### 53.4.2. Repository interface implementation file (if system entity)
-##### 53.4.3. Hook files
-##### 53.4.4. Privacy policy file
-##### 53.4.5. Page builder file
-##### 53.4.6. Migration file
-##### 53.4.7. Test files — unit, integration, contract
-##### 53.4.8. Documentation requirement — the entity must have a corresponding section in Part VI
+#### 56.4. Adding a New Platform EntityDefinition
+##### 56.4.1. Schema file
+##### 56.4.2. Repository interface implementation file (system entity)
+##### 56.4.3. Hook files
+##### 56.4.4. Privacy policy file
+##### 56.4.5. Page builder file
+##### 56.4.6. Migration file pair (.up.sql / .down.sql)
+##### 56.4.7. Test files — unit, integration, contract
+##### 56.4.8. Documentation requirement — the entity must have a corresponding section in Part VI
 
-#### 53.5. Release Process
-##### 53.5.1. Semantic versioning — `v{major}.{minor}.{patch}`
-##### 53.5.2. Changelog — `CHANGELOG.md` maintained per release
-##### 53.5.3. Release branch cut and tag
+#### 56.5. Release Process
+##### 56.5.1. Semantic versioning — `v{major}.{minor}.{patch}`
+##### 56.5.2. Changelog — `CHANGELOG.md` maintained per release
+##### 56.5.3. Release branch cut and tag
 
 ---
 
-### 54. Roadmap and Known Limitations
+### 57. Roadmap and Known Limitations
 
-#### 54.1. Current Limitations
-##### 54.1.1. Runtime EntityDefinition creation — currently requires a code deploy and migration
-##### 54.1.2. GraphQL API — not yet available, under evaluation
-##### 54.1.3. Offline-first mobile — research phase
+#### 57.1. Current Limitations
+##### 57.1.1. Runtime EntityDefinition creation — currently requires a code deploy and migration
+##### 57.1.2. GraphQL API — not yet available, under evaluation
+##### 57.1.3. Offline-first mobile — research phase
 
-#### 54.2. Planned
-##### 54.2.1. Connect-Go / mobile SDK — protobuf contracts for Flutter
-##### 54.2.2. KRA eTIMS e-invoicing integration
-##### 54.2.3. Plugin marketplace
+#### 57.2. Planned
+##### 57.2.1. Connect-Go / mobile SDK — protobuf contracts for Flutter
+##### 57.2.2. KRA eTIMS e-invoicing integration
+##### 57.2.3. Plugin marketplace
 
 ---
 
@@ -1811,69 +1926,9 @@
 #### B.2. Write methods
 #### B.3. Transaction methods
 #### B.4. Filter DSL types
-#### B.5. Error types returned
 
-### Appendix C — amis Component Type Reference
-#### C.1. Foundation component type strings
-#### C.2. Composite block type strings
-#### C.3. Required and optional JSON keys per component type
-#### C.4. amis expression syntax quick reference
-
-### Appendix D — Temporal Activity Options Cheatsheet
-#### D.1. `ActivityOptions` fields — names, types, defaults
-#### D.2. Retry policy fields
-#### D.3. Common timeout configurations for ERP activity categories
-
-### Appendix E — Atlas CLI Command Reference
-#### E.1. `atlas migrate diff`
-#### E.2. `atlas migrate apply`
-#### E.3. `atlas migrate lint`
-#### E.4. `atlas schema inspect`
-#### E.5. `atlas migrate status`
-
-### Appendix F — Environment Variable Reference
-#### F.1. Database — `AWO_DB_*`
-#### F.2. Redis — `AWO_REDIS_*`
-#### F.3. Temporal — `AWO_TEMPORAL_*`
-#### F.4. Server — `AWO_SERVER_*`
-#### F.5. Auth — `AWO_AUTH_*`
-#### F.6. Feature flags — `AWO_FLAGS_*`
-#### F.7. Observability — `AWO_OTEL_*`, `AWO_LOG_*`
-#### F.8. Kenya-specific — `AWO_KRA_*`, `AWO_NEMA_*`
-
-### Appendix G — Role and Permission Matrix
-#### G.1. System roles — names, descriptions, intended users
-#### G.2. Default permission matrix — role × entity × operation
-#### G.3. Tenant-overridable vs locked permissions
-
-### Appendix H — Kenya-Specific Configuration Reference
-#### H.1. KRA eTIMS — required fields, device setup, test vs live environment
-#### H.2. NEMA — wetstock variance thresholds by product grade
-#### H.3. KES currency formatting rules
-#### H.4. Public holidays — East Africa calendar for date calculations
-
-### Appendix I — Performance Benchmarks
-#### I.1. API latency — p50, p95, p99 under load
-#### I.2. Workflow throughput — workflows per minute at steady state
-#### I.3. JSONB query performance — custom entity queries with GIN index
-#### I.4. Comparison baseline — equivalent Frappe operation timings
-
-### Appendix J — Migration Guide From Frappe
-#### J.1. Concept mapping — DocType → EntityDefinition, Controller hook → Go hook
-#### J.2. Data migration — exporting Frappe data to Awo-compatible format
-#### J.3. Workflow migration — Frappe Workflow → Temporal
-#### J.4. Custom Script migration — Python → Go hook or plugin
-
-### Appendix K — Glossary
-#### K.1. Framework terms
-#### K.2. ERP domain terms
-#### K.3. Kenya-specific regulatory terms
-
-### Appendix L — Index
-
----
-
-*End of Table of Contents*
-*Total: 10 Parts · 54 Chapters · 9 Volumes of appendices*
-*Each chapter is a standalone markdown file. Chapter numbering is stable across versions.*
-*Breaking changes to chapter numbers are treated as a major version change.*
+### Appendix C — golang-migrate Quick Reference
+#### C.1. CLI commands
+#### C.2. Migration file naming convention
+#### C.3. RLS policy boilerplate
+#### C.4. Common DDL patterns (views, triggers, functions)
