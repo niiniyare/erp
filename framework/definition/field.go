@@ -85,7 +85,7 @@ type FieldDef struct {
 	Unique      bool
 	Immutable   bool // set on create, rejected on update
 	Searchable  bool // creates GIN pg_trgm index (Data fields only)
-	Sensitive   bool // excluded from logs and default API responses
+	Sensitive   bool // excluded from logs AND all API responses (FindByID, List)
 
 	// Type-specific constraints
 	MaxLen int            // Data, SmallText
@@ -106,7 +106,7 @@ type FieldDef struct {
 	AsyncValidators []AsyncFieldValidator
 
 	// Metadata for SDUI and privacy
-	Hidden      bool   // exclude from list views
+	Hidden      bool   // exclude from SDUI list view columns; API still returns the field
 	ReadOnly    bool   // rendered read-only in forms
 	Section     string // form section grouping
 	Width       int    // AMIS column width hint

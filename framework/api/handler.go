@@ -376,7 +376,7 @@ func recordToMap(rec definition.Record, def *definition.EntityDefinition) map[st
 		}
 	}
 	for _, f := range def.Fields {
-		if !f.Hidden {
+		if !f.Sensitive {
 			m[f.Name] = rec.Get(f.Name)
 		}
 	}
