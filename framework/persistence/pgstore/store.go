@@ -246,7 +246,7 @@ func (s *EntityStore) scanListRow(rows pgx.Rows) (*mapRecord, int64, error) {
 func buildScanDest(def *definition.EntityDefinition, tenantID uuid.UUID) (*mapRecord, []any, []*any) {
 	rec := newMapRecord(def.Name, tenantID)
 	dest := []any{&rec.id}
-	if !def.Global {
+	if !def.IsGlobal() {
 		dest = append(dest, &rec.tenantID)
 	}
 
@@ -346,7 +346,7 @@ func (a *TenantStoreAdapter) ForEntity(ctx context.Context, tenantID uuid.UUID, 
 		return nil, err
 	}
 	// Set RLS tenant context on this connection before returning.
-	if !def.Global {
+	if !def.IsGlobal() {
 		if _, err := conn.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
 			conn.Release()
 			return nil, fmt.Errorf("set_tenant_context: %w", err)

@@ -77,7 +77,7 @@ func Insert(def *definition.EntityDefinition, fields []string) (query string, co
 			cols = append(cols, f)
 		}
 	}
-	if def.Global {
+	if def.IsGlobal() {
 		// Global entities have no tenant_id column.
 		cols = cols[1:] // drop tenant_id
 	}
@@ -157,7 +157,7 @@ func Exists(def *definition.EntityDefinition, filterFields []string) string {
 func columnList(def *definition.EntityDefinition) string {
 	cols := make([]string, 0, len(def.Fields)+3)
 	cols = append(cols, "id")
-	if !def.Global {
+	if !def.IsGlobal() {
 		cols = append(cols, "tenant_id")
 	}
 	cols = append(cols, "created_at", "updated_at")

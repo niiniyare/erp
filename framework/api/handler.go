@@ -2,7 +2,9 @@
 package api
 
 import (
+	"context"
 	"errors"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
@@ -16,13 +18,19 @@ import (
 // Host application must register a middleware that calls c.Locals("viewer", ...).
 type ViewerFromCtx func(c *fiber.Ctx) (definition.ViewerContext, error)
 
+// TenantResolver resolves a tenant slug or UUID string to a UUID.
+// Called when viewer.TenantID() is not a valid UUID (e.g. dev slug headers).
+// Return uuid.Nil + error to reject the request.
+type TenantResolver func(ctx context.Context, slugOrID string) (uuid.UUID, error)
+
 // Handler is a generic CRUD handler for one EntityDefinition.
 type Handler struct {
-	def      *definition.EntityDefinition
-	store    persistence.TenantStore
-	hooks    *hooks.Executor
-	enforcer *privacy.Enforcer
-	viewer   ViewerFromCtx
+	def            *definition.EntityDefinition
+	store          persistence.TenantStore
+	hooks          *hooks.Executor
+	enforcer       *privacy.Enforcer
+	viewer         ViewerFromCtx
+	tenantResolver TenantResolver
 }
 
 // NewHandler creates a Handler for def.
@@ -30,14 +38,27 @@ func NewHandler(
 	def *definition.EntityDefinition,
 	store persistence.TenantStore,
 	viewer ViewerFromCtx,
+	opts ...HandlerOption,
 ) *Handler {
-	return &Handler{
+	h := &Handler{
 		def:      def,
 		store:    store,
 		hooks:    hooks.New(),
 		enforcer: privacy.New(),
 		viewer:   viewer,
 	}
+	for _, o := range opts {
+		o(h)
+	}
+	return h
+}
+
+// HandlerOption configures a Handler.
+type HandlerOption func(*Handler)
+
+// WithTenantResolver sets a function that resolves tenant slug → UUID.
+func WithTenantResolver(fn TenantResolver) HandlerOption {
+	return func(h *Handler) { h.tenantResolver = fn }
 }
 
 // Register mounts CRUD routes under prefix on router.
@@ -70,21 +91,23 @@ func (h *Handler) findByID(c *fiber.Ctx) error {
 		return err
 	}
 
-	es, err := h.store.ForEntity(c.Context(), tenantID, h.def.Name)
-	if err != nil {
+	var result map[string]any
+	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
+		es := tx.ForEntity(h.def.Name)
+		rec, err := es.FindByID(c.Context(), id)
+		if err != nil {
+			return err
+		}
+		if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpRead, rec); err != nil {
+			return errForbidden // hide existence from unauthorized viewers
+		}
+		result = recordToMap(rec, h.def)
+		return nil
+	}); err != nil {
 		return fiberErr(err)
 	}
 
-	rec, err := es.FindByID(c.Context(), id)
-	if err != nil {
-		return fiberErr(err)
-	}
-
-	if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpRead, rec); err != nil {
-		return fiber.ErrNotFound // hide existence from unauthorized viewers
-	}
-
-	return c.JSON(recordToMap(rec, h.def))
+	return c.JSON(result)
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
@@ -98,8 +121,9 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	opts := persistence.ListOptions{
-		Search: c.Query("q"),
-		OrderBy: c.Query("order_by"),
+		Search:    c.Query("q"),
+		OrderBy:   c.Query("order_by"),
+		Ascending: c.Query("dir") == "asc",
 	}
 	if lim := c.QueryInt("limit", 50); lim > 0 {
 		opts.Limit = lim
@@ -107,28 +131,30 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	if off := c.QueryInt("offset", 0); off >= 0 {
 		opts.Offset = off
 	}
-	opts.Ascending = c.Query("dir") == "asc"
 
-	es, err := h.store.ForEntity(c.Context(), tenantID, h.def.Name)
-	if err != nil {
+	var result fiber.Map
+	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
+		es := tx.ForEntity(h.def.Name)
+		page, err := es.List(c.Context(), opts)
+		if err != nil {
+			return err
+		}
+		rows := make([]map[string]any, len(page.Records))
+		for i, r := range page.Records {
+			rows[i] = recordToMap(r, h.def)
+		}
+		result = fiber.Map{
+			"data":   rows,
+			"total":  page.Total,
+			"limit":  page.Limit,
+			"offset": page.Offset,
+		}
+		return nil
+	}); err != nil {
 		return fiberErr(err)
 	}
 
-	page, err := es.List(c.Context(), opts)
-	if err != nil {
-		return fiberErr(err)
-	}
-
-	rows := make([]map[string]any, len(page.Records))
-	for i, r := range page.Records {
-		rows[i] = recordToMap(r, h.def)
-	}
-	return c.JSON(fiber.Map{
-		"data":   rows,
-		"total":  page.Total,
-		"limit":  page.Limit,
-		"offset": page.Offset,
-	})
+	return c.JSON(result)
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {
@@ -270,10 +296,25 @@ func (h *Handler) extractContext(c *fiber.Ctx) (definition.ViewerContext, uuid.U
 	if err != nil {
 		return nil, uuid.Nil, fiber.ErrUnauthorized
 	}
+
 	tenantID, err := uuid.Parse(viewer.TenantID())
 	if err != nil {
-		return nil, uuid.Nil, fiber.ErrUnauthorized
+		// Not a UUID — try resolving as a slug if a resolver is configured.
+		if h.tenantResolver == nil {
+			return nil, uuid.Nil, fiber.NewError(fiber.StatusUnauthorized,
+				"tenant ID is not a valid UUID and no resolver is configured")
+		}
+		tenantID, err = h.tenantResolver(c.Context(), viewer.TenantID())
+		if err != nil {
+			return nil, uuid.Nil, fiber.NewError(fiber.StatusUnauthorized,
+				"could not resolve tenant: "+err.Error())
+		}
 	}
+
+	if tenantID == uuid.Nil {
+		return nil, uuid.Nil, fiber.NewError(fiber.StatusUnauthorized, "missing tenant")
+	}
+
 	return viewer, tenantID, nil
 }
 

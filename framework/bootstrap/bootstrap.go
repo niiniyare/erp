@@ -17,6 +17,7 @@ import (
 
 	"awo.so/framework/api"
 	"awo.so/framework/definition"
+	"awo.so/framework/org"
 	"awo.so/framework/persistence/pgstore"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
@@ -34,6 +35,11 @@ type Options struct {
 	// ViewerFn extracts authentication context from each request.
 	// Defaults to anonymous viewer when nil.
 	ViewerFn api.ViewerFromCtx
+
+	// TenantResolver resolves a tenant slug or non-UUID string to a UUID.
+	// Required when ViewerFn may return a slug instead of a UUID from TenantID().
+	// Example: look up tenants table by slug.
+	TenantResolver api.TenantResolver
 
 	// TemporalClient enables workflow triggers on entity mutations.
 	// Pass nil to disable workflow integration.
@@ -65,8 +71,12 @@ func Mount(app *fiber.App, opts Options) {
 	_ = wfExec // used by modules that register workflow hooks via definition.HookDef
 
 	apiGroup := app.Group(opts.APIPrefix)
+	handlerOpts := []api.HandlerOption{}
+	if opts.TenantResolver != nil {
+		handlerOpts = append(handlerOpts, api.WithTenantResolver(opts.TenantResolver))
+	}
 	for _, def := range definition.All() {
-		h := api.NewHandler(def, tenantStore, opts.ViewerFn)
+		h := api.NewHandler(def, tenantStore, opts.ViewerFn, handlerOpts...)
 		api.Register(apiGroup, "/"+def.TableName(), h)
 	}
 
@@ -85,7 +95,10 @@ func anonymousViewer(c *fiber.Ctx) (definition.ViewerContext, error) {
 
 type anonViewer struct{ tenantID string }
 
-func (v *anonViewer) ActorID() string       { return "anonymous" }
-func (v *anonViewer) TenantID() string      { return v.tenantID }
-func (v *anonViewer) IsSystem() bool        { return false }
-func (v *anonViewer) HasRole(_ string) bool { return false }
+func (v *anonViewer) ActorID() string            { return "anonymous" }
+func (v *anonViewer) TenantID() string           { return v.tenantID }
+func (v *anonViewer) CompanyID() string          { return "" }
+func (v *anonViewer) DivisionID() string         { return "" }
+func (v *anonViewer) OrgScope() org.Scope        { return org.Scope{} }
+func (v *anonViewer) IsSystem() bool             { return false }
+func (v *anonViewer) HasRole(_ string) bool      { return false }

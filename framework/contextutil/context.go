@@ -1,0 +1,196 @@
+// Package contextutil provides context helpers for propagating organisational
+// scope and request identity through the Awo Framework call chain.
+//
+// # Org hierarchy context
+//
+// Every authenticated request carries an org.Scope that locates the request
+// within the organisational hierarchy:
+//
+//	Tenant → Company → Division
+//
+// Use WithOrgScope at the request entry point (middleware or handler) and
+// GetOrgScope wherever the scope is needed:
+//
+//	// In auth middleware:
+//	ctx = contextutil.WithOrgScope(ctx, org.WithCompany(tenantID, companyID))
+//
+//	// In a service or repository:
+//	scope, ok := contextutil.GetOrgScope(ctx)
+//	if !ok { return ErrUnauthenticated }
+//
+// # Standard context keys
+//
+// The package uses unexported typed context keys to avoid collisions with
+// third-party packages that use string keys.
+package contextutil
+
+import (
+	"context"
+	"net/http"
+
+	"github.com/google/uuid"
+
+	"awo.so/framework/org"
+)
+
+// SystemUserID is a well-known sentinel UUID used when the system itself
+// initiates an operation (Temporal workflow, scheduled job, internal service).
+// It is never a real user account and must never appear in user-facing queries.
+//
+// Value: 00000000-0000-0000-0000-000000000001
+var SystemUserID = uuid.MustParse("00000000-0000-0000-0000-000000000001")
+
+// contextKey is a private type to prevent collisions with other packages
+// that use plain strings as context keys.
+type contextKey string
+
+const (
+	keyOrgScope   contextKey = "awo.org_scope"
+	keyUserID     contextKey = "awo.user_id"
+	keyRequestCtx contextKey = "awo.request_ctx"
+	keyActorID    contextKey = "awo.actor_id"
+)
+
+// ── Org scope ─────────────────────────────────────────────────────────────────
+
+// WithOrgScope stores an org.Scope in the context.
+// Call this early in the request pipeline (auth middleware) so downstream
+// layers (service, repository, privacy policies) can retrieve it.
+func WithOrgScope(ctx context.Context, scope org.Scope) context.Context {
+	return context.WithValue(ctx, keyOrgScope, scope)
+}
+
+// GetOrgScope retrieves the org.Scope from the context.
+// Returns (zero, false) if no scope has been set.
+func GetOrgScope(ctx context.Context) (org.Scope, bool) {
+	scope, ok := ctx.Value(keyOrgScope).(org.Scope)
+	if !ok || scope.TenantID == uuid.Nil {
+		return org.Scope{}, false
+	}
+	return scope, true
+}
+
+// MustGetOrgScope retrieves the org.Scope or panics.
+// Intended for internal framework use where scope absence is a programming error.
+func MustGetOrgScope(ctx context.Context) org.Scope {
+	scope, ok := GetOrgScope(ctx)
+	if !ok {
+		panic("contextutil: org scope not in context — ensure auth middleware ran")
+	}
+	return scope
+}
+
+// WithTenantID is a convenience wrapper that sets a tenant-only scope.
+// Use WithOrgScope(ctx, org.WithCompany(...)) for company-scoped requests.
+func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
+	return WithOrgScope(ctx, org.TenantOnly(tenantID))
+}
+
+// GetTenantID retrieves just the tenant ID from the org scope.
+// Returns (uuid.Nil, false) if no scope is present.
+func GetTenantID(ctx context.Context) (uuid.UUID, bool) {
+	scope, ok := GetOrgScope(ctx)
+	if !ok {
+		return uuid.Nil, false
+	}
+	return scope.TenantID, true
+}
+
+// GetCompanyID retrieves the company ID from the org scope.
+// Returns (uuid.Nil, false) when the request is not company-scoped.
+func GetCompanyID(ctx context.Context) (uuid.UUID, bool) {
+	scope, ok := GetOrgScope(ctx)
+	if !ok || scope.CompanyID == nil {
+		return uuid.Nil, false
+	}
+	return *scope.CompanyID, true
+}
+
+// GetDivisionID retrieves the division ID from the org scope.
+// Returns (uuid.Nil, false) when the request is not division-scoped.
+func GetDivisionID(ctx context.Context) (uuid.UUID, bool) {
+	scope, ok := GetOrgScope(ctx)
+	if !ok || scope.DivisionID == nil {
+		return uuid.Nil, false
+	}
+	return *scope.DivisionID, true
+}
+
+// ── Actor identity ────────────────────────────────────────────────────────────
+
+// WithActorID stores the authenticated user UUID in the context.
+func WithActorID(ctx context.Context, actorID uuid.UUID) context.Context {
+	return context.WithValue(ctx, keyActorID, actorID)
+}
+
+// GetActorID retrieves the authenticated user UUID from the context.
+// Returns (uuid.Nil, false) for unauthenticated requests.
+func GetActorID(ctx context.Context) (uuid.UUID, bool) {
+	id, ok := ctx.Value(keyActorID).(uuid.UUID)
+	if !ok || id == uuid.Nil {
+		return uuid.Nil, false
+	}
+	return id, true
+}
+
+// IsSystemActor reports whether the context actor is the system sentinel UUID.
+// Use this to detect framework-internal or workflow-initiated operations.
+func IsSystemActor(ctx context.Context) bool {
+	id, ok := GetActorID(ctx)
+	return ok && id == SystemUserID
+}
+
+// ── Request metadata ──────────────────────────────────────────────────────────
+
+// RequestContext holds HTTP-layer metadata about the incoming request.
+// It is stored in context by middleware and read by loggers, audit log writers,
+// and tracing integrations.
+type RequestContext struct {
+	// Request is the underlying HTTP request. May be nil in non-HTTP contexts
+	// (e.g. Temporal activity, gRPC).
+	Request *http.Request
+
+	// UserAgent is the value of the User-Agent header.
+	UserAgent string
+
+	// IPAddress is the client's IP address (after proxy header resolution).
+	IPAddress string
+
+	// SessionID is the authenticated session identifier, if applicable.
+	SessionID string
+
+	// TraceID is the distributed trace ID for correlating logs across services.
+	TraceID string
+
+	// RequestID is a per-request UUID injected by the gateway or middleware.
+	RequestID string
+}
+
+// WithRequestContext stores request metadata in the context.
+func WithRequestContext(ctx context.Context, req *RequestContext) context.Context {
+	return context.WithValue(ctx, keyRequestCtx, req)
+}
+
+// GetRequestContext retrieves the request metadata from the context.
+// Returns (nil, false) when no request context has been set.
+func GetRequestContext(ctx context.Context) (*RequestContext, bool) {
+	req, ok := ctx.Value(keyRequestCtx).(*RequestContext)
+	return req, ok
+}
+
+// GetTraceID is a convenience function that extracts the trace ID from the
+// request context without requiring callers to unpack the full RequestContext.
+func GetTraceID(ctx context.Context) string {
+	if req, ok := GetRequestContext(ctx); ok {
+		return req.TraceID
+	}
+	return ""
+}
+
+// GetRequestID extracts the request ID from the request context.
+func GetRequestID(ctx context.Context) string {
+	if req, ok := GetRequestContext(ctx); ok {
+		return req.RequestID
+	}
+	return ""
+}

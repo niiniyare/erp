@@ -5,6 +5,7 @@ import (
 	"context"
 
 	"awo.so/framework/definition"
+	"awo.so/framework/org"
 )
 
 func init() {
@@ -148,7 +149,7 @@ var Currency = &definition.EntityDefinition{
 	Label:   "Currency",
 	Table:   "finance_currencies",
 	Module:  "Finance",
-	Global:  false, // tenant-scoped enabled currencies
+	OrgScope: org.ScopeLevelTenant, // tenant-scoped enabled currencies
 	Fields: []*definition.FieldDef{
 		definition.Field("code").OfType(definition.FieldTypeSmallText).WithLabel("Code").
 			RequiredField().UniqueField().ImmutableField().WithMaxLen(3),

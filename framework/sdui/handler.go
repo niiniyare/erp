@@ -51,7 +51,7 @@ func serveNav(c *fiber.Ctx) error {
 	groups := map[string][]NavItem{}
 
 	for _, d := range defs {
-		if d.Global {
+		if d.IsGlobal() {
 			continue // global entities are not user-navigable by default
 		}
 		mod := d.Module
