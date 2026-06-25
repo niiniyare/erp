@@ -1383,6 +1383,61 @@
 
 ---
 
+### 41b. Implementing Platform Modules — Worked Reference
+
+> Full source: `docs/framework/part-06-modules/implementing-platform-modules.md`
+
+#### 41b.1. Module Layout Convention
+##### 41b.1.1. Directory structure shared by platform and business modules
+##### 41b.1.2. The `init()` + `definition.Register()` wiring pattern
+##### 41b.1.3. Why the framework cannot distinguish platform from business EntityDefinitions
+
+#### 41b.2. Tenant Module
+##### 41b.2.1. TenantDef — `OrgScope: ScopeLevelGlobal`, no RLS, system-only write policies
+##### 41b.2.2. OrgNodeDef — materialised path hook, tree-scoped read policy
+##### 41b.2.3. Status transition hook — validating PENDING→ACTIVE, blocking PENDING→SUSPENDED
+##### 41b.2.4. Migration — no RLS on `tenants` table; RLS on `org_nodes`
+
+#### 41b.3. IAM Module
+##### 41b.3.1. UserDef — Sensitive fields (password_hash, mfa_secret), `allowSelf` read policy
+##### 41b.3.2. RoleDef — protecting system roles via BeforeHook
+##### 41b.3.3. UserRoleDef — `set_assigned_by` hook, Casbin reload AfterHook
+##### 41b.3.4. SessionDef — no user CRUD; IAM service layer drives login/logout
+##### 41b.3.5. Migration — partial unique index for active session token lookup
+
+#### 41b.4. Feature Flags Module
+##### 41b.4.1. FeatureFlagDef — global catalogue, platform_admin write policy
+##### 41b.4.2. FeatureFlagOverrideDef — tenant-scoped, cache invalidation hook
+##### 41b.4.3. EvalService — Redis fast path, three-tier cascade evaluation
+
+#### 41b.5. Settings Module
+##### 41b.5.1. ConfigKeyDef — global key catalogue, read-only for tenant callers
+##### 41b.5.2. ConfigValueDef — tenant-scoped, scope=system|tenant|entity, value type validation hook
+##### 41b.5.3. Resolution service — entity beats tenant beats system default
+
+#### 41b.6. Audit Log Module
+##### 41b.6.1. AuditLogDef — append-only; `OpCreate` for system only; `OpWrite/Delete` denied
+##### 41b.6.2. DB trigger `audit_log_trigger_fn` — captures all SQL writes
+##### 41b.6.3. Monthly partitioning — 7-year Kenya compliance retention
+
+#### 41b.7. Metadata / Custom Fields Module
+##### 41b.7.1. CustomFieldDefDef — soft-delete, validateFieldName hook, SDUI cache invalidation
+##### 41b.7.2. How business modules receive custom fields — `custom_fields jsonb` column
+##### 41b.7.3. SDUI form field merging — framework fields + tenant custom fields at render time
+
+#### 41b.8. Plugin / Module Registry
+##### 41b.8.1. ModuleDef — global catalogue, populated by module `init()` calls
+##### 41b.8.2. TenantModuleDef — which modules a tenant has activated; navigation reload hook
+##### 41b.8.3. Business module self-registration pattern — `registry.RegisterModule()`
+
+#### 41b.9. Startup Wire-Up
+##### 41b.9.1. Import order — platform modules before business modules
+##### 41b.9.2. `bootstrap.Mount` reads `definition.All()` — single pass for all modules
+
+#### 41b.10. Platform vs Business Module Comparison Table
+
+---
+
 ## Part VII — Multi-Tenancy and Configuration
 
 ### 41. Tenant Lifecycle
