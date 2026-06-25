@@ -66,9 +66,13 @@ func (s *EntityStore) List(ctx context.Context, opts persistence.ListOptions) (p
 	sbOpts := buildSelectOpts(opts)
 	query, _ := sqlbuilder.SelectList(s.def, sbOpts)
 
-	// Collect args in the same order whereClauses produces placeholders.
+	// Collect args matching whereClauses placeholder order:
+	// 1. filter values, 2. OrgUnitIDs array, 3. search string.
 	for _, k := range filterFields {
 		args = append(args, opts.Filter[k])
+	}
+	if len(opts.OrgUnitIDs) > 0 {
+		args = append(args, opts.OrgUnitIDs)
 	}
 	if opts.Search != "" {
 		args = append(args, "%"+opts.Search+"%")
@@ -328,10 +332,11 @@ func mapPgError(err error) error {
 
 func buildSelectOpts(opts persistence.ListOptions) sqlbuilder.SelectOpts {
 	return sqlbuilder.SelectOpts{
-		Filter:    opts.Filter,
-		Search:    opts.Search,
-		OrderBy:   opts.OrderBy,
-		Ascending: opts.Ascending,
+		Filter:     opts.Filter,
+		Search:     opts.Search,
+		OrderBy:    opts.OrderBy,
+		Ascending:  opts.Ascending,
+		OrgUnitIDs: opts.OrgUnitIDs,
 	}
 }
 

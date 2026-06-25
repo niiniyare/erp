@@ -26,6 +26,13 @@ type ListOptions struct {
 
 	// Offset is the zero-based row offset for pagination.
 	Offset int
+
+	// OrgUnitIDs restricts results to records whose org_unit_id is in this set.
+	// When non-empty the store emits: WHERE org_unit_id = ANY($n).
+	// Set by the API handler for ScopeLevelUnit entities based on the viewer's
+	// subtree (all descendants of viewer.OrgUnitID()). Ignored for non-unit-scoped
+	// entities.
+	OrgUnitIDs []uuid.UUID
 }
 
 // Page is a paginated result from EntityStore.List.

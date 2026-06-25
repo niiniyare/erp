@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"awo.so/framework/definition"
 )
 
@@ -21,12 +23,15 @@ func SelectOne(def *definition.EntityDefinition) string {
 	return q
 }
 
-// SelectOpts controls filtering, search, and ordering for SelectList.
+// SelectOpts controls filtering, search, ordering, and org-unit scoping for SelectList.
 type SelectOpts struct {
-	Filter    map[string]any
-	Search    string
-	OrderBy   string
-	Ascending bool
+	Filter     map[string]any
+	Search     string
+	OrderBy    string
+	Ascending  bool
+	// OrgUnitIDs restricts results to these org unit IDs via ANY($n).
+	// Empty slice = no restriction.
+	OrgUnitIDs []uuid.UUID
 }
 
 // SelectList builds a SELECT + COUNT(*) OVER() query with optional WHERE clause.
@@ -197,8 +202,14 @@ func scopeColumns(def *definition.EntityDefinition) []string {
 	}
 }
 
-// whereClauses builds AND clauses for filters and soft-delete, returning the
-// updated placeholder index.
+// whereClauses builds AND clauses for filters, org-unit scoping, search, and
+// soft-delete. Returns clauses and the updated placeholder index.
+//
+// Placeholder order matches the args slice the caller must build:
+//  1. filter values (one per Filter entry)
+//  2. org_unit_id array (one placeholder, type []uuid.UUID)
+//  3. search string (one placeholder, ILIKE applied across Searchable fields)
+//  4. limit, offset (appended by SelectList after this call)
 func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, int) {
 	var clauses []string
 	idx := startIdx
@@ -212,8 +223,14 @@ func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx in
 		idx++
 	}
 
+	if len(opts.OrgUnitIDs) > 0 {
+		// Restrict to viewer's org subtree. pgx encodes []uuid.UUID as a Postgres
+		// UUID array, so ANY($n) works directly without IN (…) expansion.
+		clauses = append(clauses, fmt.Sprintf("org_unit_id = ANY($%d)", idx))
+		idx++
+	}
+
 	if opts.Search != "" {
-		// Build OR across all Searchable fields using pg_trgm similarity.
 		var searchParts []string
 		for _, f := range def.Fields {
 			if f.Searchable {

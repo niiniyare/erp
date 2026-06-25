@@ -139,6 +139,16 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		opts.Offset = off
 	}
 
+	// For unit-scoped entities, restrict results to the viewer's org subtree.
+	// Tenant-wide viewers (OrgUnitID == Nil) see all rows — no restriction.
+	if h.def.IsUnitScoped() && h.orgTree != nil && viewer.OrgUnitID() != uuid.Nil {
+		descendants, err := h.orgTree.Descendants(c.Context(), tenantID, viewer.OrgUnitID())
+		if err != nil {
+			return fiber.NewError(fiber.StatusInternalServerError, "org tree lookup failed")
+		}
+		opts.OrgUnitIDs = descendants
+	}
+
 	var result fiber.Map
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
