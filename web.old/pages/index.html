@@ -213,11 +213,26 @@
       white-space: nowrap;
     }
 
+    .sidebar-search .search-box input {
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text-color);
+      font-size: 13px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .sidebar-search .search-box input::placeholder {
+      color: var(--text-muted);
+    }
+
     .collapsed .sidebar-search {
       padding: 12px 8px;
     }
 
-    .collapsed .sidebar-search .search-box span {
+    .collapsed .sidebar-search .search-box span,
+    .collapsed .sidebar-search .search-box input {
       display: none;
     }
 
@@ -302,7 +317,7 @@
     }
 
     .menu-group.expanded .menu-group-items {
-      max-height: 500px;
+      max-height: 2000px;
     }
 
     /* Collapsed sidebar: hide labels & chevrons */
@@ -991,7 +1006,7 @@
       <div class="sidebar-search">
         <div class="search-box">
           <i class="fa fa-search"></i>
-          <span>Search tools</span>
+          <input type="search" id="sidebarSearch" placeholder="Search tools" autocomplete="off">
         </div>
       </div>
 
@@ -1035,13 +1050,9 @@
   <script src="../sdk/charts.js"></script>
   <script src="../sdk/rest.js"></script>
   <script src="../utils/locale-en.js"></script>
-  <script src="../utils/schema-loader.js"></script>
   <script>
     (function () {
-      var API_BASE = 'http://localhost:8080/';
-
       var amis = amisRequire('amis/embed');
-      var loader = new SchemaLoader('../schemas/');
       var currentInstance = null;
 
       // ── Theme System ──
@@ -1107,26 +1118,37 @@
         },
         {
           type: 'group',
-          id: 'basic-info',
-          label: 'Basic Information',
-          icon: 'fa-briefcase',
+          id: 'finance',
+          label: 'Finance',
+          icon: 'fa-calculator',
           expanded: false,
           items: [
-            {id: 'users', label: 'Users', hash: '#users'},
-            {id: 'table', label: 'Table', hash: '#table'},
-            {id: 'organizations', label: 'Tenants', hash: '#organizations'},
-            {id: 'settings', label: 'Settings', hash: '#settings'}
+            {id: 'finance/dashboard', label: 'Overview', hash: '#finance/dashboard'},
+            {id: 'finance/accounts', label: 'Chart of Accounts', hash: '#finance/accounts'},
+            {id: 'finance/transactions', label: 'Transactions', hash: '#finance/transactions'},
+            {id: 'finance/invoices/new', label: 'New Invoice', hash: '#finance/invoices/new'},
+            {id: 'finance/bills/new', label: 'New Bill', hash: '#finance/bills/new'},
+            {id: 'finance/journal-entries/new', label: 'New Journal Entry', hash: '#finance/journal-entries/new'},
+            {id: 'finance/reports/trial-balance', label: 'Trial Balance', hash: '#finance/reports/trial-balance'}
           ]
         },
         {
           type: 'group',
-          id: 'inventory',
-          label: 'Inventory',
-          icon: 'fa-warehouse',
+          id: 'admin',
+          label: 'Administration',
+          icon: 'fa-cogs',
           expanded: false,
           items: [
-            {id: 'products', label: 'Products', hash: '#products'}
+            {id: 'users', label: 'Users', hash: '#users'},
+            {id: 'organizations', label: 'Organizations', hash: '#organizations'}
           ]
+        },
+        {
+          type: 'item',
+          id: 'settings',
+          label: 'Settings',
+          icon: 'fa-sliders-h',
+          hash: '#settings'
         }
       ];
 
@@ -1212,24 +1234,40 @@
         document.getElementById('sidebar-backdrop').classList.remove('visible');
       };
 
-      // ── Click outside sidebar → collapse on desktop ──
-      document.getElementById('main').addEventListener('click', function () {
-        collapseSidebar();
-      });
-
       // ── Update Active Menu & Breadcrumb ──
       function updateNav(route) {
-        // Update active state
+        // Update active state — exact match first
         var items = document.querySelectorAll('.menu-item');
+        var exactMatch = false;
         for (var i = 0; i < items.length; i++) {
           var itemRoute = items[i].getAttribute('data-route');
-          items[i].classList.toggle('active', itemRoute === route);
+          var active = itemRoute === route;
+          items[i].classList.toggle('active', active);
+          if (active) exactMatch = true;
+        }
+
+        // Prefix-match fallback for parameterised sub-routes
+        // e.g. finance/invoices/abc-123 highlights finance/invoices/new (longest prefix wins)
+        if (!exactMatch) {
+          var bestLen = 0, bestEl = null;
+          for (var j = 0; j < items.length; j++) {
+            var ir = items[j].getAttribute('data-route') || '';
+            var base = ir.replace(/\/new$/, ''); // strip trailing /new for prefix compare
+            if (base && route.indexOf(base) === 0 && base.length > bestLen) {
+              bestLen = base.length;
+              bestEl = items[j];
+            }
+          }
+          if (bestEl) bestEl.classList.add('active');
         }
 
         // Auto-expand only the group containing the active route (collapse others)
         menuConfig.forEach(function (entry) {
           if (entry.type === 'group') {
-            var hasActive = entry.items.some(function (item) {return item.id === route;});
+            var hasActive = entry.items.some(function (item) {
+              var base = item.id.replace(/\/new$/, '');
+              return item.id === route || route.indexOf(base) === 0;
+            });
             entry.expanded = hasActive;
             var group = document.querySelector('[data-group="' + entry.id + '"]');
             if (group) group.classList.toggle('expanded', hasActive);
@@ -1264,12 +1302,23 @@
 
         if (!pageName) pageName = route.charAt(0).toUpperCase() + route.slice(1);
 
+        breadcrumb.textContent = '';
         if (groupName) {
-          breadcrumb.innerHTML = '<span>' + groupName + '</span>'
-            + '<i class="fa fa-chevron-right bc-separator"></i>'
-            + '<span class="bc-current">' + pageName + '</span>';
+          var groupSpan = document.createElement('span');
+          groupSpan.textContent = groupName;
+          var sep = document.createElement('i');
+          sep.className = 'fa fa-chevron-right bc-separator';
+          var pageSpan = document.createElement('span');
+          pageSpan.className = 'bc-current';
+          pageSpan.textContent = pageName;
+          breadcrumb.appendChild(groupSpan);
+          breadcrumb.appendChild(sep);
+          breadcrumb.appendChild(pageSpan);
         } else {
-          breadcrumb.innerHTML = '<span class="bc-current">' + pageName + '</span>';
+          var pageSpan = document.createElement('span');
+          pageSpan.className = 'bc-current';
+          pageSpan.textContent = pageName;
+          breadcrumb.appendChild(pageSpan);
         }
       }
 
@@ -1279,10 +1328,6 @@
 
         fetcher: function (api) {
           var url = api.url;
-          if (url && !/^https?:\/\//.test(url)) {
-            // Strip leading slash to avoid double-slash with API_BASE
-            url = API_BASE + url.replace(/^\//, '');
-          }
 
           // Convert AMIS pagination (page/perPage) to backend (offset/limit)
           var urlObj = new URL(url, window.location.origin);
@@ -1301,6 +1346,16 @@
 
           var method = (api.method || 'get').toLowerCase();
           var headers = Object.assign({'Content-Type': 'application/json'}, api.headers || {});
+
+          // Attach CSRF token for state-changing requests (double-submit cookie pattern)
+          if (method !== 'get' && method !== 'head' && method !== 'options') {
+            var csrfToken = document.cookie.split('; ').reduce(function (val, part) {
+              var kv = part.split('=');
+              return kv[0] === 'csrf_token' ? decodeURIComponent(kv[1]) : val;
+            }, '');
+            if (csrfToken) headers['X-Csrf-Token'] = csrfToken;
+          }
+
           var opts = {method: method, headers: headers};
 
           if (method !== 'get' && method !== 'head' && api.data) {
@@ -1312,6 +1367,11 @@
               // 204 No Content (DELETE success) — no body to parse
               if (res.status === 204) {
                 return {status: 0, msg: ''};
+              }
+              // Session expired — redirect to login
+              if (res.status === 401) {
+                window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
+                return Promise.reject(new Error('Session expired'));
               }
               if (!res.ok) {
                 // Try to parse error body for backend message
@@ -1339,7 +1399,6 @@
                     status: 0,
                     data: {
                       items: json.data,
-                      options: json.data,
                       count: json.meta.pagination.total_records
                     }
                   };
@@ -1354,12 +1413,18 @@
               return {status: 1, msg: 'Network error: ' + err.message};
             });
         },
+        // Intercept AMIS navigation so link-type actions use hash routing
+        // instead of full-page redirects. Handles both "/route" and "#route" targets.
+        jumpTo: function (to) {
+          var route = (to || '').replace(/^#/, '').replace(/^\//, '');
+          if (route) window.location.hash = '#' + route;
+        },
         isCancel: function () {return false;},
         notify: function (type, msg) {
           console.log('[' + type + ']', msg);
         },
         alert: function (msg) {
-          alert(msg);
+          amisEnv.notify('error', msg);
         },
         copy: function (text) {
           if (navigator.clipboard) navigator.clipboard.writeText(text);
@@ -1380,9 +1445,27 @@
         contentEl.innerHTML = '<div class="loading"><i class="fa fa-spinner fa-spin"></i>&nbsp; Loading...</div>';
 
         try {
-          var schema = await loader.load('pages/' + route + '.json');
+          var res = await fetch('/schema/' + route, {headers: {'Accept': 'application/json'}});
+
+          // Auth middleware may return 401 before the pipeline runs
+          if (res.status === 401 || res.status === 403) {
+            window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
+            return;
+          }
+
+          if (!res.ok) throw new Error('Schema not found: ' + route);
+
+          var envelope = await res.json();
+
+          // Handle auth error embedded in response body (middleware JSON format)
+          if (envelope.error === true || envelope.status === 401) {
+            window.location.href = '/ui/login?next=' + encodeURIComponent(window.location.pathname + window.location.hash);
+            return;
+          }
+
+          var schema = (envelope.status === 0 && envelope.data) ? envelope.data : envelope;
           contentEl.innerHTML = '';
-          currentInstance = amis.embed(contentEl, schema, {}, amisEnv);
+          currentInstance = amis.embed(contentEl, schema, {locale: 'en-US'}, amisEnv);
         } catch (error) {
           contentEl.innerHTML =
             '<div class="error-page">' +
@@ -1393,8 +1476,43 @@
         }
       }
 
+      // ── Sidebar Search Filter ──
+      function filterMenu(query) {
+        var q = query.trim().toLowerCase();
+        var menu = document.getElementById('sidebarMenu');
+        if (!q) {
+          // Restore normal render
+          renderMenu();
+          var route = window.location.hash.replace('#', '');
+          if (route) updateNav(route);
+          return;
+        }
+        // Show only matching items; expand groups that have matches
+        menu.querySelectorAll('.menu-item.top-level').forEach(function (el) {
+          var label = (el.getAttribute('data-tooltip') || '').toLowerCase();
+          el.style.display = label.indexOf(q) >= 0 ? '' : 'none';
+        });
+        menu.querySelectorAll('.menu-group').forEach(function (group) {
+          var hasMatch = false;
+          group.querySelectorAll('.menu-item').forEach(function (el) {
+            var label = (el.getAttribute('data-tooltip') || '').toLowerCase();
+            var match = label.indexOf(q) >= 0;
+            el.style.display = match ? '' : 'none';
+            if (match) hasMatch = true;
+          });
+          group.style.display = hasMatch ? '' : 'none';
+          if (hasMatch) {
+            group.classList.add('expanded');
+          }
+        });
+      }
+
       // ── Init ──
       renderMenu();
+      var searchInput = document.getElementById('sidebarSearch');
+      if (searchInput) {
+        searchInput.addEventListener('input', function () {filterMenu(this.value);});
+      }
       window.addEventListener('hashchange', navigate);
 
       if (!window.location.hash) {

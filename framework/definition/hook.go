@@ -6,19 +6,25 @@ import "context"
 type Op uint8
 
 const (
-	OpCreate Op = 1 << iota
+	OpRead Op = 1 << iota
+	OpCreate
 	OpUpdate
 	OpDelete
 )
 
 // OpAll is a convenience mask matching any operation.
-const OpAll = OpCreate | OpUpdate | OpDelete
+const OpAll = OpRead | OpCreate | OpUpdate | OpDelete
+
+// OpWrite matches create, update, delete (not read).
+const OpWrite = OpCreate | OpUpdate | OpDelete
 
 // Is reports whether op includes the given operation flag.
 func (o Op) Is(flag Op) bool { return o&flag != 0 }
 
 func (o Op) String() string {
 	switch o {
+	case OpRead:
+		return "read"
 	case OpCreate:
 		return "create"
 	case OpUpdate:
