@@ -1,0 +1,147 @@
+// Package workflow integrates EntityDefinition lifecycle hooks with Temporal.
+// It provides a HookFunc factory that enqueues a Temporal workflow signal or
+// start-workflow call whenever a matching mutation occurs, decoupling the
+// write path from async processing.
+package workflow
+
+import (
+	"context"
+	"fmt"
+
+	"go.temporal.io/sdk/client"
+
+	"awo.so/framework/definition"
+)
+
+// TriggerKind controls how the workflow is launched.
+type TriggerKind string
+
+const (
+	// TriggerSignal sends a signal to a running workflow identified by WorkflowID.
+	// If no running workflow matches, the signal is dropped (use TriggerSignalWithStart
+	// to avoid this).
+	TriggerSignal TriggerKind = "signal"
+
+	// TriggerSignalWithStart signals the workflow if running, or starts it if not.
+	TriggerSignalWithStart TriggerKind = "signal_with_start"
+
+	// TriggerStart always starts a new workflow execution.
+	TriggerStart TriggerKind = "start"
+)
+
+// TriggerConfig describes one workflow trigger attached to an entity.
+type TriggerConfig struct {
+	// Ops is the bitmask of operations that fire this trigger.
+	Ops definition.Op
+
+	// Kind controls how the Temporal client is called.
+	Kind TriggerKind
+
+	// WorkflowType is the registered Temporal workflow function name.
+	WorkflowType string
+
+	// TaskQueue is the Temporal task queue to route the workflow to.
+	TaskQueue string
+
+	// WorkflowIDFn derives the workflow ID from the mutation.
+	// For TriggerSignal / TriggerSignalWithStart this identifies the target run.
+	// For TriggerStart a unique run ID is appended automatically.
+	// If nil, defaults to "<entity>/<record-id>/<workflow-type>".
+	WorkflowIDFn func(m *definition.Mutation) string
+
+	// SignalName is the Temporal signal name (required for TriggerSignal and
+	// TriggerSignalWithStart).
+	SignalName string
+
+	// PayloadFn builds the signal/workflow input from the mutation.
+	// If nil, the entire mutation is passed as-is (serialised by Temporal's codec).
+	PayloadFn func(m *definition.Mutation) any
+}
+
+// Executor holds a Temporal client and issues workflow calls from hook invocations.
+type Executor struct {
+	client client.Client
+}
+
+// NewExecutor creates a workflow Executor backed by a Temporal client.
+func NewExecutor(c client.Client) *Executor {
+	return &Executor{client: c}
+}
+
+// Hook returns a definition.HookFunc that fires the configured workflow trigger.
+// Attach the returned HookFunc as an AfterHook (after_save, still in TX) so the
+// trigger only fires on successful commit.
+//
+// Important: Temporal calls here are made inside the write transaction context.
+// They are non-blocking (enqueue, not await). If Temporal is unavailable the
+// hook returns an error and the transaction rolls back — use AfterCommit hooks
+// (outside TX) for fire-and-forget semantics where rollback is undesirable.
+func (e *Executor) Hook(cfg TriggerConfig) definition.HookFunc {
+	return func(ctx context.Context, m *definition.Mutation) error {
+		if !cfg.Ops.Is(m.Op) {
+			return nil
+		}
+
+		workflowID := defaultWorkflowID(m, cfg)
+		payload := buildPayload(m, cfg)
+
+		switch cfg.Kind {
+		case TriggerStart:
+			opts := client.StartWorkflowOptions{
+				ID:        workflowID,
+				TaskQueue: cfg.TaskQueue,
+			}
+			_, err := e.client.ExecuteWorkflow(ctx, opts, cfg.WorkflowType, payload)
+			if err != nil {
+				return fmt.Errorf("workflow trigger start %s: %w", cfg.WorkflowType, err)
+			}
+
+		case TriggerSignal:
+			err := e.client.SignalWorkflow(ctx, workflowID, "", cfg.SignalName, payload)
+			if err != nil {
+				return fmt.Errorf("workflow trigger signal %s/%s: %w", workflowID, cfg.SignalName, err)
+			}
+
+		case TriggerSignalWithStart:
+			opts := client.StartWorkflowOptions{
+				ID:        workflowID,
+				TaskQueue: cfg.TaskQueue,
+			}
+			_, err := e.client.SignalWithStartWorkflow(ctx, workflowID, cfg.SignalName, payload, opts, cfg.WorkflowType, payload)
+			if err != nil {
+				return fmt.Errorf("workflow trigger signal-with-start %s/%s: %w", workflowID, cfg.SignalName, err)
+			}
+
+		default:
+			return fmt.Errorf("workflow trigger: unknown kind %q", cfg.Kind)
+		}
+
+		return nil
+	}
+}
+
+// ──────────────────────────────────────────────────────────────────
+// Helpers
+// ──────────────────────────────────────────────────────────────────
+
+func defaultWorkflowID(m *definition.Mutation, cfg TriggerConfig) string {
+	if cfg.WorkflowIDFn != nil {
+		return cfg.WorkflowIDFn(m)
+	}
+	var rec definition.Record = m.After
+	if rec == nil {
+		rec = m.Before
+	}
+	id := ""
+	if rec != nil {
+		id = rec.ID().String()
+	}
+	return fmt.Sprintf("%s/%s/%s", m.Op.String(), id, cfg.WorkflowType)
+}
+
+func buildPayload(m *definition.Mutation, cfg TriggerConfig) any {
+	if cfg.PayloadFn != nil {
+		return cfg.PayloadFn(m)
+	}
+	return m
+}
