@@ -88,55 +88,41 @@ Database coupling is one of the most common sources of long-term maintainability
 
 Awo defines all persistence through the `EntityRepository` interface. Framework consumers — hook implementations, workflow activities, service layer code — interact exclusively with this interface. No concrete database type appears in any position visible to framework consumers.
 
+The current persistence interface lives in `awo.so/framework/persistence` and is implemented by `awo.so/framework/persistence/pgstore`. The core contracts:
+
 ```go
-// `EntityRepository` is the persistence abstraction all framework consumers use.
-// Never import any concrete implementation type in code that uses this interface.
-package entity
+// Package: awo.so/framework/persistence
 
-import (
-    "context"
-    "time"
-)
-
-// `EntityRecord` is the unified return type for all entity operations.
-// Every record carries tenant_id, org_id, version, and audit metadata
-// regardless of whether it is a system entity or a custom entity.
-type EntityRecord struct {
-    ID       string
-    Type     string
-    TenantID string
-    OrgID    string
-    Fields   map[string]any
-    Meta     RecordMeta
+// EntityStore handles operations for one entity type within one tenant transaction.
+type EntityStore interface {
+    FindByID(ctx context.Context, id uuid.UUID) (definition.Record, error)
+    List(ctx context.Context, opts ListOptions) (Page, error)
+    Create(ctx context.Context, rec definition.MutableRecord) error
+    Update(ctx context.Context, rec definition.MutableRecord) error
+    Delete(ctx context.Context, id uuid.UUID) error
+    Exists(ctx context.Context, filter map[string]any) (bool, error)
+    BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
 }
 
-// RecordMeta holds the version and audit columns present on every
-// tenant-scoped table. The framework populates these automatically;
-// callers never set them directly.
-type RecordMeta struct {
-    Version   int64     // optimistic-lock counter, incremented on every UPDATE
-    CreatedAt time.Time
-    CreatedBy string    // actor ID of the user who created the record
-    UpdatedAt time.Time
-    UpdatedBy string    // actor ID of the user who last modified the record
-    DeletedAt *time.Time // non-nil for soft-deleted records
-    DeletedBy *string
+// TenantStore is the entry point: resolves an EntityStore for a given tenant + entity,
+// or opens a transaction scoping all operations to one tenant.
+type TenantStore interface {
+    ForEntity(ctx context.Context, tenantID uuid.UUID, entity string) (EntityStore, error)
+    WithTx(ctx context.Context, tenantID uuid.UUID, fn func(tx TenantTx) error) error
 }
 
-type EntityRepository interface {
-    Get(ctx context.Context, entityType, id string) (*EntityRecord, error)
-    Query(ctx context.Context, q EntityQuery) ([]*EntityRecord, error)
-    Create(ctx context.Context, entityType string, fields map[string]any) (*EntityRecord, error)
-    Update(ctx context.Context, entityType, id string, fields map[string]any, expectedVersion int64) (*EntityRecord, error)
-    Delete(ctx context.Context, entityType, id string) error
-    WithTx(ctx context.Context, fn func(tx `EntityRepository`) error) error
-    Aggregate(ctx context.Context, q AggregateQuery) (*AggregateResult, error)
+// TenantTx is a transactional TenantStore. All EntityStore instances returned
+// from ForEntity within the same TenantTx share one database transaction.
+type TenantTx interface {
+    ForEntity(entity string) EntityStore
 }
 ```
 
-The `expectedVersion` parameter on `Update` enforces optimistic concurrency control: if the record's current version does not match the caller's expectation, the update is rejected with `ErrVersionConflict`. This prevents lost updates under concurrent modification without requiring the caller to hold a database lock. The framework increments the version column atomically inside the update path.
+`definition.Record` and `definition.MutableRecord` are interfaces exposing field access via `Get(field string) any` and `Set(field string, value any)`. IDs are `uuid.UUID`. The `pgstore` implementation sets the RLS tenant context (`set_tenant_context(tenantID)`) on every connection or transaction before executing any query.
 
-The interface contract specifies semantics, not implementation. `WithTx` guarantees atomicity; whether that comes from a SQL transaction, an optimistic lock chain, or a saga compensator is an implementation detail. `Aggregate` returns computed summaries; whether those come from a SQL `GROUP BY` or a materialized view is equally irrelevant to the caller.
+> **Note on roadmap:** Future iterations will add optimistic concurrency control (`expectedVersion` on `Update`) and richer `Aggregate` / cross-entity query support. These are not in the current implementation. See Part VIII for the full planned interface contract.
+
+The interface contract specifies semantics, not implementation. `WithTx` guarantees atomicity. `BulkUpdate` batches updates without loading records individually. The caller never imports `pgstore` — only the interface types from `persistence` and the record types from `definition`.
 
 ### 1.2.5 Workflow-first ERP — why business processes belong in Temporal, not in request handlers
 
@@ -219,144 +205,111 @@ func InvoiceSubmissionWorkflow(ctx workflow.Context, input InvoiceSubmissionInpu
 
 ### 1.2.6 Multi-tenancy as a first-class concern — shared tables with Row-Level Security
 
-Awo uses a shared-table, shared-schema model with PostgreSQL Row-Level Security (RLS) policies to enforce tenant and organizational data isolation. Every table that stores tenant-specific data carries a `tenant_id` column and an `org_id` column. RLS policies on each table ensure that a database session can only read and write rows belonging to the tenant and organizational scope set on that session. Isolation is enforced by the database engine, not by a `WHERE` clause the application must remember to include in every query.
+Awo uses a shared-table, shared-schema model with PostgreSQL Row-Level Security (RLS) policies to enforce tenant data isolation. Every table that stores tenant-specific data carries a `tenant_id` column. RLS policies on each table ensure that a database session can only read and write rows belonging to the tenant set on that session. Isolation is enforced by the database engine, not by a `WHERE` clause the application must remember to include in every query.
 
 **Why shared tables with RLS rather than schema-per-tenant**
 
 Schema-per-tenant isolation is intuitive and structurally clean: a query running against the wrong schema simply fails at the database level. Its operational costs, however, compound with tenant count. Schema migrations must be applied to every tenant schema individually; connection pools must be partitioned or routed by schema; cross-tenant analytics require dynamic schema stitching; and the PostgreSQL system catalog grows with the number of schemas and their contained objects, creating real catalog contention at scale.
 
-Shared-table RLS imposes isolation through policy rather than namespace. The operational benefits are material: a migration is a single DDL statement run once; a connection pool is shared across all tenants without per-tenant routing; cross-tenant analytics run as straightforward queries with elevated privileges; and the catalog size is bounded by the number of tables, not the number of tenants. The isolation guarantee is equivalent — a session whose `tenant_id` session variable is set to `t_01H9XYZ` cannot read rows where `tenant_id = 't_02H8WXY'` even if it tries — because the database evaluates the policy before the query touches any rows.
+Shared-table RLS imposes isolation through policy rather than namespace. The operational benefits are material: a migration is a single DDL statement run once; a connection pool is shared across all tenants without per-tenant routing; cross-tenant analytics run as straightforward queries with elevated privileges; and the catalog size is bounded by the number of tables, not the number of tenants. The isolation guarantee is equivalent — a session whose `tenant_id` session variable is set to the correct UUID cannot read another tenant's rows even if it tries — because the database evaluates the RLS policy before the query touches any rows.
 
-**The `org_id` column and organizational hierarchy**
+**Organizational scoping within a tenant**
 
-`org_id` represents a node in the tenant's organizational hierarchy — a company, division, branch, department, or cost centre, depending on how the tenant has structured their organization. For platform users (Awo administrators and framework-level service accounts), `org_id` is not evaluated; platform users have cross-organization visibility within their authorized scope. For tenant users, the framework enforces that a user can only access records belonging to organizations at or below their assigned node in the hierarchy.
+Within a tenant, records may be scoped to a company (`company_id`) or further to a division (`company_id` + `division_id`), reflecting the `org.ScopeLevel` enum in the framework's Go code:
 
-This means data access clearance is modelled through the organizational tree, not only through role assignments. A finance manager assigned to the East Africa Division node can read invoices belonging to Kenya Branch and Uganda Branch (children of East Africa Division) but cannot read invoices belonging to West Africa Division (a sibling node). Role permissions determine *what actions* a user may take; organizational hierarchy determines *which records* those actions may be applied to.
+- `ScopeLevelGlobal` — no `tenant_id`; shared reference data (currencies, countries)
+- `ScopeLevelTenant` — `tenant_id` only; visible across all companies (users, roles, feature flags)
+- `ScopeLevelCompany` — `tenant_id` + `company_id`; company-specific (GL accounts, employees)
+- `ScopeLevelDivision` — `tenant_id` + `company_id` + `division_id`; division-specific (sales targets)
+
+Company and division columns are `uuid` foreign keys to the `org_nodes` table and are `NULL` for entities whose `OrgScope` is at a higher level. The `AllowWithinOrgScope` privacy policy (see §9) enforces that a viewer can only access records within their assigned organizational scope.
+
+Role permissions determine *what actions* a user may take; organizational scope determines *which records* those actions may be applied to.
 
 **Standard columns on every tenant-scoped table**
 
-Every table that stores tenant-specific data must include the following columns. The framework's migration tooling enforces their presence and will refuse to register a table missing any of them.
+Every table that stores tenant-specific data must include the following columns:
 
 ```sql
 -- Columns required on every tenant-scoped table.
--- The framework enforces these at migration time; do not omit them.
+-- EntityDefinition.OrgScope determines which of company_id/division_id are present.
 
-tenant_id    TEXT        NOT NULL,  -- Identifies the tenant. Matches the RLS session variable.
-org_id       TEXT        NOT NULL,  -- Identifies the organizational node that owns this record.
-                                    -- For platform-level records, set to the sentinel value 'platform'.
+tenant_id    uuid        NOT NULL REFERENCES tenants(id),
+-- company_id and division_id present only when OrgScope >= Company/Division:
+-- company_id   uuid    REFERENCES org_nodes(id),
+-- division_id  uuid    REFERENCES org_nodes(id),
 
--- Optimistic concurrency and soft-delete
-version      BIGINT      NOT NULL DEFAULT 1,       -- Incremented on every UPDATE. Used for optimistic lock checks.
-deleted_at   TIMESTAMPTZ,                          -- NULL = live record. Non-NULL = soft-deleted.
-deleted_by   TEXT,                                 -- Actor ID of the user who performed the soft delete.
+-- Soft-delete
+deleted_at   timestamptz,
+deleted_by   uuid REFERENCES users(id),
 
 -- Audit trail
-created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-created_by   TEXT        NOT NULL,                 -- Actor ID (user or service account) that created the record.
-updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-updated_by   TEXT        NOT NULL,                 -- Actor ID that last modified the record.
+created_at   timestamptz NOT NULL DEFAULT now(),
+created_by   uuid        NOT NULL REFERENCES users(id),
+updated_at   timestamptz NOT NULL DEFAULT now(),
+updated_by   uuid        NOT NULL REFERENCES users(id),
 
--- RLS policy anchor (applied to every tenant-scoped table)
--- The policy reads the session variable set by the connection acquisition logic.
--- No query should ever need to filter on tenant_id or org_id explicitly.
+-- updated_at is maintained by a trigger; do not set it manually.
 ```
 
-A representative table definition for the `invoices` system entity illustrates how these columns compose with business columns:
+A representative table definition for the `invoices` system entity:
 
 ```sql
 CREATE TABLE invoices (
-    -- Identity
-    id           TEXT PRIMARY KEY,
+    id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    -- Tenant and org isolation (required)
-    tenant_id    TEXT        NOT NULL,
-    org_id       TEXT        NOT NULL,
+    -- Tenant + company scoping (Finance entities are company-scoped)
+    tenant_id       uuid        NOT NULL REFERENCES tenants(id),
+    company_id      uuid        NOT NULL REFERENCES org_nodes(id),
 
     -- Business columns
-    invoice_no   TEXT        NOT NULL,
-    customer_id  TEXT        NOT NULL REFERENCES customers(id),
-    total_kes    NUMERIC(18, 2) NOT NULL CHECK (total_kes >= 0),
-    status       TEXT        NOT NULL DEFAULT 'DRAFT',
-    custom_fields JSONB      NOT NULL DEFAULT '{}',
+    series          varchar(50) NOT NULL,
+    customer_id     uuid        NOT NULL REFERENCES customers(id),
+    total_kes       numeric(20,4) NOT NULL CHECK (total_kes >= 0),
+    status          varchar(20) NOT NULL DEFAULT 'DRAFT',
+    custom_fields   jsonb       NOT NULL DEFAULT '{}',
 
-    -- Versioning and soft-delete
-    version      BIGINT      NOT NULL DEFAULT 1,
-    deleted_at   TIMESTAMPTZ,
-    deleted_by   TEXT,
+    -- Soft-delete
+    deleted_at      timestamptz,
+    deleted_by      uuid REFERENCES users(id),
 
     -- Audit
-    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    created_by   TEXT        NOT NULL,
-    updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_by   TEXT        NOT NULL
+    created_at      timestamptz NOT NULL DEFAULT now(),
+    created_by      uuid        NOT NULL REFERENCES users(id),
+    updated_at      timestamptz NOT NULL DEFAULT now(),
+    updated_by      uuid        NOT NULL REFERENCES users(id)
 );
 
--- RLS: enable and force for all roles including table owner
 ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices FORCE ROW LEVEL SECURITY;
 
--- SELECT policy: tenant isolation via session variable
 CREATE POLICY invoices_tenant_isolation ON invoices
-    FOR ALL
-    USING (
-        tenant_id = current_setting('awo.tenant_id', true)
-        AND (
-            -- Platform users bypass org filtering
-            current_setting('awo.is_platform_user', true) = 'true'
-            OR org_id = ANY(
-                -- org_ids returns the current user's accessible org subtree
-                string_to_array(current_setting('awo.accessible_org_ids', true), ',')
-            )
-        )
-        AND deleted_at IS NULL  -- soft-deleted rows are invisible by default
-    );
+    USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+CREATE TRIGGER invoices_updated_at
+    BEFORE UPDATE ON invoices
+    FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
 
 **Tenant context flows through the session, not the query**
 
-Tenant context flows through the system via the request context. The middleware layer resolves the tenant from the HTTP host header (subdomain routing) or `X-Tenant-ID` header, validates the session, and injects tenant and organizational identity into the context before the request reaches any handler. The `EntityRepository` implementation reads these values from the context to set the correct PostgreSQL session variables before executing any query. Tenant and org isolation are not parameters you pass to every database call — they are structural properties of the session.
+The middleware layer resolves the tenant from the HTTP host header (subdomain routing) or `X-Awo-Tenant` header, validates the session, and calls `set_tenant_context(tenant_id)` on the acquired PostgreSQL connection before any query runs. No query should ever need to filter `tenant_id` explicitly — RLS enforces it at the database level.
 
 ```go
-// TenantContext carries all identity required to scope a database session.
-// The `EntityRepository` sets the corresponding PostgreSQL session variables
-// (awo.tenant_id, awo.org_id, awo.accessible_org_ids, awo.is_platform_user)
-// on every connection acquired from the pool.
-package tenancy
-
-import (
-    "context"
-    "fmt"
-)
-
-type contextKey struct{}
-
-// TenantContext is resolved once per request by the middleware layer
-// and injected into the request context. All downstream code reads
-// tenant identity from here; nothing constructs a TenantContext manually.
-type TenantContext struct {
-    TenantID         string   // opaque tenant identifier, e.g. "t_01H9XYZ"
-    OrgID            string   // the organizational node this session is scoped to
-    AccessibleOrgIDs []string // this node and all descendants in the org tree
-    IsPlatformUser   bool     // true for Awo admins; bypasses org-level filtering
-    Locale           string   // BCP-47 language tag, e.g. "sw" for Swahili
-    Timezone         string   // IANA tz database name; "Africa/Nairobi" for Kenya
-}
-
-func WithTenant(ctx context.Context, t TenantContext) context.Context {
-    return context.WithValue(ctx, contextKey{}, t)
-}
-
-func TenantFromContext(ctx context.Context) (TenantContext, error) {
-    t, ok := ctx.Value(contextKey{}).(TenantContext)
-    if !ok {
-        return TenantContext{}, fmt.Errorf("tenancy: no tenant in context; " +
-            "ensure this code is called within a tenant-scoped request or activity")
-    }
-    return t, nil
+// ViewerContext (awo.so/framework/definition) carries the resolved
+// tenant and org scope for each request. The pgstore implementation
+// calls set_tenant_context() on connection acquisition.
+type ViewerContext interface {
+    ActorID()   string      // user UUID
+    TenantID()  string      // tenant UUID
+    CompanyID() string      // company UUID, empty if tenant-wide
+    DivisionID() string     // division UUID, empty if not division-scoped
+    OrgScope()  org.Scope   // full parsed scope for hierarchy checks
+    HasRole(role string) bool
+    IsSystem() bool
 }
 ```
 
-Custom entity definitions are stored in the shared `entity_definitions` table, filtered by `tenant_id` during tenant boot. When a request arrives for a tenant whose EntityRegistry is not yet populated, the boot sequence loads all custom entity definitions belonging to that tenant and registers them with the `EntityResolver`. Tenant-specific customizations are available within the first request from that tenant, without a global process restart.
+Custom entity definitions are stored in the shared `entity_definitions` table, filtered by `tenant_id` during tenant boot. When a request arrives for a tenant whose EntityRegistry is not yet populated, the boot sequence loads all custom entity definitions for that tenant and registers them with the `EntityResolver`. Tenant-specific customizations are available within the first request from that tenant, without a global process restart.
 
 ### 1.2.7 Server-driven UI as a force multiplier — eliminating the frontend bottleneck
 

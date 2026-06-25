@@ -1,5 +1,11 @@
 # The EntityDefinition — The Central Abstraction
 
+> **Package naming note:** The live implementation uses `awo.so/framework/definition` with the type `definition.EntityDefinition` and builder functions like `definition.Field("name").OfType(definition.FieldTypeData)`. This chapter uses conceptual names (`entity.SystemDefinition`, `entity.FieldDef`, `entity.HookSet`) for readability. Where the conceptual names differ from the actual package, the actual package is authoritative. See the source at `framework/definition/` for current type names and builder APIs.
+
+> **Registry note:** The current implementation uses package-level functions `definition.Register(def)`, `definition.Lookup(name)`, and `definition.All()` rather than a passed `*Registry` argument. The `Init(registry)` pattern shown in some examples is aspirational (planned for multi-registry support). The module-level registration call is `definition.Register(&myEntityDef)` in an `init()` function or explicit startup call.
+
+---
+
 ## 2.1 Why EntityDefinition Is the Central Primitive
 
 ### 2.1.1 What the framework does when it sees an EntityDefinition
@@ -51,7 +57,7 @@ package finance
 
 import (
     "time"
-    "awo.so/internal/entity"
+    "awo.so/framework/definition" // actual package; "entity" used as alias below for readability
 )
 
 // InvoiceDefinition declares the Invoice system entity.
@@ -383,19 +389,13 @@ The registry holds: the raw EntityDefinition structs, the compiled Casbin policy
 System entities are registered by module `init()` functions or by explicit registration calls in the application's startup sequence. The registration function validates the EntityDefinition, compiles the permission policies, generates the route handlers, and registers the dispatch entry in the EntityResolver. All of this happens before the Fiber HTTP server starts accepting requests.
 
 ```go
-// Register is called from the finance module's init function.
+// Register is called from the finance module's init function (or Bootstrap call).
 // All system entity registrations happen before main() starts the HTTP server.
-func Register(registry *entity.Registry) error {
-    if err := registry.RegisterSystem(InvoiceDefinition); err != nil {
-        return fmt.Errorf("finance: register invoice: %w", err)
-    }
-    if err := registry.RegisterSystem(InvoiceLineDefinition); err != nil {
-        return fmt.Errorf("finance: register invoice_line: %w", err)
-    }
-    if err := registry.RegisterSystem(JournalEntryDefinition); err != nil {
-        return fmt.Errorf("finance: register journal_entry: %w", err)
-    }
-    return nil
+// Current API: definition.Register() is a package-level function, not a method.
+func init() {
+    definition.Register(&InvoiceDefinition)
+    definition.Register(&InvoiceLineDefinition)
+    definition.Register(&JournalEntryDefinition)
 }
 ```
 
