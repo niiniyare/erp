@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"awo.so/framework/definition"
+	"awo.so/framework/org"
 )
 
 // File is one half of a migration pair.
@@ -86,7 +87,7 @@ func header(b *strings.Builder, def *definition.EntityDefinition, seq int) {
 -- Generated: %s
 -- Entity:    %s  (module: %s)
 -- Table:     %s
--- Global:    %v  SoftDelete: %v  Audited: %v
+-- OrgScope:  %s  SoftDelete: %v  Audited: %v
 -- --------------------------------------------------------------------
 
 `,
@@ -95,7 +96,7 @@ func header(b *strings.Builder, def *definition.EntityDefinition, seq int) {
 		time.Now().UTC().Format("2006-01-02"),
 		def.Name, def.Module,
 		def.TableName(),
-		def.IsGlobal(), def.SoftDelete, def.Audited,
+		effectiveScope(def), def.SoftDelete, def.Audited,
 	)
 }
 
@@ -107,6 +108,13 @@ func createTable(b *strings.Builder, def *definition.EntityDefinition) {
 
 	if !def.IsGlobal() {
 		fmt.Fprintf(b, "  tenant_id  UUID        NOT NULL REFERENCES tenants(id) ON DELETE CASCADE,\n")
+	}
+	if def.IsUnitScoped() {
+		// org_unit_id scopes the record to a node in the org_units tree.
+		// Access control is tree-based: viewer's unit must be an ancestor-or-equal
+		// of this unit. RLS enforces tenant isolation; org-scope is enforced in
+		// the query layer (WHERE org_unit_id = ANY(subtree_descendants)).
+		fmt.Fprintf(b, "  org_unit_id UUID       NOT NULL REFERENCES org_units(uuid) ON DELETE RESTRICT,\n")
 	}
 
 	// Custom fields.
@@ -231,6 +239,15 @@ func indexes(b *strings.Builder, def *definition.EntityDefinition) {
 			table, table)
 	}
 
+	// org_unit_id index — subtree list queries use WHERE org_unit_id = ANY($n).
+	if def.IsUnitScoped() {
+		fmt.Fprintf(b, "CREATE INDEX IF NOT EXISTS %s_org_unit_id_idx ON %s (org_unit_id);\n",
+			table, table)
+		// Composite index for the common tenant + unit filter pattern.
+		fmt.Fprintf(b, "CREATE INDEX IF NOT EXISTS %s_tenant_org_unit_idx ON %s (tenant_id, org_unit_id);\n",
+			table, table)
+	}
+
 	// soft-delete index (WHERE deleted_at IS NULL is on every list query).
 	if def.SoftDelete {
 		fmt.Fprintf(b, "CREATE INDEX IF NOT EXISTS %s_active_idx ON %s (tenant_id) WHERE deleted_at IS NULL;\n",
@@ -344,6 +361,14 @@ func generateDown(def *definition.EntityDefinition) string {
 // ──────────────────────────────────────────────────────────────────
 // Helpers
 // ──────────────────────────────────────────────────────────────────
+
+// effectiveScope returns the human-readable OrgScope for the migration header comment.
+func effectiveScope(def *definition.EntityDefinition) org.ScopeLevel {
+	if def.OrgScope == "" {
+		return org.ScopeLevelTenant
+	}
+	return def.OrgScope
+}
 
 // pgIdent returns the column name. Panics on unsafe identifiers (same guard as sqlbuilder).
 func pgIdent(name string) string {
