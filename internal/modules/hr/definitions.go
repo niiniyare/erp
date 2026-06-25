@@ -65,7 +65,7 @@ var Employee = &definition.EntityDefinition{
 	Audited:    true,
 	Fields: []*definition.FieldDef{
 		definition.Field("person_id").OfType(definition.FieldTypeLink).WithLabel("Person").
-			RequiredField().ImmutableField().LinksTo("person", "id"),
+			RequiredField().ImmutableField().LinksTo("person"),
 		definition.Field("employee_number").OfType(definition.FieldTypeSmallText).WithLabel("Employee #").
 			RequiredField().UniqueField().SearchableField().WithMaxLen(30),
 		definition.Field("position_title").OfType(definition.FieldTypeSmallText).WithLabel("Position").
@@ -77,7 +77,7 @@ var Employee = &definition.EntityDefinition{
 		definition.Field("hire_date").OfType(definition.FieldTypeDate).WithLabel("Hire Date").RequiredField(),
 		definition.Field("termination_date").OfType(definition.FieldTypeDate).WithLabel("Termination Date"),
 		definition.Field("manager_id").OfType(definition.FieldTypeLink).WithLabel("Manager").
-			LinksTo("employee", "id"),
+			LinksTo("employee"),
 		definition.Field("security_level").OfType(definition.FieldTypeInt).WithLabel("Security Level").
 			WithDefault(1),
 	},

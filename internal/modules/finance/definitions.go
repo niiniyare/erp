@@ -73,7 +73,7 @@ var Account = &definition.EntityDefinition{
 		definition.Field("current_balance").OfType(definition.FieldTypeCurrency).WithLabel("Current Balance").
 			ReadOnlyField(),
 		definition.Field("parent_account_id").OfType(definition.FieldTypeLink).WithLabel("Parent Account").
-			LinksTo("finance_account", "id"),
+			LinksTo("finance_account"),
 	},
 	Policies: []definition.PolicyDef{
 		definition.Policy(definition.OpAll, allowFinanceRead),
@@ -107,7 +107,7 @@ var AccountingPeriod = &definition.EntityDefinition{
 	Module: "Finance",
 	Fields: []*definition.FieldDef{
 		definition.Field("fiscal_year_id").OfType(definition.FieldTypeLink).WithLabel("Fiscal Year").
-			RequiredField().LinksTo("finance_fiscal_year", "id"),
+			RequiredField().LinksTo("finance_fiscal_year"),
 		definition.Field("period_number").OfType(definition.FieldTypeInt).WithLabel("Period #").RequiredField(),
 		definition.Field("name").OfType(definition.FieldTypeSmallText).WithLabel("Name").
 			RequiredField().WithMaxLen(50),
@@ -134,7 +134,7 @@ var CostCenter = &definition.EntityDefinition{
 			RequiredField().SearchableField().WithMaxLen(150),
 		definition.Field("description").OfType(definition.FieldTypeLongText).WithLabel("Description"),
 		definition.Field("parent_id").OfType(definition.FieldTypeLink).WithLabel("Parent").
-			LinksTo("finance_cost_center", "id"),
+			LinksTo("finance_cost_center"),
 		definition.Field("is_active").OfType(definition.FieldTypeBool).WithLabel("Active").WithDefault(true),
 	},
 	Policies: []definition.PolicyDef{
@@ -205,7 +205,7 @@ var Budget = &definition.EntityDefinition{
 			RequiredField().WithMaxLen(200),
 		definition.Field("description").OfType(definition.FieldTypeLongText).WithLabel("Description"),
 		definition.Field("fiscal_year_id").OfType(definition.FieldTypeLink).WithLabel("Fiscal Year").
-			RequiredField().LinksTo("finance_fiscal_year", "id"),
+			RequiredField().LinksTo("finance_fiscal_year"),
 		definition.Field("budget_type").OfType(definition.FieldTypeSelect).WithLabel("Type").
 			WithOptions("OPERATIONAL", "CAPITAL", "CASH_FLOW").WithDefault("OPERATIONAL"),
 		definition.Field("status").OfType(definition.FieldTypeSelect).WithLabel("Status").
