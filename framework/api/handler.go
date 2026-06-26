@@ -13,6 +13,7 @@ import (
 	"awo.so/framework/org"
 	"awo.so/framework/persistence"
 	"awo.so/framework/privacy"
+	"awo.so/framework/validate"
 )
 
 // ViewerFromCtx extracts a ViewerContext from a Fiber request context.
@@ -204,6 +205,13 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
+	if verrs := validate.Run(h.def, rec); verrs != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"status": fiber.StatusUnprocessableEntity,
+			"errors": verrs,
+		})
+	}
+
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
@@ -237,7 +245,7 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	var result map[string]any
-	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
+	txErr := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
 		before, err := es.FindByID(c.Context(), id)
@@ -261,6 +269,9 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		if err := h.hooks.RunBeforeValidate(c.Context(), h.def, mut); err != nil {
 			return err
 		}
+		if verrs := validate.Run(h.def, rec); verrs != nil {
+			return verrs
+		}
 		if err := h.hooks.RunBefore(c.Context(), h.def, mut); err != nil {
 			return err
 		}
@@ -272,8 +283,16 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		}
 		result = recordToMap(rec, h.def)
 		return nil
-	}); err != nil {
-		return fiberErr(err)
+	})
+	if txErr != nil {
+		var verrs validate.ValidationErrors
+		if errors.As(txErr, &verrs) {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"status": fiber.StatusUnprocessableEntity,
+				"errors": verrs,
+			})
+		}
+		return fiberErr(txErr)
 	}
 
 	return c.JSON(result)

@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"awo.so/framework/definition"
+	"awo.so/framework/filter"
 )
 
 // SelectOne builds a SELECT statement that fetches a single record by primary key.
@@ -25,7 +26,8 @@ func SelectOne(def *definition.EntityDefinition) string {
 
 // SelectOpts controls filtering, search, ordering, and org-unit scoping for SelectList.
 type SelectOpts struct {
-	Filter     map[string]any
+	// Predicate is an optional composable filter tree (preferred over legacy Filter).
+	Predicate  *filter.Filter
 	Search     string
 	OrderBy    string
 	Ascending  bool
@@ -35,17 +37,22 @@ type SelectOpts struct {
 }
 
 // SelectList builds a SELECT + COUNT(*) OVER() query with optional WHERE clause.
-// Placeholder numbering starts at 1; caller appends argument values in order.
 //
-// Returns (query, placeholderCount).
-func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, int) {
+// Returns (query, filterArgs) where filterArgs holds all bound values EXCEPT
+// limit and offset, which the caller appends:
+//
+//	query, args := sqlbuilder.SelectList(def, opts)
+//	args = append(args, limit, offset)
+//	rows, err := q.Query(ctx, query, args...)
+func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []any) {
 	cols := columnList(def)
 	var sb strings.Builder
+	var args []any
 	idx := 1
 
 	sb.WriteString(fmt.Sprintf("SELECT %s, COUNT(*) OVER() AS __total FROM %s", cols, def.TableName()))
 
-	clauses, idx := whereClauses(def, opts, idx)
+	clauses, args, idx := whereClauses(def, opts, idx)
 	if len(clauses) > 0 {
 		sb.WriteString(" WHERE ")
 		sb.WriteString(strings.Join(clauses, " AND "))
@@ -64,9 +71,8 @@ func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, int)
 	}
 
 	sb.WriteString(fmt.Sprintf(" LIMIT $%d OFFSET $%d", idx, idx+1))
-	idx += 2
 
-	return sb.String(), idx - 1
+	return sb.String(), args
 }
 
 // Insert builds an INSERT statement for the given mutable field names.
@@ -261,30 +267,39 @@ func scopeColumns(def *definition.EntityDefinition) []string {
 }
 
 // whereClauses builds AND clauses for filters, org-unit scoping, search, and
-// soft-delete. Returns clauses and the updated placeholder index.
+// soft-delete.
 //
-// Placeholder order matches the args slice the caller must build:
-//  1. filter values (one per Filter entry)
-//  2. org_unit_id array (one placeholder, type []uuid.UUID)
-//  3. search string (one placeholder, ILIKE applied across Searchable fields)
-//  4. limit, offset (appended by SelectList after this call)
-func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, int) {
+// Placeholder order:
+//  1. soft-delete guard (no placeholder)
+//  2. Predicate filter tree
+//  3. org_unit_id = ANY($n) (one placeholder, []uuid.UUID)
+//  4. search ILIKE (one placeholder per searchable field — OR-grouped)
+//  5. LIMIT / OFFSET appended by SelectList
+//
+// Returns (clauses, args, nextIdx).
+func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, []any, int) {
 	var clauses []string
+	var args []any
 	idx := startIdx
 
 	if def.SoftDelete {
 		clauses = append(clauses, "deleted_at IS NULL")
 	}
 
-	for field := range opts.Filter {
-		clauses = append(clauses, fmt.Sprintf("%s = $%d", pgIdent(field), idx))
-		idx++
+	// Composable filter predicate.
+	if opts.Predicate != nil && opts.Predicate.Kind != filter.KindNone {
+		clause, filterArgs, nextIdx := ToSQL(opts.Predicate, idx)
+		if clause != "" {
+			clauses = append(clauses, clause)
+			args = append(args, filterArgs...)
+			idx = nextIdx
+		}
 	}
 
 	if len(opts.OrgUnitIDs) > 0 {
-		// Restrict to viewer's org subtree. pgx encodes []uuid.UUID as a Postgres
-		// UUID array, so ANY($n) works directly without IN (…) expansion.
+		// pgx encodes []uuid.UUID as a Postgres UUID array; ANY($n) works directly.
 		clauses = append(clauses, fmt.Sprintf("org_unit_id = ANY($%d)", idx))
+		args = append(args, opts.OrgUnitIDs)
 		idx++
 	}
 
@@ -297,11 +312,12 @@ func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx in
 		}
 		if len(searchParts) > 0 {
 			clauses = append(clauses, "("+strings.Join(searchParts, " OR ")+")")
+			args = append(args, "%"+opts.Search+"%")
 			idx++
 		}
 	}
 
-	return clauses, idx
+	return clauses, args, idx
 }
 
 // pgIdent quotes an identifier to prevent SQL injection.

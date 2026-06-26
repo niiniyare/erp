@@ -12,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"awo.so/framework/definition"
+	"awo.so/framework/naming"
 	"awo.so/framework/persistence"
 	"awo.so/framework/persistence/sqlbuilder"
 )
@@ -53,30 +54,6 @@ func (s *EntityStore) FindByID(ctx context.Context, id uuid.UUID) (definition.Re
 }
 
 func (s *EntityStore) List(ctx context.Context, opts persistence.ListOptions) (persistence.Page, error) {
-	// Build args slice: filter values, search string, limit, offset.
-	var args []any
-
-	// We pass the opts through; sqlbuilder.SelectList needs the filter map.
-	// For now we use a simplified path: build the query, collect args in field order.
-	filterFields := make([]string, 0, len(opts.Filter))
-	for k := range opts.Filter {
-		filterFields = append(filterFields, k)
-	}
-
-	sbOpts := buildSelectOpts(opts)
-	query, _ := sqlbuilder.SelectList(s.def, sbOpts)
-
-	// Collect args matching whereClauses placeholder order:
-	// 1. filter values, 2. OrgUnitIDs array, 3. search string.
-	for _, k := range filterFields {
-		args = append(args, opts.Filter[k])
-	}
-	if len(opts.OrgUnitIDs) > 0 {
-		args = append(args, opts.OrgUnitIDs)
-	}
-	if opts.Search != "" {
-		args = append(args, "%"+opts.Search+"%")
-	}
 	limit := opts.Limit
 	if limit <= 0 {
 		limit = 50
@@ -84,7 +61,13 @@ func (s *EntityStore) List(ctx context.Context, opts persistence.ListOptions) (p
 	if limit > 500 {
 		limit = 500
 	}
-	args = append(args, limit, opts.Offset)
+
+	sbOpts := buildSelectOpts(opts)
+	query, filterArgs := sqlbuilder.SelectList(s.def, sbOpts)
+
+	// filterArgs come from the predicate + orgUnitIDs + search, in that order.
+	// Append limit and offset as the final two placeholders.
+	args := append(filterArgs, limit, opts.Offset) //nolint:gocritic
 
 	rows, err := s.q.Query(ctx, query, args...)
 	if err != nil {
@@ -115,6 +98,13 @@ func (s *EntityStore) List(ctx context.Context, opts persistence.ListOptions) (p
 }
 
 func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) error {
+	// Stamp naming series before building the INSERT so the generated value is
+	// included in the persisted row. Uses the same connection/transaction as
+	// the INSERT — rolls back atomically on failure.
+	if err := naming.Stamp(s.execOneRow(ctx), s.tenantID, s.def, rec); err != nil {
+		return err
+	}
+
 	fields := fieldNames(s.def)
 	query, cols := sqlbuilder.Insert(s.def, fields)
 
@@ -353,6 +343,13 @@ func dereferenceFieldPtrs(def *definition.EntityDefinition, rec *mapRecord, ptrs
 // Internal helpers
 // ──────────────────────────────────────────────────────────────────
 
+// execOneRow returns a naming.ExecOneRow backed by this store's Querier and ctx.
+func (s *EntityStore) execOneRow(ctx context.Context) naming.ExecOneRow {
+	return func(sql string, args []any, dest []any) error {
+		return s.q.QueryRow(ctx, sql, args...).Scan(dest...)
+	}
+}
+
 func fieldNames(def *definition.EntityDefinition) []string {
 	names := make([]string, len(def.Fields))
 	for i, f := range def.Fields {
@@ -391,7 +388,7 @@ func mapPgError(err error) error {
 
 func buildSelectOpts(opts persistence.ListOptions) sqlbuilder.SelectOpts {
 	return sqlbuilder.SelectOpts{
-		Filter:     opts.Filter,
+		Predicate:  opts.Predicate,
 		Search:     opts.Search,
 		OrderBy:    opts.OrderBy,
 		Ascending:  opts.Ascending,

@@ -97,6 +97,13 @@ type EntityDefinition struct {
 	// The audit log records actor, tenant/company/division, timestamp, and a
 	// JSON diff of changed fields.
 	Audited bool
+
+	// NamingSeries configures automatic document numbering for this entity.
+	// When non-nil, the naming package stamps a generated series value onto
+	// the target field during Create (before RunBefore hooks).
+	// Example: &NamingSeries{Field: "name", Prefix: "INV-", Padding: 5}
+	// produces "INV-00001", "INV-00002", …
+	NamingSeries *NamingSeriesDef
 }
 
 // Validation errors returned by Validate.

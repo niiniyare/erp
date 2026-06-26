@@ -4,13 +4,17 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+
 	"awo.so/framework/definition"
+	"awo.so/framework/filter"
 )
 
 // ListOptions controls pagination, ordering, and filtering for List queries.
 type ListOptions struct {
-	// Filter is a map of field name → value (AND semantics, exact match).
-	Filter map[string]any
+	// Predicate is a composable filter tree built with the filter package.
+	// Takes precedence over all ad-hoc filters.
+	// Example: filter.Eq("status", "active").And(filter.Gt("amount", 1000))
+	Predicate *filter.Filter
 
 	// Search is a full-text search string applied to Searchable fields via pg_trgm.
 	Search string
