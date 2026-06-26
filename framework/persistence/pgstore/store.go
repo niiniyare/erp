@@ -178,6 +178,65 @@ func (s *EntityStore) Delete(ctx context.Context, id uuid.UUID) error {
 	return mapPgError(err)
 }
 
+func (s *EntityStore) BulkCreate(ctx context.Context, recs []definition.MutableRecord) error {
+	if len(recs) == 0 {
+		return nil
+	}
+	fields := fieldNames(s.def)
+	query, cols := sqlbuilder.BulkInsert(s.def, fields, len(recs))
+
+	args := make([]any, 0, len(recs)*len(cols))
+	for _, rec := range recs {
+		id := rec.ID()
+		if id == uuid.Nil {
+			id = uuid.New()
+			rec.Set("id", id)
+		}
+		for _, col := range cols {
+			switch col {
+			case "id":
+				args = append(args, id)
+			case "tenant_id":
+				args = append(args, s.tenantID)
+			case "org_unit_id":
+				args = append(args, rec.Get("org_unit_id"))
+			default:
+				args = append(args, rec.Get(col))
+			}
+		}
+	}
+
+	rows, err := s.q.Query(ctx, query, args...)
+	if err != nil {
+		return mapPgError(err)
+	}
+	defer rows.Close()
+
+	i := 0
+	for rows.Next() {
+		var returnedID uuid.UUID
+		if err := rows.Scan(&returnedID); err != nil {
+			return err
+		}
+		recs[i].Set("id", returnedID)
+		i++
+	}
+	return rows.Err()
+}
+
+func (s *EntityStore) Count(ctx context.Context, filter map[string]any) (int64, error) {
+	fields := make([]string, 0, len(filter))
+	args := make([]any, 0, len(filter))
+	for k, v := range filter {
+		fields = append(fields, k)
+		args = append(args, v)
+	}
+	query := sqlbuilder.Count(s.def, fields)
+	var count int64
+	err := s.q.QueryRow(ctx, query, args...).Scan(&count)
+	return count, err
+}
+
 func (s *EntityStore) Exists(ctx context.Context, filter map[string]any) (bool, error) {
 	fields := make([]string, 0, len(filter))
 	args := make([]any, 0, len(filter))
@@ -306,7 +365,7 @@ func fieldNames(def *definition.EntityDefinition) []string {
 func mutableFieldNames(def *definition.EntityDefinition) []string {
 	names := make([]string, 0, len(def.Fields))
 	for _, f := range def.Fields {
-		if !f.Immutable {
+		if !f.IsImmutable {
 			names = append(names, f.Name)
 		}
 	}

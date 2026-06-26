@@ -32,7 +32,7 @@ func (e *Enforcer) Allow(
 	record definition.Record,
 ) error {
 	for i, p := range def.Policies {
-		if !p.Ops.Is(op) {
+		if !p.EffectiveOps().Is(op) {
 			continue
 		}
 		err := p.Fn(ctx, viewer, op, record)

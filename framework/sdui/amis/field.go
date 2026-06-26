@@ -15,7 +15,7 @@ func FormControl(f *definition.FieldDef) map[string]any {
 	if f.Description != "" {
 		ctrl["description"] = f.Description
 	}
-	if f.Required {
+	if f.IsRequired {
 		ctrl["required"] = true
 	}
 	if f.ReadOnly {
@@ -76,14 +76,14 @@ func applyType(ctrl map[string]any, f *definition.FieldDef) {
 	switch f.Type {
 	case definition.FieldTypeSmallText, definition.FieldTypeData:
 		ctrl["type"] = "input-text"
-		if f.MaxLen > 0 {
-			ctrl["maxLength"] = f.MaxLen
+		if f.MaxLength > 0 {
+			ctrl["maxLength"] = f.MaxLength
 		}
 
 	case definition.FieldTypeLongText:
 		ctrl["type"] = "textarea"
-		if f.MaxLen > 0 {
-			ctrl["maxLength"] = f.MaxLen
+		if f.MaxLength > 0 {
+			ctrl["maxLength"] = f.MaxLength
 		}
 
 	case definition.FieldTypeInt:
@@ -125,7 +125,7 @@ func applyType(ctrl map[string]any, f *definition.FieldDef) {
 	case definition.FieldTypeSelect:
 		ctrl["type"] = "select"
 		ctrl["options"] = optionItems(f.Options)
-		ctrl["clearable"] = !f.Required
+		ctrl["clearable"] = !f.IsRequired
 
 	case definition.FieldTypeMultiSelect:
 		ctrl["type"] = "select"
@@ -169,19 +169,19 @@ func applyValidation(ctrl map[string]any, f *definition.FieldDef) {
 	rules := map[string]any{}
 	msgs := map[string]any{}
 
-	if f.Required {
+	if f.IsRequired {
 		rules["isRequired"] = true
 		msgs["isRequired"] = f.Label + " is required"
 	}
-	if f.MaxLen > 0 {
-		rules["maxLength"] = f.MaxLen
-		msgs["maxLength"] = f.Label + " must be at most " + itoa(f.MaxLen) + " characters"
+	if f.MaxLength > 0 {
+		rules["maxLength"] = f.MaxLength
+		msgs["maxLength"] = f.Label + " must be at most " + itoa(f.MaxLength) + " characters"
 	}
-	if f.Min != nil {
-		rules["minimum"] = f.Min.String()
+	if f.MinVal != nil {
+		rules["minimum"] = f.MinVal.String()
 	}
-	if f.Max != nil {
-		rules["maximum"] = f.Max.String()
+	if f.MaxVal != nil {
+		rules["maximum"] = f.MaxVal.String()
 	}
 
 	if len(rules) > 0 {
@@ -191,11 +191,11 @@ func applyValidation(ctrl map[string]any, f *definition.FieldDef) {
 }
 
 func applyMinMax(ctrl map[string]any, f *definition.FieldDef) {
-	if f.Min != nil {
-		ctrl["min"] = f.Min.String()
+	if f.MinVal != nil {
+		ctrl["min"] = f.MinVal.String()
 	}
-	if f.Max != nil {
-		ctrl["max"] = f.Max.String()
+	if f.MaxVal != nil {
+		ctrl["max"] = f.MaxVal.String()
 	}
 }
 

@@ -117,7 +117,7 @@ func tableColumns(def *definition.EntityDefinition, opts PageOpts) []any {
 		map[string]any{"name": "id", "label": "ID", "type": "text", "toggled": false},
 	}
 	for _, f := range def.Fields {
-		if opts.ExcludeFields[f.Name] || f.Hidden || f.Sensitive {
+		if opts.ExcludeFields[f.Name] || f.Hidden || f.IsSensitive {
 			continue
 		}
 		cols = append(cols, ColumnDef(f))

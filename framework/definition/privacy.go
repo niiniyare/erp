@@ -89,13 +89,32 @@ type ViewerContext interface {
 type PolicyFunc func(ctx context.Context, viewer ViewerContext, op Op, record Record) error
 
 // PolicyDef binds a PolicyFunc to one or more operations via a bitmask.
+//
+// Use Op (singular) for a single operation or Ops for a bitmask of multiple operations.
+// If both are set, Ops takes precedence. If neither is set, OpAll is assumed.
 type PolicyDef struct {
+	// Op is a convenience field for a single operation (e.g. definition.OpCreate).
+	// Equivalent to setting Ops with a single-bit value.
+	Op Op
+
 	// Ops is the bitmask of operations this policy governs.
 	// Use OpAll to govern every operation.
 	Ops Op
 
 	// Fn is the policy implementation.
 	Fn PolicyFunc
+}
+
+// EffectiveOps returns the operation bitmask, preferring Ops over Op.
+// Falls back to OpAll when neither is set.
+func (p PolicyDef) EffectiveOps() Op {
+	if p.Ops != 0 {
+		return p.Ops
+	}
+	if p.Op != 0 {
+		return p.Op
+	}
+	return OpAll
 }
 
 // Policy creates a PolicyDef for the given operations and function.
@@ -182,4 +201,73 @@ func AllowWithinOrgScope(tree org.Tree) PolicyFunc {
 type OrgScoped interface {
 	// RecordOrgUnitID returns the org_unit_id of this record.
 	RecordOrgUnitID() uuid.UUID
+}
+
+// OwnerOnly grants access only when the named field on the record equals the
+// viewer's ActorID. Abstains when record is nil (list-level check) — the list
+// handler must apply an equivalent filter-by-owner predicate separately.
+//
+// Usage:
+//
+//	definition.Policy(definition.OpAll, definition.OwnerOnly("created_by_id"))
+func OwnerOnly(field string) PolicyFunc {
+	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
+		if record == nil {
+			return ErrSkip
+		}
+		owner, _ := record.Get(field).(string)
+		if owner == "" {
+			return ErrSkip
+		}
+		if owner == viewer.ActorID() {
+			return ErrAllow
+		}
+		return ErrDeny
+	}
+}
+
+// OwnerOnlyUnless grants access like OwnerOnly but abstains (instead of denying)
+// when the viewer holds any of the listed roles, allowing a subsequent policy to
+// grant broader access (e.g. a manager seeing all records).
+//
+// Usage:
+//
+//	definition.Policy(definition.OpAll,
+//	    definition.OwnerOnlyUnless("created_by_id", "finance_manager", "admin"))
+func OwnerOnlyUnless(field string, roles ...string) PolicyFunc {
+	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
+		for _, r := range roles {
+			if viewer.HasRole(r) {
+				return ErrSkip // let the next policy decide
+			}
+		}
+		if record == nil {
+			return ErrSkip
+		}
+		owner, _ := record.Get(field).(string)
+		if owner == "" {
+			return ErrSkip
+		}
+		if owner == viewer.ActorID() {
+			return ErrAllow
+		}
+		return ErrDeny
+	}
+}
+
+// RequireRole grants access when the viewer holds any of the named roles,
+// otherwise denies. Abstains on nil record.
+//
+// Usage:
+//
+//	definition.Policy(definition.OpWrite, definition.RequireRole("finance_manager", "admin"))
+func RequireRole(roles ...string) PolicyFunc {
+	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
+		for _, r := range roles {
+			if viewer.HasRole(r) {
+				return ErrAllow
+			}
+		}
+		return ErrDeny
+	}
 }

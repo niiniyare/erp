@@ -1,5 +1,10 @@
 package definition
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Cardinality describes the multiplicity of a relationship between entities.
 type Cardinality string
 
@@ -42,6 +47,27 @@ type EdgeDef struct {
 
 	// Label is the human-readable name shown in SDUI sub-forms.
 	Label string
+
+	// IsRequired indicates if this relationship is mandatory.
+	IsRequired bool
+
+	// RefField is the name of the edge on the target entity that this edge refers to (for inverse edges).
+	RefField string
+
+	// AnnotationsList holds custom schema annotations (e.g., cascade rules, DB indexes).
+	AnnotationsList []any
+}
+
+// Package-level constructor helpers matching the documentation's simplified builder API.
+
+// To creates an owner-side EdgeDef pointing to targetEntity (many-to-one).
+func To(name string, targetEntity string) *EdgeDef {
+	return Edge(name).To(targetEntity).One()
+}
+
+// From creates an inverse-side EdgeDef pointing from targetEntity (one-to-many).
+func From(name string, targetEntity string) *EdgeDef {
+	return Edge(name).To(targetEntity).Many()
 }
 
 // Edge starts a fluent EdgeDef declaration.
@@ -58,3 +84,35 @@ func (e *EdgeDef) WithJoinTable(t string) *EdgeDef     { e.JoinTable = t; return
 func (e *EdgeDef) CascadeDelete() *EdgeDef             { e.Cascade = true; return e }
 func (e *EdgeDef) Eager() *EdgeDef                     { e.EagerLoad = true; return e }
 func (e *EdgeDef) WithLabel(l string) *EdgeDef         { e.Label = l; return e }
+
+// Documentation-aligned fluent builder API aliases and helpers
+
+// Field specifies the explicit foreign key column name. Alias for WithForeignKey.
+func (e *EdgeDef) Field(col string) *EdgeDef {
+	return e.WithForeignKey(col)
+}
+
+// Required marks the relationship as mandatory.
+func (e *EdgeDef) Required() *EdgeDef {
+	e.IsRequired = true
+	return e
+}
+
+// Ref specifies the owner-side edge name that this inverse edge references.
+func (e *EdgeDef) Ref(ref string) *EdgeDef {
+	e.RefField = ref
+	return e
+}
+
+// Annotations stores custom metadata or db annotations on the edge.
+// If any annotation contains "cascade", it automatically marks the edge as Cascade = true.
+func (e *EdgeDef) Annotations(anns ...any) *EdgeDef {
+	e.AnnotationsList = append(e.AnnotationsList, anns...)
+	for _, ann := range anns {
+		annStr := fmt.Sprintf("%v", ann)
+		if strings.Contains(strings.ToLower(annStr), "cascade") {
+			e.Cascade = true
+		}
+	}
+	return e
+}

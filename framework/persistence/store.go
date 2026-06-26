@@ -70,10 +70,160 @@ type EntityStore interface {
 	// Exists reports whether any record matches the given filter.
 	Exists(ctx context.Context, filter map[string]any) (bool, error)
 
+	// Count returns the number of records matching filter (AND semantics, exact match).
+	// More efficient than List+Total when only the count is needed.
+	Count(ctx context.Context, filter map[string]any) (int64, error)
+
+	// BulkCreate inserts multiple records in a single statement. Atomic — all
+	// succeed or all fail. Does NOT invoke hooks; caller is responsible for
+	// running before_validate, before_save, and after_save outside this call.
+	BulkCreate(ctx context.Context, recs []definition.MutableRecord) error
+
 	// BulkUpdate applies the same field values to all records matching filter.
 	// Does NOT invoke hooks — intended for system-level batch operations only.
 	BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
 }
+
+// ── Generic typed interface ────────────────────────────────────────────────────
+
+// RecordMapper converts a dynamic definition.Record into a typed domain value T.
+// Module code provides this function when constructing a TypedRepository.
+type RecordMapper[T any] func(definition.Record) (T, error)
+
+// EntityRepository[T any] is the typed persistence contract for one entity type.
+//
+// T is the caller's domain type. For dynamic/meta code use T = definition.Record
+// and adapt via AsRecordRepository(store). Module code passes a RecordMapper to
+// NewTypedRepository to obtain a fully typed repository over the pgstore backend.
+//
+// All methods apply the entity's privacy policies and respect tenant context.
+// Write methods do NOT invoke lifecycle hooks — the caller (handler or service)
+// is responsible for running the hook chain around repository calls.
+type EntityRepository[T any] interface {
+	// Get returns the record with the given primary key.
+	// Returns ErrNotFound when no row exists (or is soft-deleted).
+	Get(ctx context.Context, id uuid.UUID) (T, error)
+
+	// Query returns a paginated, filtered list of records plus the total count.
+	Query(ctx context.Context, opts ListOptions) ([]T, int64, error)
+
+	// Exists reports whether any record matches the given exact-match filter.
+	Exists(ctx context.Context, filter map[string]any) (bool, error)
+
+	// Count returns the count of records matching the given exact-match filter.
+	Count(ctx context.Context, filter map[string]any) (int64, error)
+
+	// Create inserts rec and returns the saved record (with assigned ID, timestamps).
+	Create(ctx context.Context, rec definition.MutableRecord) (T, error)
+
+	// Update applies changes in rec to the existing row identified by rec.ID()
+	// and returns the updated record.
+	Update(ctx context.Context, rec definition.MutableRecord) (T, error)
+
+	// Delete removes the record (or sets deleted_at for soft-delete entities).
+	Delete(ctx context.Context, id uuid.UUID) error
+
+	// BulkCreate inserts multiple records atomically. Hooks do not run.
+	BulkCreate(ctx context.Context, recs []definition.MutableRecord) ([]T, error)
+
+	// BulkUpdate applies values to all records matching filter. Hooks do not run.
+	BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
+}
+
+// TypedRepository[T] adapts an EntityStore to EntityRepository[T] via a RecordMapper.
+// Construct with NewTypedRepository; use AsRecordRepository for definition.Record.
+type TypedRepository[T any] struct {
+	store  EntityStore
+	mapper RecordMapper[T]
+}
+
+// NewTypedRepository wraps store with mapper to produce an EntityRepository[T].
+func NewTypedRepository[T any](store EntityStore, mapper RecordMapper[T]) *TypedRepository[T] {
+	return &TypedRepository[T]{store: store, mapper: mapper}
+}
+
+// AsRecordRepository wraps store as EntityRepository[definition.Record].
+// Use when you need the generic interface but do not have a typed domain struct.
+func AsRecordRepository(store EntityStore) *TypedRepository[definition.Record] {
+	return NewTypedRepository(store, func(r definition.Record) (definition.Record, error) {
+		return r, nil
+	})
+}
+
+func (r *TypedRepository[T]) Get(ctx context.Context, id uuid.UUID) (T, error) {
+	rec, err := r.store.FindByID(ctx, id)
+	if err != nil {
+		var zero T
+		return zero, err
+	}
+	return r.mapper(rec)
+}
+
+func (r *TypedRepository[T]) Query(ctx context.Context, opts ListOptions) ([]T, int64, error) {
+	page, err := r.store.List(ctx, opts)
+	if err != nil {
+		return nil, 0, err
+	}
+	out := make([]T, 0, len(page.Records))
+	for _, rec := range page.Records {
+		t, err := r.mapper(rec)
+		if err != nil {
+			return nil, 0, err
+		}
+		out = append(out, t)
+	}
+	return out, page.Total, nil
+}
+
+func (r *TypedRepository[T]) Exists(ctx context.Context, filter map[string]any) (bool, error) {
+	return r.store.Exists(ctx, filter)
+}
+
+func (r *TypedRepository[T]) Count(ctx context.Context, filter map[string]any) (int64, error) {
+	return r.store.Count(ctx, filter)
+}
+
+func (r *TypedRepository[T]) Create(ctx context.Context, rec definition.MutableRecord) (T, error) {
+	if err := r.store.Create(ctx, rec); err != nil {
+		var zero T
+		return zero, err
+	}
+	return r.mapper(rec)
+}
+
+func (r *TypedRepository[T]) Update(ctx context.Context, rec definition.MutableRecord) (T, error) {
+	if err := r.store.Update(ctx, rec); err != nil {
+		var zero T
+		return zero, err
+	}
+	return r.mapper(rec)
+}
+
+func (r *TypedRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
+	return r.store.Delete(ctx, id)
+}
+
+func (r *TypedRepository[T]) BulkCreate(ctx context.Context, recs []definition.MutableRecord) ([]T, error) {
+	if err := r.store.BulkCreate(ctx, recs); err != nil {
+		return nil, err
+	}
+	out := make([]T, 0, len(recs))
+	for _, rec := range recs {
+		t, err := r.mapper(rec)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, nil
+}
+
+func (r *TypedRepository[T]) BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error) {
+	return r.store.BulkUpdate(ctx, filter, values)
+}
+
+// compile-time check
+var _ EntityRepository[definition.Record] = (*TypedRepository[definition.Record])(nil)
 
 // TenantStore is the top-level store factory. The host application provides
 // one implementation (usually wrapping a *pgxpool.Pool or db.SQLStore) and

@@ -153,6 +153,64 @@ func HardDelete(def *definition.EntityDefinition) string {
 	return fmt.Sprintf("DELETE FROM %s WHERE id = $1", def.TableName())
 }
 
+// BulkInsert builds a multi-row INSERT statement for n records.
+// Returns (query, orderedColumns) so the caller can extract values in the
+// correct placeholder order (row-major: all cols for row 0, then row 1, …).
+//
+//	INSERT INTO <table> (col1, col2, …) VALUES ($1,$2,…),($3,$4,…) RETURNING id
+func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query string, cols []string) {
+	if n == 0 {
+		return "", nil
+	}
+	scopeCols := scopeColumns(def)
+	reserved := map[string]bool{"id": true}
+	for _, sc := range scopeCols {
+		reserved[sc] = true
+	}
+	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
+	cols = append(cols, "id")
+	cols = append(cols, scopeCols...)
+	for _, f := range fields {
+		if !reserved[f] {
+			cols = append(cols, f)
+		}
+	}
+
+	rowWidth := len(cols)
+	valueGroups := make([]string, n)
+	for row := 0; row < n; row++ {
+		placeholders := make([]string, rowWidth)
+		for col := 0; col < rowWidth; col++ {
+			placeholders[col] = fmt.Sprintf("$%d", row*rowWidth+col+1)
+		}
+		valueGroups[row] = "(" + strings.Join(placeholders, ", ") + ")"
+	}
+	query = fmt.Sprintf(
+		"INSERT INTO %s (%s) VALUES %s RETURNING id",
+		def.TableName(),
+		strings.Join(cols, ", "),
+		strings.Join(valueGroups, ", "),
+	)
+	return query, cols
+}
+
+// Count builds a SELECT COUNT(*) query with optional exact-match WHERE clauses.
+// Placeholder numbering starts at 1; caller appends filter values in field order.
+func Count(def *definition.EntityDefinition, filterFields []string) string {
+	clauses := make([]string, 0, len(filterFields)+1)
+	if def.SoftDelete {
+		clauses = append(clauses, "deleted_at IS NULL")
+	}
+	for i, f := range filterFields {
+		clauses = append(clauses, fmt.Sprintf("%s = $%d", pgIdent(f), i+1))
+	}
+	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", def.TableName())
+	if len(clauses) > 0 {
+		q += " WHERE " + strings.Join(clauses, " AND ")
+	}
+	return q
+}
+
 // Exists builds a cheap existence check.
 func Exists(def *definition.EntityDefinition, filterFields []string) string {
 	clauses := make([]string, len(filterFields))
@@ -233,7 +291,7 @@ func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx in
 	if opts.Search != "" {
 		var searchParts []string
 		for _, f := range def.Fields {
-			if f.Searchable {
+			if f.IsSearchable {
 				searchParts = append(searchParts, fmt.Sprintf("%s ILIKE $%d", pgIdent(f.Name), idx))
 			}
 		}

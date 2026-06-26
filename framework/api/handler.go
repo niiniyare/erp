@@ -198,6 +198,12 @@ func (h *Handler) create(c *fiber.Ctx) error {
 
 	mut := &definition.Mutation{Op: definition.OpCreate, After: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
+	// RunBeforeValidate fires outside the transaction so hooks can normalise
+	// input before validation (e.g. derive computed fields, trim whitespace).
+	if err := h.hooks.RunBeforeValidate(c.Context(), h.def, mut); err != nil {
+		return fiberErr(err)
+	}
+
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
@@ -252,6 +258,9 @@ func (h *Handler) update(c *fiber.Ctx) error {
 			ActorID:  viewer.ActorID(),
 		}
 
+		if err := h.hooks.RunBeforeValidate(c.Context(), h.def, mut); err != nil {
+			return err
+		}
 		if err := h.hooks.RunBefore(c.Context(), h.def, mut); err != nil {
 			return err
 		}
@@ -293,7 +302,7 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 
 		mut := &definition.Mutation{Op: definition.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
-		if err := h.hooks.RunBefore(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.RunBeforeDelete(c.Context(), h.def, mut); err != nil {
 			return err
 		}
 		if err := es.Delete(c.Context(), id); err != nil {
@@ -376,7 +385,7 @@ func recordToMap(rec definition.Record, def *definition.EntityDefinition) map[st
 		}
 	}
 	for _, f := range def.Fields {
-		if !f.Sensitive {
+		if !f.IsSensitive {
 			m[f.Name] = rec.Get(f.Name)
 		}
 	}

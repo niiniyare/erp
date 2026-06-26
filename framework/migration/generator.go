@@ -151,20 +151,29 @@ func fieldToColumn(f *definition.FieldDef) string {
 
 	parts := []string{col, colType}
 
-	if f.Required {
+	if f.IsRequired {
 		parts = append(parts, "NOT NULL")
 	}
 
-	if f.Default != nil {
-		parts = append(parts, fmt.Sprintf("DEFAULT %s", pgLiteral(f.Default)))
+	if f.DefaultVal != nil {
+		parts = append(parts, fmt.Sprintf("DEFAULT %s", pgLiteral(f.DefaultVal)))
 	}
 
-	if f.MaxLen > 0 {
+	if f.MaxLength > 0 {
 		// Already encoded in type for VARCHAR; skip separate constraint.
 	}
 
-	if f.Unique {
+	if f.IsUnique {
 		parts = append(parts, "UNIQUE")
+	}
+
+	// Emit FK reference for Link fields that declare a LinkedEntity.
+	// DynamicLink has no FK constraint (polymorphic, app-layer integrity only).
+	if f.Type == definition.FieldTypeLink && f.LinkedEntity != "" {
+		target := definition.Lookup(f.LinkedEntity)
+		if target != nil {
+			parts = append(parts, fmt.Sprintf("REFERENCES %s(id) ON DELETE RESTRICT", target.TableName()))
+		}
 	}
 
 	return strings.Join(parts, " ")
@@ -173,19 +182,19 @@ func fieldToColumn(f *definition.FieldDef) string {
 func fieldTypeToPG(f *definition.FieldDef) string {
 	switch f.Type {
 	case definition.FieldTypeData, definition.FieldTypeSmallText:
-		if f.MaxLen > 0 {
-			return fmt.Sprintf("VARCHAR(%d)", f.MaxLen)
+		if f.MaxLength > 0 {
+			return fmt.Sprintf("VARCHAR(%d)", f.MaxLength)
 		}
 		return "VARCHAR(255)"
 	case definition.FieldTypeLongText:
 		return "TEXT"
 	case definition.FieldTypeInt:
-		return "INTEGER"
+		return "BIGINT"
 	case definition.FieldTypeFloat:
 		return "DOUBLE PRECISION"
 	case definition.FieldTypeCurrency:
-		// Stored as NUMERIC(20,6) — never FLOAT (precision loss).
-		return "NUMERIC(20,6)"
+		// Stored as NUMERIC(20,4) — never FLOAT (precision loss). Docs §5.1.1.
+		return "NUMERIC(20,4)"
 	case definition.FieldTypeBool:
 		return "BOOLEAN"
 	case definition.FieldTypeDate:
@@ -196,8 +205,10 @@ func fieldTypeToPG(f *definition.FieldDef) string {
 		return "TIME"
 	case definition.FieldTypeUUID:
 		return "UUID"
-	case definition.FieldTypeSelect, definition.FieldTypeMultiSelect:
-		return "VARCHAR(50)"
+	case definition.FieldTypeSelect:
+		return "VARCHAR(100)" // stable key values; doc §5.1.2 Select
+	case definition.FieldTypeMultiSelect:
+		return "TEXT[]" // array of stable keys; doc §5.1.2 MultiSelect
 	case definition.FieldTypeJSON:
 		return "JSONB"
 	case definition.FieldTypeLink, definition.FieldTypeDynamicLink:
@@ -256,14 +267,14 @@ func indexes(b *strings.Builder, def *definition.EntityDefinition) {
 
 	for _, f := range def.Fields {
 		// GIN trgm index for pg_trgm full-text search.
-		if f.Searchable {
+		if f.IsSearchable {
 			fmt.Fprintf(b,
 				"CREATE INDEX IF NOT EXISTS %s_%s_trgm_idx ON %s USING GIN (%s gin_trgm_ops);\n",
 				table, f.Name, table, pgIdent(f.Name))
 		}
 
 		// B-tree index on FK columns (Link / DynamicLink).
-		if (f.Type == definition.FieldTypeLink || f.Type == definition.FieldTypeDynamicLink) && !f.Unique {
+		if (f.Type == definition.FieldTypeLink || f.Type == definition.FieldTypeDynamicLink) && !f.IsUnique {
 			fmt.Fprintf(b,
 				"CREATE INDEX IF NOT EXISTS %s_%s_idx ON %s (%s);\n",
 				table, f.Name, table, pgIdent(f.Name))
