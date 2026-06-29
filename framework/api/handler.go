@@ -10,8 +10,8 @@ import (
 
 	"awo.so/framework/definition"
 	"awo.so/framework/hooks"
-	"awo.so/framework/org"
 	"awo.so/framework/persistence"
+	"awo.so/framework/platform/org"
 	"awo.so/framework/privacy"
 	"awo.so/framework/validate"
 )

@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"os"
 
+	"awo.so/framework/cmd/awo/internal/generateCmd"
 	"awo.so/framework/cmd/awo/internal/migrateCmd"
 )
 
@@ -33,6 +34,8 @@ func run(args []string) error {
 	switch args[0] {
 	case "migrate":
 		return migrateCmd.Run(ctx, args[1:])
+	case "generate", "gen":
+		return generateCmd.Run(ctx, args[1:])
 	case "version", "--version", "-v":
 		fmt.Println("awo v0.1.0 (framework)")
 		return nil
@@ -49,6 +52,8 @@ func printUsage() {
 
 Usage:
   awo migrate [up|down|status|version]   Database migration management
+  awo generate entity <name>            Scaffold a new entity definition file
+  awo generate migration <name>         Create a new numbered migration pair
   awo version                            Print CLI version
   awo help                               Show this help
 

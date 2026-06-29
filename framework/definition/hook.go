@@ -50,6 +50,7 @@ type Mutation struct {
 	After MutableRecord
 
 	// TenantID is the tenant context for this operation.
+	// Available to hooks that need tenant-scoped lookups or outbox writes.
 	TenantID string
 
 	// ActorID is the authenticated user performing the operation (may be empty for system ops).

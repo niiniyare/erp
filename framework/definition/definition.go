@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"awo.so/framework/org"
+	"awo.so/framework/platform/org"
 )
 
 // EntityDefinition is the authoritative meta-model for one entity type.

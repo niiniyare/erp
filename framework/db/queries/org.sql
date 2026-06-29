@@ -36,3 +36,22 @@ RETURNING *;
 -- name: DeleteOrgUnit :exec
 DELETE FROM org_units
 WHERE id = $1 AND tenant_id = current_tenant_id();
+
+-- name: InsertOrgUnitPath :exec
+INSERT INTO org_unit_paths (ancestor_id, descendant_id, depth)
+VALUES ($1, $2, $3)
+ON CONFLICT DO NOTHING;
+
+-- name: GetAncestors :many
+SELECT ancestor_id FROM org_unit_paths
+WHERE descendant_id = $1
+ORDER BY depth ASC;
+
+-- name: GetDescendants :many
+SELECT descendant_id FROM org_unit_paths
+WHERE ancestor_id = $1
+ORDER BY depth ASC;
+
+-- name: DeleteOrgUnitPaths :exec
+DELETE FROM org_unit_paths
+WHERE descendant_id = $1;

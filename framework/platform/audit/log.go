@@ -14,9 +14,8 @@ import (
 	"awo.so/framework/definition"
 )
 
-// Entry is one audit log record.
+// Entry is one audit log record. tenant_id is populated by the DB via current_tenant_id().
 type Entry struct {
-	TenantID uuid.UUID      `json:"tenant_id"`
 	Entity   string         `json:"entity"`
 	RecordID uuid.UUID      `json:"record_id"`
 	Op       string         `json:"op"`
