@@ -24,7 +24,7 @@ ORDER BY name;
 -- name: ListOrgUnitDescendants :many
 SELECT * FROM org_units
 WHERE tenant_id = current_tenant_id()
-  AND path LIKE (SELECT path FROM org_units WHERE id = $1) || '.%'
+  AND path LIKE (SELECT p.path FROM org_units p WHERE p.id = $1) || '.%'
 ORDER BY path;
 
 -- name: UpdateOrgUnit :one
