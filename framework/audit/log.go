@@ -3,7 +3,7 @@
 //
 // Required migration:
 //
-//	CREATE TABLE IF NOT EXISTS awo_audit_log (
+//	CREATE TABLE IF NOT EXISTS audit_log (
 //	    id         UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
 //	    tenant_id  UUID,
 //	    entity     TEXT        NOT NULL,
@@ -13,10 +13,10 @@
 //	    changes    JSONB       NOT NULL DEFAULT '{}',
 //	    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 //	);
-//	CREATE INDEX IF NOT EXISTS awo_audit_log_record_idx
-//	    ON awo_audit_log (entity, record_id);
-//	CREATE INDEX IF NOT EXISTS awo_audit_log_tenant_idx
-//	    ON awo_audit_log (tenant_id, created_at DESC);
+//	CREATE INDEX IF NOT EXISTS audit_log_record_idx
+//	    ON audit_log (entity, record_id);
+//	CREATE INDEX IF NOT EXISTS audit_log_tenant_idx
+//	    ON audit_log (tenant_id, created_at DESC);
 package audit
 
 import (
@@ -40,11 +40,11 @@ type Entry struct {
 }
 
 // WriteFunc persists an audit entry. The host application provides this,
-// typically by writing to awo_audit_log inside the same transaction.
+// typically by writing to audit_log inside the same transaction.
 //
 //	func(ctx context.Context, e *audit.Entry) error {
 //	    _, err := tx.Exec(ctx,
-//	        `INSERT INTO awo_audit_log (tenant_id,entity,record_id,op,actor_id,changes)
+//	        `INSERT INTO audit_log (tenant_id,entity,record_id,op,actor_id,changes)
 //	         VALUES ($1,$2,$3,$4,$5,$6)`,
 //	        e.TenantID, e.Entity, e.RecordID, e.Op, e.ActorID, changesJSON)
 //	    return err
@@ -52,7 +52,7 @@ type Entry struct {
 type WriteFunc func(ctx context.Context, e *Entry) error
 
 const insertAudit = `
-INSERT INTO awo_audit_log (tenant_id, entity, record_id, op, actor_id, changes)
+INSERT INTO audit_log (tenant_id, entity, record_id, op, actor_id, changes)
 VALUES ($1, $2, $3, $4, $5, $6)`
 
 // ExecFunc executes a fire-and-forget SQL statement (no result scanning).
@@ -69,7 +69,7 @@ func Write(ctx context.Context, exec ExecFunc, def *definition.EntityDefinition,
 
 	tenantID, _ := uuid.Parse(m.TenantID)
 	recordID := uuid.Nil
-	op := string(m.Op)
+	op := m.Op.String()
 
 	changes := diff(def, m)
 

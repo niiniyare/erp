@@ -137,11 +137,15 @@ func Update(def *definition.EntityDefinition, fields []string) (query string, co
 	}
 
 	idPlaceholder := len(cols) + 1
+	where := fmt.Sprintf("id = $%d", idPlaceholder)
+	if def.SoftDelete {
+		where += " AND deleted_at IS NULL"
+	}
 	query = fmt.Sprintf(
-		"UPDATE %s SET %s WHERE id = $%d",
+		"UPDATE %s SET %s WHERE %s",
 		def.TableName(),
 		strings.Join(setClauses, ", "),
-		idPlaceholder,
+		where,
 	)
 	return query, cols
 }

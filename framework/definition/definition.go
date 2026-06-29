@@ -104,6 +104,12 @@ type EntityDefinition struct {
 	// Example: &NamingSeries{Field: "name", Prefix: "INV-", Padding: 5}
 	// produces "INV-00001", "INV-00002", …
 	NamingSeries *NamingSeriesDef
+
+	// EntityValidators are cross-field validators run after all per-field
+	// validators pass. Each receives the full record and returns a slice
+	// of FieldErrors (may reference multiple fields).
+	// Example use: end_date must be after start_date.
+	EntityValidators []EntityValidator
 }
 
 // Validation errors returned by Validate.

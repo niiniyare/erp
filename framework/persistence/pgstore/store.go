@@ -39,7 +39,7 @@ func New(def *definition.EntityDefinition, tenantID uuid.UUID, q Querier) *Entit
 }
 
 // WithAudit returns a copy of the store with audit writing enabled via exec.
-// exec must write to awo_audit_log inside the current transaction.
+// exec must write to audit_log inside the current transaction.
 func (s *EntityStore) WithAudit(exec audit.ExecFunc) *EntityStore {
 	cp := *s
 	cp.auditFn = exec
@@ -247,7 +247,17 @@ func (s *EntityStore) BulkCreate(ctx context.Context, recs []definition.MutableR
 		recs[i].Set("id", returnedID)
 		i++
 	}
-	return rows.Err()
+	if err := rows.Err(); err != nil {
+		return err
+	}
+
+	for _, rec := range recs {
+		m := &definition.Mutation{Op: definition.OpCreate, After: rec, TenantID: s.tenantID.String()}
+		if err := s.writeAudit(ctx, m); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func (s *EntityStore) Count(ctx context.Context, filter map[string]any) (int64, error) {

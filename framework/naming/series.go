@@ -1,12 +1,12 @@
 // Package naming provides atomic document-number generation backed by PostgreSQL.
 //
-// Sequences are stored in the awo_naming_sequences table (one row per entity
+// Sequences are stored in the naming_sequences table (one row per entity
 // per tenant). Each call to Next atomically increments the counter and returns
 // the new value in a single round-trip via INSERT … ON CONFLICT … UPDATE.
 //
 // Required migration:
 //
-//	CREATE TABLE IF NOT EXISTS awo_naming_sequences (
+//	CREATE TABLE IF NOT EXISTS naming_sequences (
 //	    tenant_id   uuid   NOT NULL,
 //	    entity      text   NOT NULL,
 //	    current_seq bigint NOT NULL DEFAULT 0,
@@ -32,10 +32,10 @@ import (
 type ExecOneRow func(sql string, args []any, dest []any) error
 
 const upsertSeq = `
-INSERT INTO awo_naming_sequences (tenant_id, entity, current_seq)
+INSERT INTO naming_sequences (tenant_id, entity, current_seq)
 VALUES ($1, $2, 1)
 ON CONFLICT (tenant_id, entity) DO UPDATE
-    SET current_seq = awo_naming_sequences.current_seq + 1
+    SET current_seq = naming_sequences.current_seq + 1
 RETURNING current_seq`
 
 // Next atomically increments the sequence for (tenantID, entityName) and

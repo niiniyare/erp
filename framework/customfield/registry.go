@@ -2,12 +2,12 @@
 // custom field definitions.
 //
 // Custom field definitions are stored in the database as JSONB in a
-// awo_custom_fields table. The registry caches them in-process and must be
+// custom_fields table. The registry caches them in-process and must be
 // refreshed on change.
 //
 // Required migration:
 //
-//	CREATE TABLE IF NOT EXISTS awo_custom_fields (
+//	CREATE TABLE IF NOT EXISTS custom_fields (
 //	    tenant_id  uuid NOT NULL,
 //	    entity     text NOT NULL,
 //	    fields     jsonb NOT NULL DEFAULT '[]',

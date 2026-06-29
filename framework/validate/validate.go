@@ -169,6 +169,18 @@ func Run(def *definition.EntityDefinition, rec definition.MutableRecord) Validat
 		errs = append(errs, fieldErrs...)
 	}
 
+	// Entity-level cross-field validators only run when all field validators pass.
+	// This prevents confusing errors (e.g. date range check when both dates are empty).
+	if len(errs) == 0 {
+		for _, ev := range def.EntityValidators {
+			for _, fe := range ev(rec) {
+				if fe != nil {
+					errs = append(errs, &FieldErr{Field: fe.Field, Message: fe.Message})
+				}
+			}
+		}
+	}
+
 	if len(errs) == 0 {
 		return nil
 	}

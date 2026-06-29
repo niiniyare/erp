@@ -34,20 +34,20 @@ const frameworkUp = `-- --------------------------------------------------------
 -- ── Naming sequences ────────────────────────────────────────────────────────
 -- Stores the current counter for each entity's document numbering series.
 -- The atomic upsert in naming.Next guarantees no gaps under concurrent load.
-CREATE TABLE IF NOT EXISTS awo_naming_sequences (
+CREATE TABLE IF NOT EXISTS naming_sequences (
     tenant_id   UUID   NOT NULL,
     entity      TEXT   NOT NULL,
     current_seq BIGINT NOT NULL DEFAULT 0,
     PRIMARY KEY (tenant_id, entity)
 );
 
-GRANT SELECT, INSERT, UPDATE ON awo_naming_sequences TO application_role, admin_role;
+GRANT SELECT, INSERT, UPDATE ON naming_sequences TO application_role, admin_role;
 
 -- ── Custom field definitions ─────────────────────────────────────────────────
 -- Stores per-tenant, per-entity custom field definitions as a JSONB array of
 -- definition.FieldDef objects. The customfield.Registry caches these in-memory
 -- and must be invalidated on change.
-CREATE TABLE IF NOT EXISTS awo_custom_fields (
+CREATE TABLE IF NOT EXISTS custom_fields (
     tenant_id  UUID        NOT NULL,
     entity     TEXT        NOT NULL,
     fields     JSONB       NOT NULL DEFAULT '[]',
@@ -55,12 +55,12 @@ CREATE TABLE IF NOT EXISTS awo_custom_fields (
     PRIMARY KEY (tenant_id, entity)
 );
 
-GRANT SELECT, INSERT, UPDATE ON awo_custom_fields TO application_role, admin_role;
+GRANT SELECT, INSERT, UPDATE ON custom_fields TO application_role, admin_role;
 
 -- ── Audit log ────────────────────────────────────────────────────────────────
 -- Immutable audit trail for Create / Update / Delete on Audited entities.
 -- Rows are never updated or deleted — append-only.
-CREATE TABLE IF NOT EXISTS awo_audit_log (
+CREATE TABLE IF NOT EXISTS audit_log (
     id         UUID        NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
     tenant_id  UUID,
     entity     TEXT        NOT NULL,
@@ -71,19 +71,19 @@ CREATE TABLE IF NOT EXISTS awo_audit_log (
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE INDEX IF NOT EXISTS awo_audit_log_record_idx
-    ON awo_audit_log (entity, record_id);
-CREATE INDEX IF NOT EXISTS awo_audit_log_tenant_idx
-    ON awo_audit_log (tenant_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS audit_log_record_idx
+    ON audit_log (entity, record_id);
+CREATE INDEX IF NOT EXISTS audit_log_tenant_idx
+    ON audit_log (tenant_id, created_at DESC);
 
 -- Audit log is INSERT-only for the application role.
-GRANT INSERT ON awo_audit_log TO application_role;
-GRANT SELECT ON awo_audit_log TO application_role, admin_role, readonly_role;
-GRANT INSERT, SELECT ON awo_audit_log TO admin_role;
+GRANT INSERT ON audit_log TO application_role;
+GRANT SELECT ON audit_log TO application_role, admin_role, readonly_role;
+GRANT INSERT, SELECT ON audit_log TO admin_role;
 `
 
 const frameworkDown = `-- Drop framework tables in reverse dependency order.
-DROP TABLE IF EXISTS awo_audit_log;
-DROP TABLE IF EXISTS awo_custom_fields;
-DROP TABLE IF EXISTS awo_naming_sequences;
+DROP TABLE IF EXISTS audit_log;
+DROP TABLE IF EXISTS custom_fields;
+DROP TABLE IF EXISTS naming_sequences;
 `

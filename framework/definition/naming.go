@@ -3,7 +3,7 @@ package definition
 // NamingSeriesDef configures automatic document-number generation for an entity.
 //
 // The naming package increments a per-entity, per-tenant counter stored in
-// awo_naming_sequences and stamps the generated value onto Field during Create.
+// naming_sequences and stamps the generated value onto Field during Create.
 //
 // Example configuration:
 //

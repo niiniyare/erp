@@ -43,6 +43,11 @@ const (
 	FieldTypeAttachImage FieldType = "attachimage"  // text + metadata jsonb
 )
 
+// EntityValidator is a cross-field validator run after all per-field validators pass.
+// It receives the full record and returns zero or more FieldErrors.
+// Use for invariants that span multiple fields (e.g. end_date > start_date).
+type EntityValidator func(record Record) []*FieldError
+
 // FieldValidator is a synchronous field-level validator.
 // value is already coerced to the field's Go type.
 // record provides read-only access to sibling fields for cross-field checks.
