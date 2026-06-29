@@ -11,9 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"awo.so/framework/audit"
 	"awo.so/framework/definition"
-	"awo.so/framework/naming"
+	"awo.so/framework/platform/audit"
+	"awo.so/framework/platform/naming"
 	"awo.so/framework/persistence"
 	"awo.so/framework/persistence/sqlbuilder"
 )
@@ -138,9 +138,6 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 		switch col {
 		case "id":
 			args = append(args, id)
-		case "tenant_id":
-			// Always use the store's tenant, never trust body input.
-			args = append(args, s.tenantID)
 		case "org_unit_id":
 			// Handler stamps viewer.OrgUnitID() onto the record before Create;
 			// we read it back here so the INSERT uses the framework-injected value.
@@ -222,8 +219,6 @@ func (s *EntityStore) BulkCreate(ctx context.Context, recs []definition.MutableR
 			switch col {
 			case "id":
 				args = append(args, id)
-			case "tenant_id":
-				args = append(args, s.tenantID)
 			case "org_unit_id":
 				args = append(args, rec.Get("org_unit_id"))
 			default:

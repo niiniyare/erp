@@ -79,33 +79,53 @@ func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []an
 // Returns (query, orderedColumns) so the caller can extract values in the
 // correct placeholder order.
 //
-//	INSERT INTO <table> (col1, col2, ...) VALUES ($1, $2, ...) RETURNING id
+// tenant_id is always written as current_tenant_id() — never a parameter.
+//
+//	INSERT INTO <table> (col1, col2, ...) VALUES ($1, current_tenant_id(), ...) RETURNING id
 func Insert(def *definition.EntityDefinition, fields []string) (query string, cols []string) {
-	// Start with scope columns; trim based on entity's OrgScope.
 	scopeCols := scopeColumns(def)
 	reserved := map[string]bool{"id": true}
 	for _, sc := range scopeCols {
 		reserved[sc] = true
 	}
 
+	// sqlCols: column names that appear in the SQL INSERT list.
+	// cols (returned): columns whose values the caller must supply ($N params).
+	sqlCols := make([]string, 0, len(fields)+len(scopeCols)+1)
 	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
+
+	sqlCols = append(sqlCols, "id")
 	cols = append(cols, "id")
-	cols = append(cols, scopeCols...)
+
+	for _, sc := range scopeCols {
+		sqlCols = append(sqlCols, sc)
+		if sc != "tenant_id" {
+			cols = append(cols, sc)
+		}
+	}
 	for _, f := range fields {
 		if !reserved[f] {
+			sqlCols = append(sqlCols, f)
 			cols = append(cols, f)
 		}
 	}
 
-	placeholders := make([]string, len(cols))
-	for i := range cols {
-		placeholders[i] = fmt.Sprintf("$%d", i+1)
+	// Build placeholders: tenant_id → literal function call; others → $N.
+	paramIdx := 1
+	placeholders := make([]string, len(sqlCols))
+	for i, col := range sqlCols {
+		if col == "tenant_id" {
+			placeholders[i] = "current_tenant_id()"
+		} else {
+			placeholders[i] = fmt.Sprintf("$%d", paramIdx)
+			paramIdx++
+		}
 	}
 
 	query = fmt.Sprintf(
 		"INSERT INTO %s (%s) VALUES (%s) RETURNING id",
 		def.TableName(),
-		strings.Join(cols, ", "),
+		strings.Join(sqlCols, ", "),
 		strings.Join(placeholders, ", "),
 	)
 	return query, cols
@@ -165,9 +185,11 @@ func HardDelete(def *definition.EntityDefinition) string {
 
 // BulkInsert builds a multi-row INSERT statement for n records.
 // Returns (query, orderedColumns) so the caller can extract values in the
-// correct placeholder order (row-major: all cols for row 0, then row 1, …).
+// correct placeholder order (row-major: all value cols for row 0, then row 1, …).
 //
-//	INSERT INTO <table> (col1, col2, …) VALUES ($1,$2,…),($3,$4,…) RETURNING id
+// tenant_id is written as current_tenant_id() — never a parameter.
+//
+//	INSERT INTO <table> (col1, col2, …) VALUES ($1,current_tenant_id(),$2,…) RETURNING id
 func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query string, cols []string) {
 	if n == 0 {
 		return "", nil
@@ -177,28 +199,46 @@ func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query
 	for _, sc := range scopeCols {
 		reserved[sc] = true
 	}
+
+	sqlCols := make([]string, 0, len(fields)+len(scopeCols)+1)
 	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
+
+	sqlCols = append(sqlCols, "id")
 	cols = append(cols, "id")
-	cols = append(cols, scopeCols...)
+
+	for _, sc := range scopeCols {
+		sqlCols = append(sqlCols, sc)
+		if sc != "tenant_id" {
+			cols = append(cols, sc)
+		}
+	}
 	for _, f := range fields {
 		if !reserved[f] {
+			sqlCols = append(sqlCols, f)
 			cols = append(cols, f)
 		}
 	}
 
-	rowWidth := len(cols)
+	// paramWidth: number of $N params per row (excludes tenant_id literal).
+	paramWidth := len(cols)
 	valueGroups := make([]string, n)
 	for row := 0; row < n; row++ {
-		placeholders := make([]string, rowWidth)
-		for col := 0; col < rowWidth; col++ {
-			placeholders[col] = fmt.Sprintf("$%d", row*rowWidth+col+1)
+		placeholders := make([]string, len(sqlCols))
+		paramCol := 0
+		for i, col := range sqlCols {
+			if col == "tenant_id" {
+				placeholders[i] = "current_tenant_id()"
+			} else {
+				placeholders[i] = fmt.Sprintf("$%d", row*paramWidth+paramCol+1)
+				paramCol++
+			}
 		}
 		valueGroups[row] = "(" + strings.Join(placeholders, ", ") + ")"
 	}
 	query = fmt.Sprintf(
 		"INSERT INTO %s (%s) VALUES %s RETURNING id",
 		def.TableName(),
-		strings.Join(cols, ", "),
+		strings.Join(sqlCols, ", "),
 		strings.Join(valueGroups, ", "),
 	)
 	return query, cols
