@@ -1,14 +1,4 @@
-// Package migrate provides a golang-migrate runner for the Awo Framework.
-//
-// Migrations are embedded from framework/db/migrations via db.Migrations.
-// Applications call Run to apply or revert them.
-//
-// Usage:
-//
-//	if err := migrate.Run(ctx, dsn, migrate.Up); err != nil {
-//	    log.Fatal(err)
-//	}
-package migrate
+package migration
 
 import (
 	"context"
@@ -72,15 +62,15 @@ func Version(_ context.Context, dsn string) (version uint, dirty bool, err error
 func newMigrate(dsn string) (*migrate.Migrate, error) {
 	sub, err := fs.Sub(db.Migrations, "migrations")
 	if err != nil {
-		return nil, fmt.Errorf("migrate: embed sub: %w", err)
+		return nil, fmt.Errorf("migration: embed sub: %w", err)
 	}
 	src, err := iofs.New(sub, ".")
 	if err != nil {
-		return nil, fmt.Errorf("migrate: iofs source: %w", err)
+		return nil, fmt.Errorf("migration: iofs source: %w", err)
 	}
 	m, err := migrate.NewWithSourceInstance("iofs", src, dsn)
 	if err != nil {
-		return nil, fmt.Errorf("migrate: new: %w", err)
+		return nil, fmt.Errorf("migration: new: %w", err)
 	}
 	return m, nil
 }

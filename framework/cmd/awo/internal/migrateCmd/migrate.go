@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 
-	"awo.so/framework/migrate"
+	"awo.so/framework/migration"
 )
 
 // Run executes the migrate subcommand with args.
@@ -24,7 +24,7 @@ func Run(ctx context.Context, args []string) error {
 	switch sub {
 	case "up":
 		fmt.Println("awo migrate: applying pending migrations…")
-		if err := migrate.Run(ctx, dsn, migrate.Up); err != nil {
+		if err := migration.Run(ctx, dsn, migration.Up); err != nil {
 			return fmt.Errorf("migrate up: %w", err)
 		}
 		fmt.Println("awo migrate: up — done")
@@ -32,14 +32,14 @@ func Run(ctx context.Context, args []string) error {
 
 	case "down":
 		fmt.Println("awo migrate: reverting last migration…")
-		if err := migrate.Run(ctx, dsn, migrate.Down); err != nil {
+		if err := migration.Run(ctx, dsn, migration.Down); err != nil {
 			return fmt.Errorf("migrate down: %w", err)
 		}
 		fmt.Println("awo migrate: down — done")
 		return nil
 
 	case "status", "version":
-		v, dirty, err := migrate.Version(ctx, dsn)
+		v, dirty, err := migration.Version(ctx, dsn)
 		if err != nil {
 			return fmt.Errorf("migrate version: %w", err)
 		}
