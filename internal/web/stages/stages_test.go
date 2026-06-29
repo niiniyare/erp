@@ -540,6 +540,7 @@ func (m *mockCacheService) Expire(_ context.Context, _ string, _ time.Duration) 
 func (m *mockCacheService) GetMemory(_ context.Context, _ string, _ any) error {
 	return cache.ErrCacheMiss
 }
+
 func (m *mockCacheService) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
 	return nil
 }

@@ -18,7 +18,7 @@ const (
 	RunStatusFailed  RunStatus = "failed"
 )
 
-// Report is a saved report definition.
+// Report is a saved report def.
 type Report struct {
 	ID        uuid.UUID       `json:"id"`
 	TenantID  uuid.UUID       `json:"tenant_id"`

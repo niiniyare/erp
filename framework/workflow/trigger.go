@@ -10,7 +10,7 @@ import (
 
 	"go.temporal.io/sdk/client"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // TriggerKind controls how the workflow is launched.
@@ -32,7 +32,7 @@ const (
 // TriggerConfig describes one workflow trigger attached to an entity.
 type TriggerConfig struct {
 	// Ops is the bitmask of operations that fire this trigger.
-	Ops definition.Op
+	Ops def.Op
 
 	// Kind controls how the Temporal client is called.
 	Kind TriggerKind
@@ -47,7 +47,7 @@ type TriggerConfig struct {
 	// For TriggerSignal / TriggerSignalWithStart this identifies the target run.
 	// For TriggerStart a unique run ID is appended automatically.
 	// If nil, defaults to "<entity>/<record-id>/<workflow-type>".
-	WorkflowIDFn func(m *definition.Mutation) string
+	WorkflowIDFn func(m *def.Mutation) string
 
 	// SignalName is the Temporal signal name (required for TriggerSignal and
 	// TriggerSignalWithStart).
@@ -55,7 +55,7 @@ type TriggerConfig struct {
 
 	// PayloadFn builds the signal/workflow input from the mutation.
 	// If nil, the entire mutation is passed as-is (serialised by Temporal's codec).
-	PayloadFn func(m *definition.Mutation) any
+	PayloadFn func(m *def.Mutation) any
 }
 
 // Executor holds a Temporal client and issues workflow calls from hook invocations.
@@ -68,7 +68,7 @@ func NewExecutor(c client.Client) *Executor {
 	return &Executor{client: c}
 }
 
-// Hook returns a definition.HookFunc that fires the configured workflow trigger.
+// Hook returns a def.HookFunc that fires the configured workflow trigger.
 // Attach the returned HookFunc as an AfterHook (after_save, still in TX) so the
 // trigger only fires on successful commit.
 //
@@ -76,8 +76,8 @@ func NewExecutor(c client.Client) *Executor {
 // They are non-blocking (enqueue, not await). If Temporal is unavailable the
 // hook returns an error and the transaction rolls back — use AfterCommit hooks
 // (outside TX) for fire-and-forget semantics where rollback is undesirable.
-func (e *Executor) Hook(cfg TriggerConfig) definition.HookFunc {
-	return func(ctx context.Context, m *definition.Mutation) error {
+func (e *Executor) Hook(cfg TriggerConfig) def.HookFunc {
+	return func(ctx context.Context, m *def.Mutation) error {
 		if !cfg.Ops.Is(m.Op) {
 			return nil
 		}
@@ -124,11 +124,11 @@ func (e *Executor) Hook(cfg TriggerConfig) definition.HookFunc {
 // Helpers
 // ──────────────────────────────────────────────────────────────────
 
-func defaultWorkflowID(m *definition.Mutation, cfg TriggerConfig) string {
+func defaultWorkflowID(m *def.Mutation, cfg TriggerConfig) string {
 	if cfg.WorkflowIDFn != nil {
 		return cfg.WorkflowIDFn(m)
 	}
-	var rec definition.Record = m.After
+	var rec def.Record = m.After
 	if rec == nil {
 		rec = m.Before
 	}
@@ -139,7 +139,7 @@ func defaultWorkflowID(m *definition.Mutation, cfg TriggerConfig) string {
 	return fmt.Sprintf("%s/%s/%s", m.Op.String(), id, cfg.WorkflowType)
 }
 
-func buildPayload(m *definition.Mutation, cfg TriggerConfig) any {
+func buildPayload(m *def.Mutation, cfg TriggerConfig) any {
 	if cfg.PayloadFn != nil {
 		return cfg.PayloadFn(m)
 	}

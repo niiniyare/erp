@@ -1,4 +1,4 @@
-package definition
+package def
 
 import (
 	"context"
@@ -53,7 +53,7 @@ type ViewerContext interface {
 	// Use this in privacy policies for tree-based access control:
 	//
 	//	ok, err := orgTree.IsAncestorOrEqual(ctx, tenantID, viewer.OrgUnitID(), record.OrgUnitID())
-	//	if !ok { return definition.ErrDeny }
+	//	if !ok { return def.ErrDeny }
 	OrgUnitID() uuid.UUID
 
 	// OrgScope returns the combined tenant + unit scope for this viewer.
@@ -93,7 +93,7 @@ type PolicyFunc func(ctx context.Context, viewer ViewerContext, op Op, record Re
 // Use Op (singular) for a single operation or Ops for a bitmask of multiple operations.
 // If both are set, Ops takes precedence. If neither is set, OpAll is assumed.
 type PolicyDef struct {
-	// Op is a convenience field for a single operation (e.g. definition.OpCreate).
+	// Op is a convenience field for a single operation (e.g. def.OpCreate).
 	// Equivalent to setting Ops with a single-bit value.
 	Op Op
 
@@ -121,11 +121,11 @@ func (p PolicyDef) EffectiveOps() Op {
 //
 // Example:
 //
-//	definition.Policy(definition.OpAll, func(ctx context.Context, v definition.ViewerContext, op definition.Op, rec definition.Record) error {
+//	def.Policy(def.OpAll, func(ctx context.Context, v def.ViewerContext, op def.Op, rec def.Record) error {
 //	    if v.IsSystem() || v.HasRole("admin") {
-//	        return definition.ErrAllow
+//	        return def.ErrAllow
 //	    }
-//	    return definition.ErrDeny
+//	    return def.ErrDeny
 //	})
 func Policy(ops Op, fn PolicyFunc) PolicyDef {
 	return PolicyDef{Ops: ops, Fn: fn}
@@ -149,9 +149,9 @@ func DenyAll(_ context.Context, _ ViewerContext, _ Op, _ Record) error {
 // AllowSystem grants access when IsSystem() is true, otherwise abstains.
 // Chain after more specific policies so system callers bypass user checks:
 //
-//	Policies: []definition.PolicyDef{
-//	    definition.Policy(definition.OpAll, definition.AllowSystem),
-//	    definition.Policy(definition.OpAll, myUserPolicy),
+//	Policies: []def.PolicyDef{
+//	    def.Policy(def.OpAll, def.AllowSystem),
+//	    def.Policy(def.OpAll, myUserPolicy),
 //	}
 func AllowSystem(_ context.Context, viewer ViewerContext, _ Op, _ Record) error {
 	if viewer.IsSystem() {
@@ -169,7 +169,7 @@ func AllowSystem(_ context.Context, viewer ViewerContext, _ Op, _ Record) error 
 //
 // Usage:
 //
-//	definition.Policy(definition.OpAll, definition.AllowWithinOrgScope(myTree))
+//	def.Policy(def.OpAll, def.AllowWithinOrgScope(myTree))
 // func AllowWithinOrgScope(tree org.Tree) PolicyFunc {
 // 	return func(ctx context.Context, viewer ViewerContext, _ Op, record Record) error {
 // 		if record == nil {
@@ -209,7 +209,7 @@ type OrgScoped interface {
 //
 // Usage:
 //
-//	definition.Policy(definition.OpAll, definition.OwnerOnly("created_by_id"))
+//	def.Policy(def.OpAll, def.OwnerOnly("created_by_id"))
 func OwnerOnly(field string) PolicyFunc {
 	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
 		if record == nil {
@@ -232,8 +232,8 @@ func OwnerOnly(field string) PolicyFunc {
 //
 // Usage:
 //
-//	definition.Policy(definition.OpAll,
-//	    definition.OwnerOnlyUnless("created_by_id", "finance_manager", "admin"))
+//	def.Policy(def.OpAll,
+//	    def.OwnerOnlyUnless("created_by_id", "finance_manager", "admin"))
 func OwnerOnlyUnless(field string, roles ...string) PolicyFunc {
 	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
 		for _, r := range roles {
@@ -260,7 +260,7 @@ func OwnerOnlyUnless(field string, roles ...string) PolicyFunc {
 //
 // Usage:
 //
-//	definition.Policy(definition.OpWrite, definition.RequireRole("finance_manager", "admin"))
+//	def.Policy(def.OpWrite, def.RequireRole("finance_manager", "admin"))
 func RequireRole(roles ...string) PolicyFunc {
 	return func(_ context.Context, viewer ViewerContext, _ Op, record Record) error {
 		for _, r := range roles {

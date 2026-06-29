@@ -3,12 +3,12 @@
 package pgstore
 
 import (
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"github.com/google/uuid"
 )
 
-// mapRecord is a concrete implementation of definition.Record and
-// definition.MutableRecord backed by a plain map.
+// mapRecord is a concrete implementation of def.Record and
+// def.MutableRecord backed by a plain map.
 type mapRecord struct {
 	id         uuid.UUID
 	tenantID   uuid.UUID
@@ -32,13 +32,13 @@ func (r *mapRecord) TenantID() uuid.UUID         { return r.tenantID }
 func (r *mapRecord) OrgUnitID() uuid.UUID        { return r.orgUnitID }
 func (r *mapRecord) EntityName() string          { return r.entityName }
 
-// RecordOrgUnitID implements definition.OrgScoped so mapRecord works directly
+// RecordOrgUnitID implements def.OrgScoped so mapRecord works directly
 // with AllowWithinOrgScope policy without any wrapping.
 func (r *mapRecord) RecordOrgUnitID() uuid.UUID { return r.orgUnitID }
 
 // ensure interfaces satisfied at compile time
 var (
-	_ definition.Record        = (*mapRecord)(nil)
-	_ definition.MutableRecord = (*mapRecord)(nil)
-	_ definition.OrgScoped     = (*mapRecord)(nil)
+	_ def.Record        = (*mapRecord)(nil)
+	_ def.MutableRecord = (*mapRecord)(nil)
+	_ def.OrgScoped     = (*mapRecord)(nil)
 )

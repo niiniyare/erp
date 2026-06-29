@@ -426,6 +426,7 @@ func (n *noopCacheImpl) Expire(_ context.Context, _ string, _ time.Duration) err
 func (n *noopCacheImpl) GetMemory(_ context.Context, _ string, _ any) error {
 	return cache.ErrCacheMiss
 }
+
 func (n *noopCacheImpl) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
 	return nil
 }

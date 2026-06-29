@@ -179,7 +179,7 @@ type Principal struct {
 const LocalsKeyPrincipal = "authz_principal"
 
 // Request is a single authorization check passed to the Casbin enforcer.
-// It mirrors the (sub, dom, obj, act) tuple of the Casbin request definition.
+// It mirrors the (sub, dom, obj, act) tuple of the Casbin request def.
 //
 // Object follows a slash-separated resource path convention:
 //

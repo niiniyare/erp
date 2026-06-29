@@ -11,7 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // Entry is one audit log record. tenant_id is populated by the DB via current_tenant_id().
@@ -38,26 +38,26 @@ type ExecFunc func(ctx context.Context, sql string, args []any) error
 
 // Write builds and persists an audit entry for mutation m.
 // No-op when def.Audited is false.
-func Write(ctx context.Context, exec ExecFunc, def *definition.EntityDefinition, m *definition.Mutation) error {
-	if !def.Audited {
+func Write(ctx context.Context, exec ExecFunc, entity *def.EntityDefinition, m *def.Mutation) error {
+	if !entity.Audited {
 		return nil
 	}
 
 	recordID := uuid.Nil
 	op := m.Op.String()
 
-	changes := diff(def, m)
+	changes := diff(entity, m)
 
 	switch m.Op {
-	case definition.OpCreate:
+	case def.OpCreate:
 		if m.After != nil {
 			recordID = m.After.ID()
 		}
-	case definition.OpUpdate:
+	case def.OpUpdate:
 		if m.After != nil {
 			recordID = m.After.ID()
 		}
-	case definition.OpDelete:
+	case def.OpDelete:
 		if m.Before != nil {
 			recordID = m.Before.ID()
 		}
@@ -68,22 +68,22 @@ func Write(ctx context.Context, exec ExecFunc, def *definition.EntityDefinition,
 		return fmt.Errorf("audit: marshal changes: %w", err)
 	}
 
-	return exec(ctx, insertAudit, []any{def.Name, recordID, op, m.ActorID, string(changesJSON)})
+	return exec(ctx, insertAudit, []any{entity.Name, recordID, op, m.ActorID, string(changesJSON)})
 }
 
 // diff builds a changes map from the mutation.
 // For Create: {"after": {field: value, …}}
 // For Update: {"before": {…}, "after": {…}} — only changed fields
 // For Delete: {"before": {field: value, …}}
-func diff(def *definition.EntityDefinition, m *definition.Mutation) map[string]any {
+func diff(entity *def.EntityDefinition, m *def.Mutation) map[string]any {
 	switch m.Op {
-	case definition.OpCreate:
-		return map[string]any{"after": recordSnapshot(def, m.After)}
-	case definition.OpDelete:
-		return map[string]any{"before": recordSnapshot(def, m.Before)}
-	case definition.OpUpdate:
-		before := recordSnapshot(def, m.Before)
-		after := recordSnapshot(def, m.After)
+	case def.OpCreate:
+		return map[string]any{"after": recordSnapshot(entity, m.After)}
+	case def.OpDelete:
+		return map[string]any{"before": recordSnapshot(entity, m.Before)}
+	case def.OpUpdate:
+		before := recordSnapshot(entity, m.Before)
+		after := recordSnapshot(entity, m.After)
 		changed := make(map[string]any)
 		for k, av := range after {
 			bv := before[k]
@@ -100,12 +100,12 @@ func diff(def *definition.EntityDefinition, m *definition.Mutation) map[string]a
 }
 
 // recordSnapshot captures field values from rec, skipping sensitive fields.
-func recordSnapshot(def *definition.EntityDefinition, rec definition.Record) map[string]any {
+func recordSnapshot(entity *def.EntityDefinition, rec def.Record) map[string]any {
 	if rec == nil {
 		return map[string]any{}
 	}
-	m := make(map[string]any, len(def.Fields))
-	for _, f := range def.Fields {
+	m := make(map[string]any, len(entity.Fields))
+	for _, f := range entity.Fields {
 		if f.IsSensitive {
 			continue
 		}

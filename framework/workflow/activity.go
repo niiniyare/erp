@@ -7,7 +7,7 @@ import (
 	"github.com/google/uuid"
 	"go.temporal.io/sdk/activity"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/persistence"
 )
 
@@ -61,7 +61,7 @@ func (a *StoreActivity) FindByID(ctx context.Context, input FindByIDInput) (*Fin
 
 	logger.Info("FindByID", "entity", input.Entity, "id", input.ID)
 
-	def := definition.Lookup(input.Entity)
+	def := def.Lookup(input.Entity)
 	fields := map[string]any{"id": rec.ID().String()}
 	if def != nil {
 		for _, f := range def.Fields {
@@ -114,7 +114,7 @@ func (a *StoreActivity) Update(ctx context.Context, input UpdateInput) error {
 // ──────────────────────────────────────────────────────────────────
 
 type mutableWrapper struct {
-	definition.Record
+	def.Record
 	changes map[string]any
 }
 
@@ -132,4 +132,4 @@ func (w *mutableWrapper) Set(field string, value any) {
 	w.changes[field] = value
 }
 
-var _ definition.MutableRecord = (*mutableWrapper)(nil)
+var _ def.MutableRecord = (*mutableWrapper)(nil)

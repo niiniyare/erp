@@ -17,10 +17,10 @@ import (
 	tclient "go.temporal.io/sdk/client"
 
 	"awo.so/framework/api"
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
+	"awo.so/framework/persistence/pgstore"
 	platformorg "awo.so/framework/platform/org"
 	platformorgpgorg "awo.so/framework/platform/org/pgorg"
-	"awo.so/framework/persistence/pgstore"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
 )
@@ -78,7 +78,7 @@ func Mount(app *fiber.App, opts Options) {
 	if opts.TemporalClient != nil {
 		wfExec = workflow.NewExecutor(opts.TemporalClient)
 	}
-	_ = wfExec // used by modules that register workflow hooks via definition.HookDef
+	_ = wfExec // used by modules that register workflow hooks via def.HookDef
 
 	apiGroup := app.Group(opts.APIPrefix)
 	handlerOpts := []api.HandlerOption{
@@ -87,7 +87,7 @@ func Mount(app *fiber.App, opts Options) {
 	if opts.TenantResolver != nil {
 		handlerOpts = append(handlerOpts, api.WithTenantResolver(opts.TenantResolver))
 	}
-	for _, def := range definition.All() {
+	for _, def := range def.All() {
 		h := api.NewHandler(def, tenantStore, opts.ViewerFn, handlerOpts...)
 		api.Register(apiGroup, "/"+def.TableName(), h)
 	}
@@ -97,7 +97,7 @@ func Mount(app *fiber.App, opts Options) {
 
 // anonymousViewer is the fallback ViewerFromCtx when none is provided.
 // Returns an unauthenticated viewer — suitable only for dev/testing.
-func anonymousViewer(c *fiber.Ctx) (definition.ViewerContext, error) {
+func anonymousViewer(c *fiber.Ctx) (def.ViewerContext, error) {
 	tenantID := c.Get("X-Awo-Tenant")
 	if tenantID == "" {
 		tenantID, _ = c.Locals("tenant_slug").(string)

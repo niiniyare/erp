@@ -1,4 +1,4 @@
-package definition
+package def
 
 import (
 	"errors"
@@ -19,10 +19,15 @@ import (
 //   - Audit log    — automatic write tracking when Audited = true
 //
 // EntityDefinitions MUST be immutable after registration. Mutating a definition
-// after calling definition.Register produces undefined behaviour because the
+// after calling def.Register produces undefined behaviour because the
 // registry stores a pointer and the API/persistence layers cache field lists.
 type EntityDefinition struct {
 	// ── Identity ──────────────────────────────────────────────────────────────
+
+	// Type controls which persistence backend stores this entity's records.
+	// Defaults to EntityTypeSystem (dedicated SQL table) when zero.
+	// Set to EntityTypeCustom for tenant-defined runtime entities stored in JSONB.
+	Type EntityType
 
 	// Name is the canonical machine identifier used in URLs, DB tables, and logs.
 	// Convention: singular, snake_case. Must be unique across the registry.
@@ -32,6 +37,11 @@ type EntityDefinition struct {
 	// Label is the human-readable display name shown in SDUI navigation and forms.
 	// Example: "Sales Order", "Chart of Accounts"
 	Label string
+
+	// LabelPlural is the plural form of Label used in list views and navigation.
+	// Defaults to Label+"s" when empty.
+	// Example: "Sales Orders", "Chart of Accounts" (irregular — must be explicit)
+	LabelPlural string
 
 	// Description is shown in generated API documentation and SDUI tooltips.
 	Description string
@@ -85,7 +95,7 @@ type EntityDefinition struct {
 
 	// Policies control read/write access per operation.
 	// Evaluated in order; fail-closed (deny if no policy returns ErrAllow).
-	// See definition.PolicyFunc for the full contract.
+	// See def.PolicyFunc for the full contract.
 	Policies []PolicyDef
 
 	// SoftDelete enables soft-delete via a `deleted_at timestamptz` column.
@@ -110,6 +120,33 @@ type EntityDefinition struct {
 	// of FieldErrors (may reference multiple fields).
 	// Example use: end_date must be after start_date.
 	EntityValidators []EntityValidator
+
+	// ── Workflow ───────────────────────────────────────────────────────────────
+
+	// WorkflowTriggers declares Temporal workflow bindings for this entity.
+	// Each trigger specifies which mutation operations launch which workflow type.
+	// Triggers fire after a successful save (via HookAfterSave) so the entity
+	// row is committed before the workflow attempts to read it.
+	WorkflowTriggers []WorkflowTrigger
+
+	// ── UI Extensions ─────────────────────────────────────────────────────────
+
+	// Actions declares custom action buttons shown in the SDUI list and detail views.
+	// Each action maps to a POST /api/{entity}/{id}/{action-name} route registered
+	// automatically at bootstrap time.
+	Actions []ActionDef
+
+	// PageBuilders overrides the default AMIS schema generators per view mode.
+	// When non-nil, the SDUI handler calls the appropriate builder instead of
+	// the default CRUDPage / FormPage generators.
+	PageBuilders *PageBuilderSet
+
+	// ── Permissions ───────────────────────────────────────────────────────────
+
+	// Permissions maps role names to the set of operations that role may perform.
+	// Used by RequireRole policies and the SDUI layer to filter UI elements.
+	// Example: {"finance_manager": OpAll, "auditor": OpRead}
+	Permissions map[string]Op
 }
 
 // Validation errors returned by Validate.
@@ -167,11 +204,39 @@ func (d *EntityDefinition) Validate() error {
 
 // TableName returns the resolved PostgreSQL table name.
 // Defaults to "{Name}s" when Table is empty.
+// For EntityTypeCustom the store always uses custom_entity_records; this method
+// returns the logical table name used in SQL builders for system entities.
 func (d *EntityDefinition) TableName() string {
 	if d.Table != "" {
 		return d.Table
 	}
 	return d.Name + "s"
+}
+
+// LabelPluralName returns the plural display name.
+// Defaults to Label+"s" when LabelPlural is not set.
+func (d *EntityDefinition) LabelPluralName() string {
+	if d.LabelPlural != "" {
+		return d.LabelPlural
+	}
+	if d.Label != "" {
+		return d.Label + "s"
+	}
+	return d.Name + "s"
+}
+
+// IsCustom reports whether this is a runtime custom entity stored in JSONB.
+func (d *EntityDefinition) IsCustom() bool {
+	return d.Type.IsCustom()
+}
+
+// FieldSet returns a map of field name → struct for fast allowlist lookups.
+func (d *EntityDefinition) FieldSet() map[string]struct{} {
+	m := make(map[string]struct{}, len(d.Fields))
+	for _, f := range d.Fields {
+		m[f.Name] = struct{}{}
+	}
+	return m
 }
 
 // FieldByName returns the FieldDef with the given name, or nil.

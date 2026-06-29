@@ -1,9 +1,9 @@
 // Package validate provides field-level validators and the validation pipeline.
 //
-// Built-in validators are constructor functions that return definition.FieldValidator.
+// Built-in validators are constructor functions that return def.FieldValidator.
 // They are designed to be chained on FieldDef declarations:
 //
-//	definition.Field("email").OfType(definition.FieldTypeData).
+//	def.Field("email").OfType(def.FieldTypeData).
 //	    MaxLen(254).
 //	    Validate(validate.Email())
 package validate
@@ -16,50 +16,50 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // ── Built-in validators ────────────────────────────────────────────────────────
 
 // Email validates RFC 5321 email format.
-func Email() definition.FieldValidator {
-	return func(value any, _ definition.Record) *definition.FieldError {
+func Email() def.FieldValidator {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if _, err := mail.ParseAddress(s); err != nil {
-			return &definition.FieldError{Message: "must be a valid email address"}
+			return &def.FieldError{Message: "must be a valid email address"}
 		}
 		return nil
 	}
 }
 
 // Phone validates E.164 format (+[country][number], 8-15 digits total).
-func Phone() definition.FieldValidator {
+func Phone() def.FieldValidator {
 	re := regexp.MustCompile(`^\+[1-9]\d{7,14}$`)
-	return func(value any, _ definition.Record) *definition.FieldError {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if !re.MatchString(s) {
-			return &definition.FieldError{Message: "must be in E.164 format (e.g. +254700000000)"}
+			return &def.FieldError{Message: "must be in E.164 format (e.g. +254700000000)"}
 		}
 		return nil
 	}
 }
 
 // URL validates an absolute HTTP or HTTPS URL.
-func URL() definition.FieldValidator {
-	return func(value any, _ definition.Record) *definition.FieldError {
+func URL() def.FieldValidator {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		u, err := url.ParseRequestURI(s)
 		if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
-			return &definition.FieldError{Message: "must be an absolute HTTP or HTTPS URL"}
+			return &def.FieldError{Message: "must be an absolute HTTP or HTTPS URL"}
 		}
 		return nil
 	}
@@ -67,30 +67,30 @@ func URL() definition.FieldValidator {
 
 // KRAPin validates Kenyan KRA PIN format: one letter + 9 digits + one letter.
 // Example valid value: A000000000X
-func KRAPin() definition.FieldValidator {
+func KRAPin() def.FieldValidator {
 	re := regexp.MustCompile(`^[A-Z]\d{9}[A-Z]$`)
-	return func(value any, _ definition.Record) *definition.FieldError {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if !re.MatchString(strings.ToUpper(s)) {
-			return &definition.FieldError{Message: "must be a valid KRA PIN (e.g. A000000000X)"}
+			return &def.FieldError{Message: "must be a valid KRA PIN (e.g. A000000000X)"}
 		}
 		return nil
 	}
 }
 
 // NHIF validates an NHIF member number (6–9 digits).
-func NHIF() definition.FieldValidator {
+func NHIF() def.FieldValidator {
 	re := regexp.MustCompile(`^\d{6,9}$`)
-	return func(value any, _ definition.Record) *definition.FieldError {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if !re.MatchString(s) {
-			return &definition.FieldError{Message: "must be a valid NHIF member number (6–9 digits)"}
+			return &def.FieldError{Message: "must be a valid NHIF member number (6–9 digits)"}
 		}
 		return nil
 	}
@@ -98,29 +98,29 @@ func NHIF() definition.FieldValidator {
 
 // Regex validates that the field value matches pattern. pattern is compiled
 // once at call time and panics on invalid syntax.
-func Regex(pattern string) definition.FieldValidator {
+func Regex(pattern string) def.FieldValidator {
 	re := regexp.MustCompile(pattern) // panics on bad pattern at startup
-	return func(value any, _ definition.Record) *definition.FieldError {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if !re.MatchString(s) {
-			return &definition.FieldError{Message: fmt.Sprintf("must match pattern %s", pattern)}
+			return &def.FieldError{Message: fmt.Sprintf("must match pattern %s", pattern)}
 		}
 		return nil
 	}
 }
 
 // MinLen validates minimum rune count for string fields.
-func MinLen(n int) definition.FieldValidator {
-	return func(value any, _ definition.Record) *definition.FieldError {
+func MinLen(n int) def.FieldValidator {
+	return func(value any, _ def.Record) *def.FieldError {
 		s, ok := toString(value)
 		if !ok || s == "" {
 			return nil
 		}
 		if utf8.RuneCountInString(s) < n {
-			return &definition.FieldError{Message: fmt.Sprintf("must be at least %d characters", n)}
+			return &def.FieldError{Message: fmt.Sprintf("must be at least %d characters", n)}
 		}
 		return nil
 	}
@@ -160,7 +160,7 @@ func (ve ValidationErrors) Error() string {
 // A field that fails Required is not further validated (skip subsequent stages).
 //
 // Returns nil when all validations pass.
-func Run(def *definition.EntityDefinition, rec definition.MutableRecord) ValidationErrors {
+func Run(def *def.EntityDefinition, rec def.MutableRecord) ValidationErrors {
 	var errs ValidationErrors
 
 	for _, f := range def.Fields {
@@ -188,7 +188,7 @@ func Run(def *definition.EntityDefinition, rec definition.MutableRecord) Validat
 }
 
 // validateField runs all stages for one field and returns any errors.
-func validateField(f *definition.FieldDef, value any, rec definition.Record) []*FieldErr {
+func validateField(f *def.FieldDef, value any, rec def.Record) []*FieldErr {
 	var errs []*FieldErr
 
 	empty := isEmpty(value)
@@ -227,7 +227,7 @@ func validateField(f *definition.FieldDef, value any, rec definition.Record) []*
 	}
 
 	// Stage 4: Options (Select / MultiSelect).
-	if f.Type == definition.FieldTypeSelect && len(f.Options) > 0 {
+	if f.Type == def.FieldTypeSelect && len(f.Options) > 0 {
 		if s, ok := toString(value); ok {
 			if !contains(f.Options, s) {
 				errs = append(errs, &FieldErr{
@@ -277,7 +277,7 @@ func contains(opts []string, v string) bool {
 	return false
 }
 
-func validateNumericRange(f *definition.FieldDef, value any) *definition.FieldError {
+func validateNumericRange(f *def.FieldDef, value any) *def.FieldError {
 	// Convert value to float64 for comparison.
 	var n float64
 	switch v := value.(type) {
@@ -298,7 +298,7 @@ func validateNumericRange(f *definition.FieldDef, value any) *definition.FieldEr
 	if f.MinVal != nil {
 		min, _ := f.MinVal.Float64()
 		if n < min {
-			return &definition.FieldError{
+			return &def.FieldError{
 				Message: fmt.Sprintf("must be at least %s", f.MinVal.String()),
 			}
 		}
@@ -306,7 +306,7 @@ func validateNumericRange(f *definition.FieldDef, value any) *definition.FieldEr
 	if f.MaxVal != nil {
 		max, _ := f.MaxVal.Float64()
 		if n > max {
-			return &definition.FieldError{
+			return &def.FieldError{
 				Message: fmt.Sprintf("must be at most %s", f.MaxVal.String()),
 			}
 		}

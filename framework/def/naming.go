@@ -1,4 +1,4 @@
-package definition
+package def
 
 // NamingSeriesDef configures automatic document-number generation for an entity.
 //
@@ -7,7 +7,7 @@ package definition
 //
 // Example configuration:
 //
-//	NamingSeries: &definition.NamingSeriesDef{
+//	NamingSeries: &def.NamingSeriesDef{
 //	    Field:   "name",
 //	    Prefix:  "INV-",
 //	    Padding: 5,

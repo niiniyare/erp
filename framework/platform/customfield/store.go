@@ -7,10 +7,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
-// FieldKind mirrors the subset of definition.FieldType that custom fields support.
+// FieldKind mirrors the subset of def.FieldType that custom fields support.
 type FieldKind string
 
 const (
@@ -93,8 +93,8 @@ type Store interface {
 
 // ValidationHook returns a HookFunc that validates the `custom_fields` map
 // against the tenant's registered Field definitions.
-func ValidationHook(store Store) definition.HookFunc {
-	return func(ctx context.Context, m *definition.Mutation) error {
+func ValidationHook(store Store) def.HookFunc {
+	return func(ctx context.Context, m *def.Mutation) error {
 		if m.After == nil {
 			return nil
 		}
@@ -132,7 +132,7 @@ func ValidationHook(store Store) definition.HookFunc {
 		for _, cf := range defs {
 			if cf.Required {
 				if _, present := values[cf.Name]; !present {
-					if m.Op == definition.OpCreate {
+					if m.Op == def.OpCreate {
 						return &ValidationError{Field: cf.Name, Message: "required"}
 					}
 				}
@@ -153,7 +153,7 @@ func RegisterRoutes(router fiber.Router, prefix string, store Store, viewerFn fu
 			return fiber.ErrUnauthorized
 		}
 		entity := c.Params("entity")
-		if definition.Lookup(entity) == nil {
+		if def.Lookup(entity) == nil {
 			return fiber.NewError(fiber.StatusNotFound, "unknown entity: "+entity)
 		}
 		fields, err := store.ListForEntity(c.Context(), tenantID, entity)
@@ -169,7 +169,7 @@ func RegisterRoutes(router fiber.Router, prefix string, store Store, viewerFn fu
 			return fiber.ErrUnauthorized
 		}
 		entity := c.Params("entity")
-		if definition.Lookup(entity) == nil {
+		if def.Lookup(entity) == nil {
 			return fiber.NewError(fiber.StatusNotFound, "unknown entity: "+entity)
 		}
 

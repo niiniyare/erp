@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/validate"
 )
 
@@ -28,7 +28,7 @@ func (r *rec) ID() uuid.UUID       { return uuid.Nil }
 func (r *rec) TenantID() uuid.UUID { return uuid.Nil }
 func (r *rec) EntityName() string  { return "test" }
 
-var _ definition.MutableRecord = (*rec)(nil)
+var _ def.MutableRecord = (*rec)(nil)
 
 // ── suite ────────────────────────────────────────────────────────────────────
 
@@ -105,9 +105,9 @@ func (s *ValidateSuite) TestRegex_NoMatch() {
 // ── Run pipeline ──────────────────────────────────────────────────────────────
 
 func (s *ValidateSuite) TestRun_Required_Missing() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "invoice",
-		Fields: []*definition.FieldDef{definition.String("title").Required()},
+		Fields: []*def.FieldDef{def.String("title").Required()},
 	}
 	errs := validate.Run(def, newRec())
 	s.Require().NotNil(errs)
@@ -116,17 +116,17 @@ func (s *ValidateSuite) TestRun_Required_Missing() {
 }
 
 func (s *ValidateSuite) TestRun_Required_Present() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "invoice",
-		Fields: []*definition.FieldDef{definition.String("title").Required()},
+		Fields: []*def.FieldDef{def.String("title").Required()},
 	}
 	s.Nil(validate.Run(def, newRec("title", "INV-001")))
 }
 
 func (s *ValidateSuite) TestRun_MaxLength_Exceeded() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "invoice",
-		Fields: []*definition.FieldDef{definition.String("note").MaxLen(5)},
+		Fields: []*def.FieldDef{def.String("note").MaxLen(5)},
 	}
 	errs := validate.Run(def, newRec("note", "toolongvalue"))
 	s.NotNil(errs)
@@ -134,17 +134,17 @@ func (s *ValidateSuite) TestRun_MaxLength_Exceeded() {
 }
 
 func (s *ValidateSuite) TestRun_Select_ValidOption() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "invoice",
-		Fields: []*definition.FieldDef{definition.Enum("status").Values("draft", "approved")},
+		Fields: []*def.FieldDef{def.Enum("status").Values("draft", "approved")},
 	}
 	s.Nil(validate.Run(def, newRec("status", "draft")))
 }
 
 func (s *ValidateSuite) TestRun_Select_InvalidOption() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "invoice",
-		Fields: []*definition.FieldDef{definition.Enum("status").Values("draft", "approved")},
+		Fields: []*def.FieldDef{def.Enum("status").Values("draft", "approved")},
 	}
 	errs := validate.Run(def, newRec("status", "unknown"))
 	s.Require().NotNil(errs)
@@ -153,10 +153,10 @@ func (s *ValidateSuite) TestRun_Select_InvalidOption() {
 
 func (s *ValidateSuite) TestRun_RequiredFails_SkipsCustomValidator() {
 	called := false
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name: "t",
-		Fields: []*definition.FieldDef{
-			definition.String("email").Required().Validate(func(v any, _ definition.Record) *definition.FieldError {
+		Fields: []*def.FieldDef{
+			def.String("email").Required().Validate(func(v any, _ def.Record) *def.FieldError {
 				called = true
 				return nil
 			}),
@@ -169,16 +169,16 @@ func (s *ValidateSuite) TestRun_RequiredFails_SkipsCustomValidator() {
 
 func (s *ValidateSuite) TestRun_EntityValidator_Runs_After_Fields() {
 	crossCalled := false
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "leave",
-		Fields: []*definition.FieldDef{definition.String("start"), definition.String("end")},
-		EntityValidators: []definition.EntityValidator{
-			func(r definition.Record) []*definition.FieldError {
+		Fields: []*def.FieldDef{def.String("start"), def.String("end")},
+		EntityValidators: []def.EntityValidator{
+			func(r def.Record) []*def.FieldError {
 				crossCalled = true
 				start, _ := r.Get("start").(string)
 				end, _ := r.Get("end").(string)
 				if start != "" && end != "" && end < start {
-					return []*definition.FieldError{{Field: "end", Message: "must be after start"}}
+					return []*def.FieldError{{Field: "end", Message: "must be after start"}}
 				}
 				return nil
 			},
@@ -192,11 +192,11 @@ func (s *ValidateSuite) TestRun_EntityValidator_Runs_After_Fields() {
 
 func (s *ValidateSuite) TestRun_EntityValidator_SkippedOnFieldErrors() {
 	crossCalled := false
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:   "leave",
-		Fields: []*definition.FieldDef{definition.String("start").Required()},
-		EntityValidators: []definition.EntityValidator{
-			func(_ definition.Record) []*definition.FieldError {
+		Fields: []*def.FieldDef{def.String("start").Required()},
+		EntityValidators: []def.EntityValidator{
+			func(_ def.Record) []*def.FieldError {
 				crossCalled = true
 				return nil
 			},
@@ -209,11 +209,11 @@ func (s *ValidateSuite) TestRun_EntityValidator_SkippedOnFieldErrors() {
 }
 
 func (s *ValidateSuite) TestRun_MultipleFields_AllErrorsCollected() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name: "t",
-		Fields: []*definition.FieldDef{
-			definition.String("a").Required(),
-			definition.String("b").Required(),
+		Fields: []*def.FieldDef{
+			def.String("a").Required(),
+			def.String("b").Required(),
 		},
 	}
 	errs := validate.Run(def, newRec())

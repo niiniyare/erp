@@ -3,15 +3,15 @@
 //
 // # Hook execution model
 //
-//   - Hooks are registered on [definition.EntityDefinition] as a slice of
-//     [definition.Hook] values. Each hook declares which [definition.Op]s and
-//     which [definition.HookTiming] it applies to via [definition.Hook.Ops] and
-//     [definition.Hook.Timing]; zero values are expanded to "all ops" and the
-//     default timing by the [definition.Hook.EffectiveOps] /
-//     [definition.Hook.EffectiveTiming] methods.
+//   - Hooks are registered on [def.EntityDefinition] as a slice of
+//     [def.Hook] values. Each hook declares which [def.Op]s and
+//     which [def.HookTiming] it applies to via [def.Hook.Ops] and
+//     [def.Hook.Timing]; zero values are expanded to "all ops" and the
+//     default timing by the [def.Hook.EffectiveOps] /
+//     [def.Hook.EffectiveTiming] methods.
 //
 //   - [Runner.Run] is the single entry point. Callers pass the desired
-//     [definition.HookTiming] explicitly so the call site documents when hooks
+//     [def.HookTiming] explicitly so the call site documents when hooks
 //     fire without requiring six separately-named methods.
 //
 //   - Hooks that panic are caught and converted to errors so a single
@@ -24,12 +24,12 @@
 //
 //	r := hooks.NewRunner(logger) // or hooks.DefaultRunner
 //
-//	if err := r.Run(ctx, def, m, definition.HookBeforeValidate); err != nil { … }
+//	if err := r.Run(ctx, def, m, def.HookBeforeValidate); err != nil { … }
 //	if err := validate(m); err != nil { … }
-//	if err := r.Run(ctx, def, m, definition.HookBeforeSave); err != nil { … }
+//	if err := r.Run(ctx, def, m, def.HookBeforeSave); err != nil { … }
 //	// begin tx
 //	if err := persist(ctx, tx, m); err != nil { … }
-//	if err := r.Run(ctx, def, m, definition.HookAfterSave); err != nil { … }
+//	if err := r.Run(ctx, def, m, def.HookAfterSave); err != nil { … }
 //	// commit tx
 package hooks
 
@@ -39,7 +39,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // ── Error type ────────────────────────────────────────────────────────────────
@@ -53,9 +53,9 @@ type HookError struct {
 	// Entity is the EntityDefinition.Name of the entity being mutated.
 	Entity string
 	// Op is the write operation (create, update, delete, …).
-	Op definition.Op
+	Op def.Op
 	// Timing is the hook phase that failed.
-	Timing definition.HookTiming
+	Timing def.HookTiming
 	// Panicked is true when the hook panicked rather than returning an error.
 	Panicked bool
 	// Err is the underlying error (or the recovered panic value converted to error).
@@ -107,9 +107,9 @@ func NewRunner(logger *slog.Logger) *Runner {
 // Panicked == true so the calling write transaction can roll back cleanly.
 func (r *Runner) Run(
 	ctx context.Context,
-	def *definition.EntityDefinition,
-	m *definition.Mutation,
-	timing definition.HookTiming,
+	def *def.EntityDefinition,
+	m *def.Mutation,
+	timing def.HookTiming,
 ) error {
 	// Fast-path: refuse to start if the context is already cancelled.
 	if err := ctx.Err(); err != nil {
@@ -133,10 +133,10 @@ func (r *Runner) Run(
 // runOne calls a single hook function and converts panics to *HookError.
 func (r *Runner) runOne(
 	ctx context.Context,
-	def *definition.EntityDefinition,
-	m *definition.Mutation,
-	timing definition.HookTiming,
-	h definition.HookDef,
+	def *def.EntityDefinition,
+	m *def.Mutation,
+	timing def.HookTiming,
+	h def.HookDef,
 	idx int,
 ) (retErr error) {
 	name := hookName(h, idx)
@@ -203,7 +203,7 @@ func AsHookError(err error) (*HookError, bool) {
 // hookName returns the hook's declared name, or a positional fallback.
 // Using a fallback rather than a blank string keeps error messages actionable
 // for hooks that were registered without an explicit name.
-func hookName(h definition.HookDef, idx int) string {
+func hookName(h def.HookDef, idx int) string {
 	if h.Name != "" {
 		return h.Name
 	}

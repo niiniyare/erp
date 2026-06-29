@@ -25,7 +25,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/filter"
 )
 
@@ -41,7 +41,7 @@ const TotalColumn = "__total"
 //	SELECT <cols> FROM <table> WHERE id = $1 [AND deleted_at IS NULL]
 //
 // The caller supplies the id value as the sole query argument.
-func SelectOne(def *definition.EntityDefinition) (string, error) {
+func SelectOne(def *def.EntityDefinition) (string, error) {
 	cols, err := columnList(def)
 	if err != nil {
 		return "", err
@@ -95,7 +95,7 @@ type SelectOpts struct {
 //
 // The result set includes a [TotalColumn] ("__total") column that holds the
 // total number of matching rows, available on every row via the OVER() window.
-func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []any, error) {
+func SelectList(def *def.EntityDefinition, opts SelectOpts) (string, []any, error) {
 	cols, err := columnList(def)
 	if err != nil {
 		return "", nil, err
@@ -154,7 +154,7 @@ func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []an
 //	INSERT INTO <table> (id, tenant_id, col1, …)
 //	VALUES ($1, current_tenant_id(), $2, …)
 //	RETURNING id
-func Insert(def *definition.EntityDefinition, fields []string) (query string, cols []string, err error) {
+func Insert(def *def.EntityDefinition, fields []string) (query string, cols []string, err error) {
 	sqlCols, paramCols, err := buildColumnLists(def, fields)
 	if err != nil {
 		return "", nil, fmt.Errorf("sqlbuilder.Insert: %w", err)
@@ -195,7 +195,7 @@ func Insert(def *definition.EntityDefinition, fields []string) (query string, co
 //
 // Returns (query, cols, error) where cols is the ordered parameter column list
 // (same for every row). If n == 0 both query and cols are empty.
-func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query string, cols []string, err error) {
+func BulkInsert(def *def.EntityDefinition, fields []string, n int) (query string, cols []string, err error) {
 	if n == 0 {
 		return "", nil, nil
 	}
@@ -253,7 +253,7 @@ var immutableCols = map[string]bool{
 // values the caller supplies as $1…$k; id is always the final placeholder $k+1.
 //
 //	UPDATE <table> SET col1=$1, col2=$2, … WHERE id=$k+1 [AND deleted_at IS NULL]
-func Update(def *definition.EntityDefinition, fields []string) (query string, cols []string, err error) {
+func Update(def *def.EntityDefinition, fields []string) (query string, cols []string, err error) {
 	mutable := make([]string, 0, len(fields))
 	for _, f := range fields {
 		if !immutableCols[f] {
@@ -298,7 +298,7 @@ func Update(def *definition.EntityDefinition, fields []string) (query string, co
 // SoftDelete builds an UPDATE that stamps deleted_at = NOW() for a single record.
 //
 // The caller supplies the record id as $1.
-func SoftDelete(def *definition.EntityDefinition) (string, error) {
+func SoftDelete(def *def.EntityDefinition) (string, error) {
 	table, err := pgIdent(def.TableName())
 	if err != nil {
 		return "", fmt.Errorf("sqlbuilder.SoftDelete: %w", err)
@@ -309,7 +309,7 @@ func SoftDelete(def *definition.EntityDefinition) (string, error) {
 // HardDelete builds a DELETE statement for a single record.
 //
 // The caller supplies the record id as $1.
-func HardDelete(def *definition.EntityDefinition) (string, error) {
+func HardDelete(def *def.EntityDefinition) (string, error) {
 	table, err := pgIdent(def.TableName())
 	if err != nil {
 		return "", fmt.Errorf("sqlbuilder.HardDelete: %w", err)
@@ -326,7 +326,7 @@ func HardDelete(def *definition.EntityDefinition) (string, error) {
 // a placeholder.
 //
 // The caller supplies values for filterFields (in order) as query args.
-func Count(def *definition.EntityDefinition, filterFields []string) (string, error) {
+func Count(def *def.EntityDefinition, filterFields []string) (string, error) {
 	table, err := pgIdent(def.TableName())
 	if err != nil {
 		return "", fmt.Errorf("sqlbuilder.Count: %w", err)
@@ -357,7 +357,7 @@ func Count(def *definition.EntityDefinition, filterFields []string) (string, err
 // filterFields are exact-match equality predicates ($1, $2, …). Soft-delete
 // guard (if any) is appended after the parameterised fields and does not
 // consume a placeholder. The caller supplies values for filterFields as args.
-func Exists(def *definition.EntityDefinition, filterFields []string) (string, error) {
+func Exists(def *def.EntityDefinition, filterFields []string) (string, error) {
 	table, err := pgIdent(def.TableName())
 	if err != nil {
 		return "", fmt.Errorf("sqlbuilder.Exists: %w", err)
@@ -386,7 +386,7 @@ func Exists(def *definition.EntityDefinition, filterFields []string) (string, er
 
 // columnList returns a comma-separated, quoted column list for SELECT statements.
 // System columns (id, scope cols, timestamps) come first; entity fields follow.
-func columnList(def *definition.EntityDefinition) (string, error) {
+func columnList(def *def.EntityDefinition) (string, error) {
 	scope := scopeColumns(def)
 	cols := make([]string, 0, len(def.Fields)+5)
 
@@ -420,7 +420,7 @@ func columnList(def *definition.EntityDefinition) (string, error) {
 //   - Global   → nil
 //   - Tenant   → ["tenant_id"]
 //   - Unit     → ["tenant_id", "org_unit_id"]
-func scopeColumns(def *definition.EntityDefinition) []string {
+func scopeColumns(def *def.EntityDefinition) []string {
 	switch {
 	case def.IsGlobal():
 		return nil
@@ -437,7 +437,7 @@ func scopeColumns(def *definition.EntityDefinition) []string {
 //     including id, scope cols, and the supplied fields.
 //   - paramCols: columns whose values are caller-supplied $N parameters
 //     (tenant_id is excluded because it maps to the current_tenant_id() literal).
-func buildColumnLists(def *definition.EntityDefinition, fields []string) (sqlCols, paramCols []string, err error) {
+func buildColumnLists(def *def.EntityDefinition, fields []string) (sqlCols, paramCols []string, err error) {
 	scopeCols := scopeColumns(def)
 	reserved := make(map[string]bool, len(scopeCols)+1)
 	reserved["id"] = true
@@ -511,7 +511,7 @@ func quoteIdents(names []string) ([]string, error) {
 // Returns (clauses, args, nextIdx, error). nextIdx is the first unused $N
 // after all WHERE clause parameters (LIMIT / OFFSET are appended at nextIdx
 // and nextIdx+1 by [SelectList]).
-func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, []any, int, error) {
+func whereClauses(def *def.EntityDefinition, opts SelectOpts, startIdx int) ([]string, []any, int, error) {
 	var clauses []string
 	var args []any
 	idx := startIdx

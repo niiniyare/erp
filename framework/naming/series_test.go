@@ -6,7 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/naming"
 )
 
@@ -20,7 +20,7 @@ func (r *stubRec) ID() uuid.UUID       { return uuid.Nil }
 func (r *stubRec) TenantID() uuid.UUID { return uuid.Nil }
 func (r *stubRec) EntityName() string  { return "invoice" }
 
-var _ definition.MutableRecord = (*stubRec)(nil)
+var _ def.MutableRecord = (*stubRec)(nil)
 
 // mockExec simulates an atomic counter (no DB needed).
 func mockExec(seq *int64) naming.ExecOneRow {
@@ -40,18 +40,18 @@ func TestNamingSuite(t *testing.T) { suite.Run(t, new(NamingSuite)) }
 // ── tests ────────────────────────────────────────────────────────────────────
 
 func (s *NamingSuite) TestFormat_Basic() {
-	ns := &definition.NamingSeriesDef{Prefix: "INV-", Padding: 5}
+	ns := &def.NamingSeriesDef{Prefix: "INV-", Padding: 5}
 	s.Equal("INV-00001", naming.Format(ns, 1))
 	s.Equal("INV-00042", naming.Format(ns, 42))
 }
 
 func (s *NamingSuite) TestFormat_PaddingExceeded_NoTruncation() {
-	ns := &definition.NamingSeriesDef{Prefix: "INV-", Padding: 4}
+	ns := &def.NamingSeriesDef{Prefix: "INV-", Padding: 4}
 	s.Equal("INV-100000", naming.Format(ns, 100000))
 }
 
 func (s *NamingSuite) TestFormat_DefaultPadding() {
-	ns := &definition.NamingSeriesDef{Prefix: "ORD-"} // Padding=0 → 5
+	ns := &def.NamingSeriesDef{Prefix: "ORD-"} // Padding=0 → 5
 	s.Equal("ORD-00007", naming.Format(ns, 7))
 }
 
@@ -85,7 +85,7 @@ func (s *NamingSuite) TestNext_PassesCorrectArgs() {
 }
 
 func (s *NamingSuite) TestStamp_NilSeries_Noop() {
-	def := &definition.EntityDefinition{Name: "invoice", NamingSeries: nil}
+	def := &def.EntityDefinition{Name: "invoice", NamingSeries: nil}
 	called := false
 	exec := func(_ string, _ []any, _ []any) error {
 		called = true
@@ -97,9 +97,9 @@ func (s *NamingSuite) TestStamp_NilSeries_Noop() {
 }
 
 func (s *NamingSuite) TestStamp_SetsTargetField() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:         "invoice",
-		NamingSeries: &definition.NamingSeriesDef{Field: "name", Prefix: "INV-", Padding: 4},
+		NamingSeries: &def.NamingSeriesDef{Field: "name", Prefix: "INV-", Padding: 4},
 	}
 	var seq int64
 	r := &stubRec{data: map[string]any{}}
@@ -108,9 +108,9 @@ func (s *NamingSuite) TestStamp_SetsTargetField() {
 }
 
 func (s *NamingSuite) TestStamp_SequentialCalls_DifferentValues() {
-	def := &definition.EntityDefinition{
+	def := &def.EntityDefinition{
 		Name:         "invoice",
-		NamingSeries: &definition.NamingSeriesDef{Field: "name", Prefix: "INV-", Padding: 3},
+		NamingSeries: &def.NamingSeriesDef{Field: "name", Prefix: "INV-", Padding: 3},
 	}
 	var seq int64
 	exec := mockExec(&seq)

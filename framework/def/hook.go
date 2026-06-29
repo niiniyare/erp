@@ -1,4 +1,4 @@
-package definition
+package def
 
 import "context"
 
@@ -90,6 +90,8 @@ func (t HookTiming) String() string {
 		return "on_submit"
 	case HookOnCancel:
 		return "on_cancel"
+	case HookAfterDelete:
+		return "after_delete"
 	default:
 		return "unknown"
 	}
@@ -119,6 +121,11 @@ const (
 	// HookOnCancel fires when a submitted document is cancelled.
 	// Use to reverse GL postings and trigger compensating workflows.
 	HookOnCancel
+
+	// HookAfterDelete fires after a successful delete, still inside the transaction.
+	// Use for cascading soft-deletes or audit writes that must roll back on failure.
+	// Distinct from HookAfterSave so hooks can target delete specifically.
+	HookAfterDelete
 )
 
 // HookDef binds a named HookFunc to a set of operations and a lifecycle timing.
@@ -193,6 +200,11 @@ func AfterSaveHook(name string, ops Op, fn HookFunc) HookDef {
 // BeforeDeleteHook creates a named HookBeforeDelete (ops forced to OpDelete).
 func BeforeDeleteHook(name string, fn HookFunc) HookDef {
 	return HookDef{Name: name, Ops: OpDelete, Timing: HookBeforeDelete, Fn: fn}
+}
+
+// AfterDeleteHook creates a named HookAfterDelete (ops forced to OpDelete).
+func AfterDeleteHook(name string, fn HookFunc) HookDef {
+	return HookDef{Name: name, Ops: OpDelete, Timing: HookAfterDelete, Fn: fn}
 }
 
 // OnSubmitHook creates a named HookOnSubmit (ops forced to OpUpdate).

@@ -855,7 +855,7 @@ var _ Node = PropertyNode{}
 // ─── ActionNode (display helper) ─────────────────────────────────────────────
 // ActionNode is defined here (before form.go) because CRUDNode uses it in
 // RowActions. The full form-oriented ActionNode definition lives in form.go.
-// This is the shared canonical definition.
+// This is the shared canonical def.
 
 // ActionNode renders a button or link that triggers an AMIS action.
 // Maps to AMIS type "button".

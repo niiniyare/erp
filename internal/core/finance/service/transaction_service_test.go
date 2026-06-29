@@ -229,9 +229,11 @@ func (s *stubAccountRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Ac
 func (s *stubAccountRepo) Create(ctx context.Context, a *domain.Accounts) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetByCode(ctx context.Context, eid *uuid.UUID, code string) (*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) Update(ctx context.Context, a *domain.Accounts) error {
 	panic("not expected")
 }
@@ -239,114 +241,149 @@ func (s *stubAccountRepo) Delete(ctx context.Context, id uuid.UUID) error { pani
 func (s *stubAccountRepo) List(ctx context.Context, f *domain.AccountFilter) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) Count(ctx context.Context, f *domain.AccountFilter) (int64, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ListByParent(ctx context.Context, pid uuid.UUID) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ListByRootType(ctx context.Context, rt domain.RootType) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountPath(ctx context.Context, id uuid.UUID) ([]domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ValidateHierarchy(ctx context.Context, id, pid uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountBalance(ctx context.Context, id uuid.UUID, asOf *time.Time) (*domain.AccountBalance, error) {
 	if s.fnGetAccountBalance != nil {
 		return s.fnGetAccountBalance(ctx, id, asOf)
 	}
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountBalances(ctx context.Context, ids []uuid.UUID, asOf *time.Time) ([]*domain.AccountBalance, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetTrialBalance(ctx context.Context, eid *uuid.UUID, asOf *time.Time) ([]*domain.TrialBalanceEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetActiveAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetControlAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountsByType(ctx context.Context, t string, rt *domain.RootType) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) Search(ctx context.Context, q string, limit int) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ValidateAccountCode(ctx context.Context, code string, excl *uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) IsAccountCodeUnique(ctx context.Context, eid *uuid.UUID, code string, excl *uuid.UUID) (bool, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) HasChildren(ctx context.Context, id uuid.UUID) (bool, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetChildren(ctx context.Context, id uuid.UUID) ([]*domain.Accounts, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) HasTransactions(ctx context.Context, id uuid.UUID) (bool, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) UpdateBalance(ctx context.Context, id uuid.UUID, b domain.AccountBalance) error {
 	if s.fnUpdateBalance != nil {
 		return s.fnUpdateBalance(ctx, id, b)
 	}
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) CreateAccountGroup(ctx context.Context, g *domain.AccountGroup) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountGroupByCode(ctx context.Context, code string, eid *uuid.UUID) (*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) UpdateAccountGroup(ctx context.Context, id uuid.UUID, g *domain.AccountGroup) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) DeleteAccountGroup(ctx context.Context, id uuid.UUID, eid *uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ListAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) ([]*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) CountAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) (int64, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountGroupHierarchy(ctx context.Context, rootID *uuid.UUID, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetGroupsByFinancialStatement(ctx context.Context, st string, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetGroupsByCashFlowCategory(ctx context.Context, cat string, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) ValidateAccountGroupCode(ctx context.Context, code string, excl *uuid.UUID, eid *uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountChildrenHierarchy(ctx context.Context, pid uuid.UUID) ([]*domain.AccountHierarchy, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountSubtree(ctx context.Context, id uuid.UUID) ([]*domain.AccountHierarchy, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountsWithRecentActivity(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetStaleAccountBalances(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
 	panic("not expected")
 }
+
 func (s *stubAccountRepo) GetAccountActivitySummary(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error) {
 	panic("not expected")
 }
@@ -359,42 +396,54 @@ type stubEntryService struct {
 func (s *stubEntryService) CreateEntry(ctx context.Context, e *domain.TransactionEntry) error {
 	panic("not expected")
 }
+
 func (s *stubEntryService) CreateEntries(ctx context.Context, ee []*domain.TransactionEntry) error {
 	panic("not expected")
 }
+
 func (s *stubEntryService) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) GetEntriesByTransactionID(ctx context.Context, id uuid.UUID) ([]*domain.TransactionEntry, error) {
 	if s.fnGetEntriesByTxnID != nil {
 		return s.fnGetEntriesByTxnID(ctx, id)
 	}
 	panic("stubEntryService.GetEntriesByTransactionID not expected")
 }
+
 func (s *stubEntryService) UpdateEntry(ctx context.Context, id uuid.UUID, req domain.TransactionEntry) (*domain.TransactionEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) DeleteEntry(ctx context.Context, id uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubEntryService) GetEntriesByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*domain.TransactionEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) SearchEntries(ctx context.Context, q string, f *domain.EntryFilter, limit, offset int) ([]*domain.TransactionEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) ReconcileEntries(ctx context.Context, ids []uuid.UUID, ref string) error {
 	panic("not expected")
 }
+
 func (s *stubEntryService) UnreconcileEntries(ctx context.Context, ids []uuid.UUID) error {
 	panic("not expected")
 }
+
 func (s *stubEntryService) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoff *time.Time) ([]*domain.TransactionEntry, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) ValidateEntryConsistency(ctx context.Context, entry *domain.TransactionEntry) ([]domain.ValidationError, error) {
 	panic("not expected")
 }
+
 func (s *stubEntryService) GetEntrySummary(ctx context.Context, accountID uuid.UUID, start, end time.Time) (*domain.TransactionSummary, error) {
 	panic("not expected")
 }

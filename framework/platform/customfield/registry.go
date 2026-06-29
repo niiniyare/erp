@@ -16,7 +16,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // LoadFunc loads the raw JSONB custom-field definitions for (tenantID, entity)
@@ -30,7 +30,7 @@ type SaveFunc func(ctx context.Context, tenantID uuid.UUID, entity string, data 
 // Use New to construct; safe for concurrent use after construction.
 type Registry struct {
 	mu    sync.RWMutex
-	cache map[cacheKey][]*definition.FieldDef
+	cache map[cacheKey][]*def.FieldDef
 	load  LoadFunc
 	save  SaveFunc
 }
@@ -43,7 +43,7 @@ type cacheKey struct {
 // New creates a Registry backed by load and save functions.
 func New(load LoadFunc, save SaveFunc) *Registry {
 	return &Registry{
-		cache: make(map[cacheKey][]*definition.FieldDef),
+		cache: make(map[cacheKey][]*def.FieldDef),
 		load:  load,
 		save:  save,
 	}
@@ -51,7 +51,7 @@ func New(load LoadFunc, save SaveFunc) *Registry {
 
 // Get returns the custom field definitions for (tenantID, entity).
 // Results are cached in memory; call Invalidate to force a reload.
-func (r *Registry) Get(ctx context.Context, tenantID uuid.UUID, entity string) ([]*definition.FieldDef, error) {
+func (r *Registry) Get(ctx context.Context, tenantID uuid.UUID, entity string) ([]*def.FieldDef, error) {
 	key := cacheKey{tenantID, entity}
 
 	r.mu.RLock()
@@ -66,7 +66,7 @@ func (r *Registry) Get(ctx context.Context, tenantID uuid.UUID, entity string) (
 		return nil, fmt.Errorf("customfield: load %s/%s: %w", entity, tenantID, err)
 	}
 
-	var defs []*definition.FieldDef
+	var defs []*def.FieldDef
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &defs); err != nil {
 			return nil, fmt.Errorf("customfield: unmarshal %s/%s: %w", entity, tenantID, err)
@@ -81,7 +81,7 @@ func (r *Registry) Get(ctx context.Context, tenantID uuid.UUID, entity string) (
 }
 
 // Set persists and caches new custom field definitions for (tenantID, entity).
-func (r *Registry) Set(ctx context.Context, tenantID uuid.UUID, entity string, fields []*definition.FieldDef) error {
+func (r *Registry) Set(ctx context.Context, tenantID uuid.UUID, entity string, fields []*def.FieldDef) error {
 	raw, err := json.Marshal(fields)
 	if err != nil {
 		return fmt.Errorf("customfield: marshal %s/%s: %w", entity, tenantID, err)
@@ -110,13 +110,13 @@ func (r *Registry) Invalidate(tenantID uuid.UUID, entity string) {
 // InvalidateAll clears all cached definitions.
 func (r *Registry) InvalidateAll() {
 	r.mu.Lock()
-	r.cache = make(map[cacheKey][]*definition.FieldDef)
+	r.cache = make(map[cacheKey][]*def.FieldDef)
 	r.mu.Unlock()
 }
 
 // MergedFields returns base entity fields merged with tenant-specific custom
 // fields. Custom fields with names that clash with base fields are skipped.
-func MergedFields(base []*definition.FieldDef, custom []*definition.FieldDef) []*definition.FieldDef {
+func MergedFields(base []*def.FieldDef, custom []*def.FieldDef) []*def.FieldDef {
 	if len(custom) == 0 {
 		return base
 	}
@@ -124,7 +124,7 @@ func MergedFields(base []*definition.FieldDef, custom []*definition.FieldDef) []
 	for _, f := range base {
 		seen[f.Name] = struct{}{}
 	}
-	merged := make([]*definition.FieldDef, len(base), len(base)+len(custom))
+	merged := make([]*def.FieldDef, len(base), len(base)+len(custom))
 	copy(merged, base)
 	for _, f := range custom {
 		if _, clash := seen[f.Name]; !clash {

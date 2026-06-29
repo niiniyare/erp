@@ -45,7 +45,7 @@ GRANT SELECT, INSERT, UPDATE ON naming_sequences TO application_role, admin_role
 
 -- ── Custom field definitions ─────────────────────────────────────────────────
 -- Stores per-tenant, per-entity custom field definitions as a JSONB array of
--- definition.FieldDef objects. The customfield.Registry caches these in-memory
+-- def.FieldDef objects. The customfield.Registry caches these in-memory
 -- and must be invalidated on change.
 CREATE TABLE IF NOT EXISTS custom_fields (
     tenant_id  UUID        NOT NULL,

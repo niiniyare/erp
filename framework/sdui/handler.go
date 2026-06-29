@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/sdui/amis"
 )
 
@@ -28,7 +28,7 @@ type NavGroup struct {
 
 // CustomFieldSource resolves tenant-specific custom fields for an entity.
 // Typically backed by customfield.Registry.Get.
-type CustomFieldSource func(ctx context.Context, tenantID uuid.UUID, entity string) ([]*definition.FieldDef, error)
+type CustomFieldSource func(ctx context.Context, tenantID uuid.UUID, entity string) ([]*def.FieldDef, error)
 
 // TenantFromCtx extracts the tenant UUID from a Fiber request context.
 // Mirrors api.ViewerFromCtx — host registers middleware that calls c.Locals("viewer", …).
@@ -84,7 +84,7 @@ func Register(router fiber.Router, apiBase string, opts ...HandlerOption) {
 // serveNav returns the sidebar navigation structure derived from all registered
 // EntityDefinitions, grouped by EntityDefinition.Module.
 func serveNav(c *fiber.Ctx) error {
-	defs := definition.All()
+	defs := def.All()
 
 	// Group by module, preserving first-seen order.
 	order := []string{}
@@ -122,7 +122,7 @@ func serveNav(c *fiber.Ctx) error {
 
 func (h *Handler) servePage(c *fiber.Ctx, formOnly bool) error {
 	name := c.Params("entity")
-	def := definition.Lookup(name)
+	def := def.Lookup(name)
 	if def == nil {
 		return fiber.NewError(fiber.StatusNotFound, "unknown entity: "+name)
 	}

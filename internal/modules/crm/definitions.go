@@ -4,87 +4,87 @@ package crm
 import (
 	"context"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 func init() {
-	definition.Register(Customer)
-	definition.Register(Contract)
+	def.Register(Customer)
+	def.Register(Contract)
 }
 
-func allowCRM(_ context.Context, viewer definition.ViewerContext, _ definition.Op, _ definition.Record) error {
+func allowCRM(_ context.Context, viewer def.ViewerContext, _ def.Op, _ def.Record) error {
 	if viewer.IsSystem() || viewer.HasRole("crm_manager") || viewer.HasRole("sales_rep") || viewer.HasRole("tenant_admin") {
-		return definition.ErrAllow
+		return def.ErrAllow
 	}
-	return definition.ErrDeny
+	return def.ErrDeny
 }
 
 // Customer is a Person record typed as CUSTOMER, exposed as its own CRM entity.
-var Customer = &definition.EntityDefinition{
+var Customer = &def.EntityDefinition{
 	Name:       "customer",
 	Label:      "Customer",
 	Table:      "persons",
 	Module:     "CRM",
 	SoftDelete: true,
-	Fields: []*definition.FieldDef{
-		definition.Field("first_name").OfType(definition.FieldTypeSmallText).WithLabel("First Name").
+	Fields: []*def.FieldDef{
+		def.Field("first_name").OfType(def.FieldTypeSmallText).WithLabel("First Name").
 			RequiredField().SearchableField().WithMaxLen(100),
-		definition.Field("last_name").OfType(definition.FieldTypeSmallText).WithLabel("Last Name").
+		def.Field("last_name").OfType(def.FieldTypeSmallText).WithLabel("Last Name").
 			RequiredField().SearchableField().WithMaxLen(100),
-		definition.Field("email").OfType(definition.FieldTypeSmallText).WithLabel("Email").
+		def.Field("email").OfType(def.FieldTypeSmallText).WithLabel("Email").
 			UniqueField().WithMaxLen(320),
-		definition.Field("phone").OfType(definition.FieldTypeSmallText).WithLabel("Phone").WithMaxLen(30),
-		definition.Field("tax_id").OfType(definition.FieldTypeSmallText).WithLabel("Tax ID").
+		def.Field("phone").OfType(def.FieldTypeSmallText).WithLabel("Phone").WithMaxLen(30),
+		def.Field("tax_id").OfType(def.FieldTypeSmallText).WithLabel("Tax ID").
 			SensitiveField().WithMaxLen(50),
-		definition.Field("is_active").OfType(definition.FieldTypeBool).WithLabel("Active").WithDefault(true),
+		def.Field("is_active").OfType(def.FieldTypeBool).WithLabel("Active").WithDefault(true),
 		// person_type is fixed to CUSTOMER — set via BeforeHook in registration.
-		definition.Field("person_type").OfType(definition.FieldTypeData).
+		def.Field("person_type").OfType(def.FieldTypeData).
 			WithDefault("CUSTOMER").ReadOnlyField().HiddenInList(),
 	},
-	Hooks: []definition.HookDef{
+	Hooks: []def.HookDef{
 		// Ensure person_type is always CUSTOMER regardless of payload.
-		definition.BeforeHook(definition.OpCreate|definition.OpUpdate, func(_ context.Context, m *definition.Mutation) error {
+		def.BeforeHook(def.OpCreate|def.OpUpdate, func(_ context.Context, m *def.Mutation) error {
 			if m.After != nil {
 				m.After.Set("person_type", "CUSTOMER")
 			}
 			return nil
 		}),
 	},
-	Policies: []definition.PolicyDef{
-		definition.Policy(definition.OpAll, allowCRM),
+	Policies: []def.PolicyDef{
+		def.Policy(def.OpAll, allowCRM),
 	},
 }
 
 // Contract is a signed agreement with a counterparty.
-var Contract = &definition.EntityDefinition{
+var Contract = &def.EntityDefinition{
 	Name:       "contract",
 	Label:      "Contract",
 	Table:      "contracts",
 	Module:     "CRM",
 	SoftDelete: true,
 	Audited:    true,
-	Fields: []*definition.FieldDef{
-		definition.Field("number").OfType(definition.FieldTypeSmallText).WithLabel("Contract #").
+	Fields: []*def.FieldDef{
+		def.Field("number").OfType(def.FieldTypeSmallText).WithLabel("Contract #").
 			RequiredField().UniqueField().SearchableField().WithMaxLen(50),
-		definition.Field("title").OfType(definition.FieldTypeSmallText).WithLabel("Title").
+		def.Field("title").OfType(def.FieldTypeSmallText).WithLabel("Title").
 			RequiredField().SearchableField().WithMaxLen(255),
-		definition.Field("status").OfType(definition.FieldTypeSelect).WithLabel("Status").
+		def.Field("status").OfType(def.FieldTypeSelect).WithLabel("Status").
 			WithOptions("DRAFT", "ACTIVE", "EXPIRED", "TERMINATED", "PENDING_APPROVAL").
 			WithDefault("DRAFT"),
-		definition.Field("contract_type").OfType(definition.FieldTypeSmallText).WithLabel("Type").
+		def.Field("contract_type").OfType(def.FieldTypeSmallText).WithLabel("Type").
 			WithMaxLen(50),
-		definition.Field("counterparty_name").OfType(definition.FieldTypeSmallText).WithLabel("Counterparty").
+		def.Field("counterparty_name").OfType(def.FieldTypeSmallText).WithLabel("Counterparty").
 			RequiredField().SearchableField().WithMaxLen(255),
-		definition.Field("counterparty_email").OfType(definition.FieldTypeSmallText).WithLabel("Counterparty Email").
+		def.Field("counterparty_email").OfType(def.FieldTypeSmallText).WithLabel("Counterparty Email").
 			WithMaxLen(320),
-		definition.Field("start_date").OfType(definition.FieldTypeDate).WithLabel("Start Date"),
-		definition.Field("end_date").OfType(definition.FieldTypeDate).WithLabel("End Date"),
-		definition.Field("value").OfType(definition.FieldTypeCurrency).WithLabel("Value"),
-		definition.Field("currency_code").OfType(definition.FieldTypeSmallText).WithLabel("Currency").
+		def.Field("start_date").OfType(def.FieldTypeDate).WithLabel("Start Date"),
+		def.Field("end_date").OfType(def.FieldTypeDate).WithLabel("End Date"),
+		def.Field("value").OfType(def.FieldTypeCurrency).WithLabel("Value"),
+		def.Field("currency_code").OfType(def.FieldTypeSmallText).WithLabel("Currency").
 			WithMaxLen(3).WithDefault("USD"),
-		definition.Field("description").OfType(definition.FieldTypeLongText).WithLabel("Description"),
+		def.Field("description").OfType(def.FieldTypeLongText).WithLabel("Description"),
 	},
-	Policies: []definition.PolicyDef{
-		definition.Policy(definition.OpAll, allowCRM),
+	Policies: []def.PolicyDef{
+		def.Policy(def.OpAll, allowCRM),
 	},
 }

@@ -388,7 +388,7 @@ type Employee struct {
 	SalaryInfo []byte `json:"salary_info"`
 	// Current employment status: ACTIVE, INACTIVE, TERMINATED, ON_LEAVE, SUSPENDED.
 	EmploymentStatus *string `json:"employment_status"`
-	// JSONB containing flexible work schedule definition.
+	// JSONB containing flexible work schedule def.
 	WorkSchedule []byte `json:"work_schedule"`
 	// Numeric security clearance level (0 = lowest; higher numbers = higher clearance).
 	SecurityLevel *int32 `json:"security_level"`

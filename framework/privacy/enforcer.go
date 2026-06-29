@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // Enforcer evaluates policy chains. Stateless; safe to share.
@@ -26,27 +26,27 @@ func New() *Enforcer { return &Enforcer{} }
 // Fail-closed: if chain exhausts without ErrAllow → deny.
 func (e *Enforcer) Allow(
 	ctx context.Context,
-	def *definition.EntityDefinition,
-	viewer definition.ViewerContext,
-	op definition.Op,
-	record definition.Record,
+	entity *def.EntityDefinition,
+	viewer def.ViewerContext,
+	op def.Op,
+	record def.Record,
 ) error {
-	for i, p := range def.Policies {
+	for i, p := range entity.Policies {
 		if !p.EffectiveOps().Is(op) {
 			continue
 		}
 		err := p.Fn(ctx, viewer, op, record)
 		switch {
-		case errors.Is(err, definition.ErrAllow):
+		case errors.Is(err, def.ErrAllow):
 			return nil
-		case errors.Is(err, definition.ErrDeny):
+		case errors.Is(err, def.ErrDeny):
 			return fmt.Errorf("policy[%d] denied %s/%s for actor %s",
-				i, def.Name, op, viewer.ActorID())
-		case errors.Is(err, definition.ErrSkip):
+				i, entity.Name, op, viewer.ActorID())
+		case errors.Is(err, def.ErrSkip):
 			continue
 		case err != nil:
 			// Unexpected error treated as deny.
-			return fmt.Errorf("policy[%d] error %s/%s: %w", i, def.Name, op, err)
+			return fmt.Errorf("policy[%d] error %s/%s: %w", i, entity.Name, op, err)
 		default:
 			// nil return from policy treated as ErrSkip.
 			continue
@@ -54,5 +54,5 @@ func (e *Enforcer) Allow(
 	}
 	// No policy granted — fail closed.
 	return fmt.Errorf("no policy granted %s/%s for actor %s (fail-closed)",
-		def.Name, op, viewer.ActorID())
+		entity.Name, op, viewer.ActorID())
 }

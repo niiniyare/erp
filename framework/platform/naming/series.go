@@ -12,7 +12,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // ExecOneRow executes a single-row query and scans the result into dest.
@@ -37,9 +37,9 @@ func Next(exec ExecOneRow, tenantID uuid.UUID, entityName string) (int64, error)
 	return seq, nil
 }
 
-// Format formats seq according to the naming series definition.
+// Format formats seq according to the naming series def.
 // Padding defaults to 5 when ≤ 0.
-func Format(ns *definition.NamingSeriesDef, seq int64) string {
+func Format(ns *def.NamingSeriesDef, seq int64) string {
 	pad := ns.Padding
 	if pad <= 0 {
 		pad = 5
@@ -49,7 +49,7 @@ func Format(ns *definition.NamingSeriesDef, seq int64) string {
 
 // Stamp generates the next document number and writes it onto rec's target
 // field. No-op when def.NamingSeries is nil.
-func Stamp(exec ExecOneRow, tenantID uuid.UUID, def *definition.EntityDefinition, rec definition.MutableRecord) error {
+func Stamp(exec ExecOneRow, tenantID uuid.UUID, def *def.EntityDefinition, rec def.MutableRecord) error {
 	if def.NamingSeries == nil {
 		return nil
 	}

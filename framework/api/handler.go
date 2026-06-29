@@ -8,7 +8,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/hooks"
 	"awo.so/framework/persistence"
 	"awo.so/framework/platform/org"
@@ -18,7 +18,7 @@ import (
 
 // ViewerFromCtx extracts a ViewerContext from a Fiber request context.
 // Host application must register a middleware that calls c.Locals("viewer", ...).
-type ViewerFromCtx func(c *fiber.Ctx) (definition.ViewerContext, error)
+type ViewerFromCtx func(c *fiber.Ctx) (def.ViewerContext, error)
 
 // TenantResolver resolves a tenant slug or UUID string to a UUID.
 // Called when viewer.TenantID() is not a valid UUID (e.g. dev slug headers).
@@ -27,7 +27,7 @@ type TenantResolver func(ctx context.Context, slugOrID string) (uuid.UUID, error
 
 // Handler is a generic CRUD handler for one EntityDefinition.
 type Handler struct {
-	def            *definition.EntityDefinition
+	def            *def.EntityDefinition
 	store          persistence.TenantStore
 	hooks          *hooks.Runner
 	enforcer       *privacy.Enforcer
@@ -38,7 +38,7 @@ type Handler struct {
 
 // NewHandler creates a Handler for def.
 func NewHandler(
-	def *definition.EntityDefinition,
+	def *def.EntityDefinition,
 	store persistence.TenantStore,
 	viewer ViewerFromCtx,
 	opts ...HandlerOption,
@@ -106,7 +106,7 @@ func (h *Handler) findByID(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpRead, rec); err != nil {
+		if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpRead, rec); err != nil {
 			return errForbidden // hide existence from unauthorized viewers
 		}
 		result = recordToMap(rec, h.def)
@@ -124,7 +124,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return err
 	}
 	// Policy check against nil record — policies must handle nil for list-level checks.
-	if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpRead, nil); err != nil {
+	if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpRead, nil); err != nil {
 		return fiber.ErrForbidden
 	}
 
@@ -193,15 +193,15 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	// never written to DB — scopeColumns omits org_unit_id for those entities).
 	rec.Set("org_unit_id", viewer.OrgUnitID())
 
-	if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpCreate, rec); err != nil {
+	if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpCreate, rec); err != nil {
 		return fiber.ErrForbidden
 	}
 
-	mut := &definition.Mutation{Op: definition.OpCreate, After: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
+	mut := &def.Mutation{Op: def.OpCreate, After: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
 	// RunBeforeValidate fires outside the transaction so hooks can normalise
 	// input before validation (e.g. derive computed fields, trim whitespace).
-	if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeValidate); err != nil {
+	if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeValidate); err != nil {
 		return fiberErr(err)
 	}
 
@@ -215,13 +215,13 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
-		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeSave); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeSave); err != nil {
 			return err
 		}
 		if err := es.Create(c.Context(), rec); err != nil {
 			return err
 		}
-		return h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave)
+		return h.hooks.Run(c.Context(), h.def, mut, def.HookAfterSave)
 	}); err != nil {
 		return fiberErr(err)
 	}
@@ -244,41 +244,58 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadRequest, "invalid JSON body")
 	}
 
+	// Fetch existing record and validate outside the transaction so HookBeforeValidate
+	// can perform external lookups without holding a DB connection.
+	before, err := func() (def.Record, error) {
+		var rec def.Record
+		if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
+			var e error
+			rec, e = tx.ForEntity(h.def.Name).FindByID(c.Context(), id)
+			return e
+		}); err != nil {
+			return nil, err
+		}
+		return rec, nil
+	}()
+	if err != nil {
+		return fiberErr(err)
+	}
+
+	if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpUpdate, before); err != nil {
+		return fiber.ErrForbidden
+	}
+
+	rec := newMutableFromRecord(before, body)
+	mut := &def.Mutation{
+		Op:       def.OpUpdate,
+		Before:   before,
+		After:    rec,
+		TenantID: tenantID.String(),
+		ActorID:  viewer.ActorID(),
+	}
+
+	// HookBeforeValidate and validation run outside the transaction (consistent with create).
+	if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeValidate); err != nil {
+		return fiberErr(err)
+	}
+	if verrs := validate.Run(h.def, rec); verrs != nil {
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"status": fiber.StatusUnprocessableEntity,
+			"errors": verrs,
+		})
+	}
+
 	var result map[string]any
 	txErr := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
-		before, err := es.FindByID(c.Context(), id)
-		if err != nil {
-			return err
-		}
-
-		if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpUpdate, before); err != nil {
-			return errForbidden
-		}
-
-		rec := newMutableFromRecord(before, body)
-		mut := &definition.Mutation{
-			Op:       definition.OpUpdate,
-			Before:   before,
-			After:    rec,
-			TenantID: tenantID.String(),
-			ActorID:  viewer.ActorID(),
-		}
-
-		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeValidate); err != nil {
-			return err
-		}
-		if verrs := validate.Run(h.def, rec); verrs != nil {
-			return verrs
-		}
-		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeSave); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeSave); err != nil {
 			return err
 		}
 		if err := es.Update(c.Context(), rec); err != nil {
 			return err
 		}
-		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, def.HookAfterSave); err != nil {
 			return err
 		}
 		result = recordToMap(rec, h.def)
@@ -315,19 +332,19 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if err := h.enforcer.Allow(c.Context(), h.def, viewer, definition.OpDelete, rec); err != nil {
+		if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpDelete, rec); err != nil {
 			return errForbidden
 		}
 
-		mut := &definition.Mutation{Op: definition.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
+		mut := &def.Mutation{Op: def.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
-		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeDelete); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeDelete); err != nil {
 			return err
 		}
 		if err := es.Delete(c.Context(), id); err != nil {
 			return err
 		}
-		return h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave)
+		return h.hooks.Run(c.Context(), h.def, mut, def.HookAfterDelete)
 	}); err != nil {
 		return fiberErr(err)
 	}
@@ -341,7 +358,7 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 
 var errForbidden = errors.New("forbidden")
 
-func (h *Handler) extractContext(c *fiber.Ctx) (definition.ViewerContext, uuid.UUID, error) {
+func (h *Handler) extractContext(c *fiber.Ctx) (def.ViewerContext, uuid.UUID, error) {
 	viewer, err := h.viewer(c)
 	if err != nil {
 		return nil, uuid.Nil, fiber.ErrUnauthorized
@@ -389,7 +406,7 @@ func fiberErr(err error) error {
 	}
 }
 
-func recordToMap(rec definition.Record, def *definition.EntityDefinition) map[string]any {
+func recordToMap(rec def.Record, def *def.EntityDefinition) map[string]any {
 	m := map[string]any{
 		"id":         rec.ID(),
 		"created_at": rec.Get("created_at"),
@@ -413,7 +430,7 @@ func recordToMap(rec definition.Record, def *definition.EntityDefinition) map[st
 
 // newMutableFromMap creates a MutableRecord from a JSON body map.
 // tenantID is injected; id taken from body["id"] if present.
-func newMutableFromMap(entityName string, tenantID uuid.UUID, body map[string]any) definition.MutableRecord {
+func newMutableFromMap(entityName string, tenantID uuid.UUID, body map[string]any) def.MutableRecord {
 	rec := &simpleRecord{
 		entityName: entityName,
 		tenantID:   tenantID,
@@ -431,7 +448,7 @@ func newMutableFromMap(entityName string, tenantID uuid.UUID, body map[string]an
 }
 
 // newMutableFromRecord overlays body changes onto an existing record.
-func newMutableFromRecord(base definition.Record, changes map[string]any) definition.MutableRecord {
+func newMutableFromRecord(base def.Record, changes map[string]any) def.MutableRecord {
 	// We need access to base's full field set — reconstruct via Get.
 	// This works because base is a *mapRecord from pgstore.
 	rec := &simpleRecord{
@@ -442,7 +459,7 @@ func newMutableFromRecord(base definition.Record, changes map[string]any) defini
 	}
 	// Copy existing values first.
 	// (Record has no Iterate; we iterate known fields via EntityName lookup.)
-	def := definition.Lookup(base.EntityName())
+	def := def.Lookup(base.EntityName())
 	if def != nil {
 		for _, f := range def.Fields {
 			rec.data[f.Name] = base.Get(f.Name)
@@ -469,4 +486,4 @@ func (r *simpleRecord) ID() uuid.UUID             { return r.id }
 func (r *simpleRecord) TenantID() uuid.UUID       { return r.tenantID }
 func (r *simpleRecord) EntityName() string        { return r.entityName }
 
-var _ definition.MutableRecord = (*simpleRecord)(nil)
+var _ def.MutableRecord = (*simpleRecord)(nil)

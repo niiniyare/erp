@@ -1,7 +1,7 @@
 package amis
 
 import (
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // PageOpts controls which optional sections are rendered.
@@ -21,13 +21,13 @@ type PageOpts struct {
 	// ExtraFields are appended after the entity's base fields.
 	// Use this to inject tenant-specific custom fields loaded from the
 	// customfield.Registry at request time.
-	ExtraFields []*definition.FieldDef
+	ExtraFields []*def.FieldDef
 }
 
 // CRUDPage generates a full AMIS CRUD page schema for an EntityDefinition.
 // The schema includes a toolbar with Create button, a searchable table,
 // and inline edit/delete actions.
-func CRUDPage(def *definition.EntityDefinition, opts PageOpts) map[string]any {
+func CRUDPage(def *def.EntityDefinition, opts PageOpts) map[string]any {
 	base := opts.APIBase
 	if base == "" {
 		base = "/api"
@@ -72,7 +72,7 @@ func CRUDPage(def *definition.EntityDefinition, opts PageOpts) map[string]any {
 
 // FormPage generates an AMIS form page for create or edit.
 // When id is empty the form POSTs to apiURL; otherwise PUTs to apiURL/$id.
-func FormPage(def *definition.EntityDefinition, opts PageOpts) map[string]any {
+func FormPage(def *def.EntityDefinition, opts PageOpts) map[string]any {
 	base := opts.APIBase
 	if base == "" {
 		base = "/api"
@@ -92,7 +92,7 @@ func FormPage(def *definition.EntityDefinition, opts PageOpts) map[string]any {
 }
 
 // FormSchema generates an AMIS form schema (without the page wrapper).
-func FormSchema(def *definition.EntityDefinition, apiURL string, opts PageOpts) map[string]any {
+func FormSchema(def *def.EntityDefinition, apiURL string, opts PageOpts) map[string]any {
 	controls := formControls(def, opts)
 
 	return map[string]any{
@@ -117,11 +117,11 @@ return api;`,
 // Internal builders
 // ──────────────────────────────────────────────────────────────────
 
-func tableColumns(def *definition.EntityDefinition, opts PageOpts) []any {
+func tableColumns(entity *def.EntityDefinition, opts PageOpts) []any {
 	cols := []any{
 		map[string]any{"name": "id", "label": "ID", "type": "text", "toggled": false},
 	}
-	for _, f := range allFields(def, opts) {
+	for _, f := range allFields(entity, opts) {
 		if opts.ExcludeFields[f.Name] || f.Hidden || f.IsSensitive {
 			continue
 		}
@@ -131,16 +131,16 @@ func tableColumns(def *definition.EntityDefinition, opts PageOpts) []any {
 }
 
 // allFields returns def.Fields merged with opts.ExtraFields.
-func allFields(def *definition.EntityDefinition, opts PageOpts) []*definition.FieldDef {
+func allFields(entity *def.EntityDefinition, opts PageOpts) []*def.FieldDef {
 	if len(opts.ExtraFields) == 0 {
-		return def.Fields
+		return entity.Fields
 	}
-	seen := make(map[string]struct{}, len(def.Fields))
-	for _, f := range def.Fields {
+	seen := make(map[string]struct{}, len(entity.Fields))
+	for _, f := range entity.Fields {
 		seen[f.Name] = struct{}{}
 	}
-	merged := make([]*definition.FieldDef, len(def.Fields), len(def.Fields)+len(opts.ExtraFields))
-	copy(merged, def.Fields)
+	merged := make([]*def.FieldDef, len(entity.Fields), len(entity.Fields)+len(opts.ExtraFields))
+	copy(merged, entity.Fields)
 	for _, f := range opts.ExtraFields {
 		if _, clash := seen[f.Name]; !clash {
 			merged = append(merged, f)
@@ -149,14 +149,14 @@ func allFields(def *definition.EntityDefinition, opts PageOpts) []*definition.Fi
 	return merged
 }
 
-func formControls(def *definition.EntityDefinition, opts PageOpts) []any {
+func formControls(entity *def.EntityDefinition, opts PageOpts) []any {
 	// Hidden id field for edit mode.
 	controls := []any{
 		map[string]any{"type": "hidden", "name": "id"},
 	}
 
 	// Group by Section if any field has one.
-	sections := groupBySection(def, opts)
+	sections := groupBySection(entity, opts)
 	if len(sections) > 1 || (len(sections) == 1 && sections[0].name != "") {
 		for _, s := range sections {
 			body := make([]any, len(s.fields))
@@ -174,7 +174,7 @@ func formControls(def *definition.EntityDefinition, opts PageOpts) []any {
 			}
 		}
 	} else {
-		for _, f := range allFields(def, opts) {
+		for _, f := range allFields(entity, opts) {
 			if opts.ExcludeFields[f.Name] || f.Hidden {
 				continue
 			}
@@ -186,14 +186,14 @@ func formControls(def *definition.EntityDefinition, opts PageOpts) []any {
 
 type sectionGroup struct {
 	name   string
-	fields []*definition.FieldDef
+	fields []*def.FieldDef
 }
 
-func groupBySection(def *definition.EntityDefinition, opts PageOpts) []sectionGroup {
+func groupBySection(entity *def.EntityDefinition, opts PageOpts) []sectionGroup {
 	order := []string{}
 	groups := map[string]*sectionGroup{}
 
-	for _, f := range allFields(def, opts) {
+	for _, f := range allFields(entity, opts) {
 		if opts.ExcludeFields[f.Name] || f.Hidden {
 			continue
 		}
@@ -212,10 +212,10 @@ func groupBySection(def *definition.EntityDefinition, opts PageOpts) []sectionGr
 	return out
 }
 
-func createButton(def *definition.EntityDefinition, opts PageOpts) map[string]any {
-	label := "Create " + def.Label
-	if def.Label == "" {
-		label = "Create " + def.Name
+func createButton(entity *def.EntityDefinition, opts PageOpts) map[string]any {
+	label := "Create " + entity.Label
+	if entity.Label == "" {
+		label = "Create " + entity.Name
 	}
 	return map[string]any{
 		"type":       "button",
@@ -224,7 +224,7 @@ func createButton(def *definition.EntityDefinition, opts PageOpts) map[string]an
 		"actionType": "dialog",
 		"dialog": map[string]any{
 			"title": label,
-			"body":  FormSchema(def, opts.APIBase+"/"+def.TableName(), opts),
+			"body":  FormSchema(entity, opts.APIBase+"/"+entity.TableName(), opts),
 		},
 	}
 }

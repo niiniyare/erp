@@ -30,19 +30,19 @@ func Run(_ context.Context, args []string) error {
 
 const entityTmpl = `package {{.Pkg}}
 
-import "awo.so/framework/definition"
+import "awo.so/framework/def"
 
-var {{.TypeName}}Def = &definition.EntityDefinition{
+var {{.TypeName}}Def = &def.EntityDefinition{
 	Name:   "{{.Name}}",
 	Label:  "{{.Label}}",
 	Module: "TODO",
-	Fields: []*definition.FieldDef{
+	Fields: []*def.FieldDef{
 		// TODO: add fields
 	},
 }
 
 func init() {
-	definition.Register({{.TypeName}}Def)
+	def.Register({{.TypeName}}Def)
 }
 `
 

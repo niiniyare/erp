@@ -2,11 +2,11 @@
 package amis
 
 import (
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 )
 
 // FormControl converts a FieldDef into an AMIS form control schema map.
-func FormControl(f *definition.FieldDef) map[string]any {
+func FormControl(f *def.FieldDef) map[string]any {
 	ctrl := map[string]any{
 		"name":  f.Name,
 		"label": label(f),
@@ -29,25 +29,25 @@ func FormControl(f *definition.FieldDef) map[string]any {
 }
 
 // ColumnDef converts a FieldDef into an AMIS table column schema map.
-func ColumnDef(f *definition.FieldDef) map[string]any {
+func ColumnDef(f *def.FieldDef) map[string]any {
 	col := map[string]any{
 		"name":  f.Name,
 		"label": label(f),
 	}
 
 	switch f.Type {
-	case definition.FieldTypeBool:
+	case def.FieldTypeBool:
 		col["type"] = "status"
-	case definition.FieldTypeCurrency:
+	case def.FieldTypeCurrency:
 		col["type"] = "number"
 		col["prefix"] = ""
-	case definition.FieldTypeDate:
+	case def.FieldTypeDate:
 		col["type"] = "date"
 		col["format"] = "YYYY-MM-DD"
-	case definition.FieldTypeDateTime:
+	case def.FieldTypeDateTime:
 		col["type"] = "datetime"
 		col["format"] = "YYYY-MM-DD HH:mm:ss"
-	case definition.FieldTypeAttachImage:
+	case def.FieldTypeAttachImage:
 		col["type"] = "image"
 		col["thumbMode"] = "cover"
 	default:
@@ -65,37 +65,37 @@ func ColumnDef(f *definition.FieldDef) map[string]any {
 // Internal helpers
 // ──────────────────────────────────────────────────────────────────
 
-func label(f *definition.FieldDef) string {
+func label(f *def.FieldDef) string {
 	if f.Label != "" {
 		return f.Label
 	}
 	return f.Name
 }
 
-func applyType(ctrl map[string]any, f *definition.FieldDef) {
+func applyType(ctrl map[string]any, f *def.FieldDef) {
 	switch f.Type {
-	case definition.FieldTypeSmallText, definition.FieldTypeData:
+	case def.FieldTypeSmallText, def.FieldTypeData:
 		ctrl["type"] = "input-text"
 		if f.MaxLength > 0 {
 			ctrl["maxLength"] = f.MaxLength
 		}
 
-	case definition.FieldTypeLongText:
+	case def.FieldTypeLongText:
 		ctrl["type"] = "textarea"
 		if f.MaxLength > 0 {
 			ctrl["maxLength"] = f.MaxLength
 		}
 
-	case definition.FieldTypeInt:
+	case def.FieldTypeInt:
 		ctrl["type"] = "input-number"
 		ctrl["precision"] = 0
 		applyMinMax(ctrl, f)
 
-	case definition.FieldTypeFloat:
+	case def.FieldTypeFloat:
 		ctrl["type"] = "input-number"
 		applyMinMax(ctrl, f)
 
-	case definition.FieldTypeCurrency:
+	case def.FieldTypeCurrency:
 		// Stored as string (decimal); rendered as number input.
 		ctrl["type"] = "input-number"
 		ctrl["precision"] = 2
@@ -103,39 +103,39 @@ func applyType(ctrl map[string]any, f *definition.FieldDef) {
 			"Value serialised as string to preserve decimal precision.")
 		applyMinMax(ctrl, f)
 
-	case definition.FieldTypeBool:
+	case def.FieldTypeBool:
 		ctrl["type"] = "switch"
 
-	case definition.FieldTypeDate:
+	case def.FieldTypeDate:
 		ctrl["type"] = "input-date"
 		ctrl["format"] = "YYYY-MM-DD"
 
-	case definition.FieldTypeDateTime:
+	case def.FieldTypeDateTime:
 		ctrl["type"] = "input-datetime"
 		ctrl["format"] = "YYYY-MM-DD HH:mm:ss"
 
-	case definition.FieldTypeTime:
+	case def.FieldTypeTime:
 		ctrl["type"] = "input-time"
 		ctrl["format"] = "HH:mm:ss"
 
-	case definition.FieldTypeUUID:
+	case def.FieldTypeUUID:
 		ctrl["type"] = "input-text"
 		ctrl["placeholder"] = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 
-	case definition.FieldTypeSelect:
+	case def.FieldTypeSelect:
 		ctrl["type"] = "select"
 		ctrl["options"] = optionItems(f.Options)
 		ctrl["clearable"] = !f.IsRequired
 
-	case definition.FieldTypeMultiSelect:
+	case def.FieldTypeMultiSelect:
 		ctrl["type"] = "select"
 		ctrl["multiple"] = true
 		ctrl["options"] = optionItems(f.Options)
 
-	case definition.FieldTypeJSON:
+	case def.FieldTypeJSON:
 		ctrl["type"] = "json-editor"
 
-	case definition.FieldTypeLink:
+	case def.FieldTypeLink:
 		ctrl["type"] = "input-text"
 		if f.LinkedEntity != "" {
 			ctrl["type"] = "select"
@@ -144,18 +144,18 @@ func applyType(ctrl map[string]any, f *definition.FieldDef) {
 			ctrl["labelField"] = "name"
 		}
 
-	case definition.FieldTypeDynamicLink:
+	case def.FieldTypeDynamicLink:
 		ctrl["type"] = "select"
 		ctrl["source"] = "${DYNAMIC_OPTIONS_API}/" + f.Name
 
-	case definition.FieldTypeTable:
+	case def.FieldTypeTable:
 		ctrl["type"] = "input-table"
 
-	case definition.FieldTypeAttach:
+	case def.FieldTypeAttach:
 		ctrl["type"] = "input-file"
 		ctrl["multiple"] = true
 
-	case definition.FieldTypeAttachImage:
+	case def.FieldTypeAttachImage:
 		ctrl["type"] = "input-image"
 		ctrl["multiple"] = true
 		ctrl["accept"] = ".jpg,.jpeg,.png,.webp"
@@ -165,7 +165,7 @@ func applyType(ctrl map[string]any, f *definition.FieldDef) {
 	}
 }
 
-func applyValidation(ctrl map[string]any, f *definition.FieldDef) {
+func applyValidation(ctrl map[string]any, f *def.FieldDef) {
 	rules := map[string]any{}
 	msgs := map[string]any{}
 
@@ -190,7 +190,7 @@ func applyValidation(ctrl map[string]any, f *definition.FieldDef) {
 	}
 }
 
-func applyMinMax(ctrl map[string]any, f *definition.FieldDef) {
+func applyMinMax(ctrl map[string]any, f *def.FieldDef) {
 	if f.MinVal != nil {
 		ctrl["min"] = f.MinVal.String()
 	}

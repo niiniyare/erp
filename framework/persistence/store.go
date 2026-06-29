@@ -5,7 +5,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/definition"
+	"awo.so/framework/def"
 	"awo.so/framework/filter"
 )
 
@@ -41,7 +41,7 @@ type ListOptions struct {
 
 // Page is a paginated result from EntityStore.List.
 type Page struct {
-	Records []definition.Record
+	Records []def.Record
 	Total   int64
 	Limit   int
 	Offset  int
@@ -56,17 +56,17 @@ type Page struct {
 type EntityStore interface {
 	// FindByID returns the record with the given primary key.
 	// Returns ErrNotFound when no row exists (or has been soft-deleted).
-	FindByID(ctx context.Context, id uuid.UUID) (definition.Record, error)
+	FindByID(ctx context.Context, id uuid.UUID) (def.Record, error)
 
 	// List returns a paginated, filtered page of records.
 	List(ctx context.Context, opts ListOptions) (Page, error)
 
 	// Create inserts a new record. The record's ID is assigned by the store
 	// (uuid_generate_v4()) if not already set.
-	Create(ctx context.Context, rec definition.MutableRecord) error
+	Create(ctx context.Context, rec def.MutableRecord) error
 
 	// Update applies changes in rec to the existing row identified by rec.ID().
-	Update(ctx context.Context, rec definition.MutableRecord) error
+	Update(ctx context.Context, rec def.MutableRecord) error
 
 	// Delete removes the record. For soft-delete entities, sets deleted_at.
 	Delete(ctx context.Context, id uuid.UUID) error
@@ -81,7 +81,7 @@ type EntityStore interface {
 	// BulkCreate inserts multiple records in a single statement. Atomic — all
 	// succeed or all fail. Does NOT invoke hooks; caller is responsible for
 	// running before_validate, before_save, and after_save outside this call.
-	BulkCreate(ctx context.Context, recs []definition.MutableRecord) error
+	BulkCreate(ctx context.Context, recs []def.MutableRecord) error
 
 	// BulkUpdate applies the same field values to all records matching filter.
 	// Does NOT invoke hooks — intended for system-level batch operations only.
@@ -90,13 +90,13 @@ type EntityStore interface {
 
 // ── Generic typed interface ────────────────────────────────────────────────────
 
-// RecordMapper converts a dynamic definition.Record into a typed domain value T.
+// RecordMapper converts a dynamic def.Record into a typed domain value T.
 // Module code provides this function when constructing a TypedRepository.
-type RecordMapper[T any] func(definition.Record) (T, error)
+type RecordMapper[T any] func(def.Record) (T, error)
 
 // EntityRepository[T any] is the typed persistence contract for one entity type.
 //
-// T is the caller's domain type. For dynamic/meta code use T = definition.Record
+// T is the caller's domain type. For dynamic/meta code use T = def.Record
 // and adapt via AsRecordRepository(store). Module code passes a RecordMapper to
 // NewTypedRepository to obtain a fully typed repository over the pgstore backend.
 //
@@ -118,24 +118,24 @@ type EntityRepository[T any] interface {
 	Count(ctx context.Context, filter map[string]any) (int64, error)
 
 	// Create inserts rec and returns the saved record (with assigned ID, timestamps).
-	Create(ctx context.Context, rec definition.MutableRecord) (T, error)
+	Create(ctx context.Context, rec def.MutableRecord) (T, error)
 
 	// Update applies changes in rec to the existing row identified by rec.ID()
 	// and returns the updated record.
-	Update(ctx context.Context, rec definition.MutableRecord) (T, error)
+	Update(ctx context.Context, rec def.MutableRecord) (T, error)
 
 	// Delete removes the record (or sets deleted_at for soft-delete entities).
 	Delete(ctx context.Context, id uuid.UUID) error
 
 	// BulkCreate inserts multiple records atomically. Hooks do not run.
-	BulkCreate(ctx context.Context, recs []definition.MutableRecord) ([]T, error)
+	BulkCreate(ctx context.Context, recs []def.MutableRecord) ([]T, error)
 
 	// BulkUpdate applies values to all records matching filter. Hooks do not run.
 	BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
 }
 
 // TypedRepository[T] adapts an EntityStore to EntityRepository[T] via a RecordMapper.
-// Construct with NewTypedRepository; use AsRecordRepository for definition.Record.
+// Construct with NewTypedRepository; use AsRecordRepository for def.Record.
 type TypedRepository[T any] struct {
 	store  EntityStore
 	mapper RecordMapper[T]
@@ -146,10 +146,10 @@ func NewTypedRepository[T any](store EntityStore, mapper RecordMapper[T]) *Typed
 	return &TypedRepository[T]{store: store, mapper: mapper}
 }
 
-// AsRecordRepository wraps store as EntityRepository[definition.Record].
+// AsRecordRepository wraps store as EntityRepository[def.Record].
 // Use when you need the generic interface but do not have a typed domain struct.
-func AsRecordRepository(store EntityStore) *TypedRepository[definition.Record] {
-	return NewTypedRepository(store, func(r definition.Record) (definition.Record, error) {
+func AsRecordRepository(store EntityStore) *TypedRepository[def.Record] {
+	return NewTypedRepository(store, func(r def.Record) (def.Record, error) {
 		return r, nil
 	})
 }
@@ -187,7 +187,7 @@ func (r *TypedRepository[T]) Count(ctx context.Context, filter map[string]any) (
 	return r.store.Count(ctx, filter)
 }
 
-func (r *TypedRepository[T]) Create(ctx context.Context, rec definition.MutableRecord) (T, error) {
+func (r *TypedRepository[T]) Create(ctx context.Context, rec def.MutableRecord) (T, error) {
 	if err := r.store.Create(ctx, rec); err != nil {
 		var zero T
 		return zero, err
@@ -195,7 +195,7 @@ func (r *TypedRepository[T]) Create(ctx context.Context, rec definition.MutableR
 	return r.mapper(rec)
 }
 
-func (r *TypedRepository[T]) Update(ctx context.Context, rec definition.MutableRecord) (T, error) {
+func (r *TypedRepository[T]) Update(ctx context.Context, rec def.MutableRecord) (T, error) {
 	if err := r.store.Update(ctx, rec); err != nil {
 		var zero T
 		return zero, err
@@ -207,7 +207,7 @@ func (r *TypedRepository[T]) Delete(ctx context.Context, id uuid.UUID) error {
 	return r.store.Delete(ctx, id)
 }
 
-func (r *TypedRepository[T]) BulkCreate(ctx context.Context, recs []definition.MutableRecord) ([]T, error) {
+func (r *TypedRepository[T]) BulkCreate(ctx context.Context, recs []def.MutableRecord) ([]T, error) {
 	if err := r.store.BulkCreate(ctx, recs); err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (r *TypedRepository[T]) BulkUpdate(ctx context.Context, filter map[string]a
 }
 
 // compile-time check
-var _ EntityRepository[definition.Record] = (*TypedRepository[definition.Record])(nil)
+var _ EntityRepository[def.Record] = (*TypedRepository[def.Record])(nil)
 
 // TenantStore is the top-level store factory. The host application provides
 // one implementation (usually wrapping a *pgxpool.Pool or db.SQLStore) and
