@@ -11,6 +11,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"awo.so/framework/audit"
 	"awo.so/framework/definition"
 	"awo.so/framework/naming"
 	"awo.so/framework/persistence"
@@ -29,12 +30,30 @@ type EntityStore struct {
 	def      *definition.EntityDefinition
 	tenantID uuid.UUID
 	q        Querier
+	auditFn  audit.ExecFunc // nil = auditing disabled
 }
 
 // New creates an EntityStore. tenantID may be uuid.Nil for Global entities.
 func New(def *definition.EntityDefinition, tenantID uuid.UUID, q Querier) *EntityStore {
 	return &EntityStore{def: def, tenantID: tenantID, q: q}
 }
+
+// WithAudit returns a copy of the store with audit writing enabled via exec.
+// exec must write to awo_audit_log inside the current transaction.
+func (s *EntityStore) WithAudit(exec audit.ExecFunc) *EntityStore {
+	cp := *s
+	cp.auditFn = exec
+	return &cp
+}
+
+// writeAudit writes an audit entry if auditing is configured and def.Audited.
+func (s *EntityStore) writeAudit(ctx context.Context, m *definition.Mutation) error {
+	if s.auditFn == nil {
+		return nil
+	}
+	return audit.Write(ctx, s.auditFn, s.def, m)
+}
+
 
 // ──────────────────────────────────────────────────────────────────
 // persistence.EntityStore implementation
@@ -137,7 +156,9 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 		return mapPgError(err)
 	}
 	rec.Set("id", returnedID)
-	return nil
+
+	m := &definition.Mutation{Op: definition.OpCreate, After: rec, TenantID: s.tenantID.String()}
+	return s.writeAudit(ctx, m)
 }
 
 func (s *EntityStore) Update(ctx context.Context, rec definition.MutableRecord) error {
@@ -154,10 +175,20 @@ func (s *EntityStore) Update(ctx context.Context, rec definition.MutableRecord) 
 	if err != nil {
 		return mapPgError(err)
 	}
-	return nil
+	m := &definition.Mutation{Op: definition.OpUpdate, After: rec, TenantID: s.tenantID.String()}
+	return s.writeAudit(ctx, m)
 }
 
 func (s *EntityStore) Delete(ctx context.Context, id uuid.UUID) error {
+	// Capture before-snapshot for audit log before the row disappears.
+	var before definition.Record
+	if s.auditFn != nil && s.def.Audited {
+		rec, err := s.FindByID(ctx, id)
+		if err == nil {
+			before = rec
+		}
+	}
+
 	var query string
 	if s.def.SoftDelete {
 		query = sqlbuilder.SoftDelete(s.def)
@@ -165,7 +196,12 @@ func (s *EntityStore) Delete(ctx context.Context, id uuid.UUID) error {
 		query = sqlbuilder.HardDelete(s.def)
 	}
 	_, err := s.q.Exec(ctx, query, id)
-	return mapPgError(err)
+	if err != nil {
+		return mapPgError(err)
+	}
+
+	m := &definition.Mutation{Op: definition.OpDelete, Before: before, TenantID: s.tenantID.String()}
+	return s.writeAudit(ctx, m)
 }
 
 func (s *EntityStore) BulkCreate(ctx context.Context, recs []definition.MutableRecord) error {

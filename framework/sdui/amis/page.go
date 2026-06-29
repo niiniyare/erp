@@ -17,6 +17,11 @@ type PageOpts struct {
 
 	// ReadOnly renders forms in view-only mode (no create/edit/delete).
 	ReadOnly bool
+
+	// ExtraFields are appended after the entity's base fields.
+	// Use this to inject tenant-specific custom fields loaded from the
+	// customfield.Registry at request time.
+	ExtraFields []*definition.FieldDef
 }
 
 // CRUDPage generates a full AMIS CRUD page schema for an EntityDefinition.
@@ -116,13 +121,32 @@ func tableColumns(def *definition.EntityDefinition, opts PageOpts) []any {
 	cols := []any{
 		map[string]any{"name": "id", "label": "ID", "type": "text", "toggled": false},
 	}
-	for _, f := range def.Fields {
+	for _, f := range allFields(def, opts) {
 		if opts.ExcludeFields[f.Name] || f.Hidden || f.IsSensitive {
 			continue
 		}
 		cols = append(cols, ColumnDef(f))
 	}
 	return cols
+}
+
+// allFields returns def.Fields merged with opts.ExtraFields.
+func allFields(def *definition.EntityDefinition, opts PageOpts) []*definition.FieldDef {
+	if len(opts.ExtraFields) == 0 {
+		return def.Fields
+	}
+	seen := make(map[string]struct{}, len(def.Fields))
+	for _, f := range def.Fields {
+		seen[f.Name] = struct{}{}
+	}
+	merged := make([]*definition.FieldDef, len(def.Fields), len(def.Fields)+len(opts.ExtraFields))
+	copy(merged, def.Fields)
+	for _, f := range opts.ExtraFields {
+		if _, clash := seen[f.Name]; !clash {
+			merged = append(merged, f)
+		}
+	}
+	return merged
 }
 
 func formControls(def *definition.EntityDefinition, opts PageOpts) []any {
@@ -150,7 +174,7 @@ func formControls(def *definition.EntityDefinition, opts PageOpts) []any {
 			}
 		}
 	} else {
-		for _, f := range def.Fields {
+		for _, f := range allFields(def, opts) {
 			if opts.ExcludeFields[f.Name] || f.Hidden {
 				continue
 			}
@@ -169,7 +193,7 @@ func groupBySection(def *definition.EntityDefinition, opts PageOpts) []sectionGr
 	order := []string{}
 	groups := map[string]*sectionGroup{}
 
-	for _, f := range def.Fields {
+	for _, f := range allFields(def, opts) {
 		if opts.ExcludeFields[f.Name] || f.Hidden {
 			continue
 		}
