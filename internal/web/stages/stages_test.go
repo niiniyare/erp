@@ -75,10 +75,11 @@ func (s *stubSessionSvc) Logout(_ context.Context, _ string) error { return nil 
 func (s *stubSessionSvc) ValidateSession(_ context.Context, _ string) (*iam.ResolvedSession, error) {
 	return s.sess, nil
 }
+
 func (s *stubSessionSvc) CompleteMFALogin(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil
 }
-func (s *stubSessionSvc) LogoutAllForUser(_ context.Context, _ uuid.UUID) error  { return nil }
+func (s *stubSessionSvc) LogoutAllForUser(_ context.Context, _ uuid.UUID) error   { return nil }
 func (s *stubSessionSvc) LogoutAllForTenant(_ context.Context, _ uuid.UUID) error { return nil }
 func (s *stubSessionSvc) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil
@@ -518,27 +519,32 @@ func (m *mockCacheService) Set(_ context.Context, _ string, _ any, _ time.Durati
 }
 
 // Remaining cache.Service methods — not used in these tests.
-func (m *mockCacheService) GetAndDelete(_ context.Context, _ string, _ any) error { return cache.ErrCacheMiss }
-func (m *mockCacheService) Delete(_ context.Context, _ string) error               { return nil }
-func (m *mockCacheService) Flush(_ context.Context) error                          { return nil }
+func (m *mockCacheService) GetAndDelete(_ context.Context, _ string, _ any) error {
+	return cache.ErrCacheMiss
+}
+func (m *mockCacheService) Delete(_ context.Context, _ string) error { return nil }
+func (m *mockCacheService) Flush(_ context.Context) error            { return nil }
 func (m *mockCacheService) MGet(_ context.Context, _ []string) ([]cache.Result, error) {
 	return nil, nil
 }
+
 func (m *mockCacheService) MSet(_ context.Context, _ map[string]any, _ time.Duration) error {
 	return nil
 }
-func (m *mockCacheService) MDelete(_ context.Context, _ []string) error            { return nil }
-func (m *mockCacheService) DeletePattern(_ context.Context, _ string) error        { return nil }
-func (m *mockCacheService) Keys(_ context.Context, _ string) ([]string, error)     { return nil, nil }
-func (m *mockCacheService) Exists(_ context.Context, _ string) (bool, error)       { return false, nil }
-func (m *mockCacheService) TTL(_ context.Context, _ string) (time.Duration, error) { return 0, nil }
+func (m *mockCacheService) MDelete(_ context.Context, _ []string) error               { return nil }
+func (m *mockCacheService) DeletePattern(_ context.Context, _ string) error           { return nil }
+func (m *mockCacheService) Keys(_ context.Context, _ string) ([]string, error)        { return nil, nil }
+func (m *mockCacheService) Exists(_ context.Context, _ string) (bool, error)          { return false, nil }
+func (m *mockCacheService) TTL(_ context.Context, _ string) (time.Duration, error)    { return 0, nil }
 func (m *mockCacheService) Expire(_ context.Context, _ string, _ time.Duration) error { return nil }
-func (m *mockCacheService) GetMemory(_ context.Context, _ string, _ any) error        { return cache.ErrCacheMiss }
+func (m *mockCacheService) GetMemory(_ context.Context, _ string, _ any) error {
+	return cache.ErrCacheMiss
+}
 func (m *mockCacheService) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
 	return nil
 }
-func (m *mockCacheService) DeleteMemory(_ context.Context, _ string) error    { return nil }
-func (m *mockCacheService) GetGlobalMemory(_ string, _ any) error             { return cache.ErrCacheMiss }
+func (m *mockCacheService) DeleteMemory(_ context.Context, _ string) error { return nil }
+func (m *mockCacheService) GetGlobalMemory(_ string, _ any) error          { return cache.ErrCacheMiss }
 func (m *mockCacheService) SetGlobalMemory(_ string, _ any, _ time.Duration) error {
 	return nil
 }

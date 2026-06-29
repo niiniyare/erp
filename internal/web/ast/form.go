@@ -82,8 +82,10 @@ func (f FormNode) Compile() ui.M {
 
 func (f FormNode) Children() []Node { return f.Body }
 
-var _ Node = FormNode{}
-var _ ContainerNode = FormNode{}
+var (
+	_ Node          = FormNode{}
+	_ ContainerNode = FormNode{}
+)
 
 // ─── FilterBarNode ────────────────────────────────────────────────────────────
 
@@ -94,7 +96,7 @@ var _ ContainerNode = FormNode{}
 //
 // Required: at least one node in Body.
 type FilterBarNode struct {
-	Body        []Node
+	Body []Node
 	// Collapsible collapses the filter bar under a [Filter] button.
 	Collapsible bool
 	// ShowCount displays the number of active filters when collapsed.
@@ -112,10 +114,10 @@ func (f FilterBarNode) Validate() error {
 
 func (f FilterBarNode) Compile() ui.M {
 	m := ui.M{
-		"type":          "form",
+		"type":           "form",
 		"submitOnChange": true,
-		"body":          compileNodes(f.Body),
-		"actions":       ui.A{}, // no submit button — change triggers automatically
+		"body":           compileNodes(f.Body),
+		"actions":        ui.A{}, // no submit button — change triggers automatically
 	}
 	if f.Collapsible {
 		m["collapsible"] = true
@@ -128,8 +130,10 @@ func (f FilterBarNode) Compile() ui.M {
 
 func (f FilterBarNode) Children() []Node { return f.Body }
 
-var _ Node = FilterBarNode{}
-var _ ContainerNode = FilterBarNode{}
+var (
+	_ Node          = FilterBarNode{}
+	_ ContainerNode = FilterBarNode{}
+)
 
 // ─── InputTextNode ────────────────────────────────────────────────────────────
 
@@ -146,11 +150,11 @@ type InputTextNode struct {
 	DisabledOn  string
 	MaxLength   int
 	// ClearValue is the value sent when the field is cleared. Default: "".
-	ClearValue  string
+	ClearValue string
 	// Trim strips whitespace on submit when true.
-	Trim        bool
+	Trim bool
 	// AddOn renders a prefix/suffix label inside the input box.
-	AddOn       string
+	AddOn string
 }
 
 func (i InputTextNode) NodeType() string { return "input-text" }
@@ -252,15 +256,15 @@ var _ Node = InputNumberNode{}
 //
 // Required: Name.
 type InputDateNode struct {
-	Name       string
-	Label      string
-	Required   bool
-	Format     string // value format (default: "YYYY-MM-DD")
+	Name        string
+	Label       string
+	Required    bool
+	Format      string // value format (default: "YYYY-MM-DD")
 	InputFormat string // display format (default: "YYYY-MM-DD")
-	MinDate    string  // e.g. "2020-01-01" or "${start_date}"
-	MaxDate    string
-	VisibleOn  string
-	DisabledOn string
+	MinDate     string // e.g. "2020-01-01" or "${start_date}"
+	MaxDate     string
+	VisibleOn   string
+	DisabledOn  string
 }
 
 func (i InputDateNode) NodeType() string { return "input-date" }
@@ -354,20 +358,20 @@ var _ Node = InputDateRangeNode{}
 //
 // Required: Name. Either Source or Options must be set.
 type SelectNode struct {
-	Name        string
-	Label       string
-	Required    bool
+	Name     string
+	Label    string
+	Required bool
 	// Source is a remote API for options.
-	Source      *APISpec
+	Source *APISpec
 	// Options is a static option list. Use when values are fixed at compile time.
-	Options     []SelectOption
-	ValueField  string // default: "value"
-	LabelField  string // default: "label"
-	Multiple    bool
-	Clearable   bool
-	Searchable  bool
-	VisibleOn   string
-	DisabledOn  string
+	Options    []SelectOption
+	ValueField string // default: "value"
+	LabelField string // default: "label"
+	Multiple   bool
+	Clearable  bool
+	Searchable bool
+	VisibleOn  string
+	DisabledOn string
 	// DefaultValue is the initial selected value.
 	DefaultValue any
 	// Placeholder text shown when no value is selected.
@@ -447,11 +451,11 @@ var _ Node = SelectNode{}
 //
 // Required: Name and at least one node in Items.
 type ComboNode struct {
-	Name       string
-	Label      string
-	Items      []Node // fields within each row
+	Name  string
+	Label string
+	Items []Node // fields within each row
 	// Multiple allows adding multiple rows.
-	Multiple   bool
+	Multiple bool
 	// AddButtonLabel overrides the default "+" button text.
 	AddButtonLabel string
 	// MaxLength caps the number of rows. 0 = unlimited.
@@ -493,8 +497,10 @@ func (c ComboNode) Compile() ui.M {
 
 func (c ComboNode) Children() []Node { return c.Items }
 
-var _ Node = ComboNode{}
-var _ ContainerNode = ComboNode{}
+var (
+	_ Node          = ComboNode{}
+	_ ContainerNode = ComboNode{}
+)
 
 // ─── MultiSelectNode ──────────────────────────────────────────────────────────
 
@@ -503,18 +509,18 @@ var _ ContainerNode = ComboNode{}
 //
 // Required: Name. Either Source or Options must be set.
 type MultiSelectNode struct {
-	Name        string
-	Label       string
-	Required    bool
-	Source      *APISpec
-	Options     []SelectOption
-	ValueField  string
-	LabelField  string
-	Searchable  bool
-	Clearable   bool
-	Delimiter   string // value separator in submitted data (default ",")
-	VisibleOn   string
-	DisabledOn  string
+	Name       string
+	Label      string
+	Required   bool
+	Source     *APISpec
+	Options    []SelectOption
+	ValueField string
+	LabelField string
+	Searchable bool
+	Clearable  bool
+	Delimiter  string // value separator in submitted data (default ",")
+	VisibleOn  string
+	DisabledOn string
 }
 
 func (m MultiSelectNode) NodeType() string { return "select" }
@@ -565,8 +571,8 @@ var _ Node = MultiSelectNode{}
 //
 // Required: Name.
 type CheckboxNode struct {
-	Name       string
-	Label      string
+	Name  string
+	Label string
 	// Option is the text shown next to the checkbox (different from Label which is
 	// the field label in form layout).
 	Option     string
@@ -696,8 +702,10 @@ func (d DialogNode) Compile() ui.M {
 
 func (d DialogNode) Children() []Node { return d.Body }
 
-var _ Node = DialogNode{}
-var _ ContainerNode = DialogNode{}
+var (
+	_ Node          = DialogNode{}
+	_ ContainerNode = DialogNode{}
+)
 
 // ─── DrawerNode ───────────────────────────────────────────────────────────────
 
@@ -755,8 +763,10 @@ func (d DrawerNode) Compile() ui.M {
 
 func (d DrawerNode) Children() []Node { return d.Body }
 
-var _ Node = DrawerNode{}
-var _ ContainerNode = DrawerNode{}
+var (
+	_ Node          = DrawerNode{}
+	_ ContainerNode = DrawerNode{}
+)
 
 // ─── WizardNode ───────────────────────────────────────────────────────────────
 
@@ -768,11 +778,11 @@ var _ ContainerNode = DrawerNode{}
 // The final step's submit calls API.
 type WizardNode struct {
 	// API is the submit endpoint called on final step completion. Required.
-	API    APISpec
+	API APISpec
 	// Steps are the ordered wizard panels. Required: at least 2.
-	Steps  []WizardStep
+	Steps []WizardStep
 	// Mode: "horizontal" (default) | "vertical"
-	Mode   string
+	Mode string
 	// StartStep is the initial step index (0-based). Default: 0.
 	StartStep int
 }
@@ -780,15 +790,15 @@ type WizardNode struct {
 // WizardStep is one panel in a WizardNode.
 type WizardStep struct {
 	// Title is the step label in the wizard progress bar. Required.
-	Title       string
+	Title string
 	// SubTitle is optional descriptive text under the title.
-	SubTitle    string
+	SubTitle string
 	// Body is the form fields rendered in this step.
-	Body        []Node
+	Body []Node
 	// API is an optional per-step submit endpoint (overrides wizard-level API for this step only).
-	API         *APISpec
+	API *APISpec
 	// VisibleOn is a boolean AMIS expression; hides the step when false.
-	VisibleOn   string
+	VisibleOn string
 }
 
 func (w WizardNode) NodeType() string { return "wizard" }
@@ -850,8 +860,10 @@ func (w WizardNode) Children() []Node {
 	return all
 }
 
-var _ Node = WizardNode{}
-var _ ContainerNode = WizardNode{}
+var (
+	_ Node          = WizardNode{}
+	_ ContainerNode = WizardNode{}
+)
 
 // ─── PickerNode ───────────────────────────────────────────────────────────────
 
@@ -864,27 +876,27 @@ var _ ContainerNode = WizardNode{}
 // Required: Name and Source.
 type PickerNode struct {
 	// Name is the field key that receives the selected value. Required.
-	Name        string
+	Name string
 	// Label is the field label shown in the form.
-	Label       string
+	Label string
 	// Source is the API URL that powers the picker's CRUD list. Required.
-	Source      string
+	Source string
 	// Columns are the columns shown in the picker dialog.
-	Columns     []TableColumn
+	Columns []TableColumn
 	// ValueField is the field from the selected row used as the submitted value (default: "id").
-	ValueField  string
+	ValueField string
 	// LabelField is the field shown as the selected item label (default: "name").
-	LabelField  string
+	LabelField string
 	// Multiple allows selecting multiple items.
-	Multiple    bool
+	Multiple bool
 	// Required marks the field as mandatory.
-	Required    bool
+	Required bool
 	// VisibleOn is a boolean AMIS expression controlling visibility.
-	VisibleOn   string
+	VisibleOn string
 	// DisabledOn is a boolean AMIS expression controlling disabled state.
-	DisabledOn  string
+	DisabledOn string
 	// Embed renders the CRUD list inline instead of in a dialog when true.
-	Embed       bool
+	Embed bool
 }
 
 func (p PickerNode) NodeType() string { return "picker" }

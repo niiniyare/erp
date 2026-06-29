@@ -30,7 +30,7 @@ func (s *stubTxRunner) RunInTx(_ context.Context, fn func(context.Context, db.St
 
 type compensatableStage struct {
 	testStage
-	compensated bool
+	compensated   bool
 	compensateErr error
 }
 

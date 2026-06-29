@@ -62,9 +62,9 @@ const (
 
 // TenantHealthReport is the output of TenantHealthReport.
 type TenantHealthReport struct {
-	TenantID       uuid.UUID        `json:"tenant_id"`
-	GeneratedAt    time.Time        `json:"generated_at"`
-	OverallStatus  HealthStatus     `json:"overall_status"`
+	TenantID        uuid.UUID        `json:"tenant_id"`
+	GeneratedAt     time.Time        `json:"generated_at"`
+	OverallStatus   HealthStatus     `json:"overall_status"`
 	IntegrityReport *IntegrityReport `json:"integrity"`
 	ReversalReport  *IntegrityReport `json:"reversal_chains"`
 	DuplicateReport *IntegrityReport `json:"duplicate_postings"`
@@ -237,9 +237,9 @@ func (s *operationsService) ReconciliationDiagnostics(ctx context.Context, tenan
 
 	logger.InfoContext(ctx, "Reconciliation diagnostics complete",
 		logger.Fields{
-			"tenant_id":     tenantID.String(),
-			"open_count":    len(diag.InProgressStatements),
-			"stale_count":   diag.StaleStatementCount,
+			"tenant_id":   tenantID.String(),
+			"open_count":  len(diag.InProgressStatements),
+			"stale_count": diag.StaleStatementCount,
 		})
 
 	return diag, nil

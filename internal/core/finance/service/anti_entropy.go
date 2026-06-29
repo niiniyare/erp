@@ -63,8 +63,8 @@ type AntiEntropyRepository interface {
 // A nil *AntiEntropyService returns a healthy empty report.
 type AntiEntropyService struct {
 	aeRepo         AntiEntropyRepository        // nil → DB checks skipped
-	violationRepo  IntegrityViolationRepository  // nil → open-violation check skipped
-	outboxGovernor *OutboxGovernor               // nil → backlog check skipped
+	violationRepo  IntegrityViolationRepository // nil → open-violation check skipped
+	outboxGovernor *OutboxGovernor              // nil → backlog check skipped
 	metrics        metrics.MetricsProvider
 }
 
@@ -131,8 +131,8 @@ func (s *AntiEntropyService) checkCriticalViolationsVsOutbox(ctx context.Context
 	openCount, err := s.violationRepo.CountOpenCritical(ctx, tenantID)
 	if err != nil {
 		report.Violations = append(report.Violations, AntiEntropyViolation{
-			Kind:   "INTEGRITY_QUERY_FAILED",
-			Detail: fmt.Sprintf("could not query open CRITICAL violations: %v", err),
+			Kind:         "INTEGRITY_QUERY_FAILED",
+			Detail:       fmt.Sprintf("could not query open CRITICAL violations: %v", err),
 			RepairAction: "Check DB connectivity.",
 		})
 		return

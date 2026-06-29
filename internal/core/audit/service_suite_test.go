@@ -9,8 +9,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/google/uuid"
 	"awo.so/internal/shared/token"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

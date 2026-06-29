@@ -82,10 +82,10 @@ func (s *AuthzStage) Execute(opCtx *pipeline.OperationContext) (pipeline.StageRe
 			len(perms), sc.UserID(), permFP, flagFP,
 		),
 		Outputs: map[string]any{
-			ui.DataKeyPermissions:      perms,
-			ui.DataKeyPermFingerprint:  permFP,
-			ui.DataKeyFlagFingerprint:  flagFP,
-			ui.DataKeySessionCtx:       uiSess,
+			ui.DataKeyPermissions:     perms,
+			ui.DataKeyPermFingerprint: permFP,
+			ui.DataKeyFlagFingerprint: flagFP,
+			ui.DataKeySessionCtx:      uiSess,
 		},
 	}, nil
 }

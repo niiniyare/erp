@@ -231,10 +231,10 @@ func (c *noEntriesCheck) Kind() string { return "POSTED_WITHOUT_ENTRIES" }
 func (c *noEntriesCheck) Execute(_ context.Context, txn *domain.Transaction, entries []domain.TransactionEntry, report *IntegrityReport) {
 	if len(entries) == 0 {
 		report.add(IntegrityViolation{
-			Kind:     c.Kind(),
-			Severity: SeverityHigh,
-			EntityID: txn.ID,
-			Detail:   fmt.Sprintf("transaction %s posted with no entries", txn.TransactionNumber),
+			Kind:         c.Kind(),
+			Severity:     SeverityHigh,
+			EntityID:     txn.ID,
+			Detail:       fmt.Sprintf("transaction %s posted with no entries", txn.TransactionNumber),
 			RepairAction: "Cancel or reverse the transaction if it appears in reports. Investigate whether a migration partially committed the header without entries.",
 		})
 	}
@@ -437,10 +437,10 @@ func (s *integrityService) ScanDuplicatePostings(ctx context.Context, _ uuid.UUI
 		if len(ids) > 1 {
 			s.metrics.IncrementCounter("integrity_violations_total", metrics.Fields{"kind": "duplicate_posting"})
 			report.add(IntegrityViolation{
-				Kind:     "DUPLICATE_POSTING",
-				Severity: SeverityMedium,
-				EntityID: ids[0],
-				Detail:   fmt.Sprintf("transaction number %q posted %d times: %v", number, len(ids), ids),
+				Kind:         "DUPLICATE_POSTING",
+				Severity:     SeverityMedium,
+				EntityID:     ids[0],
+				Detail:       fmt.Sprintf("transaction number %q posted %d times: %v", number, len(ids), ids),
 				RepairAction: "Identify which posting is the authoritative one. Reverse the duplicates. Investigate the idempotency failure that allowed both to be created.",
 			})
 		}

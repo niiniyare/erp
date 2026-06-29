@@ -15,19 +15,19 @@ import (
 // does not panic.
 type discardLogger struct{}
 
-func (d *discardLogger) Debug(_ string, _ ...logger.Fields)                         {}
-func (d *discardLogger) Info(_ string, _ ...logger.Fields)                          {}
-func (d *discardLogger) Warn(_ string, _ ...logger.Fields)                          {}
-func (d *discardLogger) Error(_ string, _ ...logger.Fields)                         {}
-func (d *discardLogger) Fatal(_ string, _ ...logger.Fields)                         {}
+func (d *discardLogger) Debug(_ string, _ ...logger.Fields)                           {}
+func (d *discardLogger) Info(_ string, _ ...logger.Fields)                            {}
+func (d *discardLogger) Warn(_ string, _ ...logger.Fields)                            {}
+func (d *discardLogger) Error(_ string, _ ...logger.Fields)                           {}
+func (d *discardLogger) Fatal(_ string, _ ...logger.Fields)                           {}
 func (d *discardLogger) DebugContext(_ context.Context, _ string, _ ...logger.Fields) {}
 func (d *discardLogger) InfoContext(_ context.Context, _ string, _ ...logger.Fields)  {}
 func (d *discardLogger) WarnContext(_ context.Context, _ string, _ ...logger.Fields)  {}
 func (d *discardLogger) ErrorContext(_ context.Context, _ string, _ ...logger.Fields) {}
-func (d *discardLogger) WithFields(_ logger.Fields) logger.Logger                   { return d }
-func (d *discardLogger) WithContext(_ context.Context) logger.Logger                { return d }
-func (d *discardLogger) SetLevel(_ logger.LogLevel)                                 {}
-func (d *discardLogger) Close() error                                               { return nil }
+func (d *discardLogger) WithFields(_ logger.Fields) logger.Logger                     { return d }
+func (d *discardLogger) WithContext(_ context.Context) logger.Logger                  { return d }
+func (d *discardLogger) SetLevel(_ logger.LogLevel)                                   {}
+func (d *discardLogger) Close() error                                                 { return nil }
 
 func newTestAuthzService(t *testing.T) AuthzService {
 	t.Helper()

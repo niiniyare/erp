@@ -6,11 +6,11 @@ import (
 	"context"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // AdminService provides administrative operations for feature flags

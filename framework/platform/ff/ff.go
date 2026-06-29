@@ -12,10 +12,10 @@ import (
 
 // Flag represents a feature flag record.
 type Flag struct {
-	Key        string    `json:"key"`
+	Key        string     `json:"key"`
 	TenantID   *uuid.UUID `json:"tenant_id,omitempty"`
-	Enabled    bool      `json:"enabled"`
-	RolloutPct int       `json:"rollout_pct"`
+	Enabled    bool       `json:"enabled"`
+	RolloutPct int        `json:"rollout_pct"`
 }
 
 // Store is the persistence interface for feature flags.

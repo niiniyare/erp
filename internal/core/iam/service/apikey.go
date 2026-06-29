@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	apiKeyPrefix    = "eak_"       // ERP API Key prefix — makes keys recognisable in logs
+	apiKeyPrefix    = "eak_" // ERP API Key prefix — makes keys recognisable in logs
 	apiKeyCacheTTL  = 5 * time.Minute
 	apiKeyCacheNS   = "apikey:"    // Redis key namespace: apikey:{sha256hex(rawToken)}
 	apiKeyIDIndexNS = "apikey:id:" // secondary index: keyID → primary cache key (for revocation)

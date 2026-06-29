@@ -13,14 +13,14 @@ import (
 type PaymentRunStatus string
 
 const (
-	PaymentRunStatusDraft     PaymentRunStatus = "DRAFT"      // Being constructed; invoices are being selected
-	PaymentRunStatusPending   PaymentRunStatus = "PENDING"    // Ready for approval / bank submission
-	PaymentRunStatusApproved  PaymentRunStatus = "APPROVED"   // Approved and queued for processing
+	PaymentRunStatusDraft      PaymentRunStatus = "DRAFT"      // Being constructed; invoices are being selected
+	PaymentRunStatusPending    PaymentRunStatus = "PENDING"    // Ready for approval / bank submission
+	PaymentRunStatusApproved   PaymentRunStatus = "APPROVED"   // Approved and queued for processing
 	PaymentRunStatusProcessing PaymentRunStatus = "PROCESSING" // Submitted to bank / payment processor
-	PaymentRunStatusCompleted PaymentRunStatus = "COMPLETED"  // All payments confirmed settled
-	PaymentRunStatusPartial   PaymentRunStatus = "PARTIAL"    // Some payments succeeded, some failed
-	PaymentRunStatusFailed    PaymentRunStatus = "FAILED"     // Entire run rejected by bank
-	PaymentRunStatusCancelled PaymentRunStatus = "CANCELLED"  // Cancelled before processing
+	PaymentRunStatusCompleted  PaymentRunStatus = "COMPLETED"  // All payments confirmed settled
+	PaymentRunStatusPartial    PaymentRunStatus = "PARTIAL"    // Some payments succeeded, some failed
+	PaymentRunStatusFailed     PaymentRunStatus = "FAILED"     // Entire run rejected by bank
+	PaymentRunStatusCancelled  PaymentRunStatus = "CANCELLED"  // Cancelled before processing
 )
 
 // IsValid returns true if the status is a recognised value.
@@ -57,12 +57,12 @@ func (s PaymentRunStatus) IsTerminal() bool {
 type PaymentMethod string
 
 const (
-	PaymentMethodEFT     PaymentMethod = "EFT"      // Electronic Funds Transfer
-	PaymentMethodCheque  PaymentMethod = "CHEQUE"   // Physical cheque
-	PaymentMethodCash    PaymentMethod = "CASH"      // Cash payment
-	PaymentMethodBECS    PaymentMethod = "BECS"      // Bulk Electronic Clearing System (AU)
-	PaymentMethodSEPA    PaymentMethod = "SEPA"      // Single Euro Payments Area
-	PaymentMethodSWIFT   PaymentMethod = "SWIFT"     // International wire
+	PaymentMethodEFT      PaymentMethod = "EFT"      // Electronic Funds Transfer
+	PaymentMethodCheque   PaymentMethod = "CHEQUE"   // Physical cheque
+	PaymentMethodCash     PaymentMethod = "CASH"     // Cash payment
+	PaymentMethodBECS     PaymentMethod = "BECS"     // Bulk Electronic Clearing System (AU)
+	PaymentMethodSEPA     PaymentMethod = "SEPA"     // Single Euro Payments Area
+	PaymentMethodSWIFT    PaymentMethod = "SWIFT"    // International wire
 	PaymentMethodInternal PaymentMethod = "INTERNAL" // Internal transfer between own accounts
 )
 
@@ -87,21 +87,21 @@ type PaymentRun struct {
 	TenantID uuid.UUID `json:"tenant_id"`
 
 	// Identity
-	RunNumber   string `json:"run_number"`   // System-generated sequential number
-	Description string `json:"description"`  // Human-readable label
-	Reference   string `json:"reference"`    // Bank payment reference (appears on statements)
+	RunNumber   string `json:"run_number"`  // System-generated sequential number
+	Description string `json:"description"` // Human-readable label
+	Reference   string `json:"reference"`   // Bank payment reference (appears on statements)
 
 	// Funding account (the GL account funds are drawn from)
 	BankAccountID uuid.UUID `json:"bank_account_id"`
 	CurrencyCode  string    `json:"currency_code"` // ISO 4217
 
-	PaymentDate   time.Time     `json:"payment_date"`   // Value date for all items in this run
+	PaymentDate   time.Time     `json:"payment_date"` // Value date for all items in this run
 	PaymentMethod PaymentMethod `json:"payment_method"`
 
 	// Aggregated amounts (maintained by the service layer)
-	TotalAmount    decimal.Decimal `json:"total_amount"`    // Sum of all item amounts
-	ItemCount      int             `json:"item_count"`      // Number of items in the run
-	FailedCount    int             `json:"failed_count"`    // Items that failed processing
+	TotalAmount decimal.Decimal `json:"total_amount"` // Sum of all item amounts
+	ItemCount   int             `json:"item_count"`   // Number of items in the run
+	FailedCount int             `json:"failed_count"` // Items that failed processing
 
 	Status PaymentRunStatus `json:"status"`
 
@@ -113,7 +113,7 @@ type PaymentRun struct {
 
 	// Processing metadata
 	ProcessedAt    *time.Time `json:"processed_at,omitempty"`
-	BankReference  *string    `json:"bank_reference,omitempty"`  // Reference returned by the bank
+	BankReference  *string    `json:"bank_reference,omitempty"` // Reference returned by the bank
 	BankResponseAt *time.Time `json:"bank_response_at,omitempty"`
 
 	// GL posting reference (created once the run is confirmed)
@@ -196,9 +196,9 @@ type PaymentRunItem struct {
 	SourceReference    string    `json:"source_reference"` // Invoice number / expense claim ref
 
 	// Amounts
-	GrossAmount   decimal.Decimal `json:"gross_amount"`   // Total amount on source document
+	GrossAmount    decimal.Decimal `json:"gross_amount"`    // Total amount on source document
 	DiscountAmount decimal.Decimal `json:"discount_amount"` // Early-payment discount applied
-	NetAmount     decimal.Decimal `json:"net_amount"`      // Amount actually paid (gross - discount)
+	NetAmount      decimal.Decimal `json:"net_amount"`      // Amount actually paid (gross - discount)
 
 	// Bank details snapshot (copied at run creation to protect against changes)
 	BankAccountNumber *string `json:"bank_account_number,omitempty"`
@@ -209,9 +209,9 @@ type PaymentRunItem struct {
 	Status PaymentRunItemStatus `json:"status"`
 
 	// Processing outcome
-	FailureReason  *string    `json:"failure_reason,omitempty"`
-	ClearedAt      *time.Time `json:"cleared_at,omitempty"`
-	BankReference  *string    `json:"bank_reference,omitempty"`
+	FailureReason *string    `json:"failure_reason,omitempty"`
+	ClearedAt     *time.Time `json:"cleared_at,omitempty"`
+	BankReference *string    `json:"bank_reference,omitempty"`
 
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`

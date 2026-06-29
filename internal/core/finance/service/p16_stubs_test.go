@@ -21,19 +21,19 @@ import (
 // without a real database.
 
 type p16StubTxnRepo struct {
-	fnCreate              func(ctx context.Context, t *domain.Transaction) error
-	fnGetByID             func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
-	fnGetByNumber         func(ctx context.Context, entityID *uuid.UUID, number string) (*domain.Transaction, error)
-	fnUpdate              func(ctx context.Context, t *domain.Transaction) error
-	fnDelete              func(ctx context.Context, id uuid.UUID) error
-	fnList                func(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error)
-	fnGetEntriesByTxn     func(ctx context.Context, transactionID uuid.UUID) ([]domain.TransactionEntry, error)
-	fnPost                func(ctx context.Context, transactionID uuid.UUID, postedBy uuid.UUID, postedAt time.Time) error
-	fnApprove             func(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) error
-	fnReject              func(ctx context.Context, transactionID uuid.UUID, rejectedBy uuid.UUID, rejectedAt time.Time, reason domain.RejectionReason, notes *string) error
-	fnReverse             func(ctx context.Context, originalID, reversalID uuid.UUID, reason string) error
-	fnIsNumberUnique      func(ctx context.Context, entityID *uuid.UUID, number string, excludeID *uuid.UUID) (bool, error)
-	fnGetNextNumber       func(ctx context.Context, entityID *uuid.UUID, txType domain.TransactionType) (string, error)
+	fnCreate          func(ctx context.Context, t *domain.Transaction) error
+	fnGetByID         func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
+	fnGetByNumber     func(ctx context.Context, entityID *uuid.UUID, number string) (*domain.Transaction, error)
+	fnUpdate          func(ctx context.Context, t *domain.Transaction) error
+	fnDelete          func(ctx context.Context, id uuid.UUID) error
+	fnList            func(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error)
+	fnGetEntriesByTxn func(ctx context.Context, transactionID uuid.UUID) ([]domain.TransactionEntry, error)
+	fnPost            func(ctx context.Context, transactionID uuid.UUID, postedBy uuid.UUID, postedAt time.Time) error
+	fnApprove         func(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) error
+	fnReject          func(ctx context.Context, transactionID uuid.UUID, rejectedBy uuid.UUID, rejectedAt time.Time, reason domain.RejectionReason, notes *string) error
+	fnReverse         func(ctx context.Context, originalID, reversalID uuid.UUID, reason string) error
+	fnIsNumberUnique  func(ctx context.Context, entityID *uuid.UUID, number string, excludeID *uuid.UUID) (bool, error)
+	fnGetNextNumber   func(ctx context.Context, entityID *uuid.UUID, txType domain.TransactionType) (string, error)
 }
 
 func (r *p16StubTxnRepo) Create(ctx context.Context, t *domain.Transaction) error {

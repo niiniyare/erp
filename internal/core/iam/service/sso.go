@@ -1,13 +1,13 @@
 package service
 
 // OAuth/OIDC SSO service.
-// 
+//
 // Flow:
 // 1. BeginOAuth  — build the provider's authorization URL; store CSRF state in Redis.
 // 2. ResolveUser — exchange code for tokens; fetch userinfo; JIT-provision user if
 // provider.AutoProvision is true; return the User.
 // 3. Caller passes the User to SessionService.LoginWithSSO to build a full session.
-// 
+//
 // Supported providers: google, microsoft.
 // Implemented using stdlib net/http only — no external OAuth2 library required.
 
@@ -172,8 +172,8 @@ func (s *ssoService) DeactivateProvider(ctx context.Context, provider domain.OAu
 
 // ssoState is stored in Redis under `sso:state:{token}` for CSRF validation.
 type ssoState struct {
-	TenantID uuid.UUID             `json:"tenant_id"`
-	Provider domain.OAuthProvider  `json:"provider"`
+	TenantID uuid.UUID            `json:"tenant_id"`
+	Provider domain.OAuthProvider `json:"provider"`
 }
 
 func (s *ssoService) BeginOAuth(ctx context.Context, tenantID uuid.UUID, provider domain.OAuthProvider) (string, error) {

@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/access/conditional"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // AdvancedEvaluationEngine provides sophisticated feature flag evaluation

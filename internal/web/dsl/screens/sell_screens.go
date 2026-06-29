@@ -83,4 +83,3 @@ func salesOrderStatusOptions() []ast.SelectOption {
 		{Label: "Cancelled", Value: "cancelled"},
 	}
 }
-

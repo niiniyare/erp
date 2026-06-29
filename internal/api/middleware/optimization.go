@@ -9,12 +9,12 @@ import (
 	"sync/atomic"
 	"time"
 
+	"awo.so/internal/shared/logger"
+	"awo.so/internal/shared/metrics"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
-	"awo.so/internal/shared/logger"
-	"awo.so/internal/shared/metrics"
 )
 
 // NOTE: This file provides additional integration methods and helper utilities

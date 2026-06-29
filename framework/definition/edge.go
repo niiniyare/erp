@@ -76,14 +76,14 @@ func Edge(name string) *EdgeDef {
 }
 
 func (e *EdgeDef) To(entity string) *EdgeDef          { e.TargetEntity = entity; return e }
-func (e *EdgeDef) One() *EdgeDef                       { e.Cardinality = CardinalityOne; return e }
-func (e *EdgeDef) Many() *EdgeDef                      { e.Cardinality = CardinalityMany; return e }
-func (e *EdgeDef) ManyToMany() *EdgeDef                { e.Cardinality = CardinalityManyToMany; return e }
-func (e *EdgeDef) WithForeignKey(col string) *EdgeDef  { e.ForeignKey = col; return e }
-func (e *EdgeDef) WithJoinTable(t string) *EdgeDef     { e.JoinTable = t; return e }
-func (e *EdgeDef) CascadeDelete() *EdgeDef             { e.Cascade = true; return e }
-func (e *EdgeDef) Eager() *EdgeDef                     { e.EagerLoad = true; return e }
-func (e *EdgeDef) WithLabel(l string) *EdgeDef         { e.Label = l; return e }
+func (e *EdgeDef) One() *EdgeDef                      { e.Cardinality = CardinalityOne; return e }
+func (e *EdgeDef) Many() *EdgeDef                     { e.Cardinality = CardinalityMany; return e }
+func (e *EdgeDef) ManyToMany() *EdgeDef               { e.Cardinality = CardinalityManyToMany; return e }
+func (e *EdgeDef) WithForeignKey(col string) *EdgeDef { e.ForeignKey = col; return e }
+func (e *EdgeDef) WithJoinTable(t string) *EdgeDef    { e.JoinTable = t; return e }
+func (e *EdgeDef) CascadeDelete() *EdgeDef            { e.Cascade = true; return e }
+func (e *EdgeDef) Eager() *EdgeDef                    { e.EagerLoad = true; return e }
+func (e *EdgeDef) WithLabel(l string) *EdgeDef        { e.Label = l; return e }
 
 // Documentation-aligned fluent builder API aliases and helpers
 

@@ -21,8 +21,10 @@ func CreditNoteScreen(sess ui.UISessionContext, cfg CreditNoteScreenConfig) ast.
 	return ast.PageNode{
 		Title: "Credit Note",
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Issued", Value: "issued"}, {Label: "Applied", Value: "applied"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Issued", Value: "issued"}, {Label: "Applied", Value: "applied"}},
+			}),
 			blocks.PartyBlock(sess, blocks.DefaultCustomerConfig()),
 			blocks.ProductServiceLineBlock(sess, lineCfg),
 			blocks.TaxSummaryBlock(sess),

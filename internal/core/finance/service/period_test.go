@@ -188,7 +188,7 @@ func (s *PeriodServiceSuite) TestFiscalYear_OverlapRejectedByRepository() {
 func (s *PeriodServiceSuite) TestFiscalYear_DateRangeValidation_EndBeforeStart() {
 	fy := s.newFY(
 		time.Date(2025, 12, 31, 0, 0, 0, 0, time.UTC), // start = Dec 31
-		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),  // end = Jan 1 (before start)
+		time.Date(2025, 1, 1, 0, 0, 0, 0, time.UTC),   // end = Jan 1 (before start)
 	)
 
 	// Repo must NOT be called when validation fails at service level

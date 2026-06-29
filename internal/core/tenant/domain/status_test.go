@@ -22,9 +22,9 @@ func TestStatusSuite(t *testing.T) { suite.Run(t, new(StatusSuite)) }
 
 func (s *StatusSuite) TestStatusConstants() {
 	tests := []struct {
-		name     string
-		status   domain.TenantStatus
-		wantStr  string
+		name    string
+		status  domain.TenantStatus
+		wantStr string
 	}{
 		{"active", domain.StatusActive, "ACTIVE"},
 		{"suspended", domain.StatusSuspended, "SUSPENDED"},

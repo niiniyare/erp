@@ -59,8 +59,8 @@ type ServiceContainer struct {
 	IdentityService contract.UserService
 
 	// Security & Access Control
-	IAMService   contract.AuthzService
-	AuditService audit.Service
+	IAMService     contract.AuthzService
+	AuditService   audit.Service
 	SessionService contract.SessionService
 
 	// Feature Management

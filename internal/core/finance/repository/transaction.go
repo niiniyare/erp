@@ -630,7 +630,9 @@ func (r *transactionRepository) GetPendingApprovalTransactions(ctx context.Conte
 	ctx, span := r.tracing.StartSpan(ctx, "TransactionRepository.GetPendingApproval")
 	defer span.End()
 	start := time.Now()
-	defer func() { observeOp(ctx, "GetPendingApprovalTransactions", "transaction", start, err, r.logger, r.metrics) }()
+	defer func() {
+		observeOp(ctx, "GetPendingApprovalTransactions", "transaction", start, err, r.logger, r.metrics)
+	}()
 
 	// Get tenant ID from context
 	if _, ok := shared.GetTenantID(ctx); !ok {

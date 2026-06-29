@@ -39,8 +39,8 @@ type BankStatement struct {
 	Status ReconciliationStatus `json:"status"`
 
 	// Reconciled totals (updated as lines are matched)
-	MatchedCount    int             `json:"matched_count"`
-	UnmatchedCount  int             `json:"unmatched_count"`
+	MatchedCount     int             `json:"matched_count"`
+	UnmatchedCount   int             `json:"unmatched_count"`
 	DifferenceAmount decimal.Decimal `json:"difference_amount"` // ClosingBalance - GL balance at statement date
 
 	// Lines (loaded on demand)
@@ -94,9 +94,9 @@ type BankStatementLine struct {
 	Balance      decimal.Decimal `json:"balance"`       // Running balance after this line
 
 	// Reconciliation
-	IsReconciled   bool       `json:"is_reconciled"`
-	ReconciledAt   *time.Time `json:"reconciled_at,omitempty"`
-	ReconciledBy   *uuid.UUID `json:"reconciled_by,omitempty"`
+	IsReconciled bool       `json:"is_reconciled"`
+	ReconciledAt *time.Time `json:"reconciled_at,omitempty"`
+	ReconciledBy *uuid.UUID `json:"reconciled_by,omitempty"`
 
 	// Matched journal entry (set when this line is matched to a TransactionEntry)
 	MatchedEntryID *uuid.UUID `json:"matched_entry_id,omitempty"`

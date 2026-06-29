@@ -3,8 +3,8 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
+	"github.com/google/uuid"
 )
 
 // SetTenantContext sets the RLS tenant context on the database session.

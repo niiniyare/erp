@@ -6,13 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/repository"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/shared/utils"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

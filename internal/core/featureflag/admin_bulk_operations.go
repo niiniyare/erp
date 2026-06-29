@@ -8,10 +8,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
+	"github.com/google/uuid"
 )
 
 // BulkEnableFlags enables multiple feature flags

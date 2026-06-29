@@ -3,9 +3,9 @@ package middleware
 import (
 	"net/http"
 
-	"github.com/gofiber/fiber/v2"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
+	"github.com/gofiber/fiber/v2"
 )
 
 // HTTPMiddleware defines the standard HTTP middleware signature

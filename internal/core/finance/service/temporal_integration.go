@@ -42,8 +42,8 @@ func businessErrorToTemporal(err error) error {
 // TemporalIntegration wires finance service methods into Temporal activities and
 // workflows, then registers them with the platform WorkerManager.
 type TemporalIntegration struct {
-	txnService  TransactionService
-	workerMgr   *platformTemporal.WorkerManager
+	txnService TransactionService
+	workerMgr  *platformTemporal.WorkerManager
 }
 
 // NewTemporalIntegration creates a TemporalIntegration ready to be registered.
@@ -93,11 +93,11 @@ type PostTransactionActivityInput struct {
 func temporalCorrelationFields(ctx context.Context) logger.Fields {
 	info := activity.GetInfo(ctx)
 	return logger.Fields{
-		"temporal_workflow_id":  info.WorkflowExecution.ID,
-		"temporal_run_id":       info.WorkflowExecution.RunID,
-		"temporal_activity_id":  info.ActivityID,
-		"temporal_attempt":      info.Attempt,
-		"temporal_task_queue":   info.TaskQueue,
+		"temporal_workflow_id": info.WorkflowExecution.ID,
+		"temporal_run_id":      info.WorkflowExecution.RunID,
+		"temporal_activity_id": info.ActivityID,
+		"temporal_attempt":     info.Attempt,
+		"temporal_task_queue":  info.TaskQueue,
 	}
 }
 

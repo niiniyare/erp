@@ -7,9 +7,9 @@ import (
 	"maps"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/shared/logger"
+	"github.com/google/uuid"
 )
 
 // In-memory template storage (in production, this would be database-backed)

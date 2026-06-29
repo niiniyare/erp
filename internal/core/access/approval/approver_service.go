@@ -7,12 +7,12 @@ package approval
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 	"awo.so/internal/shared/types"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

@@ -482,7 +482,7 @@ func (noopTracer) ExtractHTTPHeaders(ctx context.Context, _ http.Header) context
 func (noopTracer) SetAttributes(context.Context, ...attribute.KeyValue)                  {}
 func (noopTracer) RecordError(context.Context, error, ...tracing.ErrorOption)            {}
 func (noopTracer) AddEvent(context.Context, string, ...attribute.KeyValue)               {}
-func (noopTracer) GetTraceID(context.Context) string { return "" }
+func (noopTracer) GetTraceID(context.Context) string                                     { return "" }
 
 func (noopTracer) GetSpanID(context.Context) string { return "" }
 

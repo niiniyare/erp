@@ -119,12 +119,12 @@ func (h *Handler) Routes(r fiber.Router) {
 	contracts := r.Group("/contracts")
 
 	// CRUD
-	contracts.Post("/", h.Create)                     // POST   /api/v1/contracts
-	contracts.Get("/", h.List)                        // GET    /api/v1/contracts
-	contracts.Get("/number/:number", h.GetByNumber)   // GET    /api/v1/contracts/number/:number
-	contracts.Get("/:id", h.GetByID)                  // GET    /api/v1/contracts/:id
-	contracts.Patch("/:id", h.Update)                 // PATCH  /api/v1/contracts/:id
-	contracts.Delete("/:id", h.Delete)                // DELETE /api/v1/contracts/:id
+	contracts.Post("/", h.Create)                   // POST   /api/v1/contracts
+	contracts.Get("/", h.List)                      // GET    /api/v1/contracts
+	contracts.Get("/number/:number", h.GetByNumber) // GET    /api/v1/contracts/number/:number
+	contracts.Get("/:id", h.GetByID)                // GET    /api/v1/contracts/:id
+	contracts.Patch("/:id", h.Update)               // PATCH  /api/v1/contracts/:id
+	contracts.Delete("/:id", h.Delete)              // DELETE /api/v1/contracts/:id
 
 	// Lifecycle transitions
 	contracts.Post("/:id/submit", h.Submit)       // POST /api/v1/contracts/:id/submit

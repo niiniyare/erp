@@ -56,4 +56,3 @@ func (e *Enforcer) Allow(
 	return fmt.Errorf("no policy granted %s/%s for actor %s (fail-closed)",
 		def.Name, op, viewer.ActorID())
 }
-

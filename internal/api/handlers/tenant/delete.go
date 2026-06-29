@@ -1,10 +1,10 @@
 package tenant
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // Delete handles the soft deletion of an organization.

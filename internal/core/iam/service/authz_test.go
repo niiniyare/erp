@@ -19,8 +19,8 @@ import (
 // =============================================================================
 
 type stubAuthzRepo struct {
-	upsertErr      error
-	deactivateErr  error
+	upsertErr       error
+	deactivateErr   error
 	listAssignments []domain.RoleAssignment
 	listExpiredErr  error
 }

@@ -38,12 +38,16 @@ func hardenCtx(t *testing.T) context.Context {
 
 func hardenBalancedEntries(txnID, tenantID uuid.UUID, amount int64) []*domain.TransactionEntry {
 	return []*domain.TransactionEntry{
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
 			AccountID: uuid.New(), DebitAmount: decimal.NewFromInt(amount),
-			Description: "DR", ExchangeRate: decimal.NewFromInt(1)},
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
+			Description: "DR", ExchangeRate: decimal.NewFromInt(1),
+		},
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
 			AccountID: uuid.New(), CreditAmount: decimal.NewFromInt(amount),
-			Description: "CR", ExchangeRate: decimal.NewFromInt(1)},
+			Description: "CR", ExchangeRate: decimal.NewFromInt(1),
+		},
 	}
 }
 
@@ -90,12 +94,16 @@ func TestINV001_PostTransaction_UnbalancedEntries_MustFail(t *testing.T) {
 		CreatedBy: uuid.New(),
 	}
 	entries := []*domain.TransactionEntry{
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
 			AccountID: acctID1, DebitAmount: decimal.NewFromInt(500),
-			Description: "DR", ExchangeRate: decimal.NewFromInt(1)},
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
+			Description: "DR", ExchangeRate: decimal.NewFromInt(1),
+		},
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
 			AccountID: acctID2, CreditAmount: decimal.NewFromInt(400),
-			Description: "CR", ExchangeRate: decimal.NewFromInt(1)},
+			Description: "CR", ExchangeRate: decimal.NewFromInt(1),
+		},
 	}
 
 	repo := &mockTransactionRepo{}
@@ -216,12 +224,16 @@ func TestINV004_PostTransaction_InactiveAccount_MustFail(t *testing.T) {
 		CreatedBy: uuid.New(),
 	}
 	entries := []*domain.TransactionEntry{
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 1,
 			AccountID: inactiveAcctID, DebitAmount: decimal.NewFromInt(100),
-			Description: "DR", ExchangeRate: decimal.NewFromInt(1)},
-		{ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
+			Description: "DR", ExchangeRate: decimal.NewFromInt(1),
+		},
+		{
+			ID: uuid.New(), TenantID: tenantID, TransactionID: txnID, EntryNumber: 2,
 			AccountID: activeAcctID, CreditAmount: decimal.NewFromInt(100),
-			Description: "CR", ExchangeRate: decimal.NewFromInt(1)},
+			Description: "CR", ExchangeRate: decimal.NewFromInt(1),
+		},
 	}
 
 	repo := &mockTransactionRepo{}
@@ -255,10 +267,14 @@ func TestINV005_DomainCreateReversalTransaction_TypeMustBeReversal(t *testing.T)
 		CurrencyCode:      "USD", ExchangeRate: decimal.NewFromInt(1),
 		TotalDebitAmount: decimal.NewFromInt(100), TotalCreditAmount: decimal.NewFromInt(100),
 		Entries: []domain.TransactionEntry{
-			{ID: uuid.New(), AccountID: uuid.New(), DebitAmount: decimal.NewFromInt(100),
-				Description: "DR", ExchangeRate: decimal.NewFromInt(1)},
-			{ID: uuid.New(), AccountID: uuid.New(), CreditAmount: decimal.NewFromInt(100),
-				Description: "CR", ExchangeRate: decimal.NewFromInt(1)},
+			{
+				ID: uuid.New(), AccountID: uuid.New(), DebitAmount: decimal.NewFromInt(100),
+				Description: "DR", ExchangeRate: decimal.NewFromInt(1),
+			},
+			{
+				ID: uuid.New(), AccountID: uuid.New(), CreditAmount: decimal.NewFromInt(100),
+				Description: "CR", ExchangeRate: decimal.NewFromInt(1),
+			},
 		},
 	}
 
@@ -281,7 +297,7 @@ func TestINV006_RejectTransaction_SubmitterCannotReject_SODViolation(t *testing.
 	txn := &domain.Transaction{
 		ID: txnID, TenantID: uuid.New(),
 		ApprovalRequired: true, ApprovalStatus: domain.ApprovalStatusPending,
-		CreatedBy: submitterID,
+		CreatedBy:    submitterID,
 		CurrencyCode: "USD", ExchangeRate: decimal.NewFromInt(1),
 	}
 
@@ -314,7 +330,7 @@ func TestINV007_RejectTransaction_UsesApproverNotSubmitter(t *testing.T) {
 	txn := &domain.Transaction{
 		ID: txnID, TenantID: uuid.New(),
 		ApprovalRequired: true, ApprovalStatus: domain.ApprovalStatusPending,
-		CreatedBy: submitterID,
+		CreatedBy:    submitterID,
 		CurrencyCode: "USD", ExchangeRate: decimal.NewFromInt(1),
 	}
 	rejected := *txn

@@ -351,10 +351,11 @@ func (s *stubSessionService) Logout(_ context.Context, _ string) error { return 
 func (s *stubSessionService) ValidateSession(_ context.Context, _ string) (*iam.ResolvedSession, error) {
 	return s.validateSess, s.validateErr
 }
+
 func (s *stubSessionService) CompleteMFALogin(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil
 }
-func (s *stubSessionService) LogoutAllForUser(_ context.Context, _ uuid.UUID) error  { return nil }
+func (s *stubSessionService) LogoutAllForUser(_ context.Context, _ uuid.UUID) error   { return nil }
 func (s *stubSessionService) LogoutAllForTenant(_ context.Context, _ uuid.UUID) error { return nil }
 func (s *stubSessionService) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.ResolvedSession, string, error) {
 	return nil, "", nil

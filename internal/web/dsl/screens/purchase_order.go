@@ -20,8 +20,10 @@ func POScreen(sess ui.UISessionContext, cfg POScreenConfig) ast.Node {
 	lineCfg.ReadOnly = cfg.ReadOnly
 
 	body := []ast.Node{
-		blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-			StatusOptions: poStatusOptions()}),
+		blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+			ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+			StatusOptions: poStatusOptions(),
+		}),
 		blocks.PartyBlock(sess, blocks.DefaultSupplierConfig()),
 		blocks.AddressBlock(sess, blocks.AddressConfig{ShowShipping: true, ReadOnly: cfg.ReadOnly}),
 		blocks.ProductServiceLineBlock(sess, lineCfg),

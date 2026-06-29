@@ -87,7 +87,7 @@ func (v EvolutionSafetyViolation) Error() string {
 //
 // A nil *EvolutionSafetyGuard passes all checks (safe for tests).
 type EvolutionSafetyGuard struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	contracts map[string]ExtensionContract
 
 	// Core dependencies whose absence is a startup-blocking invariant.

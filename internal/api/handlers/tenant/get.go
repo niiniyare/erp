@@ -1,11 +1,11 @@
 package tenant
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // Get handles retrieval of a single organization by its ID.

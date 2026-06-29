@@ -31,8 +31,8 @@ func RequisitionScreen(sess ui.UISessionContext) ast.Node {
 						Source:   &ast.APISpec{Method: "get", URL: "/api/v1/hr/departments/options"},
 					},
 					ast.SelectNode{
-						Name:   "status",
-						Label:  "Status",
+						Name:    "status",
+						Label:   "Status",
 						Options: requisitionStatusOptions(),
 					},
 				},
@@ -94,4 +94,3 @@ func purchaseOrderStatusOptions() []ast.SelectOption {
 		{Label: "Cancelled", Value: "cancelled"},
 	}
 }
-

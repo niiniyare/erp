@@ -135,8 +135,8 @@ func (s *BudgetServiceSuite) seedBudget(status domain.BudgetStatus) *domain.Budg
 
 func (s *BudgetServiceSuite) TestCreateBudget_ValidInput_SetsDefaultsAndPersists() {
 	b := s.newDraftBudget()
-	b.Status = ""  // service should default to DRAFT
-	b.Version = 0  // service should default to 1
+	b.Status = "" // service should default to DRAFT
+	b.Version = 0 // service should default to 1
 
 	s.repo.On("CreateBudget", s.ctx, mock.MatchedBy(func(arg *domain.Budget) bool {
 		return arg.Status == domain.BudgetStatusDraft && arg.Version == 1

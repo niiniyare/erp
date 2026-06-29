@@ -255,4 +255,3 @@ func TestAuthorize_EnforceError_Returns500(t *testing.T) {
 	assert.Equal(t, fiber.StatusInternalServerError, status,
 		"Enforce error must produce 500, not 403")
 }
-

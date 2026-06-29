@@ -3,10 +3,10 @@ package tenant
 import (
 	"fmt"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // Activate handles the activation of a tenant.

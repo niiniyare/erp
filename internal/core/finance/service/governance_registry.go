@@ -133,29 +133,29 @@ type GovernancePolicy struct {
 // values proven safe in phase 8 testing.
 func DefaultGovernancePolicy() GovernancePolicy {
 	return GovernancePolicy{
-		Version:                         1,
-		RequireZeroCriticalViolations:   true,
-		RequireReconciliationComplete:   true,
-		PeriodCloseGracePeriod:          24 * time.Hour,
-		ApprovalRequiredAbove:           decimal.NewFromInt(50_000),
-		DualApprovalAbove:               decimal.NewFromInt(500_000),
+		Version:                       1,
+		RequireZeroCriticalViolations: true,
+		RequireReconciliationComplete: true,
+		PeriodCloseGracePeriod:        24 * time.Hour,
+		ApprovalRequiredAbove:         decimal.NewFromInt(50_000),
+		DualApprovalAbove:             decimal.NewFromInt(500_000),
 		CriticalAuditEventTypes: []string{
 			"TRANSACTION_POSTED",
 			"PERIOD_HARD_CLOSED",
 			"RECONCILIATION_COMPLETED",
 			"REVERSAL_POSTED",
 		},
-		AuditDeliveryMaxLatency:             5 * time.Minute,
-		RequireAuditChainForCritical:        true,
-		AnomalyEscalationThreshold:          10,
-		AnomalyWindowDuration:               time.Hour,
-		MaxOpenTransactions:                 10_000,
-		MaxMonthlyPostingVolume:             decimal.NewFromInt(1_000_000_000), // 1 B
-		ReconciliationStaleDays:             30,
-		MaxUnmatchedLineRatio:               0.05,
-		AllowViolationSuppression:           true,
-		MaxSuppressionDuration:              7 * 24 * time.Hour,
-		CriticalViolationSuppressionDenied:  true,
+		AuditDeliveryMaxLatency:            5 * time.Minute,
+		RequireAuditChainForCritical:       true,
+		AnomalyEscalationThreshold:         10,
+		AnomalyWindowDuration:              time.Hour,
+		MaxOpenTransactions:                10_000,
+		MaxMonthlyPostingVolume:            decimal.NewFromInt(1_000_000_000), // 1 B
+		ReconciliationStaleDays:            30,
+		MaxUnmatchedLineRatio:              0.05,
+		AllowViolationSuppression:          true,
+		MaxSuppressionDuration:             7 * 24 * time.Hour,
+		CriticalViolationSuppressionDenied: true,
 	}
 }
 

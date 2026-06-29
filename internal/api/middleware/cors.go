@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
+	"awo.so/internal/shared/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/google/uuid"
-	"awo.so/internal/shared/logger"
 )
 
 // CORSConfig defines CORS configuration for the middleware.

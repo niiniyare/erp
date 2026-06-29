@@ -139,12 +139,12 @@ func (r *ReplayReconstructor) ReplayTenant(
 
 		net := debit.Sub(credit)
 		rb := domain.ReplayedBalance{
-			AccountID:     a.ID,
-			AccountCode:   a.AccountCode,
-			ReplayedDebit: debit,
+			AccountID:      a.ID,
+			AccountCode:    a.AccountCode,
+			ReplayedDebit:  debit,
 			ReplayedCredit: credit,
-			NetBalance:    net,
-			TxnCount:      txnCount,
+			NetBalance:     net,
+			TxnCount:       txnCount,
 		}
 		balances = append(balances, rb)
 
@@ -168,11 +168,11 @@ func (r *ReplayReconstructor) ReplayTenant(
 	r.emitReplayMetrics(ctx, report)
 
 	logger.InfoContext(ctx, "ledger replay complete", logger.Fields{
-		"tenant_id":    tenantID.String(),
-		"txns":         report.TxnsReplayed,
-		"entries":      report.EntriesReplayed,
-		"drift_count":  len(driftAccounts),
-		"clean":        report.ReplayClean,
+		"tenant_id":   tenantID.String(),
+		"txns":        report.TxnsReplayed,
+		"entries":     report.EntriesReplayed,
+		"drift_count": len(driftAccounts),
+		"clean":       report.ReplayClean,
 	})
 
 	return report, nil

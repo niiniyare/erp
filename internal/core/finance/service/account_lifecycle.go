@@ -31,10 +31,10 @@ import (
 
 // AccountLifecycleService orchestrates formal account lifecycle transitions.
 type AccountLifecycleService struct {
-	accounts  domain.AccountsRepository
-	events    domain.AccountLifecycleEventRepository // nil = events not persisted
-	governor  *AccountMutationGovernor
-	metrics   metrics.MetricsProvider
+	accounts domain.AccountsRepository
+	events   domain.AccountLifecycleEventRepository // nil = events not persisted
+	governor *AccountMutationGovernor
+	metrics  metrics.MetricsProvider
 }
 
 // NewAccountLifecycleService constructs the service.

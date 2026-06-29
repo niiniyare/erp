@@ -217,23 +217,23 @@ var _ Node = TableNode{}
 //
 // Required: API and at least one Column.
 type CRUDNode struct {
-	API        APISpec
-	Columns    []TableColumn
+	API     APISpec
+	Columns []TableColumn
 	// Filter is the filter form shown above the table. nil = no filter.
 	// Accepts any Node — typically FilterBarNode or FormNode.
-	Filter     Node
+	Filter Node
 	// Toolbar nodes appear in the top-right of the CRUD header.
-	Toolbar    []Node
+	Toolbar []Node
 	// BulkActions appear when rows are selected.
 	BulkActions []Node
 	// RowActions appear in an "operation" column on each row.
-	RowActions  []ActionNode
+	RowActions []ActionNode
 	// PrimaryKey is the field used for row identity (default: "id").
-	PrimaryKey  string
+	PrimaryKey string
 	// PageSize is the default number of rows per page (default: 20).
-	PageSize    int
+	PageSize int
 	// Title is an optional heading above the CRUD component.
-	Title       string
+	Title string
 }
 
 func (c CRUDNode) NodeType() string { return "crud" }
@@ -321,8 +321,10 @@ func (c CRUDNode) Children() []Node {
 	return all
 }
 
-var _ Node = CRUDNode{}
-var _ ContainerNode = CRUDNode{}
+var (
+	_ Node          = CRUDNode{}
+	_ ContainerNode = CRUDNode{}
+)
 
 // ─── ChartNode ────────────────────────────────────────────────────────────────
 
@@ -435,8 +437,10 @@ func (c CardNode) Children() []Node {
 	return mergeNodeSlices(c.Body, c.Footer)
 }
 
-var _ Node = CardNode{}
-var _ ContainerNode = CardNode{}
+var (
+	_ Node          = CardNode{}
+	_ ContainerNode = CardNode{}
+)
 
 // ─── StatNode ─────────────────────────────────────────────────────────────────
 
@@ -619,11 +623,11 @@ type TimelineNode struct {
 
 // TimelineItem is a single entry in a TimelineNode.
 type TimelineItem struct {
-	Time    string // display time label
-	Title   string
-	Detail  string
-	Color   string // dot colour: "green" | "red" | "blue" | "grey" | custom hex
-	Icon    string // optional icon class
+	Time   string // display time label
+	Title  string
+	Detail string
+	Color  string // dot colour: "green" | "red" | "blue" | "grey" | custom hex
+	Icon   string // optional icon class
 }
 
 func (t TimelineNode) NodeType() string { return "timeline" }
@@ -693,7 +697,7 @@ func (t TreeNode) Validate() error {
 
 func (t TreeNode) Compile() ui.M {
 	m := ui.M{
-		"type": "tree",
+		"type":   "tree",
 		"source": t.API.Compile(),
 	}
 	lf := t.LabelField
@@ -734,12 +738,12 @@ var _ Node = TreeNode{}
 // Required: Name and at least one entry in Map.
 type MappingNode struct {
 	// Name is the data field key whose value is looked up in Map.
-	Name      string
+	Name string
 	// Label is the field label (used in form layout or table header).
-	Label     string
+	Label string
 	// Map is the value→display mapping. Values are HTML strings.
 	// Example: {"draft": "<span class='badge badge-warning'>Draft</span>", "*": "${value}"}
-	Map       map[string]string
+	Map map[string]string
 	// VisibleOn is a boolean AMIS expression controlling visibility.
 	VisibleOn string
 }
@@ -860,34 +864,34 @@ var _ Node = PropertyNode{}
 // For "dialog" ActionType: set Dialog (inline) or Target (named reference).
 // For "drawer" ActionType: set Drawer (inline) or Target (named reference).
 type ActionNode struct {
-	Label       string
+	Label string
 	// ActionType: "ajax" | "dialog" | "drawer" | "link" | "submit" | "reset" |
 	//             "copy" | "download" | "reload" | "close"
-	ActionType  string
+	ActionType string
 	// API is required when ActionType is "ajax".
-	API         *APISpec
+	API *APISpec
 	// Dialog is an inline dialog definition for ActionType "dialog".
 	// Takes precedence over Target when both are set.
-	Dialog      *DialogNode
+	Dialog *DialogNode
 	// Drawer is an inline drawer definition for ActionType "drawer".
 	// Takes precedence over Target when both are set.
-	Drawer      *DrawerNode
+	Drawer *DrawerNode
 	// Target is a named dialog/drawer reference or URL for link types.
 	// Use Dialog/Drawer fields instead for inline definitions.
-	Target      string
+	Target string
 	// Level controls button colour: "primary" | "success" | "warning" | "danger" |
 	//                               "info" | "default" | "link"
-	Level       string
+	Level string
 	// Size: "xs" | "sm" | "md" | "lg"
-	Size        string
+	Size string
 	// VisibleOn is a boolean AMIS expression controlling visibility.
-	VisibleOn   string
+	VisibleOn string
 	// DisabledOn is a boolean AMIS expression controlling disabled state.
-	DisabledOn  string
+	DisabledOn string
 	// ConfirmText shows a confirmation dialog before executing the action.
 	ConfirmText string
 	// Icon is an optional Font Awesome class (e.g. "fa fa-check").
-	Icon        string
+	Icon string
 }
 
 func (a ActionNode) NodeType() string { return "button" }

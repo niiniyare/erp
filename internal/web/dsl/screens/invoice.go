@@ -28,8 +28,10 @@ func InvoiceScreen(sess ui.UISessionContext, cfg InvoiceScreenConfig) ast.Node {
 	}
 
 	body := []ast.Node{
-		blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-			StatusOptions: invoiceStatusOptions()}),
+		blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+			ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+			StatusOptions: invoiceStatusOptions(),
+		}),
 		blocks.PartyBlock(sess, partyCfg),
 		blocks.AddressBlock(sess, blocks.AddressConfig{ShowBilling: true, ShowShipping: !cfg.IsPurchase, ReadOnly: cfg.ReadOnly}),
 		blocks.ProductServiceLineBlock(sess, lineCfg),

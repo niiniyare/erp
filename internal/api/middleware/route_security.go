@@ -207,7 +207,6 @@ func (m *RouteSecurityManager) ConfigureAPIRoutes(router fiber.Router) {
 		rateLimitConfig.UserRPS = m.config.API.RateLimit.UserRPS
 		router.Use(CreateRateLimitMiddleware(&rateLimitConfig, nil, m.logger)) // cache would be injected
 	}
-
 }
 
 // ConfigureUIRoutes applies security middleware for UI routes

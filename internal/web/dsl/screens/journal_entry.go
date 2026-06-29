@@ -26,8 +26,10 @@ func JournalEntryScreen(sess ui.UISessionContext, cfg JournalEntryScreenConfig) 
 			// Backend must return: can_approve, tenant_currency, totals[].
 		},
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Posted", Value: "posted"}, {Label: "Reversed", Value: "reversed"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Posted", Value: "posted"}, {Label: "Reversed", Value: "reversed"}},
+			}),
 			blocks.ProductServiceLineBlock(sess, lineCfg),
 			blocks.TotalsSummaryBlock(sess),
 			blocks.ApprovalWorkflowBlock(sess),

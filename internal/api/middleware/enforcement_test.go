@@ -39,21 +39,27 @@ type stubSessionService struct {
 func (s *stubSessionService) Login(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	panic("unexpected call to Login in middleware test")
 }
+
 func (s *stubSessionService) CompleteMFALogin(_ context.Context, _, _ string) (*iam.ResolvedSession, string, error) {
 	panic("unexpected call to CompleteMFALogin in middleware test")
 }
+
 func (s *stubSessionService) ValidateSession(_ context.Context, _ string) (*iam.ResolvedSession, error) {
 	return s.session, s.err
 }
+
 func (s *stubSessionService) Logout(_ context.Context, _ string) error {
 	panic("unexpected call to Logout in middleware test")
 }
+
 func (s *stubSessionService) LogoutAllForUser(_ context.Context, _ uuid.UUID) error {
 	panic("unexpected call to LogoutAllForUser in middleware test")
 }
+
 func (s *stubSessionService) LogoutAllForTenant(_ context.Context, _ uuid.UUID) error {
 	panic("unexpected call to LogoutAllForTenant in middleware test")
 }
+
 func (s *stubSessionService) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.ResolvedSession, string, error) {
 	panic("unexpected call to LoginWithSSO in middleware test")
 }

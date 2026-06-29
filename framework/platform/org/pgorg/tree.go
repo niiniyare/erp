@@ -19,8 +19,8 @@ type PgTree struct {
 	tx   pgx.Tx
 }
 
-func New(pool *pgxpool.Pool) *PgTree        { return &PgTree{pool: pool} }
-func (t *PgTree) InTx(tx pgx.Tx) *PgTree   { return &PgTree{pool: t.pool, tx: tx} }
+func New(pool *pgxpool.Pool) *PgTree     { return &PgTree{pool: pool} }
+func (t *PgTree) InTx(tx pgx.Tx) *PgTree { return &PgTree{pool: t.pool, tx: tx} }
 
 func (t *PgTree) querier() interface {
 	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row

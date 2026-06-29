@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/tenant/domain"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

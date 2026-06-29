@@ -1,5 +1,22 @@
 // Package sqlbuilder generates parameterised PostgreSQL statements from
-// EntityDefinition metadata. All methods are pure functions; no DB calls occur here.
+// EntityDefinition metadata.
+//
+// All exported functions are pure: they accept metadata and options, return
+// SQL strings and argument slices, and never touch the database.
+//
+// # Placeholder numbering
+//
+// Functions that return both a query and args use 1-based PostgreSQL $n
+// placeholders. When a caller needs to compose fragments (e.g. appending LIMIT
+// and OFFSET), [SelectList] documents exactly which $n slots it occupies so
+// the caller can append limit/offset at the right indices.
+//
+// # Identifier safety
+//
+// Column and table names are passed through [pgIdent], which double-quote-wraps
+// the identifier and returns an error on characters outside [a-zA-Z0-9_].
+// Callers that provide dynamic OrderBy values should validate them against
+// [EntityDefinition.FieldNames] before calling [SelectList].
 package sqlbuilder
 
 import (
@@ -12,291 +29,395 @@ import (
 	"awo.so/framework/filter"
 )
 
+// TotalColumn is the alias emitted by [SelectList] for the window-function
+// total count. Callers scan this column to determine total result count without
+// a separate COUNT query.
+const TotalColumn = "__total"
+
+// ── SELECT ────────────────────────────────────────────────────────────────────
+
 // SelectOne builds a SELECT statement that fetches a single record by primary key.
 //
 //	SELECT <cols> FROM <table> WHERE id = $1 [AND deleted_at IS NULL]
-func SelectOne(def *definition.EntityDefinition) string {
-	cols := columnList(def)
-	q := fmt.Sprintf("SELECT %s FROM %s WHERE id = $1", cols, def.TableName())
+//
+// The caller supplies the id value as the sole query argument.
+func SelectOne(def *definition.EntityDefinition) (string, error) {
+	cols, err := columnList(def)
+	if err != nil {
+		return "", err
+	}
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", fmt.Errorf("sqlbuilder.SelectOne: %w", err)
+	}
+	q := fmt.Sprintf("SELECT %s FROM %s WHERE id = $1", cols, table)
 	if def.SoftDelete {
 		q += " AND deleted_at IS NULL"
 	}
-	return q
+	return q, nil
 }
 
-// SelectOpts controls filtering, search, ordering, and org-unit scoping for SelectList.
+// SelectOpts controls filtering, ordering, search, and org-unit scoping for
+// [SelectList]. All fields are optional.
 type SelectOpts struct {
-	// Predicate is an optional composable filter tree (preferred over legacy Filter).
-	Predicate  *filter.Filter
-	Search     string
-	OrderBy    string
-	Ascending  bool
-	// OrgUnitIDs restricts results to these org unit IDs via ANY($n).
-	// Empty slice = no restriction.
+	// Predicate is an optional composable filter tree built with the filter
+	// package. It is ANDed with the implicit soft-delete and org-unit clauses.
+	Predicate *filter.Filter
+
+	// Search is a free-text string applied as ILIKE '%search%' across all
+	// fields where FieldDefinition.IsSearchable is true. Special characters
+	// (%, _) are escaped so the value is treated as a literal substring.
+	Search string
+
+	// OrderBy is the column to sort by. It must be a valid column identifier;
+	// [SelectList] validates it with [pgIdent] and returns an error if it
+	// contains unsafe characters. Defaults to "created_at" when empty.
+	OrderBy string
+
+	// Ascending controls sort direction. Default (false) is DESC.
+	Ascending bool
+
+	// OrgUnitIDs restricts results to the given org-unit IDs via
+	//   org_unit_id = ANY($n)
+	// An empty slice means no org-unit restriction.
 	OrgUnitIDs []uuid.UUID
 }
 
-// SelectList builds a SELECT + COUNT(*) OVER() query with optional WHERE clause.
+// SelectList builds a paginated SELECT with a window-function total count.
 //
-// Returns (query, filterArgs) where filterArgs holds all bound values EXCEPT
-// limit and offset, which the caller appends:
+// The returned args slice covers all WHERE clause parameters. The caller must
+// append limit and offset values (in that order) before executing:
 //
-//	query, args := sqlbuilder.SelectList(def, opts)
+//	query, args, err := sqlbuilder.SelectList(def, opts)
+//	if err != nil { … }
 //	args = append(args, limit, offset)
-//	rows, err := q.Query(ctx, query, args...)
-func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []any) {
-	cols := columnList(def)
+//	rows, err := pool.Query(ctx, query, args...)
+//
+// The result set includes a [TotalColumn] ("__total") column that holds the
+// total number of matching rows, available on every row via the OVER() window.
+func SelectList(def *definition.EntityDefinition, opts SelectOpts) (string, []any, error) {
+	cols, err := columnList(def)
+	if err != nil {
+		return "", nil, err
+	}
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.SelectList: table name: %w", err)
+	}
+
 	var sb strings.Builder
-	var args []any
-	idx := 1
+	sb.WriteString(fmt.Sprintf(
+		"SELECT %s, COUNT(*) OVER() AS %s FROM %s",
+		cols, TotalColumn, table,
+	))
 
-	sb.WriteString(fmt.Sprintf("SELECT %s, COUNT(*) OVER() AS __total FROM %s", cols, def.TableName()))
-
-	clauses, args, idx := whereClauses(def, opts, idx)
+	clauses, args, nextIdx, err := whereClauses(def, opts, 1)
+	if err != nil {
+		return "", nil, err
+	}
 	if len(clauses) > 0 {
 		sb.WriteString(" WHERE ")
 		sb.WriteString(strings.Join(clauses, " AND "))
 	}
 
-	sb.WriteString(" ORDER BY ")
+	// ORDER BY — validate the column name before interpolating.
+	orderCol := "created_at"
 	if opts.OrderBy != "" {
-		sb.WriteString(pgIdent(opts.OrderBy))
-	} else {
-		sb.WriteString("created_at")
+		if _, err := pgIdent(opts.OrderBy); err != nil {
+			return "", nil, fmt.Errorf("sqlbuilder.SelectList: OrderBy: %w", err)
+		}
+		orderCol = opts.OrderBy
 	}
+	dir := "DESC"
 	if opts.Ascending {
-		sb.WriteString(" ASC")
-	} else {
-		sb.WriteString(" DESC")
+		dir = "ASC"
 	}
+	sb.WriteString(fmt.Sprintf(" ORDER BY %s %s", orderCol, dir))
 
-	sb.WriteString(fmt.Sprintf(" LIMIT $%d OFFSET $%d", idx, idx+1))
+	// LIMIT and OFFSET are NOT in args — the caller appends them.
+	sb.WriteString(fmt.Sprintf(" LIMIT $%d OFFSET $%d", nextIdx, nextIdx+1))
 
-	return sb.String(), args
+	return sb.String(), args, nil
 }
 
-// Insert builds an INSERT statement for the given mutable field names.
-// Returns (query, orderedColumns) so the caller can extract values in the
-// correct placeholder order.
+// ── INSERT ────────────────────────────────────────────────────────────────────
+
+// Insert builds a single-row INSERT statement for the given mutable fields.
 //
-// tenant_id is always written as current_tenant_id() — never a parameter.
+// Returns (query, cols, error) where cols is the ordered slice of column names
+// whose values the caller must supply as positional args. The slice order
+// matches the $n placeholders in query.
 //
-//	INSERT INTO <table> (col1, col2, ...) VALUES ($1, current_tenant_id(), ...) RETURNING id
-func Insert(def *definition.EntityDefinition, fields []string) (query string, cols []string) {
-	scopeCols := scopeColumns(def)
-	reserved := map[string]bool{"id": true}
-	for _, sc := range scopeCols {
-		reserved[sc] = true
+// The tenant_id column — if present for this entity's scope — is always written
+// as the SQL function call current_tenant_id() and is never a caller parameter.
+//
+//	INSERT INTO <table> (id, tenant_id, col1, …)
+//	VALUES ($1, current_tenant_id(), $2, …)
+//	RETURNING id
+func Insert(def *definition.EntityDefinition, fields []string) (query string, cols []string, err error) {
+	sqlCols, paramCols, err := buildColumnLists(def, fields)
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.Insert: %w", err)
 	}
 
-	// sqlCols: column names that appear in the SQL INSERT list.
-	// cols (returned): columns whose values the caller must supply ($N params).
-	sqlCols := make([]string, 0, len(fields)+len(scopeCols)+1)
-	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
-
-	sqlCols = append(sqlCols, "id")
-	cols = append(cols, "id")
-
-	for _, sc := range scopeCols {
-		sqlCols = append(sqlCols, sc)
-		if sc != "tenant_id" {
-			cols = append(cols, sc)
-		}
-	}
-	for _, f := range fields {
-		if !reserved[f] {
-			sqlCols = append(sqlCols, f)
-			cols = append(cols, f)
-		}
+	placeholders, err := buildPlaceholders(sqlCols, 1)
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.Insert: %w", err)
 	}
 
-	// Build placeholders: tenant_id → literal function call; others → $N.
-	paramIdx := 1
-	placeholders := make([]string, len(sqlCols))
-	for i, col := range sqlCols {
-		if col == "tenant_id" {
-			placeholders[i] = "current_tenant_id()"
-		} else {
-			placeholders[i] = fmt.Sprintf("$%d", paramIdx)
-			paramIdx++
-		}
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.Insert: %w", err)
+	}
+
+	quotedCols, err := quoteIdents(sqlCols)
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.Insert: %w", err)
 	}
 
 	query = fmt.Sprintf(
 		"INSERT INTO %s (%s) VALUES (%s) RETURNING id",
-		def.TableName(),
-		strings.Join(sqlCols, ", "),
+		table,
+		strings.Join(quotedCols, ", "),
 		strings.Join(placeholders, ", "),
 	)
-	return query, cols
+	return query, paramCols, nil
 }
 
-// immutableCols are columns that must never be changed after INSERT.
-var immutableCols = map[string]bool{
-	"id":          true,
-	"tenant_id":   true,
-	"org_unit_id": true, // reparenting goes through a dedicated reparent operation
-	"created_at":  true,
-}
-
-// Update builds an UPDATE statement for the given mutable field names.
-// Returns (query, orderedColumns). The last placeholder is always `id`.
+// BulkInsert builds a multi-row INSERT for n records.
 //
-//	UPDATE <table> SET col1=$1, col2=$2 WHERE id=$N
-func Update(def *definition.EntityDefinition, fields []string) (query string, cols []string) {
-	cols = make([]string, 0, len(fields))
-	for _, f := range fields {
-		if !immutableCols[f] {
-			cols = append(cols, f)
-		}
-	}
-
-	setClauses := make([]string, len(cols))
-	for i, col := range cols {
-		setClauses[i] = fmt.Sprintf("%s = $%d", pgIdent(col), i+1)
-	}
-
-	idPlaceholder := len(cols) + 1
-	where := fmt.Sprintf("id = $%d", idPlaceholder)
-	if def.SoftDelete {
-		where += " AND deleted_at IS NULL"
-	}
-	query = fmt.Sprintf(
-		"UPDATE %s SET %s WHERE %s",
-		def.TableName(),
-		strings.Join(setClauses, ", "),
-		where,
-	)
-	return query, cols
-}
-
-// SoftDelete builds an UPDATE that sets deleted_at = NOW().
-func SoftDelete(def *definition.EntityDefinition) string {
-	return fmt.Sprintf(
-		"UPDATE %s SET deleted_at = NOW() WHERE id = $1",
-		def.TableName(),
-	)
-}
-
-// HardDelete builds a DELETE statement.
-func HardDelete(def *definition.EntityDefinition) string {
-	return fmt.Sprintf("DELETE FROM %s WHERE id = $1", def.TableName())
-}
-
-// BulkInsert builds a multi-row INSERT statement for n records.
-// Returns (query, orderedColumns) so the caller can extract values in the
-// correct placeholder order (row-major: all value cols for row 0, then row 1, …).
+// Placeholders are laid out in row-major order: all parameter columns for row 0
+// (at $1…$k), then row 1 (at $k+1…$2k), and so on.
 //
-// tenant_id is written as current_tenant_id() — never a parameter.
+//	INSERT INTO <table> (id, tenant_id, col1, …)
+//	VALUES ($1, current_tenant_id(), $2, …), ($k+1, current_tenant_id(), $k+2, …)
+//	RETURNING id
 //
-//	INSERT INTO <table> (col1, col2, …) VALUES ($1,current_tenant_id(),$2,…) RETURNING id
-func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query string, cols []string) {
+// Returns (query, cols, error) where cols is the ordered parameter column list
+// (same for every row). If n == 0 both query and cols are empty.
+func BulkInsert(def *definition.EntityDefinition, fields []string, n int) (query string, cols []string, err error) {
 	if n == 0 {
-		return "", nil
-	}
-	scopeCols := scopeColumns(def)
-	reserved := map[string]bool{"id": true}
-	for _, sc := range scopeCols {
-		reserved[sc] = true
+		return "", nil, nil
 	}
 
-	sqlCols := make([]string, 0, len(fields)+len(scopeCols)+1)
-	cols = make([]string, 0, len(fields)+len(scopeCols)+1)
-
-	sqlCols = append(sqlCols, "id")
-	cols = append(cols, "id")
-
-	for _, sc := range scopeCols {
-		sqlCols = append(sqlCols, sc)
-		if sc != "tenant_id" {
-			cols = append(cols, sc)
-		}
-	}
-	for _, f := range fields {
-		if !reserved[f] {
-			sqlCols = append(sqlCols, f)
-			cols = append(cols, f)
-		}
+	sqlCols, paramCols, err := buildColumnLists(def, fields)
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.BulkInsert: %w", err)
 	}
 
-	// paramWidth: number of $N params per row (excludes tenant_id literal).
-	paramWidth := len(cols)
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.BulkInsert: %w", err)
+	}
+
+	quotedCols, err := quoteIdents(sqlCols)
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.BulkInsert: %w", err)
+	}
+
+	// paramWidth: number of $N slots consumed per row (tenant_id is a literal).
+	paramWidth := len(paramCols)
 	valueGroups := make([]string, n)
 	for row := 0; row < n; row++ {
-		placeholders := make([]string, len(sqlCols))
-		paramCol := 0
-		for i, col := range sqlCols {
-			if col == "tenant_id" {
-				placeholders[i] = "current_tenant_id()"
-			} else {
-				placeholders[i] = fmt.Sprintf("$%d", row*paramWidth+paramCol+1)
-				paramCol++
-			}
+		placeholders, err := buildPlaceholders(sqlCols, row*paramWidth+1)
+		if err != nil {
+			return "", nil, fmt.Errorf("sqlbuilder.BulkInsert row %d: %w", row, err)
 		}
 		valueGroups[row] = "(" + strings.Join(placeholders, ", ") + ")"
 	}
+
 	query = fmt.Sprintf(
 		"INSERT INTO %s (%s) VALUES %s RETURNING id",
-		def.TableName(),
-		strings.Join(sqlCols, ", "),
+		table,
+		strings.Join(quotedCols, ", "),
 		strings.Join(valueGroups, ", "),
 	)
-	return query, cols
+	return query, paramCols, nil
 }
 
-// Count builds a SELECT COUNT(*) query with optional exact-match WHERE clauses.
-// Placeholder numbering starts at 1; caller appends filter values in field order.
-func Count(def *definition.EntityDefinition, filterFields []string) string {
+// ── UPDATE ────────────────────────────────────────────────────────────────────
+
+// immutableCols are columns that [Update] will silently skip even if the caller
+// includes them in fields. Reparenting an entity to a different org unit must
+// go through a dedicated reparent operation.
+var immutableCols = map[string]bool{
+	"id":          true,
+	"tenant_id":   true,
+	"org_unit_id": true,
+	"created_at":  true,
+}
+
+// Update builds an UPDATE statement for the given mutable fields.
+//
+// Returns (query, cols, error). cols is the ordered list of columns whose
+// values the caller supplies as $1…$k; id is always the final placeholder $k+1.
+//
+//	UPDATE <table> SET col1=$1, col2=$2, … WHERE id=$k+1 [AND deleted_at IS NULL]
+func Update(def *definition.EntityDefinition, fields []string) (query string, cols []string, err error) {
+	mutable := make([]string, 0, len(fields))
+	for _, f := range fields {
+		if !immutableCols[f] {
+			mutable = append(mutable, f)
+		}
+	}
+	if len(mutable) == 0 {
+		return "", nil, fmt.Errorf("sqlbuilder.Update: no mutable fields provided")
+	}
+
+	setClauses := make([]string, len(mutable))
+	for i, col := range mutable {
+		quoted, err := pgIdent(col)
+		if err != nil {
+			return "", nil, fmt.Errorf("sqlbuilder.Update: field %q: %w", col, err)
+		}
+		setClauses[i] = fmt.Sprintf("%s = $%d", quoted, i+1)
+	}
+
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.Update: %w", err)
+	}
+
+	idParam := len(mutable) + 1
+	where := fmt.Sprintf("id = $%d", idParam)
+	if def.SoftDelete {
+		where += " AND deleted_at IS NULL"
+	}
+
+	query = fmt.Sprintf(
+		"UPDATE %s SET %s WHERE %s",
+		table,
+		strings.Join(setClauses, ", "),
+		where,
+	)
+	return query, mutable, nil
+}
+
+// ── DELETE ────────────────────────────────────────────────────────────────────
+
+// SoftDelete builds an UPDATE that stamps deleted_at = NOW() for a single record.
+//
+// The caller supplies the record id as $1.
+func SoftDelete(def *definition.EntityDefinition) (string, error) {
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", fmt.Errorf("sqlbuilder.SoftDelete: %w", err)
+	}
+	return fmt.Sprintf("UPDATE %s SET deleted_at = NOW() WHERE id = $1", table), nil
+}
+
+// HardDelete builds a DELETE statement for a single record.
+//
+// The caller supplies the record id as $1.
+func HardDelete(def *definition.EntityDefinition) (string, error) {
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", fmt.Errorf("sqlbuilder.HardDelete: %w", err)
+	}
+	return fmt.Sprintf("DELETE FROM %s WHERE id = $1", table), nil
+}
+
+// ── COUNT / EXISTS ────────────────────────────────────────────────────────────
+
+// Count builds a SELECT COUNT(*) query.
+//
+// filterFields is an optional list of columns for exact-match equality
+// predicates ($1, $2, …). The soft-delete guard (if any) does not consume
+// a placeholder.
+//
+// The caller supplies values for filterFields (in order) as query args.
+func Count(def *definition.EntityDefinition, filterFields []string) (string, error) {
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", fmt.Errorf("sqlbuilder.Count: %w", err)
+	}
+
+	// soft-delete guard has no placeholder; field predicates start at $1.
 	clauses := make([]string, 0, len(filterFields)+1)
 	if def.SoftDelete {
 		clauses = append(clauses, "deleted_at IS NULL")
 	}
 	for i, f := range filterFields {
-		clauses = append(clauses, fmt.Sprintf("%s = $%d", pgIdent(f), i+1))
+		quoted, err := pgIdent(f)
+		if err != nil {
+			return "", fmt.Errorf("sqlbuilder.Count: field %q: %w", f, err)
+		}
+		clauses = append(clauses, fmt.Sprintf("%s = $%d", quoted, i+1))
 	}
-	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", def.TableName())
+
+	q := fmt.Sprintf("SELECT COUNT(*) FROM %s", table)
 	if len(clauses) > 0 {
 		q += " WHERE " + strings.Join(clauses, " AND ")
 	}
-	return q
+	return q, nil
 }
 
-// Exists builds a cheap existence check.
-func Exists(def *definition.EntityDefinition, filterFields []string) string {
-	clauses := make([]string, len(filterFields))
+// Exists builds a cheap SELECT EXISTS(…) query.
+//
+// filterFields are exact-match equality predicates ($1, $2, …). Soft-delete
+// guard (if any) is appended after the parameterised fields and does not
+// consume a placeholder. The caller supplies values for filterFields as args.
+func Exists(def *definition.EntityDefinition, filterFields []string) (string, error) {
+	table, err := pgIdent(def.TableName())
+	if err != nil {
+		return "", fmt.Errorf("sqlbuilder.Exists: %w", err)
+	}
+
+	clauses := make([]string, 0, len(filterFields)+1)
 	for i, f := range filterFields {
-		clauses[i] = fmt.Sprintf("%s = $%d", pgIdent(f), i+1)
+		quoted, err := pgIdent(f)
+		if err != nil {
+			return "", fmt.Errorf("sqlbuilder.Exists: field %q: %w", f, err)
+		}
+		clauses = append(clauses, fmt.Sprintf("%s = $%d", quoted, i+1))
 	}
-	where := strings.Join(clauses, " AND ")
 	if def.SoftDelete {
-		where += " AND deleted_at IS NULL"
+		clauses = append(clauses, "deleted_at IS NULL")
 	}
-	return fmt.Sprintf("SELECT EXISTS(SELECT 1 FROM %s WHERE %s)", def.TableName(), where)
+
+	return fmt.Sprintf(
+		"SELECT EXISTS(SELECT 1 FROM %s WHERE %s)",
+		table,
+		strings.Join(clauses, " AND "),
+	), nil
 }
 
-// ──────────────────────────────────────────────────────────────────
-// Internal helpers
-// ──────────────────────────────────────────────────────────────────
+// ── Internal helpers ──────────────────────────────────────────────────────────
 
-// columnList returns a comma-separated list of all field columns for SELECT.
-func columnList(def *definition.EntityDefinition) string {
+// columnList returns a comma-separated, quoted column list for SELECT statements.
+// System columns (id, scope cols, timestamps) come first; entity fields follow.
+func columnList(def *definition.EntityDefinition) (string, error) {
+	scope := scopeColumns(def)
 	cols := make([]string, 0, len(def.Fields)+5)
-	cols = append(cols, "id")
-	cols = append(cols, scopeColumns(def)...)
-	cols = append(cols, "created_at", "updated_at")
+
+	// System columns — these are known-safe identifiers; quoting is defensive.
+	for _, sys := range append([]string{"id"}, scope...) {
+		q, err := pgIdent(sys)
+		if err != nil {
+			return "", fmt.Errorf("sqlbuilder: system column %q: %w", sys, err)
+		}
+		cols = append(cols, q)
+	}
+	for _, ts := range []string{"created_at", "updated_at"} {
+		q, _ := pgIdent(ts) // known-safe
+		cols = append(cols, q)
+	}
 	if def.SoftDelete {
 		cols = append(cols, "deleted_at")
 	}
 	for _, f := range def.Fields {
-		cols = append(cols, pgIdent(f.Name))
+		q, err := pgIdent(f.Name)
+		if err != nil {
+			return "", fmt.Errorf("sqlbuilder: field %q: %w", f.Name, err)
+		}
+		cols = append(cols, q)
 	}
-	return strings.Join(cols, ", ")
+	return strings.Join(cols, ", "), nil
 }
 
-// scopeColumns returns the scope-specific column names for an entity,
-// based on its OrgScope level.
+// scopeColumns returns the scope-enforcement columns for the entity's OrgScope:
 //
-//   - Global   → [] (no scope columns)
+//   - Global   → nil
 //   - Tenant   → ["tenant_id"]
 //   - Unit     → ["tenant_id", "org_unit_id"]
 func scopeColumns(def *definition.EntityDefinition) []string {
@@ -305,23 +426,92 @@ func scopeColumns(def *definition.EntityDefinition) []string {
 		return nil
 	case def.IsUnitScoped():
 		return []string{"tenant_id", "org_unit_id"}
-	default: // ScopeLevelTenant
+	default:
 		return []string{"tenant_id"}
 	}
 }
 
-// whereClauses builds AND clauses for filters, org-unit scoping, search, and
-// soft-delete.
+// buildColumnLists derives two parallel slices from a field list:
 //
-// Placeholder order:
+//   - sqlCols: every column that appears in the INSERT column list,
+//     including id, scope cols, and the supplied fields.
+//   - paramCols: columns whose values are caller-supplied $N parameters
+//     (tenant_id is excluded because it maps to the current_tenant_id() literal).
+func buildColumnLists(def *definition.EntityDefinition, fields []string) (sqlCols, paramCols []string, err error) {
+	scopeCols := scopeColumns(def)
+	reserved := make(map[string]bool, len(scopeCols)+1)
+	reserved["id"] = true
+	for _, sc := range scopeCols {
+		reserved[sc] = true
+	}
+
+	sqlCols = make([]string, 0, len(fields)+len(scopeCols)+1)
+	paramCols = make([]string, 0, len(fields)+len(scopeCols)+1)
+
+	sqlCols = append(sqlCols, "id")
+	paramCols = append(paramCols, "id")
+
+	for _, sc := range scopeCols {
+		sqlCols = append(sqlCols, sc)
+		if sc != "tenant_id" {
+			paramCols = append(paramCols, sc)
+		}
+	}
+	for _, f := range fields {
+		if reserved[f] {
+			continue
+		}
+		if _, verr := pgIdent(f); verr != nil {
+			return nil, nil, fmt.Errorf("field %q: %w", f, verr)
+		}
+		sqlCols = append(sqlCols, f)
+		paramCols = append(paramCols, f)
+	}
+	return sqlCols, paramCols, nil
+}
+
+// buildPlaceholders returns a placeholder slice aligned with sqlCols.
+// tenant_id maps to the literal current_tenant_id(); all other columns get
+// a $N placeholder. startParam is the first $N value to use.
+func buildPlaceholders(sqlCols []string, startParam int) ([]string, error) {
+	placeholders := make([]string, len(sqlCols))
+	paramIdx := startParam
+	for i, col := range sqlCols {
+		if col == "tenant_id" {
+			placeholders[i] = "current_tenant_id()"
+		} else {
+			placeholders[i] = fmt.Sprintf("$%d", paramIdx)
+			paramIdx++
+		}
+	}
+	return placeholders, nil
+}
+
+// quoteIdents returns a new slice with each identifier double-quote-wrapped.
+func quoteIdents(names []string) ([]string, error) {
+	out := make([]string, len(names))
+	for i, n := range names {
+		q, err := pgIdent(n)
+		if err != nil {
+			return nil, err
+		}
+		out[i] = q
+	}
+	return out, nil
+}
+
+// whereClauses assembles the AND fragments for a SelectList WHERE clause.
+//
+// Placeholder allocation order:
 //  1. soft-delete guard (no placeholder)
-//  2. Predicate filter tree
-//  3. org_unit_id = ANY($n) (one placeholder, []uuid.UUID)
-//  4. search ILIKE (one placeholder per searchable field — OR-grouped)
-//  5. LIMIT / OFFSET appended by SelectList
+//  2. filter.Predicate ($startIdx … $n)
+//  3. org_unit_id = ANY($n+1)  — one slice param
+//  4. search ILIKE ($n+2)      — shared across all searchable fields
 //
-// Returns (clauses, args, nextIdx).
-func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, []any, int) {
+// Returns (clauses, args, nextIdx, error). nextIdx is the first unused $N
+// after all WHERE clause parameters (LIMIT / OFFSET are appended at nextIdx
+// and nextIdx+1 by [SelectList]).
+func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx int) ([]string, []any, int, error) {
 	var clauses []string
 	var args []any
 	idx := startIdx
@@ -330,47 +520,77 @@ func whereClauses(def *definition.EntityDefinition, opts SelectOpts, startIdx in
 		clauses = append(clauses, "deleted_at IS NULL")
 	}
 
-	// Composable filter predicate.
-	if opts.Predicate != nil && opts.Predicate.Kind != filter.KindNone {
-		clause, filterArgs, nextIdx := ToSQL(opts.Predicate, idx)
+	// Composable predicate from filter package.
+	if !opts.Predicate.IsNone() {
+		clause, filterArgs, err := filterToSQL(opts.Predicate, idx)
+		if err != nil {
+			return nil, nil, 0, fmt.Errorf("sqlbuilder: predicate: %w", err)
+		}
 		if clause != "" {
 			clauses = append(clauses, clause)
 			args = append(args, filterArgs...)
-			idx = nextIdx
+			idx += len(filterArgs)
 		}
 	}
 
+	// Org-unit restriction — pgx encodes []uuid.UUID natively for ANY($n).
 	if len(opts.OrgUnitIDs) > 0 {
-		// pgx encodes []uuid.UUID as a Postgres UUID array; ANY($n) works directly.
 		clauses = append(clauses, fmt.Sprintf("org_unit_id = ANY($%d)", idx))
 		args = append(args, opts.OrgUnitIDs)
 		idx++
 	}
 
+	// Full-text search across searchable fields.
 	if opts.Search != "" {
 		var searchParts []string
 		for _, f := range def.Fields {
-			if f.IsSearchable {
-				searchParts = append(searchParts, fmt.Sprintf("%s ILIKE $%d", pgIdent(f.Name), idx))
+			if !f.IsSearchable {
+				continue
 			}
+			quoted, err := pgIdent(f.Name)
+			if err != nil {
+				return nil, nil, 0, fmt.Errorf("sqlbuilder: search field %q: %w", f.Name, err)
+			}
+			searchParts = append(searchParts, fmt.Sprintf("%s ILIKE $%d", quoted, idx))
 		}
 		if len(searchParts) > 0 {
 			clauses = append(clauses, "("+strings.Join(searchParts, " OR ")+")")
-			args = append(args, "%"+opts.Search+"%")
+			// Escape literal % and _ so the search term is treated as a plain
+			// substring, not an ILIKE pattern.
+			args = append(args, "%"+escapeLike(opts.Search)+"%")
 			idx++
 		}
 	}
 
-	return clauses, args, idx
+	return clauses, args, idx, nil
 }
 
-// pgIdent quotes an identifier to prevent SQL injection.
-// Only allows [a-z0-9_] — panics on anything else.
-func pgIdent(name string) string {
+// escapeLike escapes ILIKE special characters in a literal search term.
+func escapeLike(s string) string {
+	s = strings.ReplaceAll(s, `\`, `\\`)
+	s = strings.ReplaceAll(s, "%", `\%`)
+	s = strings.ReplaceAll(s, "_", `\_`)
+	return s
+}
+
+// pgIdent double-quote-wraps a PostgreSQL identifier and returns an error if it
+// contains characters outside [a-zA-Z0-9_]. It does not allow schema-qualified
+// names (no dots); callers must handle qualification themselves.
+//
+// This is a security boundary: all caller-supplied names (field names, OrderBy)
+// must pass through pgIdent before being interpolated into SQL.
+func pgIdent(name string) (string, error) {
+	if name == "" {
+		return "", fmt.Errorf("sqlbuilder: empty identifier")
+	}
 	for _, c := range name {
-		if !((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '_') {
-			panic(fmt.Sprintf("sqlbuilder: unsafe identifier %q", name))
+		ok := (c >= 'a' && c <= 'z') ||
+			(c >= 'A' && c <= 'Z') ||
+			(c >= '0' && c <= '9') ||
+			c == '_'
+		if !ok {
+			return "", fmt.Errorf("sqlbuilder: unsafe identifier %q (char %q)", name, c)
 		}
 	}
-	return name
+	return `"` + name + `"`, nil
 }

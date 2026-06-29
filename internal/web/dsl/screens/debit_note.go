@@ -20,8 +20,10 @@ func DebitNoteScreen(sess ui.UISessionContext, cfg DebitNoteScreenConfig) ast.No
 	return ast.PageNode{
 		Title: "Debit Note",
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Issued", Value: "issued"}, {Label: "Applied", Value: "applied"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Issued", Value: "issued"}, {Label: "Applied", Value: "applied"}},
+			}),
 			blocks.PartyBlock(sess, blocks.DefaultSupplierConfig()),
 			blocks.ProductServiceLineBlock(sess, lineCfg),
 			blocks.TaxSummaryBlock(sess),

@@ -7,10 +7,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

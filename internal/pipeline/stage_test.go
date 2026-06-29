@@ -32,8 +32,10 @@ func (s *testSimulatableStage) Simulate(opCtx *OperationContext) (StageResult, e
 	return s.simResult, s.simErr
 }
 
-var _ Stage      = &testSimulatableStage{}
-var _ Simulatable = &testSimulatableStage{}
+var (
+	_ Stage       = &testSimulatableStage{}
+	_ Simulatable = &testSimulatableStage{}
+)
 
 // ── BaseStage defaults ────────────────────────────────────────────────────────
 

@@ -4,13 +4,13 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	stderrors "errors"
+	"github.com/gofiber/fiber/v2"
 )
 
 // mapTenantError converts domain-layer errors into structured *BusinessError values
@@ -140,8 +140,8 @@ func (h *TenantHandler) validateRequest(c *fiber.Ctx, req any) error {
 // success returns a standardized 200 OK success response.
 func (h *TenantHandler) success(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
-		"success":    true,
-		"data":       data,
+		"success": true,
+		"data":    data,
 		"meta": fiber.Map{
 			"request_id": getRequestID(c),
 			"timestamp":  time.Now().UTC().Format(time.RFC3339),
@@ -154,9 +154,9 @@ func (h *TenantHandler) success(c *fiber.Ctx, data any) error {
 // successWithMeta returns a 200 OK response with additional top-level metadata.
 func (h *TenantHandler) successWithMeta(c *fiber.Ctx, data any, meta fiber.Map) error {
 	response := fiber.Map{
-		"success":    true,
-		"data":       data,
-		"meta":       meta,
+		"success": true,
+		"data":    data,
+		"meta":    meta,
 	}
 	// Add standard meta fields
 	meta["request_id"] = getRequestID(c)
@@ -169,8 +169,8 @@ func (h *TenantHandler) successWithMeta(c *fiber.Ctx, data any, meta fiber.Map) 
 // created returns a 201 Created response.
 func (h *TenantHandler) created(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
-		"success":    true,
-		"data":       data,
+		"success": true,
+		"data":    data,
 		"meta": fiber.Map{
 			"request_id": getRequestID(c),
 			"timestamp":  time.Now().UTC().Format(time.RFC3339),
@@ -183,8 +183,8 @@ func (h *TenantHandler) created(c *fiber.Ctx, data any) error {
 // accepted returns a 202 Accepted response for async operations.
 func (h *TenantHandler) accepted(c *fiber.Ctx, data any) error {
 	response := fiber.Map{
-		"success":    true,
-		"data":       data,
+		"success": true,
+		"data":    data,
 		"meta": fiber.Map{
 			"request_id": getRequestID(c),
 			"timestamp":  time.Now().UTC().Format(time.RFC3339),

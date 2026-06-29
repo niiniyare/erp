@@ -6,10 +6,10 @@ import (
 	"math"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
+	"github.com/google/uuid"
 )
 
 // MLOptimizationService provides machine learning-based feature flag optimization

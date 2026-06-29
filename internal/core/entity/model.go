@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
+	"github.com/google/uuid"
 )
 
 // Entity represents a business entity in the system (domain model)

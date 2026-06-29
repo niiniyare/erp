@@ -8,7 +8,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/finance/domain"
 	financePipeline "awo.so/internal/core/finance/pipeline"
@@ -18,6 +17,7 @@ import (
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"github.com/shopspring/decimal"
 	"go.opentelemetry.io/otel/attribute"
 )
@@ -53,9 +53,9 @@ type transactionService struct {
 	txRunner            domain.TxRunner               // nil → reversal uses best-effort cleanup
 	tracing             tracing.Service
 	metrics             metrics.MetricsProvider
-	auditWriter         *financeAuditWriter  // nil → audit skipped (safe for tests)
-	safetyEnforcer      *SafetyEnforcer      // nil → safety checks skipped (safe for tests)
-	anomalyDetector     *AnomalyDetector     // nil → anomaly observation skipped (safe for tests)
+	auditWriter         *financeAuditWriter // nil → audit skipped (safe for tests)
+	safetyEnforcer      *SafetyEnforcer     // nil → safety checks skipped (safe for tests)
+	anomalyDetector     *AnomalyDetector    // nil → anomaly observation skipped (safe for tests)
 }
 
 func NewTransactionService(
@@ -214,20 +214,20 @@ func (s *transactionService) CreateTransaction(ctx context.Context, req domain.C
 	})
 
 	transaction := &domain.Transaction{
-		ID:                uuid.New(),
-		TenantID:          tenantID,
-		EntityID:          req.EntityID,
-		TransactionNumber: req.TransactionNumber,
-		TransactionDate:   req.TransactionDate,
-		TransactionType:   req.TransactionType,
-		Description:       req.Description,
-		ReferenceNumber:   req.ReferenceNumber,
-		CurrencyCode:      req.CurrencyCode,
-		ExchangeRate:      req.ExchangeRate,
-		TransactionStatus: domain.TransactionStatusDraft,
-		ApprovalRequired:  approvalRequired,
-		ApprovalStatus:    approvalStatus,
-		SourceModule:      req.SourceModule,
+		ID:                 uuid.New(),
+		TenantID:           tenantID,
+		EntityID:           req.EntityID,
+		TransactionNumber:  req.TransactionNumber,
+		TransactionDate:    req.TransactionDate,
+		TransactionType:    req.TransactionType,
+		Description:        req.Description,
+		ReferenceNumber:    req.ReferenceNumber,
+		CurrencyCode:       req.CurrencyCode,
+		ExchangeRate:       req.ExchangeRate,
+		TransactionStatus:  domain.TransactionStatusDraft,
+		ApprovalRequired:   approvalRequired,
+		ApprovalStatus:     approvalStatus,
+		SourceModule:       req.SourceModule,
 		SourceDocumentType: req.SourceDocumentType,
 	}
 	if createdBy, ok := shared.GetUserID(ctx); ok {
@@ -868,9 +868,9 @@ func (s *transactionService) postTransactionInline(ctx context.Context, id uuid.
 			})
 			logger.ErrorContext(ctx, "SECURITY: PostTransaction tenant mismatch — possible cross-tenant access attempt",
 				logger.Fields{
-					"transaction_id":      id.String(),
-					"transaction_tenant":  transaction.TenantID.String(),
-					"caller_tenant":       callerTenantID.String(),
+					"transaction_id":     id.String(),
+					"transaction_tenant": transaction.TenantID.String(),
+					"caller_tenant":      callerTenantID.String(),
 				})
 			return nil, errors.NewBusinessError("TENANT_MISMATCH",
 				"transaction does not belong to the caller's tenant").
@@ -1150,11 +1150,11 @@ func (s *transactionService) ReverseTransaction(ctx context.Context, id uuid.UUI
 		EntityID:          transaction.EntityID,
 		TransactionNumber: fmt.Sprintf("REV-%s", transaction.TransactionNumber),
 		// Reversals are a distinct type so they can be identified unambiguously in reports.
-		TransactionType:   domain.TransactionTypeReversal,
-		TransactionDate:   time.Now(),
-		Description:       fmt.Sprintf("REVERSAL: %s - %s", transaction.Description, reason),
-		ReferenceNumber:   &transaction.TransactionNumber,
-		CurrencyCode:      transaction.CurrencyCode,
+		TransactionType: domain.TransactionTypeReversal,
+		TransactionDate: time.Now(),
+		Description:     fmt.Sprintf("REVERSAL: %s - %s", transaction.Description, reason),
+		ReferenceNumber: &transaction.TransactionNumber,
+		CurrencyCode:    transaction.CurrencyCode,
 		// Preserve the original exchange rate to avoid fictitious FX gains/losses.
 		ExchangeRate:      transaction.ExchangeRate,
 		TransactionStatus: domain.TransactionStatusDraft,
@@ -1897,10 +1897,10 @@ func (s *transactionService) CreateRecurringTransaction(ctx context.Context, tem
 		})
 		logger.WarnContext(ctx, "CreateRecurringTransaction: idempotent retry — transaction already generated",
 			logger.Fields{
-				"template_id":        templateID.String(),
-				"generated_number":   generatedNumber,
-				"existing_tx_id":     existing.ID.String(),
-				"transaction_date":   date.Format("2006-01-02"),
+				"template_id":      templateID.String(),
+				"generated_number": generatedNumber,
+				"existing_tx_id":   existing.ID.String(),
+				"transaction_date": date.Format("2006-01-02"),
 			})
 		return existing, nil
 	}

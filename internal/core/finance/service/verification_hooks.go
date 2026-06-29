@@ -65,13 +65,13 @@ type VerificationReport struct {
 // ContinuousVerificationService runs all governance invariant checks.
 // A nil *ContinuousVerificationService returns healthy empty reports.
 type ContinuousVerificationService struct {
-	evolutionGuard  *EvolutionSafetyGuard
-	antiEntropy     *AntiEntropyService
-	outboxGovernor  *OutboxGovernor
-	gapDetector     *AuditGapDetector
-	violationRepo   IntegrityViolationRepository
-	policyRegistry  *GovernancePolicyRegistry
-	metrics         metrics.MetricsProvider
+	evolutionGuard *EvolutionSafetyGuard
+	antiEntropy    *AntiEntropyService
+	outboxGovernor *OutboxGovernor
+	gapDetector    *AuditGapDetector
+	violationRepo  IntegrityViolationRepository
+	policyRegistry *GovernancePolicyRegistry
+	metrics        metrics.MetricsProvider
 }
 
 // NewContinuousVerificationService creates the service. All deps may be nil.
@@ -250,9 +250,9 @@ func (s *ContinuousVerificationService) checkCriticalViolations(ctx context.Cont
 	}
 	if count > 0 {
 		report.Failures = append(report.Failures, VerificationFailure{
-			Check:    "CRITICAL_VIOLATIONS",
-			Severity: VerificationSeverityCritical,
-			Detail:   fmt.Sprintf("%d open CRITICAL integrity violations — finance mutations are blocked", count),
+			Check:        "CRITICAL_VIOLATIONS",
+			Severity:     VerificationSeverityCritical,
+			Detail:       fmt.Sprintf("%d open CRITICAL integrity violations — finance mutations are blocked", count),
 			RepairAction: "Acknowledge each violation, investigate the root cause, and call ResolveViolation once repaired",
 		})
 	}
@@ -276,17 +276,17 @@ func (s *ContinuousVerificationService) checkOutboxHealth(ctx context.Context, r
 		}
 		if gapReport.DeadOutboxCount > 0 {
 			report.Failures = append(report.Failures, VerificationFailure{
-				Check:    "OUTBOX_HEALTH",
-				Severity: VerificationSeverityCritical,
-				Detail:   fmt.Sprintf("%d DEAD outbox entries — CRITICAL audit events may be permanently lost", gapReport.DeadOutboxCount),
+				Check:        "OUTBOX_HEALTH",
+				Severity:     VerificationSeverityCritical,
+				Detail:       fmt.Sprintf("%d DEAD outbox entries — CRITICAL audit events may be permanently lost", gapReport.DeadOutboxCount),
 				RepairAction: "Inspect DEAD entries and attempt replay via SelfHealingService.ValidateReplay",
 			})
 		}
 		if gapReport.StaleOutboxCount > 0 {
 			report.Failures = append(report.Failures, VerificationFailure{
-				Check:    "OUTBOX_HEALTH",
-				Severity: VerificationSeverityHigh,
-				Detail:   fmt.Sprintf("%d stale PENDING outbox entries — delivery worker is lagging", gapReport.StaleOutboxCount),
+				Check:        "OUTBOX_HEALTH",
+				Severity:     VerificationSeverityHigh,
+				Detail:       fmt.Sprintf("%d stale PENDING outbox entries — delivery worker is lagging", gapReport.StaleOutboxCount),
 				RepairAction: "Check AuditOutboxProcessor Temporal cron status",
 			})
 		}

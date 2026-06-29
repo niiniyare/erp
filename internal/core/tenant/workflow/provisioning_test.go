@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/workflow"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -32,7 +32,9 @@ func TestProvisioningWorkflowSuite(t *testing.T) {
 func (s *ProvisioningWorkflowSuite) SetupTest() {
 	s.env = s.NewTestWorkflowEnvironment()
 	s.env.RegisterActivityWithOptions(
-		func(ctx context.Context, input domain.ProvisioningInput) (*domain.ProvisioningResult, error) { return nil, nil },
+		func(ctx context.Context, input domain.ProvisioningInput) (*domain.ProvisioningResult, error) {
+			return nil, nil
+		},
 		activity.RegisterOptions{Name: "ProvisionTenantActivity"},
 	)
 	s.env.RegisterActivityWithOptions(

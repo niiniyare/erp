@@ -444,11 +444,11 @@ type COAIntegrityViolation struct {
 // COAIntegrityReport is the output of a full COA integrity scan.
 // It mirrors IntegrityReport from the transaction subsystem.
 type COAIntegrityReport struct {
-	TenantID       uuid.UUID              `json:"tenant_id"`
-	GeneratedAt    time.Time              `json:"generated_at"`
-	AccountsScanned int                   `json:"accounts_scanned"`
-	Violations     []COAIntegrityViolation `json:"violations,omitempty"`
-	Healthy        bool                   `json:"healthy"` // true when no CRITICAL or HIGH violations
+	TenantID        uuid.UUID               `json:"tenant_id"`
+	GeneratedAt     time.Time               `json:"generated_at"`
+	AccountsScanned int                     `json:"accounts_scanned"`
+	Violations      []COAIntegrityViolation `json:"violations,omitempty"`
+	Healthy         bool                    `json:"healthy"` // true when no CRITICAL or HIGH violations
 }
 
 // HasCritical returns true when the report contains any CRITICAL violations.
@@ -477,31 +477,31 @@ func (r *COAIntegrityReport) HasHigh() bool {
 
 var (
 	// Lifecycle errors
-	ErrAccountNotInDraft          = errors.New("account is not in DRAFT status")
-	ErrAccountNotPendingApproval  = errors.New("account is not in PENDING_APPROVAL status")
-	ErrSelfApprovalNotAllowed     = errors.New("the approver cannot be the same person who submitted the account (SOD)")
-	ErrAccountStatusTransition    = errors.New("account status transition not permitted")
-	ErrAccountHasNonZeroBalance   = errors.New("account has a non-zero balance; cannot proceed")
-	ErrAccountFrozen              = errors.New("account is frozen; no mutations permitted")
+	ErrAccountNotInDraft         = errors.New("account is not in DRAFT status")
+	ErrAccountNotPendingApproval = errors.New("account is not in PENDING_APPROVAL status")
+	ErrSelfApprovalNotAllowed    = errors.New("the approver cannot be the same person who submitted the account (SOD)")
+	ErrAccountStatusTransition   = errors.New("account status transition not permitted")
+	ErrAccountHasNonZeroBalance  = errors.New("account has a non-zero balance; cannot proceed")
+	ErrAccountFrozen             = errors.New("account is frozen; no mutations permitted")
 
 	// Mutation governance errors
-	ErrMutationBlockedAfterPosting = errors.New("this mutation is not permitted after transactions have been posted")
-	ErrRootTypeChangeForbidden     = errors.New("root type cannot be changed after transactions have been posted")
-	ErrCurrencyChangeForbidden     = errors.New("currency cannot be changed after transactions have been posted")
+	ErrMutationBlockedAfterPosting      = errors.New("this mutation is not permitted after transactions have been posted")
+	ErrRootTypeChangeForbidden          = errors.New("root type cannot be changed after transactions have been posted")
+	ErrCurrencyChangeForbidden          = errors.New("currency cannot be changed after transactions have been posted")
 	ErrHighRiskMutationRequiresApproval = errors.New("high-risk account mutation requires explicit approval")
 
 	// Hierarchy errors
-	ErrHierarchyCycleDetected     = errors.New("proposed hierarchy change creates a circular reference")
-	ErrHierarchyDepthExceeded     = errors.New("proposed hierarchy depth exceeds maximum allowed level")
-	ErrHierarchyRootTypeMismatch  = errors.New("parent and child accounts have incompatible root types")
-	ErrHierarchySelfParent        = errors.New("account cannot be its own parent")
-	ErrHierarchyTenantMismatch    = errors.New("parent and child accounts belong to different tenants")
+	ErrHierarchyCycleDetected    = errors.New("proposed hierarchy change creates a circular reference")
+	ErrHierarchyDepthExceeded    = errors.New("proposed hierarchy depth exceeds maximum allowed level")
+	ErrHierarchyRootTypeMismatch = errors.New("parent and child accounts have incompatible root types")
+	ErrHierarchySelfParent       = errors.New("account cannot be its own parent")
+	ErrHierarchyTenantMismatch   = errors.New("parent and child accounts belong to different tenants")
 
 	// Opening balance errors
-	ErrOpeningBalanceAlreadyPosted  = errors.New("opening balance has already been posted; use a journal entry for corrections")
-	ErrOpeningBalanceSelfApproval   = errors.New("opening balance approver cannot be the same as the submitter (SOD)")
-	ErrOpeningBalanceCurrencyMismatch = errors.New("opening balance currency does not match account currency")
+	ErrOpeningBalanceAlreadyPosted     = errors.New("opening balance has already been posted; use a journal entry for corrections")
+	ErrOpeningBalanceSelfApproval      = errors.New("opening balance approver cannot be the same as the submitter (SOD)")
+	ErrOpeningBalanceCurrencyMismatch  = errors.New("opening balance currency does not match account currency")
 	ErrOpeningBalanceDirectionMismatch = errors.New("opening balance debit/credit direction does not match account normal balance")
-	ErrOpeningBalanceInClosedPeriod = errors.New("opening balance cannot be set in a closed accounting period")
-	ErrOpeningBalanceNotApproved    = errors.New("opening balance must be approved before posting")
+	ErrOpeningBalanceInClosedPeriod    = errors.New("opening balance cannot be set in a closed accounting period")
+	ErrOpeningBalanceNotApproved       = errors.New("opening balance must be approved before posting")
 )

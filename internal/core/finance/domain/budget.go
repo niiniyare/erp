@@ -44,11 +44,11 @@ func (bs BudgetStatus) IsEditable() bool {
 type BudgetType string
 
 const (
-	BudgetTypeAnnual      BudgetType = "ANNUAL"      // Full-year operational budget
-	BudgetTypeQuarterly   BudgetType = "QUARTERLY"   // Quarterly rolling budget
-	BudgetTypeProject     BudgetType = "PROJECT"      // Project / capex budget
-	BudgetTypeDepartment  BudgetType = "DEPARTMENT"  // Department-level cost budget
-	BudgetTypeCapex       BudgetType = "CAPEX"        // Capital expenditure budget
+	BudgetTypeAnnual     BudgetType = "ANNUAL"     // Full-year operational budget
+	BudgetTypeQuarterly  BudgetType = "QUARTERLY"  // Quarterly rolling budget
+	BudgetTypeProject    BudgetType = "PROJECT"    // Project / capex budget
+	BudgetTypeDepartment BudgetType = "DEPARTMENT" // Department-level cost budget
+	BudgetTypeCapex      BudgetType = "CAPEX"      // Capital expenditure budget
 )
 
 // IsValid returns true if the BudgetType is a recognised value.
@@ -72,11 +72,11 @@ type Budget struct {
 	TenantID     uuid.UUID `json:"tenant_id"`
 	FiscalYearID uuid.UUID `json:"fiscal_year_id"`
 
-	Name         string     `json:"name"`
-	Description  *string    `json:"description,omitempty"`
-	BudgetType   BudgetType `json:"budget_type"`
+	Name         string       `json:"name"`
+	Description  *string      `json:"description,omitempty"`
+	BudgetType   BudgetType   `json:"budget_type"`
 	Status       BudgetStatus `json:"status"`
-	CurrencyCode string     `json:"currency_code"` // ISO 4217
+	CurrencyCode string       `json:"currency_code"` // ISO 4217
 
 	// Scope — budget may cover all cost centres or just one
 	CostCenterID *uuid.UUID `json:"cost_center_id,omitempty"`
@@ -91,7 +91,7 @@ type Budget struct {
 	RejectNote  *string    `json:"reject_note,omitempty"`
 
 	// Revision tracking
-	Version        int        `json:"version"`                    // 1 = original, 2+ = revisions
+	Version          int        `json:"version"`                      // 1 = original, 2+ = revisions
 	OriginalBudgetID *uuid.UUID `json:"original_budget_id,omitempty"` // Points to v1 for revised budgets
 
 	CreatedAt time.Time  `json:"created_at"`

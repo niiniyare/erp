@@ -8,10 +8,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/access/approval"
 	"awo.so/internal/core/access/execution"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/suite"
 )

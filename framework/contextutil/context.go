@@ -3,7 +3,7 @@
 //
 // # Org scope context
 //
-// Every authenticated request carries an org.Scope that locates the request
+// Every authenticated request carries an definition.Scope that locates the request
 // within the organisational tree:
 //
 //	Tenant ──► OrgUnit (any node in the unit tree)
@@ -30,7 +30,7 @@ import (
 
 	"github.com/google/uuid"
 
-	"awo.so/framework/org"
+	"awo.so/framework/definition"
 )
 
 // SystemUserID is a well-known sentinel UUID used when the system itself
@@ -52,26 +52,26 @@ const (
 
 // ── Org scope ─────────────────────────────────────────────────────────────────
 
-// WithOrgScope stores an org.Scope in the context.
+// WithOrgScope stores an definition.Scope in the context.
 // Call this early in the request pipeline (auth middleware) so downstream
 // layers (service, repository, privacy policies) can retrieve it.
-func WithOrgScope(ctx context.Context, scope org.Scope) context.Context {
+func WithOrgScope(ctx context.Context, scope definition.Scope) context.Context {
 	return context.WithValue(ctx, keyOrgScope, scope)
 }
 
-// GetOrgScope retrieves the org.Scope from the context.
+// GetOrgScope retrieves the definition.Scope from the context.
 // Returns (zero, false) if no scope has been set or if TenantID is missing.
-func GetOrgScope(ctx context.Context) (org.Scope, bool) {
-	scope, ok := ctx.Value(keyOrgScope).(org.Scope)
+func GetOrgScope(ctx context.Context) (definition.Scope, bool) {
+	scope, ok := ctx.Value(keyOrgScope).(definition.Scope)
 	if !ok || scope.TenantID == uuid.Nil {
-		return org.Scope{}, false
+		return definition.Scope{}, false
 	}
 	return scope, true
 }
 
-// MustGetOrgScope retrieves the org.Scope or panics.
+// MustGetOrgScope retrieves the definition.Scope or panics.
 // Intended for internal framework use where scope absence is a programming error.
-func MustGetOrgScope(ctx context.Context) org.Scope {
+func MustGetOrgScope(ctx context.Context) definition.Scope {
 	scope, ok := GetOrgScope(ctx)
 	if !ok {
 		panic("contextutil: org scope not in context — ensure auth middleware ran")
@@ -82,7 +82,7 @@ func MustGetOrgScope(ctx context.Context) org.Scope {
 // WithTenantID is a convenience wrapper that sets a tenant-only scope with no
 // specific org unit. Use WithOrgScope(ctx, org.WithUnit(…)) for unit-scoped requests.
 func WithTenantID(ctx context.Context, tenantID uuid.UUID) context.Context {
-	return WithOrgScope(ctx, org.TenantOnly(tenantID))
+	return WithOrgScope(ctx, definition.TenantOnly(tenantID))
 }
 
 // GetTenantID retrieves just the tenant ID from the org scope.

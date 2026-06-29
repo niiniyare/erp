@@ -5,13 +5,13 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/gofiber/fiber/v2"
 	"awo.so/internal/core/entity"
 	"awo.so/internal/core/iam/contract"
 	iamDomain "awo.so/internal/core/iam/domain"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/shared"
+	"github.com/gofiber/fiber/v2"
 	"go.opentelemetry.io/otel/attribute"
 )
 

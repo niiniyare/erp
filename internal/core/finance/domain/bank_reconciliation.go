@@ -43,11 +43,11 @@ func (s BankReconciliationStatus) IsEditable() bool {
 type ReconciliationItemStatus string
 
 const (
-	ReconciliationItemStatusUnmatched   ReconciliationItemStatus = "UNMATCHED"   // Not yet matched to a GL entry
-	ReconciliationItemStatusMatched     ReconciliationItemStatus = "MATCHED"     // Matched to one or more GL entries
-	ReconciliationItemStatusExplained   ReconciliationItemStatus = "EXPLAINED"   // Timing difference; noted but not matched
-	ReconciliationItemStatusDisputed    ReconciliationItemStatus = "DISPUTED"    // Disputed with the bank
-	ReconciliationItemStatusWrittenOff  ReconciliationItemStatus = "WRITTEN_OFF" // Difference written off via journal
+	ReconciliationItemStatusUnmatched  ReconciliationItemStatus = "UNMATCHED"   // Not yet matched to a GL entry
+	ReconciliationItemStatusMatched    ReconciliationItemStatus = "MATCHED"     // Matched to one or more GL entries
+	ReconciliationItemStatusExplained  ReconciliationItemStatus = "EXPLAINED"   // Timing difference; noted but not matched
+	ReconciliationItemStatusDisputed   ReconciliationItemStatus = "DISPUTED"    // Disputed with the bank
+	ReconciliationItemStatusWrittenOff ReconciliationItemStatus = "WRITTEN_OFF" // Difference written off via journal
 )
 
 // IsValid returns true if the status is a recognised value.
@@ -71,30 +71,30 @@ type BankReconciliation struct {
 	AccountID uuid.UUID `json:"account_id"`
 
 	// Statement details
-	BankStatementDate    time.Time       `json:"bank_statement_date"`    // Date on the bank statement
-	StatementOpeningBal  decimal.Decimal `json:"statement_opening_bal"`  // Opening balance per bank
-	StatementClosingBal  decimal.Decimal `json:"statement_closing_bal"`  // Closing balance per bank
-	CurrencyCode         string          `json:"currency_code"`          // ISO 4217
+	BankStatementDate   time.Time       `json:"bank_statement_date"`   // Date on the bank statement
+	StatementOpeningBal decimal.Decimal `json:"statement_opening_bal"` // Opening balance per bank
+	StatementClosingBal decimal.Decimal `json:"statement_closing_bal"` // Closing balance per bank
+	CurrencyCode        string          `json:"currency_code"`         // ISO 4217
 
 	// GL balances (populated by the system)
-	GLOpeningBalance     decimal.Decimal `json:"gl_opening_balance"`      // GL balance at period start
-	GLClosingBalance     decimal.Decimal `json:"gl_closing_balance"`      // GL balance at reconciliation date
+	GLOpeningBalance decimal.Decimal `json:"gl_opening_balance"` // GL balance at period start
+	GLClosingBalance decimal.Decimal `json:"gl_closing_balance"` // GL balance at reconciliation date
 
 	// Reconciled difference
-	Difference           decimal.Decimal `json:"difference"`              // statement_closing - gl_closing; should be 0 when complete
+	Difference decimal.Decimal `json:"difference"` // statement_closing - gl_closing; should be 0 when complete
 
 	Status BankReconciliationStatus `json:"status"`
 
 	// Timing differences (populated as items are matched)
-	OutstandingDeposits  decimal.Decimal `json:"outstanding_deposits"`   // Deposits in transit
-	OutstandingPayments  decimal.Decimal `json:"outstanding_payments"`   // Cheques not yet cleared
+	OutstandingDeposits   decimal.Decimal `json:"outstanding_deposits"`   // Deposits in transit
+	OutstandingPayments   decimal.Decimal `json:"outstanding_payments"`   // Cheques not yet cleared
 	UnexplainedDifference decimal.Decimal `json:"unexplained_difference"` // Remaining difference after adjustments
 
 	// Approval metadata
-	CompletedAt  *time.Time `json:"completed_at,omitempty"`
-	CompletedBy  *uuid.UUID `json:"completed_by,omitempty"`
-	ApprovedAt   *time.Time `json:"approved_at,omitempty"`
-	ApprovedBy   *uuid.UUID `json:"approved_by,omitempty"`
+	CompletedAt *time.Time `json:"completed_at,omitempty"`
+	CompletedBy *uuid.UUID `json:"completed_by,omitempty"`
+	ApprovedAt  *time.Time `json:"approved_at,omitempty"`
+	ApprovedBy  *uuid.UUID `json:"approved_by,omitempty"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -137,11 +137,11 @@ type BankStatementItem struct {
 	TenantID         uuid.UUID `json:"tenant_id"`
 
 	// Statement line data
-	ValueDate   time.Time       `json:"value_date"`             // Date funds cleared
-	Description string          `json:"description"`            // Bank's own narration
-	Reference   *string         `json:"reference,omitempty"`    // Bank reference / cheque number
-	Amount      decimal.Decimal `json:"amount"`                 // Positive = credit (inflow); negative = debit (outflow)
-	RunningBal  decimal.Decimal `json:"running_bal"`            // Balance after this entry
+	ValueDate   time.Time       `json:"value_date"`          // Date funds cleared
+	Description string          `json:"description"`         // Bank's own narration
+	Reference   *string         `json:"reference,omitempty"` // Bank reference / cheque number
+	Amount      decimal.Decimal `json:"amount"`              // Positive = credit (inflow); negative = debit (outflow)
+	RunningBal  decimal.Decimal `json:"running_bal"`         // Balance after this entry
 
 	Status ReconciliationItemStatus `json:"status"`
 

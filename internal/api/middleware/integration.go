@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant"
 	"awo.so/internal/platform/cache"
 	loggerPkg "awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // MiddlewareStack provides a complete middleware stack for the ERP system.

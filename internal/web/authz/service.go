@@ -242,8 +242,10 @@ func GrantOnly(perms ...string) *MockUIAuthzService {
 }
 
 // Ensure compile-time conformance.
-var _ UIAuthzService = (*CasbinUIAuthzService)(nil)
-var _ UIAuthzService = (*MockUIAuthzService)(nil)
+var (
+	_ UIAuthzService = (*CasbinUIAuthzService)(nil)
+	_ UIAuthzService = (*MockUIAuthzService)(nil)
+)
 
 // UIFlagList is the canonical set of feature flags used in fingerprinting.
 // Mirrors allKnownFlags in ui/types.go without the circular import.

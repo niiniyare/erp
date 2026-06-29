@@ -54,7 +54,7 @@ func NewPipelineBuilder(registry *StageRegistry, txRunner TxRunner) *PipelineBui
 //     a. If DryRun and stage implements Simulatable → call Simulate.
 //     b. Otherwise call Execute.
 //     c. If the stage returns an error and Required() == true → abort,
-//        compensate completed stages in LIFO order, return the error.
+//     compensate completed stages in LIFO order, return the error.
 //     d. If Required() == false → log the error and continue.
 //     e. Record a stageCheckpoint for compensation tracking.
 //     f. Write Outputs back to opCtx.Data.

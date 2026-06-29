@@ -31,15 +31,15 @@ import (
 // Tests cover: AUTH-API-001 through AUTH-API-005.
 type AuthAPIIntegrationTestSuite struct {
 	suite.Suite
-	ctx            context.Context
-	runner         *tenant.DatabaseTestRunner
-	client         *http.Client
-	authSvc        contract.AuthService
-	userSvc        iam.UserService
-	tenantA        *db.Tenant
-	tenantB        *db.Tenant
-	testUserA      *iam.User
-	testUserB      *iam.User
+	ctx             context.Context
+	runner          *tenant.DatabaseTestRunner
+	client          *http.Client
+	authSvc         contract.AuthService
+	userSvc         iam.UserService
+	tenantA         *db.Tenant
+	tenantB         *db.Tenant
+	testUserA       *iam.User
+	testUserB       *iam.User
 	validPassword   string
 	invalidPassword string
 	defaultTimeout  time.Duration
@@ -417,21 +417,23 @@ func (n *noopCacheImpl) MGet(_ context.Context, _ []string) ([]cache.Result, err
 func (n *noopCacheImpl) MSet(_ context.Context, _ map[string]any, _ time.Duration) error {
 	return nil
 }
-func (n *noopCacheImpl) MDelete(_ context.Context, _ []string) error            { return nil }
-func (n *noopCacheImpl) DeletePattern(_ context.Context, _ string) error        { return nil }
-func (n *noopCacheImpl) Keys(_ context.Context, _ string) ([]string, error)     { return nil, nil }
-func (n *noopCacheImpl) Exists(_ context.Context, _ string) (bool, error)       { return false, nil }
-func (n *noopCacheImpl) TTL(_ context.Context, _ string) (time.Duration, error) { return 0, nil }
+func (n *noopCacheImpl) MDelete(_ context.Context, _ []string) error               { return nil }
+func (n *noopCacheImpl) DeletePattern(_ context.Context, _ string) error           { return nil }
+func (n *noopCacheImpl) Keys(_ context.Context, _ string) ([]string, error)        { return nil, nil }
+func (n *noopCacheImpl) Exists(_ context.Context, _ string) (bool, error)          { return false, nil }
+func (n *noopCacheImpl) TTL(_ context.Context, _ string) (time.Duration, error)    { return 0, nil }
 func (n *noopCacheImpl) Expire(_ context.Context, _ string, _ time.Duration) error { return nil }
-func (n *noopCacheImpl) GetMemory(_ context.Context, _ string, _ any) error { return cache.ErrCacheMiss }
+func (n *noopCacheImpl) GetMemory(_ context.Context, _ string, _ any) error {
+	return cache.ErrCacheMiss
+}
 func (n *noopCacheImpl) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
 	return nil
 }
-func (n *noopCacheImpl) DeleteMemory(_ context.Context, _ string) error      { return nil }
-func (n *noopCacheImpl) GetGlobalMemory(_ string, _ any) error               { return cache.ErrCacheMiss }
+func (n *noopCacheImpl) DeleteMemory(_ context.Context, _ string) error         { return nil }
+func (n *noopCacheImpl) GetGlobalMemory(_ string, _ any) error                  { return cache.ErrCacheMiss }
 func (n *noopCacheImpl) SetGlobalMemory(_ string, _ any, _ time.Duration) error { return nil }
-func (n *noopCacheImpl) DeleteGlobalMemory(_ string) error                   { return nil }
-func (n *noopCacheImpl) Ping(_ context.Context) error                        { return nil }
-func (n *noopCacheImpl) Stats() cache.CacheStats                             { return cache.CacheStats{} }
-func (n *noopCacheImpl) Reset()                                              {}
-func (n *noopCacheImpl) Close() error                                        { return nil }
+func (n *noopCacheImpl) DeleteGlobalMemory(_ string) error                      { return nil }
+func (n *noopCacheImpl) Ping(_ context.Context) error                           { return nil }
+func (n *noopCacheImpl) Stats() cache.CacheStats                                { return cache.CacheStats{} }
+func (n *noopCacheImpl) Reset()                                                 {}
+func (n *noopCacheImpl) Close() error                                           { return nil }

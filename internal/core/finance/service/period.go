@@ -35,8 +35,8 @@ type PeriodService interface {
 
 type periodService struct {
 	repo             domain.PeriodRepository
-	integrityService IntegrityService                // nil → hard-close runs without integrity gate
-	escalation       *IntegrityEscalationService     // nil → violation-lifecycle blocking skipped
+	integrityService IntegrityService            // nil → hard-close runs without integrity gate
+	escalation       *IntegrityEscalationService // nil → violation-lifecycle blocking skipped
 	tracing          tracing.Service
 	metrics          metrics.MetricsProvider
 	auditWriter      *financeAuditWriter // nil → audit skipped

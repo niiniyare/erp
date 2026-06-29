@@ -6,9 +6,9 @@ import (
 	"regexp"
 	"strings"
 
+	"awo.so/internal/shared/errors"
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
-	"awo.so/internal/shared/errors"
 )
 
 // validate holds the singleton validator instance.

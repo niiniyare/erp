@@ -3,8 +3,8 @@
 package approval
 
 import (
-	"github.com/google/uuid"
 	"awo.so/internal/shared/types"
+	"github.com/google/uuid"
 )
 
 // Type aliases for shared types

@@ -91,10 +91,10 @@ type AccountingPeriod struct {
 	Status       PeriodStatus `json:"status"`
 
 	// Closing metadata
-	ClosedAt  *time.Time `json:"closed_at,omitempty"`
-	ClosedBy  *uuid.UUID `json:"closed_by,omitempty"`
-	LockedAt  *time.Time `json:"locked_at,omitempty"`
-	LockedBy  *uuid.UUID `json:"locked_by,omitempty"`
+	ClosedAt *time.Time `json:"closed_at,omitempty"`
+	ClosedBy *uuid.UUID `json:"closed_by,omitempty"`
+	LockedAt *time.Time `json:"locked_at,omitempty"`
+	LockedBy *uuid.UUID `json:"locked_by,omitempty"`
 
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`

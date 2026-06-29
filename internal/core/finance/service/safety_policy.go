@@ -67,7 +67,7 @@ func DefaultSafetyPolicy() SafetyPolicy {
 
 // SafetyEnforcer evaluates runtime safety policies before finance mutations.
 type SafetyEnforcer struct {
-	mu            sync.RWMutex
+	mu             sync.RWMutex
 	tenantPolicies map[uuid.UUID]SafetyPolicy
 	defaultPolicy  SafetyPolicy
 	counters       *safetyCounters

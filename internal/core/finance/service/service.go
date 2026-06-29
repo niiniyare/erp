@@ -27,20 +27,20 @@ type Services struct {
 
 // Dependencies contains the required dependencies to create finance services
 type Dependencies struct {
-	AccountRepo      domain.AccountsRepository
-	AccountGroupRepo domain.AccountGroupRepository
-	TransactionRepo  domain.TransactionRepository
-	PeriodRepo       domain.PeriodRepository
-	ExchangeRateRepo domain.ExchangeRateRepository
-	CurrencyRepo     CurrencyRepository
-	CostCenterRepo      domain.CostCenterRepository
-	BudgetRepo          domain.BudgetRepository
-	TaxRepo             domain.TaxRepository
-	ReconciliationRepo  domain.ReconciliationRepository
+	AccountRepo        domain.AccountsRepository
+	AccountGroupRepo   domain.AccountGroupRepository
+	TransactionRepo    domain.TransactionRepository
+	PeriodRepo         domain.PeriodRepository
+	ExchangeRateRepo   domain.ExchangeRateRepository
+	CurrencyRepo       CurrencyRepository
+	CostCenterRepo     domain.CostCenterRepository
+	BudgetRepo         domain.BudgetRepository
+	TaxRepo            domain.TaxRepository
+	ReconciliationRepo domain.ReconciliationRepository
 	// TxRunner enables atomic multi-step operations (e.g. ReverseTransaction).
 	// Provided by the infrastructure wiring layer (pgx pool adapter).
 	// nil → reversal uses best-effort cleanup on failure.
-	TxRunner           domain.TxRunner
+	TxRunner domain.TxRunner
 	Tracing  tracing.Service
 	Metrics  metrics.MetricsProvider
 	// AuditService is the single audit sink for all finance mutations.

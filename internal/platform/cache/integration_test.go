@@ -8,9 +8,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/platform/config"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )
@@ -557,10 +557,10 @@ type UserPreferences struct {
 }
 
 type Session struct {
-	ID        string                 `json:"id"`
-	UserID    string                 `json:"user_id"`
-	Token     string                 `json:"token"`
-	ExpiresAt time.Time              `json:"expires_at"`
+	ID        string         `json:"id"`
+	UserID    string         `json:"user_id"`
+	Token     string         `json:"token"`
+	ExpiresAt time.Time      `json:"expires_at"`
 	Data      map[string]any `json:"data"`
 }
 
@@ -578,12 +578,12 @@ type CartItem struct {
 }
 
 type ComplexStruct struct {
-	ID         string                 `json:"id"`
-	Name       string                 `json:"name"`
+	ID         string         `json:"id"`
+	Name       string         `json:"name"`
 	Metadata   map[string]any `json:"metadata"`
-	Tags       []string               `json:"tags"`
-	Timestamps Timestamps             `json:"timestamps"`
-	Relations  []Relation             `json:"relations"`
+	Tags       []string       `json:"tags"`
+	Timestamps Timestamps     `json:"timestamps"`
+	Relations  []Relation     `json:"relations"`
 }
 
 type Timestamps struct {

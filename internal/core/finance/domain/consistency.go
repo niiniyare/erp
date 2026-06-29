@@ -69,16 +69,16 @@ type COASnapshot struct {
 // It contains exactly the fields required for report generation and
 // transaction-to-COA binding — no operational metadata.
 type COASnapshotEntry struct {
-	AccountID     uuid.UUID    `json:"account_id"`
-	AccountCode   string       `json:"account_code"`
-	AccountName   string       `json:"account_name"`
-	RootType      RootType     `json:"root_type"`
+	AccountID     uuid.UUID     `json:"account_id"`
+	AccountCode   string        `json:"account_code"`
+	AccountName   string        `json:"account_name"`
+	RootType      RootType      `json:"root_type"`
 	NormalBalance NormalBalance `json:"normal_balance"`
 	Status        AccountStatus `json:"status"`
-	ParentID      *uuid.UUID   `json:"parent_id,omitempty"`
-	AccountLevel  int32        `json:"account_level"`
-	CurrencyCode  *string      `json:"currency_code,omitempty"`
-	IsActive      bool         `json:"is_active"`
+	ParentID      *uuid.UUID    `json:"parent_id,omitempty"`
+	AccountLevel  int32         `json:"account_level"`
+	CurrencyCode  *string       `json:"currency_code,omitempty"`
+	IsActive      bool          `json:"is_active"`
 }
 
 // IsPostingEligible returns true when this snapshot entry was in a state that
@@ -207,8 +207,8 @@ type ConsistencyViolation struct {
 // SystemConsistencyReport is the output of a full cross-system consistency scan.
 // It covers COA ↔ transactions ↔ audit ↔ reports as a unified truth model.
 type SystemConsistencyReport struct {
-	TenantID   uuid.UUID `json:"tenant_id"`
-	AsOfDate   time.Time `json:"as_of_date"`
+	TenantID    uuid.UUID `json:"tenant_id"`
+	AsOfDate    time.Time `json:"as_of_date"`
 	GeneratedAt time.Time `json:"generated_at"`
 
 	// Violations contains all detected cross-system invariant failures.
@@ -218,9 +218,9 @@ type SystemConsistencyReport struct {
 	Healthy bool `json:"healthy"`
 
 	// Metrics — scan scope summary.
-	LedgerTxnCount  int `json:"ledger_txn_count"`
+	LedgerTxnCount   int `json:"ledger_txn_count"`
 	LedgerEntryCount int `json:"ledger_entry_count"`
-	COAAccountCount int `json:"coa_account_count"`
+	COAAccountCount  int `json:"coa_account_count"`
 }
 
 // HasCritical returns true when any CRITICAL violation exists.
@@ -251,12 +251,12 @@ type ReplayedBalance struct {
 
 // ReplayReport is the output of a full ledger replay.
 type ReplayReport struct {
-	TenantID    uuid.UUID         `json:"tenant_id"`
-	AsOfDate    time.Time         `json:"as_of_date"`
-	GeneratedAt time.Time         `json:"generated_at"`
-	Balances    []ReplayedBalance `json:"balances"`
-	TxnsReplayed int              `json:"txns_replayed"`
-	EntriesReplayed int           `json:"entries_replayed"`
+	TenantID        uuid.UUID         `json:"tenant_id"`
+	AsOfDate        time.Time         `json:"as_of_date"`
+	GeneratedAt     time.Time         `json:"generated_at"`
+	Balances        []ReplayedBalance `json:"balances"`
+	TxnsReplayed    int               `json:"txns_replayed"`
+	EntriesReplayed int               `json:"entries_replayed"`
 	// DriftAccounts contains IDs of accounts where replayed balance ≠ stored balance.
 	DriftAccounts []uuid.UUID `json:"drift_accounts,omitempty"`
 	ReplayClean   bool        `json:"replay_clean"` // true = no drift
@@ -269,13 +269,13 @@ type ReplayReport struct {
 // TrialBalanceReport is the canonical deterministic trial balance output.
 // Binding: must specify AsOfDate and SnapshotID for reproducibility.
 type TrialBalanceReport struct {
-	TenantID   uuid.UUID           `json:"tenant_id"`
-	AsOfDate   time.Time           `json:"as_of_date"`
-	SnapshotID uuid.UUID           `json:"snapshot_id"`
-	GeneratedAt time.Time          `json:"generated_at"`
-	Lines      []TrialBalanceLine  `json:"lines"`
-	TotalDebits  decimal.Decimal   `json:"total_debits"`
-	TotalCredits decimal.Decimal   `json:"total_credits"`
+	TenantID     uuid.UUID          `json:"tenant_id"`
+	AsOfDate     time.Time          `json:"as_of_date"`
+	SnapshotID   uuid.UUID          `json:"snapshot_id"`
+	GeneratedAt  time.Time          `json:"generated_at"`
+	Lines        []TrialBalanceLine `json:"lines"`
+	TotalDebits  decimal.Decimal    `json:"total_debits"`
+	TotalCredits decimal.Decimal    `json:"total_credits"`
 	// Balanced is true when TotalDebits == TotalCredits.
 	Balanced bool   `json:"balanced"`
 	Hash     string `json:"hash"` // deterministic fingerprint
@@ -283,11 +283,11 @@ type TrialBalanceReport struct {
 
 // TrialBalanceLine is a single row in the deterministic trial balance.
 type TrialBalanceLine struct {
-	AccountID    uuid.UUID       `json:"account_id"`
-	AccountCode  string          `json:"account_code"`
-	AccountName  string          `json:"account_name"`
-	RootType     RootType        `json:"root_type"`
-	NormalBalance NormalBalance  `json:"normal_balance"`
-	Debit        decimal.Decimal `json:"debit"`
-	Credit       decimal.Decimal `json:"credit"`
+	AccountID     uuid.UUID       `json:"account_id"`
+	AccountCode   string          `json:"account_code"`
+	AccountName   string          `json:"account_name"`
+	RootType      RootType        `json:"root_type"`
+	NormalBalance NormalBalance   `json:"normal_balance"`
+	Debit         decimal.Decimal `json:"debit"`
+	Credit        decimal.Decimal `json:"credit"`
 }

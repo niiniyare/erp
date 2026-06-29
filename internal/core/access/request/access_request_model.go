@@ -6,10 +6,10 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/types"
+	"github.com/google/uuid"
 )
 
 // Type aliases for shared types

@@ -73,7 +73,6 @@ func TestBalanceCheckStage_BalancedEntries_Succeeds(t *testing.T) {
 
 	stage := pipeline.NewBalanceCheckStage()
 	result, err := stage.Execute(opCtx)
-
 	if err != nil {
 		t.Fatalf("unexpected error for balanced entries: %v", err)
 	}
@@ -138,7 +137,6 @@ func TestPeriodCheckStage_NilRepo_Skips(t *testing.T) {
 
 	stage := pipeline.NewPeriodCheckStage(nil)
 	result, err := stage.Execute(opCtx)
-
 	if err != nil {
 		t.Fatalf("nil periodRepo should not return error, got: %v", err)
 	}
@@ -151,8 +149,8 @@ func TestPeriodCheckStage_NilRepo_Skips(t *testing.T) {
 
 // stubGLRepo is a minimal TransactionRepository for GLPostStage tests.
 type stubGLRepo struct {
-	fnPost    func(ctx context.Context, id, postedBy uuid.UUID, postingDate time.Time) error
-	fnGetByID func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
+	fnPost            func(ctx context.Context, id, postedBy uuid.UUID, postingDate time.Time) error
+	fnGetByID         func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
 	fnGetEntriesByTxn func(ctx context.Context, id uuid.UUID) ([]domain.TransactionEntry, error)
 }
 
@@ -181,6 +179,7 @@ func (r *stubGLRepo) GetEntriesByTransaction(ctx context.Context, id uuid.UUID) 
 func (r *stubGLRepo) Create(ctx context.Context, txn *domain.Transaction) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) Update(ctx context.Context, t *domain.Transaction) error {
 	panic("not implemented")
 }
@@ -188,48 +187,63 @@ func (r *stubGLRepo) Delete(ctx context.Context, id uuid.UUID) error { panic("no
 func (r *stubGLRepo) List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) Approve(ctx context.Context, id, by uuid.UUID, at time.Time, notes *string) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) Reject(ctx context.Context, id, by uuid.UUID, at time.Time, reason domain.RejectionReason, notes *string) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) Reverse(ctx context.Context, origID, revID uuid.UUID, reason string) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) Count(ctx context.Context, f *domain.TransactionFilter) (int64, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) ListByAccount(ctx context.Context, accountID uuid.UUID, f *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) ListByDateRange(ctx context.Context, start, end time.Time) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetByStatus(ctx context.Context, status domain.TransactionStatus, limit int) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetRecurringTransactions(ctx context.Context, due time.Time) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) UpdateNextRecurringDate(ctx context.Context, id uuid.UUID, next time.Time) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) CreateEntry(ctx context.Context, e *domain.TransactionEntry) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) CreateEntries(ctx context.Context, ee []*domain.TransactionEntry) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, f *domain.EntryFilter) ([]domain.TransactionEntry, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) UpdateEntry(ctx context.Context, e *domain.TransactionEntry) error {
 	panic("not implemented")
 }
@@ -237,33 +251,43 @@ func (r *stubGLRepo) DeleteEntry(ctx context.Context, id uuid.UUID) error { pani
 func (r *stubGLRepo) SearchEntries(ctx context.Context, q string, f *domain.EntryFilter, limit, offset int) ([]*domain.TransactionEntry, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) UpdateReconciliationStatus(ctx context.Context, id uuid.UUID, reconciled bool, date *time.Time, ref *string) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoff *time.Time) ([]*domain.TransactionEntry, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetEntrySummary(ctx context.Context, accountID uuid.UUID, start, end time.Time) (*domain.TransactionSummary, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) CalculateAccountBalance(ctx context.Context, accountID uuid.UUID, asOf *time.Time) (decimal.Decimal, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetAccountTransactionSummary(ctx context.Context, accountID uuid.UUID, dr *domain.DateRange) (*domain.TransactionSummary, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) IsTransactionNumberUnique(ctx context.Context, eid *uuid.UUID, num string, excl *uuid.UUID) (bool, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) ValidateAccountsExist(ctx context.Context, ids []uuid.UUID) error {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetNextTransactionNumber(ctx context.Context, eid *uuid.UUID, tt domain.TransactionType) (string, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetByNumber(ctx context.Context, eid *uuid.UUID, num string) (*domain.Transaction, error) {
 	panic("not implemented")
 }
+
 func (r *stubGLRepo) GetReversalHistory(ctx context.Context, id uuid.UUID) ([]*domain.Transaction, error) {
 	panic("not implemented")
 }
@@ -305,7 +329,6 @@ func TestGLPostStage_PostsSuccessfully(t *testing.T) {
 
 	stage := pipeline.NewGLPostStage(repo)
 	result, err := stage.Execute(opCtx)
-
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}

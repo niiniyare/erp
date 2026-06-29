@@ -98,7 +98,7 @@ func NewSessionServiceWithConfig(
 // when MFA is enabled, returns (nil, pendingToken, ErrMFARequired).
 // In the MFA case, the caller must call CompleteMFALogin with the pending token
 // and the user's TOTP code.
-// 
+//
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 func (s *sessionService) Login(ctx context.Context, email, password string) (*domain.ResolvedSession, string, error) {
 	ctx, span := s.tracer.StartSpan(ctx, "iam.session.Login")

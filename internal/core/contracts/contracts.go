@@ -90,13 +90,13 @@ type Service interface {
 // ── Functional options (re-exported for handler convenience) ─────────────────
 
 var (
-	WithContractType    = domain.WithContractType
-	WithContractValue   = domain.WithContractValue
-	WithEndDate         = domain.WithEndDate
+	WithContractType      = domain.WithContractType
+	WithContractValue     = domain.WithContractValue
+	WithEndDate           = domain.WithEndDate
 	WithCounterpartyEmail = domain.WithCounterpartyEmail
-	WithDescription     = domain.WithDescription
-	WithTerms           = domain.WithTerms
-	WithCreatedBy       = domain.WithCreatedBy
+	WithDescription       = domain.WithDescription
+	WithTerms             = domain.WithTerms
+	WithCreatedBy         = domain.WithCreatedBy
 )
 
 // ── Factory ───────────────────────────────────────────────────────────────────

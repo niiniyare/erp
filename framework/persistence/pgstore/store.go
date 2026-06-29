@@ -12,10 +12,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"awo.so/framework/definition"
-	"awo.so/framework/platform/audit"
-	"awo.so/framework/platform/naming"
 	"awo.so/framework/persistence"
 	"awo.so/framework/persistence/sqlbuilder"
+	"awo.so/framework/platform/audit"
+	"awo.so/framework/platform/naming"
 )
 
 // Querier is the minimal pgx interface satisfied by both *pgxpool.Pool and pgx.Tx.
@@ -54,13 +54,15 @@ func (s *EntityStore) writeAudit(ctx context.Context, m *definition.Mutation) er
 	return audit.Write(ctx, s.auditFn, s.def, m)
 }
 
-
 // ──────────────────────────────────────────────────────────────────
 // persistence.EntityStore implementation
 // ──────────────────────────────────────────────────────────────────
 
 func (s *EntityStore) FindByID(ctx context.Context, id uuid.UUID) (definition.Record, error) {
-	query := sqlbuilder.SelectOne(s.def)
+	query, err := sqlbuilder.SelectOne(s.def)
+	if err != nil {
+		return nil, err
+	}
 	row := s.q.QueryRow(ctx, query, id)
 	rec, err := s.scanRow(row)
 	if err != nil {
@@ -82,8 +84,10 @@ func (s *EntityStore) List(ctx context.Context, opts persistence.ListOptions) (p
 	}
 
 	sbOpts := buildSelectOpts(opts)
-	query, filterArgs := sqlbuilder.SelectList(s.def, sbOpts)
-
+	query, filterArgs, err := sqlbuilder.SelectList(s.def, sbOpts)
+	if err != nil {
+		return persistence.Page{}, err
+	}
 	// filterArgs come from the predicate + orgUnitIDs + search, in that order.
 	// Append limit and offset as the final two placeholders.
 	args := append(filterArgs, limit, opts.Offset) //nolint:gocritic
@@ -125,7 +129,10 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 	}
 
 	fields := fieldNames(s.def)
-	query, cols := sqlbuilder.Insert(s.def, fields)
+	query, cols, err := sqlbuilder.Insert(s.def, fields)
+	if err != nil {
+		return err
+	}
 
 	id := rec.ID()
 	if id == uuid.Nil {
@@ -148,7 +155,7 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 	}
 
 	var returnedID uuid.UUID
-	err := s.q.QueryRow(ctx, query, args...).Scan(&returnedID)
+	err = s.q.QueryRow(ctx, query, args...).Scan(&returnedID)
 	if err != nil {
 		return mapPgError(err)
 	}
@@ -160,7 +167,10 @@ func (s *EntityStore) Create(ctx context.Context, rec definition.MutableRecord) 
 
 func (s *EntityStore) Update(ctx context.Context, rec definition.MutableRecord) error {
 	fields := mutableFieldNames(s.def)
-	query, cols := sqlbuilder.Update(s.def, fields)
+	query, cols, err := sqlbuilder.Update(s.def, fields)
+	if err != nil {
+		return err
+	}
 
 	args := make([]any, 0, len(cols)+1)
 	for _, col := range cols {
@@ -168,7 +178,7 @@ func (s *EntityStore) Update(ctx context.Context, rec definition.MutableRecord) 
 	}
 	args = append(args, rec.ID()) // last placeholder = id
 
-	_, err := s.q.Exec(ctx, query, args...)
+	_, err = s.q.Exec(ctx, query, args...)
 	if err != nil {
 		return mapPgError(err)
 	}
@@ -188,9 +198,9 @@ func (s *EntityStore) Delete(ctx context.Context, id uuid.UUID) error {
 
 	var query string
 	if s.def.SoftDelete {
-		query = sqlbuilder.SoftDelete(s.def)
+		query, _ = sqlbuilder.SoftDelete(s.def)
 	} else {
-		query = sqlbuilder.HardDelete(s.def)
+		query, _ = sqlbuilder.HardDelete(s.def)
 	}
 	_, err := s.q.Exec(ctx, query, id)
 	if err != nil {
@@ -206,7 +216,10 @@ func (s *EntityStore) BulkCreate(ctx context.Context, recs []definition.MutableR
 		return nil
 	}
 	fields := fieldNames(s.def)
-	query, cols := sqlbuilder.BulkInsert(s.def, fields, len(recs))
+	query, cols, err := sqlbuilder.BulkInsert(s.def, fields, len(recs))
+	if err != nil {
+		return err
+	}
 
 	args := make([]any, 0, len(recs)*len(cols))
 	for _, rec := range recs {
@@ -262,7 +275,7 @@ func (s *EntityStore) Count(ctx context.Context, filter map[string]any) (int64, 
 		fields = append(fields, k)
 		args = append(args, v)
 	}
-	query := sqlbuilder.Count(s.def, fields)
+	query, _ := sqlbuilder.Count(s.def, fields)
 	var count int64
 	err := s.q.QueryRow(ctx, query, args...).Scan(&count)
 	return count, err
@@ -275,7 +288,7 @@ func (s *EntityStore) Exists(ctx context.Context, filter map[string]any) (bool, 
 		fields = append(fields, k)
 		args = append(args, v)
 	}
-	query := sqlbuilder.Exists(s.def, fields)
+	query, _ := sqlbuilder.Exists(s.def, fields)
 	var exists bool
 	err := s.q.QueryRow(ctx, query, args...).Scan(&exists)
 	return exists, err
@@ -288,12 +301,12 @@ func (s *EntityStore) BulkUpdate(ctx context.Context, filter map[string]any, val
 	idx := 1
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("UPDATE %s SET ", s.def.TableName()))
+	fmt.Fprintf(&sb, "UPDATE %s SET ", s.def.TableName())
 	for col, val := range values {
 		if idx > 1 {
 			sb.WriteString(", ")
 		}
-		sb.WriteString(fmt.Sprintf("%s = $%d", col, idx))
+		fmt.Fprintf(&sb, "%s = $%d", col, idx)
 		setCols = append(setCols, col)
 		args = append(args, val)
 		idx++
@@ -342,7 +355,8 @@ func (s *EntityStore) scanListRow(rows pgx.Rows) (*mapRecord, int64, error) {
 }
 
 // buildScanDest builds scan destination pointers matching sqlbuilder.columnList order:
-//   id [tenant_id] [org_unit_id] created_at updated_at [deleted_at] <fields…>
+//
+//	id [tenant_id] [org_unit_id] created_at updated_at [deleted_at] <fields…>
 func buildScanDest(def *definition.EntityDefinition, tenantID uuid.UUID) (*mapRecord, []any, []*any) {
 	rec := newMapRecord(def.Name, tenantID)
 	dest := []any{&rec.id}
@@ -417,8 +431,7 @@ func mapPgError(err error) error {
 	if errors.Is(err, pgx.ErrNoRows) {
 		return persistence.ErrNotFound
 	}
-	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) {
+	if pgErr, ok := errors.AsType[*pgconn.PgError](err); ok {
 		switch pgErr.Code {
 		case "23505": // unique_violation
 			return fmt.Errorf("%w: %s", persistence.ErrConflict, pgErr.ConstraintName)
@@ -507,5 +520,7 @@ func (t *tenantTx) ForEntity(entity string) persistence.EntityStore {
 	return New(def, t.tenantID, t.tx)
 }
 
-var _ persistence.TenantStore = (*TenantStoreAdapter)(nil)
-var _ persistence.TenantTx    = (*tenantTx)(nil)
+var (
+	_ persistence.TenantStore = (*TenantStoreAdapter)(nil)
+	_ persistence.TenantTx    = (*tenantTx)(nil)
+)

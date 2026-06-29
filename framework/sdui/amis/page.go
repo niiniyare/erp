@@ -57,11 +57,11 @@ func CRUDPage(def *definition.EntityDefinition, opts PageOpts) map[string]any {
 		"type":  "page",
 		"title": title,
 		"body": map[string]any{
-			"type": "crud",
-			"api":  apiURL,
-			"syncLocation": false,
+			"type":          "crud",
+			"api":           apiURL,
+			"syncLocation":  false,
 			"headerToolbar": toolbar,
-			"columns": columns,
+			"columns":       columns,
 			"footerToolbar": []any{
 				"statistics",
 				map[string]any{"type": "pagination", "layout": "perPage,pager,go"},
@@ -107,9 +107,9 @@ if (payload.id) {
 }
 return api;`,
 		},
-		"body":           controls,
+		"body":             controls,
 		"resetAfterSubmit": false,
-		"wrapWithPanel":  true,
+		"wrapWithPanel":    true,
 	}
 }
 
@@ -218,9 +218,9 @@ func createButton(def *definition.EntityDefinition, opts PageOpts) map[string]an
 		label = "Create " + def.Name
 	}
 	return map[string]any{
-		"type":      "button",
-		"label":     label,
-		"level":     "primary",
+		"type":       "button",
+		"label":      label,
+		"level":      "primary",
 		"actionType": "dialog",
 		"dialog": map[string]any{
 			"title": label,
@@ -261,11 +261,11 @@ func actionColumn(apiURL string) map[string]any {
 				},
 			},
 			map[string]any{
-				"label":      "Delete",
-				"type":       "button",
-				"level":      "link",
-				"className":  "text-danger",
-				"actionType": "ajax",
+				"label":       "Delete",
+				"type":        "button",
+				"level":       "link",
+				"className":   "text-danger",
+				"actionType":  "ajax",
 				"confirmText": "Delete this record?",
 				"api": map[string]any{
 					"method": "delete",

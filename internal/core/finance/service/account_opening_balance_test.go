@@ -67,12 +67,14 @@ func (r *obBalanceRepo) Create(_ context.Context, ob *domain.OpeningBalance) err
 	r.balances[ob.ID] = ob
 	return nil
 }
+
 func (r *obBalanceRepo) GetByID(_ context.Context, id uuid.UUID) (*domain.OpeningBalance, error) {
 	if ob, ok := r.balances[id]; ok {
 		return ob, nil
 	}
 	return nil, errors.New("opening balance not found")
 }
+
 func (r *obBalanceRepo) GetByAccount(_ context.Context, accountID uuid.UUID) ([]*domain.OpeningBalance, error) {
 	var out []*domain.OpeningBalance
 	for _, ob := range r.balances {
@@ -82,6 +84,7 @@ func (r *obBalanceRepo) GetByAccount(_ context.Context, accountID uuid.UUID) ([]
 	}
 	return out, nil
 }
+
 func (r *obBalanceRepo) Update(_ context.Context, ob *domain.OpeningBalance) error {
 	r.balances[ob.ID] = ob
 	return nil

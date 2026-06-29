@@ -89,6 +89,7 @@ func (r *lcEventRepo) Append(_ context.Context, e *domain.AccountLifecycleEvent)
 	r.events = append(r.events, e)
 	return nil
 }
+
 func (r *lcEventRepo) ListForAccount(_ context.Context, id uuid.UUID) ([]*domain.AccountLifecycleEvent, error) {
 	var out []*domain.AccountLifecycleEvent
 	for _, e := range r.events {
@@ -98,6 +99,7 @@ func (r *lcEventRepo) ListForAccount(_ context.Context, id uuid.UUID) ([]*domain
 	}
 	return out, nil
 }
+
 func (r *lcEventRepo) ListForTenant(_ context.Context, _ uuid.UUID, _, _ time.Time) ([]*domain.AccountLifecycleEvent, error) {
 	return r.events, nil
 }

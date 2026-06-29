@@ -16,10 +16,10 @@ import (
 // Port (interface)
 
 // APIKeyRepository is the persistence port for API key management.
-// 
+//
 // Create / Revoke / List use WithTenantFromCtx — the caller must ensure
 // tenant ID is in ctx (cache.TenantIDKey).
-// 
+//
 // GetByHash intentionally bypasses tenant context: the key_hash is globally
 // unique and the tenant is unknown until after the lookup.  This method must
 // be backed by a DB role with BYPASSRLS (admin_role) at the infrastructure

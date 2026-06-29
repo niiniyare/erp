@@ -67,17 +67,19 @@ func (c *atomicCache) Delete(_ context.Context, key string) error {
 }
 
 // Unused interface methods — panic on call so test errors surface clearly.
-func (c *atomicCache) Flush(_ context.Context) error                          { panic("not impl") }
+func (c *atomicCache) Flush(_ context.Context) error { panic("not impl") }
+
 func (c *atomicCache) MGet(_ context.Context, _ []string) ([]cache.Result, error) {
 	panic("not impl")
 }
+
 func (c *atomicCache) MSet(_ context.Context, _ map[string]any, _ time.Duration) error {
 	panic("not impl")
 }
-func (c *atomicCache) MDelete(_ context.Context, _ []string) error          { panic("not impl") }
-func (c *atomicCache) DeletePattern(_ context.Context, _ string) error      { panic("not impl") }
-func (c *atomicCache) Keys(_ context.Context, _ string) ([]string, error)   { panic("not impl") }
-func (c *atomicCache) Exists(_ context.Context, _ string) (bool, error)     { panic("not impl") }
+func (c *atomicCache) MDelete(_ context.Context, _ []string) error            { panic("not impl") }
+func (c *atomicCache) DeletePattern(_ context.Context, _ string) error        { panic("not impl") }
+func (c *atomicCache) Keys(_ context.Context, _ string) ([]string, error)     { panic("not impl") }
+func (c *atomicCache) Exists(_ context.Context, _ string) (bool, error)       { panic("not impl") }
 func (c *atomicCache) TTL(_ context.Context, _ string) (time.Duration, error) { panic("not impl") }
 func (c *atomicCache) Expire(_ context.Context, _ string, _ time.Duration) error {
 	panic("not impl")
@@ -86,7 +88,7 @@ func (c *atomicCache) GetMemory(_ context.Context, _ string, _ any) error { pani
 func (c *atomicCache) SetMemory(_ context.Context, _ string, _ any, _ time.Duration) error {
 	panic("not impl")
 }
-func (c *atomicCache) DeleteMemory(_ context.Context, _ string) error        { panic("not impl") }
+func (c *atomicCache) DeleteMemory(_ context.Context, _ string) error         { panic("not impl") }
 func (c *atomicCache) GetGlobalMemory(_ string, _ any) error                  { panic("not impl") }
 func (c *atomicCache) SetGlobalMemory(_ string, _ any, _ time.Duration) error { panic("not impl") }
 func (c *atomicCache) DeleteGlobalMemory(_ string) error                      { panic("not impl") }
@@ -115,8 +117,8 @@ func TestGetPendingMFA_AtomicConsumption(t *testing.T) {
 	}
 
 	var (
-		wg       sync.WaitGroup
-		mu       sync.Mutex
+		wg        sync.WaitGroup
+		mu        sync.Mutex
 		successes []uuid.UUID
 		failures  []error
 	)

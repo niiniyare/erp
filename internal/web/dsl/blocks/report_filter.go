@@ -22,10 +22,10 @@ func ReportFilterBlock(_ ui.UISessionContext, cfg ReportFilterConfig) ast.Node {
 	}
 	if cfg.ShowEntityPicker && cfg.EntityURL != "" {
 		fields = append(fields, ast.SelectNode{
-			Name:      "entity_id",
-			Label:     "Entity",
-			Source:    &ast.APISpec{Method: "get", URL: cfg.EntityURL},
-			Clearable: true,
+			Name:       "entity_id",
+			Label:      "Entity",
+			Source:     &ast.APISpec{Method: "get", URL: cfg.EntityURL},
+			Clearable:  true,
 			Searchable: true,
 		})
 	}

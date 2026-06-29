@@ -4,20 +4,20 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/repository"
 	"awo.so/internal/core/tenant/service"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // Activities holds all tenant Temporal activity implementations.
 type Activities struct {
-	tenant  *service.TenantService
-	prov    *service.ProvisioningService
-	repo    repository.Repository
-	tracer  tracing.Service
+	tenant   *service.TenantService
+	prov     *service.ProvisioningService
+	repo     repository.Repository
+	tracer   tracing.Service
 	authzSvc contract.AuthzService // optional — IAM role seeding skipped when nil
 }
 

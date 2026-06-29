@@ -13,12 +13,12 @@ import (
 type RateType string
 
 const (
-	RateTypeSpot       RateType = "SPOT"        // Real-time market rate
-	RateTypeClosing    RateType = "CLOSING"      // End-of-day bank rate
-	RateTypeAverage    RateType = "AVERAGE"      // Period-average rate (for P&L revaluation)
-	RateTypeHistorical RateType = "HISTORICAL"   // Rate frozen at transaction date
-	RateTypeFixed      RateType = "FIXED"        // Contractually fixed rate (e.g. hedging)
-	RateTypeOfficial   RateType = "OFFICIAL"     // Central-bank official/published rate
+	RateTypeSpot       RateType = "SPOT"       // Real-time market rate
+	RateTypeClosing    RateType = "CLOSING"    // End-of-day bank rate
+	RateTypeAverage    RateType = "AVERAGE"    // Period-average rate (for P&L revaluation)
+	RateTypeHistorical RateType = "HISTORICAL" // Rate frozen at transaction date
+	RateTypeFixed      RateType = "FIXED"      // Contractually fixed rate (e.g. hedging)
+	RateTypeOfficial   RateType = "OFFICIAL"   // Central-bank official/published rate
 )
 
 // IsValid returns true if the RateType is a recognised value.
@@ -111,17 +111,17 @@ func CurrencyConversionTolerance(code string) decimal.Decimal {
 
 // ExchangeRate records the rate between two currencies at a point in time.
 type ExchangeRate struct {
-	ID           uuid.UUID `json:"id"`
-	TenantID     uuid.UUID `json:"tenant_id"`
+	ID       uuid.UUID `json:"id"`
+	TenantID uuid.UUID `json:"tenant_id"`
 
-	FromCurrency string          `json:"from_currency"` // ISO 4217 source currency code
-	ToCurrency   string          `json:"to_currency"`   // ISO 4217 target currency code
-	Rate         decimal.Decimal `json:"rate"`          // How many units of ToCurrency per 1 FromCurrency
-	RateType     RateType        `json:"rate_type"`
-	EffectiveDate time.Time      `json:"effective_date"` // Date from which this rate is valid
-	ExpiryDate   *time.Time      `json:"expiry_date,omitempty"`
+	FromCurrency  string          `json:"from_currency"` // ISO 4217 source currency code
+	ToCurrency    string          `json:"to_currency"`   // ISO 4217 target currency code
+	Rate          decimal.Decimal `json:"rate"`          // How many units of ToCurrency per 1 FromCurrency
+	RateType      RateType        `json:"rate_type"`
+	EffectiveDate time.Time       `json:"effective_date"` // Date from which this rate is valid
+	ExpiryDate    *time.Time      `json:"expiry_date,omitempty"`
 
-	Source    string    `json:"source"`     // e.g. "ECB", "manual", "open-exchange-rates"
+	Source    string    `json:"source"` // e.g. "ECB", "manual", "open-exchange-rates"
 	CreatedAt time.Time `json:"created_at"`
 	CreatedBy uuid.UUID `json:"created_by"`
 }

@@ -5,8 +5,8 @@ package repository
 import (
 	"context"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/domain"
+	"github.com/google/uuid"
 )
 
 // Repository defines the interface for tenant data access.

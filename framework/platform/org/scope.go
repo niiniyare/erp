@@ -33,6 +33,7 @@ func (s Scope) Validate() error {
 	}
 	return nil
 }
+
 func (s Scope) String() string {
 	if s.IsTenantWide() {
 		return fmt.Sprintf("tenant:%s", s.TenantID)

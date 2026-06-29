@@ -3,8 +3,8 @@
 package pgstore
 
 import (
-	"github.com/google/uuid"
 	"awo.so/framework/definition"
+	"github.com/google/uuid"
 )
 
 // mapRecord is a concrete implementation of definition.Record and
@@ -37,6 +37,8 @@ func (r *mapRecord) EntityName() string          { return r.entityName }
 func (r *mapRecord) RecordOrgUnitID() uuid.UUID { return r.orgUnitID }
 
 // ensure interfaces satisfied at compile time
-var _ definition.Record        = (*mapRecord)(nil)
-var _ definition.MutableRecord = (*mapRecord)(nil)
-var _ definition.OrgScoped     = (*mapRecord)(nil)
+var (
+	_ definition.Record        = (*mapRecord)(nil)
+	_ definition.MutableRecord = (*mapRecord)(nil)
+	_ definition.OrgScoped     = (*mapRecord)(nil)
+)

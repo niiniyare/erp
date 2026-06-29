@@ -20,7 +20,7 @@ import (
 	"time"
 
 	"awo.so/framework/definition"
-	"awo.so/framework/org"
+	platformorg "awo.so/framework/platform/org"
 )
 
 // File is one half of a migration pair.
@@ -374,9 +374,9 @@ func generateDown(def *definition.EntityDefinition) string {
 // ──────────────────────────────────────────────────────────────────
 
 // effectiveScope returns the human-readable OrgScope for the migration header comment.
-func effectiveScope(def *definition.EntityDefinition) org.ScopeLevel {
+func effectiveScope(def *definition.EntityDefinition) platformorg.ScopeLevel {
 	if def.OrgScope == "" {
-		return org.ScopeLevelTenant
+		return platformorg.ScopeLevelTenant
 	}
 	return def.OrgScope
 }

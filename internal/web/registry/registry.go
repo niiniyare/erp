@@ -117,8 +117,8 @@ type paramRoute struct {
 var (
 	mu            sync.RWMutex
 	registrations = map[string]PageRegistration{} // exact-match routes only
-	paramRoutes   []paramRoute                     // param-pattern routes (contain ":")
-	patternSet    = map[string]bool{}              // all registered patterns for de-dup
+	paramRoutes   []paramRoute                    // param-pattern routes (contain ":")
+	patternSet    = map[string]bool{}             // all registered patterns for de-dup
 )
 
 // RegisterPage adds a PageRegistration to the registry.

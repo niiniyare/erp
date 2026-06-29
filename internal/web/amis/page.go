@@ -181,8 +181,8 @@ type StatBuilder struct{ base }
 // Stat creates a new statistic component. source is the data expression e.g. "${total}".
 func Stat(label, source string) *StatBuilder {
 	b := &StatBuilder{base{s: M{
-		"type":   "tpl",
-		"tpl":    statTpl(label, source),
+		"type":      "tpl",
+		"tpl":       statTpl(label, source),
 		"className": "stat-card",
 	}}}
 	return b

@@ -336,5 +336,7 @@ func ruleNoIAMExpressions(path string, node ui.M) error {
 	return nil
 }
 
-var _ pipeline.Stage = (*NormalizeStage)(nil)
-var _ pipeline.Stage = (*ValidateStage)(nil)
+var (
+	_ pipeline.Stage = (*NormalizeStage)(nil)
+	_ pipeline.Stage = (*ValidateStage)(nil)
+)

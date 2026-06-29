@@ -137,8 +137,8 @@ func TestAUTHZ_RUNTIME_2_SessionSerializationHasNoPermissionsKey(t *testing.T) {
 		`"acl"`,
 		`"capabilities"`,
 		`"access_rights"`,
-		`"can_"`,   // prefix: can_read, can_write, etc.
-		`"perm_"`,  // prefix: perm_finance, etc.
+		`"can_"`,  // prefix: can_read, can_write, etc.
+		`"perm_"`, // prefix: perm_finance, etc.
 	}
 
 	// Files that define the session serialization structs.
@@ -184,16 +184,16 @@ func TestAUTHZ_RUNTIME_3_NoPermissionsFieldInSessionTypes(t *testing.T) {
 	// Field name prefixes/patterns that imply cached authorization state.
 	// Checked case-insensitively on the field name.
 	forbiddenFieldPatterns := []string{
-		"permission",  // Permissions, PermissionMap, PermissionSet
-		"grant",       // Grants, GrantedRoles
-		"acl",         // ACL, ACLMap
-		"allowlist",   // AllowList
-		"denylist",    // DenyList
-		"canread",     // CanRead
-		"canwrite",    // CanWrite
-		"candelete",   // CanDelete
-		"canadmin",    // CanAdmin
-		"capability",  // Capabilities
+		"permission",   // Permissions, PermissionMap, PermissionSet
+		"grant",        // Grants, GrantedRoles
+		"acl",          // ACL, ACLMap
+		"allowlist",    // AllowList
+		"denylist",     // DenyList
+		"canread",      // CanRead
+		"canwrite",     // CanWrite
+		"candelete",    // CanDelete
+		"canadmin",     // CanAdmin
+		"capability",   // Capabilities
 		"accessrights", // AccessRights
 	}
 

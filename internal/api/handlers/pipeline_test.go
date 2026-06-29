@@ -59,8 +59,8 @@ func (m *mockSessionSvc) LoginWithSSO(_ context.Context, _ *iam.User) (*iam.Reso
 // mockAuthzSvc is a minimal AuthzService stub for pipeline tests.
 // Only Enforce is wired; all other methods panic if unexpectedly called.
 type mockAuthzSvc struct {
-	iam.AuthzService        // satisfies remaining interface methods
-	enforce          bool   // return value for Enforce
+	iam.AuthzService      // satisfies remaining interface methods
+	enforce          bool // return value for Enforce
 }
 
 func (m *mockAuthzSvc) Enforce(_ context.Context, _ iam.Request) (bool, error) {

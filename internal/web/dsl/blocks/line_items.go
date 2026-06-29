@@ -20,7 +20,7 @@ type LineItemConfig struct {
 	// ShowDebit renders a debit amount input. Use for journal entry lines only.
 	ShowDebit bool
 	// ShowCredit renders a credit amount input. Use for journal entry lines only.
-	ShowCredit bool
+	ShowCredit        bool
 	ShowAccount       bool
 	AllowFreeTextItem bool
 	DefaultCurrency   string

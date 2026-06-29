@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/shared/logger"
+	"github.com/google/uuid"
 )
 
 // EmergencyDisableAll disables all feature flags system-wide

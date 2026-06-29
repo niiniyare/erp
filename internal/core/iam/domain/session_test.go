@@ -34,9 +34,9 @@ func TestResolvedSession_ToPrincipal(t *testing.T) {
 	tid := uuid.MustParse("00000000-0000-0000-0000-000000000002")
 
 	cases := []struct {
-		userType      string
-		wantSubject   string
-		wantDomain    string
+		userType    string
+		wantSubject string
+		wantDomain  string
 	}{
 		{"SYSADMIN", "platform:" + uid.String(), "_platform_"},
 		{"PLATFORM", "platform:" + uid.String(), "_platform_"},

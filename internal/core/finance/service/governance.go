@@ -33,8 +33,8 @@ const (
 // SubsystemHealth is the health status of a single finance subsystem.
 type SubsystemHealth struct {
 	Status  SubsystemStatus `json:"status"`
-	Message string       `json:"message,omitempty"`
-	Count   int          `json:"count,omitempty"` // relevant count (violations, dead entries, etc.)
+	Message string          `json:"message,omitempty"`
+	Count   int             `json:"count,omitempty"` // relevant count (violations, dead entries, etc.)
 }
 
 // FinanceHealthReport is a structured, machine-readable summary of finance module health.
@@ -65,11 +65,11 @@ type FinanceHealthReport struct {
 
 // FinanceGovernanceService aggregates subsystem health into a dashboard-ready report.
 type FinanceGovernanceService struct {
-	violationRepo    IntegrityViolationRepository // nil → skipped
-	outboxGovernor   *OutboxGovernor               // nil → skipped
-	chainVerifier    *AuditChainVerifier           // nil → skipped
-	gapDetector      *AuditGapDetector             // nil → skipped
-	safetyEnforcer   *SafetyEnforcer               // nil → policy not configured
+	violationRepo  IntegrityViolationRepository // nil → skipped
+	outboxGovernor *OutboxGovernor              // nil → skipped
+	chainVerifier  *AuditChainVerifier          // nil → skipped
+	gapDetector    *AuditGapDetector            // nil → skipped
+	safetyEnforcer *SafetyEnforcer              // nil → policy not configured
 }
 
 // NewFinanceGovernanceService creates the governance service.
@@ -96,9 +96,9 @@ func (g *FinanceGovernanceService) GetHealthReport(ctx context.Context) *Finance
 	if g == nil {
 		tenantID, _ := tenantIDOrNil(ctx)
 		return &FinanceHealthReport{
-			TenantID:  tenantID,
-			Overall:   SubsystemStatusDegraded,
-			Timestamp: time.Now(),
+			TenantID:            tenantID,
+			Overall:             SubsystemStatusDegraded,
+			Timestamp:           time.Now(),
 			IntegrityHealth:     SubsystemHealth{Status: SubsystemStatusDegraded, Message: "governance service not configured"},
 			AuditDeliveryHealth: SubsystemHealth{Status: SubsystemStatusDegraded, Message: "governance service not configured"},
 			OutboxBacklogHealth: SubsystemHealth{Status: SubsystemStatusDegraded, Message: "governance service not configured"},
@@ -140,16 +140,20 @@ func (g *FinanceGovernanceService) checkIntegrityHealth(ctx context.Context, ten
 		return SubsystemHealth{Status: SubsystemStatusDegraded, Message: "query failed: " + err.Error()}
 	}
 	if count > 0 {
-		return SubsystemHealth{Status: SubsystemStatusCritical, Count: count,
-			Message: "unresolved CRITICAL integrity violations — finance mutations are blocked"}
+		return SubsystemHealth{
+			Status: SubsystemStatusCritical, Count: count,
+			Message: "unresolved CRITICAL integrity violations — finance mutations are blocked",
+		}
 	}
 
 	// Check for open HIGH violations.
 	sev := SeverityHigh
 	highs, err := g.violationRepo.ListOpenViolations(ctx, tenantID, &sev)
 	if err == nil && len(highs) > 0 {
-		return SubsystemHealth{Status: SubsystemStatusDegraded, Count: len(highs),
-			Message: "unresolved HIGH integrity violations — review before period close"}
+		return SubsystemHealth{
+			Status: SubsystemStatusDegraded, Count: len(highs),
+			Message: "unresolved HIGH integrity violations — review before period close",
+		}
 	}
 	return SubsystemHealth{Status: SubsystemStatusHealthy}
 }
@@ -163,12 +167,16 @@ func (g *FinanceGovernanceService) checkAuditDeliveryHealth(ctx context.Context)
 		return SubsystemHealth{Status: SubsystemStatusDegraded, Message: "gap check failed: " + err.Error()}
 	}
 	if gapReport.DeadOutboxCount > 0 {
-		return SubsystemHealth{Status: SubsystemStatusCritical, Count: gapReport.DeadOutboxCount,
-			Message: "DEAD outbox entries — CRITICAL audit events may be permanently lost"}
+		return SubsystemHealth{
+			Status: SubsystemStatusCritical, Count: gapReport.DeadOutboxCount,
+			Message: "DEAD outbox entries — CRITICAL audit events may be permanently lost",
+		}
 	}
 	if gapReport.StaleOutboxCount > 0 {
-		return SubsystemHealth{Status: SubsystemStatusDegraded, Count: gapReport.StaleOutboxCount,
-			Message: "stale PENDING outbox entries — delivery worker is lagging"}
+		return SubsystemHealth{
+			Status: SubsystemStatusDegraded, Count: gapReport.StaleOutboxCount,
+			Message: "stale PENDING outbox entries — delivery worker is lagging",
+		}
 	}
 	return SubsystemHealth{Status: SubsystemStatusHealthy}
 }
@@ -182,12 +190,16 @@ func (g *FinanceGovernanceService) checkOutboxBacklogHealth(ctx context.Context)
 		return SubsystemHealth{Status: SubsystemStatusDegraded, Message: "backlog check failed: " + err.Error()}
 	}
 	if backlogReport.BacklogCritical {
-		return SubsystemHealth{Status: SubsystemStatusCritical, Count: backlogReport.PendingBacklogCount,
-			Message: "critical backlog — delivery worker is severely behind"}
+		return SubsystemHealth{
+			Status: SubsystemStatusCritical, Count: backlogReport.PendingBacklogCount,
+			Message: "critical backlog — delivery worker is severely behind",
+		}
 	}
 	if backlogReport.StuckProcessingCount > 0 {
-		return SubsystemHealth{Status: SubsystemStatusDegraded, Count: backlogReport.StuckProcessingCount,
-			Message: "stuck PROCESSING entries — processor may have crashed"}
+		return SubsystemHealth{
+			Status: SubsystemStatusDegraded, Count: backlogReport.StuckProcessingCount,
+			Message: "stuck PROCESSING entries — processor may have crashed",
+		}
 	}
 	return SubsystemHealth{Status: SubsystemStatusHealthy}
 }

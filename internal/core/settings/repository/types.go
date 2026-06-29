@@ -3,8 +3,8 @@ package repository
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/settings/domain"
+	"github.com/google/uuid"
 )
 
 // ConfigDefinition represents a configuration definition in the database

@@ -28,7 +28,7 @@ type resetPasswordRequest struct {
 // user enumeration attacks. The service generates a token and the caller is
 // responsible for emailing it; here we only log/emit the token for now
 // (notification service integration is a TODO).
-// 
+//
 // NOTE(notification): In production, wire a notification service here to send
 // the reset link by email. Until then the token is silently discarded.
 func ForgotPasswordHandler(userSvc iam.UserService) fiber.Handler {

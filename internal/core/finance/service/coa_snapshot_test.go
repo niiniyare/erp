@@ -44,15 +44,15 @@ func newSnapSvc(accounts *p17AccountRepo, snapRepo *p17StubSnapshotRepo) *servic
 func makeAccount(code string) *domain.Accounts {
 	curr := "USD"
 	return &domain.Accounts{
-		ID:            uuid.New(),
-		TenantID:      uuid.New(),
-		AccountCode:   code,
-		AccountName:   "Acct " + code,
-		RootType:      domain.RootTypeAsset,
-		NormalBalance: domain.NormalBalanceDebit,
-		Status:        domain.AccountStatusActive,
-		IsActive:      true,
-		CurrencyCode:  &curr,
+		ID:             uuid.New(),
+		TenantID:       uuid.New(),
+		AccountCode:    code,
+		AccountName:    "Acct " + code,
+		RootType:       domain.RootTypeAsset,
+		NormalBalance:  domain.NormalBalanceDebit,
+		Status:         domain.AccountStatusActive,
+		IsActive:       true,
+		CurrencyCode:   &curr,
 		CurrentBalance: decimal.Zero,
 	}
 }

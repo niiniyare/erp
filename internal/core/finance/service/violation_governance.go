@@ -50,14 +50,14 @@ const (
 // SuppressionRecord is a time-bounded operator decision to suppress a violation.
 // Once created it is immutable — operators cannot edit it, only expire it.
 type SuppressionRecord struct {
-	ID           uuid.UUID `json:"id"`
-	TenantID     uuid.UUID `json:"tenant_id"`
-	ViolationKind string   `json:"violation_kind"`
-	EntityID     uuid.UUID `json:"entity_id"`
-	Reason       string    `json:"reason"`
-	SuppressedBy uuid.UUID `json:"suppressed_by"`
-	CreatedAt    time.Time `json:"created_at"`
-	ExpiresAt    time.Time `json:"expires_at"`
+	ID            uuid.UUID `json:"id"`
+	TenantID      uuid.UUID `json:"tenant_id"`
+	ViolationKind string    `json:"violation_kind"`
+	EntityID      uuid.UUID `json:"entity_id"`
+	Reason        string    `json:"reason"`
+	SuppressedBy  uuid.UUID `json:"suppressed_by"`
+	CreatedAt     time.Time `json:"created_at"`
+	ExpiresAt     time.Time `json:"expires_at"`
 	// AuditEventID is the ID of the immutable audit event recording this suppression.
 	// Populated by ViolationGovernanceService after audit write.
 	AuditEventID string `json:"audit_event_id,omitempty"`
@@ -240,8 +240,8 @@ func (s *ViolationGovernanceService) EscalateViolation(ctx context.Context, viol
 		return
 	}
 	logger.ErrorContext(ctx, "finance governance: violation ESCALATED — requires immediate operator attention", logger.Fields{
-		"violation_id":  violationID.String(),
-		"escalated_by":  escalatedBy.String(),
+		"violation_id": violationID.String(),
+		"escalated_by": escalatedBy.String(),
 	})
 	s.metrics.IncrementCounter("finance_violation_escalated_total", metrics.Fields{})
 }

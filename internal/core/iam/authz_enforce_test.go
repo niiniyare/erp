@@ -1,6 +1,6 @@
 // Package iam_test contains end-to-end enforcement tests for the AuthzService.
 // These tests use an in-memory Casbin enforcer — no database required.
-// 
+//
 // Phase 16 coverage:
 // V4 — Role expiry: expired role is lazily revoked on Enforce() and denies access
 // V5 — Tenant isolation: a policy in domain A must not grant access in domain B
@@ -23,22 +23,22 @@ import (
 
 type noopLogger struct{}
 
-func (noopLogger) Debug(_ string, _ ...logger.Fields)                              {}
-func (noopLogger) Info(_ string, _ ...logger.Fields)                               {}
-func (noopLogger) Warn(_ string, _ ...logger.Fields)                               {}
-func (noopLogger) Error(_ string, _ ...logger.Fields)                              {}
-func (noopLogger) Fatal(_ string, _ ...logger.Fields)                              {}
-func (noopLogger) DebugContext(_ context.Context, _ string, _ ...logger.Fields)   {}
-func (noopLogger) InfoContext(_ context.Context, _ string, _ ...logger.Fields)    {}
-func (noopLogger) WarnContext(_ context.Context, _ string, _ ...logger.Fields)    {}
-func (noopLogger) ErrorContext(_ context.Context, _ string, _ ...logger.Fields)   {}
-func (n noopLogger) WithFields(_ logger.Fields) logger.Logger                     { return n }
-func (n noopLogger) WithContext(_ context.Context) logger.Logger                  { return n }
-func (noopLogger) SetLevel(_ logger.LogLevel)                                      {}
-func (noopLogger) Close() error                                                    { return nil }
+func (noopLogger) Debug(_ string, _ ...logger.Fields)                           {}
+func (noopLogger) Info(_ string, _ ...logger.Fields)                            {}
+func (noopLogger) Warn(_ string, _ ...logger.Fields)                            {}
+func (noopLogger) Error(_ string, _ ...logger.Fields)                           {}
+func (noopLogger) Fatal(_ string, _ ...logger.Fields)                           {}
+func (noopLogger) DebugContext(_ context.Context, _ string, _ ...logger.Fields) {}
+func (noopLogger) InfoContext(_ context.Context, _ string, _ ...logger.Fields)  {}
+func (noopLogger) WarnContext(_ context.Context, _ string, _ ...logger.Fields)  {}
+func (noopLogger) ErrorContext(_ context.Context, _ string, _ ...logger.Fields) {}
+func (n noopLogger) WithFields(_ logger.Fields) logger.Logger                   { return n }
+func (n noopLogger) WithContext(_ context.Context) logger.Logger                { return n }
+func (noopLogger) SetLevel(_ logger.LogLevel)                                   {}
+func (noopLogger) Close() error                                                 { return nil }
 
 // mockAuthzRepo
-// 
+//
 // Controls which roles ListExpiredActiveRoleNames returns on the next call, and
 // records which roles were passed to DeactivateRoleAssignment.
 
@@ -84,7 +84,7 @@ func (s *AuthzEnforceSuite) SetupTest() {
 }
 
 // V4 — Role expiry: lazy revoke
-// 
+//
 // Scenario: a user holds role:finance-manager which grants invoice/* access.
 // The role has expired in the DB. On the next Enforce() call the service reads
 // the expired role from the repository, removes it from the in-memory enforcer,
@@ -125,7 +125,7 @@ func (s *AuthzEnforceSuite) TestV4_ExpiredRole_LazilyCleaned_DeniesAccess() {
 }
 
 // V5 — Tenant isolation: cross-tenant policy leak
-// 
+//
 // Scenario: tenantA grants role:finance-manager to a subject with invoice/* access.
 // The same subject attempts to access invoice/* in tenantB's domain — must be denied.
 // Casbin enforces domain isolation: r.dom == p.dom prevents cross-domain matches.

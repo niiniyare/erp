@@ -102,8 +102,8 @@ type AuthzConfig struct {
 type authzService struct {
 	enforcer    *casbin.SyncedEnforcer
 	repo        repository.AuthzRepository
-	sessionInv  SessionInvalidator      // may be nil
-	policyWatch watcher.PolicyWatcher   // may be nil — see notifyPeers
+	sessionInv  SessionInvalidator    // may be nil
+	policyWatch watcher.PolicyWatcher // may be nil — see notifyPeers
 	log         logger.Logger
 	metrics     metrics.MetricsProvider
 	tracer      tracing.Service

@@ -9,12 +9,12 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
 )

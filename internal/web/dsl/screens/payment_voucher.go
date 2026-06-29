@@ -25,8 +25,10 @@ func PaymentVoucherScreen(sess ui.UISessionContext, cfg PaymentVoucherScreenConf
 	return ast.PageNode{
 		Title: title,
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Posted", Value: "posted"}, {Label: "Cancelled", Value: "cancelled"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Posted", Value: "posted"}, {Label: "Cancelled", Value: "cancelled"}},
+			}),
 			blocks.PartyBlock(sess, partyCfg),
 			blocks.TotalsSummaryBlock(sess),
 			blocks.PaymentTermsBlock(sess, blocks.PaymentTermsConfig{ReadOnly: cfg.ReadOnly}),

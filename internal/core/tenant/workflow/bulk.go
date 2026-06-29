@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/tenant/domain"
+	"github.com/google/uuid"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
@@ -14,10 +14,10 @@ const BulkOperationWorkflowID = "TenantBulkOperationWorkflow"
 
 // BulkOperationInput describes a bulk tenant operation.
 type BulkOperationInput struct {
-	TenantIDs []uuid.UUID        `json:"tenant_ids"`
-	Operation string             `json:"operation"` // "suspend", "activate", "archive", "delete"
+	TenantIDs []uuid.UUID         `json:"tenant_ids"`
+	Operation string              `json:"operation"` // "suspend", "activate", "archive", "delete"
 	Status    domain.TenantStatus `json:"status,omitempty"`
-	Reason    string             `json:"reason,omitempty"`
+	Reason    string              `json:"reason,omitempty"`
 }
 
 // BulkOperationResult contains the outcome of a bulk operation.

@@ -86,7 +86,6 @@ func (s *CacheLookupStage) Execute(opCtx *pipeline.OperationContext) (pipeline.S
 
 	var schema ui.Schema
 	err := s.cacheSvc.Get(cacheCtx, cacheKey, &schema)
-
 	if err != nil {
 		if errors.Is(err, cache.ErrCacheMiss) {
 			// Normal cache miss — store key for CacheStoreStage and continue.
@@ -207,5 +206,7 @@ func withTenantContext(ctx context.Context, tenantID string) context.Context {
 	return context.WithValue(ctx, cache.TenantIDKey, tenantID)
 }
 
-var _ pipeline.Stage = (*CacheLookupStage)(nil)
-var _ pipeline.Stage = (*CacheStoreStage)(nil)
+var (
+	_ pipeline.Stage = (*CacheLookupStage)(nil)
+	_ pipeline.Stage = (*CacheStoreStage)(nil)
+)

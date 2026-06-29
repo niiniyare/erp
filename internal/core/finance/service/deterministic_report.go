@@ -149,13 +149,13 @@ func (e *DeterministicReportingEngine) GenerateTrialBalance(
 		totalCredits = totalCredits.Add(credit)
 
 		lines = append(lines, domain.TrialBalanceLine{
-			AccountID:    acct.AccountID,
-			AccountCode:  acct.AccountCode,
-			AccountName:  acct.AccountName,
-			RootType:     acct.RootType,
+			AccountID:     acct.AccountID,
+			AccountCode:   acct.AccountCode,
+			AccountName:   acct.AccountName,
+			RootType:      acct.RootType,
 			NormalBalance: acct.NormalBalance,
-			Debit:        debit,
-			Credit:       credit,
+			Debit:         debit,
+			Credit:        credit,
 		})
 	}
 

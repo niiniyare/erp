@@ -36,15 +36,15 @@ import (
 
 // AuditChainEntry is a single link in the CRITICAL-event hash chain for a tenant.
 type AuditChainEntry struct {
-	ID         uuid.UUID `json:"id"`
-	TenantID   uuid.UUID `json:"tenant_id"`
-	OutboxID   uuid.UUID `json:"outbox_id"`   // FK to finance_audit_outbox
-	Sequence   int64     `json:"sequence"`    // Monotonically increasing per tenant
-	EventType  string    `json:"event_type"`
-	Payload    []byte    `json:"payload"`     // JSON-encoded audit.CreateAuditEventRequest
-	PrevHash   string    `json:"prev_hash"`   // ChainHash of the previous entry; "" for first
-	ChainHash  string    `json:"chain_hash"`  // SHA256(prevHash+eventType+payload+createdAt)
-	CreatedAt  time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	TenantID  uuid.UUID `json:"tenant_id"`
+	OutboxID  uuid.UUID `json:"outbox_id"` // FK to finance_audit_outbox
+	Sequence  int64     `json:"sequence"`  // Monotonically increasing per tenant
+	EventType string    `json:"event_type"`
+	Payload   []byte    `json:"payload"`    // JSON-encoded audit.CreateAuditEventRequest
+	PrevHash  string    `json:"prev_hash"`  // ChainHash of the previous entry; "" for first
+	ChainHash string    `json:"chain_hash"` // SHA256(prevHash+eventType+payload+createdAt)
+	CreatedAt time.Time `json:"created_at"`
 }
 
 // computeChainHash calculates the deterministic chain hash for an entry.
@@ -155,11 +155,11 @@ func (w *AuditChainWriter) AppendDelivered(ctx context.Context, outboxID uuid.UU
 
 // ChainVerificationReport summarises the result of a hash-chain verification scan.
 type ChainVerificationReport struct {
-	TenantID      uuid.UUID         `json:"tenant_id"`
-	TotalEntries  int64             `json:"total_entries"`
-	Violations    []ChainViolation  `json:"violations,omitempty"`
-	Healthy       bool              `json:"healthy"`
-	VerifiedAt    time.Time         `json:"verified_at"`
+	TenantID     uuid.UUID        `json:"tenant_id"`
+	TotalEntries int64            `json:"total_entries"`
+	Violations   []ChainViolation `json:"violations,omitempty"`
+	Healthy      bool             `json:"healthy"`
+	VerifiedAt   time.Time        `json:"verified_at"`
 }
 
 // ChainViolation describes a single detected tamper or gap in the audit chain.
@@ -265,10 +265,10 @@ func (v *AuditChainVerifier) VerifyChain(ctx context.Context, fromSeq, toSeq int
 	report.Healthy = len(report.Violations) == 0
 	if !report.Healthy {
 		logger.ErrorContext(ctx, "audit chain: verification FAILED — tamper or deletion detected", logger.Fields{
-			"tenant_id":       tenantID.String(),
-			"violations":      len(report.Violations),
-			"from_seq":        fromSeq,
-			"to_seq":          toSeq,
+			"tenant_id":  tenantID.String(),
+			"violations": len(report.Violations),
+			"from_seq":   fromSeq,
+			"to_seq":     toSeq,
 		})
 	}
 	return report, nil

@@ -61,8 +61,8 @@ type WizardBuilder struct{ base }
 // Wizard creates a multi-step wizard. api is the final submit endpoint.
 func Wizard(api string) *WizardBuilder {
 	b := &WizardBuilder{base{s: M{
-		"type": "wizard",
-		"api":  api,
+		"type":  "wizard",
+		"api":   api,
 		"steps": A{},
 	}}}
 	return b
@@ -149,12 +149,12 @@ func SelectOpt(label string, value any) M {
 // SelectAPIField creates a select whose options are loaded from an API.
 func SelectAPIField(name, label, api string) M {
 	return M{
-		"type":          "select",
-		"name":          name,
-		"label":         label,
-		"source":        api,
-		"labelField":    "label",
-		"valueField":    "value",
+		"type":       "select",
+		"name":       name,
+		"label":      label,
+		"source":     api,
+		"labelField": "label",
+		"valueField": "value",
 	}
 }
 

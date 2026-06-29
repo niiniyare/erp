@@ -29,18 +29,18 @@ import (
 // stubTxnRepo is a minimal TransactionRepository stub. Only methods populated
 // via function fields are live; all others panic so unexpected calls fail loudly.
 type stubTxnRepo struct {
-	fnGetByID              func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
-	fnCreate               func(ctx context.Context, t *domain.Transaction) error
-	fnUpdate               func(ctx context.Context, t *domain.Transaction) error
-	fnDelete               func(ctx context.Context, id uuid.UUID) error
-	fnList                 func(ctx context.Context, f *domain.TransactionFilter) ([]*domain.Transaction, error)
-	fnPost                 func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time) error
-	fnApprove              func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, notes *string) error
-	fnReject               func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, r domain.RejectionReason, notes *string) error
-	fnReverse              func(ctx context.Context, origID, revID uuid.UUID, reason string) error
-	fnIsUnique             func(ctx context.Context, eid *uuid.UUID, num string, excl *uuid.UUID) (bool, error)
-	fnGetByNumber          func(ctx context.Context, eid *uuid.UUID, num string) (*domain.Transaction, error)
-	fnGetEntriesByTxn      func(ctx context.Context, id uuid.UUID) ([]domain.TransactionEntry, error)
+	fnGetByID         func(ctx context.Context, id uuid.UUID) (*domain.Transaction, error)
+	fnCreate          func(ctx context.Context, t *domain.Transaction) error
+	fnUpdate          func(ctx context.Context, t *domain.Transaction) error
+	fnDelete          func(ctx context.Context, id uuid.UUID) error
+	fnList            func(ctx context.Context, f *domain.TransactionFilter) ([]*domain.Transaction, error)
+	fnPost            func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time) error
+	fnApprove         func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, notes *string) error
+	fnReject          func(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, r domain.RejectionReason, notes *string) error
+	fnReverse         func(ctx context.Context, origID, revID uuid.UUID, reason string) error
+	fnIsUnique        func(ctx context.Context, eid *uuid.UUID, num string, excl *uuid.UUID) (bool, error)
+	fnGetByNumber     func(ctx context.Context, eid *uuid.UUID, num string) (*domain.Transaction, error)
+	fnGetEntriesByTxn func(ctx context.Context, id uuid.UUID) ([]domain.TransactionEntry, error)
 }
 
 func (s *stubTxnRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
@@ -49,129 +49,161 @@ func (s *stubTxnRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Transa
 	}
 	panic("stubTxnRepo.GetByID not expected")
 }
+
 func (s *stubTxnRepo) Create(ctx context.Context, t *domain.Transaction) error {
 	if s.fnCreate != nil {
 		return s.fnCreate(ctx, t)
 	}
 	panic("stubTxnRepo.Create not expected")
 }
+
 func (s *stubTxnRepo) Update(ctx context.Context, t *domain.Transaction) error {
 	if s.fnUpdate != nil {
 		return s.fnUpdate(ctx, t)
 	}
 	panic("stubTxnRepo.Update not expected")
 }
+
 func (s *stubTxnRepo) Delete(ctx context.Context, id uuid.UUID) error {
 	if s.fnDelete != nil {
 		return s.fnDelete(ctx, id)
 	}
 	panic("stubTxnRepo.Delete not expected")
 }
+
 func (s *stubTxnRepo) List(ctx context.Context, f *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	if s.fnList != nil {
 		return s.fnList(ctx, f)
 	}
 	panic("stubTxnRepo.List not expected")
 }
+
 func (s *stubTxnRepo) Count(ctx context.Context, f *domain.TransactionFilter) (int64, error) {
 	panic("stubTxnRepo.Count not expected")
 }
+
 func (s *stubTxnRepo) ListByAccount(ctx context.Context, accountID uuid.UUID, f *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	panic("stubTxnRepo.ListByAccount not expected")
 }
+
 func (s *stubTxnRepo) ListByDateRange(ctx context.Context, start, end time.Time) ([]*domain.Transaction, error) {
 	panic("stubTxnRepo.ListByDateRange not expected")
 }
+
 func (s *stubTxnRepo) GetByStatus(ctx context.Context, status domain.TransactionStatus, limit int) ([]*domain.Transaction, error) {
 	panic("stubTxnRepo.GetByStatus not expected")
 }
+
 func (s *stubTxnRepo) GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*domain.Transaction, error) {
 	panic("stubTxnRepo.GetPendingApproval not expected")
 }
+
 func (s *stubTxnRepo) GetRecurringTransactions(ctx context.Context, due time.Time) ([]*domain.Transaction, error) {
 	panic("stubTxnRepo.GetRecurringTransactions not expected")
 }
+
 func (s *stubTxnRepo) UpdateNextRecurringDate(ctx context.Context, id uuid.UUID, next time.Time) error {
 	panic("stubTxnRepo.UpdateNextRecurringDate not expected")
 }
+
 func (s *stubTxnRepo) CreateEntry(ctx context.Context, e *domain.TransactionEntry) error {
 	panic("stubTxnRepo.CreateEntry not expected")
 }
+
 func (s *stubTxnRepo) CreateEntries(ctx context.Context, ee []*domain.TransactionEntry) error {
 	panic("stubTxnRepo.CreateEntries not expected")
 }
+
 func (s *stubTxnRepo) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
 	panic("stubTxnRepo.GetEntryByID not expected")
 }
+
 func (s *stubTxnRepo) GetEntriesByTransaction(ctx context.Context, id uuid.UUID) ([]domain.TransactionEntry, error) {
 	if s.fnGetEntriesByTxn != nil {
 		return s.fnGetEntriesByTxn(ctx, id)
 	}
 	panic("stubTxnRepo.GetEntriesByTransaction not expected")
 }
+
 func (s *stubTxnRepo) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, f *domain.EntryFilter) ([]domain.TransactionEntry, error) {
 	panic("stubTxnRepo.GetEntriesByAccount not expected")
 }
+
 func (s *stubTxnRepo) UpdateEntry(ctx context.Context, e *domain.TransactionEntry) error {
 	panic("stubTxnRepo.UpdateEntry not expected")
 }
+
 func (s *stubTxnRepo) DeleteEntry(ctx context.Context, id uuid.UUID) error {
 	panic("stubTxnRepo.DeleteEntry not expected")
 }
+
 func (s *stubTxnRepo) SearchEntries(ctx context.Context, q string, f *domain.EntryFilter, limit, offset int) ([]*domain.TransactionEntry, error) {
 	panic("stubTxnRepo.SearchEntries not expected")
 }
+
 func (s *stubTxnRepo) UpdateReconciliationStatus(ctx context.Context, id uuid.UUID, reconciled bool, date *time.Time, ref *string) error {
 	panic("stubTxnRepo.UpdateReconciliationStatus not expected")
 }
+
 func (s *stubTxnRepo) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoff *time.Time) ([]*domain.TransactionEntry, error) {
 	panic("stubTxnRepo.GetUnreconciledEntries not expected")
 }
+
 func (s *stubTxnRepo) GetEntrySummary(ctx context.Context, accountID uuid.UUID, start, end time.Time) (*domain.TransactionSummary, error) {
 	panic("stubTxnRepo.GetEntrySummary not expected")
 }
+
 func (s *stubTxnRepo) CalculateAccountBalance(ctx context.Context, accountID uuid.UUID, asOf *time.Time) (decimal.Decimal, error) {
 	panic("stubTxnRepo.CalculateAccountBalance not expected")
 }
+
 func (s *stubTxnRepo) GetAccountTransactionSummary(ctx context.Context, accountID uuid.UUID, dr *domain.DateRange) (*domain.TransactionSummary, error) {
 	panic("stubTxnRepo.GetAccountTransactionSummary not expected")
 }
+
 func (s *stubTxnRepo) Post(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time) error {
 	if s.fnPost != nil {
 		return s.fnPost(ctx, id, by, at)
 	}
 	panic("stubTxnRepo.Post not expected")
 }
+
 func (s *stubTxnRepo) Approve(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, notes *string) error {
 	if s.fnApprove != nil {
 		return s.fnApprove(ctx, id, by, at, notes)
 	}
 	panic("stubTxnRepo.Approve not expected")
 }
+
 func (s *stubTxnRepo) Reject(ctx context.Context, id uuid.UUID, by uuid.UUID, at time.Time, r domain.RejectionReason, notes *string) error {
 	if s.fnReject != nil {
 		return s.fnReject(ctx, id, by, at, r, notes)
 	}
 	panic("stubTxnRepo.Reject not expected")
 }
+
 func (s *stubTxnRepo) Reverse(ctx context.Context, origID, revID uuid.UUID, reason string) error {
 	if s.fnReverse != nil {
 		return s.fnReverse(ctx, origID, revID, reason)
 	}
 	panic("stubTxnRepo.Reverse not expected")
 }
+
 func (s *stubTxnRepo) IsTransactionNumberUnique(ctx context.Context, eid *uuid.UUID, num string, excl *uuid.UUID) (bool, error) {
 	if s.fnIsUnique != nil {
 		return s.fnIsUnique(ctx, eid, num, excl)
 	}
 	panic("stubTxnRepo.IsTransactionNumberUnique not expected")
 }
+
 func (s *stubTxnRepo) ValidateAccountsExist(ctx context.Context, ids []uuid.UUID) error {
 	panic("stubTxnRepo.ValidateAccountsExist not expected")
 }
+
 func (s *stubTxnRepo) GetNextTransactionNumber(ctx context.Context, eid *uuid.UUID, tt domain.TransactionType) (string, error) {
 	panic("stubTxnRepo.GetNextTransactionNumber not expected")
 }
+
 func (s *stubTxnRepo) GetByNumber(ctx context.Context, eid *uuid.UUID, num string) (*domain.Transaction, error) {
 	if s.fnGetByNumber != nil {
 		return s.fnGetByNumber(ctx, eid, num)
@@ -181,7 +213,7 @@ func (s *stubTxnRepo) GetByNumber(ctx context.Context, eid *uuid.UUID, num strin
 
 // stubAccountRepo is a minimal AccountsRepository stub.
 type stubAccountRepo struct {
-	fnGetByID          func(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
+	fnGetByID           func(ctx context.Context, id uuid.UUID) (*domain.Accounts, error)
 	fnGetAccountBalance func(ctx context.Context, id uuid.UUID, asOf *time.Time) (*domain.AccountBalance, error)
 	fnUpdateBalance     func(ctx context.Context, id uuid.UUID, b domain.AccountBalance) error
 }
@@ -194,82 +226,178 @@ func (s *stubAccountRepo) GetByID(ctx context.Context, id uuid.UUID) (*domain.Ac
 }
 
 // All other AccountsRepository methods panic — not needed for these tests.
-func (s *stubAccountRepo) Create(ctx context.Context, a *domain.Accounts) error              { panic("not expected") }
-func (s *stubAccountRepo) GetByCode(ctx context.Context, eid *uuid.UUID, code string) (*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) Update(ctx context.Context, a *domain.Accounts) error              { panic("not expected") }
-func (s *stubAccountRepo) Delete(ctx context.Context, id uuid.UUID) error                    { panic("not expected") }
-func (s *stubAccountRepo) List(ctx context.Context, f *domain.AccountFilter) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) Count(ctx context.Context, f *domain.AccountFilter) (int64, error) { panic("not expected") }
-func (s *stubAccountRepo) ListByParent(ctx context.Context, pid uuid.UUID) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) ListByRootType(ctx context.Context, rt domain.RootType) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountPath(ctx context.Context, id uuid.UUID) ([]domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) ValidateHierarchy(ctx context.Context, id, pid uuid.UUID) error    { panic("not expected") }
+func (s *stubAccountRepo) Create(ctx context.Context, a *domain.Accounts) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetByCode(ctx context.Context, eid *uuid.UUID, code string) (*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) Update(ctx context.Context, a *domain.Accounts) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) Delete(ctx context.Context, id uuid.UUID) error { panic("not expected") }
+func (s *stubAccountRepo) List(ctx context.Context, f *domain.AccountFilter) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) Count(ctx context.Context, f *domain.AccountFilter) (int64, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ListByParent(ctx context.Context, pid uuid.UUID) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ListByRootType(ctx context.Context, rt domain.RootType) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountHierarchy(ctx context.Context, rootID uuid.UUID) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountPath(ctx context.Context, id uuid.UUID) ([]domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ValidateHierarchy(ctx context.Context, id, pid uuid.UUID) error {
+	panic("not expected")
+}
 func (s *stubAccountRepo) GetAccountBalance(ctx context.Context, id uuid.UUID, asOf *time.Time) (*domain.AccountBalance, error) {
 	if s.fnGetAccountBalance != nil {
 		return s.fnGetAccountBalance(ctx, id, asOf)
 	}
 	panic("not expected")
 }
-func (s *stubAccountRepo) GetAccountBalances(ctx context.Context, ids []uuid.UUID, asOf *time.Time) ([]*domain.AccountBalance, error) { panic("not expected") }
-func (s *stubAccountRepo) GetTrialBalance(ctx context.Context, eid *uuid.UUID, asOf *time.Time) ([]*domain.TrialBalanceEntry, error) { panic("not expected") }
-func (s *stubAccountRepo) GetActiveAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) GetControlAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountsByType(ctx context.Context, t string, rt *domain.RootType) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) Search(ctx context.Context, q string, limit int) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) ValidateAccountCode(ctx context.Context, code string, excl *uuid.UUID) error { panic("not expected") }
-func (s *stubAccountRepo) IsAccountCodeUnique(ctx context.Context, eid *uuid.UUID, code string, excl *uuid.UUID) (bool, error) { panic("not expected") }
-func (s *stubAccountRepo) HasChildren(ctx context.Context, id uuid.UUID) (bool, error)        { panic("not expected") }
-func (s *stubAccountRepo) GetChildren(ctx context.Context, id uuid.UUID) ([]*domain.Accounts, error) { panic("not expected") }
-func (s *stubAccountRepo) HasTransactions(ctx context.Context, id uuid.UUID) (bool, error)    { panic("not expected") }
+func (s *stubAccountRepo) GetAccountBalances(ctx context.Context, ids []uuid.UUID, asOf *time.Time) ([]*domain.AccountBalance, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetTrialBalance(ctx context.Context, eid *uuid.UUID, asOf *time.Time) ([]*domain.TrialBalanceEntry, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetActiveAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetControlAccounts(ctx context.Context, eid *uuid.UUID) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountsByType(ctx context.Context, t string, rt *domain.RootType) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) Search(ctx context.Context, q string, limit int) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ValidateAccountCode(ctx context.Context, code string, excl *uuid.UUID) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) IsAccountCodeUnique(ctx context.Context, eid *uuid.UUID, code string, excl *uuid.UUID) (bool, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) HasChildren(ctx context.Context, id uuid.UUID) (bool, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetChildren(ctx context.Context, id uuid.UUID) ([]*domain.Accounts, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) HasTransactions(ctx context.Context, id uuid.UUID) (bool, error) {
+	panic("not expected")
+}
 func (s *stubAccountRepo) UpdateBalance(ctx context.Context, id uuid.UUID, b domain.AccountBalance) error {
 	if s.fnUpdateBalance != nil {
 		return s.fnUpdateBalance(ctx, id, b)
 	}
 	panic("not expected")
 }
-func (s *stubAccountRepo) CreateAccountGroup(ctx context.Context, g *domain.AccountGroup) error { panic("not expected") }
-func (s *stubAccountRepo) GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountGroupByCode(ctx context.Context, code string, eid *uuid.UUID) (*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) UpdateAccountGroup(ctx context.Context, id uuid.UUID, g *domain.AccountGroup) error { panic("not expected") }
-func (s *stubAccountRepo) DeleteAccountGroup(ctx context.Context, id uuid.UUID, eid *uuid.UUID) error { panic("not expected") }
-func (s *stubAccountRepo) ListAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) ([]*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) CountAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) (int64, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountGroupHierarchy(ctx context.Context, rootID *uuid.UUID, eid *uuid.UUID) ([]*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) GetGroupsByFinancialStatement(ctx context.Context, st string, eid *uuid.UUID) ([]*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) GetGroupsByCashFlowCategory(ctx context.Context, cat string, eid *uuid.UUID) ([]*domain.AccountGroup, error) { panic("not expected") }
-func (s *stubAccountRepo) ValidateAccountGroupCode(ctx context.Context, code string, excl *uuid.UUID, eid *uuid.UUID) error { panic("not expected") }
-func (s *stubAccountRepo) GetAccountChildrenHierarchy(ctx context.Context, pid uuid.UUID) ([]*domain.AccountHierarchy, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountSubtree(ctx context.Context, id uuid.UUID) ([]*domain.AccountHierarchy, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountsWithRecentActivity(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) { panic("not expected") }
-func (s *stubAccountRepo) GetStaleAccountBalances(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) { panic("not expected") }
-func (s *stubAccountRepo) GetAccountActivitySummary(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error) { panic("not expected") }
+func (s *stubAccountRepo) CreateAccountGroup(ctx context.Context, g *domain.AccountGroup) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountGroupByID(ctx context.Context, id uuid.UUID) (*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountGroupByCode(ctx context.Context, code string, eid *uuid.UUID) (*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) UpdateAccountGroup(ctx context.Context, id uuid.UUID, g *domain.AccountGroup) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) DeleteAccountGroup(ctx context.Context, id uuid.UUID, eid *uuid.UUID) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ListAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) ([]*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) CountAccountGroups(ctx context.Context, f *domain.AccountGroupFilter) (int64, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountGroupHierarchy(ctx context.Context, rootID *uuid.UUID, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetGroupsByFinancialStatement(ctx context.Context, st string, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetGroupsByCashFlowCategory(ctx context.Context, cat string, eid *uuid.UUID) ([]*domain.AccountGroup, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) ValidateAccountGroupCode(ctx context.Context, code string, excl *uuid.UUID, eid *uuid.UUID) error {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountChildrenHierarchy(ctx context.Context, pid uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountSubtree(ctx context.Context, id uuid.UUID) ([]*domain.AccountHierarchy, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountsWithRecentActivity(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetStaleAccountBalances(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivity, error) {
+	panic("not expected")
+}
+func (s *stubAccountRepo) GetAccountActivitySummary(ctx context.Context, f *domain.AccountActivityFilter) ([]*domain.AccountActivitySummary, error) {
+	panic("not expected")
+}
 
 // stubEntryService is a minimal TransactionEntryService stub.
 type stubEntryService struct {
 	fnGetEntriesByTxnID func(ctx context.Context, id uuid.UUID) ([]*domain.TransactionEntry, error)
 }
 
-func (s *stubEntryService) CreateEntry(ctx context.Context, e *domain.TransactionEntry) error { panic("not expected") }
-func (s *stubEntryService) CreateEntries(ctx context.Context, ee []*domain.TransactionEntry) error { panic("not expected") }
-func (s *stubEntryService) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) { panic("not expected") }
+func (s *stubEntryService) CreateEntry(ctx context.Context, e *domain.TransactionEntry) error {
+	panic("not expected")
+}
+func (s *stubEntryService) CreateEntries(ctx context.Context, ee []*domain.TransactionEntry) error {
+	panic("not expected")
+}
+func (s *stubEntryService) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
+	panic("not expected")
+}
 func (s *stubEntryService) GetEntriesByTransactionID(ctx context.Context, id uuid.UUID) ([]*domain.TransactionEntry, error) {
 	if s.fnGetEntriesByTxnID != nil {
 		return s.fnGetEntriesByTxnID(ctx, id)
 	}
 	panic("stubEntryService.GetEntriesByTransactionID not expected")
 }
-func (s *stubEntryService) UpdateEntry(ctx context.Context, id uuid.UUID, req domain.TransactionEntry) (*domain.TransactionEntry, error) { panic("not expected") }
-func (s *stubEntryService) DeleteEntry(ctx context.Context, id uuid.UUID) error { panic("not expected") }
-func (s *stubEntryService) GetEntriesByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*domain.TransactionEntry, error) { panic("not expected") }
-func (s *stubEntryService) SearchEntries(ctx context.Context, q string, f *domain.EntryFilter, limit, offset int) ([]*domain.TransactionEntry, error) { panic("not expected") }
-func (s *stubEntryService) ReconcileEntries(ctx context.Context, ids []uuid.UUID, ref string) error { panic("not expected") }
-func (s *stubEntryService) UnreconcileEntries(ctx context.Context, ids []uuid.UUID) error { panic("not expected") }
-func (s *stubEntryService) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoff *time.Time) ([]*domain.TransactionEntry, error) { panic("not expected") }
+func (s *stubEntryService) UpdateEntry(ctx context.Context, id uuid.UUID, req domain.TransactionEntry) (*domain.TransactionEntry, error) {
+	panic("not expected")
+}
+func (s *stubEntryService) DeleteEntry(ctx context.Context, id uuid.UUID) error {
+	panic("not expected")
+}
+func (s *stubEntryService) GetEntriesByAccountID(ctx context.Context, accountID uuid.UUID, limit, offset int) ([]*domain.TransactionEntry, error) {
+	panic("not expected")
+}
+func (s *stubEntryService) SearchEntries(ctx context.Context, q string, f *domain.EntryFilter, limit, offset int) ([]*domain.TransactionEntry, error) {
+	panic("not expected")
+}
+func (s *stubEntryService) ReconcileEntries(ctx context.Context, ids []uuid.UUID, ref string) error {
+	panic("not expected")
+}
+func (s *stubEntryService) UnreconcileEntries(ctx context.Context, ids []uuid.UUID) error {
+	panic("not expected")
+}
+func (s *stubEntryService) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoff *time.Time) ([]*domain.TransactionEntry, error) {
+	panic("not expected")
+}
 func (s *stubEntryService) ValidateEntryConsistency(ctx context.Context, entry *domain.TransactionEntry) ([]domain.ValidationError, error) {
 	panic("not expected")
 }
-func (s *stubEntryService) GetEntrySummary(ctx context.Context, accountID uuid.UUID, start, end time.Time) (*domain.TransactionSummary, error) { panic("not expected") }
+func (s *stubEntryService) GetEntrySummary(ctx context.Context, accountID uuid.UUID, start, end time.Time) (*domain.TransactionSummary, error) {
+	panic("not expected")
+}
 
 // newSvc builds a TransactionService with stub deps.
 // nil for unused optional params (auditWriter, safetyEnforcer, anomalyDetector).
@@ -377,11 +505,11 @@ func TestApproveTransaction_SODViolation(t *testing.T) {
 	repo := &stubTxnRepo{
 		fnGetByID: func(_ context.Context, _ uuid.UUID) (*domain.Transaction, error) {
 			return &domain.Transaction{
-				ID:              txnID,
-				TenantID:        uuid.New(),
-				CreatedBy:       userID, // same as caller
+				ID:               txnID,
+				TenantID:         uuid.New(),
+				CreatedBy:        userID, // same as caller
 				ApprovalRequired: true,
-				ApprovalStatus:  domain.ApprovalStatusPending,
+				ApprovalStatus:   domain.ApprovalStatusPending,
 			}, nil
 		},
 		// Approve must NOT be reached.
@@ -410,11 +538,11 @@ func TestRejectTransaction_SODViolation(t *testing.T) {
 	repo := &stubTxnRepo{
 		fnGetByID: func(_ context.Context, _ uuid.UUID) (*domain.Transaction, error) {
 			return &domain.Transaction{
-				ID:              txnID,
-				TenantID:        uuid.New(),
-				CreatedBy:       userID, // same user
+				ID:               txnID,
+				TenantID:         uuid.New(),
+				CreatedBy:        userID, // same user
 				ApprovalRequired: true,
-				ApprovalStatus:  domain.ApprovalStatusPending,
+				ApprovalStatus:   domain.ApprovalStatusPending,
 			}, nil
 		},
 	}
@@ -750,11 +878,11 @@ func TestApproveTransaction_NotPendingApproval_Rejected(t *testing.T) {
 		repo := &stubTxnRepo{
 			fnGetByID: func(_ context.Context, _ uuid.UUID) (*domain.Transaction, error) {
 				return &domain.Transaction{
-					ID:              txnID,
-					TenantID:        uuid.New(),
-					CreatedBy:       uuid.New(), // different from approver
+					ID:               txnID,
+					TenantID:         uuid.New(),
+					CreatedBy:        uuid.New(), // different from approver
 					ApprovalRequired: approvalStatus != domain.ApprovalStatusNotRequired,
-					ApprovalStatus:  approvalStatus,
+					ApprovalStatus:   approvalStatus,
 				}, nil
 			},
 		}

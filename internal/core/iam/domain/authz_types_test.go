@@ -12,9 +12,9 @@ import (
 func TestSubjectBuilders(t *testing.T) {
 	id := "abc-123"
 	cases := []struct {
-		name    string
-		got     string
-		want    string
+		name string
+		got  string
+		want string
 	}{
 		{"PlatformSubject", PlatformSubject(id), "platform:abc-123"},
 		{"TenantSubject", TenantSubject(id), "tenant:abc-123"},

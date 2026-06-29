@@ -159,8 +159,8 @@ func UserScreen(sess ui.UISessionContext) ast.Node {
 									ast.InputTextNode{Name: "display_name", Label: "Display Name", Required: true},
 									ast.InputTextNode{Name: "email", Label: "Email", Required: true},
 									ast.SelectNode{
-										Name:    "status",
-										Label:   "Status",
+										Name:  "status",
+										Label: "Status",
 										Options: []ast.SelectOption{
 											{Label: "Active", Value: "active"},
 											{Label: "Suspended", Value: "suspended"},

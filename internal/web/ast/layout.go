@@ -84,8 +84,10 @@ func (p PageNode) Children() []Node {
 	return mergeNodeSlices(p.Body, p.AsideBody, p.Toolbar)
 }
 
-var _ Node = PageNode{}
-var _ ContainerNode = PageNode{}
+var (
+	_ Node          = PageNode{}
+	_ ContainerNode = PageNode{}
+)
 
 // ─── GridNode ─────────────────────────────────────────────────────────────────
 
@@ -151,8 +153,10 @@ func (g GridNode) Children() []Node {
 	return all
 }
 
-var _ Node = GridNode{}
-var _ ContainerNode = GridNode{}
+var (
+	_ Node          = GridNode{}
+	_ ContainerNode = GridNode{}
+)
 
 // ─── FlexNode ─────────────────────────────────────────────────────────────────
 
@@ -206,8 +210,10 @@ func (f FlexNode) Compile() ui.M {
 
 func (f FlexNode) Children() []Node { return f.Items }
 
-var _ Node = FlexNode{}
-var _ ContainerNode = FlexNode{}
+var (
+	_ Node          = FlexNode{}
+	_ ContainerNode = FlexNode{}
+)
 
 // ─── TabsNode ─────────────────────────────────────────────────────────────────
 
@@ -298,8 +304,10 @@ func (t TabsNode) Children() []Node {
 	return all
 }
 
-var _ Node = TabsNode{}
-var _ ContainerNode = TabsNode{}
+var (
+	_ Node          = TabsNode{}
+	_ ContainerNode = TabsNode{}
+)
 
 // ─── SplitPaneNode ────────────────────────────────────────────────────────────
 
@@ -356,8 +364,10 @@ func (s SplitPaneNode) Children() []Node {
 	return nodes
 }
 
-var _ Node = SplitPaneNode{}
-var _ ContainerNode = SplitPaneNode{}
+var (
+	_ Node          = SplitPaneNode{}
+	_ ContainerNode = SplitPaneNode{}
+)
 
 // ─── SectionNode ─────────────────────────────────────────────────────────────
 
@@ -369,7 +379,7 @@ var _ ContainerNode = SplitPaneNode{}
 type SectionNode struct {
 	Title     string
 	Body      []Node
-	Collapsed bool   // initial collapsed state
+	Collapsed bool // initial collapsed state
 	CSSClass  string
 }
 
@@ -400,8 +410,10 @@ func (s SectionNode) Compile() ui.M {
 
 func (s SectionNode) Children() []Node { return s.Body }
 
-var _ Node = SectionNode{}
-var _ ContainerNode = SectionNode{}
+var (
+	_ Node          = SectionNode{}
+	_ ContainerNode = SectionNode{}
+)
 
 // ─── NavNode ──────────────────────────────────────────────────────────────────
 
@@ -410,27 +422,27 @@ var _ ContainerNode = SectionNode{}
 //
 // Required: at least one Link.
 type NavNode struct {
-	Links      []NavLink
+	Links []NavLink
 	// Stacked renders links vertically (true) or horizontally (false, default).
-	Stacked    bool
+	Stacked bool
 	// Accordion makes only one sub-menu expandable at a time.
-	Accordion  bool
+	Accordion bool
 	// VisibleOn is a boolean AMIS expression controlling visibility.
-	VisibleOn  string
+	VisibleOn string
 }
 
 // NavLink is a single item (or group) in a NavNode.
 type NavLink struct {
 	// Label is the display text. Required.
-	Label    string
+	Label string
 	// To is the navigation target URL or hash route.
-	To       string
+	To string
 	// Icon is an optional icon class (e.g. "fa fa-home").
-	Icon     string
+	Icon string
 	// Children are nested sub-links (creates a collapsible group).
 	Children []NavLink
 	// Active is an AMIS expression; marks the link as active when truthy.
-	Active   string
+	Active string
 }
 
 func (n NavNode) NodeType() string { return "nav" }
@@ -499,9 +511,9 @@ type BreadcrumbItem struct {
 	// Label is the display text. Required.
 	Label string
 	// Href is an optional URL. Leave empty for the current (last) item.
-	Href  string
+	Href string
 	// Icon is an optional icon class.
-	Icon  string
+	Icon string
 }
 
 func (b BreadcrumbNode) NodeType() string { return "breadcrumb" }

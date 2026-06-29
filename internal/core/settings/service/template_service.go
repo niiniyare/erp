@@ -6,13 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/audit"
 	"awo.so/internal/core/settings/domain"
 	"awo.so/internal/core/settings/repository"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // TemplateService provides business logic for template management

@@ -3,8 +3,8 @@ package repository
 import (
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/core/finance/domain"
+	"github.com/google/uuid"
 )
 
 // AccountFilter defines filtering options for chart of accounts queries

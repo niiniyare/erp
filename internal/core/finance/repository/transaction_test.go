@@ -36,14 +36,14 @@ import (
 
 type TransactionRepoSuite struct {
 	suite.Suite
-	req      *require.Assertions
-	pool     *pgxpool.Pool
-	store    db.Store
-	repo     domain.TransactionRepository
-	tenantA  uuid.UUID
-	tenantB  uuid.UUID
-	userID   uuid.UUID // valid user ID for created_by FK
-	ctx      context.Context
+	req     *require.Assertions
+	pool    *pgxpool.Pool
+	store   db.Store
+	repo    domain.TransactionRepository
+	tenantA uuid.UUID
+	tenantB uuid.UUID
+	userID  uuid.UUID // valid user ID for created_by FK
+	ctx     context.Context
 }
 
 func TestTransactionRepoSuite(t *testing.T) {

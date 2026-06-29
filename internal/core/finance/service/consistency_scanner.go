@@ -173,12 +173,12 @@ func (s *FinancialConsistencyScanner) ScanSystem(
 	s.emitScanMetrics(ctx, report)
 
 	logger.InfoContext(ctx, "financial consistency scan complete", logger.Fields{
-		"tenant_id":        tenantID.String(),
-		"txns_scanned":     report.LedgerTxnCount,
-		"entries_scanned":  report.LedgerEntryCount,
-		"coa_accounts":     report.COAAccountCount,
-		"violations":       len(report.Violations),
-		"healthy":          report.Healthy,
+		"tenant_id":       tenantID.String(),
+		"txns_scanned":    report.LedgerTxnCount,
+		"entries_scanned": report.LedgerEntryCount,
+		"coa_accounts":    report.COAAccountCount,
+		"violations":      len(report.Violations),
+		"healthy":         report.Healthy,
 	})
 
 	return report, nil

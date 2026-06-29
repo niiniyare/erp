@@ -259,7 +259,7 @@ func TestAccountStatus_ReactivationPaths(t *testing.T) {
 		{domain.AccountStatusAuditLock, true},
 		{domain.AccountStatusComplianceHold, true},
 		{domain.AccountStatusClosed, false},   // closed is terminal
-		{domain.AccountStatusArchived, false},  // archived is terminal
+		{domain.AccountStatusArchived, false}, // archived is terminal
 	}
 
 	for _, tc := range tests {
@@ -309,10 +309,10 @@ func TestBudgetStatus_Editability(t *testing.T) {
 		editable bool
 	}{
 		{domain.BudgetStatusDraft, true},
-		{domain.BudgetStatusRejected, true},   // can be corrected after rejection
+		{domain.BudgetStatusRejected, true}, // can be corrected after rejection
 		{domain.BudgetStatusSubmitted, false},
 		{domain.BudgetStatusApproved, false},
-		{domain.BudgetStatusRevised, false},   // creates a new version
+		{domain.BudgetStatusRevised, false}, // creates a new version
 		{domain.BudgetStatusClosed, false},
 	}
 

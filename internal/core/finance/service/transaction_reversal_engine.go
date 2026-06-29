@@ -192,12 +192,12 @@ type ReversalRecord struct {
 
 // transactionReversalEngine implements TransactionReversalEngine
 type transactionReversalEngine struct {
-	transactionRepository  domain.TransactionRepository
-	reversalHistoryRepo    domain.ReversalHistoryRepository
-	numberingService       TransactionNumberingService
-	postingEngine          TransactionPostingEngine
-	validator              DoubleEntryValidator
-	tracing                tracing.Service
+	transactionRepository domain.TransactionRepository
+	reversalHistoryRepo   domain.ReversalHistoryRepository
+	numberingService      TransactionNumberingService
+	postingEngine         TransactionPostingEngine
+	validator             DoubleEntryValidator
+	tracing               tracing.Service
 }
 
 // TransactionReversalEngineDeps represents dependencies for the reversal engine

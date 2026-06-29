@@ -178,7 +178,7 @@ func TestIntegrity_DepthExceeded_Detected(t *testing.T) {
 func TestIntegrity_DeadAccount_Flagged(t *testing.T) {
 	dead := baseAccount("10010001", domain.AccountStatusActive)
 	dead.CreatedAt = time.Now().Add(-2 * 365 * 24 * time.Hour) // 2 years old
-	dead.LastTransactionDate = nil                              // never transacted
+	dead.LastTransactionDate = nil                             // never transacted
 	// Default dead threshold = 1 year, so this account should be flagged.
 
 	repo := newIntegrityRepo(dead)

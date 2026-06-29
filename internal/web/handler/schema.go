@@ -93,11 +93,11 @@ func (h *SchemaHandler) Handle(c *fiber.Ctx) error {
 
 	// opCtx.Ctx carries the contract.SessionContext — pipeline stages use
 	// contract.FromContext(opCtx.Ctx) to read it. This is the canonical pattern.
-	opCtx.Ctx          = ctx
-	opCtx.TenantID     = sc.TenantID()
-	opCtx.UserID       = sc.UserID()
+	opCtx.Ctx = ctx
+	opCtx.TenantID = sc.TenantID()
+	opCtx.UserID = sc.UserID()
 	opCtx.OperationKey = ui.OperationKey
-	opCtx.Input        = ui.UISchemaInput{Route: route}
+	opCtx.Input = ui.UISchemaInput{Route: route}
 	// Note: opCtx.Session is intentionally NOT set here.
 	// UI stages MUST use contract.FromContext(opCtx.Ctx), not opCtx.Session.
 	// Setting opCtx.Session would require importing internal IAM domain types

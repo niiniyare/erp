@@ -66,9 +66,9 @@ func (d *AuditGapDetector) CheckGaps(ctx context.Context) (*AuditGapReport, erro
 
 	if stale > 0 {
 		logger.WarnContext(ctx, "finance audit gap: stale PENDING outbox entries — delivery worker may be lagging", logger.Fields{
-			"stale_count":  stale,
-			"stale_after":  OutboxStaleDuration.String(),
-			"tenant_id":    tenantID.String(),
+			"stale_count": stale,
+			"stale_after": OutboxStaleDuration.String(),
+			"tenant_id":   tenantID.String(),
 		})
 		d.metrics.IncrementCounter("finance_audit_gap_stale_total", metrics.Fields{})
 	}

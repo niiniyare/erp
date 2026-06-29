@@ -4,13 +4,13 @@ import "errors"
 
 // Validation errors.
 var (
-	ErrTenantNameRequired     = errors.New("tenant name is required")
-	ErrTenantEmailRequired    = errors.New("tenant email is required")
-	ErrInvalidEmail           = errors.New("invalid email format")
-	ErrInvalidSubdomain       = errors.New("invalid subdomain format")
-	ErrInvalidCompanySize     = errors.New("invalid company size")
+	ErrTenantNameRequired      = errors.New("tenant name is required")
+	ErrTenantEmailRequired     = errors.New("tenant email is required")
+	ErrInvalidEmail            = errors.New("invalid email format")
+	ErrInvalidSubdomain        = errors.New("invalid subdomain format")
+	ErrInvalidCompanySize      = errors.New("invalid company size")
 	ErrInvalidAccountingMethod = errors.New("accounting method must be ACCRUAL or CASH")
-	ErrInvalidRequest         = errors.New("invalid request")
+	ErrInvalidRequest          = errors.New("invalid request")
 )
 
 // State & lifecycle errors.

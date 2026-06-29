@@ -145,10 +145,10 @@ var CostCenter = &definition.EntityDefinition{
 
 // Currency is the supported currencies catalogue (global).
 var Currency = &definition.EntityDefinition{
-	Name:    "finance_currency",
-	Label:   "Currency",
-	Table:   "finance_currencies",
-	Module:  "Finance",
+	Name:     "finance_currency",
+	Label:    "Currency",
+	Table:    "finance_currencies",
+	Module:   "Finance",
 	OrgScope: org.ScopeLevelTenant, // tenant-scoped enabled currencies
 	Fields: []*definition.FieldDef{
 		definition.Field("code").OfType(definition.FieldTypeSmallText).WithLabel("Code").

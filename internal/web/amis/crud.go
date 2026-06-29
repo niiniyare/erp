@@ -158,16 +158,16 @@ func (b *ColumnBuilder) Build() Schema { return b.s }
 // api is the PUT endpoint; fields are the form fields to show in the dialog.
 func EditBtn(api string, fields ...M) M {
 	return M{
-		"type":  "button",
-		"label": "Edit",
-		"icon":  "fa fa-pencil",
+		"type":       "button",
+		"label":      "Edit",
+		"icon":       "fa fa-pencil",
 		"actionType": "dialog",
 		"dialog": M{
 			"title": "Edit",
 			"body": M{
-				"type":  "form",
-				"api":   api,
-				"body":  fields,
+				"type": "form",
+				"api":  api,
+				"body": fields,
 			},
 		},
 	}

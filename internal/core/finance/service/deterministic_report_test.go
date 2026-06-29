@@ -47,13 +47,13 @@ func buildSnap(tenantID uuid.UUID, entries ...domain.COASnapshotEntry) *domain.C
 // helper — build a snapshot entry from an account
 func snapEntryFrom(a *domain.Accounts) domain.COASnapshotEntry {
 	return domain.COASnapshotEntry{
-		AccountID:    a.ID,
-		AccountCode:  a.AccountCode,
-		AccountName:  a.AccountName,
-		RootType:     a.RootType,
+		AccountID:     a.ID,
+		AccountCode:   a.AccountCode,
+		AccountName:   a.AccountName,
+		RootType:      a.RootType,
 		NormalBalance: a.NormalBalance,
-		Status:       a.Status,
-		IsActive:     a.IsActive,
+		Status:        a.Status,
+		IsActive:      a.IsActive,
 	}
 }
 

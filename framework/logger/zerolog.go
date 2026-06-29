@@ -32,12 +32,15 @@ func newZerologLogger(cfg Config) (*zerologLogger, error) {
 func (z *zerologLogger) Debug(msg string, fields ...Fields) {
 	z.addFields(z.logger.Debug(), fields...).Msg(msg)
 }
+
 func (z *zerologLogger) Info(msg string, fields ...Fields) {
 	z.addFields(z.logger.Info(), fields...).Msg(msg)
 }
+
 func (z *zerologLogger) Warn(msg string, fields ...Fields) {
 	z.addFields(z.logger.Warn(), fields...).Msg(msg)
 }
+
 func (z *zerologLogger) Error(msg string, fields ...Fields) {
 	z.addFields(z.logger.Error(), fields...).Msg(msg)
 }
@@ -50,12 +53,15 @@ func (z *zerologLogger) Fatal(msg string, fields ...Fields) {
 func (z *zerologLogger) DebugContext(_ context.Context, msg string, fields ...Fields) {
 	z.Debug(msg, fields...)
 }
+
 func (z *zerologLogger) InfoContext(_ context.Context, msg string, fields ...Fields) {
 	z.Info(msg, fields...)
 }
+
 func (z *zerologLogger) WarnContext(_ context.Context, msg string, fields ...Fields) {
 	z.Warn(msg, fields...)
 }
+
 func (z *zerologLogger) ErrorContext(_ context.Context, msg string, fields ...Fields) {
 	z.Error(msg, fields...)
 }

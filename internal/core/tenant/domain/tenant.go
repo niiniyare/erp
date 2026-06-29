@@ -181,7 +181,7 @@ func (t *Tenant) UpdateActivity() {
 
 // Predicates
 
-func (t *Tenant) IsActive() bool     { return t.Status == StatusActive }
+func (t *Tenant) IsActive() bool      { return t.Status == StatusActive }
 func (t *Tenant) IsSuspended() bool   { return t.Status == StatusSuspended }
 func (t *Tenant) IsArchived() bool    { return t.Status == StatusArchived }
 func (t *Tenant) IsSoftDeleted() bool { return t.DeletedAt != nil }

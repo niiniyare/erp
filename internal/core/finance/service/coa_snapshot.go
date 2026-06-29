@@ -94,16 +94,16 @@ func (s *COASnapshotService) CreateSnapshot(
 	entries := make([]domain.COASnapshotEntry, 0, len(accounts))
 	for _, a := range accounts {
 		entry := domain.COASnapshotEntry{
-			AccountID:    a.ID,
-			AccountCode:  a.AccountCode,
-			AccountName:  a.AccountName,
-			RootType:     a.RootType,
+			AccountID:     a.ID,
+			AccountCode:   a.AccountCode,
+			AccountName:   a.AccountName,
+			RootType:      a.RootType,
 			NormalBalance: a.NormalBalance,
-			Status:       a.Status,
-			ParentID:     a.ParentAccountID,
-			AccountLevel: a.AccountLevel,
-			CurrencyCode: a.CurrencyCode,
-			IsActive:     a.IsActive,
+			Status:        a.Status,
+			ParentID:      a.ParentAccountID,
+			AccountLevel:  a.AccountLevel,
+			CurrencyCode:  a.CurrencyCode,
+			IsActive:      a.IsActive,
 		}
 		entries = append(entries, entry)
 	}
@@ -120,15 +120,15 @@ func (s *COASnapshotService) CreateSnapshot(
 
 	now := time.Now().UTC()
 	snap := &domain.COASnapshot{
-		ID:          uuid.New(),
-		TenantID:    tenantID,
-		SnapshotAt:  now,
-		PeriodID:    req.PeriodID,
-		Accounts:    entries,
-		Hash:        hash,
-		EntryCount:  len(entries),
-		CreatedBy:   req.CreatedBy,
-		CreatedAt:   now,
+		ID:         uuid.New(),
+		TenantID:   tenantID,
+		SnapshotAt: now,
+		PeriodID:   req.PeriodID,
+		Accounts:   entries,
+		Hash:       hash,
+		EntryCount: len(entries),
+		CreatedBy:  req.CreatedBy,
+		CreatedAt:  now,
 	}
 
 	if err := s.snapshots.Create(ctx, snap); err != nil {
@@ -138,10 +138,10 @@ func (s *COASnapshotService) CreateSnapshot(
 	s.emitSnapshotCreated(ctx, snap)
 
 	logger.InfoContext(ctx, "COA snapshot created", logger.Fields{
-		"snapshot_id":  snap.ID.String(),
-		"tenant_id":    tenantID.String(),
-		"entry_count":  snap.EntryCount,
-		"hash":         snap.Hash[:16] + "...",
+		"snapshot_id": snap.ID.String(),
+		"tenant_id":   tenantID.String(),
+		"entry_count": snap.EntryCount,
+		"hash":        snap.Hash[:16] + "...",
 	})
 
 	return snap, nil

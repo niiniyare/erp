@@ -39,7 +39,7 @@ import (
 //   - authzSvc: resolves permissions per request via Casbin (required)
 //   - cacheSvc: tenant-aware Redis+memory cache (required; pass nil to disable caching)
 //   - versions: generation-aware cache key components (pass uicache.DefaultVersions()
-//               in tests/dev; production must inject real values from config/env)
+//     in tests/dev; production must inject real values from config/env)
 //   - tracer:   OTel tracing service (optional; nil = no tracing)
 //   - mp:       metrics provider (optional; nil = no metrics)
 //   - log:      structured logger (optional; nil = no logging)

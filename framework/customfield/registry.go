@@ -3,9 +3,11 @@ package customfield
 
 import platformcf "awo.so/framework/platform/customfield"
 
-type LoadFunc = platformcf.LoadFunc
-type SaveFunc = platformcf.SaveFunc
-type Registry = platformcf.Registry
+type (
+	LoadFunc = platformcf.LoadFunc
+	SaveFunc = platformcf.SaveFunc
+	Registry = platformcf.Registry
+)
 
 var (
 	New          = platformcf.New

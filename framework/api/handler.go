@@ -29,7 +29,7 @@ type TenantResolver func(ctx context.Context, slugOrID string) (uuid.UUID, error
 type Handler struct {
 	def            *definition.EntityDefinition
 	store          persistence.TenantStore
-	hooks          *hooks.Executor
+	hooks          *hooks.Runner
 	enforcer       *privacy.Enforcer
 	viewer         ViewerFromCtx
 	tenantResolver TenantResolver
@@ -46,7 +46,7 @@ func NewHandler(
 	h := &Handler{
 		def:      def,
 		store:    store,
-		hooks:    hooks.New(),
+		hooks:    hooks.DefaultRunner,
 		enforcer: privacy.New(),
 		viewer:   viewer,
 	}
@@ -201,7 +201,7 @@ func (h *Handler) create(c *fiber.Ctx) error {
 
 	// RunBeforeValidate fires outside the transaction so hooks can normalise
 	// input before validation (e.g. derive computed fields, trim whitespace).
-	if err := h.hooks.RunBeforeValidate(c.Context(), h.def, mut); err != nil {
+	if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeValidate); err != nil {
 		return fiberErr(err)
 	}
 
@@ -215,13 +215,13 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
-		if err := h.hooks.RunBefore(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeSave); err != nil {
 			return err
 		}
 		if err := es.Create(c.Context(), rec); err != nil {
 			return err
 		}
-		return h.hooks.RunAfter(c.Context(), h.def, mut)
+		return h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave)
 	}); err != nil {
 		return fiberErr(err)
 	}
@@ -266,19 +266,19 @@ func (h *Handler) update(c *fiber.Ctx) error {
 			ActorID:  viewer.ActorID(),
 		}
 
-		if err := h.hooks.RunBeforeValidate(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeValidate); err != nil {
 			return err
 		}
 		if verrs := validate.Run(h.def, rec); verrs != nil {
 			return verrs
 		}
-		if err := h.hooks.RunBefore(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeSave); err != nil {
 			return err
 		}
 		if err := es.Update(c.Context(), rec); err != nil {
 			return err
 		}
-		if err := h.hooks.RunAfter(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave); err != nil {
 			return err
 		}
 		result = recordToMap(rec, h.def)
@@ -321,13 +321,13 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 
 		mut := &definition.Mutation{Op: definition.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
-		if err := h.hooks.RunBeforeDelete(c.Context(), h.def, mut); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, mut, definition.HookBeforeDelete); err != nil {
 			return err
 		}
 		if err := es.Delete(c.Context(), id); err != nil {
 			return err
 		}
-		return h.hooks.RunAfter(c.Context(), h.def, mut)
+		return h.hooks.Run(c.Context(), h.def, mut, definition.HookAfterSave)
 	}); err != nil {
 		return fiberErr(err)
 	}
@@ -463,11 +463,10 @@ type simpleRecord struct {
 	data       map[string]any
 }
 
-func (r *simpleRecord) Get(field string) any        { return r.data[field] }
-func (r *simpleRecord) Set(field string, val any)   { r.data[field] = val }
-func (r *simpleRecord) ID() uuid.UUID               { return r.id }
-func (r *simpleRecord) TenantID() uuid.UUID         { return r.tenantID }
-func (r *simpleRecord) EntityName() string          { return r.entityName }
+func (r *simpleRecord) Get(field string) any      { return r.data[field] }
+func (r *simpleRecord) Set(field string, val any) { r.data[field] = val }
+func (r *simpleRecord) ID() uuid.UUID             { return r.id }
+func (r *simpleRecord) TenantID() uuid.UUID       { return r.tenantID }
+func (r *simpleRecord) EntityName() string        { return r.entityName }
 
 var _ definition.MutableRecord = (*simpleRecord)(nil)
-

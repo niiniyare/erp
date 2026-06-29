@@ -520,30 +520,39 @@ func (r *p16StubAccountRepo) GetAccountGroupByCode(ctx context.Context, code str
 func (r *p16StubAccountRepo) UpdateAccountGroup(ctx context.Context, id uuid.UUID, group *domain.AccountGroup) error {
 	return nil
 }
+
 func (r *p16StubAccountRepo) DeleteAccountGroup(ctx context.Context, id uuid.UUID, entityID *uuid.UUID) error {
 	return nil
 }
+
 func (r *p16StubAccountRepo) ListAccountGroups(ctx context.Context, filter *domain.AccountGroupFilter) ([]*domain.AccountGroup, error) {
 	return nil, nil
 }
+
 func (r *p16StubAccountRepo) CountAccountGroups(ctx context.Context, filter *domain.AccountGroupFilter) (int64, error) {
 	return 0, nil
 }
+
 func (r *p16StubAccountRepo) GetAccountGroupHierarchy(ctx context.Context, rootGroupID *uuid.UUID, entityID *uuid.UUID) ([]*domain.AccountGroup, error) {
 	return nil, nil
 }
+
 func (r *p16StubAccountRepo) GetGroupsByFinancialStatement(ctx context.Context, statementType string, entityID *uuid.UUID) ([]*domain.AccountGroup, error) {
 	return nil, nil
 }
+
 func (r *p16StubAccountRepo) GetGroupsByCashFlowCategory(ctx context.Context, category string, entityID *uuid.UUID) ([]*domain.AccountGroup, error) {
 	return nil, nil
 }
+
 func (r *p16StubAccountRepo) ValidateAccountGroupCode(ctx context.Context, code string, excludeID *uuid.UUID, entityID *uuid.UUID) error {
 	return nil
 }
+
 func (r *p16StubAccountRepo) GetAccountChildrenHierarchy(ctx context.Context, parentAccountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
 	return nil, nil
 }
+
 func (r *p16StubAccountRepo) GetAccountSubtree(ctx context.Context, accountID uuid.UUID) ([]*domain.AccountHierarchy, error) {
 	return nil, nil
 }

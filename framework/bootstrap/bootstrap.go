@@ -18,8 +18,8 @@ import (
 
 	"awo.so/framework/api"
 	"awo.so/framework/definition"
-	"awo.so/framework/org"
-	orgpgstore "awo.so/framework/org/pgstore"
+	platformorg "awo.so/framework/platform/org"
+	platformorgpgorg "awo.so/framework/platform/org/pgorg"
 	"awo.so/framework/persistence/pgstore"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
@@ -46,7 +46,7 @@ type Options struct {
 	// OrgTree is the org unit tree used by AllowWithinOrgScope policies.
 	// When nil, a default PgTree backed by Pool is constructed automatically.
 	// Supply a custom implementation to use caching or a test double.
-	OrgTree org.Tree
+	OrgTree platformorg.Tree
 
 	// TemporalClient enables workflow triggers on entity mutations.
 	// Pass nil to disable workflow integration.
@@ -69,7 +69,7 @@ func Mount(app *fiber.App, opts Options) {
 		opts.ViewerFn = anonymousViewer
 	}
 	if opts.OrgTree == nil {
-		opts.OrgTree = orgpgstore.New(opts.Pool)
+		opts.OrgTree = platformorgpgorg.New(opts.Pool)
 	}
 
 	tenantStore := pgstore.NewTenantStore(opts.Pool)
@@ -107,9 +107,8 @@ func anonymousViewer(c *fiber.Ctx) (definition.ViewerContext, error) {
 
 type anonViewer struct{ tenantID string }
 
-func (v *anonViewer) ActorID() string         { return "anonymous" }
-func (v *anonViewer) TenantID() string        { return v.tenantID }
-func (v *anonViewer) OrgUnitID() uuid.UUID    { return uuid.Nil }
-func (v *anonViewer) OrgScope() org.Scope     { return org.Scope{} }
-func (v *anonViewer) IsSystem() bool          { return false }
-func (v *anonViewer) HasRole(_ string) bool   { return false }
+func (v *anonViewer) ActorID() string       { return "anonymous" }
+func (v *anonViewer) TenantID() string      { return v.tenantID }
+func (v *anonViewer) OrgUnitID() uuid.UUID  { return uuid.Nil }
+func (v *anonViewer) IsSystem() bool        { return false }
+func (v *anonViewer) HasRole(_ string) bool { return false }

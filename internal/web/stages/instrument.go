@@ -7,9 +7,9 @@ import (
 	"go.opentelemetry.io/otel/codes"
 
 	"awo.so/internal/pipeline"
+	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/metrics"
-	sharedErrors "awo.so/internal/shared/errors"
 	"awo.so/internal/shared/tracing"
 	uimetrics "awo.so/internal/web/metrics"
 	"awo.so/internal/web/ui"
@@ -31,12 +31,12 @@ import (
 
 // UIStageAttributes is the canonical set of OTel span attributes emitted per stage.
 type UIStageAttributes struct {
-	StageName   string
-	Route       string
-	TenantID    string
+	StageName    string
+	Route        string
+	TenantID     string
 	OperationKey string
-	CacheHit    bool
-	ASTCompiled bool
+	CacheHit     bool
+	ASTCompiled  bool
 }
 
 func (a UIStageAttributes) toKeyValues() []attribute.KeyValue {

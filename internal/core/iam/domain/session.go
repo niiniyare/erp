@@ -79,7 +79,6 @@ const (
 //
 // Application of entity scope in repositories
 
-//
 //	switch sess.EntityScope.Type {
 //	case domain.EntityScopeAll:
 //	    // no extra WHERE clause; RLS already enforces tenant
@@ -121,7 +120,6 @@ type EntityScope struct {
 //
 // Staleness trade-off
 
-//
 //	Long-lived sessions may see stale configuration if a flag or setting
 //	changes after login.  Mitigate with short session TTLs for
 //	flag-sensitive features, or by adding a "re-resolve configuration"
@@ -192,11 +190,10 @@ func DefaultConfiguration() Configuration {
 //
 // PrincipalID
 
-//
-//	Non-nil for ActorPortal sessions only.  It identifies the external contact
-//	or party record (e.g. a supplier, customer, or employee on a self-service
-//	portal) that this user is operating on behalf of.  Nil for all internal and
-//	platform sessions.
+// Non-nil for ActorPortal sessions only.  It identifies the external contact
+// or party record (e.g. a supplier, customer, or employee on a self-service
+// portal) that this user is operating on behalf of.  Nil for all internal and
+// platform sessions.
 type Session struct {
 	ID            uuid.UUID
 	UserID        uuid.UUID
@@ -264,16 +261,15 @@ func (s *Session) IsValid() bool {
 //
 // PrincipalID
 
-//
-//	Mirrors Session.PrincipalID — non-nil for portal users only.
+// Mirrors Session.PrincipalID — non-nil for portal users only.
 type ResolvedSession struct {
 	UserID        uuid.UUID     `json:"user_id"`
-	UserType      string        `json:"user_type"`                 // persisted enum; always use ActorTypeFromUserType() for authz logic
-	TenantID      uuid.UUID     `json:"tenant_id"`                 // RLS key — set as app.tenant_id in every DB transaction
-	PrincipalID   *uuid.UUID    `json:"principal_id,omitempty"`    // non-nil for portal users; identifies the represented party
+	UserType      string        `json:"user_type"`              // persisted enum; always use ActorTypeFromUserType() for authz logic
+	TenantID      uuid.UUID     `json:"tenant_id"`              // RLS key — set as app.tenant_id in every DB transaction
+	PrincipalID   *uuid.UUID    `json:"principal_id,omitempty"` // non-nil for portal users; identifies the represented party
 	DisplayName   string        `json:"display_name"`
-	EntityScope   EntityScope   `json:"entity_scope"`              // application-layer entity visibility; enforced in service methods
-	Configuration Configuration `json:"configuration"`             // feature flags, tenant settings, and user preferences
+	EntityScope   EntityScope   `json:"entity_scope"`  // application-layer entity visibility; enforced in service methods
+	Configuration Configuration `json:"configuration"` // feature flags, tenant settings, and user preferences
 	// Authorization is NOT stored here. All permission checks must go through
 	// authzService.Enforce(ctx, authz.Request{...}) using ToPrincipal() as the identity.
 }

@@ -21,10 +21,10 @@ func Schema(_ ui.UISessionContext) ui.Schema {
 		Body([]any{
 			// ── Header row ──
 			amis.M{
-				"type":        "flex",
-				"justify":     "space-between",
-				"alignItems":  "center",
-				"className":   "mb-4",
+				"type":       "flex",
+				"justify":    "space-between",
+				"alignItems": "center",
+				"className":  "mb-4",
 				"items": amis.A{
 					amis.Breadcrumb(amis.BC("Home", "#dashboard")),
 					amis.M{

@@ -4,8 +4,8 @@
 package wire
 
 import (
-	"github.com/google/wire"
 	"awo.so/internal/platform/config"
+	"github.com/google/wire"
 )
 
 // ============================================================================

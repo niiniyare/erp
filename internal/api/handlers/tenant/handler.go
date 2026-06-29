@@ -1,7 +1,6 @@
 package tenant
 
 import (
-	"github.com/go-playground/validator/v10"
 	"awo.so/internal/core/entity"
 	"awo.so/internal/core/iam/contract"
 	coreTenant "awo.so/internal/core/tenant"
@@ -10,6 +9,7 @@ import (
 	"awo.so/internal/shared/metrics"
 	"awo.so/internal/shared/tracing"
 	workflowsTenant "awo.so/internal/workflows/tenant"
+	"github.com/go-playground/validator/v10"
 )
 
 // TenantHandler handles tenant-related HTTP requests.
@@ -17,9 +17,9 @@ import (
 // validation, error handling, and response formatting.
 type TenantHandler struct {
 	service        coreTenant.Service
-	userSvc        contract.UserService   // nil = sync onboarding skips user creation
-	authzSvc       contract.AuthzService  // nil = sync onboarding skips IAM seeding
-	entitySvc      entity.Service    // nil = sync onboarding skips root entity creation
+	userSvc        contract.UserService  // nil = sync onboarding skips user creation
+	authzSvc       contract.AuthzService // nil = sync onboarding skips IAM seeding
+	entitySvc      entity.Service        // nil = sync onboarding skips root entity creation
 	logger         logger.Logger
 	metrics        metrics.MetricsProvider
 	tracer         tracing.Service

@@ -196,37 +196,49 @@ type stubPeriodRepo struct{}
 func (r *stubPeriodRepo) GetPeriodForDate(_ context.Context, _ uuid.UUID, _ time.Time) (*domain.AccountingPeriod, error) {
 	return nil, nil
 }
+
 func (r *stubPeriodRepo) CreateFiscalYear(_ context.Context, _ *domain.FiscalYear) error {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) GetFiscalYearByID(_ context.Context, _ uuid.UUID) (*domain.FiscalYear, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) GetFiscalYearByYear(_ context.Context, _ uuid.UUID, _ int) (*domain.FiscalYear, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) ListFiscalYears(_ context.Context, _ uuid.UUID) ([]*domain.FiscalYear, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) UpdateFiscalYear(_ context.Context, _ *domain.FiscalYear) error {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) CreatePeriod(_ context.Context, _ *domain.AccountingPeriod) error {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) GetPeriodByID(_ context.Context, _ uuid.UUID) (*domain.AccountingPeriod, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) GetCurrentPeriod(_ context.Context, _ uuid.UUID) (*domain.AccountingPeriod, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) ListPeriods(_ context.Context, _, _ uuid.UUID) ([]*domain.AccountingPeriod, error) {
 	panic("not implemented")
 }
+
 func (r *stubPeriodRepo) UpdatePeriod(_ context.Context, _ *domain.AccountingPeriod) error {
 	panic("not implemented")
 }
 
 // Ensure unused import doesn't cause compile error.
-var _ = decimal.Zero
-var _ = corePipeline.StageResult{}
+var (
+	_ = decimal.Zero
+	_ = corePipeline.StageResult{}
+)

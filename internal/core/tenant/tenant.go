@@ -5,7 +5,6 @@ package tenant
 import (
 	"context"
 
-	"github.com/google/uuid"
 	db "awo.so/db/sqlc"
 	"awo.so/internal/core/tenant/domain"
 	"awo.so/internal/core/tenant/repository"
@@ -13,6 +12,7 @@ import (
 	"awo.so/internal/platform/cache"
 	"awo.so/internal/shared/logger"
 	"awo.so/internal/shared/tracing"
+	"github.com/google/uuid"
 )
 
 // Re-export domain types for backward compatibility.

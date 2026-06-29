@@ -34,11 +34,11 @@ import (
 // The ContentHash field is computed over the JSON-serialised bundle (excluding
 // ContentHash itself) so verifiers can confirm the bundle is unmodified.
 type EvidenceBundle struct {
-	BundleID       uuid.UUID               `json:"bundle_id"`
-	TenantID       uuid.UUID               `json:"tenant_id"`
-	GeneratedAt    time.Time               `json:"generated_at"`
-	PolicyVersion  GovernancePolicyVersion `json:"policy_version"`
-	ContentHash    string                  `json:"content_hash"` // SHA256 of bundle sans this field
+	BundleID      uuid.UUID               `json:"bundle_id"`
+	TenantID      uuid.UUID               `json:"tenant_id"`
+	GeneratedAt   time.Time               `json:"generated_at"`
+	PolicyVersion GovernancePolicyVersion `json:"policy_version"`
+	ContentHash   string                  `json:"content_hash"` // SHA256 of bundle sans this field
 }
 
 // PeriodCloseEvidence captures the complete governance state at period close.
@@ -79,10 +79,10 @@ type AuditTrailEvidence struct {
 	WindowEnd   time.Time `json:"window_end"`
 
 	// Delivery statistics.
-	TotalDelivered   int `json:"total_delivered"`
-	TotalDead        int `json:"total_dead"`
-	TotalStale       int `json:"total_stale"`
-	DeliveryRate     float64 `json:"delivery_rate"` // 0.0–1.0
+	TotalDelivered int     `json:"total_delivered"`
+	TotalDead      int     `json:"total_dead"`
+	TotalStale     int     `json:"total_stale"`
+	DeliveryRate   float64 `json:"delivery_rate"` // 0.0–1.0
 
 	// Chain coverage (CRITICAL events with chain entries).
 	ChainEntriesInWindow int  `json:"chain_entries_in_window"`
@@ -94,8 +94,8 @@ type AuditTrailEvidence struct {
 
 // AuditGapRecord describes a single detected gap in the audit trail.
 type AuditGapRecord struct {
-	Kind      string    `json:"kind"`
-	Detail    string    `json:"detail"`
+	Kind       string    `json:"kind"`
+	Detail     string    `json:"detail"`
 	DetectedAt time.Time `json:"detected_at"`
 }
 
@@ -114,9 +114,9 @@ type ComplianceSnapshot struct {
 	StaleOutboxEntries int `json:"stale_outbox_entries"`
 
 	// Safety enforcement.
-	SafetyEnforcerActive   bool `json:"safety_enforcer_active"`
+	SafetyEnforcerActive     bool `json:"safety_enforcer_active"`
 	GovernanceRegistryActive bool `json:"governance_registry_active"`
-	EvolutionGuardActive   bool `json:"evolution_guard_active"`
+	EvolutionGuardActive     bool `json:"evolution_guard_active"`
 
 	// Extension coverage.
 	RegisteredExtensions int `json:"registered_extensions"`
@@ -150,13 +150,13 @@ type ComplianceEvidenceRepository interface {
 // ComplianceEvidenceService generates compliance evidence bundles.
 // All methods are read-only. A nil receiver returns empty healthy bundles.
 type ComplianceEvidenceService struct {
-	evidenceRepo    ComplianceEvidenceRepository // nil → DB sections omitted
-	violationRepo   IntegrityViolationRepository // nil → violation counts omitted
-	gapDetector     *AuditGapDetector            // nil → outbox health omitted
-	policyRegistry  *GovernancePolicyRegistry    // nil → DefaultGovernancePolicy used
-	safetyEnforcer  *SafetyEnforcer              // nil → reported as inactive
-	evolutionGuard  *EvolutionSafetyGuard        // nil → reported as inactive
-	metrics         metrics.MetricsProvider
+	evidenceRepo   ComplianceEvidenceRepository // nil → DB sections omitted
+	violationRepo  IntegrityViolationRepository // nil → violation counts omitted
+	gapDetector    *AuditGapDetector            // nil → outbox health omitted
+	policyRegistry *GovernancePolicyRegistry    // nil → DefaultGovernancePolicy used
+	safetyEnforcer *SafetyEnforcer              // nil → reported as inactive
+	evolutionGuard *EvolutionSafetyGuard        // nil → reported as inactive
+	metrics        metrics.MetricsProvider
 }
 
 // NewComplianceEvidenceService creates the service. All deps may be nil; nil

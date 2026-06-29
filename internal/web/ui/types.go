@@ -173,14 +173,14 @@ func NewUISessionContext(
 	}
 
 	return UISessionContext{
-		UserID:      sc.UserID().String(),
-		TenantID:    sc.TenantID().String(),
-		DisplayName: sc.DisplayName(),
-		IsPlatform:  sc.IsPlatform(),
-		IsPortal:    sc.IsPortal(),
-		Locale:      sc.Preference("ui.locale", "en"),
-		Timezone:    sc.Preference("ui.timezone", "UTC"),
-		Currency:    sc.Setting("tenant.currency", "USD"),
+		UserID:       sc.UserID().String(),
+		TenantID:     sc.TenantID().String(),
+		DisplayName:  sc.DisplayName(),
+		IsPlatform:   sc.IsPlatform(),
+		IsPortal:     sc.IsPortal(),
+		Locale:       sc.Preference("ui.locale", "en"),
+		Timezone:     sc.Preference("ui.timezone", "UTC"),
+		Currency:     sc.Setting("tenant.currency", "USD"),
 		permissions:  permissions,
 		featureFlags: flags,
 		prefs:        prefs,
@@ -201,4 +201,3 @@ var allKnownFlags = []string{
 	"inventory.lot_tracking",
 	"finance.auto_reconcile",
 }
-

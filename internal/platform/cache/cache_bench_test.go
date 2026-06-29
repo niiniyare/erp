@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/google/uuid"
 	"awo.so/internal/platform/config"
+	"github.com/google/uuid"
 )
 
 // Benchmark fixtures
@@ -352,14 +352,14 @@ func BenchmarkComplexStruct(b *testing.B) {
 	setupBench()
 
 	type ComplexData struct {
-		ID       string                 `json:"id"`
-		Name     string                 `json:"name"`
-		Email    string                 `json:"email"`
-		Age      int                    `json:"age"`
-		Active   bool                   `json:"active"`
-		Tags     []string               `json:"tags"`
+		ID       string         `json:"id"`
+		Name     string         `json:"name"`
+		Email    string         `json:"email"`
+		Age      int            `json:"age"`
+		Active   bool           `json:"active"`
+		Tags     []string       `json:"tags"`
 		Metadata map[string]any `json:"metadata"`
-		Created  time.Time              `json:"created"`
+		Created  time.Time      `json:"created"`
 	}
 
 	data := ComplexData{

@@ -334,7 +334,7 @@ func (s *userService) SearchUsers(ctx context.Context, query string, limit, offs
 }
 
 // Authenticate handles login with brute-force protection.
-// 
+//
 // NOTE(tenant-context): ctx must carry tenant_id via cache.TenantIDKey.
 // TODO(settings): Load thresholds from settings service per-tenant.
 func (s *userService) Authenticate(ctx context.Context, identifier, password string) (*domain.User, error) {

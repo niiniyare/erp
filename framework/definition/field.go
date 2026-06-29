@@ -16,7 +16,7 @@ type FieldType string
 
 const (
 	// Scalar types
-	FieldTypeData     FieldType = "data"      // varchar(n), default MaxLen 140
+	FieldTypeData      FieldType = "data"      // varchar(n), default MaxLen 140
 	FieldTypeSmallText FieldType = "smalltext" // varchar(1024), never indexed
 	FieldTypeLongText  FieldType = "longtext"  // text, unbounded
 	FieldTypeInt       FieldType = "int"       // bigint
@@ -29,18 +29,18 @@ const (
 	FieldTypeUUID      FieldType = "uuid"      // uuid
 
 	// Structured types
-	FieldTypeSelect      FieldType = "select"       // text, validated against Options
-	FieldTypeMultiSelect FieldType = "multiselect"  // text[], validated against Options
-	FieldTypeJSON        FieldType = "json"         // jsonb
+	FieldTypeSelect      FieldType = "select"      // text, validated against Options
+	FieldTypeMultiSelect FieldType = "multiselect" // text[], validated against Options
+	FieldTypeJSON        FieldType = "json"        // jsonb
 
 	// Relational types
-	FieldTypeLink        FieldType = "link"         // uuid FK to another entity
-	FieldTypeDynamicLink FieldType = "dynamiclink"  // polymorphic: {name}_type + {name}_id
-	FieldTypeTable       FieldType = "table"        // child entity inline (one-to-many)
+	FieldTypeLink        FieldType = "link"        // uuid FK to another entity
+	FieldTypeDynamicLink FieldType = "dynamiclink" // polymorphic: {name}_type + {name}_id
+	FieldTypeTable       FieldType = "table"       // child entity inline (one-to-many)
 
 	// File types
-	FieldTypeAttach      FieldType = "attach"       // text (file path or object key)
-	FieldTypeAttachImage FieldType = "attachimage"  // text + metadata jsonb
+	FieldTypeAttach      FieldType = "attach"      // text (file path or object key)
+	FieldTypeAttachImage FieldType = "attachimage" // text + metadata jsonb
 )
 
 // EntityValidator is a cross-field validator run after all per-field validators pass.
@@ -88,11 +88,11 @@ type FieldDef struct {
 	Description string
 
 	// Constraints
-	IsRequired   bool
-	IsUnique     bool
-	IsImmutable  bool // set on create, rejected on update
-	IsSearchable bool // creates GIN pg_trgm index (Data fields only)
-	IsSensitive   bool // excluded from logs AND all API responses (FindByID, List)
+	IsRequired     bool
+	IsUnique       bool
+	IsImmutable    bool // set on create, rejected on update
+	IsSearchable   bool // creates GIN pg_trgm index (Data fields only)
+	IsSensitive    bool // excluded from logs AND all API responses (FindByID, List)
 	IsTranslatable bool // value stored in default locale; companion JSONB holds per-locale overrides
 
 	// Type-specific constraints
@@ -194,22 +194,22 @@ func Field(name string) *FieldDef {
 	return &FieldDef{Name: name}
 }
 
-func (f *FieldDef) OfType(t FieldType) *FieldDef     { f.Type = t; return f }
-func (f *FieldDef) WithLabel(l string) *FieldDef      { f.Label = l; return f }
-func (f *FieldDef) RequiredField() *FieldDef           { f.IsRequired = true; return f }
-func (f *FieldDef) UniqueField() *FieldDef             { f.IsUnique = true; return f }
-func (f *FieldDef) ImmutableField() *FieldDef          { f.IsImmutable = true; return f }
-func (f *FieldDef) SearchableField() *FieldDef         { f.IsSearchable = true; return f }
-func (f *FieldDef) SensitiveField() *FieldDef          { f.IsSensitive = true; return f }
-func (f *FieldDef) WithMaxLen(n int) *FieldDef         { f.MaxLength = n; return f }
-func (f *FieldDef) WithOptions(opts ...string) *FieldDef { f.Options = opts; return f }
-func (f *FieldDef) WithDefault(v any) *FieldDef        { f.DefaultVal = v; return f }
+func (f *FieldDef) OfType(t FieldType) *FieldDef           { f.Type = t; return f }
+func (f *FieldDef) WithLabel(l string) *FieldDef           { f.Label = l; return f }
+func (f *FieldDef) RequiredField() *FieldDef               { f.IsRequired = true; return f }
+func (f *FieldDef) UniqueField() *FieldDef                 { f.IsUnique = true; return f }
+func (f *FieldDef) ImmutableField() *FieldDef              { f.IsImmutable = true; return f }
+func (f *FieldDef) SearchableField() *FieldDef             { f.IsSearchable = true; return f }
+func (f *FieldDef) SensitiveField() *FieldDef              { f.IsSensitive = true; return f }
+func (f *FieldDef) WithMaxLen(n int) *FieldDef             { f.MaxLength = n; return f }
+func (f *FieldDef) WithOptions(opts ...string) *FieldDef   { f.Options = opts; return f }
+func (f *FieldDef) WithDefault(v any) *FieldDef            { f.DefaultVal = v; return f }
 func (f *FieldDef) WithDefaultFn(fn DefaultFunc) *FieldDef { f.DefaultFn = fn; return f }
-func (f *FieldDef) LinksTo(entity string) *FieldDef    { f.LinkedEntity = entity; return f }
-func (f *FieldDef) HiddenInList() *FieldDef            { f.Hidden = true; return f }
-func (f *FieldDef) ReadOnlyField() *FieldDef           { f.ReadOnly = true; return f }
-func (f *FieldDef) InSection(s string) *FieldDef       { f.Section = s; return f }
-func (f *FieldDef) WithWidth(w int) *FieldDef          { f.Width = w; return f }
+func (f *FieldDef) LinksTo(entity string) *FieldDef        { f.LinkedEntity = entity; return f }
+func (f *FieldDef) HiddenInList() *FieldDef                { f.Hidden = true; return f }
+func (f *FieldDef) ReadOnlyField() *FieldDef               { f.ReadOnly = true; return f }
+func (f *FieldDef) InSection(s string) *FieldDef           { f.Section = s; return f }
+func (f *FieldDef) WithWidth(w int) *FieldDef              { f.Width = w; return f }
 
 func (f *FieldDef) Validate(v FieldValidator) *FieldDef {
 	f.Validators = append(f.Validators, v)

@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/google/uuid"
+	// "awo.so/framework/org"
 
-	"awo.so/framework/org"
+	"github.com/google/uuid"
 )
 
 // ErrDeny is returned by a PolicyFunc to deny access immediately.
@@ -58,7 +58,7 @@ type ViewerContext interface {
 
 	// OrgScope returns the combined tenant + unit scope for this viewer.
 	// Convenience accessor; equivalent to org.WithUnit(tenantID, unitID).
-	OrgScope() org.Scope
+	// OrgScope() org.Scope
 
 	// HasRole reports whether the actor holds the given named role. Roles
 	// are resolved against the viewer's OrgUnit and its ancestors (role grants
@@ -170,31 +170,31 @@ func AllowSystem(_ context.Context, viewer ViewerContext, _ Op, _ Record) error 
 // Usage:
 //
 //	definition.Policy(definition.OpAll, definition.AllowWithinOrgScope(myTree))
-func AllowWithinOrgScope(tree org.Tree) PolicyFunc {
-	return func(ctx context.Context, viewer ViewerContext, _ Op, record Record) error {
-		if record == nil {
-			return ErrSkip // list-level; defer to companion policy
-		}
-		scoped, ok := record.(OrgScoped)
-		if !ok {
-			return ErrSkip // record carries no unit; not our concern
-		}
-		viewerUnitID := viewer.OrgUnitID()
-		recordUnitID := scoped.RecordOrgUnitID()
-		if viewerUnitID == uuid.Nil {
-			// Tenant-wide viewer: can access all units in this tenant.
-			return ErrAllow
-		}
-		ok, err := tree.IsAncestorOrEqual(ctx, viewer.OrgScope().TenantID, viewerUnitID, recordUnitID)
-		if err != nil {
-			return err // treated as ErrDeny by enforcer
-		}
-		if !ok {
-			return ErrDeny
-		}
-		return ErrAllow
-	}
-}
+// func AllowWithinOrgScope(tree org.Tree) PolicyFunc {
+// 	return func(ctx context.Context, viewer ViewerContext, _ Op, record Record) error {
+// 		if record == nil {
+// 			return ErrSkip // list-level; defer to companion policy
+// 		}
+// 		scoped, ok := record.(OrgScoped)
+// 		if !ok {
+// 			return ErrSkip // record carries no unit; not our concern
+// 		}
+// 		viewerUnitID := viewer.OrgUnitID()
+// 		recordUnitID := scoped.RecordOrgUnitID()
+// 		if viewerUnitID == uuid.Nil {
+// 			// Tenant-wide viewer: can access all units in this tenant.
+// 			return ErrAllow
+// 		}
+// 		ok, err := tree.IsAncestorOrEqual(ctx, viewer.OrgScope().TenantID, viewerUnitID, recordUnitID)
+// 		if err != nil {
+// 			return err // treated as ErrDeny by enforcer
+// 		}
+// 		if !ok {
+// 			return ErrDeny
+// 		}
+// 		return ErrAllow
+// 	}
+// }
 
 // OrgScoped is an optional interface that records may implement to expose their
 // org unit to the AllowWithinOrgScope built-in policy.

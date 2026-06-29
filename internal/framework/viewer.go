@@ -13,16 +13,16 @@ import (
 
 // sessionViewer implements definition.ViewerContext from a populated Fiber session.
 type sessionViewer struct {
-	actorID    string
-	tenantID   string
-	orgUnitID  uuid.UUID // parsed from "org_unit_id" local; uuid.Nil = tenant-wide
-	roles      map[string]bool
-	isSystem   bool
+	actorID   string
+	tenantID  string
+	orgUnitID uuid.UUID // parsed from "org_unit_id" local; uuid.Nil = tenant-wide
+	roles     map[string]bool
+	isSystem  bool
 }
 
-func (v *sessionViewer) ActorID() string  { return v.actorID }
-func (v *sessionViewer) TenantID() string { return v.tenantID }
-func (v *sessionViewer) OrgUnitID() uuid.UUID { return v.orgUnitID }
+func (v *sessionViewer) ActorID() string       { return v.actorID }
+func (v *sessionViewer) TenantID() string      { return v.tenantID }
+func (v *sessionViewer) OrgUnitID() uuid.UUID  { return v.orgUnitID }
 func (v *sessionViewer) IsSystem() bool        { return v.isSystem }
 func (v *sessionViewer) HasRole(r string) bool { return v.roles[r] }
 

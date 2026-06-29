@@ -19,8 +19,10 @@ func GoodsReceiptScreen(sess ui.UISessionContext, cfg GoodsReceiptScreenConfig) 
 	return ast.PageNode{
 		Title: "Goods Receipt Note",
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Received", Value: "received"}, {Label: "Cancelled", Value: "cancelled"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Received", Value: "received"}, {Label: "Cancelled", Value: "cancelled"}},
+			}),
 			blocks.PartyBlock(sess, blocks.DefaultSupplierConfig()),
 			blocks.AddressBlock(sess, blocks.AddressConfig{ShowShipping: true, ReadOnly: cfg.ReadOnly}),
 			blocks.ProductServiceLineBlock(sess, lineCfg),

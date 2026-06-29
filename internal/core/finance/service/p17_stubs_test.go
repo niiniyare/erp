@@ -21,11 +21,11 @@ import (
 // =============================================================================
 
 type p17StubSnapshotRepo struct {
-	fnCreate      func(ctx context.Context, snap *domain.COASnapshot) error
-	fnGetByID     func(ctx context.Context, id uuid.UUID) (*domain.COASnapshot, error)
+	fnCreate       func(ctx context.Context, snap *domain.COASnapshot) error
+	fnGetByID      func(ctx context.Context, id uuid.UUID) (*domain.COASnapshot, error)
 	fnGetForPeriod func(ctx context.Context, tenantID uuid.UUID, periodID uuid.UUID) (*domain.COASnapshot, error)
-	fnGetAtTime   func(ctx context.Context, tenantID uuid.UUID, asOfTime time.Time) (*domain.COASnapshot, error)
-	fnList        func(ctx context.Context, tenantID uuid.UUID) ([]*domain.COASnapshot, error)
+	fnGetAtTime    func(ctx context.Context, tenantID uuid.UUID, asOfTime time.Time) (*domain.COASnapshot, error)
+	fnList         func(ctx context.Context, tenantID uuid.UUID) ([]*domain.COASnapshot, error)
 
 	// Simple in-memory store — populated by Create, queried by Get*.
 	store []*domain.COASnapshot

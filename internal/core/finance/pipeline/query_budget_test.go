@@ -25,8 +25,8 @@ package pipeline_test
 
 import (
 	"context"
-	"testing"
 	"sync/atomic"
+	"testing"
 	"time"
 
 	"github.com/google/uuid"
@@ -336,47 +336,60 @@ func (r *qbStubTxnRepo) Post(ctx context.Context, transactionID, postedBy uuid.U
 
 // Satisfy the full domain.TransactionRepository interface with no-op methods.
 func (r *qbStubTxnRepo) Create(ctx context.Context, t *domain.Transaction) error { return nil }
+
 func (r *qbStubTxnRepo) GetByNumber(ctx context.Context, entityID *uuid.UUID, number string) (*domain.Transaction, error) {
 	return nil, nil
 }
-func (r *qbStubTxnRepo) Update(ctx context.Context, t *domain.Transaction) error  { return nil }
-func (r *qbStubTxnRepo) Delete(ctx context.Context, id uuid.UUID) error            { return nil }
+func (r *qbStubTxnRepo) Update(ctx context.Context, t *domain.Transaction) error { return nil }
+func (r *qbStubTxnRepo) Delete(ctx context.Context, id uuid.UUID) error          { return nil }
 func (r *qbStubTxnRepo) List(ctx context.Context, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) Count(ctx context.Context, filter *domain.TransactionFilter) (int64, error) {
 	return 0, nil
 }
+
 func (r *qbStubTxnRepo) ListByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.TransactionFilter) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) ListByDateRange(ctx context.Context, startDate, endDate time.Time) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) GetByStatus(ctx context.Context, status domain.TransactionStatus, limit int) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) GetPendingApproval(ctx context.Context, userID *uuid.UUID) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) GetRecurringTransactions(ctx context.Context, dueDate time.Time) ([]*domain.Transaction, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) UpdateNextRecurringDate(ctx context.Context, transactionID uuid.UUID, nextDate time.Time) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) CreateEntry(ctx context.Context, entry *domain.TransactionEntry) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) CreateEntries(ctx context.Context, entries []*domain.TransactionEntry) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) GetEntryByID(ctx context.Context, id uuid.UUID) (*domain.TransactionEntry, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) GetEntriesByAccount(ctx context.Context, accountID uuid.UUID, filter *domain.EntryFilter) ([]domain.TransactionEntry, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) UpdateEntry(ctx context.Context, entry *domain.TransactionEntry) error {
 	return nil
 }
@@ -384,36 +397,47 @@ func (r *qbStubTxnRepo) DeleteEntry(ctx context.Context, id uuid.UUID) error { r
 func (r *qbStubTxnRepo) SearchEntries(ctx context.Context, query string, filters *domain.EntryFilter, limit int, offset int) ([]*domain.TransactionEntry, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) UpdateReconciliationStatus(ctx context.Context, entryID uuid.UUID, reconciled bool, reconciledDate *time.Time, reconciliationRef *string) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) GetUnreconciledEntries(ctx context.Context, accountID uuid.UUID, cutoffDate *time.Time) ([]*domain.TransactionEntry, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) GetEntrySummary(ctx context.Context, accountID uuid.UUID, startDate, endDate time.Time) (*domain.TransactionSummary, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) CalculateAccountBalance(ctx context.Context, accountID uuid.UUID, asOfDate *time.Time) (decimal.Decimal, error) {
 	return decimal.Zero, nil
 }
+
 func (r *qbStubTxnRepo) GetAccountTransactionSummary(ctx context.Context, accountID uuid.UUID, dateRange *domain.DateRange) (*domain.TransactionSummary, error) {
 	return nil, nil
 }
+
 func (r *qbStubTxnRepo) Approve(ctx context.Context, transactionID uuid.UUID, approvedBy uuid.UUID, approvedAt time.Time, notes *string) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) Reject(ctx context.Context, transactionID uuid.UUID, rejectedBy uuid.UUID, rejectedAt time.Time, reason domain.RejectionReason, notes *string) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) Reverse(ctx context.Context, originalID, reversalID uuid.UUID, reason string) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) IsTransactionNumberUnique(ctx context.Context, entityID *uuid.UUID, number string, excludeID *uuid.UUID) (bool, error) {
 	return true, nil
 }
+
 func (r *qbStubTxnRepo) ValidateAccountsExist(ctx context.Context, accountIDs []uuid.UUID) error {
 	return nil
 }
+
 func (r *qbStubTxnRepo) GetNextTransactionNumber(ctx context.Context, entityID *uuid.UUID, txType domain.TransactionType) (string, error) {
 	return "TXN-QB-AUTO", nil
 }

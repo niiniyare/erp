@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
 	coreTenant "awo.so/internal/core/tenant"
+	"github.com/gofiber/fiber/v2"
 )
 
 // tenantLinks generates the HATEOAS links section for a tenant resource.

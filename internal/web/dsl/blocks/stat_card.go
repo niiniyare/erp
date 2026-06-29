@@ -18,7 +18,7 @@ const (
 type StatCardConfig struct {
 	Label     string
 	ValueKey  string
-	Format    string         // "number"|"currency"|"percent"
+	Format    string // "number"|"currency"|"percent"
 	Currency  string
 	TrendKey  string
 	Trend     TrendDirection

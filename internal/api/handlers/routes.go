@@ -278,7 +278,6 @@ type Dependencies struct {
 	// class (public / API / UI).  Optional — a permissive dev CORS policy is
 	// applied when nil.
 	SecurityManager *middlewarePkg.RouteSecurityManager
-
 }
 
 // Validate returns an error if any required dependency is missing.
@@ -746,13 +745,13 @@ func (r *Router) registerEntityAPI(apiRouter fiber.Router) error {
 	}
 
 	// Tree must be registered before /:id to avoid Fiber matching "tree" as an ID.
-	g.Get("/tree", handler.GetTree)               // GET    /api/v1/entities/tree
-	g.Post("/", handler.Create)                    // POST   /api/v1/entities
-	g.Get("/", handler.List)                       // GET    /api/v1/entities
-	g.Get("/:id", handler.GetByID)                 // GET    /api/v1/entities/:id
-	g.Put("/:id", handler.Update)                  // PUT    /api/v1/entities/:id
-	g.Delete("/:id", handler.Delete)               // DELETE /api/v1/entities/:id
-	g.Get("/:id/children", handler.GetChildren)    // GET    /api/v1/entities/:id/children
+	g.Get("/tree", handler.GetTree)             // GET    /api/v1/entities/tree
+	g.Post("/", handler.Create)                 // POST   /api/v1/entities
+	g.Get("/", handler.List)                    // GET    /api/v1/entities
+	g.Get("/:id", handler.GetByID)              // GET    /api/v1/entities/:id
+	g.Put("/:id", handler.Update)               // PUT    /api/v1/entities/:id
+	g.Delete("/:id", handler.Delete)            // DELETE /api/v1/entities/:id
+	g.Get("/:id/children", handler.GetChildren) // GET    /api/v1/entities/:id/children
 
 	r.registry.track(ModuleEntity, apiV1Prefix+"/entities", 7)
 	r.deps.Logger.Info("entity API endpoints registered")
@@ -980,14 +979,14 @@ func (r *Router) registerIAMAPI(apiRouter fiber.Router) error {
 	}
 
 	// ── Policies ──────────────────────────────────────────────────────────
-	g.Get("/policies", r.authorizeMiddleware("iam.policies.read"), handler.ListPolicies)    // GET    /api/v1/iam/policies?domain=<tenantID>
-	g.Post("/policies", r.authorizeMiddleware("iam.policies.write"), handler.AddPolicy)     // POST   /api/v1/iam/policies
+	g.Get("/policies", r.authorizeMiddleware("iam.policies.read"), handler.ListPolicies)     // GET    /api/v1/iam/policies?domain=<tenantID>
+	g.Post("/policies", r.authorizeMiddleware("iam.policies.write"), handler.AddPolicy)      // POST   /api/v1/iam/policies
 	g.Delete("/policies", r.authorizeMiddleware("iam.policies.write"), handler.RemovePolicy) // DELETE /api/v1/iam/policies (body)
 
 	// ── Role assignments ──────────────────────────────────────────────────
-	g.Get("/assignments", r.authorizeMiddleware("iam.roles.read"), handler.ListAssignments)  // GET    /api/v1/iam/assignments?subject=<sub>&domain=<dom>
-	g.Post("/roles/assign", r.authorizeMiddleware("iam.roles.write"), handler.AssignRole)    // POST   /api/v1/iam/roles/assign
-	g.Post("/roles/revoke", r.authorizeMiddleware("iam.roles.write"), handler.RevokeRole)    // POST   /api/v1/iam/roles/revoke
+	g.Get("/assignments", r.authorizeMiddleware("iam.roles.read"), handler.ListAssignments) // GET    /api/v1/iam/assignments?subject=<sub>&domain=<dom>
+	g.Post("/roles/assign", r.authorizeMiddleware("iam.roles.write"), handler.AssignRole)   // POST   /api/v1/iam/roles/assign
+	g.Post("/roles/revoke", r.authorizeMiddleware("iam.roles.write"), handler.RevokeRole)   // POST   /api/v1/iam/roles/revoke
 
 	// ── Roles query ───────────────────────────────────────────────────────
 	g.Get("/roles", r.authorizeMiddleware("iam.roles.read"), handler.GetRoles) // GET /api/v1/iam/roles?subject=<sub>&domain=<dom>

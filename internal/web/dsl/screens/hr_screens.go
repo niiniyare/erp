@@ -48,8 +48,8 @@ func EmployeeScreen(sess ui.UISessionContext) ast.Node {
 					ast.InputDateNode{Name: "start_date", Label: "Start Date", Required: true},
 					ast.InputDateNode{Name: "contract_end_date", Label: "Contract End"},
 					ast.SelectNode{
-						Name:    "employment_type",
-						Label:   "Employment Type",
+						Name:  "employment_type",
+						Label: "Employment Type",
 						Options: []ast.SelectOption{
 							{Label: "Full-time", Value: "full_time"},
 							{Label: "Part-time", Value: "part_time"},
@@ -58,8 +58,8 @@ func EmployeeScreen(sess ui.UISessionContext) ast.Node {
 						},
 					},
 					ast.SelectNode{
-						Name:    "status",
-						Label:   "Status",
+						Name:  "status",
+						Label: "Status",
 						Options: []ast.SelectOption{
 							{Label: "Active", Value: "active"},
 							{Label: "On Leave", Value: "on_leave"},
@@ -97,8 +97,8 @@ func LeaveRequestScreen(sess ui.UISessionContext) ast.Node {
 					ast.InputDateRangeNode{Name: "date_range", Label: "Date Range", Required: true},
 					ast.InputTextNode{Name: "reason", Label: "Reason", Required: true},
 					ast.SelectNode{
-						Name:    "status",
-						Label:   "Status",
+						Name:  "status",
+						Label: "Status",
 						Options: []ast.SelectOption{
 							{Label: "Pending", Value: "pending"},
 							{Label: "Approved", Value: "approved"},

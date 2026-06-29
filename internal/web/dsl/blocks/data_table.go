@@ -7,9 +7,9 @@ import (
 
 // ColumnDef defines one column in a DataTableBlock.
 type ColumnDef struct {
-	Name     string
-	Label    string
-	Type     string // "text"|"date"|"number"|"currency"|"mapping"|"link"|"image"
+	Name  string
+	Label string
+	Type  string // "text"|"date"|"number"|"currency"|"mapping"|"link"|"image"
 	// Map holds value→HTML entries for Type "mapping" columns.
 	// Prefer StatusBadgeColumn() to build this correctly.
 	Map      map[string]string
@@ -44,7 +44,7 @@ type DataTableConfig struct {
 	// "New" button. Format: "resource.action" e.g. "finance.invoices.create".
 	// Required when AllowCreate is true — without it the button is always hidden.
 	CreatePermission string
-	AllowExport bool
+	AllowExport      bool
 }
 
 // DataTableBlock builds the paginated, filterable CRUD table for listing pages.
@@ -73,8 +73,10 @@ func DataTableBlock(sess ui.UISessionContext, cfg DataTableConfig) ast.Node {
 		})
 	}
 	if cfg.AllowExport {
-		toolbar = append(toolbar, ast.ActionNode{Label: "Export", ActionType: "ajax", Level: "default", Icon: "fa fa-download",
-			API: &ast.APISpec{Method: "get", URL: cfg.APIURL + "/export"}})
+		toolbar = append(toolbar, ast.ActionNode{
+			Label: "Export", ActionType: "ajax", Level: "default", Icon: "fa fa-download",
+			API: &ast.APISpec{Method: "get", URL: cfg.APIURL + "/export"},
+		})
 	}
 
 	var bulkNodes []ast.Node

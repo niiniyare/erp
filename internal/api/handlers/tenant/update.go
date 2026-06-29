@@ -1,11 +1,11 @@
 package tenant
 
 import (
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	coreTenant "awo.so/internal/core/tenant"
 	"awo.so/internal/shared/errors"
 	"awo.so/internal/shared/logger"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // Update handles partial or full updates of an organization's details.

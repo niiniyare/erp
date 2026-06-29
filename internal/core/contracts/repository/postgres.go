@@ -227,7 +227,7 @@ func (r *postgres) Update(ctx context.Context, id uuid.UUID, req domain.UpdateCo
 			Terms:             req.Terms,
 			SignedBy:          req.SignedBy,
 			SignedAt:          ptrToNullTime(req.SignedAt), // *time.Time → sql.NullTime
-			Value:             existing.Value, // default to existing pgtype.Numeric directly
+			Value:             existing.Value,              // default to existing pgtype.Numeric directly
 		}
 
 		// Override Value if caller explicitly supplied a new one.
@@ -375,26 +375,26 @@ func (r *postgres) NumberExists(ctx context.Context, number string) (bool, error
 // mapRowToDomain converts a SQLC-generated Contract row to the domain entity.
 func mapRowToDomain(row *db.Contract) *domain.Contract {
 	c := &domain.Contract{
-		ID:               row.ID,
-		TenantID:         row.TenantID,
-		EntityID:         row.EntityID,
-		Number:           row.Number,
-		Title:            row.Title,
-		Status:           domain.ContractStatus(row.Status),
-		ContractType:     domain.ContractType(row.ContractType),
-		CounterpartyName: row.CounterpartyName,
+		ID:                row.ID,
+		TenantID:          row.TenantID,
+		EntityID:          row.EntityID,
+		Number:            row.Number,
+		Title:             row.Title,
+		Status:            domain.ContractStatus(row.Status),
+		ContractType:      domain.ContractType(row.ContractType),
+		CounterpartyName:  row.CounterpartyName,
 		CounterpartyEmail: row.CounterpartyEmail,
-		StartDate: row.StartDate,
-		EndDate:   timeToPtr(row.EndDate), // DB is NOT NULL; treat zero as nil in domain
-		Value:            pgNumericToDecimal(row.Value),
-		CurrencyCode:     row.CurrencyCode,
-		Description:      row.Description,
-		Terms:            row.Terms,
-		SignedBy:         row.SignedBy,
-		Version:          row.Version,
-		CreatedBy:        row.CreatedBy,
-		CreatedAt:        row.CreatedAt,
-		UpdatedAt:        row.UpdatedAt,
+		StartDate:         row.StartDate,
+		EndDate:           timeToPtr(row.EndDate), // DB is NOT NULL; treat zero as nil in domain
+		Value:             pgNumericToDecimal(row.Value),
+		CurrencyCode:      row.CurrencyCode,
+		Description:       row.Description,
+		Terms:             row.Terms,
+		SignedBy:          row.SignedBy,
+		Version:           row.Version,
+		CreatedBy:         row.CreatedBy,
+		CreatedAt:         row.CreatedAt,
+		UpdatedAt:         row.UpdatedAt,
 	}
 
 	// Map nullable timestamptz to *time.Time for signed_at.

@@ -565,31 +565,31 @@ func registerCustomValidators(v *validator.Validate) {
 
 // User represents the API response structure for a user
 type User struct {
-	ID            string                 `json:"id"`
-	TenantID      string                 `json:"tenant_id,omitempty"`
-	EntityID      string                 `json:"entity_id,omitempty"`
-	PersonID      string                 `json:"person_id,omitempty"`
-	EmployeeID    string                 `json:"employee_id,omitempty"`
-	Email         string                 `json:"email"`
-	Username      string                 `json:"username,omitempty"`
-	UserType      string                 `json:"user_type"`
-	Status        string                 `json:"account_status"`
-	IsActive      bool                   `json:"is_active"`
-	EmailVerified bool                   `json:"email_verified,omitempty"`
-	Phone         string                 `json:"phone,omitempty"`
-	PhoneVerified bool                   `json:"phone_verified,omitempty"`
-	LastLoginAt   *string                `json:"last_login_at,omitempty"`
-	LastLoginIP   string                 `json:"last_login_ip,omitempty"`
-	MFAEnabled    bool                   `json:"mfa_enabled,omitempty"`
-	MFAMethod     string                 `json:"mfa_method,omitempty"`
-	Timezone      string                 `json:"timezone,omitempty"`
-	Language      string                 `json:"language,omitempty"`
-	Roles         []string               `json:"roles,omitempty"`
-	Permissions   []string               `json:"permissions,omitempty"`
+	ID            string         `json:"id"`
+	TenantID      string         `json:"tenant_id,omitempty"`
+	EntityID      string         `json:"entity_id,omitempty"`
+	PersonID      string         `json:"person_id,omitempty"`
+	EmployeeID    string         `json:"employee_id,omitempty"`
+	Email         string         `json:"email"`
+	Username      string         `json:"username,omitempty"`
+	UserType      string         `json:"user_type"`
+	Status        string         `json:"account_status"`
+	IsActive      bool           `json:"is_active"`
+	EmailVerified bool           `json:"email_verified,omitempty"`
+	Phone         string         `json:"phone,omitempty"`
+	PhoneVerified bool           `json:"phone_verified,omitempty"`
+	LastLoginAt   *string        `json:"last_login_at,omitempty"`
+	LastLoginIP   string         `json:"last_login_ip,omitempty"`
+	MFAEnabled    bool           `json:"mfa_enabled,omitempty"`
+	MFAMethod     string         `json:"mfa_method,omitempty"`
+	Timezone      string         `json:"timezone,omitempty"`
+	Language      string         `json:"language,omitempty"`
+	Roles         []string       `json:"roles,omitempty"`
+	Permissions   []string       `json:"permissions,omitempty"`
 	Preferences   map[string]any `json:"preferences,omitempty"`
 	Metadata      map[string]any `json:"metadata,omitempty"`
-	CreatedAt     string                 `json:"created_at"`
-	UpdatedAt     *string                `json:"updated_at,omitempty"`
+	CreatedAt     string         `json:"created_at"`
+	UpdatedAt     *string        `json:"updated_at,omitempty"`
 }
 
 // userToAPIResponse converts a user entity to API user response

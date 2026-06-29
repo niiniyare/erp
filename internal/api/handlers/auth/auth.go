@@ -6,11 +6,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"awo.so/internal/core/iam/contract"
 	"awo.so/internal/shared"
 	sharedErrors "awo.so/internal/shared/errors"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 // LoginConfig holds tunable settings for the Login handler.

@@ -44,25 +44,25 @@ type RecoveryService interface {
 
 // RecoveryReport is the combined output of PostRestoreCheck.
 type RecoveryReport struct {
-	TenantID          uuid.UUID          `json:"tenant_id"`
-	CheckedAt         time.Time          `json:"checked_at"`
-	PostedScanReport  *IntegrityReport   `json:"posted_scan"`
-	ReversalReport    *IntegrityReport   `json:"reversal_scan"`
-	DuplicateReport   *IntegrityReport   `json:"duplicate_scan"`
+	TenantID          uuid.UUID           `json:"tenant_id"`
+	CheckedAt         time.Time           `json:"checked_at"`
+	PostedScanReport  *IntegrityReport    `json:"posted_scan"`
+	ReversalReport    *IntegrityReport    `json:"reversal_scan"`
+	DuplicateReport   *IntegrityReport    `json:"duplicate_scan"`
 	OrphanedWorkflows []*OrphanedWorkflow `json:"orphaned_workflows"`
-	HasCriticalIssues bool               `json:"has_critical_issues"`
-	Summary           string             `json:"summary"`
+	HasCriticalIssues bool                `json:"has_critical_issues"`
+	Summary           string              `json:"summary"`
 }
 
 // OrphanedWorkflow describes a transaction stuck in PENDING_APPROVAL
 // with no corresponding active workflow record.
 type OrphanedWorkflow struct {
-	TransactionID     uuid.UUID               `json:"transaction_id"`
-	TransactionNumber string                  `json:"transaction_number"`
+	TransactionID     uuid.UUID                `json:"transaction_id"`
+	TransactionNumber string                   `json:"transaction_number"`
 	Status            domain.TransactionStatus `json:"status"`
-	PendingSince      time.Time               `json:"pending_since"`
-	HasWorkflowRecord bool                    `json:"has_workflow_record"`
-	RecommendedAction string                  `json:"recommended_action"`
+	PendingSince      time.Time                `json:"pending_since"`
+	HasWorkflowRecord bool                     `json:"has_workflow_record"`
+	RecommendedAction string                   `json:"recommended_action"`
 }
 
 type recoveryService struct {

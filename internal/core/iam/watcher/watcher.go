@@ -64,9 +64,9 @@ type PolicyWatcher interface {
 // propagation — it is cheaper than nil-checking at every call site.
 type NoopWatcher struct{}
 
-func (NoopWatcher) Notify(_ context.Context) error         { return nil }
+func (NoopWatcher) Notify(_ context.Context) error          { return nil }
 func (NoopWatcher) Watch(_ context.Context, _ func()) error { return nil }
-func (NoopWatcher) Close() error                           { return nil }
+func (NoopWatcher) Close() error                            { return nil }
 
 // WatcherError wraps an error from a watcher operation with the operation name.
 type WatcherError struct {

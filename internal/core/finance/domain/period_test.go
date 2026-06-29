@@ -16,9 +16,9 @@ import (
 func TestAccountingPeriod_CanPost(t *testing.T) {
 	// AllowsPosting → true only for OPEN; soft/hard/locked all reject
 	tests := []struct {
-		status    domain.PeriodStatus
-		canPost   bool
-		note      string
+		status  domain.PeriodStatus
+		canPost bool
+		note    string
 	}{
 		{domain.PeriodStatusOpen, true, "OPEN accepts normal postings"},
 		{domain.PeriodStatusSoftClosed, false, "SOFT_CLOSED blocks normal postings (finance role uses AllowsAdjustment)"},
@@ -42,9 +42,9 @@ func TestAccountingPeriod_CanPost(t *testing.T) {
 func TestAccountingPeriod_CanFinancePost(t *testing.T) {
 	// AllowsAdjustment is the "finance role" gate — allows posting to SOFT_CLOSED
 	tests := []struct {
-		status          domain.PeriodStatus
-		canAdjust       bool
-		note            string
+		status    domain.PeriodStatus
+		canAdjust bool
+		note      string
 	}{
 		{domain.PeriodStatusOpen, true, "OPEN: finance role can always post"},
 		{domain.PeriodStatusSoftClosed, true, "SOFT_CLOSED: finance role may still post adjusting entries"},

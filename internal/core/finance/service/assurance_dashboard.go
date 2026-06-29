@@ -53,11 +53,11 @@ const (
 
 // ProtectionStatus reports whether a named protection is active and verified.
 type ProtectionStatus struct {
-	Name        string         `json:"name"`
-	Layer       AssuranceLayer `json:"layer"`
-	Active      bool           `json:"active"`
-	MutationTestedAt time.Time `json:"mutation_tested_at,omitempty"`
-	Detail      string         `json:"detail,omitempty"`
+	Name             string         `json:"name"`
+	Layer            AssuranceLayer `json:"layer"`
+	Active           bool           `json:"active"`
+	MutationTestedAt time.Time      `json:"mutation_tested_at,omitempty"`
+	Detail           string         `json:"detail,omitempty"`
 }
 
 // ── Mutation coverage ─────────────────────────────────────────────────────────
@@ -83,10 +83,10 @@ type MutationCoverageReport struct {
 
 // ObservabilityStatus tracks whether critical paths emit required signals.
 type ObservabilityStatus struct {
-	MetricsEmitted  bool `json:"metrics_emitted"`
-	TracingActive   bool `json:"tracing_active"`
-	AuditChainLive  bool `json:"audit_chain_live"`
-	OutboxHealthy   bool `json:"outbox_healthy"`
+	MetricsEmitted bool `json:"metrics_emitted"`
+	TracingActive  bool `json:"tracing_active"`
+	AuditChainLive bool `json:"audit_chain_live"`
+	OutboxHealthy  bool `json:"outbox_healthy"`
 }
 
 // ── AssuranceReport ───────────────────────────────────────────────────────────
@@ -95,18 +95,18 @@ type ObservabilityStatus struct {
 // It is machine-readable and suitable for CI gates, operator dashboards, and
 // compliance evidence generation.
 type AssuranceReport struct {
-	GeneratedAt  time.Time              `json:"generated_at"`
-	OverallScore int                    `json:"overall_score"` // 0-100
-	Healthy      bool                   `json:"healthy"`       // score >= MinAssuranceScore
+	GeneratedAt  time.Time `json:"generated_at"`
+	OverallScore int       `json:"overall_score"` // 0-100
+	Healthy      bool      `json:"healthy"`       // score >= MinAssuranceScore
 
 	MutationCoverage    MutationCoverageReport `json:"mutation_coverage"`
 	Observability       ObservabilityStatus    `json:"observability"`
 	Protections         []ProtectionStatus     `json:"protections"`
 	StartupInvariants   []string               `json:"startup_invariants_passed"`
 	StartupFailures     []string               `json:"startup_invariants_failed,omitempty"`
-	QueryBudgetStatus   string                 `json:"query_budget_status"` // "OK" | "REGRESSED" | "UNKNOWN"
+	QueryBudgetStatus   string                 `json:"query_budget_status"`   // "OK" | "REGRESSED" | "UNKNOWN"
 	IntegrityScanStatus string                 `json:"integrity_scan_status"` // "CLEAN" | "VIOLATIONS" | "NOT_RUN"
-	AuditChainStatus    string                 `json:"audit_chain_status"` // "HEALTHY" | "TAMPERED" | "NOT_RUN"
+	AuditChainStatus    string                 `json:"audit_chain_status"`    // "HEALTHY" | "TAMPERED" | "NOT_RUN"
 
 	// Warnings lists non-blocking assurance gaps (do not fail CI, but require attention).
 	Warnings []string `json:"warnings,omitempty"`
@@ -141,13 +141,13 @@ func (r *AssuranceReport) Summary() string {
 // AssuranceDashboard aggregates assurance signals from all finance subsystems.
 // Instantiate at startup; call GenerateReport when needed.
 type AssuranceDashboard struct {
-	evolutionGuard   *EvolutionSafetyGuard   // nil → startup invariants skipped
-	chainVerifier    *AuditChainVerifier      // nil → audit chain not evaluated
-	safetyEnforcer   *SafetyEnforcer          // nil → safety posture not evaluated
-	integrityService IntegrityService         // nil → integrity scan not evaluated
-	metricsActive    bool                     // set true when a real metrics provider is wired
-	tracingActive    bool                     // set true when a real tracing service is wired
-	outboxHealthy    bool                     // last known outbox health (updated by outbox governor)
+	evolutionGuard   *EvolutionSafetyGuard // nil → startup invariants skipped
+	chainVerifier    *AuditChainVerifier   // nil → audit chain not evaluated
+	safetyEnforcer   *SafetyEnforcer       // nil → safety posture not evaluated
+	integrityService IntegrityService      // nil → integrity scan not evaluated
+	metricsActive    bool                  // set true when a real metrics provider is wired
+	tracingActive    bool                  // set true when a real tracing service is wired
+	outboxHealthy    bool                  // last known outbox health (updated by outbox governor)
 
 	// protections is the canonical list registered at startup.
 	protections []ProtectionStatus
@@ -182,52 +182,90 @@ func NewAssuranceDashboard(
 func (d *AssuranceDashboard) registerCoreProtections() {
 	d.protections = []ProtectionStatus{
 		// ── Layer A: Unit invariants ──────────────────────────────────────────
-		{Name: "SOD_VIOLATION_BLOCK", Layer: LayerA, Active: true,
-			Detail: "Self-approval always rejected — creator != approver enforced"},
-		{Name: "TERMINAL_STATE_DELETION_BLOCK", Layer: LayerA, Active: true,
-			Detail: "POSTED/REVERSED transactions cannot be deleted"},
-		{Name: "APPROVAL_GATE_BLOCK", Layer: LayerA, Active: true,
-			Detail: "DRAFT+ApprovalRequired cannot post without approval"},
-		{Name: "BALANCE_CHECK_ENFORCEMENT", Layer: LayerA, Active: true,
-			Detail: "Unbalanced entries always detected — no false negatives"},
-		{Name: "STATE_MACHINE_TERMINAL_ABSORBING", Layer: LayerA, Active: true,
-			Detail: "Terminal states (REVERSED, CANCELLED) have no outbound transitions"},
-		{Name: "HASH_CHAIN_TAMPER_DETECTION", Layer: LayerA, Active: true,
-			Detail: "Any field mutation in audit chain entry raises HASH_MISMATCH"},
+		{
+			Name: "SOD_VIOLATION_BLOCK", Layer: LayerA, Active: true,
+			Detail: "Self-approval always rejected — creator != approver enforced",
+		},
+		{
+			Name: "TERMINAL_STATE_DELETION_BLOCK", Layer: LayerA, Active: true,
+			Detail: "POSTED/REVERSED transactions cannot be deleted",
+		},
+		{
+			Name: "APPROVAL_GATE_BLOCK", Layer: LayerA, Active: true,
+			Detail: "DRAFT+ApprovalRequired cannot post without approval",
+		},
+		{
+			Name: "BALANCE_CHECK_ENFORCEMENT", Layer: LayerA, Active: true,
+			Detail: "Unbalanced entries always detected — no false negatives",
+		},
+		{
+			Name: "STATE_MACHINE_TERMINAL_ABSORBING", Layer: LayerA, Active: true,
+			Detail: "Terminal states (REVERSED, CANCELLED) have no outbound transitions",
+		},
+		{
+			Name: "HASH_CHAIN_TAMPER_DETECTION", Layer: LayerA, Active: true,
+			Detail: "Any field mutation in audit chain entry raises HASH_MISMATCH",
+		},
 
 		// ── Layer B: Integration assurance ───────────────────────────────────
-		{Name: "TENANT_ISOLATION_RLS", Layer: LayerB, Active: true,
-			Detail: "RLS prevents cross-tenant data access at DB level"},
-		{Name: "INTEGRITY_SCAN_COVERAGE", Layer: LayerB, Active: true,
-			Detail: "ScanPostedTransactions covers all built-in checks"},
-		{Name: "AUDIT_OUTBOX_DURABILITY", Layer: LayerB, Active: true,
-			Detail: "CRITICAL events written to outbox within same DB transaction"},
+		{
+			Name: "TENANT_ISOLATION_RLS", Layer: LayerB, Active: true,
+			Detail: "RLS prevents cross-tenant data access at DB level",
+		},
+		{
+			Name: "INTEGRITY_SCAN_COVERAGE", Layer: LayerB, Active: true,
+			Detail: "ScanPostedTransactions covers all built-in checks",
+		},
+		{
+			Name: "AUDIT_OUTBOX_DURABILITY", Layer: LayerB, Active: true,
+			Detail: "CRITICAL events written to outbox within same DB transaction",
+		},
 
 		// ── Layer C: Orchestration assurance ─────────────────────────────────
-		{Name: "REPLAY_IDEMPOTENCY", Layer: LayerC, Active: true,
-			Detail: "PostTransaction on POSTED txn returns early — zero DB mutations"},
-		{Name: "APPROVAL_REPLAY_IDEMPOTENCY", Layer: LayerC, Active: true,
-			Detail: "ApproveTransaction on APPROVED txn is idempotent"},
-		{Name: "VELOCITY_WINDOW_THREAD_SAFE", Layer: LayerC, Active: true,
-			Detail: "Reversal velocity limit holds under 100 concurrent goroutines"},
+		{
+			Name: "REPLAY_IDEMPOTENCY", Layer: LayerC, Active: true,
+			Detail: "PostTransaction on POSTED txn returns early — zero DB mutations",
+		},
+		{
+			Name: "APPROVAL_REPLAY_IDEMPOTENCY", Layer: LayerC, Active: true,
+			Detail: "ApproveTransaction on APPROVED txn is idempotent",
+		},
+		{
+			Name: "VELOCITY_WINDOW_THREAD_SAFE", Layer: LayerC, Active: true,
+			Detail: "Reversal velocity limit holds under 100 concurrent goroutines",
+		},
 
 		// ── Layer D: Adversarial assurance ───────────────────────────────────
-		{Name: "SOD_CONCURRENT_BYPASS_IMPOSSIBLE", Layer: LayerD, Active: true,
-			Detail: "SOD violation never bypassed under concurrent replay attempts"},
-		{Name: "CORRUPTION_INJECTION_DETECTABLE", Layer: LayerD, Active: true,
-			Detail: "Synthetic corruption scenarios are detected by integrity scan"},
-		{Name: "MUTATION_HARNESS_COVERAGE", Layer: LayerD, Active: true,
-			Detail: "Each protection verified to fail when adversarial input applied"},
+		{
+			Name: "SOD_CONCURRENT_BYPASS_IMPOSSIBLE", Layer: LayerD, Active: true,
+			Detail: "SOD violation never bypassed under concurrent replay attempts",
+		},
+		{
+			Name: "CORRUPTION_INJECTION_DETECTABLE", Layer: LayerD, Active: true,
+			Detail: "Synthetic corruption scenarios are detected by integrity scan",
+		},
+		{
+			Name: "MUTATION_HARNESS_COVERAGE", Layer: LayerD, Active: true,
+			Detail: "Each protection verified to fail when adversarial input applied",
+		},
 
 		// ── Layer E: Production trust ─────────────────────────────────────────
-		{Name: "STARTUP_INVARIANTS_ENFORCED", Layer: LayerE, Active: d.evolutionGuard != nil,
-			Detail: "AssertStartupInvariants blocks unsafe wiring at boot"},
-		{Name: "METRICS_OBSERVABILITY", Layer: LayerE, Active: d.metricsActive,
-			Detail: "Metrics provider active — finance operations are observable"},
-		{Name: "TRACING_OBSERVABILITY", Layer: LayerE, Active: d.tracingActive,
-			Detail: "Tracing service active — distributed traces captured"},
-		{Name: "QUERY_BUDGET_ENFORCED", Layer: LayerE, Active: true,
-			Detail: "Pipeline stage count within budget — no query explosion"},
+		{
+			Name: "STARTUP_INVARIANTS_ENFORCED", Layer: LayerE, Active: d.evolutionGuard != nil,
+			Detail: "AssertStartupInvariants blocks unsafe wiring at boot",
+		},
+		{
+			Name: "METRICS_OBSERVABILITY", Layer: LayerE, Active: d.metricsActive,
+			Detail: "Metrics provider active — finance operations are observable",
+		},
+		{
+			Name: "TRACING_OBSERVABILITY", Layer: LayerE, Active: d.tracingActive,
+			Detail: "Tracing service active — distributed traces captured",
+		},
+		{
+			Name: "QUERY_BUDGET_ENFORCED", Layer: LayerE, Active: true,
+			Detail: "Pipeline stage count within budget — no query explosion",
+		},
 	}
 }
 
@@ -254,8 +292,8 @@ func (d *AssuranceDashboard) GenerateReport(ctx context.Context) *AssuranceRepor
 	}
 
 	report := &AssuranceReport{
-		GeneratedAt: time.Now(),
-		Protections: d.protections,
+		GeneratedAt:         time.Now(),
+		Protections:         d.protections,
 		QueryBudgetStatus:   "OK",
 		IntegrityScanStatus: "NOT_RUN",
 		AuditChainStatus:    "NOT_RUN",

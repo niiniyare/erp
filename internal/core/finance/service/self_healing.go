@@ -62,8 +62,8 @@ type SelfHealingRepository interface {
 
 // SelfHealingService executes provably safe automated recovery actions.
 type SelfHealingService struct {
-	outboxGovernor *OutboxGovernor          // nil → outbox recovery skipped
-	healingRepo    SelfHealingRepository    // nil → orphan check skipped
+	outboxGovernor *OutboxGovernor              // nil → outbox recovery skipped
+	healingRepo    SelfHealingRepository        // nil → orphan check skipped
 	violationRepo  IntegrityViolationRepository // nil → violation escalation skipped
 	metrics        metrics.MetricsProvider
 }

@@ -402,7 +402,7 @@ func (s *BudgetSuite) TestExceedsVarianceThreshold_VarianceAboveThreshold_True()
 	li := newValidLineItem(uuid.New(), b.TenantID)
 	li.BudgetedAmount = decimal.NewFromInt(100)
 	li.ActualAmount = decimal.NewFromInt(125) // -25% variance
-	threshold := decimal.NewFromInt(10)        // 10% threshold
+	threshold := decimal.NewFromInt(10)       // 10% threshold
 	s.req.True(li.ExceedsVarianceThreshold(threshold))
 }
 
@@ -411,6 +411,6 @@ func (s *BudgetSuite) TestExceedsVarianceThreshold_VarianceBelowThreshold_False(
 	li := newValidLineItem(uuid.New(), b.TenantID)
 	li.BudgetedAmount = decimal.NewFromInt(100)
 	li.ActualAmount = decimal.NewFromInt(105) // -5% variance
-	threshold := decimal.NewFromInt(10)        // 10% threshold
+	threshold := decimal.NewFromInt(10)       // 10% threshold
 	s.req.False(li.ExceedsVarianceThreshold(threshold))
 }

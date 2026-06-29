@@ -21,8 +21,10 @@ func ExpenseClaimScreen(sess ui.UISessionContext, cfg ExpenseClaimScreenConfig) 
 	return ast.PageNode{
 		Title: "Expense Claim",
 		Body: []ast.Node{
-			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
-				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Submitted", Value: "submitted"}, {Label: "Approved", Value: "approved"}, {Label: "Paid", Value: "paid"}}}),
+			blocks.DocumentHeaderBlock(sess, blocks.DocumentHeaderConfig{
+				ShowCurrency: true, ShowStatus: true, ReadOnly: cfg.ReadOnly,
+				StatusOptions: []ast.SelectOption{{Label: "Draft", Value: "draft"}, {Label: "Submitted", Value: "submitted"}, {Label: "Approved", Value: "approved"}, {Label: "Paid", Value: "paid"}},
+			}),
 			blocks.PartyBlock(sess, blocks.DefaultEmployeeConfig()),
 			blocks.ProductServiceLineBlock(sess, lineCfg),
 			blocks.TaxSummaryBlock(sess),

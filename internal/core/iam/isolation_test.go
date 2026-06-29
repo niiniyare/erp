@@ -134,8 +134,8 @@ func (s *IsolationSuite) TestAZ_ISO_005_EnforceBatch_IsolatedPerDomain() {
 	memRole(s.T(), s.svc, "tenant:usr", "role:r", domA)
 
 	reqs := []Request{
-		{Subject: "tenant:usr", Domain: domA, Object: "res", Action: "read"},  // true
-		{Subject: "tenant:usr", Domain: domB, Object: "res", Action: "read"},  // false
+		{Subject: "tenant:usr", Domain: domA, Object: "res", Action: "read"}, // true
+		{Subject: "tenant:usr", Domain: domB, Object: "res", Action: "read"}, // false
 	}
 	results, err := s.svc.EnforceBatch(s.ctx, reqs)
 	s.Require().NoError(err)
@@ -325,7 +325,7 @@ func (s *IsolationSuite) TestAZ_ISO_014_PortalDomain_IsolatedFromTenantDomain() 
 // ---------------------------------------------------------------------------
 
 func (s *IsolationSuite) TestAZ_ISO_015_APIKeySubject_IsolatedFromTenantDomain() {
-	apiDom    := "api-key-domain-0015"
+	apiDom := "api-key-domain-0015"
 	tenantDom := "tenant-eeee-0015"
 
 	s.allow("role:integrator", apiDom, "webhook/*", "create")
