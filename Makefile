@@ -15,7 +15,7 @@ MAKEFLAGS    += --warn-undefined-variables --no-builtin-rules --no-print-directo
 # =============================================================================
 
 # Database
-DB_NAME  ?= ledger
+DB_NAME  ?= awo
 DB_USER  ?= admin
 DB_PSSWD ?= admin
 DB_HOST  ?= localhost
@@ -23,7 +23,7 @@ DB_PORT  ?= 5432
 TEST_DATABASE_URL="postgres://user:pass@localhost:5432/erp_test?sslmode=di
 DB_URL   ?= postgresql://$(DB_USER):$(DB_PSSWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 # Paths
-MIGRATION_PATH := db/migration
+MIGRATION_PATH := framework/db/migrations
 SQLC_OUT       := db/sqlc
 DOCS_PATH      := docs
 COVERAGE_FILE  := coverage.out

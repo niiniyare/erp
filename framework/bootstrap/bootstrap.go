@@ -88,6 +88,8 @@ func Mount(app *fiber.App, opts Options) {
 	}
 
 	// IAM takes priority over any caller-supplied ViewerFn.
+	// Auth routes mount at root (no prefix): /auth/login, /auth/register, etc.
+	// Entity API routes mount under APIPrefix separately below.
 	if opts.RedisClient != nil {
 		svc := iam.NewAuthService(opts.Pool, opts.RedisClient)
 		iam.NewHandler(svc).Mount(app)

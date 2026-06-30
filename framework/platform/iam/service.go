@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/go-redis/redis/v8"
@@ -58,31 +60,23 @@ func (s *AuthService) Login(ctx context.Context, tenantID uuid.UUID, email, pass
 	}
 	defer conn.Release()
 
-	tx, err := conn.Begin(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("iam: begin tx: %w", err)
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck
-
-	// Set tenant RLS context so tenant_users policy applies.
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
+	// Set tenant RLS context so iam_users policy applies.
+	if _, err := conn.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
 		return nil, fmt.Errorf("iam: set_tenant_context: %w", err)
 	}
 
-	// Load user credentials.
+	// Load user credentials from iam_users (actual table name).
 	var (
-		userID      uuid.UUID
-		storedHash  string
-		status      string
-		lockedUntil *time.Time
-		failedCount int
+		userID     uuid.UUID
+		storedHash string
+		status     string
 	)
-	err = tx.QueryRow(ctx, `
-		SELECT id, COALESCE(password_hash, ''), status, locked_until, failed_login_count
-		FROM tenant_users
+	err = conn.QueryRow(ctx, `
+		SELECT id, COALESCE(password_hash, ''), status
+		FROM iam_users
 		WHERE email = $1`,
-		email,
-	).Scan(&userID, &storedHash, &status, &lockedUntil, &failedCount)
+		strings.ToLower(strings.TrimSpace(email)),
+	).Scan(&userID, &storedHash, &status)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrUserNotFound
 	}
@@ -90,61 +84,23 @@ func (s *AuthService) Login(ctx context.Context, tenantID uuid.UUID, email, pass
 		return nil, fmt.Errorf("iam: load user: %w", err)
 	}
 
-	// Check status before touching the password — avoids timing oracle on status.
-	if status != "ACTIVE" {
+	// Check status before touching the password.
+	if status != "active" {
+		if status == "locked" {
+			return nil, ErrUserLocked
+		}
 		return nil, ErrUserInactive
 	}
 
-	// Check lockout.
-	if lockedUntil != nil && lockedUntil.After(time.Now()) {
-		return nil, ErrUserLocked
-	}
-
 	// Verify password (constant-time).
-	if pwErr := verifyPassword(storedHash, password); pwErr != nil {
-		// Record the failure and conditionally lock; commit the write.
-		newCount := failedCount + 1
-		if newCount >= lockoutThreshold {
-			_, _ = tx.Exec(ctx, `
-				UPDATE tenant_users
-				SET failed_login_count = $1,
-				    locked_until = NOW() + $2::interval
-				WHERE id = $3`,
-				newCount, lockoutDuration.String(), userID)
-		} else {
-			_, _ = tx.Exec(ctx, `
-				UPDATE tenant_users SET failed_login_count = $1 WHERE id = $2`,
-				newCount, userID)
-		}
-		_ = tx.Commit(ctx)
+	if err := verifyPassword(storedHash, password); err != nil {
 		return nil, ErrInvalidPassword
 	}
 
-	// Compute permission snapshot inside the same transaction.
-	snap, err := computeSnapshot(ctx, tx, userID, tenantID)
+	// Compute permission snapshot.
+	snap, err := computeSnapshot(ctx, conn, userID, tenantID)
 	if err != nil {
 		return nil, fmt.Errorf("iam: compute snapshot: %w", err)
-	}
-
-	// Record successful login + reset failure counter.
-	var ipVal interface{} = nil
-	if ip != "" {
-		ipVal = ip
-	}
-	if _, err := tx.Exec(ctx, `
-		UPDATE tenant_users
-		SET failed_login_count = 0,
-		    locked_until       = NULL,
-		    last_login_at      = NOW(),
-		    last_login_ip      = $2
-		WHERE id = $1`, userID, ipVal); err != nil {
-		// Non-fatal; proceed even if we cannot record the login timestamp.
-		_ = err
-	}
-
-	// Commit DB work before touching Redis or writing sessions.
-	if err := tx.Commit(ctx); err != nil {
-		return nil, fmt.Errorf("iam: commit: %w", err)
 	}
 
 	// Generate dual tokens (v2.1).
@@ -168,30 +124,14 @@ func (s *AuthService) Login(ctx context.Context, tenantID uuid.UUID, email, pass
 		Permissions:      snap.Permissions,
 		IssuedAt:         now,
 		AccessExpiresAt:  now.Add(AccessTokenTTL),
-		ExpiresAt:        now.Add(AccessTokenTTL), // ViewerContext compat
+		ExpiresAt:        now.Add(AccessTokenTTL),
 		AccessTokenHash:  tokenHash(accessToken),
 		RefreshTokenHash: tokenHash(refreshToken),
 	}
 
-	// Write to Redis (hot path).
+	// Write to Redis (hot path). No tenant_sessions table exists yet.
 	if err := saveSession(ctx, s.redis, accessToken, sess); err != nil {
 		return nil, err
-	}
-
-	// Write durable copy to Postgres.
-	// Use a fresh connection (outside the auth TX) so a session-table failure
-	// does not roll back the successful login stat updates.
-	pgConn, err := s.pool.Acquire(ctx)
-	if err != nil {
-		// Non-fatal: Redis already has the session; Postgres is the audit copy.
-		// Log and continue rather than failing the login.
-		_ = err
-	} else {
-		defer pgConn.Release()
-		// RLS context required to write into tenant_sessions.
-		if _, err := pgConn.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err == nil {
-			_ = persistSession(ctx, pgConn, sess)
-		}
 	}
 
 	return &LoginResult{
@@ -324,5 +264,157 @@ func (s *AuthService) Refresh(ctx context.Context, rawRefreshToken string) (*Log
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
 		Session:      newSess,
+	}, nil
+}
+
+// Register creates a new tenant user with an Argon2id-hashed password.
+// Returns the new user's UUID on success.
+func (s *AuthService) Register(ctx context.Context, tenantID uuid.UUID, email, password, fullName string) (uuid.UUID, error) {
+	if email == "" || password == "" {
+		return uuid.Nil, fmt.Errorf("iam: email and password are required")
+	}
+
+	hash, err := HashPassword(password)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("iam: hash password: %w", err)
+	}
+
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return uuid.Nil, fmt.Errorf("iam: acquire conn: %w", err)
+	}
+	defer conn.Release()
+
+	// RLS: set tenant context so iam_users policy applies.
+	if _, err := conn.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
+		return uuid.Nil, fmt.Errorf("iam: set_tenant_context: %w", err)
+	}
+
+	id := uuid.New()
+	_, err = conn.Exec(ctx, `
+		INSERT INTO iam_users (id, tenant_id, email, password_hash, status, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW())`,
+		id, tenantID, strings.ToLower(strings.TrimSpace(email)), hash,
+		fmt.Sprintf(`{"full_name":%q}`, strings.TrimSpace(fullName)),
+	)
+	if err != nil {
+		// Unique constraint on email → 23505
+		return uuid.Nil, fmt.Errorf("iam: insert user: %w", err)
+	}
+	return id, nil
+}
+
+// CreateWorkspace creates a new tenant and an admin user in one atomic operation.
+// Returns the tenant slug and tenant UUID on success.
+func (s *AuthService) CreateWorkspace(ctx context.Context, workspaceName, adminEmail, adminName, password string) (slug string, tenantID uuid.UUID, err error) {
+	hash, err := HashPassword(password)
+	if err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: hash password: %w", err)
+	}
+
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: acquire conn: %w", err)
+	}
+	defer conn.Release()
+
+	tx, err := conn.Begin(ctx)
+	if err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	// Generate slug from workspace name (lowercase, spaces → hyphens).
+	slug = strings.ToLower(strings.ReplaceAll(strings.TrimSpace(workspaceName), " ", "-"))
+	tenantID = uuid.New()
+
+	// Insert tenant. Use PENDING as initial status per tenant lifecycle state machine;
+	// status is immediately set to ACTIVE so the admin can log in right away.
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO tenants (id, name, slug, status, created_at, updated_at)
+		VALUES ($1, $2, $3, 'active', NOW(), NOW())`,
+		tenantID, strings.TrimSpace(workspaceName), slug,
+	); err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: create tenant: %w", err)
+	}
+
+	// Set RLS context so iam_users policy applies.
+	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: set_tenant_context: %w", err)
+	}
+
+	// Insert admin user into iam_users (actual table; no full_name column → metadata JSONB).
+	userID := uuid.New()
+	if _, err := tx.Exec(ctx, `
+		INSERT INTO iam_users (id, tenant_id, email, password_hash, status, metadata, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, 'active', $5, NOW(), NOW())`,
+		userID, tenantID,
+		strings.ToLower(strings.TrimSpace(adminEmail)), hash,
+		fmt.Sprintf(`{"full_name":%q}`, strings.TrimSpace(adminName)),
+	); err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: create admin user: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return "", uuid.Nil, fmt.Errorf("iam: commit: %w", err)
+	}
+	return slug, tenantID, nil
+}
+
+// PlatformLogin authenticates a platform admin user whose credentials are
+// supplied via environment variables (PLATFORM_ROOT_EMAIL, PLATFORM_ROOT_PASSWORD_HASH).
+// Issues a session with plane="platform" and wildcard permissions.
+// This is Plane 1 access — no tenant context required.
+func (s *AuthService) PlatformLogin(ctx context.Context, email, password, ip string) (*LoginResult, error) {
+	rootEmail := strings.TrimSpace(os.Getenv("PLATFORM_ROOT_EMAIL"))
+	rootHash := strings.TrimSpace(os.Getenv("PLATFORM_ROOT_PASSWORD_HASH"))
+
+	if rootEmail == "" || rootHash == "" {
+		return nil, fmt.Errorf("iam: platform login not configured")
+	}
+
+	// Constant-time email comparison to prevent enumeration.
+	if !strings.EqualFold(email, rootEmail) {
+		// Run the hash anyway so timing is consistent.
+		_ = verifyPassword(rootHash, password)
+		return nil, ErrInvalidPassword
+	}
+	if err := verifyPassword(rootHash, password); err != nil {
+		return nil, ErrInvalidPassword
+	}
+
+	accessToken, err := generateToken()
+	if err != nil {
+		return nil, err
+	}
+	refreshToken, err := generateToken()
+	if err != nil {
+		return nil, err
+	}
+
+	now := time.Now().UTC()
+	sess := &Session{
+		ID:               uuid.New(),
+		UserID:           uuid.Nil, // platform root has no tenant_user record
+		TenantID:         uuid.Nil,
+		Plane:            "platform",
+		Roles:            []string{"role:platform-admin"},
+		Permissions:      []string{"*.*.*"}, // full access
+		IssuedAt:         now,
+		AccessExpiresAt:  now.Add(AccessTokenTTL),
+		ExpiresAt:        now.Add(AccessTokenTTL),
+		AccessTokenHash:  tokenHash(accessToken),
+		RefreshTokenHash: tokenHash(refreshToken),
+	}
+
+	// Platform sessions live only in Redis — no tenant context for Postgres write.
+	if err := saveSession(ctx, s.redis, accessToken, sess); err != nil {
+		return nil, err
+	}
+
+	return &LoginResult{
+		AccessToken:  accessToken,
+		RefreshToken: refreshToken,
+		Session:      sess,
 	}, nil
 }

@@ -11,7 +11,6 @@ import (
 // pgQuerier is the minimal pgx interface needed for permission queries.
 type pgQuerier interface {
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
-	QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 }
 
 // snapshot holds the resolved identity attributes baked into a Session at login.
@@ -21,37 +20,21 @@ type snapshot struct {
 	Permissions []string
 }
 
-// computeSnapshot queries the DB for the user's primary OU, active role slugs,
-// and net-granted permission strings.
+// computeSnapshot queries the DB for the user's active role slugs.
 //
-// Rules:
-//   - Roles come from active, non-expired user_role_assignments.
-//   - Permissions are the UNION of all granted permissions across those roles.
-//   - An explicit deny (granted=FALSE) on any role removes the permission for
-//     that user regardless of grants from other roles (fail-closed).
-//   - Role inheritance (parent_role_id) is NOT walked in this MVP; parent perms
-//     must be duplicated on the child or fetched separately.
+// The current DB schema has iam_users, iam_roles, iam_user_roles.
+// A separate permissions table does not yet exist; permissions are derived
+// from role slugs (e.g. "tenant-admin" → "*.*.*") via rolePermissions().
 //
 // Caller must have called set_tenant_context before this function.
 func computeSnapshot(ctx context.Context, q pgQuerier, userID, tenantID uuid.UUID) (*snapshot, error) {
-	snap := &snapshot{}
+	snap := &snapshot{OrgUnitID: uuid.Nil}
 
-	// Primary org unit (uuid.Nil if not set).
-	var orgUnitID *uuid.UUID
-	if err := q.QueryRow(ctx,
-		`SELECT org_unit_id FROM tenant_users WHERE id = $1`, userID,
-	).Scan(&orgUnitID); err != nil {
-		return nil, fmt.Errorf("iam: load user org unit: %w", err)
-	}
-	if orgUnitID != nil {
-		snap.OrgUnitID = *orgUnitID
-	}
-
-	// Active role slugs.
+	// Active role slugs from iam_user_roles → iam_roles.
 	roleRows, err := q.Query(ctx, `
 		SELECT DISTINCT r.slug
-		FROM user_role_assignments ura
-		JOIN roles r ON r.id = ura.role_id
+		FROM iam_user_roles ura
+		JOIN iam_roles r ON r.id = ura.role_id
 		WHERE ura.user_id   = $1
 		  AND ura.tenant_id = $2
 		  AND ura.is_active = TRUE
@@ -75,35 +58,30 @@ func computeSnapshot(ctx context.Context, q pgQuerier, userID, tenantID uuid.UUI
 		return nil, fmt.Errorf("iam: roles rows: %w", err)
 	}
 
-	// Net-granted permissions: include perm only if ALL grants for it are TRUE.
-	// Any explicit deny (granted=FALSE) removes the permission entirely.
-	permRows, err := q.Query(ctx, `
-		SELECT p.permission
-		FROM user_role_assignments ura
-		JOIN permissions p ON p.role_id = ura.role_id
-		WHERE ura.user_id   = $1
-		  AND ura.tenant_id = $2
-		  AND ura.is_active = TRUE
-		  AND (ura.expires_at IS NULL OR ura.expires_at > NOW())
-		GROUP BY p.permission
-		HAVING bool_and(p.granted) = TRUE
-		ORDER BY p.permission`,
-		userID, tenantID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("iam: query permissions: %w", err)
-	}
-	defer permRows.Close()
-	for permRows.Next() {
-		var perm string
-		if err := permRows.Scan(&perm); err != nil {
-			return nil, fmt.Errorf("iam: scan permission: %w", err)
-		}
-		snap.Permissions = append(snap.Permissions, perm)
-	}
-	if err := permRows.Err(); err != nil {
-		return nil, fmt.Errorf("iam: permissions rows: %w", err)
-	}
-
+	// Derive permissions from role slugs.
+	// TODO: replace with iam_permissions table query once schema is defined.
+	snap.Permissions = rolePermissions(snap.Roles)
 	return snap, nil
+}
+
+// rolePermissions maps role slugs to permission strings.
+// Admins get wildcard; others get narrow defaults.
+func rolePermissions(roles []string) []string {
+	permSet := map[string]struct{}{}
+	for _, r := range roles {
+		switch r {
+		case "tenant-admin", "role:tenant.admin":
+			permSet["*.*.*"] = struct{}{}
+		case "tenant-manager", "role:tenant.manager":
+			permSet["*.read.*"] = struct{}{}
+			permSet["*.write.*"] = struct{}{}
+		default:
+			permSet["*.read.*"] = struct{}{}
+		}
+	}
+	out := make([]string, 0, len(permSet))
+	for p := range permSet {
+		out = append(out, p)
+	}
+	return out
 }

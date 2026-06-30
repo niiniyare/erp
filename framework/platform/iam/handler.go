@@ -2,7 +2,6 @@ package iam
 
 import (
 	"errors"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -18,45 +17,69 @@ func NewHandler(svc *AuthService) *Handler {
 	return &Handler{svc: svc}
 }
 
-// Mount registers auth routes on r.
+// Mount registers auth routes on r (at root, no prefix).
 //
-//	POST /auth/login    — issue access + refresh token pair
-//	POST /auth/logout   — revoke access token
-//	POST /auth/refresh  — rotate tokens using a refresh token
+//	POST /auth/login             — issue access + refresh token pair (tenant user)
+//	POST /auth/logout            — revoke access token
+//	POST /auth/refresh           — rotate tokens using a refresh token
+//	POST /auth/register          — create workspace (tenant) + admin user
+//	GET  /auth/me                — return current session info
+//	POST /auth/platform/login    — authenticate platform admin (Plane 1, no tenant required)
 func (h *Handler) Mount(r fiber.Router) {
 	r.Post("/auth/login", h.login)
 	r.Post("/auth/logout", h.logout)
 	r.Post("/auth/refresh", h.refresh)
+	r.Post("/auth/register", h.register)
+	r.Get("/auth/me", h.me)
+	r.Post("/auth/platform/login", h.platformLogin)
 }
 
-// ── Request / response types ───────────────────────────────────────────────
+// ── Request types ──────────────────────────────────────────────────────────
 
 type loginRequest struct {
-	TenantID string `json:"tenant_id"` // alternative to X-Awo-Tenant header
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-type loginResponse struct {
-	AccessToken          string    `json:"access_token"`
-	RefreshToken         string    `json:"refresh_token"`
-	AccessTokenExpiresAt time.Time `json:"access_token_expires_at"`
-	UserID               string    `json:"user_id"`
-	TenantID             string    `json:"tenant_id"`
-	Roles                []string  `json:"roles"`
-	Permissions          []string  `json:"permissions"`
+	TenantID string `json:"tenant_id" form:"tenant_id"` // alternative to X-Awo-Tenant header
+	Email    string `json:"email"     form:"email"`
+	Password string `json:"password"  form:"password"`
 }
 
 type refreshRequest struct {
-	RefreshToken string `json:"refresh_token"`
+	RefreshToken string `json:"refresh_token" form:"refresh_token"`
 }
 
-// ── Handlers ──────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────
+
+// authOK wraps a LoginResult in the AMIS-compatible {status:0, data:{...}} envelope.
+func authOK(c *fiber.Ctx, r *LoginResult) error {
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"status": 0,
+		"msg":    "",
+		"data": fiber.Map{
+			"access_token":            r.AccessToken,
+			"refresh_token":           r.RefreshToken,
+			"access_token_expires_at": r.Session.AccessExpiresAt,
+			"user_id":                 r.Session.UserID.String(),
+			"tenant_id":               r.Session.TenantID.String(),
+			"display_name":            r.Session.UserID.String(), // TODO: load full_name from tenant_users
+			"roles":                   r.Session.Roles,
+			"permissions":             r.Session.Permissions,
+			"plane":                   r.Session.Plane,
+		},
+	})
+}
+
+// ── Handlers ───────────────────────────────────────────────────────────────
 
 func (h *Handler) login(c *fiber.Ctx) error {
 	var req loginRequest
-	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	_ = c.BodyParser(&req)
+	if req.Email == "" {
+		req.Email = c.FormValue("email")
+	}
+	if req.Password == "" {
+		req.Password = c.FormValue("password")
+	}
+	if req.TenantID == "" {
+		req.TenantID = c.FormValue("tenant_id")
 	}
 	if req.Email == "" || req.Password == "" {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "email and password required")
@@ -76,16 +99,7 @@ func (h *Handler) login(c *fiber.Ctx) error {
 	if err != nil {
 		return mapAuthError(err)
 	}
-
-	return c.Status(fiber.StatusOK).JSON(loginResponse{
-		AccessToken:          result.AccessToken,
-		RefreshToken:         result.RefreshToken,
-		AccessTokenExpiresAt: result.Session.AccessExpiresAt,
-		UserID:               result.Session.UserID.String(),
-		TenantID:             result.Session.TenantID.String(),
-		Roles:                result.Session.Roles,
-		Permissions:          result.Session.Permissions,
-	})
+	return authOK(c, result)
 }
 
 func (h *Handler) logout(c *fiber.Ctx) error {
@@ -101,8 +115,9 @@ func (h *Handler) logout(c *fiber.Ctx) error {
 
 func (h *Handler) refresh(c *fiber.Ctx) error {
 	var req refreshRequest
-	if err := c.BodyParser(&req); err != nil {
-		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	_ = c.BodyParser(&req)
+	if req.RefreshToken == "" {
+		req.RefreshToken = c.FormValue("refresh_token")
 	}
 	if req.RefreshToken == "" {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, "refresh_token required")
@@ -115,16 +130,110 @@ func (h *Handler) refresh(c *fiber.Ctx) error {
 		}
 		return fiber.NewError(fiber.StatusInternalServerError, "refresh failed")
 	}
+	return authOK(c, result)
+}
 
-	return c.Status(fiber.StatusOK).JSON(loginResponse{
-		AccessToken:          result.AccessToken,
-		RefreshToken:         result.RefreshToken,
-		AccessTokenExpiresAt: result.Session.AccessExpiresAt,
-		UserID:               result.Session.UserID.String(),
-		TenantID:             result.Session.TenantID.String(),
-		Roles:                result.Session.Roles,
-		Permissions:          result.Session.Permissions,
+// register handles "Create workspace" — creates a tenant + admin user in one call.
+// Body: {workspace_name, admin_email, admin_name, password}
+// Response: {status:0, data:{tenant_slug, display_name}}
+func (h *Handler) register(c *fiber.Ctx) error {
+	var req struct {
+		WorkspaceName string `json:"workspace_name" form:"workspace_name"`
+		AdminEmail    string `json:"admin_email"    form:"admin_email"`
+		AdminName     string `json:"admin_name"     form:"admin_name"`
+		Password      string `json:"password"       form:"password"`
+	}
+	_ = c.BodyParser(&req)
+	if req.AdminEmail == "" {
+		req.AdminEmail = c.FormValue("admin_email")
+	}
+	if req.Password == "" {
+		req.Password = c.FormValue("password")
+	}
+	if req.WorkspaceName == "" {
+		req.WorkspaceName = c.FormValue("workspace_name")
+	}
+	if req.AdminName == "" {
+		req.AdminName = c.FormValue("admin_name")
+	}
+	if req.AdminEmail == "" || req.Password == "" || req.WorkspaceName == "" {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "workspace_name, admin_email and password required")
+	}
+
+	slug, tenantID, err := h.svc.CreateWorkspace(c.Context(), req.WorkspaceName, req.AdminEmail, req.AdminName, req.Password)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "workspace creation failed: "+err.Error())
+	}
+
+	// Auto-login the new admin so the UI can proceed immediately.
+	result, err := h.svc.Login(c.Context(), tenantID, req.AdminEmail, req.Password, c.IP())
+	if err != nil {
+		// Created but login failed — return slug so client can log in manually.
+		return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+			"status": 0,
+			"msg":    "workspace created",
+			"data": fiber.Map{
+				"tenant_slug":  slug,
+				"display_name": req.AdminName,
+			},
+		})
+	}
+
+	data := fiber.Map{
+		"tenant_slug":             slug,
+		"display_name":            req.AdminName,
+		"access_token":            result.AccessToken,
+		"refresh_token":           result.RefreshToken,
+		"access_token_expires_at": result.Session.AccessExpiresAt,
+		"user_id":                 result.Session.UserID.String(),
+		"tenant_id":               result.Session.TenantID.String(),
+		"roles":                   result.Session.Roles,
+		"permissions":             result.Session.Permissions,
+	}
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"status": 0, "msg": "", "data": data})
+}
+
+func (h *Handler) me(c *fiber.Ctx) error {
+	v, ok := c.Locals(viewerLocalKey).(*SessionViewer)
+	if !ok || v == nil {
+		return fiber.NewError(fiber.StatusUnauthorized, "not authenticated")
+	}
+	sess := v.sess
+	return c.JSON(fiber.Map{
+		"status": 0,
+		"msg":    "",
+		"data": fiber.Map{
+			"user_id":      sess.UserID.String(),
+			"tenant_id":    sess.TenantID.String(),
+			"display_name": sess.UserID.String(), // TODO: load full_name from tenant_users
+			"roles":        sess.Roles,
+			"permissions":  sess.Permissions,
+			"plane":        sess.Plane,
+		},
 	})
+}
+
+func (h *Handler) platformLogin(c *fiber.Ctx) error {
+	var req struct {
+		Email    string `json:"email"    form:"email"`
+		Password string `json:"password" form:"password"`
+	}
+	_ = c.BodyParser(&req)
+	if req.Email == "" {
+		req.Email = c.FormValue("email")
+	}
+	if req.Password == "" {
+		req.Password = c.FormValue("password")
+	}
+	if req.Email == "" || req.Password == "" {
+		return fiber.NewError(fiber.StatusUnprocessableEntity, "email and password required")
+	}
+
+	result, err := h.svc.PlatformLogin(c.Context(), req.Email, req.Password, c.IP())
+	if err != nil {
+		return mapAuthError(err)
+	}
+	return authOK(c, result)
 }
 
 // mapAuthError converts service-layer auth errors to Fiber HTTP errors.

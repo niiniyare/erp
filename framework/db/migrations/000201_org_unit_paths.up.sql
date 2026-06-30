@@ -7,6 +7,7 @@
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS org_unit_paths (
+    tenant_id  uuid        NOT NULL DEFAULT current_tenant_id(),
     ancestor_id   uuid    NOT NULL REFERENCES org_units (id) ON DELETE CASCADE,
     descendant_id uuid    NOT NULL REFERENCES org_units (id) ON DELETE CASCADE,
     depth         integer NOT NULL CHECK (depth >= 0),

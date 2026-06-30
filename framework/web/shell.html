@@ -294,10 +294,11 @@
         </div>
       </div>
       <div class="tab-bar">
-        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Sign in</button>
-        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Create workspace</button>
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Tenant sign in</button>
+        <button class="tab-btn" id="tab-platform" onclick="switchTab('platform')">Platform admin</button>
       </div>
 
+      <!-- Tenant login form -->
       <form id="login-form" onsubmit="submitLogin(event)">
         <div class="login-field">
           <label for="login-tenant">Workspace</label>
@@ -315,25 +316,21 @@
         <div class="login-error" id="login-error"></div>
       </form>
 
-      <form id="register-form" onsubmit="submitRegister(event)" style="display:none;">
-        <div class="login-field">
-          <label for="reg-workspace">Workspace name</label>
-          <input id="reg-workspace" type="text" placeholder="Acme Corp" required>
+      <!-- Platform admin login form -->
+      <form id="platform-form" onsubmit="submitPlatformLogin(event)" style="display:none;">
+        <div class="login-field" style="margin-bottom:12px;padding:10px 12px;background:#fef9c3;border-radius:8px;font-size:12px;color:#854d0e;">
+          <i class="fa fa-shield-halved"></i> Platform administrator access. Requires <code>PLATFORM_ROOT_EMAIL</code> configured on the server.
         </div>
         <div class="login-field">
-          <label for="reg-name">Your name</label>
-          <input id="reg-name" type="text" placeholder="Jane Doe" required>
+          <label for="plat-email">Email</label>
+          <input id="plat-email" type="email" placeholder="admin@example.com" autocomplete="email" required>
         </div>
         <div class="login-field">
-          <label for="reg-email">Email</label>
-          <input id="reg-email" type="email" placeholder="you@example.com" required>
+          <label for="plat-password">Password</label>
+          <input id="plat-password" type="password" placeholder="••••••••" autocomplete="current-password" required>
         </div>
-        <div class="login-field">
-          <label for="reg-password">Password <small style="color:#94a3b8;">(min 8 chars)</small></label>
-          <input id="reg-password" type="password" placeholder="••••••••" minlength="8" required>
-        </div>
-        <button class="login-btn" type="submit" id="reg-submit">Create workspace</button>
-        <div class="login-error" id="reg-error"></div>
+        <button class="login-btn" type="submit" id="plat-submit">Sign in as platform admin</button>
+        <div class="login-error" id="plat-error"></div>
       </form>
     </div>
   </div>
@@ -385,6 +382,39 @@
       </div>
 
       <div id="footer">&copy; 2026 AWO ERP</div>
+    </div>
+  </div>
+
+  <!-- Create Tenant modal (platform admin only) -->
+  <div id="create-tenant-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.5);align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:32px;width:100%;max-width:440px;box-shadow:0 25px 50px rgba(0,0,0,.4);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+        <h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0;">Create workspace</h2>
+        <button onclick="closeCreateTenant()" style="background:none;border:none;font-size:18px;color:#94a3b8;cursor:pointer;"><i class="fa fa-xmark"></i></button>
+      </div>
+      <form id="create-tenant-form" onsubmit="submitCreateTenant(event)">
+        <div class="login-field">
+          <label for="ct-workspace">Workspace name</label>
+          <input id="ct-workspace" type="text" placeholder="Acme Corp" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-name">Admin full name</label>
+          <input id="ct-name" type="text" placeholder="Jane Doe" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-email">Admin email</label>
+          <input id="ct-email" type="email" placeholder="admin@acme.com" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-password">Admin password <small style="color:#94a3b8;">(min 8 chars)</small></label>
+          <input id="ct-password" type="password" placeholder="••••••••" minlength="8" required>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:4px;">
+          <button type="button" onclick="closeCreateTenant()" style="flex:1;padding:10px;border:1px solid #e2e8f0;border-radius:8px;background:#fff;font-size:14px;cursor:pointer;color:#64748b;">Cancel</button>
+          <button class="login-btn" type="submit" id="ct-submit" style="flex:2;">Create workspace</button>
+        </div>
+        <div class="login-error" id="ct-error"></div>
+      </form>
     </div>
   </div>
 
@@ -562,7 +592,7 @@
     }
 
     function navigate() {
-      var entity = window.location.hash.slice(1) || '__dashboard';
+      var entity = window.location.hash.slice(1) || (currentPlane === 'platform' ? '__platform-tenants' : '__dashboard');
       setActive(entity);
 
       if (currentInstance) {
@@ -571,11 +601,25 @@
       }
       content.innerHTML = '<div class="page-loading"><i class="fa fa-spinner fa-spin"></i> Loading…</div>';
 
+      // Platform admin built-in pages
+      if (entity === '__platform-tenants') {
+        renderPlatformTenantsPage();
+        return;
+      }
+      if (entity === '__platform-users') {
+        content.innerHTML = '<div style="padding:24px;color:#64748b;">Platform user management — coming soon.</div>';
+        return;
+      }
+
       var schemaURL = entity === '__dashboard'
         ? '/schemas/pages/dashboard.json'
         : SDUI_BASE + '/' + entity;
 
-      fetch(schemaURL, { credentials: 'include', headers: { 'X-Awo-Tenant': currentTenant } })
+      var token = localStorage.getItem('awo-token') || '';
+      fetch(schemaURL, {
+        credentials: 'include',
+        headers: { 'X-Awo-Tenant': currentTenant, 'Authorization': token ? 'Bearer ' + token : '' }
+      })
         .then(function (r) {
           if (!r.ok) throw new Error('HTTP ' + r.status);
           return r.json();
@@ -589,17 +633,66 @@
         });
     }
 
+    function renderPlatformTenantsPage() {
+      var token = localStorage.getItem('awo-token') || '';
+      fetch('/api/tenants', {
+        credentials: 'include',
+        headers: { 'Authorization': 'Bearer ' + token }
+      })
+      .then(function (r) { return r.ok ? r.json() : { data: [] }; })
+      .then(function (body) {
+        var tenants = Array.isArray(body.data) ? body.data : (Array.isArray(body) ? body : []);
+        var rows = tenants.map(function (t) {
+          return '<tr>' +
+            '<td style="padding:10px 12px;">' + esc(t.name || t.slug || t.id) + '</td>' +
+            '<td style="padding:10px 12px;color:#64748b;">' + esc(t.slug || '') + '</td>' +
+            '<td style="padding:10px 12px;"><span style="padding:2px 8px;border-radius:4px;font-size:12px;background:' + statusBg(t.status) + ';color:' + statusFg(t.status) + ';">' + esc(t.status || '') + '</span></td>' +
+            '<td style="padding:10px 12px;color:#94a3b8;font-size:12px;">' + esc(t.created_at ? t.created_at.slice(0,10) : '') + '</td>' +
+            '</tr>';
+        }).join('');
+
+        content.innerHTML =
+          '<div style="padding:24px;">' +
+          '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">' +
+          '<h2 style="font-size:18px;font-weight:700;color:#0f172a;margin:0;">Workspaces</h2>' +
+          '<button onclick="openCreateTenant()" style="padding:8px 16px;background:#1e40af;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;"><i class="fa fa-plus"></i> New workspace</button>' +
+          '</div>' +
+          (tenants.length === 0
+            ? '<div style="padding:40px;text-align:center;color:#94a3b8;border:2px dashed #e2e8f0;border-radius:12px;">No workspaces yet. <a href="#" onclick="openCreateTenant();return false;" style="color:#1e40af;">Create one.</a></div>'
+            : '<table style="width:100%;border-collapse:collapse;background:#fff;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.08);overflow:hidden;">' +
+              '<thead><tr style="background:#f8fafc;border-bottom:1px solid #e2e8f0;">' +
+              '<th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;">Name</th>' +
+              '<th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;">Slug</th>' +
+              '<th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;">Status</th>' +
+              '<th style="padding:10px 12px;text-align:left;font-size:12px;font-weight:600;color:#64748b;">Created</th>' +
+              '</tr></thead><tbody>' + rows + '</tbody></table>') +
+          '</div>';
+      })
+      .catch(function () {
+        content.innerHTML = '<div class="page-error"><h3>Failed to load tenants</h3></div>';
+      });
+    }
+
+    function esc(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    }
+    function statusBg(s) { return s === 'active' ? '#dcfce7' : s === 'suspended' ? '#fef9c3' : '#f1f5f9'; }
+    function statusFg(s) { return s === 'active' ? '#166534' : s === 'suspended' ? '#854d0e' : '#475569'; }
+
     window.addEventListener('hashchange', function () {
       if (document.getElementById('login-overlay').classList.contains('hidden')) navigate();
     });
 
-    /* ── Auth ─────────────────────────────────────────────────── */
+    /* ── Auth state ───────────────────────────────────────────── */
+    var currentPlane = localStorage.getItem('awo-plane') || ''; // 'tenant' | 'platform'
+
     window.switchTab = function (tab) {
-      var isLogin = tab === 'login';
-      document.getElementById('login-form').style.display   = isLogin ? '' : 'none';
-      document.getElementById('register-form').style.display = isLogin ? 'none' : '';
-      document.getElementById('tab-login').className    = 'tab-btn' + (isLogin ? ' active' : '');
-      document.getElementById('tab-register').className = 'tab-btn' + (!isLogin ? ' active' : '');
+      var isLogin    = tab === 'login';
+      var isPlatform = tab === 'platform';
+      document.getElementById('login-form').style.display    = isLogin    ? '' : 'none';
+      document.getElementById('platform-form').style.display = isPlatform ? '' : 'none';
+      document.getElementById('tab-login').className    = 'tab-btn' + (isLogin    ? ' active' : '');
+      document.getElementById('tab-platform').className = 'tab-btn' + (isPlatform ? ' active' : '');
     };
 
     function showLogin(msg) {
@@ -613,8 +706,10 @@
     function hideLogin() {
       document.getElementById('login-overlay').classList.add('hidden');
       document.getElementById('login-error').classList.remove('visible');
+      document.getElementById('plat-error').classList.remove('visible');
     }
 
+    /* ── Tenant login ──────────────────────────────────────────── */
     window.submitLogin = function (e) {
       e.preventDefault();
       var tenant = document.getElementById('login-tenant').value.trim();
@@ -633,9 +728,12 @@
       })
       .then(function (r) { return r.json(); })
       .then(function (body) {
-        if (body.status === 0) {
+        if (body.status === 0 && body.data) {
           currentTenant = tenant;
+          currentPlane  = 'tenant';
           localStorage.setItem('awo-tenant', tenant);
+          localStorage.setItem('awo-plane', 'tenant');
+          localStorage.setItem('awo-token', body.data.access_token || '');
           document.getElementById('userName').textContent = body.data.display_name || email;
           hideLogin();
           loadNav();
@@ -648,33 +746,94 @@
       .finally(function () { btn.disabled = false; btn.textContent = 'Sign in'; });
     };
 
-    window.submitRegister = function (e) {
+    /* ── Platform admin login ──────────────────────────────────── */
+    window.submitPlatformLogin = function (e) {
       e.preventDefault();
-      var workspace = document.getElementById('reg-workspace').value.trim();
-      var name      = document.getElementById('reg-name').value.trim();
-      var email     = document.getElementById('reg-email').value.trim();
-      var pass      = document.getElementById('reg-password').value;
-      var btn       = document.getElementById('reg-submit');
-      var errEl     = document.getElementById('reg-error');
+      var email = document.getElementById('plat-email').value.trim();
+      var pass  = document.getElementById('plat-password').value;
+      var btn   = document.getElementById('plat-submit');
+      var errEl = document.getElementById('plat-error');
+
+      btn.disabled = true; btn.textContent = 'Signing in…';
+      errEl.classList.remove('visible');
+
+      fetch('/auth/platform/login', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: pass })
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (body) {
+        if (body.status === 0 && body.data) {
+          currentTenant = '';
+          currentPlane  = 'platform';
+          localStorage.setItem('awo-tenant', '');
+          localStorage.setItem('awo-plane', 'platform');
+          localStorage.setItem('awo-token', body.data.access_token || '');
+          document.getElementById('userName').textContent = 'Platform Admin';
+          hideLogin();
+          loadPlatformNav();
+        } else {
+          errEl.textContent = body.msg || 'Login failed';
+          errEl.classList.add('visible');
+        }
+      })
+      .catch(function (err) { errEl.textContent = 'Network error: ' + err.message; errEl.classList.add('visible'); })
+      .finally(function () { btn.disabled = false; btn.textContent = 'Sign in as platform admin'; });
+    };
+
+    /* ── Logout ────────────────────────────────────────────────── */
+    window.doLogout = function () {
+      var token = localStorage.getItem('awo-token') || '';
+      fetch('/auth/logout', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Authorization': 'Bearer ' + token, 'X-Awo-Tenant': currentTenant }
+      }).finally(function () {
+        localStorage.removeItem('awo-token');
+        localStorage.removeItem('awo-plane');
+        currentPlane = '';
+        showLogin();
+      });
+    };
+
+    /* ── Create Tenant (platform admin) ───────────────────────── */
+    window.openCreateTenant = function () {
+      var modal = document.getElementById('create-tenant-modal');
+      modal.style.display = 'flex';
+      document.getElementById('ct-workspace').focus();
+    };
+    window.closeCreateTenant = function () {
+      document.getElementById('create-tenant-modal').style.display = 'none';
+      document.getElementById('create-tenant-form').reset();
+      document.getElementById('ct-error').classList.remove('visible');
+    };
+
+    window.submitCreateTenant = function (e) {
+      e.preventDefault();
+      var workspace = document.getElementById('ct-workspace').value.trim();
+      var name      = document.getElementById('ct-name').value.trim();
+      var email     = document.getElementById('ct-email').value.trim();
+      var pass      = document.getElementById('ct-password').value;
+      var btn       = document.getElementById('ct-submit');
+      var errEl     = document.getElementById('ct-error');
+      var token     = localStorage.getItem('awo-token') || '';
 
       btn.disabled = true; btn.textContent = 'Creating…';
       errEl.classList.remove('visible');
 
       fetch('/auth/register', {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
         body: JSON.stringify({ workspace_name: workspace, admin_name: name, admin_email: email, password: pass })
       })
       .then(function (r) { return r.json(); })
       .then(function (body) {
-        if (body.status === 0 && body.data) {
-          currentTenant = body.data.tenant_slug;
-          localStorage.setItem('awo-tenant', currentTenant);
-          document.getElementById('userName').textContent = body.data.display_name || email;
-          hideLogin();
-          loadNav();
+        if ((body.status === 0 || body.status === 201) && body.data) {
+          closeCreateTenant();
+          // Refresh the tenant list page
+          navigate();
         } else {
-          errEl.textContent = body.msg || 'Registration failed';
+          errEl.textContent = body.msg || body.error || 'Creation failed';
           errEl.classList.add('visible');
         }
       })
@@ -682,27 +841,71 @@
       .finally(function () { btn.disabled = false; btn.textContent = 'Create workspace'; });
     };
 
-    window.doLogout = function () {
-      fetch('/auth/logout', {
-        method: 'POST', credentials: 'include',
-        headers: { 'X-Awo-Tenant': currentTenant }
-      }).finally(function () { showLogin(); });
-    };
-
+    /* ── Session restore ───────────────────────────────────────── */
     function checkSession() {
-      if (!currentTenant) { showLogin(); return; }
-      fetch('/auth/me', { credentials: 'include', headers: { 'X-Awo-Tenant': currentTenant } })
-        .then(function (r) { return r.ok ? r.json() : null; })
-        .then(function (body) {
-          if (body && body.status === 0 && body.data) {
+      var token = localStorage.getItem('awo-token') || '';
+      var plane = localStorage.getItem('awo-plane') || '';
+      if (!token) { showLogin(); return; }
+
+      fetch('/auth/me', {
+        credentials: 'include',
+        headers: { 'Authorization': 'Bearer ' + token, 'X-Awo-Tenant': currentTenant }
+      })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (body) {
+        if (body && body.status === 0 && body.data) {
+          currentPlane = body.data.plane || plane;
+          localStorage.setItem('awo-plane', currentPlane);
+          if (currentPlane === 'platform') {
+            document.getElementById('userName').textContent = 'Platform Admin';
+            hideLogin();
+            loadPlatformNav();
+          } else {
             document.getElementById('userName').textContent = body.data.display_name || body.data.user_id;
             hideLogin();
             loadNav();
-          } else {
-            showLogin();
           }
-        })
-        .catch(function () { showLogin(); });
+        } else {
+          showLogin();
+        }
+      })
+      .catch(function () { showLogin(); });
+    }
+
+    /* ── Platform admin nav ────────────────────────────────────── */
+    function loadPlatformNav() {
+      var menu = document.getElementById('sidebarMenu');
+      menu.innerHTML = '';
+
+      var items = [
+        { id: '__platform-tenants', label: 'Tenants',       icon: 'fa-building-columns' },
+        { id: '__platform-users',   label: 'Platform Users', icon: 'fa-user-shield' },
+      ];
+      items.forEach(function (item) {
+        navIndex[item.id] = { label: item.label, module: 'Platform' };
+        var a = document.createElement('a');
+        a.className = 'nav-item';
+        a.id = 'nav-' + item.id;
+        a.href = '#' + item.id;
+        a.innerHTML = '<i class="fa ' + item.icon + '"></i><span>' + item.label + '</span>';
+        a.addEventListener('click', closeMobile);
+        menu.appendChild(a);
+      });
+
+      // "Create workspace" action button
+      var divider = document.createElement('div');
+      divider.className = 'nav-group-label';
+      divider.textContent = 'Actions';
+      menu.appendChild(divider);
+
+      var btn = document.createElement('a');
+      btn.className = 'nav-item';
+      btn.href = '#';
+      btn.innerHTML = '<i class="fa fa-plus-circle"></i><span>New workspace</span>';
+      btn.addEventListener('click', function (e) { e.preventDefault(); openCreateTenant(); });
+      menu.appendChild(btn);
+
+      navigate();
     }
 
     checkSession();
