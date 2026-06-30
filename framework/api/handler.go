@@ -114,6 +114,11 @@ func (h *Handler) findByID(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
+		// Org scope check before policy evaluation so cross-org reads look
+		// identical to not-found (prevents existence probing across units).
+		if err := h.assertOrgScope(c.Context(), tenantID, viewer, rec); err != nil {
+			return errForbidden
+		}
 		if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpRead, rec); err != nil {
 			return errForbidden // hide existence from unauthorized viewers
 		}
@@ -198,10 +203,24 @@ func (h *Handler) create(c *fiber.Ctx) error {
 
 	rec := newMutableFromMap(h.def.Name, tenantID, body)
 
-	// Stamp the viewer's org unit onto the record, overwriting any user-supplied
-	// value. For non-unit-scoped entities this is a no-op (uuid.Nil stored but
-	// never written to DB — scopeColumns omits org_unit_id for those entities).
-	rec.Set("org_unit_id", viewer.OrgUnitID())
+	// Resolve the target org unit. For unit-scoped entities the caller may
+	// specify an org_unit_id in the body to create in a child unit; if absent
+	// we default to the viewer's own unit. Viewers with a non-nil org unit must
+	// be an ancestor-or-equal of the target unit (hierarchical create).
+	// For non-unit-scoped entities this is a no-op (scopeColumns omits
+	// org_unit_id; uuid.Nil is stored but never written to the DB).
+	if h.def.IsUnitScoped() {
+		orgID := resolveOrgUnitID(body, viewer)
+		if h.orgTree != nil && !viewer.IsSystem() &&
+			viewer.OrgUnitID() != uuid.Nil && orgID != viewer.OrgUnitID() {
+			if err := org.AssertAncestor(c.Context(), h.orgTree, tenantID, viewer.OrgUnitID(), orgID); err != nil {
+				return fiber.ErrForbidden
+			}
+		}
+		rec.Set("org_unit_id", orgID)
+	} else {
+		rec.Set("org_unit_id", viewer.OrgUnitID())
+	}
 
 	if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpCreate, rec); err != nil {
 		return fiber.ErrForbidden
@@ -271,6 +290,11 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
+	// Org scope check: viewer must be ancestor-or-equal of the record's unit.
+	// Return ErrNotFound (not ErrForbidden) to hide cross-unit existence.
+	if err := h.assertOrgScope(c.Context(), tenantID, viewer, before); err != nil {
+		return fiberErr(persistence.ErrNotFound)
+	}
 	if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpUpdate, before); err != nil {
 		return fiber.ErrForbidden
 	}
@@ -340,6 +364,9 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
+		if err := h.assertOrgScope(c.Context(), tenantID, viewer, rec); err != nil {
+			return errForbidden
+		}
 		if err := h.enforcer.Allow(c.Context(), h.def, viewer, def.OpDelete, rec); err != nil {
 			return errForbidden
 		}
@@ -370,6 +397,49 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 // ──────────────────────────────────────────────────────────────────
 
 var errForbidden = errors.New("forbidden")
+
+// assertOrgScope returns an error when the viewer's org unit is NOT an
+// ancestor-or-equal of the record's org unit.
+//
+// No-op when:
+//   - entity is not unit-scoped
+//   - no orgTree configured on the handler
+//   - viewer is a system caller (bypasses unit checks)
+//   - viewer is tenant-wide (OrgUnitID == Nil — all units visible)
+//   - record does not implement def.OrgScoped, or its unit is Nil
+func (h *Handler) assertOrgScope(ctx context.Context, tenantID uuid.UUID, viewer def.ViewerContext, rec def.Record) error {
+	if !h.def.IsUnitScoped() || h.orgTree == nil || viewer.IsSystem() || viewer.OrgUnitID() == uuid.Nil {
+		return nil
+	}
+	scoped, ok := rec.(def.OrgScoped)
+	if !ok {
+		return nil
+	}
+	recordUnitID := scoped.RecordOrgUnitID()
+	if recordUnitID == uuid.Nil {
+		return nil
+	}
+	return org.AssertAncestor(ctx, h.orgTree, tenantID, viewer.OrgUnitID(), recordUnitID)
+}
+
+// resolveOrgUnitID picks the target org_unit_id for a new record.
+// Prefers the body's "org_unit_id" value if it parses as a non-nil UUID;
+// falls back to the viewer's own org unit.
+func resolveOrgUnitID(body map[string]any, viewer def.ViewerContext) uuid.UUID {
+	if raw, ok := body["org_unit_id"]; ok {
+		switch v := raw.(type) {
+		case string:
+			if id, err := uuid.Parse(v); err == nil && id != uuid.Nil {
+				return id
+			}
+		case uuid.UUID:
+			if v != uuid.Nil {
+				return v
+			}
+		}
+	}
+	return viewer.OrgUnitID()
+}
 
 func (h *Handler) extractContext(c *fiber.Ctx) (def.ViewerContext, uuid.UUID, error) {
 	viewer, err := h.viewer(c)
