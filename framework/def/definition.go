@@ -284,6 +284,21 @@ func (d *EntityDefinition) effectiveOrgScope() org.ScopeLevel {
 	return d.OrgScope
 }
 
+// RequiredRoles returns all role names that have been granted the given Op
+// in Permissions. Returns nil when Permissions is empty or no role matches op.
+func (d *EntityDefinition) RequiredRoles(op Op) []string {
+	if len(d.Permissions) == 0 {
+		return nil
+	}
+	var roles []string
+	for role, ops := range d.Permissions {
+		if ops.Is(op) {
+			roles = append(roles, role)
+		}
+	}
+	return roles
+}
+
 // validFieldType reports whether t is a recognised FieldType constant.
 func validFieldType(t FieldType) bool {
 	switch t {
