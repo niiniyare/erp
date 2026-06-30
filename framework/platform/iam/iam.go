@@ -16,26 +16,34 @@
 // All four entities are registered with the framework registry so that CRUD routes,
 // SDUI pages, and audit logging are auto-generated.
 //
-// # Authentication Flow
+// # Authentication Flow (v2.1 — opaque sessions)
 //
 //  1. Client sends POST /auth/login with {email, password} + X-Awo-Tenant header.
 //  2. AuthService verifies Argon2id password hash from tenant_users.
 //  3. computeSnapshot walks active role assignments to build a permission snapshot.
-//  4. Session is created in Redis (TTL 8 hours).
-//  5. Client receives an opaque 32-byte hex token.
-//  6. Subsequent requests send "Authorization: Bearer <token>".
-//  7. AuthMiddleware loads the session from Redis and sets a SessionViewer.
+//  4. Two opaque tokens issued: access (15 min) + refresh (7 days).
+//     Format: awosess_tnt_<hex(32-byte CSPRNG)>
+//  5. Access token stored in Redis (hot path); both tokens hashed and written
+//     to tenant_sessions in PostgreSQL (durable audit copy).
+//  6. Subsequent requests send "Authorization: Bearer <access_token>".
+//  7. AuthMiddleware resolves token via Redis and sets a SessionViewer.
 //  8. Framework handlers call ViewerFromCtx to get the authenticated principal.
+//  9. POST /auth/refresh rotates both tokens and recomputes the permission snapshot.
 //
 // # Wiring
 //
-// Mount the middleware and handlers in your bootstrap:
+// Simplest — pass RedisClient to bootstrap.Mount and everything is automatic:
+//
+//	bootstrap.Mount(app, bootstrap.Options{
+//	    Pool:        pool,
+//	    RedisClient: redisClient,
+//	})
+//
+// Manual wiring (if you need custom middleware ordering):
 //
 //	svc := iam.NewAuthService(pool, redisClient)
 //	iam.NewHandler(svc).Mount(app)
 //	app.Use(iam.AuthMiddleware(redisClient))
-//
-//	// Replace the anonymous viewer with the IAM-backed one:
 //	bootstrap.Mount(app, bootstrap.Options{
 //	    Pool:     pool,
 //	    ViewerFn: iam.ViewerFromCtx,

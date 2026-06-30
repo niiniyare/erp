@@ -1,16 +1,28 @@
 // Package bootstrap wires the full Awo Framework onto a Fiber application.
 //
-// Usage:
+// Minimal usage (anonymous viewer, no auth):
 //
 //	pool, _ := pgxpool.New(ctx, dsn)
 //	app := fiber.New()
+//	bootstrap.Mount(app, bootstrap.Options{Pool: pool})
+//
+// With IAM (opaque session tokens, v2.1):
+//
 //	bootstrap.Mount(app, bootstrap.Options{
-//	    Pool:     pool,
-//	    ViewerFn: myViewerExtractor,
+//	    Pool:        pool,
+//	    RedisClient: redisClient,
 //	})
+//
+// When RedisClient is set, Mount automatically:
+//   - mounts POST /auth/login, /auth/logout, /auth/refresh
+//   - installs AuthMiddleware on every subsequent request
+//   - replaces ViewerFn with iam.ViewerFromCtx
+//
+// Any explicit ViewerFn in Options is ignored when RedisClient is set.
 package bootstrap
 
 import (
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -21,6 +33,7 @@ import (
 	"awo.so/framework/persistence/pgstore"
 	platformorg "awo.so/framework/platform/org"
 	platformorgpgorg "awo.so/framework/platform/org/pgorg"
+	"awo.so/framework/platform/iam"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
 )
@@ -30,22 +43,26 @@ type Options struct {
 	// Pool is the pgx connection pool. Required.
 	Pool *pgxpool.Pool
 
+	// RedisClient enables IAM session authentication when non-nil.
+	// Mount will register auth routes and install AuthMiddleware automatically.
+	// When set, ViewerFn is ignored — iam.ViewerFromCtx is used instead.
+	RedisClient redis.Cmdable
+
 	// APIPrefix is the base path for all entity and SDUI routes.
 	// Defaults to "/api".
 	APIPrefix string
 
 	// ViewerFn extracts authentication context from each request.
-	// Defaults to anonymous viewer when nil.
+	// Ignored when RedisClient is set (IAM viewer is used instead).
+	// Defaults to anonymous viewer when nil and RedisClient is nil.
 	ViewerFn api.ViewerFromCtx
 
 	// TenantResolver resolves a tenant slug or non-UUID string to a UUID.
 	// Required when ViewerFn may return a slug instead of a UUID from TenantID().
-	// Example: look up tenants table by slug.
 	TenantResolver api.TenantResolver
 
 	// OrgTree is the org unit tree used by AllowWithinOrgScope policies.
 	// When nil, a default PgTree backed by Pool is constructed automatically.
-	// Supply a custom implementation to use caching or a test double.
 	OrgTree platformorg.Tree
 
 	// TemporalClient enables workflow triggers on entity mutations.
@@ -56,20 +73,30 @@ type Options struct {
 // Mount registers all framework routes on app using opts.
 //
 // Routes registered:
-//   - GET/POST   /<prefix>/<table>          — list / create
-//   - GET/PUT/DELETE /<prefix>/<table>/:id  — read / update / delete
-//   - GET        /<prefix>/sdui/nav         — navigation tree
-//   - GET        /<prefix>/sdui/:entity     — CRUD page schema
-//   - GET        /<prefix>/sdui/:entity/form — form schema
+//   - POST /auth/login, /auth/logout, /auth/refresh  (when RedisClient set)
+//   - GET/POST   /<prefix>/<table>                    — list / create
+//   - GET/PUT/DELETE /<prefix>/<table>/:id            — read / update / delete
+//   - GET        /<prefix>/sdui/nav                   — navigation tree
+//   - GET        /<prefix>/sdui/:entity               — CRUD page schema
+//   - GET        /<prefix>/sdui/:entity/form          — form schema
 func Mount(app *fiber.App, opts Options) {
 	if opts.APIPrefix == "" {
 		opts.APIPrefix = "/api"
 	}
-	if opts.ViewerFn == nil {
-		opts.ViewerFn = anonymousViewer
-	}
 	if opts.OrgTree == nil {
 		opts.OrgTree = platformorgpgorg.New(opts.Pool)
+	}
+
+	// IAM takes priority over any caller-supplied ViewerFn.
+	if opts.RedisClient != nil {
+		svc := iam.NewAuthService(opts.Pool, opts.RedisClient)
+		iam.NewHandler(svc).Mount(app)
+		app.Use(iam.AuthMiddleware(opts.RedisClient))
+		opts.ViewerFn = iam.ViewerFromCtx
+	}
+
+	if opts.ViewerFn == nil {
+		opts.ViewerFn = anonymousViewer
 	}
 
 	tenantStore := pgstore.NewTenantStore(opts.Pool)
