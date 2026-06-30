@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -13,6 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"awo.so/framework/def"
+	filterPkg "awo.so/framework/filter"
 	"awo.so/framework/persistence"
 	"awo.so/framework/persistence/sqlbuilder"
 	"awo.so/framework/platform/audit"
@@ -309,79 +309,32 @@ func (s *EntityStore) Exists(ctx context.Context, filter map[string]any) (bool, 
 	return exists, err
 }
 
-func (s *EntityStore) BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error) {
-	// Build the allowed-column set from the entity definition.
-	// Callers may only update fields declared on the EntityDefinition — no injection.
+func (s *EntityStore) BulkUpdate(ctx context.Context, pred *filterPkg.Filter, values map[string]any) (int64, error) {
+	// Validate that all update columns are declared entity fields.
+	// pgIdent in sqlbuilder.BulkUpdate validates safe characters; this check
+	// ensures callers cannot update undeclared or internal columns.
 	allowed := make(map[string]struct{}, len(s.def.Fields))
 	for _, f := range s.def.Fields {
 		allowed[f.Name] = struct{}{}
 	}
-
-	args := make([]any, 0, len(values)+len(filter))
-	idx := 1
-	var sb strings.Builder
-
-	tableIdent, err := quoteIdent(s.def.TableName())
-	if err != nil {
-		return 0, fmt.Errorf("BulkUpdate: %w", err)
-	}
-	fmt.Fprintf(&sb, "UPDATE %s SET ", tableIdent)
-
-	first := true
-	for col, val := range values {
+	for col := range values {
 		if _, ok := allowed[col]; !ok {
 			return 0, fmt.Errorf("BulkUpdate: unknown field %q on entity %q", col, s.def.Name)
 		}
-		ident, err := quoteIdent(col)
-		if err != nil {
-			return 0, fmt.Errorf("BulkUpdate: %w", err)
-		}
-		if !first {
-			sb.WriteString(", ")
-		}
-		fmt.Fprintf(&sb, "%s = $%d", ident, idx)
-		args = append(args, val)
-		idx++
-		first = false
 	}
 
-	var whereParts []string
-	for col, val := range filter {
-		if _, ok := allowed[col]; !ok {
-			return 0, fmt.Errorf("BulkUpdate: unknown filter field %q on entity %q", col, s.def.Name)
-		}
-		ident, err := quoteIdent(col)
-		if err != nil {
-			return 0, fmt.Errorf("BulkUpdate: %w", err)
-		}
-		whereParts = append(whereParts, fmt.Sprintf("%s = $%d", ident, idx))
-		args = append(args, val)
-		idx++
-	}
-	if len(whereParts) > 0 {
-		sb.WriteString(" WHERE " + strings.Join(whereParts, " AND "))
+	query, args, err := sqlbuilder.BulkUpdate(s.def, values, pred)
+	if err != nil {
+		return 0, fmt.Errorf("BulkUpdate: %w", err)
 	}
 
-	tag, err := s.q.Exec(ctx, sb.String(), args...)
+	tag, err := s.q.Exec(ctx, query, args...)
 	if err != nil {
 		return 0, mapPgError(err)
 	}
 	return tag.RowsAffected(), nil
 }
 
-// quoteIdent double-quote-wraps a PostgreSQL identifier and rejects names
-// containing characters outside [a-zA-Z0-9_] to prevent SQL injection.
-func quoteIdent(name string) (string, error) {
-	if name == "" {
-		return "", fmt.Errorf("empty identifier")
-	}
-	for _, c := range name {
-		if !((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '_') {
-			return "", fmt.Errorf("unsafe identifier character %q in %q", c, name)
-		}
-	}
-	return `"` + name + `"`, nil
-}
 
 // ──────────────────────────────────────────────────────────────────
 // Scanning helpers

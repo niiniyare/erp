@@ -29,7 +29,7 @@ func (s *FilterSQLSuite) TestNone_NoOutput() {
 
 func (s *FilterSQLSuite) TestEq() {
 	clause, args, next := sqlbuilder.ToSQL(filter.Eq("status", "active"), 1)
-	s.Equal("status = $1", clause)
+	s.Equal(`"status" = $1`, clause)
 	s.Equal([]any{"active"}, args)
 	s.Equal(2, next)
 }
@@ -81,7 +81,7 @@ func (s *FilterSQLSuite) TestNotIn_Empty_ReturnsTRUE() {
 
 func (s *FilterSQLSuite) TestIsNull_NoArgs() {
 	clause, args, next := sqlbuilder.ToSQL(filter.IsNull("deleted_at"), 1)
-	s.Equal("deleted_at IS NULL", clause)
+	s.Equal(`"deleted_at" IS NULL`, clause)
 	s.Empty(args)
 	s.Equal(1, next, "IsNull must not advance placeholder index")
 }

@@ -83,9 +83,10 @@ type EntityStore interface {
 	// running before_validate, before_save, and after_save outside this call.
 	BulkCreate(ctx context.Context, recs []def.MutableRecord) error
 
-	// BulkUpdate applies the same field values to all records matching filter.
+	// BulkUpdate applies the same field values to all records matching pred.
 	// Does NOT invoke hooks — intended for system-level batch operations only.
-	BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
+	// pred must be non-nil; use filter.None() to update all rows explicitly.
+	BulkUpdate(ctx context.Context, pred *filter.Filter, values map[string]any) (int64, error)
 }
 
 // ── Generic typed interface ────────────────────────────────────────────────────
@@ -130,8 +131,8 @@ type EntityRepository[T any] interface {
 	// BulkCreate inserts multiple records atomically. Hooks do not run.
 	BulkCreate(ctx context.Context, recs []def.MutableRecord) ([]T, error)
 
-	// BulkUpdate applies values to all records matching filter. Hooks do not run.
-	BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error)
+	// BulkUpdate applies values to all records matching pred. Hooks do not run.
+	BulkUpdate(ctx context.Context, pred *filter.Filter, values map[string]any) (int64, error)
 }
 
 // TypedRepository[T] adapts an EntityStore to EntityRepository[T] via a RecordMapper.
@@ -222,8 +223,8 @@ func (r *TypedRepository[T]) BulkCreate(ctx context.Context, recs []def.MutableR
 	return out, nil
 }
 
-func (r *TypedRepository[T]) BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error) {
-	return r.store.BulkUpdate(ctx, filter, values)
+func (r *TypedRepository[T]) BulkUpdate(ctx context.Context, pred *filter.Filter, values map[string]any) (int64, error) {
+	return r.store.BulkUpdate(ctx, pred, values)
 }
 
 // compile-time check

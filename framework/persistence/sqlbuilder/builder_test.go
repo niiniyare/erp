@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"awo.so/framework/def"
 	"awo.so/framework/filter"
 	"awo.so/framework/persistence/sqlbuilder"
 )
@@ -322,5 +323,99 @@ func assertNoErr(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// ── BulkUpdate ────────────────────────────────────────────────────────────────
+
+func bulkTestDef() *def.EntityDefinition {
+	return &def.EntityDefinition{
+		Name: "invoice",
+		Fields: []*def.FieldDef{
+			{Name: "status"},
+			{Name: "amount"},
+			{Name: "customer_id"},
+		},
+	}
+}
+
+func TestBulkUpdate_BasicSetClause(t *testing.T) {
+	q, args, err := sqlbuilder.BulkUpdate(bulkTestDef(),
+		map[string]any{"status": "paid"},
+		filter.None(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(q, `"status" = $1`) {
+		t.Errorf("want SET clause with quoted column, got: %s", q)
+	}
+	if len(args) != 1 || args[0] != "paid" {
+		t.Errorf("want args=[paid], got %v", args)
+	}
+}
+
+func TestBulkUpdate_WithFilter(t *testing.T) {
+	q, args, err := sqlbuilder.BulkUpdate(bulkTestDef(),
+		map[string]any{"status": "paid"},
+		filter.Eq("customer_id", "cust-1"),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(q, "WHERE") {
+		t.Errorf("want WHERE clause, got: %s", q)
+	}
+	// args: "paid" (SET) + "cust-1" (WHERE)
+	if len(args) != 2 {
+		t.Errorf("want 2 args, got %d: %v", len(args), args)
+	}
+}
+
+func TestBulkUpdate_MultipleColumns_DeterministicOrder(t *testing.T) {
+	q, _, err := sqlbuilder.BulkUpdate(bulkTestDef(),
+		map[string]any{"status": "paid", "amount": 1000},
+		filter.None(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Columns sorted alphabetically: amount before status.
+	amtIdx := strings.Index(q, `"amount"`)
+	statusIdx := strings.Index(q, `"status"`)
+	if amtIdx > statusIdx {
+		t.Errorf("want columns sorted (amount before status), got: %s", q)
+	}
+}
+
+func TestBulkUpdate_UnsafeColumnName_ReturnsError(t *testing.T) {
+	_, _, err := sqlbuilder.BulkUpdate(bulkTestDef(),
+		map[string]any{"bad-col; DROP TABLE": "x"},
+		filter.None(),
+	)
+	if err == nil {
+		t.Error("want error for unsafe column name, got nil")
+	}
+}
+
+func TestBulkUpdate_EmptyUpdates_ReturnsError(t *testing.T) {
+	_, _, err := sqlbuilder.BulkUpdate(bulkTestDef(), map[string]any{}, filter.None())
+	if err == nil {
+		t.Error("want error for empty updates, got nil")
+	}
+}
+
+func TestBulkUpdate_SoftDeleteEntityAddsGuard(t *testing.T) {
+	d := bulkTestDef()
+	d.SoftDelete = true
+	q, _, err := sqlbuilder.BulkUpdate(d,
+		map[string]any{"status": "archived"},
+		filter.None(),
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(q, "deleted_at IS NULL") {
+		t.Errorf("want deleted_at IS NULL guard, got: %s", q)
 	}
 }

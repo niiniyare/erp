@@ -12,7 +12,9 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"awo.so/framework/def"
+	filterPkg "awo.so/framework/filter"
 	"awo.so/framework/persistence"
+	"awo.so/framework/persistence/sqlbuilder"
 )
 
 // customEntityRecordsTable is the shared JSONB table used by all custom entities.
@@ -262,21 +264,33 @@ func (s *CustomStore) BulkCreate(ctx context.Context, recs []def.MutableRecord) 
 	return nil
 }
 
-func (s *CustomStore) BulkUpdate(ctx context.Context, filter map[string]any, values map[string]any) (int64, error) {
+func (s *CustomStore) BulkUpdate(ctx context.Context, pred *filterPkg.Filter, values map[string]any) (int64, error) {
 	// Merge values into the JSONB data column using the || (concat) operator.
 	patch, err := json.Marshal(values)
 	if err != nil {
 		return 0, fmt.Errorf("CustomStore.BulkUpdate marshal patch: %w", err)
 	}
 
-	where, args := buildJSONBFilter(filter, s.def.Name)
-	nextIdx := len(args) + 1
+	// Anchor on entity_type and soft-delete. $1 = entity name.
+	baseWhere := "entity_type = $1 AND deleted_at IS NULL"
+	args := []any{s.def.Name}
+
+	// Translate the caller's filter predicate. Callers should use
+	// filter.JSONPath("data", "field_name", filter.Eq("", value)) for JSONB
+	// fields and filter.Eq("id", id) for system columns.
+	if !pred.IsNone() {
+		if clause, predArgs, _ := sqlbuilder.ToSQL(pred, len(args)+1); clause != "" {
+			baseWhere += " AND " + clause
+			args = append(args, predArgs...)
+		}
+	}
+
+	patchIdx := len(args) + 1
 	args = append(args, string(patch))
 
 	q := fmt.Sprintf(
-		`UPDATE %s SET data = data || $%d::jsonb, updated_at = NOW()
-		 WHERE %s AND deleted_at IS NULL`,
-		customEntityRecordsTable, nextIdx, where,
+		`UPDATE %s SET data = data || $%d::jsonb, updated_at = NOW() WHERE %s`,
+		customEntityRecordsTable, patchIdx, baseWhere,
 	)
 	tag, err := s.q.Exec(ctx, q, args...)
 	if err != nil {

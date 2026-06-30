@@ -284,7 +284,9 @@ func (b *indexedBuilder) jsonPath(f *filter.Filter) (string, error) {
 		// Escape single-quotes inside the key literal (SQL standard).
 		escaped := strings.ReplaceAll(seg, "'", "''")
 		if i < len(segments)-1 {
-			expr = fmt.Sprintf("(%s->'%s')", expr, escaped)
+			// Chain intermediate segments without extra wrapping parens; only
+			// the final expression gets outer parens for unambiguous grouping.
+			expr = fmt.Sprintf("%s->'%s'", expr, escaped)
 		} else {
 			expr = fmt.Sprintf("(%s->>'%s')", expr, escaped)
 		}

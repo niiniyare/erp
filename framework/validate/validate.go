@@ -10,11 +10,14 @@ package validate
 
 import (
 	"fmt"
+	"log/slog"
 	"net/mail"
 	"net/url"
 	"regexp"
 	"strings"
 	"unicode/utf8"
+
+	"github.com/shopspring/decimal"
 
 	"awo.so/framework/def"
 )
@@ -123,6 +126,95 @@ func MinLen(n int) def.FieldValidator {
 			return &def.FieldError{Message: fmt.Sprintf("must be at least %d characters", n)}
 		}
 		return nil
+	}
+}
+
+// Currency validates that the field value can be parsed as a precise decimal
+// number. It rejects float64 values to prevent silent precision loss on
+// financial amounts. Use this validator on FieldTypeCurrency fields.
+//
+// Accepted types: decimal.Decimal, string (parseable as decimal), int, int64.
+// Rejected: float32, float64 (lossy — must be converted to string by caller).
+func Currency() def.FieldValidator {
+	return func(value any, _ def.Record) *def.FieldError {
+		if value == nil {
+			return nil
+		}
+		switch value.(type) {
+		case decimal.Decimal:
+			return nil // already precise
+		case string:
+			s, _ := value.(string)
+			if s == "" {
+				return nil
+			}
+			if _, err := decimal.NewFromString(s); err != nil {
+				return &def.FieldError{Message: "must be a valid decimal number"}
+			}
+			return nil
+		case int, int32, int64, uint, uint32, uint64:
+			return nil // lossless integer → decimal
+		case float32, float64:
+			return &def.FieldError{
+				Message: "currency value must not be a floating-point number (use string or decimal.Decimal)",
+			}
+		default:
+			return &def.FieldError{Message: fmt.Sprintf("unsupported currency type %T", value)}
+		}
+	}
+}
+
+// CurrencyRange validates that a decimal.Decimal (or string-parseable decimal)
+// field value falls within [min, max] inclusive. Either bound may be nil to
+// skip that side of the range check.
+//
+// Returns a def.FieldValidator suitable for use in FieldDef.Validators.
+func CurrencyRange(min, max *decimal.Decimal) def.FieldValidator {
+	return func(value any, _ def.Record) *def.FieldError {
+		if value == nil {
+			return nil
+		}
+		d, err := toDecimal(value)
+		if err != nil {
+			return &def.FieldError{Message: "must be a valid decimal number"}
+		}
+		if min != nil && d.LessThan(*min) {
+			return &def.FieldError{
+				Message: fmt.Sprintf("must be at least %s", min.String()),
+			}
+		}
+		if max != nil && d.GreaterThan(*max) {
+			return &def.FieldError{
+				Message: fmt.Sprintf("must be at most %s", max.String()),
+			}
+		}
+		return nil
+	}
+}
+
+// toDecimal converts v to decimal.Decimal without float precision loss.
+// float64 inputs are accepted but logged as a warning — they originate from
+// JSON unmarshalling and are an unavoidable ingestion artifact.
+func toDecimal(v any) (decimal.Decimal, error) {
+	switch t := v.(type) {
+	case decimal.Decimal:
+		return t, nil
+	case string:
+		return decimal.NewFromString(t)
+	case int:
+		return decimal.NewFromInt(int64(t)), nil
+	case int32:
+		return decimal.NewFromInt(int64(t)), nil
+	case int64:
+		return decimal.NewFromInt(t), nil
+	case uint, uint32, uint64:
+		return decimal.NewFromFloat(float64(t.(uint))), nil
+	case float64:
+		// Lossy but unavoidable when value originates from JSON decode.
+		slog.Warn("currency: float64 value may lose precision", "value", t)
+		return decimal.NewFromFloat(t), nil
+	default:
+		return decimal.Zero, fmt.Errorf("unsupported type %T for decimal conversion", v)
 	}
 }
 
@@ -278,7 +370,24 @@ func contains(opts []string, v string) bool {
 }
 
 func validateNumericRange(f *def.FieldDef, value any) *def.FieldError {
-	// Convert value to float64 for comparison.
+	// For decimal.Decimal values (Currency fields), use exact decimal arithmetic
+	// to avoid the precision loss that float64 comparison would introduce on
+	// amounts like 1234567890.1234.
+	if d, err := toDecimal(value); err == nil {
+		if f.MinVal != nil && d.LessThan(*f.MinVal) {
+			return &def.FieldError{
+				Message: fmt.Sprintf("must be at least %s", f.MinVal.String()),
+			}
+		}
+		if f.MaxVal != nil && d.GreaterThan(*f.MaxVal) {
+			return &def.FieldError{
+				Message: fmt.Sprintf("must be at most %s", f.MaxVal.String()),
+			}
+		}
+		return nil
+	}
+
+	// Fallback for plain integer/float fields that don't carry decimal.Decimal.
 	var n float64
 	switch v := value.(type) {
 	case int:

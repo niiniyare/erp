@@ -21,6 +21,7 @@ package sqlbuilder
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/google/uuid"
@@ -291,6 +292,80 @@ func Update(def *def.EntityDefinition, fields []string) (query string, cols []st
 		where,
 	)
 	return query, mutable, nil
+}
+
+// ── BULK UPDATE ───────────────────────────────────────────────────────────────
+
+// BulkUpdate builds an UPDATE statement that sets multiple columns on all rows
+// matching pred.
+//
+//	UPDATE <table> SET col1=$1, col2=$2 [WHERE <pred>] [AND deleted_at IS NULL]
+//
+// updates keys are validated through [pgIdent] (safe characters only); the
+// caller is also responsible for ensuring keys are declared entity fields.
+// pred is compiled to parameterised SQL via the filter package translator; its
+// placeholders start after the SET clause parameters.
+//
+// Returns (query, args, error). args covers SET values followed by WHERE args.
+// If updates is empty, returns an error immediately.
+func BulkUpdate(entDef *def.EntityDefinition, updates map[string]any, pred *filter.Filter) (string, []any, error) {
+	if len(updates) == 0 {
+		return "", nil, fmt.Errorf("sqlbuilder.BulkUpdate: no fields to update")
+	}
+
+	table, err := pgIdent(entDef.TableName())
+	if err != nil {
+		return "", nil, fmt.Errorf("sqlbuilder.BulkUpdate: %w", err)
+	}
+
+	// Sort column names so the generated SQL is deterministic (maps are unordered).
+	cols := make([]string, 0, len(updates))
+	for col := range updates {
+		cols = append(cols, col)
+	}
+	sort.Strings(cols)
+
+	var sb strings.Builder
+	sb.WriteString("UPDATE ")
+	sb.WriteString(table)
+	sb.WriteString(" SET ")
+
+	args := make([]any, 0, len(updates))
+	idx := 1
+	for i, col := range cols {
+		if i > 0 {
+			sb.WriteString(", ")
+		}
+		quoted, err := pgIdent(col)
+		if err != nil {
+			return "", nil, fmt.Errorf("sqlbuilder.BulkUpdate: column %q: %w", col, err)
+		}
+		fmt.Fprintf(&sb, "%s = $%d", quoted, idx)
+		args = append(args, updates[col])
+		idx++
+	}
+
+	// WHERE clause: filter predicate + optional soft-delete guard.
+	var whereParts []string
+	if !pred.IsNone() {
+		clause, filterArgs, err := filterToSQL(pred, idx)
+		if err != nil {
+			return "", nil, fmt.Errorf("sqlbuilder.BulkUpdate: where: %w", err)
+		}
+		if clause != "" {
+			whereParts = append(whereParts, clause)
+			args = append(args, filterArgs...)
+		}
+	}
+	if entDef.SoftDelete {
+		whereParts = append(whereParts, "deleted_at IS NULL")
+	}
+	if len(whereParts) > 0 {
+		sb.WriteString(" WHERE ")
+		sb.WriteString(strings.Join(whereParts, " AND "))
+	}
+
+	return sb.String(), args, nil
 }
 
 // ── DELETE ────────────────────────────────────────────────────────────────────
