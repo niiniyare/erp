@@ -39,7 +39,7 @@ func (t *PgTree) IsAncestorOrEqual(ctx context.Context, tenantID, ancestorID, no
 	var exists bool
 	err := t.querier().QueryRow(ctx, `
 		SELECT EXISTS(
-			SELECT 1 FROM org_unit_paths
+			SELECT 1 FROM hierarchy_paths
 			WHERE ancestor_id = $1 AND descendant_id = $2
 		)`, ancestorID, nodeID).Scan(&exists)
 	return exists, err
@@ -47,7 +47,7 @@ func (t *PgTree) IsAncestorOrEqual(ctx context.Context, tenantID, ancestorID, no
 
 func (t *PgTree) Ancestors(ctx context.Context, tenantID, nodeID uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := t.querier().Query(ctx, `
-		SELECT ancestor_id FROM org_unit_paths
+		SELECT ancestor_id FROM hierarchy_paths
 		WHERE descendant_id = $1
 		ORDER BY depth ASC`, nodeID)
 	if err != nil {
@@ -59,7 +59,7 @@ func (t *PgTree) Ancestors(ctx context.Context, tenantID, nodeID uuid.UUID) ([]u
 
 func (t *PgTree) Descendants(ctx context.Context, tenantID, nodeID uuid.UUID) ([]uuid.UUID, error) {
 	rows, err := t.querier().Query(ctx, `
-		SELECT descendant_id FROM org_unit_paths
+		SELECT descendant_id FROM hierarchy_paths
 		WHERE ancestor_id = $1
 		ORDER BY depth ASC`, nodeID)
 	if err != nil {
@@ -69,10 +69,12 @@ func (t *PgTree) Descendants(ctx context.Context, tenantID, nodeID uuid.UUID) ([
 	return collectUUIDs(rows)
 }
 
+// SubtreePath returns the org_path of nodeID with a trailing '%' suitable for
+// a LIKE predicate: WHERE org_path LIKE SubtreePath(nodeID).
 func (t *PgTree) SubtreePath(ctx context.Context, tenantID, nodeID uuid.UUID) (string, error) {
 	var path *string
 	err := t.querier().QueryRow(ctx,
-		`SELECT path FROM org_units WHERE id = $1`,
+		`SELECT org_path FROM orgunits WHERE uuid = $1`,
 		nodeID).Scan(&path)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", org.ErrUnitNotFound
@@ -89,9 +91,9 @@ func (t *PgTree) SubtreePath(ctx context.Context, tenantID, nodeID uuid.UUID) (s
 func (t *PgTree) Unit(ctx context.Context, tenantID, unitID uuid.UUID) (*org.Unit, error) {
 	u := &org.Unit{}
 	err := t.querier().QueryRow(ctx, `
-		SELECT id, tenant_id, parent_id, name, code, path
-		FROM org_units
-		WHERE id = $1`,
+		SELECT uuid, tenant_id, parent_id, name, code, org_path
+		FROM orgunits
+		WHERE uuid = $1`,
 		unitID).Scan(
 		&u.ID, &u.TenantID, &u.ParentID, &u.Name, &u.Code, &u.OrgUnitPath,
 	)
@@ -134,12 +136,23 @@ func (t *PgTree) RebuildPaths(ctx context.Context, unit *org.Unit) error {
 	return tx.Commit(ctx)
 }
 
+// insertPaths writes the closure table entries for unit and updates its
+// materialized org_path in orgunits.
+//
+// hierarchy_paths stores every ancestor-descendant pair (including self at
+// depth 0) with tenant_id for RLS. org_path in orgunits follows the format:
+//
+//	/root_uuid/parent_uuid/this_uuid/
+//
+// Root units (ParentID == nil) skip the path update — their org_path is set
+// during provisioning when the org unit row is first created.
 func insertPaths(ctx context.Context, tx pgx.Tx, unit *org.Unit) error {
+	// Self-reference at depth 0.
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO org_unit_paths (ancestor_id, descendant_id, depth)
-		VALUES ($1, $1, 0)
+		INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+		VALUES ($1, $2, $2, 0)
 		ON CONFLICT DO NOTHING`,
-		unit.ID); err != nil {
+		unit.TenantID, unit.ID); err != nil {
 		return fmt.Errorf("pgorg.insertPaths self: %w", err)
 	}
 
@@ -147,35 +160,42 @@ func insertPaths(ctx context.Context, tx pgx.Tx, unit *org.Unit) error {
 		return nil
 	}
 
+	// Inherit all ancestor rows from the parent, incrementing depth.
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO org_unit_paths (ancestor_id, descendant_id, depth)
-		SELECT ancestor_id, $1, depth + 1
-		FROM org_unit_paths
+		INSERT INTO hierarchy_paths (tenant_id, ancestor_id, descendant_id, depth)
+		SELECT tenant_id, ancestor_id, $1, depth + 1
+		FROM hierarchy_paths
 		WHERE descendant_id = $2
 		ON CONFLICT DO NOTHING`,
 		unit.ID, *unit.ParentID); err != nil {
 		return fmt.Errorf("pgorg.insertPaths ancestors: %w", err)
 	}
 
+	// Extend the materialized path: parent_path + this_uuid + '/'.
+	// e.g. parent = '/root/' → child = '/root/child_uuid/'
 	if _, err := tx.Exec(ctx, `
-		UPDATE org_units
-		SET path = (SELECT path FROM org_units WHERE id = $1) || '.' || $2
-		WHERE id = $3`,
+		UPDATE orgunits
+		SET org_path = (SELECT org_path FROM orgunits WHERE uuid = $1) || $2 || '/'
+		WHERE uuid = $3`,
 		*unit.ParentID, unit.ID.String(), unit.ID); err != nil {
-		return fmt.Errorf("pgorg.insertPaths path: %w", err)
+		return fmt.Errorf("pgorg.insertPaths org_path: %w", err)
 	}
 
 	return nil
 }
 
+// rebuildPaths removes stale closure-table entries for the subtree rooted at
+// unit and re-inserts them via insertPaths. Used on reparenting.
 func rebuildPaths(ctx context.Context, tx pgx.Tx, unit *org.Unit) error {
+	// Delete all entries that point INTO the subtree from OUTSIDE it.
+	// Specifically: descendant is in our subtree AND ancestor is not.
 	if _, err := tx.Exec(ctx, `
-		DELETE FROM org_unit_paths
+		DELETE FROM hierarchy_paths
 		WHERE descendant_id IN (
-			SELECT descendant_id FROM org_unit_paths WHERE ancestor_id = $1
+			SELECT descendant_id FROM hierarchy_paths WHERE ancestor_id = $1
 		)
 		AND ancestor_id NOT IN (
-			SELECT descendant_id FROM org_unit_paths WHERE ancestor_id = $1
+			SELECT descendant_id FROM hierarchy_paths WHERE ancestor_id = $1
 		)`,
 		unit.ID); err != nil {
 		return fmt.Errorf("pgorg.rebuildPaths delete: %w", err)
