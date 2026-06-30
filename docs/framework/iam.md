@@ -1,9 +1,11 @@
 # AwoERP — Identity, Access Management & Multi-Tenant Authorization
-## Users, Roles, Permissions, Authentication & Authorization — v2.0
+## Users, Roles, Permissions, Authentication & Authorization — v2.1
 
-**Platform:** AwoERP (`awo.so`) — Go · Fiber v2 · PostgreSQL RLS · Casbin · CEL  
-**Scope:** Conceptual entities, data model design, and pseudo-code patterns. No implementation code.  
+**Platform:** AwoERP (`awo.so`) — Go · Fiber v2 · PostgreSQL RLS · Redis · Casbin · CEL
+**Scope:** Conceptual entities, data model design, and pseudo-code patterns. No implementation code.
 **Audience:** Platform architects, ERP implementors, module contributors
+
+**Changelog (v2.0 → v2.1):** Authentication tokens moved from signed JWTs (ES256) to **opaque, server-side session tokens**. Every access token is now a random identifier that resolves to a session record held in Redis (hot path) and PostgreSQL (durable copy). This removes the signing-key/`kid` rotation problem, makes revocation instantaneous and authoritative everywhere (no negative-cache window), and avoids embedding permission snapshots in a client-readable, self-verifying artifact. The trade-off — a store lookup on every request instead of local signature verification — is absorbed by the Redis hot path described in §9.
 
 ---
 
@@ -46,9 +48,10 @@
    - 8.6 MFA Enrollment
 9. [Session & Token Lifecycle](#9-session--token-lifecycle)
    - 9.1 Session Entity
-   - 9.2 JWT Structure — Platform vs Tenant
+   - 9.2 Session Token Structure — Platform vs Tenant
    - 9.3 Token Refresh & Rotation
    - 9.4 Session Revocation
+   - 9.5 Why Opaque Sessions Instead of Signed Tokens
 10. [Authorization Engine](#10-authorization-engine)
     - 10.1 Architecture
     - 10.2 Platform-Plane Authorization
@@ -70,7 +73,7 @@
 
 ## 1. The Two Principal Planes
 
-AwoERP operates with **two completely separate identity planes**. They share no user table, no session table, and no permission model. They are isolated at every layer — HTTP routing, database access, audit logging, and token signing.
+AwoERP operates with **two completely separate identity planes**. They share no user table, no session table, and no permission model. They are isolated at every layer — HTTP routing, database access, audit logging, and session storage.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
@@ -100,7 +103,7 @@ AwoERP operates with **two completely separate identity planes**. They share no 
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
-The two planes are distinguished at the **token level** (separate `aud` claim and signing key), at the **middleware level** (two separate auth middleware chains), and at the **database level** (separate schema or clear column separation for platform entities).
+The two planes are distinguished at the **session-store level** (separate Redis keyspaces and separate PostgreSQL session tables), at the **middleware level** (two separate auth middleware chains), and at the **database level** (separate schema or clear column separation for platform entities). A token issued in one plane is structurally meaningless in the other — there is no shared secret or shared verification path that could cause cross-plane confusion.
 
 ---
 
@@ -180,7 +183,7 @@ The fundamental rule is: **platform users operate on tenant configurations and S
 │ Read platform health & metrics     │  ✓    │  ✓    │   ✓     │   ✓      │
 │ Read aggregate billing summaries   │  ✓    │  ✓    │   ✗     │   ✓      │
 │ Change platform configuration      │  ✓    │  ✗    │   ✗     │   ✗      │
-│ Manage signing keys & secrets      │  ✓    │  ✗    │   ✗     │   ✗      │
+│ Manage session-store secrets       │  ✓    │  ✗    │   ✗     │   ✗      │
 │ Revoke any active session          │  ✓    │  ✓    │   ✗     │   ✗      │
 └────────────────────────────────────┴───────┴───────┴─────────┴──────────┘
 
@@ -199,8 +202,9 @@ PLATFORM_ROOT_EMAIL            root@internal.awo.so
 PLATFORM_ROOT_PASSWORD_HASH    <argon2id hash set at deploy time>
 PLATFORM_ROOT_MFA_SECRET       <TOTP secret, sealed>
 PLATFORM_ADMIN_IPS             10.0.0.0/8,172.16.0.0/12   (allowlist)
-PLATFORM_JWT_SIGNING_KEY       <ES256 private key, sealed>
-PLATFORM_JWT_SIGNING_KID       platform-2025-01
+PLATFORM_SESSION_STORE_DSN     <sealed Redis/Postgres credentials>
+PLATFORM_SESSION_ENCRYPTION_KEY <AES-256-GCM key used to encrypt session
+                                  records at rest, sealed>
 ```
 
 The root account:
@@ -220,8 +224,7 @@ admin_ip_allowlist      CIDR[]      (from env)
 mfa_required_tiers      ENUM[]      [ROOT, PLATFORM_ADMIN]
 tenant_subdomain_tpl    STRING      "{slug}.awo.so"
 default_tenant_plan     ENUM        STARTER
-jwt_platform_kid        STRING      (from env)
-jwt_tenant_kid          STRING      (from env)
+session_store_namespace STRING      "platform" (Redis key prefix isolation)
 ```
 
 ---
@@ -258,7 +261,7 @@ created_at           TIMESTAMPTZ
 updated_at           TIMESTAMPTZ
 ```
 
-A tenant user with the email `manager@vivoenergy.co.ke` is entirely separate from a platform user with that same email. They are different principals, authenticated against different tables, issued tokens with different signing keys and different `aud` claims.
+A tenant user with the email `manager@vivoenergy.co.ke` is entirely separate from a platform user with that same email. They are different principals, authenticated against different tables, and issued session tokens that resolve through different store namespaces and carry different `plane` markers server-side.
 
 ### 3.2 User Status Lifecycle
 
@@ -307,7 +310,7 @@ PENDING ──► ACTIVE ──► SUSPENDED ──► ACTIVE
    └─────────────┴──────────────────► ARCHIVED
 ```
 
-Only a platform admin (Tier 1+) can change tenant status. A tenant user — including the tenant admin — cannot suspend or archive their own tenant.
+Only a platform admin (Tier 1+) can change tenant status. A tenant user — including the tenant admin — cannot suspend or archive their own tenant. Suspending a tenant also triggers an immediate bulk revocation of every active session for that tenant (see §9.4) — this is one of the operational advantages of server-side sessions: the lockout is enforced at the store, not dependent on waiting out a token's natural expiry.
 
 ### 4.3 Tenant Resolution from HTTP Request
 
@@ -561,6 +564,13 @@ resource.amount_kes <= 500000 ||
 resource.org_unit_path.startsWith(subject.org_unit_path)
 ```
 
+### 6.4 Standard Actions
+
+See §6.1 for the canonical action vocabulary. Two implementation notes worth calling out explicitly:
+
+- `admin` is sugar for "all actions on this resource," resolved at permission-grant time into the full action set — it is never matched literally against a required permission string at request time, to keep the authorization check a single deterministic lookup.
+- `delete` is intentionally a single action covering both soft- and hard-delete; whether a given resource performs a soft- or hard-delete is a property of the resource's own service logic, not of the permission model.
+
 ---
 
 ## 7. Role Assignment & OU Scoping
@@ -661,10 +671,10 @@ function resolveConflicts(permissions):
 
 ### 7.4 Permission Snapshot (Session Bake)
 
-At login, the full effective permission set is computed once and embedded in the session. No permission database lookup occurs during ordinary request processing.
+At login, the full effective permission set is computed once and embedded in the **server-side session record** — never in a client-readable token. The client only ever holds an opaque session identifier; the permission list itself lives in Redis/PostgreSQL and is read back on each request via that identifier.
 
 ```
-Session.Permissions = [
+SessionRecord.Permissions = [
     "finance.accounts.read",
     "finance.transactions.read",
     "finance.transactions.write",
@@ -673,17 +683,19 @@ Session.Permissions = [
     ...
 ]
 
-Session.OrgUnitPaths = [
+SessionRecord.OrgUnitPaths = [
     "VEA.KE.NBI.MZN",    // Maanzoni Branch — full write access
     "VEA.KE.MBA",         // Mombasa Region — read-only (different role)
 ]
 ```
 
-The snapshot is **invalidated** (and the user's next token refresh will recompute it) when:
+Because the snapshot lives server-side, it can be **mutated in place** rather than only invalidated. The snapshot is updated (and, depending on policy, the change is effective on the user's very next request) when:
 - A role assignment is added, removed, or expires for this user
 - Any permission is changed on any of this user's roles
 - The tenant admin explicitly forces a session refresh
 - The session's TTL expires
+
+This is a meaningful improvement over a self-contained token: a stolen or misissued token cannot "outlive" its permission grant by riding out an unexpired token, because the permissions are re-read from the store rather than trusted from the token itself.
 
 ---
 
@@ -758,11 +770,11 @@ function platformLogin(email, password, mfaCode?, requestIP):
     updateLastLogin(user, ip: requestIP)
 
     // Platform session — no tenant_id, no OU scope
-    session = createPlatformSession(user)
+    session = createPlatformSession(user)   // writes record to Redis + Postgres
 
     return 200, {
-        access_token:  signJWT(session, key: PLATFORM_SIGNING_KEY, ttl: 15m),
-        refresh_token: signRefreshToken(session.id, key: PLATFORM_REFRESH_KEY, ttl: 4h),
+        access_token:  session.access_token,    // opaque random string
+        refresh_token: session.refresh_token,    // opaque random string
         user:          platformUserView(user),
         tier:          user.tier,
     }
@@ -801,9 +813,9 @@ function tenantLogin(tenantSlug, email, password, mfaCode?):
             else → 401 "Invalid MFA code"
 
     if user.must_change_password:
-        // Issue a limited token valid only for the password-change endpoint
-        changeToken = signJWT({ user_id: user.id, scope: "password_change_only" }, ttl: 10m)
-        return 200, { must_change_password: true, change_token: changeToken }
+        // Issue a limited session valid only for the password-change endpoint
+        changeSession = createScopedSession(user.id, scope: "password_change_only", ttl: 10m)
+        return 200, { must_change_password: true, change_token: changeSession.access_token }
 
     resetFailedCount(user)
     updateLastLogin(user, ip: request.ip)
@@ -811,10 +823,11 @@ function tenantLogin(tenantSlug, email, password, mfaCode?):
     permissions = computeEffectivePermissions(user.id, tenant.id)
     orgUnitPaths = loadUserOrgUnitPaths(user.id, tenant.id)
     session = createTenantSession(user, tenant, permissions, orgUnitPaths)
+                  // writes session record to Redis (hot) + Postgres (durable)
 
     return 200, {
-        access_token:  signJWT(session, key: TENANT_SIGNING_KEY, ttl: 15m),
-        refresh_token: signRefreshToken(session.id, key: TENANT_REFRESH_KEY, ttl: 7d),
+        access_token:  session.access_token,     // opaque random string
+        refresh_token: session.refresh_token,     // opaque random string
         user:          tenantUserView(user),
         permissions:   session.permissions,
         org_unit_paths: session.org_unit_paths,
@@ -846,6 +859,9 @@ function ssoCallback(tenantSlug, provider, authCode):
 
     tokens = exchangeCodeForTokens(authCode, config)
     idToken = verifyAndDecodeIDToken(tokens.id_token, config.issuer_url)
+    // Note: the OIDC provider's id_token is itself a signed JWT by spec —
+    // that verification is unrelated to AwoERP's own session mechanism and
+    // is unaffected by this document's move away from JWTs for AwoERP sessions.
 
     if config.allowed_domains != nil:
         assert emailDomain(idToken.email) in config.allowed_domains
@@ -864,7 +880,7 @@ function ssoCallback(tenantSlug, provider, authCode):
     permissions = computeEffectivePermissions(user.id, tenant.id)
     session = createTenantSession(user, tenant, permissions, ...)
 
-    return redirect(config.post_login_url + "?token=" + signJWT(session, ttl: 15m))
+    return redirect(config.post_login_url + "?token=" + session.access_token)
 ```
 
 ### 8.6 MFA Enrollment
@@ -900,96 +916,113 @@ function confirmMFAEnrollment(session, totpCode):
 
 ### 9.1 Session Entity
 
-Platform and tenant sessions are stored in separate tables but share the same schema shape.
+Platform and tenant sessions are stored in separate keyspaces/tables but share the same schema shape. Every session lives in two places: **Redis**, for sub-millisecond reads on the hot path of every request, and **PostgreSQL**, as the durable system of record used for audit, reporting, and rebuilding the Redis cache after a restart.
 
 ```
 Entity: PlatformSession  /  TenantSession
 ─────────────────────────────────────────────────────────────────────
-id              UUID            Primary key (also JWT `jti` claim)
-user_id         UUID            FK → PlatformUser / TenantUser
-tenant_id       UUID?           NULL for platform sessions
-actor_type      ENUM            user | service_account | api_key
-tier            ENUM?           Platform tier (for platform sessions only)
-permissions     TEXT[]          Snapshot at session creation
-org_unit_paths  LTREE[]?        OU subtree roots for this session (tenant only)
-ip_address      INET
-user_agent      TEXT
-mfa_verified    BOOL
-refresh_token   TEXT            Argon2id hash of raw token (never stored plain)
-issued_at       TIMESTAMPTZ
-expires_at      TIMESTAMPTZ
-last_active_at  TIMESTAMPTZ
-revoked_at      TIMESTAMPTZ?    NULL = active
-revoke_reason   TEXT?
+id                  UUID            Primary key (internal session identifier)
+user_id             UUID            FK → PlatformUser / TenantUser
+tenant_id           UUID?           NULL for platform sessions
+actor_type          ENUM            user | service_account | api_key
+tier                ENUM?           Platform tier (for platform sessions only)
+permissions         TEXT[]          Snapshot, refreshed on role/permission change
+org_unit_paths      LTREE[]?        OU subtree roots for this session (tenant only)
+access_token_hash   TEXT            Argon2id hash of the opaque access token
+refresh_token_hash  TEXT            Argon2id hash of the opaque refresh token
+ip_address          INET
+user_agent          TEXT
+mfa_verified        BOOL
+issued_at           TIMESTAMPTZ
+access_expires_at   TIMESTAMPTZ
+refresh_expires_at  TIMESTAMPTZ
+last_active_at      TIMESTAMPTZ
+revoked_at          TIMESTAMPTZ?    NULL = active
+revoke_reason       TEXT?
 ```
 
-### 9.2 JWT Structure — Platform vs Tenant
+Only the **hash** of each token is ever persisted, exactly as a password would be — a database read (legitimate query or breach) never yields a usable credential, and the raw token returned to the client is never written anywhere in plaintext.
 
-Both planes use ES256 (ECDSA P-256) but with separate signing keys and distinguishable `aud` claims so a tenant access token can never be used against a platform API endpoint and vice versa.
+### 9.2 Session Token Structure — Platform vs Tenant
 
-```json
-// Platform JWT payload
+Both planes issue **opaque bearer tokens**: a cryptographically random string with no embedded structure, no claims, and nothing the client (or anyone intercepting it) can decode. All meaning lives in the session record the token resolves to via a store lookup.
+
+```
+Token format:
+─────────────────────────────────────────────────────────────────────
+awosess_<plane>_<32-byte CSPRNG value, base62-encoded>
+
+Examples:
+  Platform access token:   awosess_plat_4xKpR7mNqZwLdTvHjBsY3nGcAuFe9i2X
+  Tenant access token:     awosess_tnt_9bQzW2eRpKxVjMdNsFtYhCgLrUo5k7Z
+```
+
+The `plane` segment (`plat` / `tnt`) is a **routing hint only** — it lets the gateway choose which session store/keyspace to query without guessing, but it carries no authority itself. The actual plane, tier, tenant, permissions, and OU scope are all read from the session record after the store lookup succeeds. A platform-prefixed token that somehow points at no session, or at a session in the wrong store, is simply invalid; there is no signature to forge and nothing to "trust" before the lookup happens.
+
+```
+Session record resolved by the store (illustrative — never serialized to the client):
+─────────────────────────────────────────────────────────────────────
+// Platform session record
 {
-  "iss": "https://auth.awo.so",
-  "aud": "platform.awo.so",
-  "sub": "<platform_user_uuid>",
-  "jti": "<platform_session_uuid>",
-  "iat": 1735689600,
-  "exp": 1735690500,
   "plane": "platform",
+  "user_id": "<platform_user_uuid>",
+  "session_id": "<platform_session_uuid>",
+  "issued_at": "2026-06-30T09:00:00Z",
+  "access_expires_at": "2026-06-30T09:15:00Z",
   "tier": "PLATFORM_SUPPORT",
   "permissions": ["platform.tenants.read", "platform.audit.read"]
 }
 
-// Tenant JWT payload
+// Tenant session record
 {
-  "iss": "https://auth.awo.so",
-  "aud": "vivo-energy-africa.awo.so",
-  "sub": "<tenant_user_uuid>",
-  "jti": "<tenant_session_uuid>",
-  "iat": 1735689600,
-  "exp": 1735690500,
   "plane": "tenant",
+  "user_id": "<tenant_user_uuid>",
+  "session_id": "<tenant_session_uuid>",
   "tenant_id": "<tenant_uuid>",
+  "issued_at": "2026-06-30T09:00:00Z",
+  "access_expires_at": "2026-06-30T09:15:00Z",
   "org_unit_paths": ["VEA.KE.NBI.MZN"],
   "permissions": ["fms.shifts.read", "fms.shifts.submit", "fms.cashier-reconciliation.submit"]
 }
 ```
 
-The `plane` claim is validated by the authentication middleware on every request. A request to a tenant route carrying a `plane: platform` token is rejected with 401 even if the signature is valid.
+The `plane` field on the resolved record is validated by the authentication middleware on every request, exactly as before — a request to a tenant route whose token resolves to a record with `plane: platform` is rejected with 401. The difference from a signed-JWT design is simply *where* that field lives: in a server-controlled record instead of a client-held, self-asserted claim.
 
 ### 9.3 Token Refresh & Rotation
 
 ```
 function refreshTokens(rawRefreshToken, expectedPlane):
 
-    // Identify session by hashing the token
+    // Resolve the session by hashing the presented token and querying the store
     session = findSessionByHash(argon2id(rawRefreshToken), plane: expectedPlane)
     assert session != nil and session.revoked_at == nil
         else → 401 "Invalid or revoked refresh token"
-    assert now() < session.expires_at
+    assert now() < session.refresh_expires_at
         else → 401 "Refresh token expired — please log in again"
 
     // Rotate: invalidate old refresh token, issue new one
     session.revoked_at = now()
     session.revoke_reason = "rotation"
-    save(session)
+    persistAndEvict(session)   // updates Postgres, deletes the Redis entry
 
-    newRefreshToken = secureRandom(32)
-    newSession = cloneSession(session, newRefreshToken: newRefreshToken)
+    newAccessToken  = generateOpaqueToken(32)
+    newRefreshToken = generateOpaqueToken(32)
+    newSession = cloneSession(session, newAccessToken, newRefreshToken)
 
     // Re-compute permissions (catches role changes since last login)
     if expectedPlane == "tenant":
         newSession.permissions = computeEffectivePermissions(session.user_id, session.tenant_id)
         newSession.org_unit_paths = loadUserOrgUnitPaths(session.user_id, session.tenant_id)
 
-    save(newSession)
+    writeThrough(newSession)   // Postgres insert + Redis SETEX in the same step
 
     return {
-        access_token:  signJWT(newSession, ttl: 15m),
+        access_token:  newAccessToken,
         refresh_token: newRefreshToken,
     }
 ```
+
+Because permissions are recomputed and written straight back into the session record on every rotation, a stale-permission window can never extend beyond the access-token TTL (15 minutes) even under heavy traffic — there is no signature to keep trusting after the underlying grant has changed.
 
 ### 9.4 Session Revocation
 
@@ -999,8 +1032,9 @@ function revokeSession(sessionID, reason):
     session = loadSession(sessionID)
     session.revoked_at = now()
     session.revoke_reason = reason
-    save(session)
-    cache.addToRevocationSet("revoked:" + session.jti, ttl: session.ttl_remaining)
+    save(session)                                  // Postgres: durable record
+    cache.delete("session:" + session.access_token_hash)
+    cache.delete("session:" + session.refresh_token_hash)   // Redis: immediate effect
 
 
 // Force re-login for all of a user's sessions (e.g. password change, compromise)
@@ -1018,7 +1052,40 @@ function revokeAllTenantSessions(tenantID, reason):
         revokeSession(session.id, reason)
 ```
 
-The revocation check uses a **Redis revocation set** keyed by `jti`. On every request the middleware checks this set before trusting the JWT signature. This avoids a database lookup on the happy path while still allowing instantaneous revocation.
+Revocation is **immediate and authoritative** everywhere, because the Redis entry the request-path lookup depends on is deleted directly — there is no propagation delay, no negative-cache window to wait out, and no risk of a revoked-but-still-validly-signed token being accepted by a node that hasn't yet learned about the revocation. This is the main practical benefit traded for the extra store round-trip on each request (see §9.5).
+
+### 9.5 Why Opaque Sessions Instead of Signed Tokens
+
+This revision replaces self-contained signed tokens (the v2.0 design used ES256-signed JWTs) with opaque, server-resolved session tokens. The reasoning:
+
+```
+┌────────────────────────────────┬───────────────────────┬──────────────────────────┐
+│ Property                       │ Signed JWT (v2.0)      │ Opaque session (v2.1)    │
+├────────────────────────────────┼───────────────────────┼──────────────────────────┤
+│ Revocation                     │ Needs a negative cache │ Immediate — delete the   │
+│                                 │ (revocation set) with  │ store entry; nothing     │
+│                                 │ its own propagation    │ left to "still trust"    │
+│                                 │ delay across nodes     │                          │
+│ Permission freshness           │ Baked in at issuance;  │ Re-read from the store   │
+│                                 │ stale until next       │ on every request; can be │
+│                                 │ refresh                │ updated in place         │
+│ Key management                 │ Signing keys, `kid`     │ None — no signature to  │
+│                                 │ rotation, multi-region │ produce or verify        │
+│                                 │ key distribution       │                          │
+│ Client-visible structure       │ Base64 payload is      │ Fully opaque; nothing to │
+│                                 │ readable (not secret,  │ decode even if leaked    │
+│                                 │ but inspectable)       │                          │
+│ Request-path cost              │ Local signature check, │ One Redis lookup         │
+│                                 │ no store round-trip    │ (sub-millisecond, same   │
+│                                 │                        │ datacenter)              │
+│ Operates correctly offline /   │ Yes, by design         │ No — requires the store  │
+│ across trust boundaries        │                        │ to be reachable          │
+└────────────────────────────────┴───────────────────────┴──────────────────────────┘
+```
+
+AwoERP's authorization model already depends on a fast in-memory permission check (§7.4) and a Redis-backed revocation mechanism (the v2.0 negative-cache set) on every request, so the store round-trip was never actually avoided — v2.0 paid the same Redis cost for revocation checking while still carrying the key-management burden of signing. Moving to opaque sessions keeps the single Redis round-trip, removes the signing infrastructure entirely, and turns "eventually revoked" into "revoked the instant the delete completes."
+
+The one capability this gives up is offline/cross-service verification without a network call to AwoERP's own session store — not a requirement here, since every consumer of these tokens (the Fiber API itself, Casbin enforcement, RLS context injection) is already inside the same trust boundary and already talking to Redis on the request path.
 
 ---
 
@@ -1030,7 +1097,7 @@ AwoERP uses **Casbin v2** with CEL expression evaluation for attribute condition
 
 ### 10.2 Platform-Plane Authorization
 
-Platform routes are secured by checking the `tier` field of the platform session against a static tier-permission matrix defined in configuration (not in the database). This matrix is intentionally non-modifiable at runtime.
+Platform routes are secured by checking the `tier` field of the resolved platform session against a static tier-permission matrix defined in configuration (not in the database). This matrix is intentionally non-modifiable at runtime.
 
 ```
 TierPermissionMatrix (loaded from config at startup):
@@ -1062,7 +1129,7 @@ function authorizePlatformRequest(session, requiredPermission):
 
 Tenant authorization has two layers working together:
 
-**Layer 1 — Permission check (application layer):** Does the user's permission snapshot contain the required permission string? This is a fast in-memory check against the session payload.
+**Layer 1 — Permission check (application layer):** Does the resolved session's permission snapshot contain the required permission string? This is a fast in-memory check against the session record already fetched from Redis.
 
 **Layer 2 — Data visibility (database layer):** Even with the correct permission, the RLS policy on the table restricts which rows the query returns based on the session's `org_unit_paths`. This layer is enforced by PostgreSQL itself.
 
@@ -1074,21 +1141,19 @@ The combination means:
 
 ```
 middleware AuthenticateTenant:
-    token = extractBearerToken(request)
-    assert token != nil
+    rawToken = extractBearerToken(request)
+    assert rawToken != nil
         else → 401
 
-    claims = verifyJWT(token, key: TENANT_SIGNING_KEY)
-    assert claims.plane == "tenant"
+    // Resolve the opaque token to a session record via the store
+    session = sessionStore.resolve(argon2id(rawToken), namespace: "tenant")
+    assert session != nil and session.revoked_at == nil
+        else → 401 "Invalid or revoked session"
+    assert now() < session.access_expires_at
+        else → 401 "Session expired"
+    assert session.plane == "tenant"
         else → 401 "Wrong authentication plane"
-    assert claims.aud == request.host
-        else → 401 "Token audience mismatch"
 
-    // Check revocation set (Redis O(1) lookup)
-    assert not cache.isMember("revoked:" + claims.jti)
-        else → 401 "Session revoked"
-
-    session = buildSessionFromClaims(claims)
     ctx.session = session
     ctx.tenant_id = session.tenant_id
     ctx.org_unit_paths = session.org_unit_paths
@@ -1105,7 +1170,7 @@ middleware Authorize(requiredPermission string):
     assert session != nil
         else → 401
 
-    // Fast path: exact match in pre-baked snapshot
+    // Fast path: exact match in the resolved snapshot
     if requiredPermission in session.permissions:
         return next(ctx)
 
@@ -1114,9 +1179,9 @@ middleware Authorize(requiredPermission string):
         return next(ctx)
 
     // Slow path: evaluate CEL-conditioned permissions via Casbin
-    // (record-scoped or time-windowed conditions not in snapshot)
+    // (record-scoped or time-windowed conditions not in the snapshot)
     cel_ctx = buildCELContext(ctx, session)
-    allowed = platformCasbin.Enforce(session.user_id, requiredPermission, cel_ctx)
+    allowed = tenantCasbin.Enforce(session.user_id, requiredPermission, cel_ctx)
 
     if not allowed:
         auditRecord("authorization.denied", { permission: requiredPermission }, session)
@@ -1292,6 +1357,8 @@ created_at      TIMESTAMPTZ
 - An API key can never be scoped to an OU the creator cannot access.
 - API keys carry their own `org_unit_path` injected into RLS — they are not implicitly scoped to the creator's current OU.
 
+API keys are themselves a flavor of opaque, server-resolved credential — they were never JWTs even in v2.0, so this revision does not change their format. They do, however, now share the same resolution path (hash → store lookup → synthetic session) as the rest of the tenant plane, described below.
+
 ### 12.2 API Key Format
 
 ```
@@ -1329,7 +1396,9 @@ function authenticateAPIKey(bearerToken):
 
             updateLastUsed(candidate)
 
-            // Synthetic session for downstream middleware
+            // Synthetic session for downstream middleware — same shape as a
+            // login-derived session record, just constructed inline rather
+            // than read from the session store
             return Session{
                 tenant_id:      tenant.id,
                 actor_type:     "api_key",
@@ -1416,7 +1485,7 @@ created_at      TIMESTAMPTZ     Immutable
 ```
 HTTP Request  →  POST /api/v1/fms/shifts/close
                  Host: vivo-energy-africa.awo.so
-                 Authorization: Bearer <tenant_jwt>
+                 Authorization: Bearer <opaque tenant session token>
                                 │
 ┌──────────────────────────────────────────────────────┐
 │ [1] TenantResolutionMiddleware                        │
@@ -1428,12 +1497,12 @@ HTTP Request  →  POST /api/v1/fms/shifts/close
                                 │
 ┌──────────────────────────────────────────────────────┐
 │ [2] AuthenticateTenantMiddleware                      │
-│     Extract Bearer JWT                               │
-│     Verify signature with TENANT_SIGNING_KEY         │
-│     Assert claims.plane == "tenant"                  │
-│     Assert claims.aud == request.host                │
-│     Check Redis revocation set for claims.jti        │
-│     Build session from claims                        │
+│     Extract Bearer token                              │
+│     Hash token, resolve session via Redis lookup     │
+│       (fallback to Postgres on cache miss)            │
+│     Assert session.revoked_at IS NULL                │
+│     Assert session.plane == "tenant"                  │
+│     Build session context from the resolved record   │
 │     Inject RLS settings on DB connection:            │
 │       SET LOCAL app.current_tenant_id = <uuid>       │
 │       SET LOCAL app.current_ou_paths = "VEA.KE.NBI.MZN" │
@@ -1471,7 +1540,7 @@ HTTP Request  →  POST /api/v1/fms/shifts/close
 ```
 HTTP Request  →  GET /platform/api/v1/tenants/vivo-energy-africa/users
                  Host: platform.awo.so
-                 Authorization: Bearer <platform_jwt>
+                 Authorization: Bearer <opaque platform session token>
                                 │
 ┌──────────────────────────────────────────────────────┐
 │ [1] Platform Route Guard                              │
@@ -1481,10 +1550,9 @@ HTTP Request  →  GET /platform/api/v1/tenants/vivo-energy-africa/users
                                 │
 ┌──────────────────────────────────────────────────────┐
 │ [2] AuthenticatePlatformMiddleware                    │
-│     Verify JWT with PLATFORM_SIGNING_KEY             │
-│     Assert claims.plane == "platform"                │
+│     Hash token, resolve platform session via Redis   │
+│     Assert session.plane == "platform"                │
 │     Assert requestIP in PLATFORM_ADMIN_IPS           │
-│     Build platform session                           │
 │     Set ctx.platform_tier = PLATFORM_SUPPORT         │
 │     Inject RLS settings:                             │
 │       SET LOCAL app.actor_plane = 'platform'         │
@@ -1501,7 +1569,7 @@ HTTP Request  →  GET /platform/api/v1/tenants/vivo-energy-africa/users
 ┌──────────────────────────────────────────────────────┐
 │ [4] Handler reads tenant user list                    │
 │     Uses platform read-only DB connection role       │
-│     Platform RLS policy allows cross-tenant read     │
+│     Platform RLS policy allows cross-tenant read      │
 │     Returns user list (PII fields may be masked      │
 │     depending on platform_tier)                      │
 └──────────────────────────────────────────────────────┘
@@ -1524,11 +1592,14 @@ RoleService.AssignRole(adminSession, userX.id, countryManagerRole.id, orgUnit: V
 ├── Assert admin's own OU path covers VEA.KE (can't grant beyond own scope)
 ├── INSERT UserRoleAssignment (userX, countryManagerRole, org_unit: VEA.KE)
 ├── Record audit event "role.assigned"
-└── Invalidate User X's permission snapshot:
-        cache.delete("permissions:" + tenantID + ":" + userX.id)
-        // User X's current access tokens remain valid until expiry (15 min max)
-        // Next token refresh recomputes permissions with new role included
-        // For immediate effect, revoke all User X sessions:
+└── Update User X's permission snapshot directly in the session store:
+        for each active session of userX:
+            session.permissions = computeEffectivePermissions(userX.id, tenantID)
+            writeThrough(session)   // Postgres update + Redis SETEX
+        // Because the snapshot lives server-side, this can take effect on
+        // User X's very next request — no token refresh or expiry wait
+        // required. For an immediate full re-login instead of a live
+        // snapshot update, the admin may choose to revoke all sessions:
         //   SessionService.RevokeAll(userX.id, tenantID, "role_changed")
 ```
 
@@ -1571,11 +1642,11 @@ RoleService.AssignRole(adminSession, userX.id, countryManagerRole.id, orgUnit: V
         │  (org_unit_path baked into)
         ▼
    TenantSession ─────────────────────────────────────────────
-     permissions[]  (snapshot)
-     org_unit_paths[]  (snapshot)
+     permissions[]  (snapshot, server-side, mutable in place)
+     org_unit_paths[]  (snapshot, server-side, mutable in place)
         │
-        ├── derives access token (JWT, 15 min)
-        └── rotates refresh token (7 days)
+        ├── resolved from opaque access token (Redis lookup, 15 min TTL)
+        └── rotates opaque refresh token (7 days TTL)
 
    APIKey ──► (tenant_id, permissions[], org_unit_path?)
            └── creates synthetic Session on auth
@@ -1607,13 +1678,14 @@ RoleService.AssignRole(adminSession, userX.id, countryManagerRole.id, orgUnit: V
 ### Platform Plane
 - [ ] Root credentials loaded from sealed secrets at startup — never written to DB
 - [ ] Separate `platform_users` table outside any tenant schema
-- [ ] Separate JWT signing key for platform tokens (`kid: platform-*`)
+- [ ] Separate Redis keyspace / Postgres session table for platform sessions (`session:plat:*`)
 - [ ] Platform routes behind separate subdomain (`platform.awo.so`)
 - [ ] IP allowlist enforced before credential check for platform logins
 - [ ] MFA enforced for ROOT and PLATFORM_ADMIN at middleware level (not policy level)
 - [ ] Platform read-only DB role with separate RLS policy (cross-tenant read, no write)
 - [ ] `platform.tenant_data.read` audit event on every support data access
 - [ ] Platform refresh token TTL: 4 hours (shorter than tenant)
+- [ ] Session-store encryption-at-rest key (AES-256-GCM) sealed and rotated independently of any other secret
 
 ### Tenant Plane — Database
 - [ ] `ENABLE ROW LEVEL SECURITY` and `FORCE ROW LEVEL SECURITY` on all business tables
@@ -1629,14 +1701,17 @@ RoleService.AssignRole(adminSession, userX.id, countryManagerRole.id, orgUnit: V
 - [ ] All permission checks via `Authorize(permission_string)` middleware, not ad-hoc
 - [ ] `WithTenant(ctx, tenantID, fn)` wrapping all repository calls
 - [ ] OU path injected into DB connection alongside tenant ID
-- [ ] Permission snapshot cached in Redis: `permissions:{tenantID}:{userID}`
-- [ ] Cache invalidated on role assignment change
+- [ ] Session records held in Redis with TTL matching `access_expires_at`, mirrored durably in Postgres
+- [ ] Session-store lookup wrapped with a circuit breaker / Postgres fallback so a Redis outage degrades latency rather than availability
+- [ ] Permission snapshot updated in place on role assignment change (not merely invalidated)
+- [ ] Only token *hashes* persisted (Argon2id); raw tokens never logged or stored
 - [ ] Argon2id parameters: t=3, m=65536, p=4 (minimum)
 - [ ] TOTP window tolerance: ±1 period (accepts codes ±30 seconds)
 - [ ] Backup codes: 10 single-use, bcrypt-hashed, consumed on use
 - [ ] Refresh token rotation on every use (invalidate old, issue new)
 - [ ] Rate limiting on `/auth/login` (10 req/min per IP per tenant)
 - [ ] Rate limiting on `/auth/mfa/verify` (5 req/min per user)
+- [ ] Rate limiting / backoff on session-store resolution to absorb Redis hot-key contention under load spikes
 
 ### Audit
 - [ ] Both planes write to audit log before sending HTTP response
@@ -1664,9 +1739,9 @@ RoleService.AssignRole(adminSession, userX.id, countryManagerRole.id, orgUnit: V
 | Company (multi-company) | OrgUnit of type SUBSIDIARY within a single Tenant |
 | Branch | OrgUnit of type BRANCH |
 | `frappe.get_list` with User Permissions | DB query filtered by RLS `org_unit_path <@` policy |
-| Session Document | `TenantSession` entity |
+| Session Document | `TenantSession` entity (now opaque-token-backed; see §9) |
 | OAuth Client | `SSOConfig` entity |
 
 ---
 
-*End of Document — AwoERP IAM Guide v2.0*
+*End of Document — AwoERP IAM Guide v2.1*
