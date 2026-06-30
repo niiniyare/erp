@@ -61,11 +61,11 @@ func (s *NamingSuite) TestNext_Increments() {
 	exec := mockExec(&seq)
 	tenantID := uuid.New()
 
-	n1, err := naming.Next(exec, tenantID, "invoice")
+	n1, err := naming.Next(exec, tenantID, "invoice", "")
 	s.Require().NoError(err)
 	s.Equal(int64(1), n1)
 
-	n2, err := naming.Next(exec, tenantID, "invoice")
+	n2, err := naming.Next(exec, tenantID, "invoice", "")
 	s.Require().NoError(err)
 	s.Equal(int64(2), n2)
 }
@@ -78,11 +78,12 @@ func (s *NamingSuite) TestNext_PassesCorrectArgs() {
 		*(dest[0].(*int64)) = 1
 		return nil
 	}
-	_, err := naming.Next(exec, tenantID, "purchase_order")
+	_, err := naming.Next(exec, tenantID, "purchase_order", "")
 	s.Require().NoError(err)
-	s.Require().Len(gotArgs, 2)
+	s.Require().Len(gotArgs, 3)
 	s.Equal(tenantID, gotArgs[0])
 	s.Equal("purchase_order", gotArgs[1])
+	s.Equal("", gotArgs[2])
 }
 
 func (s *NamingSuite) TestStamp_NilSeries_Noop() {
@@ -93,7 +94,7 @@ func (s *NamingSuite) TestStamp_NilSeries_Noop() {
 		return nil
 	}
 	r := &stubRec{data: map[string]any{}}
-	s.Require().NoError(naming.Stamp(exec, uuid.New(), def, r))
+	s.Require().NoError(naming.Stamp(exec, uuid.New(), def, r, time.Time{}))
 	s.False(called, "exec must not be called when NamingSeries is nil")
 }
 
@@ -104,7 +105,7 @@ func (s *NamingSuite) TestStamp_SetsTargetField() {
 	}
 	var seq int64
 	r := &stubRec{data: map[string]any{}}
-	s.Require().NoError(naming.Stamp(mockExec(&seq), uuid.New(), def, r))
+	s.Require().NoError(naming.Stamp(mockExec(&seq), uuid.New(), def, r, time.Time{}))
 	s.Equal("INV-0001", r.data["name"])
 }
 
@@ -119,8 +120,8 @@ func (s *NamingSuite) TestStamp_SequentialCalls_DifferentValues() {
 
 	r1 := &stubRec{data: map[string]any{}}
 	r2 := &stubRec{data: map[string]any{}}
-	s.Require().NoError(naming.Stamp(exec, tenantID, def, r1))
-	s.Require().NoError(naming.Stamp(exec, tenantID, def, r2))
+	s.Require().NoError(naming.Stamp(exec, tenantID, def, r1, time.Time{}))
+	s.Require().NoError(naming.Stamp(exec, tenantID, def, r2, time.Time{}))
 
 	s.Equal("INV-001", r1.data["name"])
 	s.Equal("INV-002", r2.data["name"])
