@@ -2,6 +2,7 @@ package naming_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
@@ -41,18 +42,18 @@ func TestNamingSuite(t *testing.T) { suite.Run(t, new(NamingSuite)) }
 
 func (s *NamingSuite) TestFormat_Basic() {
 	ns := &def.NamingSeriesDef{Prefix: "INV-", Padding: 5}
-	s.Equal("INV-00001", naming.Format(ns, 1))
-	s.Equal("INV-00042", naming.Format(ns, 42))
+	s.Equal("INV-00001", naming.Format(ns, 1, time.Time{}))
+	s.Equal("INV-00042", naming.Format(ns, 42, time.Time{}))
 }
 
 func (s *NamingSuite) TestFormat_PaddingExceeded_NoTruncation() {
 	ns := &def.NamingSeriesDef{Prefix: "INV-", Padding: 4}
-	s.Equal("INV-100000", naming.Format(ns, 100000))
+	s.Equal("INV-100000", naming.Format(ns, 100000, time.Time{}))
 }
 
 func (s *NamingSuite) TestFormat_DefaultPadding() {
 	ns := &def.NamingSeriesDef{Prefix: "ORD-"} // Padding=0 → 5
-	s.Equal("ORD-00007", naming.Format(ns, 7))
+	s.Equal("ORD-00007", naming.Format(ns, 7, time.Time{}))
 }
 
 func (s *NamingSuite) TestNext_Increments() {

@@ -77,8 +77,8 @@ func Mount(app *fiber.App, opts Options) {
 	var wfExec *workflow.Executor
 	if opts.TemporalClient != nil {
 		wfExec = workflow.NewExecutor(opts.TemporalClient)
+		bindWorkflowTriggers(wfExec)
 	}
-	_ = wfExec // used by modules that register workflow hooks via def.HookDef
 
 	apiGroup := app.Group(opts.APIPrefix)
 	handlerOpts := []api.HandlerOption{
@@ -93,6 +93,28 @@ func Mount(app *fiber.App, opts Options) {
 	}
 
 	sdui.Register(app, opts.APIPrefix)
+}
+
+// bindWorkflowTriggers registers HookAfterCommit hooks for every WorkflowTrigger
+// declared on each EntityDefinition. This is called once at startup when a
+// Temporal client is available.
+//
+// Each trigger fires AFTER the database transaction commits so that Temporal
+// failures never roll back entity saves.
+func bindWorkflowTriggers(exec *workflow.Executor) {
+	for _, d := range def.All() {
+		for _, t := range d.WorkflowTriggers {
+			cfg := workflow.TriggerConfig{
+				Ops:          t.Ops,
+				Kind:         workflow.TriggerStart,
+				WorkflowType: t.WorkflowType,
+				TaskQueue:    t.TaskQueue,
+				WorkflowIDFn: t.IDFunc,
+			}
+			hookName := "wf:" + t.WorkflowType
+			d.Hooks = append(d.Hooks, def.AfterCommitHook(hookName, t.Ops, exec.Hook(cfg)))
+		}
+	}
 }
 
 // anonymousViewer is the fallback ViewerFromCtx when none is provided.
