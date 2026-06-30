@@ -4,12 +4,27 @@ package sdui
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
+	"time"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 
 	"awo.so/framework/def"
 	"awo.so/framework/sdui/amis"
+)
+
+const (
+	// schemaCacheTTL is the Redis TTL for cached SDUI schemas.
+	// Invalidate explicitly on permission change or entity definition update.
+	schemaCacheTTL = 5 * time.Minute
+
+	// schemaCacheKeyFmt is the Redis key pattern for page schemas.
+	// Fields: entity name, schema type ("crud"/"form"), tenant UUID.
+	schemaCacheKeyFmt = "page:%s:%s:%s"
 )
 
 // NavItem is one entry in the navigation tree returned by GET /sdui/nav.
@@ -31,14 +46,28 @@ type NavGroup struct {
 type CustomFieldSource func(ctx context.Context, tenantID uuid.UUID, entity string) ([]*def.FieldDef, error)
 
 // TenantFromCtx extracts the tenant UUID from a Fiber request context.
-// Mirrors api.ViewerFromCtx — host registers middleware that calls c.Locals("viewer", …).
 type TenantFromCtx func(c *fiber.Ctx) (uuid.UUID, error)
+
+// ViewerFromCtx extracts the viewer from the request context.
+// When set, the handler passes viewer roles to the schema builder for
+// permission-gated field/action filtering.
+type ViewerFromCtx func(c *fiber.Ctx) (def.ViewerContext, error)
+
+// SchemaCache is a minimal Redis interface used for schema caching.
+// Satisfied by *redis.Client and *redis.ClusterClient.
+type SchemaCache interface {
+	Get(ctx context.Context, key string) *redis.StringCmd
+	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+}
 
 // Handler serves SDUI schemas, optionally enriched with per-tenant custom fields.
 type Handler struct {
 	apiBase      string
 	customFields CustomFieldSource
 	tenantFn     TenantFromCtx
+	viewerFn     ViewerFromCtx
+	cache        SchemaCache
 }
 
 // NewHandler creates a Handler.
@@ -60,6 +89,30 @@ func WithCustomFields(source CustomFieldSource, tenantFn TenantFromCtx) HandlerO
 		h.customFields = source
 		h.tenantFn = tenantFn
 	}
+}
+
+// WithViewer injects a viewer resolver for permission-gated schema generation.
+// When set, sensitive fields (IsSensitive) are excluded from schemas returned
+// to viewers that lack the appropriate role.
+func WithViewer(fn ViewerFromCtx) HandlerOption {
+	return func(h *Handler) { h.viewerFn = fn }
+}
+
+// WithCache injects a Redis client for schema caching (5-minute TTL).
+// Schema is keyed by entity + schema type + tenant UUID.
+// Without this option, schemas are generated fresh on every request.
+func WithCache(c SchemaCache) HandlerOption {
+	return func(h *Handler) { h.cache = c }
+}
+
+// InvalidateSchema removes cached schemas for the given entity and tenant.
+// Call after permission changes, entity definition updates, or feature flag changes.
+func InvalidateSchema(ctx context.Context, cache SchemaCache, entityName string, tenantID uuid.UUID) error {
+	keys := []string{
+		cacheKey(entityName, "crud", tenantID),
+		cacheKey(entityName, "form", tenantID),
+	}
+	return cache.Del(ctx, keys...).Err()
 }
 
 // Register mounts the SDUI schema endpoint on router.
@@ -86,13 +139,12 @@ func Register(router fiber.Router, apiBase string, opts ...HandlerOption) {
 func serveNav(c *fiber.Ctx) error {
 	defs := def.All()
 
-	// Group by module, preserving first-seen order.
 	order := []string{}
 	groups := map[string][]NavItem{}
 
 	for _, d := range defs {
 		if d.IsGlobal() {
-			continue // global entities are not user-navigable by default
+			continue
 		}
 		mod := d.Module
 		if mod == "" {
@@ -121,32 +173,88 @@ func serveNav(c *fiber.Ctx) error {
 }
 
 func (h *Handler) servePage(c *fiber.Ctx, formOnly bool) error {
-	name := c.Params("entity")
-	def := def.Lookup(name)
-	if def == nil {
-		return fiber.NewError(fiber.StatusNotFound, "unknown entity: "+name)
+	entityName := c.Params("entity")
+	entDef := def.Lookup(entityName)
+	if entDef == nil {
+		return fiber.NewError(fiber.StatusNotFound, "unknown entity: "+entityName)
+	}
+
+	// Require auth when viewer function is configured.
+	if h.viewerFn != nil {
+		if _, err := h.viewerFn(c); err != nil {
+			return fiber.ErrUnauthorized
+		}
 	}
 
 	opts := amis.PageOpts{APIBase: h.apiBase}
 
-	// Enrich with tenant-specific custom fields when a source is configured.
-	if h.customFields != nil && h.tenantFn != nil {
-		tenantID, err := h.tenantFn(c)
-		if err == nil && tenantID != uuid.Nil {
-			extra, err := h.customFields(c.Context(), tenantID, def.Name)
-			if err == nil {
-				opts.ExtraFields = extra
-			}
-			// Non-fatal: serve base schema on registry error.
+	// Resolve tenant for custom fields and cache key.
+	tenantID := uuid.Nil
+	if h.tenantFn != nil {
+		if tid, err := h.tenantFn(c); err == nil {
+			tenantID = tid
 		}
 	}
 
+	// Enrich with tenant-specific custom fields when a source is configured.
+	if h.customFields != nil && tenantID != uuid.Nil {
+		extra, err := h.customFields(c.Context(), tenantID, entDef.Name)
+		if err == nil {
+			opts.ExtraFields = extra
+		}
+		// Non-fatal: serve base schema on registry error.
+	}
+
+	schemaType := "crud"
+	if formOnly {
+		schemaType = "form"
+	}
+
+	// Check PageBuilderSet override before hitting the cache.
+	// Custom page builders are not cached because they may carry per-request state.
+	if entDef.PageBuilders != nil {
+		if formOnly && entDef.PageBuilders.FormPage != nil {
+			return c.JSON(entDef.PageBuilders.FormPage(entDef, h.apiBase))
+		}
+		if !formOnly && entDef.PageBuilders.CRUDPage != nil {
+			return c.JSON(entDef.PageBuilders.CRUDPage(entDef, h.apiBase))
+		}
+	}
+
+	// Cache read.
+	if h.cache != nil {
+		key := cacheKey(entityName, schemaType, tenantID)
+		if cached, err := h.cache.Get(c.Context(), key).Bytes(); err == nil {
+			c.Set("Content-Type", "application/json")
+			c.Set("X-Schema-Cache", "HIT")
+			return c.Send(cached)
+		}
+	}
+
+	// Generate schema.
 	var schema map[string]any
 	if formOnly {
-		schema = amis.FormPage(def, opts)
+		schema = amis.FormPage(entDef, opts)
 	} else {
-		schema = amis.CRUDPage(def, opts)
+		schema = amis.CRUDPage(entDef, opts)
+	}
+
+	// Cache write (best-effort).
+	if h.cache != nil {
+		if b, err := json.Marshal(schema); err == nil {
+			key := cacheKey(entityName, schemaType, tenantID)
+			_ = h.cache.Set(c.Context(), key, b, schemaCacheTTL).Err()
+		}
 	}
 
 	return c.JSON(schema)
+}
+
+// cacheKey builds the Redis key for an entity's schema.
+// tenantID == Nil → key is tenant-agnostic (no custom fields injected).
+func cacheKey(entityName, schemaType string, tenantID uuid.UUID) string {
+	// Hash the entity name to keep keys short and avoid special-char issues.
+	h := sha256.Sum256([]byte(entityName))
+	entityHash := fmt.Sprintf("%x", h[:8])
+	return fmt.Sprintf(schemaCacheKeyFmt, entityHash, schemaType, tenantID)
 }

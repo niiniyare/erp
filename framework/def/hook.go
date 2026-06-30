@@ -92,6 +92,8 @@ func (t HookTiming) String() string {
 		return "on_cancel"
 	case HookAfterDelete:
 		return "after_delete"
+	case HookAfterCommit:
+		return "after_commit"
 	default:
 		return "unknown"
 	}
@@ -126,6 +128,15 @@ const (
 	// Use for cascading soft-deletes or audit writes that must roll back on failure.
 	// Distinct from HookAfterSave so hooks can target delete specifically.
 	HookAfterDelete
+
+	// HookAfterCommit fires after the DB transaction commits successfully.
+	// It runs OUTSIDE the transaction in a goroutine-safe manner.
+	// Use for: Temporal workflow starts, outbox publishes, cache invalidation,
+	// webhook dispatches — anything that must not roll back DB data on failure.
+	//
+	// Errors from HookAfterCommit are logged but do NOT roll back the committed
+	// transaction. Idempotency and at-least-once delivery are the caller's responsibility.
+	HookAfterCommit
 )
 
 // HookDef binds a named HookFunc to a set of operations and a lifecycle timing.
@@ -215,4 +226,11 @@ func OnSubmitHook(name string, fn HookFunc) HookDef {
 // OnCancelHook creates a named HookOnCancel (ops forced to OpUpdate).
 func OnCancelHook(name string, fn HookFunc) HookDef {
 	return HookDef{Name: name, Ops: OpUpdate, Timing: HookOnCancel, Fn: fn}
+}
+
+// AfterCommitHook creates a named HookAfterCommit for the given ops.
+// The hook fires AFTER the transaction commits — errors do not roll back the data.
+// Use for workflow triggers, outbox writes, cache invalidation.
+func AfterCommitHook(name string, ops Op, fn HookFunc) HookDef {
+	return HookDef{Name: name, Ops: ops, Timing: HookAfterCommit, Fn: fn}
 }

@@ -233,6 +233,9 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
+	// Fire after_commit hooks outside the transaction (Temporal triggers, outbox, etc.).
+	h.hooks.RunAfterCommit(c.Context(), h.def, mut)
+
 	return Created(c, recordToMap(rec, h.def))
 }
 
@@ -313,6 +316,9 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return fiberErr(txErr)
 	}
 
+	// Fire after_commit hooks outside the transaction.
+	h.hooks.RunAfterCommit(c.Context(), h.def, mut)
+
 	return OK(c, result)
 }
 
@@ -326,6 +332,7 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 		return err
 	}
 
+	var deleteMut *def.Mutation
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 
@@ -337,17 +344,22 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 			return errForbidden
 		}
 
-		mut := &def.Mutation{Op: def.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
+		deleteMut = &def.Mutation{Op: def.OpDelete, Before: rec, TenantID: tenantID.String(), ActorID: viewer.ActorID()}
 
-		if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeDelete); err != nil {
+		if err := h.hooks.Run(c.Context(), h.def, deleteMut, def.HookBeforeDelete); err != nil {
 			return err
 		}
 		if err := es.Delete(c.Context(), id); err != nil {
 			return err
 		}
-		return h.hooks.Run(c.Context(), h.def, mut, def.HookAfterDelete)
+		return h.hooks.Run(c.Context(), h.def, deleteMut, def.HookAfterDelete)
 	}); err != nil {
 		return fiberErr(err)
+	}
+
+	// Fire after_commit hooks outside the transaction.
+	if deleteMut != nil {
+		h.hooks.RunAfterCommit(c.Context(), h.def, deleteMut)
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)

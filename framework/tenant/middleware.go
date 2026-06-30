@@ -58,10 +58,14 @@ func ResolutionMiddleware() fiber.Handler {
 			if idx := strings.LastIndexByte(host, ':'); idx > 0 {
 				host = host[:idx]
 			}
-			parts := strings.SplitN(host, ".", 2)
-			if len(parts) == 2 && parts[0] != "www" && parts[0] != "api" &&
-				parts[0] != "app" && parts[0] != "bo" && parts[0] != "portal" {
-				tenant = parts[0]
+			// Require 3+ parts (subdomain.domain.tld) to avoid treating bare
+			// two-part hostnames like "example.com" as tenant subdomains.
+			parts := strings.Split(host, ".")
+			if len(parts) >= 3 {
+				sub := parts[0]
+				if sub != "www" && sub != "api" && sub != "app" && sub != "bo" && sub != "portal" {
+					tenant = sub
+				}
 			}
 		}
 

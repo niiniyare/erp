@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -71,6 +72,20 @@ func (s *EntityStore) FindByID(ctx context.Context, id uuid.UUID) (def.Record, e
 		}
 		return nil, fmt.Errorf("FindByID %s/%s: %w", s.def.Name, id, err)
 	}
+
+	// Eager-load edges declared with EagerLoad: true.
+	// Edge data is embedded directly in rec.data so it flows through recordToMap.
+	if len(s.def.Edges) > 0 {
+		base := make(map[string]any, len(rec.data))
+		for k, v := range rec.data {
+			base[k] = v
+		}
+		merged := s.loadEagerEdges(ctx, rec, base)
+		for k, v := range merged {
+			rec.data[k] = v
+		}
+	}
+
 	return rec, nil
 }
 
@@ -124,7 +139,7 @@ func (s *EntityStore) Create(ctx context.Context, rec def.MutableRecord) error {
 	// Stamp naming series before building the INSERT so the generated value is
 	// included in the persisted row. Uses the same connection/transaction as
 	// the INSERT — rolls back atomically on failure.
-	if err := naming.Stamp(s.execOneRow(ctx), s.tenantID, s.def, rec); err != nil {
+	if err := naming.Stamp(s.execOneRow(ctx), s.tenantID, s.def, rec, time.Now().UTC()); err != nil {
 		return err
 	}
 

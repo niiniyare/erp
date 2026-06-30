@@ -183,6 +183,36 @@ func (r *Runner) runOne(
 	return nil
 }
 
+// RunAfterCommit executes all HookAfterCommit hooks registered on def for m.Op.
+//
+// Unlike Run, errors from individual hooks are NOT returned — the DB transaction
+// has already committed and rolling back is impossible. Each failure is logged at
+// Error level. All hooks are attempted even if an earlier one fails.
+//
+// Call this immediately after the WithTx call returns nil, outside any transaction.
+func (r *Runner) RunAfterCommit(
+	ctx context.Context,
+	entDef *def.EntityDefinition,
+	m *def.Mutation,
+) {
+	for i, h := range entDef.Hooks {
+		if h.EffectiveTiming() != def.HookAfterCommit {
+			continue
+		}
+		if !h.EffectiveOps().Is(m.Op) {
+			continue
+		}
+		if err := r.runOne(ctx, entDef, m, def.HookAfterCommit, h, i); err != nil {
+			r.log.ErrorContext(ctx, "after_commit hook failed (tx already committed)",
+				slog.String("hook", hookName(h, i)),
+				slog.String("entity", entDef.Name),
+				slog.String("op", m.Op.String()),
+				slog.Any("error", err),
+			)
+		}
+	}
+}
+
 // ── Convenience unwrap helpers ────────────────────────────────────────────────
 
 // AsHookError unwraps err into a *HookError if one is present in the chain.

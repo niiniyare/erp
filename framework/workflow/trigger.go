@@ -69,13 +69,15 @@ func NewExecutor(c client.Client) *Executor {
 }
 
 // Hook returns a def.HookFunc that fires the configured workflow trigger.
-// Attach the returned HookFunc as an AfterHook (after_save, still in TX) so the
-// trigger only fires on successful commit.
 //
-// Important: Temporal calls here are made inside the write transaction context.
-// They are non-blocking (enqueue, not await). If Temporal is unavailable the
-// hook returns an error and the transaction rolls back — use AfterCommit hooks
-// (outside TX) for fire-and-forget semantics where rollback is undesirable.
+// The returned hook is intended for HookAfterCommit timing so Temporal calls
+// execute AFTER the DB transaction commits. This guarantees:
+//   - DB failure → no orphaned workflow started
+//   - Temporal failure → DB data is preserved (hook error is logged, not fatal)
+//
+// Example usage:
+//
+//	def.AfterCommitHook("start_approval", def.OpCreate, executor.Hook(cfg))
 func (e *Executor) Hook(cfg TriggerConfig) def.HookFunc {
 	return func(ctx context.Context, m *def.Mutation) error {
 		if !cfg.Ops.Is(m.Op) {
@@ -132,11 +134,15 @@ func defaultWorkflowID(m *def.Mutation, cfg TriggerConfig) string {
 	if rec == nil {
 		rec = m.Before
 	}
-	id := ""
+	recordID := ""
+	entityName := ""
 	if rec != nil {
-		id = rec.ID().String()
+		recordID = rec.ID().String()
+		entityName = rec.EntityName()
 	}
-	return fmt.Sprintf("%s/%s/%s", m.Op.String(), id, cfg.WorkflowType)
+	// Convention: "{tenantID}.{entity}.{recordID}.{op}"
+	// Tenant prefix ensures uniqueness across tenants in a shared Temporal namespace.
+	return fmt.Sprintf("%s.%s.%s.%s", m.TenantID, entityName, recordID, m.Op.String())
 }
 
 func buildPayload(m *def.Mutation, cfg TriggerConfig) any {
