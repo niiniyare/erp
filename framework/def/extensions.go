@@ -60,8 +60,12 @@ type ActionDef struct {
 	Ops Op
 
 	// Fn is the action handler invoked when the action route is called.
-	// It receives the Mutation with Op = OpUpdate and must return nil on success.
-	Fn func(ctx context.Context, m *Mutation) error
+	// Returns an ActionResult on success; errors are mapped to HTTP responses.
+	//
+	// Signature kept in def to avoid an import cycle with framework/api.
+	// The concrete ActionResult type lives in framework/api; Fn returns any
+	// so module code can pass *api.ActionResult without importing api directly.
+	Fn func(ctx context.Context, m *Mutation) (any, error)
 }
 
 // ── Page builders ──────────────────────────────────────────────────────────────

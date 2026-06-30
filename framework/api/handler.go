@@ -74,15 +74,23 @@ func WithOrgTree(tree org.Tree) HandlerOption {
 //	GET    /prefix          → List
 //	POST   /prefix          → Create
 //	GET    /prefix/:id      → FindByID
-//	PUT    /prefix/:id      → Update
+//	PATCH  /prefix/:id      → Update (partial)
+//	PUT    /prefix/:id      → Update (alias — full-replace semantics not yet enforced)
 //	DELETE /prefix/:id      → Delete
 func Register(router fiber.Router, prefix string, h *Handler) {
 	g := router.Group(prefix)
 	g.Get("/", h.list)
 	g.Post("/", h.create)
 	g.Get("/:id", h.findByID)
-	g.Put("/:id", h.update)
+	g.Patch("/:id", h.update) // canonical per docs
+	g.Put("/:id", h.update)   // backward-compat alias
 	g.Delete("/:id", h.delete)
+
+	// Mount declared custom actions: POST /{prefix}/:id/{action.Name}
+	for _, action := range h.def.Actions {
+		action := action
+		g.Post("/:id/"+action.Name, makeActionHandler(h, action))
+	}
 }
 
 // ──────────────────────────────────────────────────────────────────
@@ -115,7 +123,7 @@ func (h *Handler) findByID(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
-	return c.JSON(result)
+	return OK(c, result)
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
@@ -150,29 +158,31 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		opts.OrgUnitIDs = descendants
 	}
 
-	var result fiber.Map
+	var (
+		rows  []map[string]any
+		total int64
+		lim   int
+		off   int
+	)
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
 		es := tx.ForEntity(h.def.Name)
 		page, err := es.List(c.Context(), opts)
 		if err != nil {
 			return err
 		}
-		rows := make([]map[string]any, len(page.Records))
+		rows = make([]map[string]any, len(page.Records))
 		for i, r := range page.Records {
 			rows[i] = recordToMap(r, h.def)
 		}
-		result = fiber.Map{
-			"data":   rows,
-			"total":  page.Total,
-			"limit":  page.Limit,
-			"offset": page.Offset,
-		}
+		total = page.Total
+		lim = page.Limit
+		off = page.Offset
 		return nil
 	}); err != nil {
 		return fiberErr(err)
 	}
 
-	return c.JSON(result)
+	return List(c, rows, total, lim, off)
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {
@@ -205,11 +215,8 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
-	if verrs := validate.Run(h.def, rec); verrs != nil {
-		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
-			"status": fiber.StatusUnprocessableEntity,
-			"errors": verrs,
-		})
+	if verrs := validate.Run(h.def, rec); len(verrs) > 0 {
+		return ValidationErr(c, verrFields(verrs))
 	}
 
 	if err := h.store.WithTx(c.Context(), tenantID, func(tx persistence.TenantTx) error {
@@ -226,7 +233,7 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return fiberErr(err)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(recordToMap(rec, h.def))
+	return Created(c, recordToMap(rec, h.def))
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
@@ -278,11 +285,8 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	if err := h.hooks.Run(c.Context(), h.def, mut, def.HookBeforeValidate); err != nil {
 		return fiberErr(err)
 	}
-	if verrs := validate.Run(h.def, rec); verrs != nil {
-		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
-			"status": fiber.StatusUnprocessableEntity,
-			"errors": verrs,
-		})
+	if verrs := validate.Run(h.def, rec); len(verrs) > 0 {
+		return ValidationErr(c, verrFields(verrs))
 	}
 
 	var result map[string]any
@@ -304,15 +308,12 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	if txErr != nil {
 		var verrs validate.ValidationErrors
 		if errors.As(txErr, &verrs) {
-			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
-				"status": fiber.StatusUnprocessableEntity,
-				"errors": verrs,
-			})
+			return ValidationErr(c, verrFields(verrs))
 		}
 		return fiberErr(txErr)
 	}
 
-	return c.JSON(result)
+	return OK(c, result)
 }
 
 func (h *Handler) delete(c *fiber.Ctx) error {
@@ -391,6 +392,15 @@ func parseUUID(c *fiber.Ctx, param string) (uuid.UUID, error) {
 		return uuid.Nil, fiber.NewError(fiber.StatusBadRequest, "invalid UUID: "+c.Params(param))
 	}
 	return id, nil
+}
+
+// verrFields converts ValidationErrors to a field→message map for ValidationErr.
+func verrFields(verrs validate.ValidationErrors) map[string]string {
+	fields := make(map[string]string, len(verrs))
+	for _, ve := range verrs {
+		fields[ve.Field] = ve.Message
+	}
+	return fields
 }
 
 func fiberErr(err error) error {
