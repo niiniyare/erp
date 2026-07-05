@@ -166,7 +166,8 @@ func (h *Handler) serveView(c *fiber.Ctx, viewType ViewType) error {
 		}
 	}
 
-	b := NewBuilder(entDef, h.apiBase,
+	b := NewBuilder(
+		entDef, h.apiBase,
 		WithBuilderCache(h.cache),
 		WithExtraFields(extraFields),
 	)

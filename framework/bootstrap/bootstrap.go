@@ -31,9 +31,9 @@ import (
 	"awo.so/framework/api"
 	"awo.so/framework/def"
 	"awo.so/framework/persistence/pgstore"
+	"awo.so/framework/platform/iam"
 	platformorg "awo.so/framework/platform/org"
 	platformorgpgorg "awo.so/framework/platform/org/pgorg"
-	"awo.so/framework/platform/iam"
 	"awo.so/framework/sdui"
 	"awo.so/framework/workflow"
 )

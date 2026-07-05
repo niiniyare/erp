@@ -422,6 +422,7 @@ func (r *customRecord) Get(field string) any {
 	}
 	return r.data[field]
 }
+
 func (r *customRecord) Set(field string, val any) {
 	switch field {
 	case "_id":
@@ -444,7 +445,7 @@ func (r *customRecord) Set(field string, val any) {
 
 // compile-time checks
 var (
-	_ def.Record        = (*customRecord)(nil)
-	_ def.MutableRecord = (*customRecord)(nil)
+	_ def.Record              = (*customRecord)(nil)
+	_ def.MutableRecord       = (*customRecord)(nil)
 	_ persistence.EntityStore = (*CustomStore)(nil)
 )

@@ -335,7 +335,6 @@ func (s *EntityStore) BulkUpdate(ctx context.Context, pred *filterPkg.Filter, va
 	return tag.RowsAffected(), nil
 }
 
-
 // ──────────────────────────────────────────────────────────────────
 // Scanning helpers
 // ──────────────────────────────────────────────────────────────────

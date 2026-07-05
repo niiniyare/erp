@@ -24,7 +24,7 @@ import (
 // Compensations run in LIFO order. Compensation errors are logged but do not
 // prevent other compensations from running.
 type Saga struct {
-	ctx          workflow.Context
+	ctx           workflow.Context
 	compensations []sagaFn
 }
 

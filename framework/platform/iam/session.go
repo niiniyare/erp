@@ -37,7 +37,7 @@ type Session struct {
 	UserID    uuid.UUID `json:"user_id"`
 	TenantID  uuid.UUID `json:"tenant_id"`
 	OrgUnitID uuid.UUID `json:"org_unit_id"` // uuid.Nil = tenant-wide viewer
-	Plane     string    `json:"plane"`        // always "tenant" for this package
+	Plane     string    `json:"plane"`       // always "tenant" for this package
 
 	// Roles holds the role slugs active at login.
 	Roles []string `json:"roles"`

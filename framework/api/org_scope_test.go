@@ -27,10 +27,10 @@ func (v *scopeViewer) IsSystem() bool        { return v.isSystem }
 // scopedRecord implements def.Record + def.OrgScoped.
 type scopedRecord struct{ unitID uuid.UUID }
 
-func (r *scopedRecord) Get(_ string) any          { return nil }
-func (r *scopedRecord) ID() uuid.UUID             { return uuid.Nil }
-func (r *scopedRecord) TenantID() uuid.UUID       { return uuid.Nil }
-func (r *scopedRecord) EntityName() string        { return "test" }
+func (r *scopedRecord) Get(_ string) any           { return nil }
+func (r *scopedRecord) ID() uuid.UUID              { return uuid.Nil }
+func (r *scopedRecord) TenantID() uuid.UUID        { return uuid.Nil }
+func (r *scopedRecord) EntityName() string         { return "test" }
 func (r *scopedRecord) RecordOrgUnitID() uuid.UUID { return r.unitID }
 
 // unscopedRecord implements def.Record only (no OrgScoped).
@@ -53,12 +53,16 @@ func (t *treeStub) IsAncestorOrEqual(_ context.Context, _ uuid.UUID, ancestor, n
 	}
 	return t.ancestors[ancestor][node], nil
 }
-func (t *treeStub) Ancestors(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error)   { return nil, nil }
-func (t *treeStub) Descendants(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) { return nil, nil }
-func (t *treeStub) SubtreePath(context.Context, uuid.UUID, uuid.UUID) (string, error)      { return "", nil }
-func (t *treeStub) Unit(context.Context, uuid.UUID, uuid.UUID) (*org.Unit, error)          { return nil, nil }
-func (t *treeStub) InsertPaths(context.Context, *org.Unit) error                           { return nil }
-func (t *treeStub) RebuildPaths(context.Context, *org.Unit) error                          { return nil }
+func (t *treeStub) Ancestors(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+func (t *treeStub) Descendants(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+func (t *treeStub) SubtreePath(context.Context, uuid.UUID, uuid.UUID) (string, error) { return "", nil }
+func (t *treeStub) Unit(context.Context, uuid.UUID, uuid.UUID) (*org.Unit, error)     { return nil, nil }
+func (t *treeStub) InsertPaths(context.Context, *org.Unit) error                      { return nil }
+func (t *treeStub) RebuildPaths(context.Context, *org.Unit) error                     { return nil }
 
 var _ org.Tree = (*treeStub)(nil)
 

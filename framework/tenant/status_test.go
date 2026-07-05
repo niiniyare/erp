@@ -23,6 +23,7 @@ type mockStatusSvc struct {
 func (m *mockStatusSvc) GetStatus(_ context.Context, _ uuid.UUID) (tenant.TenantStatus, error) {
 	return m.status, m.err
 }
+
 func (m *mockStatusSvc) SetStatus(_ context.Context, _ uuid.UUID, _ tenant.TenantStatus) error {
 	return nil
 }

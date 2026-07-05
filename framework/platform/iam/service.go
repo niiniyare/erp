@@ -24,7 +24,7 @@ var (
 )
 
 const (
-	lockoutThreshold = 5               // failed attempts before lockout
+	lockoutThreshold = 5 // failed attempts before lockout
 	lockoutDuration  = 15 * time.Minute
 )
 
@@ -177,15 +177,15 @@ func (s *AuthService) Refresh(ctx context.Context, rawRefreshToken string) (*Log
 	refreshHash := tokenHash(rawRefreshToken)
 
 	var (
-		sessID          uuid.UUID
-		userID          uuid.UUID
-		tenantID        uuid.UUID
-		orgUnitID       uuid.UUID
-		plane           string
-		roles           []string
-		permissions     []string
-		refreshExpires  time.Time
-		revokedAt       *time.Time
+		sessID         uuid.UUID
+		userID         uuid.UUID
+		tenantID       uuid.UUID
+		orgUnitID      uuid.UUID
+		plane          string
+		roles          []string
+		permissions    []string
+		refreshExpires time.Time
+		revokedAt      *time.Time
 	)
 	err = conn.QueryRow(ctx, `
 		SELECT id, user_id, tenant_id, COALESCE(org_unit_id, $2::uuid),

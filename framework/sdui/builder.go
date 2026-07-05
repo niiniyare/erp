@@ -26,10 +26,10 @@ const (
 // It applies permission-based field filtering, honours PageBuilderSet overrides,
 // and reads/writes the schema cache transparently.
 type Builder struct {
-	entDef       *def.EntityDefinition
-	apiBase      string
-	cache        Cache
-	extraFields  []*def.FieldDef
+	entDef      *def.EntityDefinition
+	apiBase     string
+	cache       Cache
+	extraFields []*def.FieldDef
 }
 
 // NewBuilder creates a Builder for entDef.

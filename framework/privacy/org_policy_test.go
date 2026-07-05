@@ -20,19 +20,19 @@ type testViewer struct {
 	isSystem  bool
 }
 
-func (v *testViewer) ActorID() string      { return "test-actor" }
-func (v *testViewer) TenantID() string     { return v.tenantID }
-func (v *testViewer) OrgUnitID() uuid.UUID { return v.orgUnitID }
+func (v *testViewer) ActorID() string       { return "test-actor" }
+func (v *testViewer) TenantID() string      { return v.tenantID }
+func (v *testViewer) OrgUnitID() uuid.UUID  { return v.orgUnitID }
 func (v *testViewer) HasRole(_ string) bool { return false }
 func (v *testViewer) IsSystem() bool        { return v.isSystem }
 
 // orgRecord implements def.Record and def.OrgScoped.
 type orgRecord struct{ unitID uuid.UUID }
 
-func (r *orgRecord) Get(_ string) any       { return nil }
-func (r *orgRecord) ID() uuid.UUID          { return uuid.Nil }
-func (r *orgRecord) TenantID() uuid.UUID    { return uuid.Nil }
-func (r *orgRecord) EntityName() string     { return "test" }
+func (r *orgRecord) Get(_ string) any           { return nil }
+func (r *orgRecord) ID() uuid.UUID              { return uuid.Nil }
+func (r *orgRecord) TenantID() uuid.UUID        { return uuid.Nil }
+func (r *orgRecord) EntityName() string         { return "test" }
 func (r *orgRecord) RecordOrgUnitID() uuid.UUID { return r.unitID }
 
 // plainRecord implements def.Record but NOT def.OrgScoped.
@@ -64,12 +64,16 @@ func (t *mockTree) IsAncestorOrEqual(_ context.Context, _ uuid.UUID, ancestor, n
 	}
 	return false, nil
 }
-func (t *mockTree) Ancestors(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error)   { return nil, nil }
-func (t *mockTree) Descendants(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) { return nil, nil }
-func (t *mockTree) SubtreePath(context.Context, uuid.UUID, uuid.UUID) (string, error)      { return "", nil }
-func (t *mockTree) Unit(context.Context, uuid.UUID, uuid.UUID) (*org.Unit, error)          { return nil, nil }
-func (t *mockTree) InsertPaths(context.Context, *org.Unit) error                           { return nil }
-func (t *mockTree) RebuildPaths(context.Context, *org.Unit) error                          { return nil }
+func (t *mockTree) Ancestors(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+func (t *mockTree) Descendants(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
+	return nil, nil
+}
+func (t *mockTree) SubtreePath(context.Context, uuid.UUID, uuid.UUID) (string, error) { return "", nil }
+func (t *mockTree) Unit(context.Context, uuid.UUID, uuid.UUID) (*org.Unit, error)     { return nil, nil }
+func (t *mockTree) InsertPaths(context.Context, *org.Unit) error                      { return nil }
+func (t *mockTree) RebuildPaths(context.Context, *org.Unit) error                     { return nil }
 
 var _ org.Tree = (*mockTree)(nil)
 

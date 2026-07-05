@@ -76,10 +76,10 @@ func NewSessionViewer(s *Session) *SessionViewer {
 	return &SessionViewer{session: s}
 }
 
-func (v *SessionViewer) ActorID() string   { return v.session.UserID.String() }
-func (v *SessionViewer) TenantID() string  { return v.session.TenantID.String() }
+func (v *SessionViewer) ActorID() string      { return v.session.UserID.String() }
+func (v *SessionViewer) TenantID() string     { return v.session.TenantID.String() }
 func (v *SessionViewer) OrgUnitID() uuid.UUID { return uuid.Nil }
-func (v *SessionViewer) IsSystem() bool    { return v.session.IsSystem }
+func (v *SessionViewer) IsSystem() bool       { return v.session.IsSystem }
 func (v *SessionViewer) HasRole(role string) bool {
 	for _, r := range v.session.Roles {
 		if r == role {
