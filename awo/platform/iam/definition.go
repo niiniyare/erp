@@ -58,9 +58,9 @@ var UserDefinition = def.SystemDefinition{
 			Default: func() any { return "pending_verification" },
 		},
 		{
-			Name:   "tenant_id_fk",
-			Type:   def.FieldTypeLink,
-			Label:  "Tenant",
+			Name:  "tenant_id_fk",
+			Type:  def.FieldTypeLink,
+			Label: "Tenant",
 			// LinkTarget is "platform_tenant" — resolved by compiler.
 			LinkTarget: "platform_tenant",
 			Required:   true,
@@ -90,17 +90,17 @@ var UserDefinition = def.SystemDefinition{
 			Default: func() any { return false },
 		},
 		{
-			Name:   "locale",
-			Type:   def.FieldTypeData,
-			Label:  "Locale",
-			MaxLen: 10,
+			Name:    "locale",
+			Type:    def.FieldTypeData,
+			Label:   "Locale",
+			MaxLen:  10,
 			Default: func() any { return "en-KE" },
 		},
 		{
-			Name:   "timezone",
-			Type:   def.FieldTypeData,
-			Label:  "Timezone",
-			MaxLen: 64,
+			Name:    "timezone",
+			Type:    def.FieldTypeData,
+			Label:   "Timezone",
+			MaxLen:  64,
 			Default: func() any { return "Africa/Nairobi" },
 		},
 	},
@@ -135,15 +135,15 @@ var RoleDefinition = def.SystemDefinition{
 			MaxLen:    100,
 		},
 		{
-			Name:  "label",
-			Type:  def.FieldTypeData,
-			Label: "Display Label",
+			Name:   "label",
+			Type:   def.FieldTypeData,
+			Label:  "Display Label",
 			MaxLen: 255,
 		},
 		{
-			Name:    "description",
-			Type:    def.FieldTypeSmallText,
-			Label:   "Description",
+			Name:  "description",
+			Type:  def.FieldTypeSmallText,
+			Label: "Description",
 		},
 		{
 			Name:    "is_system",
@@ -173,12 +173,12 @@ var SessionDefinition = def.SystemDefinition{
 
 	Fields: []def.FieldDef{
 		{
-			Name:      "user_id",
-			Type:      def.FieldTypeLink,
-			Label:     "User",
+			Name:       "user_id",
+			Type:       def.FieldTypeLink,
+			Label:      "User",
 			LinkTarget: "iam_user",
-			Required:  true,
-			Immutable: true,
+			Required:   true,
+			Immutable:  true,
 		},
 		{
 			Name:      "token_hash",
@@ -196,9 +196,9 @@ var SessionDefinition = def.SystemDefinition{
 			MaxLen: 45,
 		},
 		{
-			Name:   "user_agent",
-			Type:   def.FieldTypeSmallText,
-			Label:  "User Agent",
+			Name:  "user_agent",
+			Type:  def.FieldTypeSmallText,
+			Label: "User Agent",
 		},
 		{
 			Name:     "expires_at",
@@ -213,9 +213,9 @@ var SessionDefinition = def.SystemDefinition{
 			Default: func() any { return false },
 		},
 		{
-			Name:   "revoked_at",
-			Type:   def.FieldTypeDateTime,
-			Label:  "Revoked At",
+			Name:  "revoked_at",
+			Type:  def.FieldTypeDateTime,
+			Label: "Revoked At",
 		},
 	},
 

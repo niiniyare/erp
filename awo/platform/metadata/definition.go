@@ -41,9 +41,9 @@ var CustomFieldDefinition = def.SystemDefinition{
 			// Convention: must start with "cf_" to avoid collisions with system fields.
 		},
 		{
-			Name:  "label",
-			Type:  def.FieldTypeData,
-			Label: "Label",
+			Name:   "label",
+			Type:   def.FieldTypeData,
+			Label:  "Label",
 			MaxLen: 255,
 		},
 		{

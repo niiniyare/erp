@@ -11,7 +11,7 @@ import (
 // validates dependency declarations and resolves a topological load order via
 // Kahn's algorithm.
 type ModuleRegistry struct {
-	mu       sync.RWMutex
+	mu        sync.RWMutex
 	manifests map[string]Manifest // keyed by Manifest.Name
 }
 

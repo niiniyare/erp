@@ -51,11 +51,11 @@ type CreateContext struct {
 
 // UpdateContext carries all inputs for an Update pipeline run.
 type UpdateContext struct {
-	Ctx        context.Context
-	EntityName string
-	Data       map[string]any
+	Ctx          context.Context
+	EntityName   string
+	Data         map[string]any
 	CustomFields map[string]any
-	Actor      *def.Actor
+	Actor        *def.Actor
 }
 
 // DeleteContext carries all inputs for a Delete pipeline run.

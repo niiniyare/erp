@@ -25,10 +25,10 @@ var LogDefinition = def.SystemDefinition{
 
 	Fields: []def.FieldDef{
 		{
-			Name:      "tenant_id_ref",
-			Type:      def.FieldTypeData, // not a Link — audit log spans all tenants
-			Label:     "Tenant ID",
-			MaxLen:    36,
+			Name:   "tenant_id_ref",
+			Type:   def.FieldTypeData, // not a Link — audit log spans all tenants
+			Label:  "Tenant ID",
+			MaxLen: 36,
 		},
 		{
 			Name:   "actor_id",
@@ -79,9 +79,9 @@ var LogDefinition = def.SystemDefinition{
 			Label: "After",
 		},
 		{
-			Name:   "diff",
-			Type:   def.FieldTypeJSON,
-			Label:  "Diff",
+			Name:  "diff",
+			Type:  def.FieldTypeJSON,
+			Label: "Diff",
 		},
 		{
 			Name:   "request_id",
@@ -94,10 +94,10 @@ var LogDefinition = def.SystemDefinition{
 	Permissions: def.PermissionSet{
 		// Only platform admins can read the audit log.
 		// Tenant admins get a scoped view via a separate query that filters by tenant_id_ref.
-		Create: []string{},                // written by framework hooks only
+		Create: []string{}, // written by framework hooks only
 		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{},                // immutable
-		Delete: []string{},                // never deleted
+		Write:  []string{}, // immutable
+		Delete: []string{}, // never deleted
 	},
 }
 

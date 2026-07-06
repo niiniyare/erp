@@ -17,11 +17,11 @@ func TestSlugValidator(t *testing.T) {
 	}{
 		{"acme-corp", false},
 		{"my-company-123", false},
-		{"ab", true},         // too short
-		{"ACME", true},       // uppercase
-		{"-acme", true},      // leading hyphen
-		{"acme-", true},      // trailing hyphen
-		{"acme corp", true},  // space
+		{"ab", true},        // too short
+		{"ACME", true},      // uppercase
+		{"-acme", true},     // leading hyphen
+		{"acme-", true},     // trailing hyphen
+		{"acme corp", true}, // space
 	}
 	for _, tt := range tests {
 		rec := &def.EntityRecord{Data: map[string]any{"slug": tt.slug}}
@@ -68,7 +68,7 @@ func TestTransitionGuard(t *testing.T) {
 		{"ACTIVE", "ARCHIVED", false},
 		{"SUSPENDED", "ACTIVE", false},
 		{"SUSPENDED", "ARCHIVED", false},
-		{"ARCHIVED", "ACTIVE", true},  // terminal
+		{"ARCHIVED", "ACTIVE", true},   // terminal
 		{"PENDING", "SUSPENDED", true}, // not allowed
 		{"ACTIVE", "PENDING", true},    // not allowed
 	}

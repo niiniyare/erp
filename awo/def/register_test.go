@@ -19,9 +19,9 @@ func TestRegister_AcceptsValidDefinition(t *testing.T) {
 	// -count=1 and avoid parallel sub-tests that call Register.
 
 	d := &SystemDefinition{
-		Name:    "test_widget",
-		Module:  "test",
-		Label:   "Widget",
+		Name:        "test_widget",
+		Module:      "test",
+		Label:       "Widget",
 		LabelPlural: "Widgets",
 	}
 

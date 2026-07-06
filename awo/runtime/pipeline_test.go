@@ -17,17 +17,17 @@ func buildTestSchema(d def.EntityDefinition) *compiler.CompiledSchema {
 		ByName: map[string]*compiler.EntitySchema{},
 	}
 	es := &compiler.EntitySchema{
-		Def:             d,
-		FieldsByName:    map[string]def.FieldDef{},
-		EdgesByName:     map[string]def.EdgeDef{},
-		ActionsByName:   map[string]def.ActionDef{},
-		DefaultValues:   map[string]func() any{},
-		RequiredFields:  map[string]bool{},
-		ImmutableFields: map[string]bool{},
-		SensitiveFields: map[string]bool{},
+		Def:              d,
+		FieldsByName:     map[string]def.FieldDef{},
+		EdgesByName:      map[string]def.EdgeDef{},
+		ActionsByName:    map[string]def.ActionDef{},
+		DefaultValues:    map[string]func() any{},
+		RequiredFields:   map[string]bool{},
+		ImmutableFields:  map[string]bool{},
+		SensitiveFields:  map[string]bool{},
 		SearchableFields: map[string]bool{},
-		LinkTargets:     map[string]*compiler.EntitySchema{},
-		TableName:       d.EntityName(),
+		LinkTargets:      map[string]*compiler.EntitySchema{},
+		TableName:        d.EntityName(),
 	}
 	for _, f := range d.EntityFields() {
 		es.FieldsByName[f.Name] = f

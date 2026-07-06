@@ -122,6 +122,16 @@ func Build() *Registry {
 //
 // Returns an error instead of panicking so callers (e.g. test harnesses) can
 // report failures cleanly via t.Fatal.
+// BuildFrom constructs a Registry from an explicit list of EntityDefinitions
+// without touching the global def registry. Intended for use in tests and
+// tooling that needs an isolated registry.
+//
+// Unlike [Build], BuildFrom does not enforce mandatory-system-entity rules,
+// allowing test registries to use arbitrary entity definitions. All other
+// validation (name format, field names, link targets) still applies.
+//
+// Returns an error instead of panicking so callers (e.g. test harnesses) can
+// report failures cleanly via t.Fatal.
 func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
 	if len(defs) == 0 {
 		return nil, fmt.Errorf("registry.BuildFrom: no EntityDefinitions provided")
@@ -134,7 +144,8 @@ func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
 
 	var errs []string
 	for _, d := range defs {
-		errs = append(errs, validateDefinition(d, byName)...)
+		// Skip mandatory-system-entity check in isolated test registries.
+		errs = append(errs, validateDefinitionRelaxed(d, byName)...)
 	}
 
 	if len(errs) > 0 {
@@ -143,6 +154,20 @@ func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
 	}
 
 	return &Registry{defs: defs, byName: byName}, nil
+}
+
+// validateDefinitionRelaxed runs all validation rules except the
+// mandatory-system-entity check. Used by BuildFrom for test/tooling registries.
+func validateDefinitionRelaxed(d def.EntityDefinition, byName map[string]def.EntityDefinition) []string {
+	errs := validateDefinition(d, byName)
+	// Filter out mandatory-system-entity errors — they contain "must be a SystemDefinition".
+	filtered := errs[:0]
+	for _, e := range errs {
+		if !strings.Contains(e, "must be a SystemDefinition") {
+			filtered = append(filtered, e)
+		}
+	}
+	return filtered
 }
 
 func validateDefinition(d def.EntityDefinition, byName map[string]def.EntityDefinition) []string {

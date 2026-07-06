@@ -25,9 +25,19 @@ func NewTestEnv(t testing.TB) *WorkflowTestEnv {
 	}
 }
 
-// MockActivity registers a mock result for the given activity function.
-// The mock is used instead of the real activity during test execution.
-// result may be a value (returned as the activity result) or an error.
-func (e *WorkflowTestEnv) MockActivity(fn any, result any) {
-	e.OnActivity(fn).Return(result)
+// MockActivityResult registers a successful mock result for the given activity
+// function. Use this when the activity returns (T, error) and you want to mock
+// a successful execution.
+//
+// Example:
+//
+//	env.MockActivityResult(activities.SendEmail, SendEmailResult{MessageID: "abc"})
+func (e *WorkflowTestEnv) MockActivityResult(fn any, result any) {
+	e.OnActivity(fn).Return(result, nil)
+}
+
+// MockActivityError registers a mock failure for the given activity function.
+// The activity will appear to return the given error when executed.
+func (e *WorkflowTestEnv) MockActivityError(fn any, err error) {
+	e.OnActivity(fn).Return(nil, err)
 }

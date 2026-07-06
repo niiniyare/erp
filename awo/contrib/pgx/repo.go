@@ -7,9 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	pgxlib "github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/google/uuid"
 
 	"awo.so/awo/compiler"
 	"awo.so/awo/contrib/pgx/sqlbuild"

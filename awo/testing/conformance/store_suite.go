@@ -307,5 +307,4 @@ func (s *StoreSuite) testTenantIsolation(t *testing.T) {
 			t.Errorf("TenantIsolation: record from tenant %s appeared in tenant A query", r.TenantID)
 		}
 	}
-
 }

@@ -45,11 +45,11 @@ var SettingDefinition = def.SystemDefinition{
 			MaxLen:    100,
 		},
 		{
-			Name:    "scope",
-			Type:    def.FieldTypeSelect,
-			Label:   "Scope",
-			Options: []string{"system", "tenant", "branch"},
-			Default: func() any { return "tenant" },
+			Name:      "scope",
+			Type:      def.FieldTypeSelect,
+			Label:     "Scope",
+			Options:   []string{"system", "tenant", "branch"},
+			Default:   func() any { return "tenant" },
 			Immutable: true,
 		},
 		{
@@ -60,14 +60,14 @@ var SettingDefinition = def.SystemDefinition{
 			// For tenant scope: tenant UUID. For branch: branch UUID. System: empty.
 		},
 		{
-			Name:   "value",
-			Type:   def.FieldTypeJSON,
-			Label:  "Value",
+			Name:  "value",
+			Type:  def.FieldTypeJSON,
+			Label: "Value",
 		},
 		{
-			Name:   "value_type",
-			Type:   def.FieldTypeSelect,
-			Label:  "Value Type",
+			Name:    "value_type",
+			Type:    def.FieldTypeSelect,
+			Label:   "Value Type",
 			Options: []string{"string", "number", "boolean", "json"},
 			Default: func() any { return "string" },
 		},

@@ -79,9 +79,9 @@ func (l *Locker) Reset() {
 
 // fakeLock implements lock.Lock.
 type fakeLock struct {
-	mu      sync.Once
-	locker  *Locker
-	key     string
+	mu       sync.Once
+	locker   *Locker
+	key      string
 	released bool
 }
 

@@ -57,28 +57,11 @@ func (g *DepGraph) dfsReach(current, target string, visited map[string]bool) boo
 }
 
 // TopologicalOrder returns entity names where dependencies come before dependents.
-// Returns error on cycle detection.
+// Uses Kahn's algorithm. Returns error on cycle detection.
+//
+// Edge direction: A→B means A depends on B; B must appear before A in the output.
 func (g *DepGraph) TopologicalOrder() ([]string, error) {
-	// Kahn's algorithm.
-	inDegree := make(map[string]int, len(g.all))
-	for name := range g.all {
-		inDegree[name] = 0
-	}
-	for name, deps := range g.deps {
-		_ = name
-		for dep := range deps {
-			inDegree[dep]++ // dep is depended-upon, not the dependant
-		}
-	}
-	// Nodes with no incoming edges (nobody depends on them yet in reverse).
-	// Actually for topological sort we want: process nodes whose dependencies
-	// are already done. Standard Kahn: inDegree = number of *incoming* edges
-	// in the direction we traverse.
-	//
-	// Our edge direction: A→B means A depends on B (B must come first).
-	// So we want nodes with no dependencies (out-degree 0 in dep map) first.
-	// Re-implement with dep-count (number of unresolved dependencies).
-
+	// depCount[A] = number of A's direct dependencies not yet placed.
 	depCount := make(map[string]int, len(g.all))
 	reverseDeps := make(map[string][]string) // B → list of A that depend on B
 	for name := range g.all {

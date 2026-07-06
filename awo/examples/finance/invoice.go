@@ -60,9 +60,9 @@ var InvoiceDefinition = def.SystemDefinition{
 			Label: "Notes",
 		},
 		{
-			Name:   "due_date",
-			Type:   def.FieldTypeDate,
-			Label:  "Due Date",
+			Name:  "due_date",
+			Type:  def.FieldTypeDate,
+			Label: "Due Date",
 		},
 	},
 

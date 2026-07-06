@@ -14,18 +14,18 @@ import (
 
 // Entry is the structured input for writing an audit log record.
 type Entry struct {
-	TenantID     uuid.UUID
-	ActorID      uuid.UUID
-	ActorEmail   string
-	IPAddress    string
-	RequestID    string
-	Operation    string // "create", "update", "delete", "action", "login", "logout"
-	EntityName   string
-	RecordID     uuid.UUID
-	Before       any // serialized to JSON
-	After        any // serialized to JSON
-	Diff         map[string]any
-	OccurredAt   time.Time
+	TenantID   uuid.UUID
+	ActorID    uuid.UUID
+	ActorEmail string
+	IPAddress  string
+	RequestID  string
+	Operation  string // "create", "update", "delete", "action", "login", "logout"
+	EntityName string
+	RecordID   uuid.UUID
+	Before     any // serialized to JSON
+	After      any // serialized to JSON
+	Diff       map[string]any
+	OccurredAt time.Time
 }
 
 // Writer appends entries to the audit_log entity.

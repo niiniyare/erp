@@ -25,10 +25,10 @@ import (
 )
 
 const (
-	sessionTTL       = 24 * time.Hour
-	sessionCacheKey  = "session:"
-	bcryptCost       = 12
-	tokenBytes       = 32
+	sessionTTL      = 24 * time.Hour
+	sessionCacheKey = "session:"
+	bcryptCost      = 12
+	tokenBytes      = 32
 )
 
 // SessionClaims holds the authenticated principal extracted from a valid session.

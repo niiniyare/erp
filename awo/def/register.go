@@ -12,10 +12,10 @@ import (
 var globalRegistry = &entityRegistry{}
 
 type entityRegistry struct {
-	mu       sync.RWMutex
-	defs     []EntityDefinition
-	byName   map[string]EntityDefinition
-	sealed   bool
+	mu     sync.RWMutex
+	defs   []EntityDefinition
+	byName map[string]EntityDefinition
+	sealed bool
 }
 
 // Register records an EntityDefinition in the global registry. It must be

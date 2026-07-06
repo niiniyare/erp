@@ -33,8 +33,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, err := store.Create(ctx, driver.CreateInput{
-	
-				Data:       map[string]any{"name": fmt.Sprintf("item-%d", i), "status": "active"},
+				Data: map[string]any{"name": fmt.Sprintf("item-%d", i), "status": "active"},
 			})
 			if err != nil {
 				b.Fatalf("Create: %v", err)
@@ -49,8 +48,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 		ids := make([]uuid.UUID, 100)
 		for i := range ids {
 			r, _ := store.Create(ctx, driver.CreateInput{
-	
-				Data:       map[string]any{"name": fmt.Sprintf("item-%d", i)},
+				Data: map[string]any{"name": fmt.Sprintf("item-%d", i)},
 			})
 			ids[i] = r.ID
 		}
@@ -68,8 +66,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 		ctx := benchCtx()
 		for i := 0; i < 1000; i++ {
 			store.Create(ctx, driver.CreateInput{
-	
-				Data:       map[string]any{"status": "active"},
+				Data: map[string]any{"status": "active"},
 			})
 		}
 		b.ResetTimer()
@@ -89,8 +86,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 				status = "draft"
 			}
 			store.Create(ctx, driver.CreateInput{
-	
-				Data:       map[string]any{"status": status},
+				Data: map[string]any{"status": status},
 			})
 		}
 		f := filter.Eq("status", "active")
@@ -107,8 +103,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 		ctx := benchCtx()
 		for i := 0; i < 1000; i++ {
 			store.Create(ctx, driver.CreateInput{
-	
-				Data:       map[string]any{"n": int64(i)},
+				Data: map[string]any{"n": int64(i)},
 			})
 		}
 		b.ResetTimer()
@@ -125,8 +120,7 @@ func BenchmarkStore(b *testing.B, factory func() driver.RecordRepository) {
 		inputs := make([]driver.CreateInput, 100)
 		for i := range inputs {
 			inputs[i] = driver.CreateInput{
-	
-				Data:       map[string]any{"name": fmt.Sprintf("item-%d", i)},
+				Data: map[string]any{"name": fmt.Sprintf("item-%d", i)},
 			}
 		}
 		b.ResetTimer()

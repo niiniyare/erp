@@ -9,7 +9,8 @@
 //	?filter[id][in]=uuid1,uuid2,uuid3
 //
 // Operators: eq, neq, gt, gte, lt, lte, between, in, not_in,
-//            is_null, is_not_null, contains, starts_with, ends_with
+//
+//	is_null, is_not_null, contains, starts_with, ends_with
 //
 // All filters are AND-combined. Use nested JSON body for complex OR/NOT trees.
 // URL filter params are intentionally simple — complex queries belong in POST

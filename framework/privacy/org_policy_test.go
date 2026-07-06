@@ -64,9 +64,11 @@ func (t *mockTree) IsAncestorOrEqual(_ context.Context, _ uuid.UUID, ancestor, n
 	}
 	return false, nil
 }
+
 func (t *mockTree) Ancestors(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }
+
 func (t *mockTree) Descendants(context.Context, uuid.UUID, uuid.UUID) ([]uuid.UUID, error) {
 	return nil, nil
 }

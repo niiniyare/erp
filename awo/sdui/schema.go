@@ -5,22 +5,22 @@ package sdui
 
 // Page is the top-level amis page component.
 type Page struct {
-	Type  string `json:"type"`  // always "page"
+	Type  string `json:"type"` // always "page"
 	Title string `json:"title,omitempty"`
 	Body  any    `json:"body"`
 }
 
 // CRUD is the amis crud component used for list/search views.
 type CRUD struct {
-	Type        string   `json:"type"` // "crud"
-	API         string   `json:"api"`
-	Columns     []Column `json:"columns"`
-	Filter      *Form    `json:"filter,omitempty"`
-	Toolbar     []any    `json:"toolbar,omitempty"`
-	PageSize    int      `json:"pageSize,omitempty"`
-	Pagination  bool     `json:"pagination"`
-	Searchable  bool     `json:"searchable,omitempty"`
-	SyncLocation bool    `json:"syncLocation,omitempty"`
+	Type         string   `json:"type"` // "crud"
+	API          string   `json:"api"`
+	Columns      []Column `json:"columns"`
+	Filter       *Form    `json:"filter,omitempty"`
+	Toolbar      []any    `json:"toolbar,omitempty"`
+	PageSize     int      `json:"pageSize,omitempty"`
+	Pagination   bool     `json:"pagination"`
+	Searchable   bool     `json:"searchable,omitempty"`
+	SyncLocation bool     `json:"syncLocation,omitempty"`
 }
 
 // Form is the amis form component used for create/edit views.
@@ -70,12 +70,12 @@ type Column struct {
 
 // Button is an amis action button.
 type Button struct {
-	Type        string `json:"type"`        // "button"
-	Label       string `json:"label"`
-	ActionType  string `json:"actionType"`  // "link", "dialog", "ajax", etc.
-	Level       string `json:"level,omitempty"` // "primary", "danger", "default"
-	URL         string `json:"url,omitempty"`
-	Target      string `json:"target,omitempty"`
+	Type       string `json:"type"` // "button"
+	Label      string `json:"label"`
+	ActionType string `json:"actionType"`      // "link", "dialog", "ajax", etc.
+	Level      string `json:"level,omitempty"` // "primary", "danger", "default"
+	URL        string `json:"url,omitempty"`
+	Target     string `json:"target,omitempty"`
 }
 
 // NavItem is one sidebar navigation entry.

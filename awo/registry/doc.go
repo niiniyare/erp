@@ -4,13 +4,13 @@
 //
 // # Lifecycle
 //
-// 1. All module init() functions call [def.Register], populating the global
-//    def registry.
-// 2. During the Initialization Phase, [Build] is called exactly once. It
-//    reads all registrations from the def package, validates each definition,
-//    and returns a sealed [Registry].
-// 3. The sealed Registry is passed to the compiler and the runtime. No
-//    further registrations are accepted after [Build] returns.
+//  1. All module init() functions call [def.Register], populating the global
+//     def registry.
+//  2. During the Initialization Phase, [Build] is called exactly once. It
+//     reads all registrations from the def package, validates each definition,
+//     and returns a sealed [Registry].
+//  3. The sealed Registry is passed to the compiler and the runtime. No
+//     further registrations are accepted after [Build] returns.
 //
 // # Validation
 //

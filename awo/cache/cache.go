@@ -75,6 +75,7 @@ type NoopCounter struct{}
 func (NoopCounter) Increment(_ context.Context, _ string, _ int64) (int64, error) {
 	return 0, nil
 }
+
 func (NoopCounter) IncrementWithReset(_ context.Context, _ string, _ int64, _ time.Duration) (int64, error) {
 	return 0, nil
 }

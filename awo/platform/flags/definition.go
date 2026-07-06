@@ -36,9 +36,9 @@ var FlagDefinition = def.SystemDefinition{
 			MaxLen:    100,
 		},
 		{
-			Name:  "label",
-			Type:  def.FieldTypeData,
-			Label: "Label",
+			Name:   "label",
+			Type:   def.FieldTypeData,
+			Label:  "Label",
 			MaxLen: 255,
 		},
 		{
@@ -59,9 +59,9 @@ var FlagDefinition = def.SystemDefinition{
 			Default: func() any { return false },
 		},
 		{
-			Name:   "rollout_percentage",
-			Type:   def.FieldTypeInt,
-			Label:  "Rollout %",
+			Name:    "rollout_percentage",
+			Type:    def.FieldTypeInt,
+			Label:   "Rollout %",
 			Default: func() any { return 0 },
 		},
 	},
@@ -92,9 +92,9 @@ var TenantOverrideDefinition = def.SystemDefinition{
 			Immutable:  true,
 		},
 		{
-			Name:    "enabled",
-			Type:    def.FieldTypeBool,
-			Label:   "Enabled",
+			Name:     "enabled",
+			Type:     def.FieldTypeBool,
+			Label:    "Enabled",
 			Required: true,
 		},
 	},

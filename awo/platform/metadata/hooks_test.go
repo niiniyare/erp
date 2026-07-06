@@ -17,10 +17,10 @@ func TestFieldNameValidator(t *testing.T) {
 	}{
 		{"cf_invoice_ref", false},
 		{"cf_x", false},
-		{"invoice_ref", true},   // missing cf_ prefix
-		{"CF_invoice", true},    // uppercase
-		{"cf_", true},           // just prefix, no name
-		{"cf_123", true},        // starts with digit after cf_
+		{"invoice_ref", true}, // missing cf_ prefix
+		{"CF_invoice", true},  // uppercase
+		{"cf_", true},         // just prefix, no name
+		{"cf_123", true},      // starts with digit after cf_
 		{"cf_good_name_123", false},
 	}
 	for _, tt := range tests {

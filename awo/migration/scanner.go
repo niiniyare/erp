@@ -8,7 +8,6 @@ import (
 	"regexp"
 	"sort"
 	"strconv"
-	"strings"
 )
 
 // filenameRe matches migration filenames:
@@ -56,14 +55,14 @@ func Scan(dir string) ([]Step, error) {
 		if err != nil {
 			continue
 		}
-		dir_ := DirectionUp
+		stepDir := DirectionUp
 		if m[3] == "down" {
-			dir_ = DirectionDown
+			stepDir = DirectionDown
 		}
 		raws = append(raws, rawFile{
 			version:     v,
 			description: m[2],
-			direction:   dir_,
+			direction:   stepDir,
 			path:        filepath.Join(dir, e.Name()),
 		})
 	}
@@ -90,8 +89,8 @@ func Scan(dir string) ([]Step, error) {
 		if steps[i].Version != steps[j].Version {
 			return steps[i].Version < steps[j].Version
 		}
-		// up before down at the same version.
-		return strings.Compare(string(steps[i].Direction), string(steps[j].Direction)) < 0
+		// Within same version, up before down.
+		return steps[i].Direction == DirectionUp && steps[j].Direction == DirectionDown
 	})
 
 	return steps, nil

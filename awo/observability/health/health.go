@@ -1,8 +1,8 @@
 // Package health provides liveness and readiness check handlers.
 //
-//   GET /health/live  → 200 if process is running (no dependency checks)
-//   GET /health/ready → 200 only if PostgreSQL + Redis reachable and
-//                       EntityRegistry populated
+//	GET /health/live  → 200 if process is running (no dependency checks)
+//	GET /health/ready → 200 only if PostgreSQL + Redis reachable and
+//	                    EntityRegistry populated
 //
 // Liveness failure: restart the process.
 // Readiness failure: remove from load balancer rotation.

@@ -14,11 +14,11 @@ import (
 
 // PostgreSQL error code constants relevant to framework operations.
 const (
-	CodeUniqueViolation     = "23505"
-	CodeForeignKeyViolation = "23503"
-	CodeCheckViolation      = "23514"
-	CodeNotNullViolation    = "23502"
-	CodeDeadlockDetected    = "40P01"
+	CodeUniqueViolation      = "23505"
+	CodeForeignKeyViolation  = "23503"
+	CodeCheckViolation       = "23514"
+	CodeNotNullViolation     = "23502"
+	CodeDeadlockDetected     = "40P01"
 	CodeSerializationFailure = "40001"
 
 	// Application-defined error codes (set by stored procedures).

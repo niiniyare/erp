@@ -19,9 +19,9 @@ func TestEntityNameFormat(t *testing.T) {
 		{"finance_invoice_line", true},
 		{"hr_employee", true},
 		{"inventory_stock_move", true},
-		{"Invoice", false},         // PascalCase
-		{"finance-invoice", false}, // hyphen
-		{"finance", false},         // no underscore separator
+		{"Invoice", false},          // PascalCase
+		{"finance-invoice", false},  // hyphen
+		{"finance", false},          // no underscore separator
 		{"_finance_invoice", false}, // leading underscore
 		{"finance_", false},         // trailing underscore
 		{"FINANCE_INVOICE", false},  // uppercase

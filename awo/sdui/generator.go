@@ -4,9 +4,10 @@
 // detail view. Custom PageBuilderSet overrides any view.
 //
 // Generated schemas are cached in Redis:
-//   Key: page:{entity}:{view}:{tenant_id}
-//   TTL: 5 minutes
-//   Invalidation: on permission change or feature flag change
+//
+//	Key: page:{entity}:{view}:{tenant_id}
+//	TTL: 5 minutes
+//	Invalidation: on permission change or feature flag change
 //
 // Permission-gated elements are ABSENT from the schema (not disabled).
 // The permission check runs at schema-serve time, not data-fetch time.
@@ -144,7 +145,7 @@ func (g *Generator) generateList(es *compiler.EntitySchema) map[string]any {
 	)
 
 	return map[string]any{
-		"type": "page",
+		"type":  "page",
 		"title": labelPlural,
 		"body": map[string]any{
 			"type":    "crud",
@@ -229,13 +230,13 @@ func (g *Generator) generateDetail(es *compiler.EntitySchema) map[string]any {
 		})
 	}
 	return map[string]any{
-		"type": "page",
+		"type":  "page",
 		"title": label,
 		"body": map[string]any{
-			"type":  "form",
-			"mode":  "horizontal",
-			"api":   "/api/v1/entities/" + es.TableName + "/${id}",
-			"body":  items,
+			"type":    "form",
+			"mode":    "horizontal",
+			"api":     "/api/v1/entities/" + es.TableName + "/${id}",
+			"body":    items,
 			"actions": []map[string]any{},
 		},
 	}

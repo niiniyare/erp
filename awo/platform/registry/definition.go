@@ -33,9 +33,9 @@ var ModuleDefinition = def.SystemDefinition{
 			// Convention: short lowercase slug e.g. "finance", "hr", "crm"
 		},
 		{
-			Name:  "label",
-			Type:  def.FieldTypeData,
-			Label: "Label",
+			Name:   "label",
+			Type:   def.FieldTypeData,
+			Label:  "Label",
 			MaxLen: 255,
 		},
 		{
@@ -97,14 +97,14 @@ var TenantModuleDefinition = def.SystemDefinition{
 			Default: func() any { return "installing" },
 		},
 		{
-			Name:   "installed_at",
-			Type:   def.FieldTypeDateTime,
-			Label:  "Installed At",
+			Name:  "installed_at",
+			Type:  def.FieldTypeDateTime,
+			Label: "Installed At",
 		},
 		{
-			Name:   "config",
-			Type:   def.FieldTypeJSON,
-			Label:  "Module Config",
+			Name:  "config",
+			Type:  def.FieldTypeJSON,
+			Label: "Module Config",
 		},
 	},
 

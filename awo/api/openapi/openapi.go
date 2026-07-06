@@ -59,10 +59,10 @@ func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 	// Collection routes.
 	paths[base] = map[string]any{
 		"get": map[string]any{
-			"summary":    "List " + schemaName,
+			"summary":     "List " + schemaName,
 			"operationId": "list_" + name,
-			"tags":       []string{schemaName},
-			"parameters": paginationParams(),
+			"tags":        []string{schemaName},
+			"parameters":  paginationParams(),
 			"responses": map[string]any{
 				"200": jsonResponse("Paginated list", listRef),
 				"401": errorResponse("Unauthorized"),
@@ -70,9 +70,9 @@ func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 			},
 		},
 		"post": map[string]any{
-			"summary":    "Create " + schemaName,
+			"summary":     "Create " + schemaName,
 			"operationId": "create_" + name,
-			"tags":       []string{schemaName},
+			"tags":        []string{schemaName},
 			"requestBody": jsonBody("Create payload", ref),
 			"responses": map[string]any{
 				"201": jsonResponse("Created", ref),
@@ -84,20 +84,20 @@ func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 	// Single-record routes.
 	paths[base+"/{id}"] = map[string]any{
 		"get": map[string]any{
-			"summary":    "Get " + schemaName,
+			"summary":     "Get " + schemaName,
 			"operationId": "get_" + name,
-			"tags":       []string{schemaName},
-			"parameters": idParam(),
+			"tags":        []string{schemaName},
+			"parameters":  idParam(),
 			"responses": map[string]any{
 				"200": jsonResponse("Record", ref),
 				"404": errorResponse("Not found"),
 			},
 		},
 		"patch": map[string]any{
-			"summary":    "Update " + schemaName,
+			"summary":     "Update " + schemaName,
 			"operationId": "update_" + name,
-			"tags":       []string{schemaName},
-			"parameters": idParam(),
+			"tags":        []string{schemaName},
+			"parameters":  idParam(),
 			"requestBody": jsonBody("Partial update", ref),
 			"responses": map[string]any{
 				"200": jsonResponse("Updated record", ref),
@@ -105,10 +105,10 @@ func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 			},
 		},
 		"delete": map[string]any{
-			"summary":    "Delete " + schemaName,
+			"summary":     "Delete " + schemaName,
 			"operationId": "delete_" + name,
-			"tags":       []string{schemaName},
-			"parameters": idParam(),
+			"tags":        []string{schemaName},
+			"parameters":  idParam(),
 			"responses": map[string]any{
 				"204": map[string]any{"description": "Deleted"},
 				"404": errorResponse("Not found"),
@@ -121,10 +121,10 @@ func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 		opID := fmt.Sprintf("action_%s_%s", name, actionName)
 		paths[fmt.Sprintf("%s/{id}/%s", base, actionName)] = map[string]any{
 			"post": map[string]any{
-				"summary":    action.Label,
+				"summary":     action.Label,
 				"operationId": opID,
-				"tags":       []string{schemaName},
-				"parameters": idParam(),
+				"tags":        []string{schemaName},
+				"parameters":  idParam(),
 				"responses": map[string]any{
 					"200": jsonResponse("Action result", map[string]any{"type": "object"}),
 				},

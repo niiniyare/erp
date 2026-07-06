@@ -35,10 +35,10 @@ const (
 	KindNot Kind = "not" // child must not match
 
 	// Custom-field predicates (JSONB path)
-	KindCustomEq  Kind = "custom_eq"  // custom_fields->>'field' = value
-	KindCustomGt  Kind = "custom_gt"  // (custom_fields->>'field')::numeric > value
-	KindCustomLt  Kind = "custom_lt"
-	KindCustomIn  Kind = "custom_in"
+	KindCustomEq   Kind = "custom_eq" // custom_fields->>'field' = value
+	KindCustomGt   Kind = "custom_gt" // (custom_fields->>'field')::numeric > value
+	KindCustomLt   Kind = "custom_lt"
+	KindCustomIn   Kind = "custom_in"
 	KindCustomNull Kind = "custom_null"
 )
 
@@ -49,11 +49,11 @@ const (
 // without the def package importing this package.
 type Filter struct {
 	Kind  Kind
-	Field string  // set for leaf predicates
-	Value any     // set for single-value predicates
-	Lo    any     // set for KindBetween (lower bound)
-	Hi    any     // set for KindBetween (upper bound)
-	In    []any   // set for KindIn, KindNotIn
+	Field string    // set for leaf predicates
+	Value any       // set for single-value predicates
+	Lo    any       // set for KindBetween (lower bound)
+	Hi    any       // set for KindBetween (upper bound)
+	In    []any     // set for KindIn, KindNotIn
 	Sub   []*Filter // set for KindAnd, KindOr, KindNot
 }
 

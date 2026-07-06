@@ -92,15 +92,15 @@ type SystemDefinition struct {
 // Ensure SystemDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*SystemDefinition)(nil)
 
-func (d *SystemDefinition) EntityName() string                   { return d.Name }
-func (d *SystemDefinition) EntityModule() string                 { return d.Module }
-func (d *SystemDefinition) EntityLabel() string                  { return d.Label }
-func (d *SystemDefinition) EntityLabelPlural() string            { return d.LabelPlural }
-func (d *SystemDefinition) EntityFields() []FieldDef             { return d.Fields }
-func (d *SystemDefinition) EntityEdges() []EdgeDef               { return d.Edges }
-func (d *SystemDefinition) EntityHooks() HookSet                 { return d.Hooks }
-func (d *SystemDefinition) EntityPermissions() PermissionSet     { return d.Permissions }
-func (d *SystemDefinition) EntityActions() []ActionDef           { return d.Actions }
+func (d *SystemDefinition) EntityName() string               { return d.Name }
+func (d *SystemDefinition) EntityModule() string             { return d.Module }
+func (d *SystemDefinition) EntityLabel() string              { return d.Label }
+func (d *SystemDefinition) EntityLabelPlural() string        { return d.LabelPlural }
+func (d *SystemDefinition) EntityFields() []FieldDef         { return d.Fields }
+func (d *SystemDefinition) EntityEdges() []EdgeDef           { return d.Edges }
+func (d *SystemDefinition) EntityHooks() HookSet             { return d.Hooks }
+func (d *SystemDefinition) EntityPermissions() PermissionSet { return d.Permissions }
+func (d *SystemDefinition) EntityActions() []ActionDef       { return d.Actions }
 func (d *SystemDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 	return d.WorkflowTriggers
 }
@@ -155,15 +155,15 @@ type CustomDefinition struct {
 // Ensure CustomDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*CustomDefinition)(nil)
 
-func (d *CustomDefinition) EntityName() string                   { return d.Name }
-func (d *CustomDefinition) EntityModule() string                 { return d.Module }
-func (d *CustomDefinition) EntityLabel() string                  { return d.Label }
-func (d *CustomDefinition) EntityLabelPlural() string            { return d.LabelPlural }
-func (d *CustomDefinition) EntityFields() []FieldDef             { return d.Fields }
-func (d *CustomDefinition) EntityEdges() []EdgeDef               { return d.Edges }
-func (d *CustomDefinition) EntityHooks() HookSet                 { return d.Hooks }
-func (d *CustomDefinition) EntityPermissions() PermissionSet     { return d.Permissions }
-func (d *CustomDefinition) EntityActions() []ActionDef           { return d.Actions }
+func (d *CustomDefinition) EntityName() string               { return d.Name }
+func (d *CustomDefinition) EntityModule() string             { return d.Module }
+func (d *CustomDefinition) EntityLabel() string              { return d.Label }
+func (d *CustomDefinition) EntityLabelPlural() string        { return d.LabelPlural }
+func (d *CustomDefinition) EntityFields() []FieldDef         { return d.Fields }
+func (d *CustomDefinition) EntityEdges() []EdgeDef           { return d.Edges }
+func (d *CustomDefinition) EntityHooks() HookSet             { return d.Hooks }
+func (d *CustomDefinition) EntityPermissions() PermissionSet { return d.Permissions }
+func (d *CustomDefinition) EntityActions() []ActionDef       { return d.Actions }
 func (d *CustomDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 	return d.WorkflowTriggers
 }

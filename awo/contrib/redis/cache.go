@@ -32,8 +32,10 @@ func New(rdb *goredis.Client) *Client {
 }
 
 // Ensure compile-time interface satisfaction.
-var _ cache.Cache = (*Client)(nil)
-var _ cache.Counter = (*Client)(nil)
+var (
+	_ cache.Cache   = (*Client)(nil)
+	_ cache.Counter = (*Client)(nil)
+)
 
 // Get retrieves the value for key into dst (JSON-decoded).
 // Returns cache.ErrMiss if the key does not exist.
