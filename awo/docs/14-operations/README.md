@@ -33,6 +33,7 @@ Operations covers the processes operators follow to keep Awo deployments healthy
 | [Performance Tuning](performance-tuning.md) | OPS-004 | PostgreSQL, Redis, PgBouncer, Fiber, Temporal worker tuning | STABLE |
 | [Upgrade Guide](upgrade-guide.md) | OPS-005 | Zero-downtime upgrade procedure, migration compatibility, Temporal versioning | STABLE |
 | [Backup and Restore](backup-restore.md) | OPS-006 | WAL archiving, point-in-time restore, Redis backup, disaster recovery | STABLE |
+| [Local Development Setup](local-development.md) | OPS-007 | Prerequisites, docker compose, migrations, hot reload, common issues | STABLE |
 
 ---
 

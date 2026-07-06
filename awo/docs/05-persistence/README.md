@@ -34,6 +34,10 @@ The persistence section specifies the interfaces and DSLs through which all enti
 | [Aggregations](aggregations.md) | PERS-006 | Count, Sum, Avg, GroupBy, time-series aggregations | STABLE |
 | [Transactions](transactions.md) | PERS-007 | WithTx, multi-repo transactions, hooks inside TX, savepoints | STABLE |
 | [System Entity Catalog](system-entities-catalog.md) | PERS-008 | Complete list of all system entities and their classification rationale | STABLE |
+| [Cursor-Based Pagination](cursor-pagination.md) | PERS-009 | Keyset pagination: cursor format, query generation, sort index requirements | STABLE |
+| [RLS Deep Dive](rls-deep-dive.md) | PERS-010 | Tenant context flow, policy evaluation, coverage verification, failure modes | STABLE |
+| [Query Options](query-options.md) | PERS-011 | Complete QueryOption reference: pagination, sorting, edges, fields, locks | STABLE |
+| [Bulk Repository Operations](bulk-operations.md) | PERS-012 | BulkCreate, BulkUpdate: atomicity, hooks, performance, import pattern | STABLE |
 
 ---
 

@@ -32,6 +32,7 @@ Multi-tenancy is the foundational structural property of the Awo Framework. This
 | [Tenant Lifecycle](tenant-lifecycle.md) | TEN-003 | Status machine, HTTP response codes, provisioning, archival | STABLE |
 | [Multi-Tenancy Patterns](multi-tenancy-patterns.md) | TEN-004 | Cross-tenant ops, platform admin context, background jobs, anti-patterns | STABLE |
 | [Tenant Provisioning](tenant-provisioning.md) | TEN-005 | Provisioning workflow, role seeding, module activation, admin user creation | STABLE |
+| [Multi-Branch Tenancy](multi-branch.md) | TEN-006 | Branch entity, branch context, branch-scoped policies, settings, RBAC | STABLE |
 
 ---
 

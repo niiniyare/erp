@@ -33,6 +33,8 @@ Every framework behavior during the Runtime Phase is derived from kernel outputs
 | [Entity Registry](registry.md) | KERN-003 | Registry contract: registration acceptance, validation, and sealing | FROZEN |
 | [Startup Sequence](startup-sequence.md) | KERN-004 | Hard dependency chain for process startup | STABLE |
 | [Custom Entity Registry](custom-entity-registry.md) | KERN-005 | Runtime per-tenant schema registry, mutation lock, concurrency rules | STABLE |
+| [Hook Pipeline](hook-pipeline.md) | KERN-006 | Exact pipeline: stages, TX boundaries, framework-injected hooks, delete flow | FROZEN |
+| [Route Generation](route-generation.md) | KERN-007 | CRUD and action route auto-generation, permission middleware, schema routes | FROZEN |
 
 ---
 

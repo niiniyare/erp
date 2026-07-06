@@ -37,6 +37,10 @@ A module is a cohesive collection of entity definitions, hooks, policies, activi
 | [Forecourt Patterns](forecourt-patterns.md) | MOD-008 | Shift management, meter readings, fuel reconciliation, settlement | STABLE |
 | [Payroll Patterns](payroll-patterns.md) | MOD-009 | Payslip computation, PAYE, NSSF/NHIF, GL journal posting | STABLE |
 | [Projects Patterns](projects-patterns.md) | MOD-010 | Project lifecycle, time logging, billing, project dashboard | STABLE |
+| [Audit Log Module](platform-audit-module.md) | MOD-011 | Tamper-evident audit log: auto-capture, sensitive fields, retention | STABLE |
+| [Metadata Module](platform-metadata-module.md) | MOD-012 | Runtime custom field extension: declaration, validation, storage, UI | STABLE |
+| [Feature Flags Module](platform-flags-module.md) | MOD-013 | Flag declaration, evaluation, caching, lifecycle management | STABLE |
+| [CRM Patterns](crm-patterns.md) | MOD-014 | Customer entity, credit limit, lead conversion, sales rep policy | STABLE |
 
 ---
 

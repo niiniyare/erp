@@ -43,6 +43,9 @@ Each document in this section builds on the previous one, using a single running
 | [Worked Example](13-worked-example.md) | MDG-13 | Complete CRM Contact module — all files in final state |
 | [Common Mistakes](14-common-mistakes.md) | MDG-14 | Catalog of common mistakes by category with correct patterns |
 | [Testing Patterns](15-testing-patterns.md) | MDG-15 | Integration tests, hook chains, policy tests, workflow tests |
+| [Module Checklist (Extended)](16-module-checklist.md) | MDG-16 | 10-gate pre-merge checklist covering all subsystems |
+| [Wire Dependency Injection](17-wire-dependency-injection.md) | MDG-17 | Wire provider sets, repository injection, cross-module interfaces |
+| [Migration Patterns](18-migration-patterns.md) | MDG-18 | SQL templates: system entity, add column, add index, child table, rename |
 
 ---
 

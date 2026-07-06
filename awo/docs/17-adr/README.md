@@ -42,6 +42,13 @@ ADRs are immutable once accepted — they record history. If a decision is rever
 | [ADR-013](adr-013-pgx-over-orm.md) | pgx Over ORM for Database Access | Accepted | — |
 | [ADR-014](adr-014-casbin-rbac.md) | Casbin for RBAC | Accepted | — |
 | [ADR-015](adr-015-golang-migrate.md) | golang-migrate for Schema Migrations | Accepted | — |
+| [ADR-016](adr-016-server-side-sessions.md) | Server-Side Sessions over JWT | Accepted | — |
+| [ADR-017](adr-017-outbox-pattern.md) | Transactional Outbox for Workflow Dispatch | Accepted | — |
+| [ADR-018](adr-018-uuid-v7-primary-keys.md) | UUID v7 for Primary Keys | Accepted | — |
+| [ADR-019](adr-019-filter-dsl.md) | Declarative Filter DSL over Query Builders | Accepted | — |
+| [ADR-020](adr-020-no-lazy-loading.md) | No Lazy Loading for Edges | Accepted | — |
+| [ADR-021](adr-021-pgbouncer-transaction-mode.md) | PgBouncer Transaction Mode Required | Accepted | — |
+| [ADR-022](adr-022-entity-naming-immutable.md) | Entity Names Are Immutable After First Migration | Accepted | — |
 
 ---
 

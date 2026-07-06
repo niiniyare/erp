@@ -33,6 +33,8 @@ Awo uses Server-Driven UI (SDUI) to generate all standard ERP views without cust
 | [Dashboard Patterns](dashboard-patterns.md) | SDUI-004 | KPI tiles, charts, embedded tables, feature-flag gating | STABLE |
 | [Form Patterns](form-patterns.md) | SDUI-005 | Conditional fields, cascading dropdowns, multi-step forms | STABLE |
 | [List Patterns](list-patterns.md) | SDUI-006 | Columns, row actions, bulk actions, cursor pagination | STABLE |
+| [Action Buttons](action-buttons.md) | SDUI-007 | Toolbar buttons, row actions, confirmation dialogs, permission gates | STABLE |
+| [Detail View Patterns](detail-view-patterns.md) | SDUI-008 | Field groups, tabs, related records, status badges, inline edit | STABLE |
 
 ---
 

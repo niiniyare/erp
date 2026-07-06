@@ -27,6 +27,7 @@ Configuration covers process-level settings loaded at startup from environment v
 |---|---|---|---|
 | [Configuration](configuration.md) | CFG-001 | Typed config struct, env vars reference, validation rules, secrets management | STABLE |
 | [Feature Flags Configuration](feature-flags-config.md) | CFG-002 | Flag declaration, evaluation order, caching, lifecycle | STABLE |
+| [Environment Variables Reference](environment-variables.md) | CFG-003 | Complete env var reference: required, optional, integration, Vault paths | STABLE |
 
 ---
 

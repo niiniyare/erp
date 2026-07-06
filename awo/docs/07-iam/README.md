@@ -32,6 +32,9 @@ The IAM module provides authentication, session management, and role-based acces
 | [Password Policy](password-policy.md) | IAM-004 | bcrypt hashing, complexity rules, temporary passwords, reset flow | STABLE |
 | [Multi-Factor Authentication](mfa.md) | IAM-005 | TOTP enrollment, backup codes, MFA login flow, enforcement policy | STABLE |
 | [API Clients](api-clients.md) | IAM-006 | Machine-to-machine auth, client credentials, scope-based authz | STABLE |
+| [RBAC Deep Dive](rbac.md) | IAM-007 | Policy model, assertions, role hierarchy, storage, caching | STABLE |
+| [Password Policy](password-policy.md) | IAM-008 | bcrypt cost, lockout, reset flow, password history | STABLE |
+| [Session Management](session-management.md) | IAM-009 | Token format, creation, validation, sliding TTL, revocation | STABLE |
 
 ---
 

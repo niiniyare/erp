@@ -36,6 +36,8 @@ Domain Layer code has zero external dependencies — it imports only `awo/def/`,
 | [Field Validators](validators.md) | DOM-007 | FieldValidator interface, built-in validators, composition, testing | STABLE |
 | [Entity Events](events.md) | DOM-008 | Lifecycle events, workflow triggers, conditional dispatch, audit log | STABLE |
 | [Permission Sets](permissions.md) | DOM-009 | PermissionSet structure, RBAC compilation, action permissions, SDUI gating | STABLE |
+| [Naming Series Advanced](naming-series-advanced.md) | DOM-010 | Branch prefixes, yearly/monthly reset, multi-segment formats, conditional series | STABLE |
+| [Edge Patterns](edge-patterns.md) | DOM-011 | One-to-many, polymorphic, many-to-many, self-referential, cross-module edges | STABLE |
 
 ---
 

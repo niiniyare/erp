@@ -34,6 +34,7 @@ These documents are prerequisites for all subsequent sections. Readers who skip 
 | [Design Goals](design-goals.md) | Explicit goals, non-goals, constraints, and success criteria | All | Yes |
 | [Architecture Overview](architecture-overview.md) | 10,000-foot structural view: five layers, compilation pipeline, multi-tenancy, module system | All | No |
 | [Glossary Quick Reference](glossary-quick-ref.md) | One-line definitions for the most-used Awo terms | All | No |
+| [Quick Start](quick-start.md) | Create your first entity in 15 minutes: setup, migration, routes, UI | Module authors | No |
 
 ---
 

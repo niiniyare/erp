@@ -28,6 +28,7 @@ Observability covers structured logging, Prometheus metrics, health endpoints, a
 | [Observability](observability.md) | OBS-001 | Logging standards, metrics catalog, health endpoints, tracing | STABLE |
 | [Structured Logging Guide](structured-logging.md) | OBS-002 | Required log fields, levels, sensitive field exclusion, error logging | STABLE |
 | [Metrics Reference](metrics-reference.md) | OBS-003 | Complete Prometheus metrics catalog, alert rules, Grafana panels | STABLE |
+| [Alerting](alerting.md) | OBS-004 | Alert rules, severity levels, Alertmanager routing, runbook index | STABLE |
 
 ---
 

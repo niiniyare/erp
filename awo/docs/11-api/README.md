@@ -33,6 +33,8 @@ The API Layer is Awo's external boundary. It translates HTTP requests into domai
 | [Bulk Operations](bulk-operations.md) | API-003 | Bulk create, bulk update, bulk delete, import — atomicity and size limits | STABLE |
 | [Webhooks](webhooks.md) | API-004 | Subscriptions, payload format, signature verification, retry schedule | STABLE |
 | [Rate Limiting](rate-limiting.md) | API-005 | Sliding window, Redis key structure, per-tenant and per-user limits | STABLE |
+| [Entity API Reference](entity-api-reference.md) | API-006 | Complete CRUD endpoint spec: parameters, request/response, error codes | STABLE |
+| [Pagination Guide](pagination-guide.md) | API-007 | Cursor pagination: fetching pages, sorting, count, amis integration | STABLE |
 
 ---
 
