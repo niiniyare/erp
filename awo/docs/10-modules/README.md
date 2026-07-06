@@ -41,6 +41,10 @@ A module is a cohesive collection of entity definitions, hooks, policies, activi
 | [Metadata Module](platform-metadata-module.md) | MOD-012 | Runtime custom field extension: declaration, validation, storage, UI | STABLE |
 | [Feature Flags Module](platform-flags-module.md) | MOD-013 | Flag declaration, evaluation, caching, lifecycle management | STABLE |
 | [CRM Patterns](crm-patterns.md) | MOD-014 | Customer entity, credit limit, lead conversion, sales rep policy | STABLE |
+| [Module Registry](platform-module-registry.md) | MOD-015 | Installed modules, tenant activation, dependency enforcement, runtime check | STABLE |
+| [Finance: eTIMS Integration](finance-etims.md) | MOD-016 | KRA eTIMS submission, TaxEntry entity, compliance requirements | STABLE |
+| [HR: Leave Management](hr-leave-management.md) | MOD-017 | Leave types, balance tracking, approval workflow, calendar | STABLE |
+| [Inventory: FIFO Valuation](inventory-valuation.md) | MOD-018 | FIFO layers, stock receipt/issue, COGS GL journals, reconciliation | STABLE |
 
 ---
 

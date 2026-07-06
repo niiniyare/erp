@@ -29,6 +29,7 @@ Observability covers structured logging, Prometheus metrics, health endpoints, a
 | [Structured Logging Guide](structured-logging.md) | OBS-002 | Required log fields, levels, sensitive field exclusion, error logging | STABLE |
 | [Metrics Reference](metrics-reference.md) | OBS-003 | Complete Prometheus metrics catalog, alert rules, Grafana panels | STABLE |
 | [Alerting](alerting.md) | OBS-004 | Alert rules, severity levels, Alertmanager routing, runbook index | STABLE |
+| [Distributed Tracing](tracing.md) | OBS-005 | OpenTelemetry instrumentation, span attributes, Jaeger/Tempo integration | STABLE |
 
 ---
 

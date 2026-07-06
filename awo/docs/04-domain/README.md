@@ -38,6 +38,8 @@ Domain Layer code has zero external dependencies — it imports only `awo/def/`,
 | [Permission Sets](permissions.md) | DOM-009 | PermissionSet structure, RBAC compilation, action permissions, SDUI gating | STABLE |
 | [Naming Series Advanced](naming-series-advanced.md) | DOM-010 | Branch prefixes, yearly/monthly reset, multi-segment formats, conditional series | STABLE |
 | [Edge Patterns](edge-patterns.md) | DOM-011 | One-to-many, polymorphic, many-to-many, self-referential, cross-module edges | STABLE |
+| [Custom Actions](custom-actions.md) | DOM-012 | ActionDef declaration, ActionContext, state transitions, workflow triggers, bulk actions | STABLE |
+| [Policy Patterns](policy-patterns.md) | DOM-013 | OwnerOnly, BranchScoped, role-conditional, composite, time-bounded policies | STABLE |
 
 ---
 

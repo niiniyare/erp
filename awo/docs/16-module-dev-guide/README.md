@@ -46,6 +46,7 @@ Each document in this section builds on the previous one, using a single running
 | [Module Checklist (Extended)](16-module-checklist.md) | MDG-16 | 10-gate pre-merge checklist covering all subsystems |
 | [Wire Dependency Injection](17-wire-dependency-injection.md) | MDG-17 | Wire provider sets, repository injection, cross-module interfaces |
 | [Migration Patterns](18-migration-patterns.md) | MDG-18 | SQL templates: system entity, add column, add index, child table, rename |
+| [Cross-Module Service Guide](19-cross-module-service-guide.md) | MDG-19 | Declare, implement, bind, and test cross-module service interfaces |
 
 ---
 

@@ -35,6 +35,8 @@ The API Layer is Awo's external boundary. It translates HTTP requests into domai
 | [Rate Limiting](rate-limiting.md) | API-005 | Sliding window, Redis key structure, per-tenant and per-user limits | STABLE |
 | [Entity API Reference](entity-api-reference.md) | API-006 | Complete CRUD endpoint spec: parameters, request/response, error codes | STABLE |
 | [Pagination Guide](pagination-guide.md) | API-007 | Cursor pagination: fetching pages, sorting, count, amis integration | STABLE |
+| [API Authentication](authentication.md) | API-008 | Session tokens, API client credentials, tenant identification, error responses | FROZEN |
+| [Webhooks Consumer Guide](webhooks-guide.md) | API-009 | Subscribe, receive, verify signatures, handle retries, idempotency | STABLE |
 
 ---
 

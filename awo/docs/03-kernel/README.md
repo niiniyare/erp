@@ -35,6 +35,8 @@ Every framework behavior during the Runtime Phase is derived from kernel outputs
 | [Custom Entity Registry](custom-entity-registry.md) | KERN-005 | Runtime per-tenant schema registry, mutation lock, concurrency rules | STABLE |
 | [Hook Pipeline](hook-pipeline.md) | KERN-006 | Exact pipeline: stages, TX boundaries, framework-injected hooks, delete flow | FROZEN |
 | [Route Generation](route-generation.md) | KERN-007 | CRUD and action route auto-generation, permission middleware, schema routes | FROZEN |
+| [def Package Reference](def-package-reference.md) | KERN-008 | Complete type reference: EntityDefinition, FieldDef, HookSet, PolicyFunc, ActionDef | FROZEN |
+| [Wire Provider Sets](wire-provider-sets.md) | KERN-009 | Provider set organization, composition root, adding new module providers | STABLE |
 
 ---
 

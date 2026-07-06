@@ -178,6 +178,72 @@ Tenant status is not cached. Every `set_tenant_context()` call reads the current
 
 ---
 
+## 7. Tenant Domain Error Catalog
+
+All tenant-domain errors produced by the repository and service layers. Handlers translate these to HTTP responses using `errors.As` unwrapping (never type switch).
+
+### Resolution Errors
+
+| Error Code | HTTP | Trigger | Description |
+|---|---|---|---|
+| `tenant.not_found` | 404 | Unknown UUID or subdomain | No tenant with that identifier exists |
+| `tenant.invalid_id` | 400 | Malformed UUID in header/param | `X-Tenant-ID` value is not a valid UUID |
+| `tenant.missing` | 400 | No tenant identifier in request | No header, param, or subdomain found |
+| `tenant.subdomain_ambiguous` | 400 | Subdomain matches multiple tenants | Misconfigured tenant records — operator action required |
+
+### Status Errors
+
+| Error Code | HTTP | Trigger | Description |
+|---|---|---|---|
+| `tenant.pending` | 503 | Tenant status is PENDING | Provisioning not complete. Response includes `Retry-After: 60` header |
+| `tenant.suspended` | 402 | Tenant status is SUSPENDED | Payment required. Response body includes suspension reason |
+| `tenant.archived` | 410 | Tenant status is ARCHIVED | Terminal state — tenant data is read-only or purged |
+
+### Mutation Errors
+
+| Error Code | HTTP | Trigger | Description |
+|---|---|---|---|
+| `tenant.duplicate_slug` | 409 | Subdomain already taken | Unique constraint on `tenants.subdomain` |
+| `tenant.duplicate_email` | 409 | Admin email already registered | Unique constraint on `tenants.admin_email` |
+| `tenant.invalid_transition` | 422 | Illegal status machine move | e.g. ARCHIVED → ACTIVE is not allowed |
+| `tenant.immutable_field` | 422 | Attempt to change read-only field | `name`, `subdomain`, `country_code` are set-once |
+| `tenant.invalid_company_size` | 422 | `company_size` not in allowed set | Must be one of the defined enum values (stored uppercase) |
+
+### Context Errors
+
+| Error Code | HTTP | Trigger | Description |
+|---|---|---|---|
+| `tenant.context_missing` | 500 | `set_tenant_context()` not called before repo access | Framework bug — request handler ran without middleware |
+| `tenant.rls_violation` | 403 | Row returned with wrong tenant_id | Should never occur in production — indicates RLS misconfiguration |
+
+### Go Sentinel Values
+
+```go
+// internal/platform/tenant/errors.go
+
+var (
+    ErrTenantNotFound        = &BusinessError{Code: "tenant.not_found",        Status: 404}
+    ErrTenantInvalidID       = &BusinessError{Code: "tenant.invalid_id",        Status: 400}
+    ErrTenantMissing         = &BusinessError{Code: "tenant.missing",           Status: 400}
+    ErrTenantPending         = &BusinessError{Code: "tenant.pending",           Status: 503}
+    ErrTenantSuspended       = &BusinessError{Code: "tenant.suspended",         Status: 402}
+    ErrTenantArchived        = &BusinessError{Code: "tenant.archived",          Status: 410}
+    ErrTenantInvalidTransition = &BusinessError{Code: "tenant.invalid_transition", Status: 422}
+)
+```
+
+Check errors with `errors.As`, not equality comparison — the error chain may wrap these values:
+
+```go
+var be *BusinessError
+if errors.As(err, &be) && be.Code == "tenant.suspended" {
+    c.Set("X-Suspension-Reason", be.Message)
+    return c.Status(402).JSON(errorEnvelope(be))
+}
+```
+
+---
+
 ## Related Documents
 
 - [Row-Level Security](rls.md) — how set_tenant_context() enables RLS

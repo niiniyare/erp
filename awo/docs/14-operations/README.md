@@ -34,6 +34,10 @@ Operations covers the processes operators follow to keep Awo deployments healthy
 | [Upgrade Guide](upgrade-guide.md) | OPS-005 | Zero-downtime upgrade procedure, migration compatibility, Temporal versioning | STABLE |
 | [Backup and Restore](backup-restore.md) | OPS-006 | WAL archiving, point-in-time restore, Redis backup, disaster recovery | STABLE |
 | [Local Development Setup](local-development.md) | OPS-007 | Prerequisites, docker compose, migrations, hot reload, common issues | STABLE |
+| [Capacity Planning](capacity-planning.md) | OPS-009 | Sizing API/DB/Redis/Temporal, scaling triggers, growth estimation | STABLE |
+| [PgBouncer Setup](pgbouncer-setup.md) | OPS-010 | Transaction mode config, application role, RLS verification, docker compose | STABLE |
+| [Migration Runner](migration-runner.md) | OPS-011 | cmd/migrate process, CI/CD integration, dirty state recovery, RLS table checklist | STABLE |
+| [SQLC Workflow](sqlc-workflow.md) | OPS-012 | Adding queries, regenerating, validating, CI check, common errors | STABLE |
 
 ---
 

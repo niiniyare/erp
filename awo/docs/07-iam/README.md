@@ -35,6 +35,7 @@ The IAM module provides authentication, session management, and role-based acces
 | [RBAC Deep Dive](rbac.md) | IAM-007 | Policy model, assertions, role hierarchy, storage, caching | STABLE |
 | [Password Policy](password-policy.md) | IAM-008 | bcrypt cost, lockout, reset flow, password history | STABLE |
 | [Session Management](session-management.md) | IAM-009 | Token format, creation, validation, sliding TTL, revocation | STABLE |
+| [RBAC Deep Dive](rbac-deep-dive.md) | IAM-010 | Casbin model internals, role hierarchy, evaluation flow, storage, caching | STABLE |
 
 ---
 

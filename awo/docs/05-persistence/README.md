@@ -38,6 +38,8 @@ The persistence section specifies the interfaces and DSLs through which all enti
 | [RLS Deep Dive](rls-deep-dive.md) | PERS-010 | Tenant context flow, policy evaluation, coverage verification, failure modes | STABLE |
 | [Query Options](query-options.md) | PERS-011 | Complete QueryOption reference: pagination, sorting, edges, fields, locks | STABLE |
 | [Bulk Repository Operations](bulk-operations.md) | PERS-012 | BulkCreate, BulkUpdate: atomicity, hooks, performance, import pattern | STABLE |
+| [filter Package Reference](filter-package-reference.md) | PERS-013 | Complete API reference: Kind constants, constructor functions, SQL generation | FROZEN |
+| [SQLC Integration](sqlc-integration.md) | PERS-014 | SQLC layering, query file organization, Querier interface, module author rules | STABLE |
 
 ---
 

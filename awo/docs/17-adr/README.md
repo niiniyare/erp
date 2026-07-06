@@ -49,6 +49,11 @@ ADRs are immutable once accepted — they record history. If a decision is rever
 | [ADR-020](adr-020-no-lazy-loading.md) | No Lazy Loading for Edges | Accepted | — |
 | [ADR-021](adr-021-pgbouncer-transaction-mode.md) | PgBouncer Transaction Mode Required | Accepted | — |
 | [ADR-022](adr-022-entity-naming-immutable.md) | Entity Names Are Immutable After First Migration | Accepted | — |
+| [ADR-023](adr-023-wire-dependency-injection.md) | Google Wire for Dependency Injection | Accepted | — |
+| [ADR-024](adr-024-single-schema-multitenancy.md) | Single-Schema Multi-Tenancy over Schema-per-Tenant | Accepted | — |
+| [ADR-025](adr-025-go-slog-structured-logging.md) | Go slog for Structured Logging | Accepted | — |
+| [ADR-026](adr-026-otel-for-tracing.md) | OpenTelemetry for Distributed Tracing | Accepted | — |
+| [ADR-027](adr-027-prometheus-metrics.md) | Prometheus for Metrics | Accepted | — |
 
 ---
 
