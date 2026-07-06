@@ -8,78 +8,87 @@ import (
 )
 
 // OrganizationService is the domain service for organization lifecycle, tree
-// operations, and scope resolution. All persistence goes through EntityRepository
-// — no raw SQL.
+// operations, path computation, and scope resolution.
 //
-// # Scope resolution
+// # Canonical pipeline
 //
-// ResolveScope is the central method for application-layer org authorization.
-// It converts a ViewerContext into a concrete []uuid.UUID that application
-// services pass as an IN predicate to their repositories. Repositories remain
-// org-unaware — they only receive filter criteria.
+//	Request → Authentication → ViewerContext → ResolveScope() →
+//	append org filter → Repository.Query() → Tenant RLS → Database
 //
-// Request evaluation order:
+// Repositories are organization-agnostic. They receive typed filter predicates
+// and execute queries inside the active tenant RLS context. Both isolation
+// stages (tenant RLS + org scope) fire independently.
 //
-//	HTTP Request
-//	  ↓ auth middleware (session validation)
-//	ViewerContext (loaded with org assignments)
-//	  ↓ service middleware or application service
-//	OrganizationService.ResolveScope()
-//	  ↓ returns []uuid.UUID (visible org IDs)
-//	Application service builds filter
-//	  ↓
-//	Repository.List(ctx, filter)
+// # ResolveScope
+//
+// ResolveScope is the single entry point for org visibility resolution.
+// It converts a ViewerContext into a []uuid.UUID of allowed org IDs.
+// Application services append those IDs as an IN predicate before calling
+// any repository method. nil return means VisibilityEntireTenant — caller
+// omits the org predicate entirely (tenant RLS still fires).
 type OrganizationService interface {
 	// ── Tree operations ──────────────────────────────────────────────────────
 
-	// Create adds a new organization node. ParentID == uuid.Nil → root node.
+	// Create adds a new org node. input.ParentID == uuid.Nil → root node.
+	// Calls ComputePath internally to set path and depth.
 	Create(ctx context.Context, input CreateInput) (*OrganizationDTO, error)
 
-	// GetByID returns an organization node by UUID.
+	// GetByID returns an org node by UUID.
 	GetByID(ctx context.Context, id uuid.UUID) (*OrganizationDTO, error)
 
-	// GetByCode returns an organization node by its immutable code within a tenant.
+	// GetByCode returns an org node by its immutable code within a tenant.
 	GetByCode(ctx context.Context, tenantID uuid.UUID, code string) (*OrganizationDTO, error)
 
 	// Move re-parents id under newParentID, recomputing path+depth for the
-	// entire subtree atomically. Returns error if move would create a cycle.
-	// newParentID == uuid.Nil promotes id to root.
+	// entire subtree atomically. newParentID == uuid.Nil promotes id to root.
+	// Calls ValidateMove before executing — returns error on cycle.
 	Move(ctx context.Context, id, newParentID uuid.UUID) error
+
+	// ValidateMove checks whether moving id under newParentID would create
+	// a cycle or violate any tree invariant. Does not modify any data.
+	// Call before Move if you need early validation without executing.
+	ValidateMove(ctx context.Context, id, newParentID uuid.UUID) error
+
+	// ComputePath derives the materialized path and depth for a node given
+	// its parent. If parentID == uuid.Nil, returns ("/<selfID>/", 0).
+	// Used internally by Create and Move; exposed for callers that build
+	// org records outside the standard Create flow (e.g. bulk import).
+	ComputePath(ctx context.Context, selfID, parentID uuid.UUID) (path string, depth int, err error)
 
 	// Disable marks id and all its descendants as active=false.
 	Disable(ctx context.Context, id uuid.UUID) error
 
-	// Enable re-activates id. Does not re-enable descendants — call Enable on
-	// each descendant explicitly if needed.
+	// Enable re-activates id. Does not re-enable descendants.
 	Enable(ctx context.Context, id uuid.UUID) error
 
-	// Tree returns all organization nodes for a tenant in depth-first order.
+	// Tree returns all org nodes for a tenant in depth-first order.
 	Tree(ctx context.Context, tenantID uuid.UUID) ([]*OrganizationDTO, error)
 
 	// Ancestors returns the path from root to id (root first, target last).
-	// Efficient: uses materialized path string, no recursive CTE.
+	// No recursive CTE — reads ancestor IDs from the materialized path string.
 	Ancestors(ctx context.Context, id uuid.UUID) ([]*OrganizationDTO, error)
 
 	// Descendants returns all nodes below id. maxDepth=0 means unlimited.
-	// Efficient: uses materialized path prefix query.
+	// Uses materialized path prefix query — O(1) regardless of tree depth.
 	Descendants(ctx context.Context, id uuid.UUID, maxDepth int) ([]*OrganizationDTO, error)
 
 	// ── Scope resolution ─────────────────────────────────────────────────────
 
-	// ResolveScope converts a ViewerContext into the set of org IDs visible to
-	// that viewer. Application services pass the result as an explicit IN filter
-	// to their repositories.
+	// ResolveScope converts a ViewerContext into the set of org IDs visible
+	// to that viewer according to their VisibilityMode.
 	//
-	// Returns nil when VisibilityEntireTenant is in effect — caller should omit
-	// the org filter entirely (all orgs in the tenant are accessible).
+	// Returns nil when VisibilityEntireTenant is in effect — caller omits
+	// the org filter entirely. Tenant RLS still fires normally.
 	//
-	// Behaviour by VisibilityMode:
-	//   Current       → [viewer.EffectiveOrganizationID()]
-	//   Descendants   → viewer's org + all descendants via path prefix
-	//   Ancestors     → viewer's org + all ancestors via path parsing
-	//   EntireTenant  → nil (no filter)
-	//   Explicit      → viewer.ExplicitOrganizationIDs
-	//   Custom        → viewer.ScopeResolver.Resolve(ctx, viewer)
+	// Mode → resolved IDs:
+	//   Self           → [viewer.EffectiveOrganizationID()]
+	//   Children       → direct children of effective org
+	//   Subtree        → effective org + all descendants (path prefix)
+	//   Parent         → effective org + all ancestors (path parse)
+	//   Assigned       → all IDs in viewer.OrganizationAssignments
+	//   Explicit       → viewer.ExplicitOrganizationIDs
+	//   EntireTenant   → nil (no org filter)
+	//   Custom         → viewer.ScopeResolver.Resolve(ctx, viewer)
 	ResolveScope(ctx context.Context, viewer ViewerContext) ([]uuid.UUID, error)
 
 	// ── Type registry ────────────────────────────────────────────────────────
@@ -90,38 +99,38 @@ type OrganizationService interface {
 	// ListTypes returns active org types for a tenant, ordered by sort_order.
 	ListTypes(ctx context.Context, tenantID uuid.UUID) ([]*OrgTypeDTO, error)
 
-	// DeactivateType marks a type as inactive. Does not modify existing org
-	// nodes that carry the type — type value on nodes is a denormalized string.
+	// DeactivateType marks a type as inactive. Does not modify org nodes that
+	// carry the type — type is stored as a denormalized string on org nodes.
 	DeactivateType(ctx context.Context, id uuid.UUID) error
 
 	// ── Assignments ──────────────────────────────────────────────────────────
 
-	// Assign adds userID to orgID with the given role within tenantID.
-	// If setPrimary=true, any existing primary assignment for the user is cleared.
+	// Assign adds userID to an org with the given role. If input.SetPrimary
+	// is true, any existing primary assignment for the user is cleared first.
 	Assign(ctx context.Context, input AssignInput) (*AssignmentDTO, error)
 
-	// Unassign removes a user from an organization. If the removed assignment
-	// was the primary, no new primary is automatically selected — caller must
-	// call SetPrimary on another assignment if needed.
+	// Unassign removes a user from an org. If the removed assignment was the
+	// primary, no new primary is auto-selected — caller must call SetPrimary.
 	Unassign(ctx context.Context, tenantID, userID, orgID uuid.UUID) error
 
-	// SetPrimary marks the given orgID as the user's primary organization.
-	// Clears any existing primary for that user in the tenant.
+	// SetPrimary marks orgID as the user's primary org within the tenant.
+	// Clears any existing primary for that user first.
 	SetPrimary(ctx context.Context, tenantID, userID, orgID uuid.UUID) error
 
 	// ListAssignments returns all org memberships for a user within a tenant.
-	// Includes inactive orgs — callers filter if needed.
 	ListAssignments(ctx context.Context, tenantID, userID uuid.UUID) ([]*AssignmentDTO, error)
 
-	// LoadViewerMemberships returns the OrgMembership slice needed to populate
-	// ViewerContext.OrganizationAssignments. Called once per session by auth
-	// middleware after session validation.
-	LoadViewerMemberships(ctx context.Context, tenantID, userID uuid.UUID) ([]OrgMembership, error)
+	// LoadViewer loads the full ViewerContext for a user. Called once per
+	// session by auth middleware after session validation. Loads org
+	// assignments, resolves roles, sets IsTenantAdmin and IsPlatformAdmin.
+	// The caller is responsible for setting ActiveOrganizationID from session
+	// state (if the user has an active org selection persisted in session).
+	LoadViewer(ctx context.Context, tenantID, userID uuid.UUID) (ViewerContext, error)
 }
 
 // ── Input / DTO types ─────────────────────────────────────────────────────────
 
-// CreateInput holds the fields needed to create a new organization node.
+// CreateInput holds the fields needed to create a new org node.
 type CreateInput struct {
 	TenantID    uuid.UUID
 	Name        string
@@ -134,15 +143,15 @@ type CreateInput struct {
 
 // OrganizationDTO is the read model returned by tree operation methods.
 type OrganizationDTO struct {
-	ID       uuid.UUID
-	TenantID uuid.UUID
-	Name     string
-	Code     string
-	Type     string
-	Path     string
-	Depth    int
-	ParentID uuid.UUID // uuid.Nil for root nodes
-	Active   bool
+	ID          uuid.UUID
+	TenantID    uuid.UUID
+	Name        string
+	Code        string
+	Type        string
+	Path        string
+	Depth       int
+	ParentID    uuid.UUID // uuid.Nil for root nodes
+	Active      bool
 	Description string
 }
 
@@ -165,7 +174,7 @@ type OrgTypeDTO struct {
 	Active      bool
 }
 
-// AssignInput holds the fields needed to add a user to an organization.
+// AssignInput holds the fields needed to add a user to an org.
 type AssignInput struct {
 	TenantID       uuid.UUID
 	UserID         uuid.UUID
@@ -190,9 +199,7 @@ type stubOrganizationService struct{}
 
 // NewOrganizationService returns a stub OrganizationService.
 // TODO: inject EntityRepository[platform_organization] and related repos.
-func NewOrganizationService() OrganizationService {
-	return &stubOrganizationService{}
-}
+func NewOrganizationService() OrganizationService { return &stubOrganizationService{} }
 
 func (s *stubOrganizationService) Create(_ context.Context, _ CreateInput) (*OrganizationDTO, error) {
 	return nil, fmt.Errorf("not implemented: OrganizationService.Create")
@@ -208,6 +215,14 @@ func (s *stubOrganizationService) GetByCode(_ context.Context, _ uuid.UUID, _ st
 
 func (s *stubOrganizationService) Move(_ context.Context, _, _ uuid.UUID) error {
 	return fmt.Errorf("not implemented: OrganizationService.Move")
+}
+
+func (s *stubOrganizationService) ValidateMove(_ context.Context, _, _ uuid.UUID) error {
+	return fmt.Errorf("not implemented: OrganizationService.ValidateMove")
+}
+
+func (s *stubOrganizationService) ComputePath(_ context.Context, _, _ uuid.UUID) (string, int, error) {
+	return "", 0, fmt.Errorf("not implemented: OrganizationService.ComputePath")
 }
 
 func (s *stubOrganizationService) Disable(_ context.Context, _ uuid.UUID) error {
@@ -262,6 +277,6 @@ func (s *stubOrganizationService) ListAssignments(_ context.Context, _, _ uuid.U
 	return nil, fmt.Errorf("not implemented: OrganizationService.ListAssignments")
 }
 
-func (s *stubOrganizationService) LoadViewerMemberships(_ context.Context, _, _ uuid.UUID) ([]OrgMembership, error) {
-	return nil, fmt.Errorf("not implemented: OrganizationService.LoadViewerMemberships")
+func (s *stubOrganizationService) LoadViewer(_ context.Context, _, _ uuid.UUID) (ViewerContext, error) {
+	return ViewerContext{}, fmt.Errorf("not implemented: OrganizationService.LoadViewer")
 }

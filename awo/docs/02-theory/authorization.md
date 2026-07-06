@@ -1,187 +1,223 @@
 # Authorization Model
 
-## Overview
+## Canonical Two-Stage Isolation Model
 
-Authorization in Awo is a two-stage pipeline evaluated on every request. The stages are independent and must not be conflated.
+Awo enforces two independent isolation boundaries on every request. They are orthogonal — each fires independently, neither depends on the other.
 
 ```
-HTTP Request
-  ↓
-Stage 1: Tenant Isolation   (framework — PostgreSQL RLS)
-  ↓
-Stage 2: Organization Scope (application — OrganizationService)
-  ↓
-  Operation Permissions     (RBAC — Casbin, per entity per action)
-  ↓
-  Business Policies         (EntityDefinition.Policy — row-level filter)
-  ↓
-Repository.Query()
+┌─────────────────────────────────────────────────────────────┐
+│  Stage 1 — Tenant Isolation                                 │
+│  Layer: Database (PostgreSQL RLS)                           │
+│  Enforced by: Framework                                     │
+│  Guarantee: cross-tenant data never leaks                   │
+├─────────────────────────────────────────────────────────────┤
+│  Stage 2 — Organization Scope                               │
+│  Layer: Application (Go)                                    │
+│  Enforced by: OrganizationService.ResolveScope()            │
+│  Guarantee: user sees only their authorized org nodes       │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+**Critical rule:** RLS is NEVER responsible for organization visibility. Organization scope is NEVER implemented through RLS predicates.
 
 ---
 
-## Stage 1 — Tenant Isolation (Framework)
+## Stage 1 — Tenant Isolation (Database)
 
-**Who enforces it:** PostgreSQL Row-Level Security via `current_tenant_id()`.
+**Mechanism:** PostgreSQL Row-Level Security
+**Who enforces it:** Framework (`set_tenant_context()` stored procedure + RLS policies)
+**When it fires:** On every single database query, automatically
 
-**What it guarantees:** Data for tenant A never appears in tenant B's queries, regardless of application code.
+```sql
+-- Every tenant-scoped table has this policy:
+CREATE POLICY tenant_isolation ON invoice
+    USING (tenant_id = current_tenant_id());
 
-**How it works:**
+-- current_tenant_id() reads app.current_tenant_id — a transaction-local variable
+-- set by set_tenant_context() at the start of each connection checkout.
+```
 
-1. Auth middleware resolves the tenant from `X-Tenant-ID` header (or subdomain).
-2. `set_tenant_context($tenantID)` stored procedure runs at the start of each connection checkout.
-3. PostgreSQL RLS policy fires on every table access: `USING (tenant_id = current_tenant_id())`.
-4. No application query can bypass this — it is enforced at the DB kernel level.
+This is a hard kernel-level guarantee. No application bug can bypass it. A misconfigured repository that forgets to pass tenant_id still gets correctly filtered by RLS.
 
-**What it does NOT do:** It does not filter by organization, user, role, or any business concept. Tenant isolation is the floor — not the ceiling.
+**What it does NOT do:** RLS does not know about organizational hierarchy. It does not enforce which organizations a user may access. That is entirely Stage 2.
 
 ---
 
 ## Stage 2 — Organization Scope (Application)
 
-**Who enforces it:** Application services via `OrganizationService.ResolveScope()`.
-
-**What it governs:** Within a tenant, which organization nodes is the current user allowed to see?
-
-**How it works:**
-
-1. Auth middleware loads the user's org assignments and populates `ViewerContext`.
-2. Auth middleware sets `ViewerContext.VisibilityMode` based on user's IAM roles.
-3. Application service calls `OrganizationService.ResolveScope(ctx, viewer)`.
-4. Result is a `[]uuid.UUID` of visible org IDs (or `nil` for entire-tenant access).
-5. Application service injects the IDs as an explicit `IN` predicate in the filter.
-
-**What it does NOT do:** Organization scope does not use RLS. Organization tables (`platform_organization`, `platform_org_type`, `platform_org_assignment`) have no RLS policies. The application is solely responsible for applying org scope.
-
-### Sequence Diagram
+**Mechanism:** `OrganizationService.ResolveScope(viewer)` → `[]uuid.UUID`
+**Who enforces it:** Application services (calling code)
+**When it fires:** Explicitly, before every org-scoped repository query
 
 ```
-Client          Middleware          OrgService       Repository
-  │                 │                   │                │
-  │── GET /invoices ▶│                   │                │
-  │                 │── validate session │                │
-  │                 │── load org assigns │                │
-  │                 │── set ViewerCtx    │                │
-  │                 │── set_tenant_ctx() │                │
-  │                 │                   │                │
-  │           InvoiceService.List(ctx)  │                │
-  │                 │── ResolveScope ──▶│                │
-  │                 │◀── []uuid.UUID ───│                │
-  │                 │── build filter    │                │
-  │                 │── repo.Query ────────────────────▶│
-  │                 │◀─ records ────────────────────────│
-  │◀── 200 JSON ────│                   │                │
+ViewerContext
+    ↓
+OrganizationService.ResolveScope(viewer)
+    ↓
+[]uuid.UUID  (allowed org IDs)  ← nil means VisibilityEntireTenant
+    ↓
+Application service appends:
+    filter.In("org_id", orgIDs...)
+    ↓
+Repository.Query(ctx, filter)
+    ↓
+Tenant RLS fires automatically (Stage 1)
+    ↓
+Database
+```
+
+**Repositories are organization-agnostic.** They receive typed filter predicates. They never inspect the user or compute visibility.
+
+**Wrong pattern** (repositories must not do this):
+```go
+// WRONG — repository computing org visibility
+func (r *invoiceRepo) List(ctx context.Context) ([]Invoice, error) {
+    viewer := organization.MustViewerFromContext(ctx) // ← WRONG
+    orgIDs, _ := r.orgSvc.ResolveScope(ctx, viewer)  // ← WRONG
+    // ...
+}
+```
+
+**Correct pattern** (application service computes scope, passes to repo):
+```go
+// CORRECT — application service resolves scope, repo receives filter
+func (s *InvoiceService) List(ctx context.Context, opts ListOptions) ([]*Invoice, error) {
+    viewer := organization.MustViewerFromContext(ctx)
+    orgIDs, err := s.orgSvc.ResolveScope(ctx, viewer)
+    if err != nil {
+        return nil, err
+    }
+    f := buildBaseFilter(opts)
+    if len(orgIDs) > 0 {  // nil = EntireTenant, omit org filter
+        f = filter.And(f, filter.In("org_id", toAny(orgIDs)...))
+    }
+    records, _, err := s.repo.Query(ctx, f)
+    return records, err
+}
 ```
 
 ---
 
-## Operation Permissions (RBAC)
+## Full Request Pipeline
 
-After tenant isolation and org scope are applied, Casbin evaluates whether the authenticated user may perform the requested operation on the target entity type.
+```
+┌──────────────────────────────────────────────────────────┐
+│  HTTP Request                                            │
+│  GET /api/v1/entities/invoice                            │
+└──────────────────────┬───────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│  Authentication Middleware                               │
+│  1. Resolve tenant (X-Tenant-ID header / subdomain)      │
+│  2. set_tenant_context(tenantID) → sets RLS variable     │
+│  3. Validate session token (Redis)                       │
+│  4. OrganizationService.LoadViewer(tenantID, userID)     │
+│     → ViewerContext{UserID, Roles, Assignments, Mode, …} │
+└──────────────────────┬───────────────────────────────────┘
+                       │  ViewerContext in context.Context
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│  Application Service (e.g. InvoiceService.List)          │
+│  1. MustViewerFromContext(ctx)                           │
+│  2. OrganizationService.ResolveScope(ctx, viewer)        │
+│     → []uuid.UUID  (Stage 2 — org scope)                 │
+│  3. Build filter: base filter + org_id IN (…)            │
+└──────────────────────┬───────────────────────────────────┘
+                       │  filter.Filter (typed predicates)
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│  Repository.Query(ctx, filter)                           │
+│  Generates: SELECT … WHERE … AND org_id = ANY($n)        │
+└──────────────────────┬───────────────────────────────────┘
+                       │  SQL
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│  PostgreSQL                                              │
+│  RLS fires: AND tenant_id = current_tenant_id()  ← Stage 1│
+│  Final query executes with both predicates active        │
+└──────────────────────────────────────────────────────────┘
+```
 
-**Policy model:** `(subject, domain, object, action)`
+Both stages fire. Stage 1 (tenant RLS) is automatic and unconditional. Stage 2 (org scope) is the application service's responsibility.
 
-- Subject: `user:{uuid}` or `role:{name}`
-- Domain: tenant UUID or `_platform_`
-- Object: entity type name (e.g. `invoice`, `platform_organization`)
-- Action: `read`, `write`, `create`, `delete`, `submit`, `cancel`, …
+---
 
-**Evaluation:**
+## Visibility Modes
 
-```go
+`VisibilityMode` is evaluated by `ResolveScope` to determine which org IDs are returned.
+
+| Mode | Resolved IDs | Typical User |
+|---|---|---|
+| `VisibilitySelf` | `[viewer.EffectiveOrgID]` | Branch cashier, data-entry clerk |
+| `VisibilityChildren` | Direct children of effective org | Parent org viewing sub-units |
+| `VisibilitySubtree` | Effective org + all descendants | Regional manager |
+| `VisibilityParent` | Effective org + all ancestors | Breadcrumb navigation; escalation |
+| `VisibilityAssigned` | All IDs in `OrganizationAssignments` | HR BP spanning multiple depts |
+| `VisibilityExplicit` | `viewer.ExplicitOrganizationIDs` | Internal auditor (non-contiguous) |
+| `VisibilityEntireTenant` | **nil** (no org filter) | tenant.admin, HQ Finance Manager |
+| `VisibilityCustom` | `viewer.ScopeResolver.Resolve(…)` | Matrix orgs, project teams |
+
+`nil` return → caller omits the org filter entirely. Tenant RLS still fires — data is still tenant-scoped.
+
+### HQ / Cross-Org Users
+
+Users who must operate across multiple or all organizations:
+
+```
+CEO / HQ Finance Manager
+  VisibilityMode = VisibilityEntireTenant
+  ResolveScope() → nil
+  Query: WHERE tenant_id = $1  (RLS only, no org filter)
+  Result: all invoices in tenant
+
+Kenya Regional Manager
+  VisibilityMode = VisibilitySubtree
+  ActiveOrganizationID = Kenya node
+  ResolveScope() → [Kenya, Nairobi, Westlands, Mombasa, …]
+  Query: WHERE tenant_id = $1 AND org_id = ANY($2)
+
+Internal Auditor
+  VisibilityMode = VisibilityExplicit
+  ExplicitOrganizationIDs = [OrgA, OrgC, OrgF]
+  ResolveScope() → [OrgA, OrgC, OrgF]
+  Query: WHERE tenant_id = $1 AND org_id = ANY($2)
+```
+
+---
+
+## Post-Scope Authorization
+
+After org scope is applied, two additional authorization checks run:
+
+### RBAC (Casbin)
+
+```
 enforcer.Enforce(userID, tenantID, entityType, action) → bool
 ```
 
-Casbin policies are compiled from `EntityDefinition.Permissions` at startup. The Casbin enforcer is wired in `api/authz` and applied per-route.
+Operation-level gate: can this user `read` the `invoice` entity type? Independent of org scope — it checks capabilities, not visibility.
 
----
+### Business Policies (EntityDefinition.Policy)
 
-## Business Policies (Row-Level Filter)
-
-The final layer is the `EntityDefinition.Policy` function — an optional row-level predicate injected into every query for that entity type.
+Row-level predicate injected into every query for the entity:
 
 ```go
 Policy: def.PolicyFunc(func(ctx context.Context) def.Filter {
     viewer, _ := organization.ViewerFromContext(ctx)
-    return filter.Eq("assigned_to", viewer.UserID.String())  // OwnerOnly
+    return filter.Eq("assigned_to", viewer.UserID.String())
 })
 ```
 
-Policies are declared once on the entity definition and enforced everywhere. They run after tenant isolation and org scope, so they operate on the already-filtered dataset.
+Declared once on the entity definition, enforced everywhere. Runs after tenant isolation and org scope — operates on the already-filtered dataset.
 
 ---
 
-## VisibilityMode → SQL Predicate Mapping
+## Summary: What Each Layer Is Responsible For
 
-| VisibilityMode | Resulting SQL (conceptual) |
-|---|---|
-| `VisibilityCurrent` | `org_id = $active_org_id` |
-| `VisibilityDescendants` | `org_id IN (SELECT id FROM platform_organization WHERE path LIKE $prefix)` |
-| `VisibilityAncestors` | `org_id IN ($ancestor_ids)` |
-| `VisibilityEntireTenant` | *(no org filter — already tenant-scoped by RLS)* |
-| `VisibilityExplicit` | `org_id IN ($explicit_ids)` |
-| `VisibilityCustom` | `org_id IN ($resolver_result)` |
-
-All predicates are constructed in Go and passed to the repository as typed `filter.Filter` values — no string interpolation, no SQL injection risk.
-
----
-
-## Headquarters Users
-
-HQ users require `VisibilityEntireTenant`. This is granted by:
-
-1. IAM role `role:tenant.admin` — automatically resolves to `VisibilityEntireTenant`.
-2. Explicit grant: middleware sets `VisibilityEntireTenant` based on a custom business rule.
-
-No special framework path. HQ access is just `VisibilityEntireTenant` — the application omits the org filter, and RLS ensures the data stays within the tenant.
-
-```
-Holding Company Finance Manager
-  IAM role: tenant.admin (or explicit HQ grant)
-  VisibilityMode: VisibilityEntireTenant
-  ResolveScope() → nil
-  Query: SELECT * FROM invoice WHERE tenant_id = $1
-         (no org filter — sees all branches, all regions)
-```
-
----
-
-## Multi-Organization Users
-
-A user belonging to multiple orgs can switch their **active organization** during a session. The switch is validated against `ViewerContext.OrganizationAssignments` — a user cannot switch to an org they are not assigned to.
-
-```
-User: Jane
-  Assignments: Nairobi Branch (manager), Mombasa Branch (viewer)
-  Active org: Nairobi Branch
-
-  → Scope: VisibilityDescendants of Nairobi
-  → Sees: Nairobi + Retail Team + Credit Team
-
-  Switch active org to Mombasa Branch:
-  → Scope: VisibilityDescendants of Mombasa
-  → Sees: Mombasa only (no sub-teams)
-```
-
----
-
-## Platform Admins
-
-`role:platform-admin` bypasses both Casbin and org scope:
-
-- No Casbin check — platform admins can perform any operation on any tenant.
-- `VisibilityMode` set to `VisibilityEntireTenant` across all tenants.
-- `ViewerContext.IsPlatformAdmin = true` — used for audit log annotation.
-
-Platform admins never impersonate tenant users — all actions are logged under the platform admin's own identity.
-
----
-
-## Summary
-
-| Question | Answered By |
-|---|---|
-| Is this request for the right tenant? | RLS (`current_tenant_id()`) — framework |
-| Which orgs can this user see? | `OrganizationService.ResolveScope()` — application |
-| Can this user perform this action on this entity type? | Casbin RBAC — framework + application |
-| Can this user see this specific row? | `EntityDefinition.Policy` — application |
+| Question | Answer | Enforcement |
+|---|---|---|
+| Is this request for the correct tenant? | `tenant_id = current_tenant_id()` | PostgreSQL RLS (Stage 1) |
+| Which org nodes can this user access? | `ResolveScope()` → org ID set | OrganizationService (Stage 2) |
+| Can this user perform this action on this entity type? | Casbin RBAC | Framework + application |
+| Can this user see this specific row? | `EntityDefinition.Policy` predicate | Application |

@@ -1,13 +1,21 @@
 -- platform_organization: arbitrary-depth org tree node.
 --
--- ISOLATION MODEL
--- ===============
--- platform_organization is NOT an RLS-enforced table. Organization hierarchy
--- is an application-layer authorization concern, not a database isolation
--- boundary. Tenant isolation is enforced exclusively on platform_tenant via
--- current_tenant_id(). Organization visibility is resolved by
--- OrganizationService.ResolveScope() and applied as explicit WHERE predicates
--- by the application service — never by RLS policies.
+-- TWO-STAGE ISOLATION MODEL
+-- =========================
+--
+-- Stage 1 — Tenant isolation (database layer)
+--   Every org table carries tenant_id and has standard tenant RLS.
+--   This guarantees cross-tenant data never leaks, identical to all
+--   other business entity tables. RLS fires: tenant_id = current_tenant_id().
+--
+-- Stage 2 — Organization visibility (application layer)
+--   Which org nodes a user may see within their tenant is determined
+--   entirely by OrganizationService.ResolveScope(). The result is a
+--   []uuid.UUID passed as an explicit IN predicate by the application
+--   service. RLS has no knowledge of organizational hierarchy.
+--
+-- These two stages are orthogonal. RLS handles tenant boundaries.
+-- The application handles org visibility. Never conflate them.
 --
 -- Materialized path (path column): "/root-id/parent-id/self-id/"
 -- depth: redundant with path; stored for cheap depth-limit enforcement.
@@ -38,7 +46,6 @@ CREATE INDEX IF NOT EXISTS idx_platform_organization_tenant_code
     ON platform_organization (tenant_id, code);
 
 -- Path-prefix queries: "WHERE path LIKE '/root-id/%'".
--- text_pattern_ops makes LIKE prefix queries index-scannable.
 CREATE INDEX IF NOT EXISTS idx_platform_organization_path
     ON platform_organization USING btree (path text_pattern_ops);
 
@@ -47,7 +54,7 @@ CREATE INDEX IF NOT EXISTS idx_platform_organization_parent
     ON platform_organization (parent_id)
     WHERE parent_id IS NOT NULL;
 
--- Active filter (most queries include active = true).
+-- Active filter.
 CREATE INDEX IF NOT EXISTS idx_platform_organization_tenant_active
     ON platform_organization (tenant_id, active);
 
@@ -55,10 +62,14 @@ CREATE INDEX IF NOT EXISTS idx_platform_organization_tenant_active
 CREATE INDEX IF NOT EXISTS idx_platform_organization_custom_fields
     ON platform_organization USING GIN (custom_fields);
 
--- NO RLS: organization visibility is an application concern.
--- Application services call OrganizationService.ResolveScope() and pass the
--- resulting org ID list as an explicit IN predicate. Never use RLS here.
+-- Stage 1: standard tenant RLS — same as every other business table.
+-- Stage 2: org visibility is NOT enforced here. Application layer only.
+ALTER TABLE platform_organization ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_organization FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON platform_organization
+    USING (tenant_id = current_tenant_id());
 
+-- ─────────────────────────────────────────────────────────────────────────────
 -- platform_org_type: tenant-defined organization type registry.
 -- Types are metadata-driven — tenant admins register valid types.
 -- The framework never assumes predefined type values.
@@ -79,12 +90,15 @@ CREATE TABLE IF NOT EXISTS platform_org_type (
 CREATE INDEX IF NOT EXISTS idx_platform_org_type_tenant
     ON platform_org_type (tenant_id, active, sort_order);
 
--- NO RLS on platform_org_type for the same reason as platform_organization.
+ALTER TABLE platform_org_type ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_org_type FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON platform_org_type
+    USING (tenant_id = current_tenant_id());
 
--- platform_org_assignment: user membership in one or more organizations.
+-- ─────────────────────────────────────────────────────────────────────────────
+-- platform_org_assignment: user ↔ organization membership.
 -- Users may belong to multiple organizations with different roles in each.
--- primary_org: the user's home organization (at most one per user per tenant).
--- role: organization-level role name (e.g. "manager", "member", "viewer").
+-- is_primary: home organization (at most one per user per tenant).
 CREATE TABLE IF NOT EXISTS platform_org_assignment (
     id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id       UUID NOT NULL REFERENCES platform_tenant(id),
@@ -98,11 +112,9 @@ CREATE TABLE IF NOT EXISTS platform_org_assignment (
     CONSTRAINT platform_org_assignment_unique UNIQUE (tenant_id, user_id, organization_id)
 );
 
--- Fast lookup: user's org memberships.
 CREATE INDEX IF NOT EXISTS idx_platform_org_assignment_user
     ON platform_org_assignment (tenant_id, user_id);
 
--- Fast lookup: org members.
 CREATE INDEX IF NOT EXISTS idx_platform_org_assignment_org
     ON platform_org_assignment (tenant_id, organization_id);
 
@@ -111,10 +123,13 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_platform_org_assignment_primary
     ON platform_org_assignment (tenant_id, user_id)
     WHERE is_primary = TRUE;
 
--- NO RLS on platform_org_assignment — visibility resolved in application layer.
+ALTER TABLE platform_org_assignment ENABLE ROW LEVEL SECURITY;
+ALTER TABLE platform_org_assignment FORCE ROW LEVEL SECURITY;
+CREATE POLICY tenant_isolation ON platform_org_assignment
+    USING (tenant_id = current_tenant_id());
 
--- Migration compatibility note:
--- platform_org_unit and platform_branch (from earlier schema versions) are
--- superseded by platform_organization. A separate data migration script maps:
---   platform_org_unit rows → platform_organization (type preserved)
---   platform_branch rows   → platform_organization (type = 'branch')
+-- ─────────────────────────────────────────────────────────────────────────────
+-- Migration compatibility:
+-- platform_org_unit → platform_organization (type preserved)
+-- platform_branch   → platform_organization (type = 'branch')
+-- Data migration is out-of-band; a separate script transforms existing rows.

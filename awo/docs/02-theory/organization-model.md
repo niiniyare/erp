@@ -1,221 +1,224 @@
 # Organization Model
 
-## The Two Isolation Layers
+## Isolation Model (Canonical)
 
-Awo has two independent isolation layers. They must never be conflated.
+```
+Stage 1 — Tenant Isolation
+  Layer:    Database (PostgreSQL RLS)
+  Enforces: tenant_id = current_tenant_id() on every query
+  Scope:    Cross-tenant data never leaks
 
-| Layer | Mechanism | Enforced By | Scope |
-|---|---|---|---|
-| **Tenant isolation** | PostgreSQL RLS | Framework | Cross-tenant data never leaks |
-| **Organization scope** | Application code | OrganizationService | Within a tenant, who sees which org |
+Stage 2 — Organization Scope
+  Layer:    Application (Go — OrganizationService)
+  Enforces: user sees only their authorized org nodes
+  Scope:    Within a single tenant's org tree
 
-**Tenant isolation** is a hard security boundary enforced at the database level via `current_tenant_id()`. The framework guarantees `WHERE tenant_id = current_tenant_id()` on every RLS-enabled table and nothing more.
+These stages are orthogonal. RLS never enforces org visibility.
+Org scope is never implemented through RLS predicates.
+```
 
-**Organization scope** is an authorization and visibility model evaluated entirely in Go. `OrganizationService.ResolveScope()` converts a `ViewerContext` into a `[]uuid.UUID` of visible org IDs. Application services pass that set as an explicit `IN` predicate to their repositories. Organization tables carry no RLS policies.
+Organization tables (`platform_organization`, `platform_org_type`, `platform_org_assignment`) carry standard tenant RLS — `tenant_id = current_tenant_id()` — identical to all other business entity tables. They carry **no** org-visibility predicates. Org visibility is a Stage 2 concern.
 
 ---
 
 ## Tenant vs Organization
 
-| Concept | Entity | Responsibility |
+| | Tenant | Organization |
 |---|---|---|
-| **Tenant** | `platform_tenant` | Multi-tenancy, billing, licensing, module installation, feature flags, RLS boundary |
-| **Organization** | `platform_organization` | Business hierarchy, team structure, scope-based data visibility |
-
-A **tenant** is created by Awo during provisioning. A **tenant** has exactly one `platform_tenant` record and zero or more `platform_organization` nodes. One tenant — one account. Tenant identity is immutable.
-
-An **organization** is created by the tenant admin. It models the internal structure: how the business organizes people, data, and operations. Organization nodes are fully tenant-managed.
+| **Represents** | Customer account | Business hierarchy node |
+| **Created by** | Awo provisioning | Tenant admin |
+| **Multiplicity** | One per account | Many per tenant |
+| **Isolation** | PostgreSQL RLS (Stage 1) | Application scope (Stage 2) |
+| **RLS** | Yes — all business tables | Yes — tenant_id only; no org predicates |
+| **Immutable field** | `slug` | `code` |
 
 ---
 
-## Organization Tree
+## Organization Hierarchy
 
-Organizations form an arbitrary-depth tree within a tenant. The framework imposes no fixed shape.
+Organizations form an arbitrary-depth tree within a tenant. The framework imposes no fixed shape and no predefined types.
 
 ```
-Holding Company  (type=holding, depth=0)
-├── Kenya        (type=country, depth=1)
-│   ├── Nairobi  (type=branch,  depth=2)
-│   │   ├── Retail Team   (type=team, depth=3)
-│   │   └── Credit Team   (type=team, depth=3)
-│   ├── Kisumu   (type=branch,  depth=2)
-│   └── Eldoret  (type=branch,  depth=2)
-├── Tanzania     (type=country, depth=1)
-└── Uganda       (type=country, depth=1)
+Tenant
+└── Holding Company        (type=holding,    depth=0)
+    ├── Kenya              (type=country,    depth=1)
+    │   ├── Nairobi HQ     (type=branch,     depth=2)
+    │   │   ├── Retail     (type=team,       depth=3)
+    │   │   └── Credit     (type=team,       depth=3)
+    │   ├── Westlands      (type=branch,     depth=2)
+    │   └── Mombasa        (type=branch,     depth=2)
+    ├── Tanzania           (type=country,    depth=1)
+    └── Uganda             (type=country,    depth=1)
 ```
 
 ### Node Types
 
-Types are **metadata-driven**. Tenant admins register valid types via `platform_org_type`. The framework never validates against a predefined list. Common registrations: `holding`, `company`, `subsidiary`, `division`, `region`, `territory`, `branch`, `department`, `team`, `store`, `warehouse`, `cost_centre`.
+Types are **metadata-driven**. Tenant admins register valid types via `platform_org_type`. The framework never validates against a predefined list and never hardcodes any type name.
 
-The type field on `platform_organization` is a denormalized varchar — no FK constraint to `platform_org_type`. This allows type names to be deactivated without cascading breaks to existing nodes.
+Examples of types tenant admins may register:
+`company`, `subsidiary`, `holding`, `region`, `country`, `territory`, `division`, `department`, `branch`, `warehouse`, `cost_centre`, `store`, `team`.
+
+The `type` field on `platform_organization` is a denormalized varchar — no FK constraint to `platform_org_type`. This allows type names to be deactivated without cascading effects on existing nodes.
 
 ### Materialized Path
 
-The `path` column stores the full ancestor chain: `/root-id/parent-id/self-id/`. This enables O(1) ancestor and descendant queries:
+`path` stores the full ancestor chain: `/root-id/parent-id/self-id/`
+
+Enables O(1) queries without recursive CTEs:
 
 ```sql
--- All descendants of Nairobi:
+-- Descendants of Nairobi HQ:
 SELECT * FROM platform_organization
 WHERE path LIKE '/holding-id/kenya-id/nairobi-id/%'
-  AND tenant_id = $1;  -- explicit tenant filter; no RLS on this table
+  AND tenant_id = current_tenant_id();  -- tenant RLS + explicit param
 
--- Ancestor IDs from path string (no recursive CTE needed):
+-- Ancestors from path string (no CTE):
 SELECT id FROM platform_organization
 WHERE id = ANY(
-    string_to_array(trim(both '/' from '/holding-id/kenya-id/nairobi-id/'), '/')::uuid[]
+    string_to_array(trim(both '/' from path_value), '/')::uuid[]
 )
-AND tenant_id = $1;
+AND tenant_id = current_tenant_id();
 ```
+
+`ComputePath` and `ValidateMove` in `OrganizationService` maintain path integrity and prevent cycles.
 
 ---
 
-## User Organization Assignment
+## Viewer Context
 
-Users may belong to multiple organizations simultaneously. Assignment is modeled in `platform_org_assignment`.
-
-```
-User: Jane (tenant.admin + Finance Manager)
-├── Assignment: Holding Company  — role=manager, is_primary=true
-├── Assignment: Kenya            — role=member
-└── Assignment: Tanzania         — role=viewer
-```
-
-### Assignment Fields
-
-| Field | Notes |
-|---|---|
-| `user_id` | FK to `iam_user` |
-| `organization_id` | FK to `platform_organization` |
-| `role` | Org-level role (not an IAM role): `manager`, `member`, `viewer`, … |
-| `is_primary` | Home org — at most one per user per tenant (partial unique index) |
-
-### IAM Roles vs Organization Roles
-
-These are **distinct** and must not be conflated:
-
-| Type | Table | Purpose |
-|---|---|---|
-| IAM role | `iam_user_role` | Platform-wide capabilities: `tenant.admin`, `finance.viewer`, … |
-| Org role | `platform_org_assignment.role` | Position within a specific org node: manager, member, viewer |
-
-A user may be `tenant.admin` (IAM) and `viewer` in their assigned org (org role). Both apply independently.
-
----
-
-## ViewerContext
-
-`ViewerContext` is populated by auth middleware after session validation and carries the full identity context of the acting user:
+`ViewerContext` is the single source of truth about the acting user's organizational context. Auth middleware populates it by calling `OrganizationService.LoadViewer()` after session validation.
 
 ```go
 type ViewerContext struct {
-    TenantID              uuid.UUID
-    UserID                uuid.UUID
-    ActiveOrganizationID  uuid.UUID   // current session org (may differ from primary)
-    PrimaryOrganizationID uuid.UUID   // home org (is_primary = true)
+    TenantID                uuid.UUID
+    UserID                  uuid.UUID
+    ActiveOrganizationID    uuid.UUID    // current session org
+    PrimaryOrganizationID   uuid.UUID    // home org (is_primary=true)
     OrganizationAssignments []OrgMembership
-    VisibilityMode        VisibilityMode
-    ExplicitOrganizationIDs []uuid.UUID // VisibilityExplicit only
-    ScopeResolver         ScopeResolver // VisibilityCustom only
-    Roles                 []string
-    IsPlatformAdmin       bool
-    IsTenantAdmin         bool
+    VisibilityMode          VisibilityMode
+    ExplicitOrganizationIDs []uuid.UUID  // VisibilityExplicit only
+    ScopeResolver           ScopeResolver // VisibilityCustom only
+    Roles                   []string
+    IsTenantAdmin           bool
+    IsPlatformAdmin         bool
 }
 ```
 
 ### Active Organization
 
-Users with multiple org assignments may switch their **active organization** during a session. The active org governs which data context they operate in. If not explicitly set, `EffectiveOrganizationID()` falls back to the primary org.
+Users with multiple org assignments can switch their **active organization** within a session. `EffectiveOrganizationID()` returns `ActiveOrganizationID` if set, falling back to `PrimaryOrganizationID`. Middleware validates that the requested org is in `OrganizationAssignments` before allowing the switch.
+
+---
+
+## User Organization Assignments
+
+Users may belong to multiple organizations simultaneously.
+
+```
+User: Jane (Regional Finance Manager)
+├── Assignment: Kenya            role=manager   is_primary=true
+├── Assignment: Nairobi HQ       role=member
+└── Assignment: Mombasa          role=viewer
+```
+
+Exactly one assignment per user per tenant may have `is_primary=true` (enforced by a partial unique index). `VisibilityAssigned` resolves to all IDs in the user's `OrganizationAssignments` list.
+
+### IAM Roles vs Organization Roles
+
+| Type | Table | Examples | Purpose |
+|---|---|---|---|
+| IAM role | `iam_user_role` | `tenant.admin`, `finance.viewer` | Platform-wide capabilities |
+| Org role | `platform_org_assignment.role` | `manager`, `member`, `viewer` | Position within an org node |
+
+Independent. A user may be `tenant.user` (IAM) and `manager` in their primary org simultaneously.
 
 ---
 
 ## Visibility Modes
 
-`VisibilityMode` is set by auth middleware based on the viewer's roles and active organization.
+`OrganizationService.ResolveScope(ctx, viewer)` evaluates `viewer.VisibilityMode` and returns the allowed org ID set.
 
-| Mode | Who Sees What | Typical User |
+| Mode | What ResolveScope Returns | Typical User |
 |---|---|---|
-| `VisibilityCurrent` | Own org only | Branch cashier |
-| `VisibilityDescendants` | Own org + all subtree below | Regional manager |
-| `VisibilityAncestors` | Own org + all nodes above | Escalation / breadcrumb |
-| `VisibilityEntireTenant` | All orgs in tenant | HQ Finance Manager, tenant.admin |
-| `VisibilityExplicit` | Fixed UUID set | Internal auditor (non-contiguous) |
-| `VisibilityCustom` | Delegated to ScopeResolver | Matrix orgs, project teams |
+| `VisibilitySelf` | `[viewer.EffectiveOrgID]` | Branch cashier |
+| `VisibilityChildren` | Direct children of effective org | Parent org reviewing sub-units |
+| `VisibilitySubtree` | Effective org + all descendants | Regional manager |
+| `VisibilityParent` | Effective org + all ancestors | Breadcrumb / escalation |
+| `VisibilityAssigned` | All IDs in `OrganizationAssignments` | HR BP across departments |
+| `VisibilityExplicit` | `viewer.ExplicitOrganizationIDs` | Internal auditor |
+| `VisibilityEntireTenant` | `nil` (no org filter) | tenant.admin, HQ Finance |
+| `VisibilityCustom` | `viewer.ScopeResolver.Resolve(…)` | Matrix orgs, project teams |
 
-### Scope Resolution
-
-```
-OrganizationService.ResolveScope(ctx, viewer) → []uuid.UUID
-```
-
-`nil` return means `VisibilityEntireTenant` — caller omits the org filter entirely.
-
-Application services apply the result as an explicit IN predicate:
-
-```go
-// Application service — example
-func (s *InvoiceService) List(ctx context.Context, opts ListOptions) ([]*Invoice, error) {
-    viewer := organization.MustViewerFromContext(ctx)
-    orgIDs, err := s.orgSvc.ResolveScope(ctx, viewer)
-    if err != nil {
-        return nil, err
-    }
-    f := buildFilter(opts)
-    if len(orgIDs) > 0 {
-        f = filter.And(f, filter.In("org_id", toAny(orgIDs)...))
-    }
-    // orgIDs == nil → no org filter, all orgs visible
-    records, _, err := s.repo.Query(ctx, f)
-    return records, err
-}
-```
+`nil` → caller omits org filter. Tenant RLS still fires — data stays tenant-scoped.
 
 ---
 
 ## Repository Contract
 
-Repositories are **org-unaware**. They receive filter criteria and execute queries. They never compute org visibility.
+Repositories are **organization-agnostic**. They receive typed filter predicates. They never compute visibility.
 
 ```
-HTTP Request
-  ↓ auth middleware (session validation + org assignment load)
-ViewerContext populated
-  ↓ application service
-OrganizationService.ResolveScope() → []uuid.UUID
-  ↓ application service builds filter
-Repository.List(ctx, filter)
-  ↓ SQL: WHERE tenant_id = $1 AND org_id = ANY($2)
-    (tenant_id enforced by explicit param; org_id enforced by IN predicate)
+Viewer
+  → OrganizationService.ResolveScope()    (Stage 2)
+  → []uuid.UUID
+  → Application service builds filter
+  → Repository.Query(ctx, filter)
+  → Tenant RLS fires                      (Stage 1)
+  → Database
 ```
 
-The `tenant_id` in the repository query is passed as an explicit parameter (matching `TenantContext.TenantID`), not via RLS — org tables have no RLS policies.
+Repositories must never:
+- Call `OrganizationService.ResolveScope`
+- Read `ViewerContext` from the context
+- Inspect user roles or assignments
+- Compute which organizations are accessible
 
 ---
 
-## Security Properties
+## HQ / Cross-Org Access
 
-| Property | How Enforced |
-|---|---|
-| Cross-tenant data leak | RLS on `platform_tenant` and all business entity tables |
-| Cross-org data leak | Explicit org IN predicate from `ResolveScope` in application services |
-| Unauthorized org switch | Session carries org assignments; switch validated against `OrganizationAssignments` |
-| Org admin scope creep | `VisibilityDescendants` — cannot see parent/sibling orgs |
-| HQ full access | `VisibilityEntireTenant` — requires `tenant.admin` or explicit grant |
-| Auditor non-contiguous access | `VisibilityExplicit` — fixed UUID list, reviewed and granted explicitly |
+Users who must access multiple or all organizations:
+
+```
+CEO / HQ Finance Manager
+  IsTenantAdmin = true
+  VisibilityMode = VisibilityEntireTenant
+  ResolveScope() → nil
+  Repository gets: WHERE tenant_id = $1  (RLS only)
+
+Kenya Regional Manager
+  ActiveOrg = Kenya
+  VisibilityMode = VisibilitySubtree
+  ResolveScope() → [Kenya, NairobiHQ, Westlands, Mombasa, …]
+  Repository gets: WHERE tenant_id = $1 AND org_id = ANY($2)
+
+Internal Auditor
+  VisibilityMode = VisibilityExplicit
+  ExplicitOrganizationIDs = [OrgA, OrgC]
+  ResolveScope() → [OrgA, OrgC]
+  Repository gets: WHERE tenant_id = $1 AND org_id = ANY($2)
+
+HR Business Partner (matrix)
+  VisibilityMode = VisibilityAssigned
+  Assignments: [Dept_Engineering, Dept_Finance, Dept_Sales]
+  ResolveScope() → [Dept_Engineering, Dept_Finance, Dept_Sales]
+```
+
+No special framework paths. All cases resolved by `VisibilityMode` + `ResolveScope`.
 
 ---
 
-## API Reference
-
-### OrganizationService
+## OrganizationService API
 
 ```go
 // Tree operations
 Create(ctx, CreateInput) (*OrganizationDTO, error)
 GetByID(ctx, id) (*OrganizationDTO, error)
 GetByCode(ctx, tenantID, code) (*OrganizationDTO, error)
-Move(ctx, id, newParentID) error              // recomputes path+depth for subtree
-Disable(ctx, id) error                        // cascades to descendants
+Move(ctx, id, newParentID) error
+ValidateMove(ctx, id, newParentID) error   // dry-run cycle check
+ComputePath(ctx, selfID, parentID) (path, depth, error)
+Disable(ctx, id) error
 Enable(ctx, id) error
 Tree(ctx, tenantID) ([]*OrganizationDTO, error)
 Ancestors(ctx, id) ([]*OrganizationDTO, error)
@@ -234,16 +237,35 @@ Assign(ctx, AssignInput) (*AssignmentDTO, error)
 Unassign(ctx, tenantID, userID, orgID) error
 SetPrimary(ctx, tenantID, userID, orgID) error
 ListAssignments(ctx, tenantID, userID) ([]*AssignmentDTO, error)
-LoadViewerMemberships(ctx, tenantID, userID) ([]OrgMembership, error)
+LoadViewer(ctx, tenantID, userID) (ViewerContext, error)
 ```
 
 ---
 
-## Migration Notes
+## ERP Module Implementation Pattern
 
-Prior to v1.1, organization hierarchy lived in `platform/tenant`:
+Every ERP module (Finance, CRM, Inventory, HR, POS, Manufacturing, etc.) that stores org-scoped data follows this pattern:
 
-- `platform_org_unit` → renamed to `platform_organization` (type preserved)
-- `platform_branch` → `platform_organization` rows with `type = 'branch'`
+```go
+// 1. Entity definition declares org_id field.
+{Name: "org_id", Type: def.FieldTypeLink, LinkTarget: "platform_organization"}
 
-The old migration files remain for historical correctness. A separate data migration script transforms existing rows. Schema migration `20260101000080` creates `platform_organization`, `platform_org_type`, and `platform_org_assignment`.
+// 2. Service resolves scope before every list/query operation.
+func (s *InvoiceService) List(ctx context.Context, opts ListOptions) ([]*Invoice, error) {
+    viewer := organization.MustViewerFromContext(ctx)
+    orgIDs, err := s.orgSvc.ResolveScope(ctx, viewer)
+    if err != nil {
+        return nil, fmt.Errorf("invoice.List: resolve org scope: %w", err)
+    }
+    f := buildFilter(opts)
+    if len(orgIDs) > 0 {
+        f = filter.And(f, filter.In("org_id", toAny(orgIDs)...))
+    }
+    records, _, err := s.repo.Query(ctx, f)
+    return records, err
+}
+
+// 3. Repository.Query receives the filter — knows nothing about org scope.
+```
+
+This pattern must be applied consistently across all ERP modules. The framework provides the primitives; the module is responsible for calling them.
