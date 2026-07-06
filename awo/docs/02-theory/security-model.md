@@ -17,14 +17,16 @@ Tables without RLS: `platform_tenant` (bootstrap), reference data, organization 
 
 ### Boundary 2 — Organization Scope (Application)
 
-**Mechanism:** Explicit IN predicate from `OrganizationService.ResolveScope()`
+**Mechanism:** `OrganizationService.ResolveScope()` → explicit `IN` predicate
 **Enforced by:** Application services
 **Guarantee:** Users see only the org nodes their `VisibilityMode` permits
 
-Organization visibility is evaluated in Go. The result is a `[]uuid.UUID` passed as an explicit `IN` predicate. Organization tables (`platform_organization`, `platform_org_type`, `platform_org_assignment`) carry no RLS policies — the application is solely responsible.
+Organization visibility is evaluated entirely in Go. The result is a `[]uuid.UUID` that application services append as an explicit `IN` predicate before calling any repository method.
 
-**Why no RLS on org tables?**
-Organization scope is a composable, context-dependent authorization concept — not a static predicate. Scope depends on the user's active org, their assignment roles, and their visibility mode. RLS cannot express this without a separate per-user session variable for each concept, which is fragile and hard to audit. Go code is easier to test, easier to trace, and easier to change.
+Organization tables (`platform_organization`, `platform_org_type`, `platform_org_assignment`) carry **standard tenant RLS** — `tenant_id = current_tenant_id()` — identical to every other business entity table. They carry no org-visibility RLS predicates. RLS handles tenant boundaries. The application handles org visibility.
+
+**Why no org-visibility RLS?**
+Org scope is context-dependent and composable — it depends on the user's active org, their assignment set, and their visibility mode. RLS cannot express this without per-user session variables for each dimension, which is fragile and hard to audit. Go code is testable, traceable, and easy to change independently of schema migrations.
 
 ---
 

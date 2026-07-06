@@ -94,11 +94,21 @@ Business modules must never query these tables directly — use the service inte
 
 ---
 
-## Organization Tables (No RLS — by design)
+## Organization Tables (Tenant RLS Only)
 
-`platform_organization`, `platform_org_type`, and `platform_org_assignment` carry no RLS policies. Organization visibility is an **application-layer concern** evaluated by `OrganizationService.ResolveScope()`.
+`platform_organization`, `platform_org_type`, and `platform_org_assignment` have standard tenant RLS — identical to all other business entity tables:
 
-Application services explicitly pass `tenant_id` as a query parameter on organization table queries. This is equivalent in safety to RLS for tenant isolation, while allowing the application to apply org scope as a separate, composable IN predicate.
+```sql
+CREATE POLICY tenant_isolation ON platform_organization
+    USING (tenant_id = current_tenant_id());
+```
+
+They carry **no** org-visibility predicates. Organization visibility is an application-layer concern evaluated by `OrganizationService.ResolveScope()`. The distinction:
+
+- **Tenant RLS** (Stage 1): prevents cross-tenant leaks — same policy as `invoice`, `contact`, every other table.
+- **Org scope** (Stage 2): restricts which org nodes within a tenant are visible to a user — resolved in Go, applied as an explicit `IN` predicate.
+
+RLS is never responsible for org visibility. Org scope is never implemented through RLS predicates.
 
 See [authorization.md](./authorization.md) for the full two-stage pipeline.
 
