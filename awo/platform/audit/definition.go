@@ -4,7 +4,7 @@
 // in the system produces an audit entry inside the same database transaction
 // that caused the change. No mutation escapes the audit trail.
 //
-// The iam_audit_log entity is a system entity stored in the global schema
+// The audit_log entity is a system entity stored in the global schema
 // (no RLS) so that compliance and investigation queries can span tenants
 // without context switching. Access requires role:platform-admin.
 //
@@ -16,9 +16,9 @@ import (
 	"awo.so/awo/def"
 )
 
-// LogDefinition is the iam_audit_log entity definition.
+// LogDefinition is the audit_log entity definition.
 var LogDefinition = def.SystemDefinition{
-	Name:        "iam_audit_log",
+	Name:        "audit_log",
 	Module:      "platform",
 	Label:       "Audit Log",
 	LabelPlural: "Audit Logs",

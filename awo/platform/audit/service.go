@@ -28,13 +28,13 @@ type Entry struct {
 	OccurredAt   time.Time
 }
 
-// Writer appends entries to the iam_audit_log entity.
+// Writer appends entries to the audit_log entity.
 // Writes run inside the caller's transaction — errors cause rollback.
 type Writer struct {
 	repo driver.EntityRepository[*def.EntityRecord]
 }
 
-// NewWriter creates a Writer backed by the iam_audit_log repository.
+// NewWriter creates a Writer backed by the audit_log repository.
 func NewWriter(repo driver.EntityRepository[*def.EntityRecord]) *Writer {
 	return &Writer{repo: repo}
 }
