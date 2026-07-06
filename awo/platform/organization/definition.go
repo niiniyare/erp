@@ -1,27 +1,40 @@
-// Package organization provides the platform Organization entity definition.
+// Package organization provides the platform Organization module.
 //
-// An Organization is a node in the business hierarchy within a tenant. The tree
-// is arbitrary-depth: company → division → department → team → … Nodes are
-// typed via the "type" field; valid types are metadata-driven and extensible by
-// tenant admins.
+// # Isolation model
 //
-// Design decisions:
+// Awo has two independent isolation layers:
 //
-//   - Tenant is the infrastructure boundary (platform/tenant). Organization is
-//     the business boundary. They are orthogonal concepts.
-//   - Materialized path (path column) enables O(1) ancestor/descendant queries
-//     without recursive CTEs. Path format: "/root-id/child-id/leaf-id/".
-//   - depth column is redundant with path but kept for cheap depth-limit checks.
-//   - Cycles are prevented by the PathComputeHook at creation/move time.
-//   - Code is immutable: embedded in Temporal IDs, Redis keys, and audit records.
+//  1. Tenant Isolation (framework) — enforced by PostgreSQL RLS.
+//     Every row in every table carries tenant_id. The framework guarantees
+//     WHERE tenant_id = current_tenant_id() and nothing more.
 //
-// Visibility scopes are declared in scope.go.
+//  2. Organization Scope (application) — evaluated entirely in Go.
+//     OrganizationService.ResolveScope() returns the set of org IDs
+//     visible to the current user. Application services pass that set
+//     as an explicit IN predicate to the repository. Organization nodes
+//     are never part of RLS policies.
+//
+// These layers are orthogonal and must never be conflated.
+//
+// # Entities
+//
+//   - platform_organization — org tree node (arbitrary depth, materialized path)
+//   - platform_org_type     — tenant-defined type registry (metadata-driven)
+//   - platform_org_assignment — user ↔ organization membership with role
+//
+// All three entities are SystemDefinitions: they are FK targets for IAM and
+// business modules, and must be accessible before per-tenant schemas load.
 package organization
 
 import "awo.so/awo/def"
 
 // Definition is the SystemDefinition for the platform_organization entity.
-// Registered in init() — available immediately at process start.
+//
+// Organizations form an arbitrary-depth tree within a tenant. The framework
+// does not assume any fixed type values (company, branch, department…) — types
+// are registered by tenant admins via OrganizationTypeDefinition.
+//
+// Visibility is evaluated by OrganizationService.ResolveScope(), not by RLS.
 var Definition = def.SystemDefinition{
 	Name:        "platform_organization",
 	Module:      "platform",
@@ -57,16 +70,15 @@ var Definition = def.SystemDefinition{
 			Immutable:  true,
 		},
 		{
-			// parent_id is nil for root nodes (top-level organization in a tenant).
+			// parent_id is nil for root nodes (top-level org in a tenant).
 			Name:       "parent_id",
 			Type:       def.FieldTypeLink,
 			Label:      "Parent",
 			LinkTarget: "platform_organization",
 		},
 		{
-			// type is metadata-driven: tenant admins register valid types via settings.
-			// Common values: company, division, department, branch, team, region, zone.
-			// Not an enum — extensible without migration.
+			// type references platform_org_type.name — not a fixed enum.
+			// Extensible by tenant admins without schema migration.
 			Name:   "type",
 			Type:   def.FieldTypeData,
 			Label:  "Type",
@@ -74,15 +86,15 @@ var Definition = def.SystemDefinition{
 		},
 		{
 			// path is a materialized path: "/root-id/parent-id/self-id/".
-			// Computed by PathComputeHook on create and move. Never set by callers.
+			// Computed by PathComputeHook on create; updated by MoveService.
 			Name:      "path",
 			Type:      def.FieldTypeData,
 			Label:     "Path",
-			Immutable: false, // updated by Move operation via service layer
+			Immutable: false, // updated by Move — cannot be set by API callers
 			MaxLen:    4096,
 		},
 		{
-			// depth is 0 for root nodes, 1 for direct children, etc.
+			// depth is 0 for root nodes, n for depth-n nodes.
 			// Derived from path but stored for cheap depth-limit enforcement.
 			Name:    "depth",
 			Type:    def.FieldTypeInt,
@@ -96,7 +108,6 @@ var Definition = def.SystemDefinition{
 			Default: func() any { return true },
 		},
 		{
-			// description is optional free-text for human context.
 			Name:  "description",
 			Type:  def.FieldTypeSmallText,
 			Label: "Description",
@@ -106,6 +117,131 @@ var Definition = def.SystemDefinition{
 	Hooks: def.HookSet{
 		BeforeCreate: []def.BeforeCreateHook{&CodeValidator{}, &PathComputeHook{}},
 		BeforeUpdate: []def.BeforeUpdateHook{&MoveGuard{}},
+	},
+
+	Permissions: def.PermissionSet{
+		Create: []string{"role:platform-admin", "role:tenant.admin"},
+		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
+		Write:  []string{"role:platform-admin", "role:tenant.admin"},
+		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+	},
+}
+
+// OrgTypeDefinition is the SystemDefinition for platform_org_type.
+//
+// Tenant admins register valid organization type names here. The framework
+// does not enforce any predefined type list — types are fully metadata-driven.
+// Common registrations: company, holding, subsidiary, division, department,
+// region, territory, branch, team, store, warehouse, cost_centre.
+var OrgTypeDefinition = def.SystemDefinition{
+	Name:        "platform_org_type",
+	Module:      "platform",
+	Label:       "Organization Type",
+	LabelPlural: "Organization Types",
+
+	Fields: []def.FieldDef{
+		{
+			// name is the machine-readable identifier stored in platform_organization.type.
+			Name:      "name",
+			Type:      def.FieldTypeData,
+			Label:     "Name",
+			Required:  true,
+			Unique:    true,
+			Immutable: true, // referenced in org records; rename = data migration
+			MaxLen:    50,
+		},
+		{
+			Name:     "label",
+			Type:     def.FieldTypeData,
+			Label:    "Label",
+			Required: true,
+			MaxLen:   255,
+		},
+		{
+			Name:  "description",
+			Type:  def.FieldTypeSmallText,
+			Label: "Description",
+		},
+		{
+			Name:    "sort_order",
+			Type:    def.FieldTypeInt,
+			Label:   "Sort Order",
+			Default: func() any { return 0 },
+		},
+		{
+			Name:    "active",
+			Type:    def.FieldTypeBool,
+			Label:   "Active",
+			Default: func() any { return true },
+		},
+	},
+
+	Permissions: def.PermissionSet{
+		Create: []string{"role:platform-admin", "role:tenant.admin"},
+		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
+		Write:  []string{"role:platform-admin", "role:tenant.admin"},
+		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+	},
+}
+
+// OrgAssignmentDefinition is the SystemDefinition for platform_org_assignment.
+//
+// Records which users belong to which organizations and in what role. Users
+// may belong to multiple organizations simultaneously. Exactly one assignment
+// per user per tenant may carry is_primary=true (enforced by unique partial index).
+//
+// Organization roles are distinct from IAM roles:
+//   - IAM role (iam_user_role): platform-wide capabilities (e.g. tenant.admin)
+//   - Org role (platform_org_assignment.role): position within an org node
+//     (e.g. manager, member, viewer, auditor)
+var OrgAssignmentDefinition = def.SystemDefinition{
+	Name:        "platform_org_assignment",
+	Module:      "platform",
+	Label:       "Organization Assignment",
+	LabelPlural: "Organization Assignments",
+
+	Fields: []def.FieldDef{
+		{
+			Name:       "tenant_id",
+			Type:       def.FieldTypeLink,
+			Label:      "Tenant",
+			LinkTarget: "platform_tenant",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:       "user_id",
+			Type:       def.FieldTypeLink,
+			Label:      "User",
+			LinkTarget: "iam_user",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:       "organization_id",
+			Type:       def.FieldTypeLink,
+			Label:      "Organization",
+			LinkTarget: "platform_organization",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			// role is the user's position within this organization node.
+			// Not a fixed enum — tenant-defined (e.g. manager, member, viewer).
+			Name:    "role",
+			Type:    def.FieldTypeData,
+			Label:   "Role",
+			MaxLen:  50,
+			Default: func() any { return "member" },
+		},
+		{
+			// is_primary marks the user's home organization.
+			// At most one primary assignment per user per tenant (partial unique index).
+			Name:    "is_primary",
+			Type:    def.FieldTypeBool,
+			Label:   "Primary",
+			Default: func() any { return false },
+		},
 	},
 
 	Permissions: def.PermissionSet{

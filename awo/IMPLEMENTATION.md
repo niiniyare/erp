@@ -92,6 +92,9 @@ Module: `awo.so` (part of root module, packages under `awo.so/awo/...`)
 | Platform metadata service | `platform/metadata/service.go`: FieldsForEntity, AddField, DeactivateField |
 | Platform registry service | `platform/registry/service.go`: RegisterModule, Activate, Disable, ListActive |
 | SQL migrations | All 8 platform modules have .up.sql/.down.sql pairs under each module's migrations/ directory |
+| platform/organization | New first-class module: OrganizationDefinition, OrgTypeDefinition, OrgAssignmentDefinition, OrganizationService, ViewerContext, VisibilityMode; RLS removed (app-layer scope) |
+| Organization isolation model | Clarified: tenant=RLS boundary, org=app-layer scope; two-stage auth pipeline documented |
+| docs/02-theory | organization-model.md, tenancy-model.md, security-model.md, authorization.md created |
 
 ## Package Dependency Graph
 

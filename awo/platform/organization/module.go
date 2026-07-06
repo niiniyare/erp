@@ -1,27 +1,49 @@
 // Package organization implements the Awo platform Organization module.
 //
-// Organization is a first-class platform module that manages the business
-// hierarchy within a tenant. It is entirely separate from platform/tenant:
+// # Isolation model
 //
-//   - platform_tenant  (platform/tenant)      — infrastructure isolation boundary
-//   - platform_organization (platform/organization) — business hierarchy node
+// Two independent isolation layers:
 //
-// A tenant has exactly one infrastructure record (platform_tenant) and zero or
-// more organization nodes (platform_organization). An organization node always
-// belongs to exactly one tenant via the tenant_id foreign key.
+//  1. Tenant isolation (framework) — PostgreSQL RLS, current_tenant_id().
+//     The framework guarantees tenant_id filtering and nothing more.
 //
-// Organization trees are arbitrary-depth. The tree shape is not constrained by
-// the framework — tenant admins define the valid node types via settings.
-// Common configurations: flat list, two-level (company/department), or deep
-// hierarchies (company/region/branch/team).
+//  2. Organization scope (application) — evaluated in Go by this module.
+//     OrganizationService.ResolveScope() converts a ViewerContext into a
+//     []uuid.UUID that application services pass as an IN predicate.
+//     Organization tables carry NO RLS policies.
 //
-// Scope filtering (OrganizationScope) is orthogonal to TenantContext:
-// TenantContext isolates data across tenants; OrganizationScope restricts
-// visibility within a single tenant's org tree.
+// These layers must never be conflated. ERP modules implement org-aware
+// business rules using the primitives in this package without coupling to
+// the framework's RLS implementation.
+//
+// # Entities
+//
+//   - platform_organization   — org tree node (arbitrary depth, materialized path)
+//   - platform_org_type       — tenant-defined type registry (metadata-driven)
+//   - platform_org_assignment — user ↔ organization membership with role
+//
+// # Two-stage authorization
+//
+// Stage 1 (framework):  tenant isolation via RLS
+// Stage 2 (application): org scope via OrganizationService.ResolveScope
+//                         + operation permissions (RBAC)
+//                         + business policies (EntityDefinition.Policy)
+//
+// # Request flow
+//
+//	HTTP Request
+//	  ↓ auth middleware    → session validation, load org assignments
+//	ViewerContext          → TenantID, UserID, ActiveOrgID, Assignments, Roles
+//	  ↓ service middleware → OrganizationService.ResolveScope()
+//	[]uuid.UUID            → visible org IDs
+//	  ↓ application service builds filter with org IDs
+//	Repository.List()
 package organization
 
 import "awo.so/awo/def"
 
 func init() {
 	def.Register(&Definition)
+	def.Register(&OrgTypeDefinition)
+	def.Register(&OrgAssignmentDefinition)
 }

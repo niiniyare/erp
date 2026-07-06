@@ -1,91 +1,65 @@
 package organization
 
-import (
-	"context"
-
-	"github.com/google/uuid"
-)
-
-// OrganizationScope controls which organization nodes are visible to a query.
-// Scope is orthogonal to TenantContext — TenantContext isolates across tenants;
-// OrganizationScope filters within a single tenant's org tree.
-type OrganizationScope int
+// VisibilityMode controls which organization nodes are included when an
+// application service resolves the organizations visible to a user.
+//
+// # Application layer only
+//
+// VisibilityMode is NOT a database isolation mechanism. Organization scope
+// is evaluated entirely in Go by OrganizationService.ResolveScope(). The
+// resulting []uuid.UUID is passed as an explicit IN predicate by the calling
+// application service. RLS is never involved.
+//
+// Tenant isolation (RLS) and organization scope are orthogonal:
+//   - RLS guarantees: data for tenant A never appears in tenant B's queries.
+//   - VisibilityMode governs: within tenant A, which org nodes can user U see?
+type VisibilityMode int
 
 const (
-	// ScopeCurrent restricts results to the caller's own organization node only.
-	ScopeCurrent OrganizationScope = iota
+	// VisibilityCurrent: only the user's active organization.
+	// Typical use: branch staff entering data for their own branch.
+	VisibilityCurrent VisibilityMode = iota
 
-	// ScopeDescendants includes the caller's node and all nodes below it in the
-	// tree. Uses the materialized path for O(1) path-prefix filtering.
-	ScopeDescendants
+	// VisibilityDescendants: active org + all nodes below it in the tree.
+	// Uses materialized path prefix match — O(1) regardless of tree depth.
+	// Typical use: regional manager viewing all branches under their region.
+	VisibilityDescendants
 
-	// ScopeAncestors includes the caller's node and all nodes above it up to the
-	// root. Useful for breadcrumb / hierarchy display.
-	ScopeAncestors
+	// VisibilityAncestors: active org + all nodes above it up to the root.
+	// Typical use: breadcrumb navigation; escalation chains.
+	VisibilityAncestors
 
-	// ScopeExplicit restricts to a caller-supplied set of organization IDs.
-	// Requires OrganizationIDs to be populated on the scope context value.
-	ScopeExplicit
+	// VisibilityEntireTenant: all org nodes in the tenant, no org filter.
+	// Typical use: tenant.admin, platform.admin, HQ Finance Manager.
+	VisibilityEntireTenant
 
-	// ScopeEntireTenant bypasses organization filtering — all nodes in the tenant
-	// are visible. Requires role:tenant.admin or role:platform-admin.
-	ScopeEntireTenant
+	// VisibilityExplicit: a caller-supplied fixed set of org IDs.
+	// Typical use: internal auditor assigned to a non-contiguous set of orgs.
+	// Requires ViewerContext.ExplicitOrganizationIDs to be populated.
+	VisibilityExplicit
 
-	// ScopeCustom delegates to an OrganizationResolver implementation. Used by
-	// platform modules that need complex visibility logic (e.g. matrix orgs).
-	ScopeCustom
+	// VisibilityCustom: delegates to a ScopeResolver implementation.
+	// Typical use: matrix organizations; project-team cross-org access.
+	// Requires ViewerContext.ScopeResolver to be non-nil.
+	VisibilityCustom
 )
 
-// String returns a human-readable name for the scope constant.
-func (s OrganizationScope) String() string {
-	switch s {
-	case ScopeCurrent:
+// String returns a stable, human-readable name for the mode constant.
+func (m VisibilityMode) String() string {
+	switch m {
+	case VisibilityCurrent:
 		return "current"
-	case ScopeDescendants:
+	case VisibilityDescendants:
 		return "descendants"
-	case ScopeAncestors:
+	case VisibilityAncestors:
 		return "ancestors"
-	case ScopeExplicit:
-		return "explicit"
-	case ScopeEntireTenant:
+	case VisibilityEntireTenant:
 		return "entire_tenant"
-	case ScopeCustom:
+	case VisibilityExplicit:
+		return "explicit"
+	case VisibilityCustom:
 		return "custom"
 	default:
 		return "unknown"
 	}
-}
-
-// ScopeContext carries an OrganizationScope and optional explicit IDs through
-// a request context. Use WithScope / ScopeFromContext to propagate.
-type ScopeContext struct {
-	Scope           OrganizationScope
-	OrganizationID  uuid.UUID   // the caller's current org node
-	OrganizationIDs []uuid.UUID // populated when Scope == ScopeExplicit
-	Resolver        OrganizationResolver // populated when Scope == ScopeCustom
-}
-
-type scopeKey struct{}
-
-// WithScope attaches an OrganizationScope to ctx.
-func WithScope(ctx context.Context, sc ScopeContext) context.Context {
-	return context.WithValue(ctx, scopeKey{}, sc)
-}
-
-// ScopeFromContext retrieves the ScopeContext from ctx.
-// Returns ScopeEntireTenant with zero OrganizationID when absent — callers with
-// no scope context see all org nodes (subject to RBAC, not org filtering).
-func ScopeFromContext(ctx context.Context) ScopeContext {
-	if v, ok := ctx.Value(scopeKey{}).(ScopeContext); ok {
-		return v
-	}
-	return ScopeContext{Scope: ScopeEntireTenant}
-}
-
-// OrganizationResolver is implemented by callers that need custom visibility
-// logic. It is invoked when ScopeContext.Scope == ScopeCustom.
-type OrganizationResolver interface {
-	// Resolve returns the set of organization IDs visible for the given tenant
-	// and caller organization. Returning nil means no org filter applied.
-	Resolve(ctx context.Context, tenantID, callerOrgID uuid.UUID) ([]uuid.UUID, error)
 }
