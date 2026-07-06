@@ -116,6 +116,35 @@ func Build() *Registry {
 	return &Registry{defs: defs, byName: byName}
 }
 
+// BuildFrom constructs a Registry from an explicit list of EntityDefinitions
+// without touching the global def registry. Intended for use in tests and
+// tooling that needs an isolated registry.
+//
+// Returns an error instead of panicking so callers (e.g. test harnesses) can
+// report failures cleanly via t.Fatal.
+func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
+	if len(defs) == 0 {
+		return nil, fmt.Errorf("registry.BuildFrom: no EntityDefinitions provided")
+	}
+
+	byName := make(map[string]def.EntityDefinition, len(defs))
+	for _, d := range defs {
+		byName[d.EntityName()] = d
+	}
+
+	var errs []string
+	for _, d := range defs {
+		errs = append(errs, validateDefinition(d, byName)...)
+	}
+
+	if len(errs) > 0 {
+		msg := strings.Join(errs, "\n  - ")
+		return nil, fmt.Errorf("registry.BuildFrom: validation failed:\n  - %s", msg)
+	}
+
+	return &Registry{defs: defs, byName: byName}, nil
+}
+
 func validateDefinition(d def.EntityDefinition, byName map[string]def.EntityDefinition) []string {
 	var errs []string
 	name := d.EntityName()

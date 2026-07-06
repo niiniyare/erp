@@ -25,6 +25,11 @@ type CompiledSchema struct {
 	// CasbinPolicies is the list of Casbin policy assertions derived from
 	// PermissionSet declarations. Consumed by the IAM module at startup.
 	CasbinPolicies []CasbinPolicy
+
+	// Diagnostics contains warnings and informational messages from the
+	// compilation phase. Error-severity diagnostics cause Compile to return
+	// an error; warnings are preserved here for tooling.
+	Diagnostics Diagnostics
 }
 
 // EntitySchema is the compiled representation of a single EntityDefinition.
@@ -118,11 +123,18 @@ type compiler struct {
 }
 
 func (c *compiler) compile() (*CompiledSchema, error) {
+	// Validate before building schema structures.
+	ds := Validate(c.reg)
+	if ds.HasErrors() {
+		return nil, ds.AsError()
+	}
+
 	defs := c.reg.All()
 
 	schema := &CompiledSchema{
-		Entities: make([]*EntitySchema, 0, len(defs)),
-		ByName:   make(map[string]*EntitySchema, len(defs)),
+		Entities:    make([]*EntitySchema, 0, len(defs)),
+		ByName:      make(map[string]*EntitySchema, len(defs)),
+		Diagnostics: ds,
 	}
 
 	// Phase 1: build EntitySchema stubs (without link resolution).
