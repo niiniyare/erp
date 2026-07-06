@@ -29,6 +29,14 @@ A module is a cohesive collection of entity definitions, hooks, policies, activi
 |---|---|---|---|
 | [Module System](module-system.md) | MOD-001 | Module structure, manifest, registration, dependency resolution | STABLE |
 | [Platform Modules](platform-modules.md) | MOD-002 | Built-in platform modules: Tenant, IAM, Flags, Settings, Audit, Metadata, Registry | STABLE |
+| [Business Module Catalog](business-modules.md) | MOD-003 | All business modules, core entities, dependency graph | STABLE |
+| [Finance Patterns](finance-patterns.md) | MOD-004 | Double-entry, invoice workflow, VAT, payment reconciliation | STABLE |
+| [HR Patterns](hr-patterns.md) | MOD-005 | Employee-user link, leave workflows, attendance, payroll | STABLE |
+| [Inventory Patterns](inventory-patterns.md) | MOD-006 | Stock moves, FIFO valuation, lot tracking, COGS | STABLE |
+| [Settings Patterns](settings-patterns.md) | MOD-007 | Declaring, reading, and overriding tenant-configurable settings | STABLE |
+| [Forecourt Patterns](forecourt-patterns.md) | MOD-008 | Shift management, meter readings, fuel reconciliation, settlement | STABLE |
+| [Payroll Patterns](payroll-patterns.md) | MOD-009 | Payslip computation, PAYE, NSSF/NHIF, GL journal posting | STABLE |
+| [Projects Patterns](projects-patterns.md) | MOD-010 | Project lifecycle, time logging, billing, project dashboard | STABLE |
 
 ---
 

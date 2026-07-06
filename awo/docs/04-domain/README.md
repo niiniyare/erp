@@ -33,6 +33,9 @@ Domain Layer code has zero external dependencies — it imports only `awo/def/`,
 | [Policy Functions](policies.md) | DOM-004 | Row-level filter injection, PolicyFunc composition | FROZEN |
 | [Actions](actions.md) | DOM-005 | Custom operations, ActionDef, ActionContext, ActionResult | STABLE |
 | [Naming Series](naming-series.md) | DOM-006 | Format string syntax, atomic counter, tenant override, ResetOnYear | STABLE |
+| [Field Validators](validators.md) | DOM-007 | FieldValidator interface, built-in validators, composition, testing | STABLE |
+| [Entity Events](events.md) | DOM-008 | Lifecycle events, workflow triggers, conditional dispatch, audit log | STABLE |
+| [Permission Sets](permissions.md) | DOM-009 | PermissionSet structure, RBAC compilation, action permissions, SDUI gating | STABLE |
 
 ---
 

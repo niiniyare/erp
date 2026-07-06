@@ -31,6 +31,9 @@ The persistence section specifies the interfaces and DSLs through which all enti
 | [System Entities](system-entities.md) | PERS-003 | SQL-backed entities: schema conventions, mandatory types, migration requirements | FROZEN |
 | [Custom Entities](custom-entities.md) | PERS-004 | JSONB-backed entities: storage model, custom fields, escalation criteria | STABLE |
 | [Cursors and Pagination](cursors-and-pagination.md) | PERS-005 | Page-number vs cursor (keyset) pagination, PageInfo, API wire format | STABLE |
+| [Aggregations](aggregations.md) | PERS-006 | Count, Sum, Avg, GroupBy, time-series aggregations | STABLE |
+| [Transactions](transactions.md) | PERS-007 | WithTx, multi-repo transactions, hooks inside TX, savepoints | STABLE |
+| [System Entity Catalog](system-entities-catalog.md) | PERS-008 | Complete list of all system entities and their classification rationale | STABLE |
 
 ---
 

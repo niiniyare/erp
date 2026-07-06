@@ -41,6 +41,8 @@ Each document in this section builds on the previous one, using a single running
 | [Testing](11-testing.md) | MDG-11 | Unit tests for hooks, policies, activities |
 | [Module Checklist](12-checklist.md) | MDG-12 | Pre-review checklist for new modules |
 | [Worked Example](13-worked-example.md) | MDG-13 | Complete CRM Contact module — all files in final state |
+| [Common Mistakes](14-common-mistakes.md) | MDG-14 | Catalog of common mistakes by category with correct patterns |
+| [Testing Patterns](15-testing-patterns.md) | MDG-15 | Integration tests, hook chains, policy tests, workflow tests |
 
 ---
 

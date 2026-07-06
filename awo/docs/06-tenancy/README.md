@@ -31,6 +31,7 @@ Multi-tenancy is the foundational structural property of the Awo Framework. This
 | [Row-Level Security](rls.md) | TEN-002 | PostgreSQL RLS specification: policies, set_tenant_context(), global tables | FROZEN |
 | [Tenant Lifecycle](tenant-lifecycle.md) | TEN-003 | Status machine, HTTP response codes, provisioning, archival | STABLE |
 | [Multi-Tenancy Patterns](multi-tenancy-patterns.md) | TEN-004 | Cross-tenant ops, platform admin context, background jobs, anti-patterns | STABLE |
+| [Tenant Provisioning](tenant-provisioning.md) | TEN-005 | Provisioning workflow, role seeding, module activation, admin user creation | STABLE |
 
 ---
 

@@ -33,6 +33,7 @@ These documents are prerequisites for all subsequent sections. Readers who skip 
 | [Philosophy](philosophy.md) | Five architectural axioms that shape every design decision in Awo | All | No |
 | [Design Goals](design-goals.md) | Explicit goals, non-goals, constraints, and success criteria | All | Yes |
 | [Architecture Overview](architecture-overview.md) | 10,000-foot structural view: five layers, compilation pipeline, multi-tenancy, module system | All | No |
+| [Glossary Quick Reference](glossary-quick-ref.md) | One-line definitions for the most-used Awo terms | All | No |
 
 ---
 

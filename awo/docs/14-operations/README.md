@@ -29,6 +29,10 @@ Operations covers the processes operators follow to keep Awo deployments healthy
 |---|---|---|---|
 | [Migrations](migrations.md) | OPS-001 | Migration workflow, zero-downtime patterns, rollback | STABLE |
 | [Deployment](deployment.md) | OPS-002 | Container build, Kubernetes manifest, rolling deploy, Temporal worker lifecycle | STABLE |
+| [Troubleshooting](troubleshooting.md) | OPS-003 | Symptom-first guide: 503, 401, migration hangs, slow queries, RLS issues | STABLE |
+| [Performance Tuning](performance-tuning.md) | OPS-004 | PostgreSQL, Redis, PgBouncer, Fiber, Temporal worker tuning | STABLE |
+| [Upgrade Guide](upgrade-guide.md) | OPS-005 | Zero-downtime upgrade procedure, migration compatibility, Temporal versioning | STABLE |
+| [Backup and Restore](backup-restore.md) | OPS-006 | WAL archiving, point-in-time restore, Redis backup, disaster recovery | STABLE |
 
 ---
 

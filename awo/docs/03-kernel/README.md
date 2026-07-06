@@ -32,6 +32,7 @@ Every framework behavior during the Runtime Phase is derived from kernel outputs
 | [Compilation Pipeline](compilation-pipeline.md) | KERN-002 | Normative specification of the Initialization → Compile → Runtime phases | FROZEN |
 | [Entity Registry](registry.md) | KERN-003 | Registry contract: registration acceptance, validation, and sealing | FROZEN |
 | [Startup Sequence](startup-sequence.md) | KERN-004 | Hard dependency chain for process startup | STABLE |
+| [Custom Entity Registry](custom-entity-registry.md) | KERN-005 | Runtime per-tenant schema registry, mutation lock, concurrency rules | STABLE |
 
 ---
 

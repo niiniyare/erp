@@ -32,6 +32,8 @@ The Workflow Layer handles all asynchronous, durable, long-running processes. It
 | [Activities](activities.md) | WF-002 | Activity pattern, dependency injection, retry configuration | STABLE |
 | [Sagas](sagas.md) | WF-003 | Saga pattern, SagaCompensator, compensation ordering | STABLE |
 | [Outbox Pattern](outbox-pattern.md) | WF-004 | Transactional outbox: schema, relay, at-least-once dispatch | FROZEN |
+| [Signal Patterns](signal-patterns.md) | WF-005 | Temporal signals, queries, approval gates, state machines | STABLE |
+| [Scheduled Workflows](scheduled-workflows.md) | WF-006 | Temporal Schedules, per-tenant fan-out, recurring jobs | STABLE |
 
 ---
 

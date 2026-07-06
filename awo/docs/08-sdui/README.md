@@ -30,6 +30,9 @@ Awo uses Server-Driven UI (SDUI) to generate all standard ERP views without cust
 | [Page Schema](page-schema.md) | SDUI-001 | Page schema structure, caching, permission gating, serving | FROZEN |
 | [Page Builders](page-builders.md) | SDUI-002 | PageBuilderSet, custom view construction, SDUI primitives | STABLE |
 | [amis Integration](amis-integration.md) | SDUI-003 | amis SDK setup, theming, known limitations, dark mode | STABLE |
+| [Dashboard Patterns](dashboard-patterns.md) | SDUI-004 | KPI tiles, charts, embedded tables, feature-flag gating | STABLE |
+| [Form Patterns](form-patterns.md) | SDUI-005 | Conditional fields, cascading dropdowns, multi-step forms | STABLE |
+| [List Patterns](list-patterns.md) | SDUI-006 | Columns, row actions, bulk actions, cursor pagination | STABLE |
 
 ---
 

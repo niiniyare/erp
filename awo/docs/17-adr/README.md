@@ -37,6 +37,11 @@ ADRs are immutable once accepted — they record history. If a decision is rever
 | [ADR-008](adr-008-entity-naming-immutable.md) | Entity Names Are Immutable After First Migration | Accepted | — |
 | [ADR-009](adr-009-uuid-v7-primary-keys.md) | UUID v7 for Primary Keys | Accepted | — |
 | [ADR-010](adr-010-pgbouncer-transaction-mode.md) | PgBouncer Transaction Mode Required | Accepted | — |
+| [ADR-011](adr-011-decimal-for-money.md) | Use decimal.Decimal for All Monetary Amounts | Accepted | — |
+| [ADR-012](adr-012-fiber-http-framework.md) | Fiber v2 as the HTTP Framework | Accepted | — |
+| [ADR-013](adr-013-pgx-over-orm.md) | pgx Over ORM for Database Access | Accepted | — |
+| [ADR-014](adr-014-casbin-rbac.md) | Casbin for RBAC | Accepted | — |
+| [ADR-015](adr-015-golang-migrate.md) | golang-migrate for Schema Migrations | Accepted | — |
 
 ---
 

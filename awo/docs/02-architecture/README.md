@@ -32,6 +32,7 @@ Documents here define rules that are permanently binding on all contributors, al
 | [Architecture Laws](laws.md) | ARCH-001 | Twenty numbered laws permanently binding on all framework code | FROZEN |
 | [Architecture Invariants](invariants.md) | ARCH-002 | Runtime properties that must hold unconditionally in every deployment | FROZEN |
 | [Five-Layer Architecture](five-layer.md) | ARCH-003 | Normative specification of the five-layer dependency model | FROZEN |
+| [Module Boundary Rules](module-boundaries.md) | ARCH-004 | Cross-module import rules, service interface pattern, enforcement | FROZEN |
 
 ---
 

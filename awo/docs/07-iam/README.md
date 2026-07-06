@@ -30,6 +30,8 @@ The IAM module provides authentication, session management, and role-based acces
 | [Sessions](sessions.md) | IAM-002 | Session lifecycle, Redis storage, token format, expiry | FROZEN |
 | [Authentication](authentication.md) | IAM-003 | Credential verification, session creation, logout | STABLE |
 | [Password Policy](password-policy.md) | IAM-004 | bcrypt hashing, complexity rules, temporary passwords, reset flow | STABLE |
+| [Multi-Factor Authentication](mfa.md) | IAM-005 | TOTP enrollment, backup codes, MFA login flow, enforcement policy | STABLE |
+| [API Clients](api-clients.md) | IAM-006 | Machine-to-machine auth, client credentials, scope-based authz | STABLE |
 
 ---
 

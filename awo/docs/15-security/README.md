@@ -29,6 +29,8 @@ Security in Awo is structural — not a layer applied on top of existing logic. 
 | Document | ID | Purpose | Stability |
 |---|---|---|---|
 | [Security Model](security-model.md) | SEC-001 | Defense-in-depth layers, threat model, trust boundaries, compliance notes | STABLE |
+| [Input Validation](input-validation.md) | SEC-002 | Validation layers, SQL injection prevention, XSS, sensitive fields | STABLE |
+| [Hardening Guide](hardening-guide.md) | SEC-003 | Production hardening checklist: network, secrets, DB, Redis, headers, audit | STABLE |
 
 ---
 
