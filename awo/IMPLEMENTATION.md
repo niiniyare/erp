@@ -45,13 +45,34 @@ Module: `awo.so` (part of root module, packages under `awo.so/awo/...`)
 | 9 — examples | ✅ Done | `awo.so/awo/examples/finance` |
 | 9 — tests | 🔄 In Progress | Per-package *_test.go files |
 
-## Pending / Next
+## Phase 11 — Production Readiness
+
+| Item | Status | Notes |
+|---|---|---|
+| Dependency audit | ✅ Done | `docs/07-framework-dev/dependency-audit.md` |
+| Error catalog | ✅ Done | `docs/12-reference/error-catalog.md` |
+| v1.0 Review | ✅ Done | `V1_REVIEW.md` |
+| filter tests (all ops) | ✅ Done | +20 tests covering all predicates |
+| runtime/errors tests | ✅ Done | +22 tests, all Is* helpers, HTTPStatus |
+| runtime/tenant tests | ✅ Done | +10 tests, panic, isolation, SystemContext |
+| api/filterparse tests | ✅ Done | +18 tests; ParseQueryString exported |
+| cli scaffold + doctor | ✅ Done | scaffoldModule/Entity/Workflow, 8 doctor checks |
+| logging → slog | ✅ Done | zerolog removed from observability/logging |
+| tracing semconv | ✅ Done | Raw attribute strings used |
+| sdk/permissions Policy cleanup | ✅ Done | NoPolicy removed from presets (nil = no filter) |
+
+## Pending / Next (v1.1)
 
 | Item | Notes |
 |---|---|
-| Temporal worker setup | `awo/cmd/server` wires Temporal client + activity registrations |
-| Edge preloading | Join queries for `WithPreload` option |
-| Pagination cursors | Keyset pagination for high-volume entities |
+| RLS wiring | `set_tenant_context()` in every pgx repository operation |
+| Casbin enforcer activation | Wire `CasbinPolicies` from CompiledSchema to casbin Enforcer |
+| Fiber route registration | `api/router` reads `CompiledSchema.Routes` at startup |
+| Outbox Temporal wiring | Relay must trigger Temporal StartWorkflow after commit |
+| NamingSeries counter | Redis INCR + PostgreSQL sequence fallback |
+| fakestore StoreSuite | Run conformance suite; fix failures (skip TenantIsolation) |
+| api/handler unit tests | Tests with fakestore: create/get/list/update/delete/errors |
+| sdui field-type tests | One assertion per field type → amis control mapping |
 
 ## Completed (this session)
 

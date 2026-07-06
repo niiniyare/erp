@@ -64,6 +64,48 @@ func FromQuery(c *fiber.Ctx) (*filter.Filter, error) {
 	return filter.And(predicates...), nil
 }
 
+// ParseQueryString parses a raw URL query string (without the leading "?")
+// and returns the combined AND filter. Returns nil if no filter params are
+// found. This is the testable core extracted from [FromQuery].
+//
+//	f, err := filterparse.ParseQueryString("filter[status][eq]=active&filter[amount][gte]=100")
+func ParseQueryString(qs string) (*filter.Filter, error) {
+	var predicates []*filter.Filter
+	for _, part := range strings.Split(qs, "&") {
+		if part == "" {
+			continue
+		}
+		eqIdx := strings.IndexByte(part, '=')
+		if eqIdx < 0 {
+			continue
+		}
+		k := part[:eqIdx]
+		v := part[eqIdx+1:]
+		if !strings.HasPrefix(k, "filter[") {
+			continue
+		}
+		rest := k[len("filter["):]
+		brackClose := strings.Index(rest, "]")
+		if brackClose < 0 {
+			continue
+		}
+		field := rest[:brackClose]
+		rest = rest[brackClose+1:]
+		if len(rest) < 3 || rest[0] != '[' {
+			continue
+		}
+		op := strings.TrimSuffix(rest[1:], "]")
+		f := buildFilter(field, op, v)
+		if f != nil {
+			predicates = append(predicates, f)
+		}
+	}
+	if len(predicates) == 0 {
+		return nil, nil
+	}
+	return filter.And(predicates...), nil
+}
+
 func buildFilter(field, op, value string) *filter.Filter {
 	switch op {
 	case "eq":

@@ -51,6 +51,14 @@ A release is considered v1.0 when every item in this checklist is satisfied.
 6. **`VerifyChecksums` called in migration runner** — the cmd/migrate entrypoint must verify checksums before executing any plan.
 7. **`Fingerprint` used for Redis page-cache invalidation** — SDUI builder cache key must incorporate schema fingerprint.
 
+### Release Blockers (Phase 11 identified)
+
+See [V1_REVIEW.md](./V1_REVIEW.md) for full details.
+
+- 🔴 **Blocker 1**: `fakestore` must pass `conformance.StoreSuite` (skip TenantIsolation)
+- 🔴 **Blocker 2**: `awo/api/handler` needs unit tests with fakestore backend
+- 🔴 **Blocker 3**: `awo/sdui` field-type mapping needs per-type assertions
+
 ---
 
 ## Platform Modules (Complete)
@@ -74,6 +82,32 @@ Framework discoveries during platform implementation:
 - Template rendering belongs in the service layer, not in hooks (hooks must not call external services)
 - Driver pattern (RegisterDriver) decouples delivery from entity persistence cleanly
 - Notification delivery must be best-effort in AfterCreate hooks — Temporal activity preferred for durability
+
+---
+
+## Phase 11 — Production Readiness (Complete)
+
+All Phase 11 objectives completed. See [V1_REVIEW.md](./V1_REVIEW.md) for full review.
+
+### Deliverables
+
+| Deliverable | Status | Location |
+|-------------|--------|----------|
+| Dependency audit | ✅ Done | `docs/07-framework-dev/dependency-audit.md` |
+| Error catalog | ✅ Done | `docs/12-reference/error-catalog.md` |
+| v1.0 Readiness Review | ✅ Done | `V1_REVIEW.md` |
+| API consistency audit | ✅ Done | All exports reviewed; permissions.go Policy field removed from presets |
+| filter test coverage | ✅ Done | 20 new tests: Between/Contains/StartsWith/EndsWith/Custom/String |
+| runtime/errors test coverage | ✅ Done | 22 new tests: all error types, Is* helpers, HTTPStatus |
+| runtime/tenant test coverage | ✅ Done | 10 new tests: round-trip, panic, system context, isolation |
+| api/filterparse tests | ✅ Done | 18 new tests via ParseQueryString; `ParseQueryString` exported |
+| cli: scaffold.go | ✅ Done | `cmd/awo/scaffold.go` — scaffoldModule/Entity/Workflow |
+| cli: doctor.go | ✅ Done | `cmd/awo/doctor.go` — 8 environment checks |
+| observability/logging → slog | ✅ Done | Replaced zerolog with log/slog |
+| tracing semconv fix | ✅ Done | Raw attribute strings, no semconv sub-package |
+| Security audit | ✅ Done | Documented in V1_REVIEW.md §5 |
+| Performance review | ✅ Done | Documented in V1_REVIEW.md §6 |
+| Concurrency audit | ✅ Done | Documented in V1_REVIEW.md §7 |
 
 ---
 
