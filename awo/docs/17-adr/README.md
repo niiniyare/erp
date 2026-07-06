@@ -1,0 +1,45 @@
+---
+title: "Architecture Decision Records — Section Overview"
+id: adr-000-readme
+status: accepted
+category: GUIDE
+stability: STABLE
+audience: [module-authors, framework-authors]
+since: "1.0"
+normative-level: informative
+related:
+  - "[Architecture Laws](../02-architecture/laws.md)"
+  - "[Invariants](../02-architecture/invariants.md)"
+  - "[Awo Glossary](../GLOSSARY.md)"
+---
+
+# Architecture Decision Records
+
+**Section 17 | Architecture Decision Records (ADRs)**
+
+Architecture Decision Records capture the reasoning behind significant decisions in Awo's design. Each ADR documents: the context, the decision, the consequences (positive and negative), and alternatives that were considered and rejected.
+
+ADRs are immutable once accepted — they record history. If a decision is reversed, a new ADR is written superseding the original.
+
+---
+
+## Index
+
+| ADR | Title | Status | Supersedes |
+|---|---|---|---|
+| [ADR-001](adr-001-temporal-for-workflows.md) | Temporal for Workflow Orchestration | Accepted | — |
+| [ADR-002](adr-002-postgres-rls-tenancy.md) | PostgreSQL RLS for Tenant Isolation | Accepted | — |
+| [ADR-003](adr-003-amis-sdui.md) | amis for Server-Driven UI | Accepted | — |
+| [ADR-004](adr-004-filter-dsl.md) | Declarative Filter DSL over Query Builders | Accepted | — |
+| [ADR-005](adr-005-server-side-sessions.md) | Server-Side Sessions over JWT | Accepted | — |
+| [ADR-006](adr-006-outbox-pattern.md) | Transactional Outbox for Workflow Dispatch | Accepted | — |
+| [ADR-007](adr-007-no-lazy-loading.md) | No Lazy Loading for Edges | Accepted | — |
+| [ADR-008](adr-008-entity-naming-immutable.md) | Entity Names Are Immutable After First Migration | Accepted | — |
+| [ADR-009](adr-009-uuid-v7-primary-keys.md) | UUID v7 for Primary Keys | Accepted | — |
+| [ADR-010](adr-010-pgbouncer-transaction-mode.md) | PgBouncer Transaction Mode Required | Accepted | — |
+
+---
+
+## How to Write a New ADR
+
+See the [ADR Template](../00-documentation/adr-template.md) for the required format. ADRs are proposed as pull requests and accepted only after architecture review. An accepted ADR may be superseded but never deleted.

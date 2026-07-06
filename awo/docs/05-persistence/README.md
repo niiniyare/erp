@@ -30,6 +30,7 @@ The persistence section specifies the interfaces and DSLs through which all enti
 | [Filter DSL](filter-dsl.md) | PERS-002 | Declarative predicate DSL: operators, composition, wire format | FROZEN |
 | [System Entities](system-entities.md) | PERS-003 | SQL-backed entities: schema conventions, mandatory types, migration requirements | FROZEN |
 | [Custom Entities](custom-entities.md) | PERS-004 | JSONB-backed entities: storage model, custom fields, escalation criteria | STABLE |
+| [Cursors and Pagination](cursors-and-pagination.md) | PERS-005 | Page-number vs cursor (keyset) pagination, PageInfo, API wire format | STABLE |
 
 ---
 

@@ -29,6 +29,7 @@ The IAM module provides authentication, session management, and role-based acces
 | [RBAC](rbac.md) | IAM-001 | Casbin model, role hierarchy, permission evaluation, system roles | FROZEN |
 | [Sessions](sessions.md) | IAM-002 | Session lifecycle, Redis storage, token format, expiry | FROZEN |
 | [Authentication](authentication.md) | IAM-003 | Credential verification, session creation, logout | STABLE |
+| [Password Policy](password-policy.md) | IAM-004 | bcrypt hashing, complexity rules, temporary passwords, reset flow | STABLE |
 
 ---
 

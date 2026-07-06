@@ -32,6 +32,7 @@ Domain Layer code has zero external dependencies — it imports only `awo/def/`,
 | [Hooks](hooks.md) | DOM-003 | Lifecycle hook system, HookRegistration, execution order | FROZEN |
 | [Policy Functions](policies.md) | DOM-004 | Row-level filter injection, PolicyFunc composition | FROZEN |
 | [Actions](actions.md) | DOM-005 | Custom operations, ActionDef, ActionContext, ActionResult | STABLE |
+| [Naming Series](naming-series.md) | DOM-006 | Format string syntax, atomic counter, tenant override, ResetOnYear | STABLE |
 
 ---
 
