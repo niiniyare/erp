@@ -23,6 +23,7 @@ Module: `awo.so` (part of root module, packages under `awo.so/awo/...`)
 | 7 — cache abstraction | ✅ Done | `awo.so/awo/cache` |
 | 7 — lock abstraction | ✅ Done | `awo.so/awo/lock` |
 | 7 — platform/tenant | ✅ Done | `awo.so/awo/platform/tenant` |
+| 7 — platform/organization | ✅ Done | `awo.so/awo/platform/organization` |
 | 7 — platform/iam | ✅ Done | `awo.so/awo/platform/iam` |
 | 7 — platform/audit | ✅ Done | `awo.so/awo/platform/audit` |
 | 7 — platform/flags | ✅ Done | `awo.so/awo/platform/flags` |

@@ -1,17 +1,14 @@
 // Package tenant implements the Awo platform Tenant module.
 //
-// The tenant module manages the top-level isolation boundary: every request
-// is scoped to exactly one tenant. It owns three system entities:
+// The tenant module manages the top-level infrastructure isolation boundary:
+// every request is scoped to exactly one tenant. It owns one system entity:
 //
-//   - platform_tenant   — the tenant record itself (lifecycle state machine)
-//   - platform_org_unit — organisational hierarchy (company/division/department/branch/team)
-//   - platform_branch   — physical locations linked to org units
+//   - platform_tenant — the tenant record itself (lifecycle state machine)
 //
-// All entities are SystemDefinitions because they are accessible before
-// per-tenant schemas load and because they are FK targets for every other
-// module in the system.
+// Organisational hierarchy (org units, branches, divisions, departments, teams)
+// lives in the platform/organization module — awo.so/awo/platform/organization.
 //
-// Registration happens in init() so that the definitions are available to the
+// Registration happens in init() so that the definition is available to the
 // compiler before any request is served.
 package tenant
 
@@ -19,6 +16,4 @@ import "awo.so/awo/def"
 
 func init() {
 	def.Register(&Definition)
-	def.Register(&OrgUnitDefinition)
-	def.Register(&BranchDefinition)
 }

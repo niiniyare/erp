@@ -42,7 +42,6 @@ type CreateInput struct {
 	Locale       string
 	Timezone     string
 	Currency     string
-	CompanySize  string
 }
 
 // ListOptions controls pagination and filtering for tenant list queries.
@@ -62,8 +61,7 @@ type TenantDTO struct {
 	Country     string
 	Locale      string
 	Timezone    string
-	Currency    string
-	CompanySize string
+	Currency string
 }
 
 // stubTenantService is the stub implementation. Replace with a real

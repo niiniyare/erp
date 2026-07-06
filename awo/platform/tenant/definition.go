@@ -5,6 +5,10 @@
 // Tenant records are stored in the global (non-RLS) schema and are readable
 // by the platform_reader role only.
 //
+// platform_tenant is an infrastructure boundary only. Organisational hierarchy
+// (divisions, departments, branches, teams) lives in the platform/organization
+// package — see awo.so/awo/platform/organization.
+//
 // Lifecycle state machine:
 //
 //	PENDING → ACTIVE → SUSPENDED → ACTIVE   (payment resolved)
@@ -31,7 +35,7 @@ var Definition = def.SystemDefinition{
 		{
 			Name:     "name",
 			Type:     def.FieldTypeData,
-			Label:    "Organisation Name",
+			Label:    "Name",
 			Required: true,
 			MaxLen:   255,
 		},
@@ -86,12 +90,6 @@ var Definition = def.SystemDefinition{
 			Default: func() any { return "KES" },
 		},
 		{
-			Name:    "company_size",
-			Type:    def.FieldTypeSelect,
-			Label:   "Company Size",
-			Options: []string{"MICRO", "SMALL", "MEDIUM", "LARGE"},
-		},
-		{
 			Name:     "contact_email",
 			Type:     def.FieldTypeData,
 			Label:    "Contact Email",
@@ -137,129 +135,4 @@ var Definition = def.SystemDefinition{
 	},
 }
 
-// OrgUnitDefinition is the platform_org_unit entity — organisational hierarchy nodes.
-var OrgUnitDefinition = def.SystemDefinition{
-	Name:        "platform_org_unit",
-	Module:      "platform",
-	Label:       "Org Unit",
-	LabelPlural: "Org Units",
 
-	Fields: []def.FieldDef{
-		{
-			Name:       "name",
-			Type:       def.FieldTypeData,
-			Label:      "Name",
-			Required:   true,
-			Searchable: true,
-			MaxLen:     255,
-		},
-		{
-			Name:      "code",
-			Type:      def.FieldTypeData,
-			Label:     "Code",
-			Required:  true,
-			Unique:    true,
-			Immutable: true,
-			MaxLen:    50,
-		},
-		{
-			Name:       "tenant_id",
-			Type:       def.FieldTypeLink,
-			Label:      "Tenant",
-			LinkTarget: "platform_tenant",
-			Required:   true,
-			Immutable:  true,
-		},
-		{
-			Name:       "parent_id",
-			Type:       def.FieldTypeLink,
-			Label:      "Parent Org Unit",
-			LinkTarget: "platform_org_unit",
-		},
-		{
-			Name:    "type",
-			Type:    def.FieldTypeSelect,
-			Label:   "Type",
-			Options: []string{"company", "division", "department", "branch", "team"},
-		},
-		{
-			Name:    "active",
-			Type:    def.FieldTypeBool,
-			Label:   "Active",
-			Default: func() any { return true },
-		},
-	},
-
-	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
-	},
-}
-
-// BranchDefinition is the platform_branch entity — physical branch locations.
-var BranchDefinition = def.SystemDefinition{
-	Name:        "platform_branch",
-	Module:      "platform",
-	Label:       "Branch",
-	LabelPlural: "Branches",
-
-	Fields: []def.FieldDef{
-		{
-			Name:       "name",
-			Type:       def.FieldTypeData,
-			Label:      "Name",
-			Required:   true,
-			Searchable: true,
-			MaxLen:     255,
-		},
-		{
-			Name:      "code",
-			Type:      def.FieldTypeData,
-			Label:     "Code",
-			Required:  true,
-			Unique:    true,
-			Immutable: true,
-			MaxLen:    50,
-		},
-		{
-			Name:       "tenant_id",
-			Type:       def.FieldTypeLink,
-			Label:      "Tenant",
-			LinkTarget: "platform_tenant",
-			Required:   true,
-			Immutable:  true,
-		},
-		{
-			Name:       "org_unit_id",
-			Type:       def.FieldTypeLink,
-			Label:      "Org Unit",
-			LinkTarget: "platform_org_unit",
-		},
-		{
-			Name:  "address",
-			Type:  def.FieldTypeSmallText,
-			Label: "Address",
-		},
-		{
-			Name:   "phone",
-			Type:   def.FieldTypeData,
-			Label:  "Phone",
-			MaxLen: 30,
-		},
-		{
-			Name:    "active",
-			Type:    def.FieldTypeBool,
-			Label:   "Active",
-			Default: func() any { return true },
-		},
-	},
-
-	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
-	},
-}
