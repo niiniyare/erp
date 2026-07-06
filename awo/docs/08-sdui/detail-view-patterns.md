@@ -115,7 +115,7 @@ return psc.Marshal(amis.Page(amis.PageProps{
         {
             Title: "Change History",
             Body: amis.CRUD(amis.CRUDProps{
-                API: "GET /api/v1/entities/audit_log?entity_type=finance_invoice&entity_id=${id}",
+                API: "GET /api/v1/entities/iam_audit_log?entity_type=finance_invoice&entity_id=${id}",
                 Columns: []amis.Column{
                     {Name: "occurred_at", Label: "When", Type: "datetime"},
                     {Name: "actor_id", Label: "By"},

@@ -157,7 +157,7 @@ func (v *InvoiceValidator) BeforeCreate(ctx context.Context, record *def.EntityR
 type InvoiceAuditHook struct{}
 
 func (h *InvoiceAuditHook) AfterCreate(ctx context.Context, record *def.EntityRecord) error {
-	// TODO: write to audit_log via AuditService injected at construction time.
+	// TODO: write to iam_audit_log via AuditService injected at construction time.
 	// This is a placeholder — real implementation uses dependency injection.
 	return nil
 }

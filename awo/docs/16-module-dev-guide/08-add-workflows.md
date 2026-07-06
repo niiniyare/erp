@@ -171,7 +171,7 @@ func (a *CRMActivities) SendWelcomeEmailActivity(ctx context.Context, input Send
     }
 
     // Record that the email was sent (for idempotency on retry)
-    // TODO: record in audit_log or a dedicated email_log entity
+    // TODO: record in iam_audit_log or a dedicated email_log entity
     return nil
 }
 ```

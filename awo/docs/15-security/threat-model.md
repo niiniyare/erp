@@ -138,7 +138,7 @@ Awo's threat model: what we protect, who the adversaries are, and what controls 
 
 **Vector**: Covering tracks after a breach by modifying audit log entries.
 
-**Mitigation**: App role has no `UPDATE` or `DELETE` on `audit_log`. Modification requires direct DB access as the migration role or superuser — detected by DB-level audit (pgaudit).
+**Mitigation**: App role has no `UPDATE` or `DELETE` on `iam_audit_log`. Modification requires direct DB access as the migration role or superuser — detected by DB-level audit (pgaudit).
 
 ### Temporal Workflow Injection
 

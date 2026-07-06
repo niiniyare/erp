@@ -43,12 +43,12 @@ Not captured in audit log (covered by application log):
 
 ## 2. Audit Log Entity
 
-The `audit_log` table is a global table (no RLS) — readable by platform admins across tenants for compliance. Tenant admins can read their own tenant's entries only (enforced in the service layer, not RLS).
+The `iam_audit_log` table is a global table (no RLS) — readable by platform admins across tenants for compliance. Tenant admins can read their own tenant's entries only (enforced in the service layer, not RLS).
 
 ```go
 // In internal/platform/audit/definition.go
 var AuditLogDefinition = definition.SystemDefinition{
-    Name:   "audit_log",
+    Name:   "iam_audit_log",
     Module: "audit",
     Fields: []definition.FieldDef{
         {Name: "tenant_id",      Type: definition.FieldData, Required: true, Immutable: true},
@@ -186,10 +186,10 @@ SDUI history panel pattern:
 
 ```go
 // Include in entity detail page builder
-if psc.IfPermitted("audit_log", "read") {
+if psc.IfPermitted("iam_audit_log", "read") {
     historyPanel := amis.Panel("Change History",
         amis.CRUD(amis.CRUDProps{
-            API: fmt.Sprintf("GET /api/v1/entities/audit_log?entity_type=%s&entity_id=${id}", entityType),
+            API: fmt.Sprintf("GET /api/v1/entities/iam_audit_log?entity_type=%s&entity_id=${id}", entityType),
             Columns: []amis.Column{
                 {Name: "occurred_at", Label: "When", Type: "datetime"},
                 {Name: "actor_id",   Label: "By"},
@@ -229,7 +229,7 @@ func AuditLogRetentionWorkflow(ctx workflow.Context) error {
 
 The audit log table has:
 - `Write` permission set to `role:system.internal_only` — no user or API client can modify entries
-- DB-level: no `UPDATE` or `DELETE` grants to the app role on `audit_log` table (migration enforces this)
+- DB-level: no `UPDATE` or `DELETE` grants to the app role on `iam_audit_log` table (migration enforces this)
 - All `Immutable: true` fields — framework rejects any update attempt at the domain layer
 
 For high-assurance environments, each audit entry can be chained via a hash (SHA-256 of previous entry + current content). The platform setting `audit.chain_hashing` enables this. Verification: `GET /api/v1/platform/audit/verify-chain?tenant_id={id}`.

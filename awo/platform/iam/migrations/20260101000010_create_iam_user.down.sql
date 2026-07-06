@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS iam_user_role;
+DROP TABLE IF EXISTS iam_api_token;
+DROP TABLE IF EXISTS iam_session;
+DROP TABLE IF EXISTS iam_role;
+DROP TABLE IF EXISTS iam_user;

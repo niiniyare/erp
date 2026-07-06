@@ -192,7 +192,7 @@ Flag lifecycle changes are communicated via changelog and documented in ADRs for
 | Flag Key | Default | Description |
 |---|---|---|
 | `platform.tenant_id_query_param` | true | Allow `?tenant_id=` in requests (disable in prod) |
-| `platform.audit_log_enabled` | true | Record audit log entries (cannot be disabled) |
+| `platform.iam_audit_log_enabled` | true | Record audit log entries (cannot be disabled) |
 | `iam.mfa_required` | false | Require MFA for all tenant users |
 | `iam.mfa_email_otp_enabled` | true | Allow email OTP as MFA method |
 | `iam.session_ttl_seconds` | 28800 | Session TTL in seconds |

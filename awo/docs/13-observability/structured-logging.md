@@ -166,7 +166,7 @@ Never log and re-return the same error — log once at the top of the call stack
 | Log type | System | Purpose |
 |---|---|---|
 | **Application logs** | `slog` → stdout | Debugging, performance, errors |
-| **Audit log** | `audit_log` DB table | Regulatory compliance, tamper-evident record |
+| **Audit log** | `iam_audit_log` DB table | Regulatory compliance, tamper-evident record |
 
 Do not confuse them. Application logs may be rotated, sampled, or lost under high load. The audit log is durable, immutable, and retained for compliance purposes.
 

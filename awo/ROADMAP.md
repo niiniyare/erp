@@ -53,6 +53,30 @@ A release is considered v1.0 when every item in this checklist is satisfied.
 
 ---
 
+## Platform Modules (Complete)
+
+All 8 platform modules are implemented under `awo/platform/`. Each has: entity definitions, hooks, service layer, SQL migrations (.up.sql/.down.sql).
+
+| Module | Package | Key Entities | Service Methods |
+|---|---|---|---|
+| Tenant | `platform/tenant` | platform_tenant, platform_org_unit, platform_branch | Create, Activate, Suspend, Archive |
+| IAM | `platform/iam` | iam_user (mandatory), iam_role, iam_session, iam_api_token, iam_user_role | Login, ValidateToken, Logout |
+| Audit | `platform/audit` | iam_audit_log (append-only) | Write, ComputeDiff |
+| Settings | `platform/settings` | platform_setting | Get, GetString, Set (scope hierarchy) |
+| Feature Flags | `platform/flags` | platform_feature_flag, platform_flag_tenant_override | IsEnabled, Invalidate |
+| Metadata | `platform/metadata` | platform_custom_field | FieldsForEntity, AddField, DeactivateField |
+| Module Registry | `platform/registry` | platform_module, platform_tenant_module | RegisterModule, Activate, Disable, ListActive |
+| Notifications | `platform/notifications` | platform_notification, platform_notification_template | Send, MarkRead, UnreadCount, MarkAllRead |
+
+Framework discoveries during platform implementation:
+- `def.Filter` is `interface{}` — PolicyFunc returning nil is sufficient for admin-scoped entities
+- `driver.BulkUpdate` with `driver.Patch{Set: ...}` is the correct API for MarkAllRead
+- Template rendering belongs in the service layer, not in hooks (hooks must not call external services)
+- Driver pattern (RegisterDriver) decouples delivery from entity persistence cleanly
+- Notification delivery must be best-effort in AfterCreate hooks — Temporal activity preferred for durability
+
+---
+
 ## v1.1 — Production Hardening
 
 - [ ] `awo/driver/postgres` — production pgx RecordRepository implementation
@@ -62,8 +86,9 @@ A release is considered v1.0 when every item in this checklist is satisfied.
 - [ ] `awo/cache` — Redis page-schema cache with Fingerprint-keyed invalidation
 - [ ] `awo/outbox` — Temporal start-after-commit retry queue
 - [ ] `awo/naming` — NamingSeries atomic counter (Redis + PostgreSQL sequence fallback)
-- [ ] Custom field runtime extension (metadata module)
-- [ ] Audit log integration in repository layer
+- [ ] Audit log integration in repository layer (AfterSave hook writing to iam_audit_log)
+- [ ] Notifications: wire TemporalDriver for at-least-once delivery guarantee
+- [ ] platform/tenant service: wire EntityRepository (currently interface only)
 
 ## v1.2 — Developer Experience
 

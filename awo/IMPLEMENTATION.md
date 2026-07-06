@@ -29,6 +29,7 @@ Module: `awo.so` (part of root module, packages under `awo.so/awo/...`)
 | 7 — platform/settings | ✅ Done | `awo.so/awo/platform/settings` |
 | 7 — platform/metadata | ✅ Done | `awo.so/awo/platform/metadata` |
 | 7 — platform/registry | ✅ Done | `awo.so/awo/platform/registry` |
+| 7 — platform/notifications | ✅ Done | `awo.so/awo/platform/notifications` |
 | 7 — internal/dberr | ✅ Done | `awo.so/awo/internal/dberr` |
 | 8 — bootstrap | ✅ Done | `awo.so/awo/bootstrap` |
 | 8 — api/response | ✅ Done | `awo.so/awo/api/response` |
@@ -65,6 +66,10 @@ Module: `awo.so` (part of root module, packages under `awo.so/awo/...`)
 | Casbin RBAC integration | `api/authz` enforcer wired into `router.RegisterOptions.Authz`; per-entity per-action; nil = RBAC disabled |
 | IAM HTTP handlers | `platform/iam/handler.go`; POST /api/v1/auth/login, /logout, GET /me |
 | Migration CLI | `cmd/migrate` wired to `golang-migrate/v4`; up/down/version/force; run `go mod tidy` to resolve |
+| Platform notifications | `platform/notifications`: definition.go, hooks.go, driver.go, service.go, module.go, migrations/ |
+| Platform metadata service | `platform/metadata/service.go`: FieldsForEntity, AddField, DeactivateField |
+| Platform registry service | `platform/registry/service.go`: RegisterModule, Activate, Disable, ListActive |
+| SQL migrations | All 8 platform modules have .up.sql/.down.sql pairs under each module's migrations/ directory |
 
 ## Package Dependency Graph
 

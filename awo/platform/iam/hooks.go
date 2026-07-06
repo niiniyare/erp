@@ -11,6 +11,28 @@ import (
 
 var emailRe = regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 
+// UserNormalizeHook lowercases email before validation so downstream uniqueness
+// checks are case-insensitive without a functional index.
+type UserNormalizeHook struct{}
+
+func (h *UserNormalizeHook) BeforeValidate(_ context.Context, rec *def.EntityRecord) error {
+	email := strings.ToLower(strings.TrimSpace(rec.GetString("email")))
+	rec.Set("email", email)
+	return nil
+}
+
+// AccountLockHook auto-locks the account when failed_attempts reaches 5.
+// Runs on Update — the auth layer increments failed_attempts on bad password.
+type AccountLockHook struct{}
+
+func (h *AccountLockHook) BeforeUpdate(_ context.Context, rec *def.EntityRecord, _ *def.EntityRecord) error {
+	attempts := rec.GetInt("failed_attempts")
+	if attempts >= 5 {
+		rec.Set("status", "locked")
+	}
+	return nil
+}
+
 // UserValidator enforces pre-create rules on iam_user records.
 type UserValidator struct{}
 

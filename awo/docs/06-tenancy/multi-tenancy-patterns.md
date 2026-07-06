@@ -46,7 +46,7 @@ Platform administrators sometimes need to query across all tenants. The `platfor
 
 ```go
 // Platform admin handler — reads global table directly
-// Global tables (tenants, audit_log, etc.) have no RLS
+// Global tables (tenants, iam_audit_log, etc.) have no RLS
 func ListAllTenantsHandler(c *fiber.Ctx) error {
     // tenantRepo reads from the global `tenants` table (no RLS)
     tenants, _, err := tenantRepo.QueryGlobal(c.Context(), filter.All())

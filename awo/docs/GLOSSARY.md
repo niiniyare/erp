@@ -198,7 +198,7 @@ The highest stability class. Documents or interfaces marked FROZEN may not chang
 ## G
 
 **Global Table**
-A PostgreSQL table that is not → tenant-scoped and therefore has no → RLS policy. Global tables are readable by the application role but not writable by application code during requests. Examples: `tenants`, `audit_log`, `timezones`, `currencies`, `countries`, `paye_bands`, `platform_admins`.
+A PostgreSQL table that is not → tenant-scoped and therefore has no → RLS policy. Global tables are readable by the application role but not writable by application code during requests. Examples: `tenants`, `iam_audit_log`, `timezones`, `currencies`, `countries`, `paye_bands`, `platform_admins`.
 
 **golang-migrate**
 The migration tool used by Awo for all schema changes. Applies `.up.sql` and `.down.sql` file pairs in version-timestamp order. All schema changes must go through golang-migrate; direct DDL execution against the production database outside the migration runner is prohibited. See: → Migration.

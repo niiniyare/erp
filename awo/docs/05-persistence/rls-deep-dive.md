@@ -106,7 +106,7 @@ These tables are accessible without tenant context — they contain cross-tenant
 
 ```
 tenants           — read-only after bootstrap
-audit_log         — read by service layer with explicit tenant filter
+iam_audit_log         — read by service layer with explicit tenant filter
 timezones         — reference data
 currencies        — reference data
 countries         — reference data
@@ -134,7 +134,7 @@ JOIN pg_namespace n ON n.oid = c.relnamespace
 WHERE n.nspname = 'public'
   AND c.relkind = 'r'
   AND c.relname NOT IN (
-    'tenants', 'audit_log', 'timezones', 'currencies', 'countries',
+    'tenants', 'iam_audit_log', 'timezones', 'currencies', 'countries',
     'paye_bands', 'platform_admins', 'casbin_rule', 'schema_migrations',
     'outbox_events', 'naming_series_counters'
   )

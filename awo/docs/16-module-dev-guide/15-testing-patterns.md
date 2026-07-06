@@ -126,7 +126,7 @@ func TestInvoiceCreationHookChain(t *testing.T) {
     // Verify audit log entry was created
     var count int
     testDB.QueryRow(ctx,
-        `SELECT COUNT(*) FROM audit_log WHERE entity_type = 'finance_invoice' AND entity_id = $1`,
+        `SELECT COUNT(*) FROM iam_audit_log WHERE entity_type = 'finance_invoice' AND entity_id = $1`,
         invoice.ID,
     ).Scan(&count)
     assert.Equal(t, 1, count)

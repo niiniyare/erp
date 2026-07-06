@@ -33,7 +33,7 @@ These entities exist before any business module is activated:
 | `iam_role` | `iam_roles` | Role definitions; Casbin reads these directly |
 | `iam_permission` | `iam_permissions` | Permission assignments; Casbin-consumed |
 | `iam_session` | Stored in Redis only | Session tokens are Redis-native; not in PostgreSQL |
-| `audit_log` | `audit_log` | Tamper-evident; SQL immutability constraints enforced at DB level |
+| `iam_audit_log` | `iam_audit_log` | Tamper-evident; SQL immutability constraints enforced at DB level |
 | `naming_series_counter` | `naming_series_counters` | Atomic counter requires `UPDATE ... RETURNING`; JSONB cannot provide this |
 | `custom_field_def` | `custom_field_definitions` | Schema metadata; must persist before custom entity data |
 | `platform_setting` | `platform_settings` | Settings hierarchy; read at every request, must be fast |
@@ -107,7 +107,7 @@ These tables are not tenant-scoped:
 | Table | Purpose |
 |---|---|
 | `tenants` | Platform tenant registry |
-| `audit_log` | Cross-tenant tamper-evident log |
+| `iam_audit_log` | Cross-tenant tamper-evident log |
 | `timezones` | IANA timezone catalog |
 | `currencies` | ISO 4217 currency codes |
 | `countries` | ISO 3166 country codes |

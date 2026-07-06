@@ -178,8 +178,8 @@ The payload is the output of `InputBuilder` — serialized to JSON. If the entit
 Every entity event automatically creates an audit log entry:
 
 ```sql
--- audit_log schema (excerpt)
-INSERT INTO audit_log (tenant_id, entity_type, entity_id, event, actor_id, before_state, after_state, timestamp)
+-- iam_audit_log schema (excerpt)
+INSERT INTO iam_audit_log (tenant_id, entity_type, entity_id, event, actor_id, before_state, after_state, timestamp)
 VALUES ($1, $2, $3, $4, $5, $6, $7, NOW());
 ```
 

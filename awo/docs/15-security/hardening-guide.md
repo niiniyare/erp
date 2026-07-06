@@ -89,7 +89,7 @@ Verify RLS coverage:
 SELECT relname, relrowsecurity, relforcerowsecurity
 FROM pg_class
 WHERE relkind = 'r'
-  AND relname NOT IN ('tenants', 'audit_log', 'schema_migrations')
+  AND relname NOT IN ('tenants', 'iam_audit_log', 'schema_migrations')
   AND relrowsecurity = false;
 -- Result MUST be empty
 ```
@@ -153,16 +153,16 @@ Setting: iam.platform_admin_session_ttl_seconds = 3600   (1 hour)
 | Item | Requirement |
 |---|---|
 | Audit log enabled for all entity mutations | MUST (enforced by framework) |
-| Audit log entries are immutable | MUST (enforced by framework — no UPDATE/DELETE on audit_log table) |
+| Audit log entries are immutable | MUST (enforced by framework — no UPDATE/DELETE on iam_audit_log table) |
 | Audit log retained for ≥ 7 years (Kenya DPA 2019) | MUST for regulated data |
 | Audit log exported to append-only external store | SHOULD for tamper evidence |
 
-The `audit_log` table has no `UPDATE` or `DELETE` grants for the app role. Verify:
+The `iam_audit_log` table has no `UPDATE` or `DELETE` grants for the app role. Verify:
 
 ```sql
 SELECT grantee, privilege_type
 FROM information_schema.role_table_grants
-WHERE table_name = 'audit_log'
+WHERE table_name = 'iam_audit_log'
   AND grantee = 'awo_app';
 -- Only INSERT and SELECT should appear
 ```

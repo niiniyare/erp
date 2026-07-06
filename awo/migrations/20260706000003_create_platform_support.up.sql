@@ -2,7 +2,7 @@
 --            and the transactional outbox table.
 
 -- Audit log (global schema — no RLS, read-only for app role)
-CREATE TABLE IF NOT EXISTS audit_log (
+CREATE TABLE IF NOT EXISTS iam_audit_log (
     id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id        UUID NOT NULL REFERENCES platform_tenant(id),
     tenant_id_ref    VARCHAR(36),
@@ -24,10 +24,10 @@ CREATE TABLE IF NOT EXISTS audit_log (
 
 -- Audit log is globally readable by platform admins and filtered by tenant for tenant admins.
 -- No RLS — the app layer filters by tenant_id_ref.
-CREATE INDEX IF NOT EXISTS audit_log_tenant_idx   ON audit_log (tenant_id_ref);
-CREATE INDEX IF NOT EXISTS audit_log_entity_idx   ON audit_log (entity_name, record_id);
-CREATE INDEX IF NOT EXISTS audit_log_actor_idx    ON audit_log (actor_id);
-CREATE INDEX IF NOT EXISTS audit_log_created_idx  ON audit_log (created_at DESC);
+CREATE INDEX IF NOT EXISTS iam_audit_log_tenant_idx   ON iam_audit_log (tenant_id_ref);
+CREATE INDEX IF NOT EXISTS iam_audit_log_entity_idx   ON iam_audit_log (entity_name, record_id);
+CREATE INDEX IF NOT EXISTS iam_audit_log_actor_idx    ON iam_audit_log (actor_id);
+CREATE INDEX IF NOT EXISTS iam_audit_log_created_idx  ON iam_audit_log (created_at DESC);
 
 -- Feature flags (global — no RLS)
 CREATE TABLE IF NOT EXISTS platform_feature_flag (

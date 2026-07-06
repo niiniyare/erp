@@ -36,7 +36,7 @@ Platform modules are loaded unconditionally on every deployment. They cannot be 
 | IAM | `internal/platform/iam` | `platform.iam` | `user`, `role`, `permission`, `session` |
 | Feature Flags | `internal/platform/flags` | `platform.flags` | `feature_flag`, `flag_override` |
 | Settings | `internal/platform/settings` | `platform.settings` | `setting_definition`, `setting_value` |
-| Audit Log | `internal/platform/audit` | `platform.audit` | `audit_log` |
+| Audit Log | `internal/platform/audit` | `platform.audit` | `iam_audit_log` |
 | Metadata | `internal/platform/metadata` | `platform.metadata` | `custom_field_def`, `custom_field_value` |
 | Module Registry | `internal/platform/registry` | `platform.registry` | `installed_module` |
 
@@ -163,12 +163,12 @@ The Audit Log module records every data mutation for legal compliance and incide
 
 **Key responsibilities:**
 - Automatic audit entry for every entity create, update, delete, and action
-- Tamper-evident records: entries are immutable (no UPDATE or DELETE on audit_log)
+- Tamper-evident records: entries are immutable (no UPDATE or DELETE on iam_audit_log)
 - Tenant-scoped but accessible only to `role:tenant.admin` and `role:platform-admin`
 - Audit log entries include: tenant, entity type, record ID, actor, operation, before/after JSONB, timestamp, request ID
 
 **Core entity:**
-- `audit_log` — system entity; append-only; no RLS delete policy
+- `iam_audit_log` — system entity; append-only; no RLS delete policy
 
 **Sensitive field handling:** Fields declared `Sensitive: true` in `EntityDefinition` appear in audit log entries as `"[REDACTED]"` — consistent with [INV-006](../02-architecture/invariants.md#inv-006) and [LAW-013](../02-architecture/laws.md#law-013).
 

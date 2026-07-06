@@ -112,7 +112,7 @@ Key tables and their growth rates:
 
 | Table | Rows/month (per active tenant) | Size/row |
 |---|---|---|
-| `audit_log` | ~5000 (all entity mutations) | ~500 bytes |
+| `iam_audit_log` | ~5000 (all entity mutations) | ~500 bytes |
 | `finance_invoice` | ~200 | ~2 KB |
 | `finance_journal_entry` | ~500 | ~1 KB |
 | `hr_attendance` | ~500 (daily per employee) | ~200 bytes |
@@ -121,7 +121,7 @@ Key tables and their growth rates:
 Estimate for 100 tenants after 1 year:
 
 ```
-audit_log:            100 × 5000 × 12 × 500B  ≈ 3 GB
+iam_audit_log:            100 × 5000 × 12 × 500B  ≈ 3 GB
 finance_invoice:      100 × 200 × 12 × 2KB    ≈ 480 MB
 journal_entries:      100 × 500 × 12 × 1KB    ≈ 600 MB
 Total (all tables):   ≈ 10–20 GB/year

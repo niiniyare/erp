@@ -54,7 +54,7 @@ var UserDefinition = def.SystemDefinition{
 			Name:    "status",
 			Type:    def.FieldTypeSelect,
 			Label:   "Status",
-			Options: []string{"pending_verification", "active", "suspended", "deleted"},
+			Options: []string{"pending_verification", "active", "suspended", "locked", "deleted"},
 			Default: func() any { return "pending_verification" },
 		},
 		{
@@ -64,6 +64,17 @@ var UserDefinition = def.SystemDefinition{
 			// LinkTarget is "platform_tenant" — resolved by compiler.
 			LinkTarget: "platform_tenant",
 			Required:   true,
+		},
+		{
+			Name:    "failed_attempts",
+			Type:    def.FieldTypeInt,
+			Label:   "Failed Login Attempts",
+			Default: func() any { return int64(0) },
+		},
+		{
+			Name:  "locked_until",
+			Type:  def.FieldTypeDateTime,
+			Label: "Locked Until",
 		},
 		{
 			Name:      "email_verified_at",
@@ -106,7 +117,9 @@ var UserDefinition = def.SystemDefinition{
 	},
 
 	Hooks: def.HookSet{
-		BeforeCreate: []def.BeforeCreateHook{&UserValidator{}},
+		BeforeValidate: []def.BeforeValidateHook{&UserNormalizeHook{}},
+		BeforeCreate:   []def.BeforeCreateHook{&UserValidator{}},
+		BeforeUpdate:   []def.BeforeUpdateHook{&AccountLockHook{}},
 	},
 
 	Permissions: def.PermissionSet{
@@ -227,8 +240,114 @@ var SessionDefinition = def.SystemDefinition{
 	},
 }
 
-func init() {
-	def.Register(&UserDefinition)
-	def.Register(&RoleDefinition)
-	def.Register(&SessionDefinition)
+// APITokenDefinition is the iam_api_token entity — long-lived machine tokens.
+var APITokenDefinition = def.CustomDefinition{
+	Name:        "iam_api_token",
+	Module:      "platform",
+	Label:       "API Token",
+	LabelPlural: "API Tokens",
+
+	Fields: []def.FieldDef{
+		{
+			Name:     "name",
+			Type:     def.FieldTypeData,
+			Label:    "Token Name",
+			Required: true,
+			MaxLen:   255,
+		},
+		{
+			Name:       "user_id",
+			Type:       def.FieldTypeLink,
+			Label:      "User",
+			LinkTarget: "iam_user",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:       "tenant_id",
+			Type:       def.FieldTypeLink,
+			Label:      "Tenant",
+			LinkTarget: "platform_tenant",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:      "token_hash",
+			Type:      def.FieldTypeData,
+			Label:     "Token Hash",
+			Required:  true,
+			Unique:    true,
+			Sensitive: true,
+			Hidden:    true,
+			Immutable: true,
+			MaxLen:    128,
+		},
+		{
+			Name:  "scopes",
+			Type:  def.FieldTypeJSON,
+			Label: "Scopes",
+		},
+		{
+			Name:  "expires_at",
+			Type:  def.FieldTypeDateTime,
+			Label: "Expires At",
+		},
+		{
+			Name:  "last_used_at",
+			Type:  def.FieldTypeDateTime,
+			Label: "Last Used At",
+		},
+		{
+			Name:  "revoked_at",
+			Type:  def.FieldTypeDateTime,
+			Label: "Revoked At",
+		},
+	},
+
+	Permissions: def.PermissionSet{
+		Create: []string{"role:tenant.admin", "role:tenant.user"},
+		Read:   []string{"role:platform-admin", "role:tenant.admin"},
+		Write:  []string{"role:platform-admin", "role:tenant.admin"},
+		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+	},
+}
+
+// UserRoleDefinition is the iam_user_role entity — join table for user-role assignments.
+var UserRoleDefinition = def.CustomDefinition{
+	Name:        "iam_user_role",
+	Module:      "platform",
+	Label:       "User Role",
+	LabelPlural: "User Roles",
+
+	Fields: []def.FieldDef{
+		{
+			Name:       "user_id",
+			Type:       def.FieldTypeLink,
+			Label:      "User",
+			LinkTarget: "iam_user",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:       "role_id",
+			Type:       def.FieldTypeLink,
+			Label:      "Role",
+			LinkTarget: "iam_role",
+			Required:   true,
+			Immutable:  true,
+		},
+		{
+			Name:       "org_unit_id",
+			Type:       def.FieldTypeLink,
+			Label:      "Org Unit Scope",
+			LinkTarget: "platform_org_unit",
+		},
+	},
+
+	Permissions: def.PermissionSet{
+		Create: []string{"role:platform-admin", "role:tenant.admin"},
+		Read:   []string{"role:platform-admin", "role:tenant.admin"},
+		Write:  []string{"role:platform-admin", "role:tenant.admin"},
+		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+	},
 }

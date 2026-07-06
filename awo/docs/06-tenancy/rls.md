@@ -107,7 +107,7 @@ Global tables are accessible to all tenants and contain platform-wide reference 
 
 ```
 tenants          — tenant registry; read-only for application
-audit_log        — cross-tenant audit records; append-only for application
+iam_audit_log        — cross-tenant audit records; append-only for application
 timezones        — timezone reference data; read-only
 currencies       — currency reference data; read-only
 countries        — country reference data; read-only
