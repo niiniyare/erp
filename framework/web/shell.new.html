@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="system">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>AWO ERP</title>
+
+  <!-- amis-ui (self-hosted, not CDN) -->
+  <link rel="stylesheet" href="/sdk/sdk.css">
+  <link rel="stylesheet" href="/sdk/helper.css">
+  <link rel="stylesheet" href="/sdk/iconfont.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+
+  <!-- Shell styles -->
+  <link rel="stylesheet" href="/shell.css">
+</head>
+
+<body>
+
+  <!-- ============================================================
+       LOGIN OVERLAY — DISABLED FOR NOW
+       ------------------------------------------------------------
+       Kept in the DOM (hidden via JS: #login-overlay.hidden) so the
+       auth flow can be restored without rebuilding markup. See the
+       "AUTH (DISABLED)" block in shell.js for what needs to be
+       reconnected. The forms below are commented out entirely to
+       avoid dangling submit handlers while disabled.
+  ============================================================ -->
+  <div id="login-overlay" class="hidden">
+    <div class="login-card">
+      <div class="login-logo">
+        <div class="login-logo-icon">A</div>
+        <div>
+          <div class="login-logo-text">AWO ERP</div>
+          <div class="login-logo-sub">Sign in to your workspace</div>
+        </div>
+      </div>
+
+      <!--
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Tenant sign in</button>
+        <button class="tab-btn" id="tab-platform" onclick="switchTab('platform')">Platform admin</button>
+      </div>
+
+      <form id="login-form" onsubmit="submitLogin(event)">
+        <div class="login-field">
+          <label for="login-tenant">Workspace</label>
+          <input id="login-tenant" type="text" placeholder="your-workspace" autocomplete="organization" required>
+        </div>
+        <div class="login-field">
+          <label for="login-email">Email</label>
+          <input id="login-email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="login-field">
+          <label for="login-password">Password</label>
+          <input id="login-password" type="password" placeholder="********" autocomplete="current-password" required>
+        </div>
+        <button class="login-btn" type="submit" id="login-submit">Sign in</button>
+        <div class="login-error" id="login-error"></div>
+      </form>
+
+      <form id="platform-form" onsubmit="submitPlatformLogin(event)" style="display:none;">
+        <div class="login-field" style="margin-bottom:12px;padding:10px 12px;background:#fef9c3;border-radius:8px;font-size:12px;color:#854d0e;">
+          <i class="fa fa-shield-halved"></i> Platform administrator access. Requires <code>PLATFORM_ROOT_EMAIL</code> configured on the server.
+        </div>
+        <div class="login-field">
+          <label for="plat-email">Email</label>
+          <input id="plat-email" type="email" placeholder="admin@example.com" autocomplete="email" required>
+        </div>
+        <div class="login-field">
+          <label for="plat-password">Password</label>
+          <input id="plat-password" type="password" placeholder="********" autocomplete="current-password" required>
+        </div>
+        <button class="login-btn" type="submit" id="plat-submit">Sign in as platform admin</button>
+        <div class="login-error" id="plat-error"></div>
+      </form>
+      -->
+
+      <div style="padding:12px;background:#eff6ff;border-radius:8px;font-size:13px;color:#1e40af;">
+        <i class="fa fa-circle-info"></i> Auth is currently disabled. The shell boots directly
+        into a dev session — see <code>shell.js</code> "AUTH (DISABLED)" section to re-enable.
+      </div>
+    </div>
+  </div>
+
+  <div id="app">
+    <aside id="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-content">
+          <div class="brand-icon">A</div>
+          <span class="brand-text">AWO ERP</span>
+        </div>
+        <button class="sidebar-toggle" onclick="toggleSidebar()" title="Toggle sidebar">
+          <i class="fa fa-bars"></i>
+        </button>
+      </div>
+      <nav class="sidebar-menu" id="sidebarMenu">
+        <div class="page-loading" style="height:80px;"><i class="fa fa-spinner fa-spin"></i></div>
+      </nav>
+    </aside>
+
+    <div id="sidebar-backdrop" onclick="closeMobile()"></div>
+
+    <div id="main">
+      <div id="topbar">
+        <button class="topbar-toggle" onclick="openMobile()"><i class="fa fa-bars"></i></button>
+        <div class="breadcrumb">
+          <span id="bc-module"></span>
+          <span class="bc-sep" id="bc-sep" style="display:none">&rsaquo;</span>
+          <span class="bc-current" id="bc-page">&mdash;</span>
+        </div>
+        <div class="topbar-spacer"></div>
+        <div class="topbar-right">
+          <div class="user-badge">
+            <i class="fa fa-circle-user"></i>
+            <span id="userName">&mdash;</span>
+          </div>
+          <button class="icon-btn" onclick="cycleTheme()">
+            <i class="fa fa-circle-half-stroke"></i>
+            <span id="themeLabel">System</span>
+          </button>
+          <!-- Logout disabled along with auth; button hidden rather than removed -->
+          <button class="icon-btn" onclick="doLogout && doLogout()" title="Sign out" style="display:none;">
+            <i class="fa fa-arrow-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="content">
+        <div class="page-loading"><i class="fa fa-spinner fa-spin"></i> Loading&hellip;</div>
+      </div>
+
+      <div id="footer">&copy; 2026 AWO ERP</div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       Create Tenant modal — part of the disabled platform-admin
+       auth flow. Left commented out; restore alongside shell.js
+       AUTH section.
+  ============================================================ -->
+  <!--
+  <div id="create-tenant-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2>Create workspace</h2>
+        <button class="modal-close" onclick="closeCreateTenant()"><i class="fa fa-xmark"></i></button>
+      </div>
+      <form id="create-tenant-form" onsubmit="submitCreateTenant(event)">
+        <div class="login-field">
+          <label for="ct-workspace">Workspace name</label>
+          <input id="ct-workspace" type="text" placeholder="Acme Corp" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-name">Admin full name</label>
+          <input id="ct-name" type="text" placeholder="Jane Doe" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-email">Admin email</label>
+          <input id="ct-email" type="email" placeholder="admin@acme.com" required>
+        </div>
+        <div class="login-field">
+          <label for="ct-password">Admin password <small style="color:#94a3b8;">(min 8 chars)</small></label>
+          <input id="ct-password" type="password" placeholder="********" minlength="8" required>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" onclick="closeCreateTenant()">Cancel</button>
+          <button class="login-btn btn-primary-flex" type="submit" id="ct-submit">Create workspace</button>
+        </div>
+        <div class="login-error" id="ct-error"></div>
+      </form>
+    </div>
+  </div>
+  -->
+
+  <!-- amis-ui runtime (self-hosted) -->
+  <script src="/sdk/sdk.js"></script>
+  <script src="/sdk/charts.js"></script>
+
+  <!-- Shell logic -->
+  <script src="/shell.js"></script>
+</body>
+
+</html>
