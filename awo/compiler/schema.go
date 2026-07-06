@@ -114,8 +114,7 @@ func Compile(reg *registry.Registry) (*CompiledSchema, error) {
 }
 
 type compiler struct {
-	reg    *registry.Registry
-	schema *CompiledSchema
+	reg *registry.Registry
 }
 
 func (c *compiler) compile() (*CompiledSchema, error) {

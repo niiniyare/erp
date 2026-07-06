@@ -57,9 +57,6 @@ type Filter struct {
 	Sub   []*Filter // set for KindAnd, KindOr, KindNot
 }
 
-// filterMarker implements def.Filter.
-func (*Filter) filterMarker() {}
-
 // --- Equality predicates ---
 
 // Eq matches rows where field equals value.

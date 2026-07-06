@@ -51,13 +51,12 @@ func TenantResolver(tenants driver.EntityRepository[*def.EntityRecord]) fiber.Ha
 		case "ACTIVE":
 			// OK
 		case "PENDING":
-			return c.Status(fiber.StatusServiceUnavailable).
-				Set("Retry-After", "60").
-				JSON(response.Wrap(&runtime.BusinessError{
-					Code:    "tenant.pending",
-					Message: "Tenant account is being activated — retry in 60 seconds",
-					Status:  503,
-				}))
+			c.Set("Retry-After", "60")
+			return c.Status(fiber.StatusServiceUnavailable).JSON(response.Wrap(&runtime.BusinessError{
+				Code:    "tenant.pending",
+				Message: "Tenant account is being activated — retry in 60 seconds",
+				Status:  503,
+			}))
 		case "SUSPENDED":
 			return c.Status(fiber.StatusPaymentRequired).JSON(response.Wrap(&runtime.BusinessError{
 				Code:    "tenant.suspended",

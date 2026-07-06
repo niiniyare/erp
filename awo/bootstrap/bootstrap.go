@@ -107,7 +107,12 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 	reg := registry.Build()
 	slog.Info("entity registry built", "entities", len(reg.All()))
 
-	schema := compiler.Compile(reg)
+	schema, err := compiler.Compile(reg)
+	if err != nil {
+		pool.Close()
+		_ = rdb.Close()
+		return nil, fmt.Errorf("bootstrap: compile schema: %w", err)
+	}
 	slog.Info("schema compiled",
 		"entities", len(schema.Entities),
 		"routes", len(schema.Routes),

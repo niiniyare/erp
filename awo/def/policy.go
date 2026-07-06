@@ -8,11 +8,10 @@ import "context"
 //
 // The zero value (nil) means "no additional restriction" — all tenant-scoped
 // rows that pass RLS are returned.
-type Filter interface {
-	// filterMarker prevents accidental implementation of this interface by
-	// types outside the filter package.
-	filterMarker()
-}
+//
+// The concrete type is *filter.Filter. Runtime code type-asserts to it.
+// Do not implement this interface with types outside awo.so/awo/filter.
+type Filter interface{}
 
 // PolicyFunc is a row-level filter injected into every query for an entity.
 // It runs at request time and receives the full request context, allowing

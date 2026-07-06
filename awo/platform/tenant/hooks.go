@@ -26,8 +26,7 @@ var validTransitions = map[string]map[string]bool{
 type SlugValidator struct{}
 
 func (v *SlugValidator) BeforeCreate(_ context.Context, rec *def.EntityRecord) error {
-	slug := strings.ToLower(strings.TrimSpace(rec.GetString("slug")))
-	rec.Set("slug", slug)
+	slug := strings.TrimSpace(rec.GetString("slug"))
 
 	if !slugRe.MatchString(slug) {
 		return &runtime.ValidationError{

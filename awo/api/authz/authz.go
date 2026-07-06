@@ -23,7 +23,6 @@ import (
 	"github.com/casbin/casbin/v2"
 	"github.com/casbin/casbin/v2/model"
 	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 
 	"awo.so/awo/api/response"
 	"awo.so/awo/compiler"
@@ -32,19 +31,19 @@ import (
 
 const casbinModel = `
 [request_definition]
-r = sub, dom, obj, act
+r = sub, obj, act
 
 [policy_definition]
-p = sub, dom, obj, act
+p = sub, obj, act
 
 [role_definition]
-g = _, _, _
+g = _, _
 
 [policy_effect]
 e = some(where (p.eft == allow))
 
 [matchers]
-m = g(r.sub, p.sub, r.dom) && r.dom == p.dom && r.obj == p.obj && r.act == p.act
+m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
 `
 
 // Enforcer wraps the Casbin enforcer with a domain-aware check API.
@@ -66,7 +65,7 @@ func NewEnforcer(schema *compiler.CompiledSchema) (*Enforcer, error) {
 
 	// Load compiled policies.
 	for _, p := range schema.CasbinPolicies {
-		if _, err := e.AddPolicy(p.Subject, p.Domain, p.Object, p.Action); err != nil {
+		if _, err := e.AddPolicy(p.Subject, p.Object, p.Action); err != nil {
 			return nil, fmt.Errorf("authz: add policy %v: %w", p, err)
 		}
 	}
@@ -75,20 +74,20 @@ func NewEnforcer(schema *compiler.CompiledSchema) (*Enforcer, error) {
 }
 
 // Can reports whether subject (e.g. "role:tenant.admin") is allowed to perform
-// action on object within domain (tenant UUID or "_platform_").
-func (en *Enforcer) Can(subject, domain, object, action string) (bool, error) {
-	return en.e.Enforce(subject, domain, object, action)
+// action on object.
+func (en *Enforcer) Can(subject, object, action string) (bool, error) {
+	return en.e.Enforce(subject, object, action)
 }
 
-// AddRoleForUser grants role to user within domain.
-func (en *Enforcer) AddRoleForUser(user, role, domain string) error {
-	_, err := en.e.AddRoleForUserInDomain(user, role, domain)
+// AddRoleForUser grants role to user.
+func (en *Enforcer) AddRoleForUser(user, role string) error {
+	_, err := en.e.AddRoleForUser(user, role)
 	return err
 }
 
-// RemoveRoleForUser revokes role from user within domain.
-func (en *Enforcer) RemoveRoleForUser(user, role, domain string) error {
-	_, err := en.e.DeleteRoleForUserInDomain(user, role, domain)
+// RemoveRoleForUser revokes role from user.
+func (en *Enforcer) RemoveRoleForUser(user, role string) error {
+	_, err := en.e.DeleteRoleForUser(user, role)
 	return err
 }
 
@@ -102,9 +101,9 @@ func (en *Enforcer) RemoveRoleForUser(user, role, domain string) error {
 func (en *Enforcer) RequirePermission(entityName, action string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		userIDStr, _ := c.Locals("user_id").(string)
-		tenantIDStr, _ := c.Locals("tenant_id").(string)
+		_, hasTenant := c.Locals("tenant_id").(string)
 
-		if userIDStr == "" || tenantIDStr == "" {
+		if userIDStr == "" || !hasTenant {
 			return c.Status(fiber.StatusUnauthorized).JSON(response.Wrap(&runtime.PermissionError{
 				EntityName: entityName,
 				Action:     action,
@@ -112,13 +111,8 @@ func (en *Enforcer) RequirePermission(entityName, action string) fiber.Handler {
 		}
 
 		subject := "user:" + userIDStr
-		tenantID, err := uuid.Parse(tenantIDStr)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.Wrap(fmt.Errorf("invalid tenant_id")))
-		}
-		domain := tenantID.String()
 
-		ok, err := en.Can(subject, domain, entityName, action)
+		ok, err := en.Can(subject, entityName, action)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(response.Wrap(err))
 		}

@@ -73,12 +73,12 @@ func main() {
 	redisClient := contribredis.New(result.Redis)
 
 	// IAM service — requires the iam_user/iam_session entity schemas.
-	iamSchema, ok := result.Schema.Entities["iam_user"]
+	iamSchema, ok := result.Schema.ByName["iam_user"]
 	if !ok {
 		slog.Error("iam_user entity not found in schema — platform/iam not registered")
 		os.Exit(1)
 	}
-	iamSessionSchema, ok := result.Schema.Entities["iam_session"]
+	iamSessionSchema, ok := result.Schema.ByName["iam_session"]
 	if !ok {
 		slog.Error("iam_session entity not found in schema — platform/iam not registered")
 		os.Exit(1)
@@ -88,7 +88,7 @@ func main() {
 	iamSvc := iam.NewService(userRepo, sessionRepo, redisClient)
 
 	// Tenant entity repository for TenantResolver middleware.
-	tenantSchema, ok := result.Schema.Entities["platform_tenant"]
+	tenantSchema, ok := result.Schema.ByName["platform_tenant"]
 	if !ok {
 		slog.Error("platform_tenant entity not found in schema — platform/tenant not registered")
 		os.Exit(1)

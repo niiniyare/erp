@@ -4,6 +4,7 @@ import (
 	"context"
 
 	pgxlib "github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"awo.so/awo/tx"
@@ -36,7 +37,7 @@ func connFromContext(ctx context.Context, pool *pgxpool.Pool) *pgConn {
 // execer provides a pgx-compatible Exec / QueryRow / Query interface that
 // works regardless of whether we are inside a transaction.
 type execer interface {
-	Exec(ctx context.Context, sql string, args ...any) (pgxlib.CommandTag, error)
+	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgxlib.Row
 	Query(ctx context.Context, sql string, args ...any) (pgxlib.Rows, error)
 	SendBatch(ctx context.Context, b *pgxlib.Batch) pgxlib.BatchResults

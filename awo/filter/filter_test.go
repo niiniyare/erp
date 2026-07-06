@@ -77,7 +77,7 @@ func TestNot_WrapsFilter(t *testing.T) {
 func TestIn_Empty_StillBuilds(t *testing.T) {
 	f := filter.In("status") // no values
 	if f == nil {
-		t.Error("In with no values should return a non-nil Filter")
+		t.Fatal("In with no values should return a non-nil Filter")
 	}
 	if f.Kind != filter.KindIn {
 		t.Errorf("expected KindIn, got %v", f.Kind)
@@ -94,13 +94,8 @@ func TestBetween(t *testing.T) {
 	}
 }
 
-func TestFilterMarker_ImplementsDefFilter(t *testing.T) {
-	// Verify *filter.Filter satisfies the def.Filter interface at compile time.
-	// The interface has a private method, so we can only check via assignment
-	// if we were in the def package. Instead, verify the type satisfies the
-	// interface via the filterMarker method existing (it will be checked by
-	// the compiler when assigning to def.Filter in policy code).
-	//
-	// This test documents the contract; the real check is in policy.go.
-	var _ interface{ filterMarker() } = (*filter.Filter)(nil)
+func TestFilterImplementsDefFilter(t *testing.T) {
+	// *filter.Filter satisfies def.Filter (empty interface) — verified by the
+	// compiler whenever a *Filter is assigned to a def.Filter variable.
+	var _ interface{} = (*filter.Filter)(nil)
 }

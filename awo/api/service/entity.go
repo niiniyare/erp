@@ -177,9 +177,7 @@ func (s *EntityService) startWorkflows(ctx context.Context, event def.EventType,
 
 		tc := def.TriggerContext{
 			TenantID: record.TenantID,
-		}
-		if actor != nil {
-			tc.Actor = *actor
+			Actor:    actor,
 		}
 
 		input, err := t.InputBuilder(record, tc)
