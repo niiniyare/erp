@@ -63,9 +63,9 @@ func (r *Registry) ByModule(module string) []def.EntityDefinition {
 	return out
 }
 
-// mandatorySystemEntities lists entity names that MUST be declared as
-// SystemDefinition. Declaring any of these as CustomDefinition is a fatal
-// validation error.
+// mandatorySystemEntities lists qualified entity names (module_name) that MUST
+// be declared as SystemDefinition. Declaring any of these as CustomDefinition
+// is a fatal validation error.
 var mandatorySystemEntities = map[string]string{
 	"iam_user":              "IAM data; JSONB corruption risk",
 	"platform_tenant":       "Platform identity; accessible before per-tenant schemas load",
@@ -76,8 +76,10 @@ var mandatorySystemEntities = map[string]string{
 	"inventory_stock_move":  "Inventory accounting; SQL quantity constraints",
 }
 
-// entityNameRe validates the {module}_{noun} snake_case format.
-var entityNameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)+$`)
+// entityNameRe validates module-local snake_case names (no mandatory underscore —
+// names like "user", "tenant", "customer" are valid; underscores are allowed
+// for compound names like "org_assignment", "audit_log").
+var entityNameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)*$`)
 
 // fieldNameRe validates snake_case field names.
 var fieldNameRe = regexp.MustCompile(`^[a-z][a-z0-9_]*$`)
@@ -97,15 +99,16 @@ func Build() *Registry {
 		panic("registry.Build: no EntityDefinitions registered — did module init() functions run?")
 	}
 
-	byName := make(map[string]def.EntityDefinition, len(defs))
+	// Build qualified-name → definition map for link-target resolution.
+	byQName := make(map[string]def.EntityDefinition, len(defs))
 	for _, d := range defs {
-		byName[d.EntityName()] = d
+		byQName[def.QualifiedName(d)] = d
 	}
 
 	var errs []string
 
 	for _, d := range defs {
-		errs = append(errs, validateDefinition(d, byName)...)
+		errs = append(errs, validateDefinition(d, byQName)...)
 	}
 
 	if len(errs) > 0 {
@@ -113,7 +116,7 @@ func Build() *Registry {
 		panic(fmt.Sprintf("registry.Build: validation failed:\n  - %s", msg))
 	}
 
-	return &Registry{defs: defs, byName: byName}
+	return &Registry{defs: defs, byName: byQName}
 }
 
 // BuildFrom constructs a Registry from an explicit list of EntityDefinitions
@@ -137,15 +140,15 @@ func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
 		return nil, fmt.Errorf("registry.BuildFrom: no EntityDefinitions provided")
 	}
 
-	byName := make(map[string]def.EntityDefinition, len(defs))
+	byQName := make(map[string]def.EntityDefinition, len(defs))
 	for _, d := range defs {
-		byName[d.EntityName()] = d
+		byQName[def.QualifiedName(d)] = d
 	}
 
 	var errs []string
 	for _, d := range defs {
 		// Skip mandatory-system-entity check in isolated test registries.
-		errs = append(errs, validateDefinitionRelaxed(d, byName)...)
+		errs = append(errs, validateDefinitionRelaxed(d, byQName)...)
 	}
 
 	if len(errs) > 0 {
@@ -153,7 +156,7 @@ func BuildFrom(defs []def.EntityDefinition) (*Registry, error) {
 		return nil, fmt.Errorf("registry.BuildFrom: validation failed:\n  - %s", msg)
 	}
 
-	return &Registry{defs: defs, byName: byName}, nil
+	return &Registry{defs: defs, byName: byQName}, nil
 }
 
 // validateDefinitionRelaxed runs all validation rules except the
@@ -170,92 +173,86 @@ func validateDefinitionRelaxed(d def.EntityDefinition, byName map[string]def.Ent
 	return filtered
 }
 
-func validateDefinition(d def.EntityDefinition, byName map[string]def.EntityDefinition) []string {
+func validateDefinition(d def.EntityDefinition, byQName map[string]def.EntityDefinition) []string {
 	var errs []string
-	name := d.EntityName()
+	localName := d.EntityName() // module-local name (e.g. "organization")
 	module := d.EntityModule()
+	qname := def.QualifiedName(d) // globally unique (e.g. "platform_organization")
 
-	// Name format
-	if !entityNameRe.MatchString(name) {
-		errs = append(errs, fmt.Sprintf(
-			"entity %q: name must match {module}_{noun} snake_case format", name,
-		))
-	}
-
-	// Module must be non-empty
+	// Module must be non-empty.
 	if module == "" {
-		errs = append(errs, fmt.Sprintf("entity %q: Module is empty", name))
+		errs = append(errs, fmt.Sprintf("entity %q: Module is empty", localName))
 	}
 
-	// Name must start with module prefix
-	if module != "" && !strings.HasPrefix(name, module+"_") {
+	// Local name must be valid snake_case.
+	if !entityNameRe.MatchString(localName) {
 		errs = append(errs, fmt.Sprintf(
-			"entity %q: name must begin with module prefix %q_", name, module,
+			"entity %q (module %q): Name must be module-local snake_case (e.g. \"organization\", not %q)",
+			qname, module, localName,
 		))
 	}
 
-	// Label required
-	if d.EntityLabel() == "" {
-		errs = append(errs, fmt.Sprintf("entity %q: Label is empty", name))
-	}
+	// Note: module-prefixed names (e.g. "iam_user" with Module="iam") are
+	// accepted during the transitional period. The compiler emits a warning
+	// diagnostic for these — migrate to module-local names when convenient.
 
-	// Mandatory system entity check
-	if reason, mandatory := mandatorySystemEntities[name]; mandatory && !d.IsSystem() {
+	// Label is derived from Name if empty — no error needed.
+
+	// Mandatory system entity check (uses QualifiedName).
+	if reason, mandatory := mandatorySystemEntities[qname]; mandatory && !d.IsSystem() {
 		errs = append(errs, fmt.Sprintf(
-			"entity %q: must be a SystemDefinition (%s)", name, reason,
+			"entity %q: must be a SystemDefinition (%s)", qname, reason,
 		))
 	}
 
-	// Field validation
+	// Field validation.
 	fieldNames := make(map[string]bool)
 	for _, f := range d.EntityFields() {
 		if f.Name == "" {
-			errs = append(errs, fmt.Sprintf("entity %q: field has empty Name", name))
+			errs = append(errs, fmt.Sprintf("entity %q: field has empty Name", qname))
 			continue
 		}
 		if !fieldNameRe.MatchString(f.Name) {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: field %q name must be snake_case", name, f.Name,
+				"entity %q: field %q name must be snake_case", qname, f.Name,
 			))
 		}
 		if fieldNames[f.Name] {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: duplicate field name %q", name, f.Name,
+				"entity %q: duplicate field name %q", qname, f.Name,
 			))
 		}
 		fieldNames[f.Name] = true
 
-		// Link target must be registered
+		// Link target must be a registered QualifiedName.
 		if f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList {
 			if f.LinkTarget == "" {
 				errs = append(errs, fmt.Sprintf(
-					"entity %q: field %q (Link/LinkList) has empty LinkTarget", name, f.Name,
+					"entity %q: field %q (Link/LinkList) has empty LinkTarget", qname, f.Name,
 				))
-			} else if byName[f.LinkTarget] == nil {
+			} else if byQName[f.LinkTarget] == nil {
 				errs = append(errs, fmt.Sprintf(
 					"entity %q: field %q LinkTarget %q is not registered",
-					name, f.Name, f.LinkTarget,
+					qname, f.Name, f.LinkTarget,
 				))
 			}
 		}
 
-		// NamingSeries requires a Series pattern
+		// NamingSeries requires a Series pattern.
 		if f.Type == def.FieldTypeNamingSeries && f.Series == "" {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: field %q (NamingSeries) has empty Series pattern", name, f.Name,
+				"entity %q: field %q (NamingSeries) has empty Series pattern", qname, f.Name,
 			))
 		}
 
-		// Select requires Options
+		// Select requires Options.
 		if f.Type == def.FieldTypeSelect && len(f.Options) == 0 {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: field %q (Select) has no Options", name, f.Name,
+				"entity %q: field %q (Select) has no Options", qname, f.Name,
 			))
 		}
 
-		// Currency must never be FieldTypeFloat — catch accidental misuse
-		// (we cannot catch it at compile time for named fields, but we can
-		// flag fields named "*amount*", "*total*", "*price*" that use Float)
+		// Money must never be FieldTypeFloat.
 		if f.Type == def.FieldTypeFloat {
 			lower := strings.ToLower(f.Name)
 			for _, hint := range []string{"amount", "total", "price", "cost", "fee", "tax"} {
@@ -263,7 +260,7 @@ func validateDefinition(d def.EntityDefinition, byName map[string]def.EntityDefi
 					errs = append(errs, fmt.Sprintf(
 						"entity %q: field %q looks monetary but uses FieldTypeFloat — "+
 							"use FieldTypeCurrency (numeric(20,4)) instead",
-						name, f.Name,
+						qname, f.Name,
 					))
 					break
 				}
@@ -271,46 +268,46 @@ func validateDefinition(d def.EntityDefinition, byName map[string]def.EntityDefi
 		}
 	}
 
-	// Edge validation
+	// Edge validation.
 	edgeNames := make(map[string]bool)
 	for _, e := range d.EntityEdges() {
 		if e.Name == "" {
-			errs = append(errs, fmt.Sprintf("entity %q: edge has empty Name", name))
+			errs = append(errs, fmt.Sprintf("entity %q: edge has empty Name", qname))
 			continue
 		}
 		if edgeNames[e.Name] {
-			errs = append(errs, fmt.Sprintf("entity %q: duplicate edge name %q", name, e.Name))
+			errs = append(errs, fmt.Sprintf("entity %q: duplicate edge name %q", qname, e.Name))
 		}
 		edgeNames[e.Name] = true
 
 		if e.Target == "" {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: edge %q has empty Target", name, e.Name,
+				"entity %q: edge %q has empty Target", qname, e.Name,
 			))
-		} else if byName[e.Target] == nil {
+		} else if byQName[e.Target] == nil {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: edge %q Target %q is not registered", name, e.Name, e.Target,
+				"entity %q: edge %q Target %q is not registered", qname, e.Name, e.Target,
 			))
 		}
 	}
 
-	// Action name uniqueness
+	// Action name uniqueness.
 	actionNames := make(map[string]bool)
 	for _, a := range d.EntityActions() {
 		if a.Name == "" {
-			errs = append(errs, fmt.Sprintf("entity %q: action has empty Name", name))
+			errs = append(errs, fmt.Sprintf("entity %q: action has empty Name", qname))
 			continue
 		}
 		if actionNames[a.Name] {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: duplicate action name %q", name, a.Name,
+				"entity %q: duplicate action name %q", qname, a.Name,
 			))
 		}
 		actionNames[a.Name] = true
 
 		if a.HandlerFunc == nil {
 			errs = append(errs, fmt.Sprintf(
-				"entity %q: action %q has nil HandlerFunc", name, a.Name,
+				"entity %q: action %q has nil HandlerFunc", qname, a.Name,
 			))
 		}
 	}

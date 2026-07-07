@@ -33,28 +33,31 @@ func Register(def EntityDefinition) {
 	if def == nil {
 		panic("def.Register: nil EntityDefinition")
 	}
-	name := def.EntityName()
-	if name == "" {
+	if def.EntityName() == "" {
 		panic("def.Register: EntityDefinition has empty Name")
 	}
+	if def.EntityModule() == "" {
+		panic(fmt.Sprintf("def.Register: entity %q has empty Module", def.EntityName()))
+	}
+	qname := QualifiedName(def)
 
 	globalRegistry.mu.Lock()
 	defer globalRegistry.mu.Unlock()
 
 	if globalRegistry.sealed {
-		panic(fmt.Sprintf("def.Register: cannot register %q after the registry is sealed", name))
+		panic(fmt.Sprintf("def.Register: cannot register %q after the registry is sealed", qname))
 	}
 	if globalRegistry.byName == nil {
 		globalRegistry.byName = make(map[string]EntityDefinition)
 	}
-	if existing, ok := globalRegistry.byName[name]; ok {
+	if existing, ok := globalRegistry.byName[qname]; ok {
 		panic(fmt.Sprintf(
 			"def.Register: duplicate entity name %q (already registered from module %q)",
-			name, existing.EntityModule(),
+			qname, existing.EntityModule(),
 		))
 	}
 
-	globalRegistry.byName[name] = def
+	globalRegistry.byName[qname] = def
 	globalRegistry.defs = append(globalRegistry.defs, def)
 }
 

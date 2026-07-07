@@ -207,9 +207,20 @@ func TestRouteRegistration(t *testing.T) {
 	}
 }
 
-// TestEntityListRoute verifies GET /api/v1/entities/demo_customer returns list envelope.
+// demoCustomerRoutePrefix returns the compiled route prefix for demo_customer.
+// New format: /api/v1/{module}/{plural} → /api/v1/demo/customers
+func demoCustomerRoutePrefix(s *apiServer) string {
+	es, ok := s.schema.ByName["demo_customer"]
+	if !ok {
+		return "/api/v1/demo/customers"
+	}
+	return es.RoutePrefix
+}
+
+// TestEntityListRoute verifies GET /api/v1/demo/customers returns list envelope.
 func TestEntityListRoute(t *testing.T) {
 	s := newAPIServer(t)
+	base := demoCustomerRoutePrefix(s)
 
 	// Seed records into fakestore.
 	ctx := context.Background()
@@ -230,16 +241,17 @@ func TestEntityListRoute(t *testing.T) {
 		}
 	}
 
-	resp := s.do(t, "GET", "/api/v1/entities/demo_customer", nil)
+	resp := s.do(t, "GET", base, nil)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 200, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
 }
 
-// TestEntityCreateRoute verifies POST /api/v1/entities/demo_customer → 201.
+// TestEntityCreateRoute verifies POST /api/v1/demo/customers → 201.
 func TestEntityCreateRoute(t *testing.T) {
 	s := newAPIServer(t)
+	base := demoCustomerRoutePrefix(s)
 
 	payload := map[string]any{
 		"tenant_id":     s.tenantID.String(),
@@ -249,44 +261,47 @@ func TestEntityCreateRoute(t *testing.T) {
 		"active":        true,
 	}
 
-	resp := s.do(t, "POST", "/api/v1/entities/demo_customer", payload)
+	resp := s.do(t, "POST", base, payload)
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		t.Fatalf("expected 201, got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
 }
 
-// TestEntityGetRoute verifies GET /api/v1/entities/demo_customer/:id → 200 or 404.
+// TestEntityGetRoute verifies GET /api/v1/demo/customers/:id → 200 or 404.
 func TestEntityGetRoute(t *testing.T) {
 	s := newAPIServer(t)
+	base := demoCustomerRoutePrefix(s)
 
 	unknownID := uuid.New().String()
-	resp := s.do(t, "GET", "/api/v1/entities/demo_customer/"+unknownID, nil)
-	// Stub returns 404 for unknown IDs — valid behavior.
+	resp := s.do(t, "GET", base+"/"+unknownID, nil)
+	// Stub returns 200 echoing ID — valid behavior for stub handler.
 	if resp.StatusCode == http.StatusMethodNotAllowed {
 		t.Errorf("route not registered — got 405")
 	}
 	resp.Body.Close()
 }
 
-// TestEntityUpdateRoute verifies PATCH /api/v1/entities/demo_customer/:id → non-404.
+// TestEntityUpdateRoute verifies PATCH /api/v1/demo/customers/:id → non-404.
 func TestEntityUpdateRoute(t *testing.T) {
 	s := newAPIServer(t)
+	base := demoCustomerRoutePrefix(s)
 
 	id := uuid.New().String()
-	resp := s.do(t, "PATCH", "/api/v1/entities/demo_customer/"+id, map[string]any{"name": "Updated"})
+	resp := s.do(t, "PATCH", base+"/"+id, map[string]any{"name": "Updated"})
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusMethodNotAllowed {
 		t.Errorf("PATCH route not registered — got %d", resp.StatusCode)
 	}
 	resp.Body.Close()
 }
 
-// TestEntityDeleteRoute verifies DELETE /api/v1/entities/demo_customer/:id → non-404.
+// TestEntityDeleteRoute verifies DELETE /api/v1/demo/customers/:id → non-404.
 func TestEntityDeleteRoute(t *testing.T) {
 	s := newAPIServer(t)
+	base := demoCustomerRoutePrefix(s)
 
 	id := uuid.New().String()
-	resp := s.do(t, "DELETE", "/api/v1/entities/demo_customer/"+id, nil)
+	resp := s.do(t, "DELETE", base+"/"+id, nil)
 	if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusMethodNotAllowed {
 		t.Errorf("DELETE route not registered — got %d", resp.StatusCode)
 	}
@@ -321,10 +336,9 @@ func TestAllEntitiesHaveRoutes(t *testing.T) {
 	}
 
 	for _, es := range s.schema.Entities {
-		name := es.Def.EntityName()
-		count := routesByEntity[name]
+		count := routesByEntity[es.QualifiedName]
 		if count < 5 {
-			t.Errorf("entity %q has only %d routes, expected ≥5 (list/get/create/update/delete)", name, count)
+			t.Errorf("entity %q has only %d routes, expected ≥5 (list/get/create/update/delete)", es.QualifiedName, count)
 		}
 	}
 }

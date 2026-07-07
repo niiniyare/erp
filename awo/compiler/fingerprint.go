@@ -15,15 +15,15 @@ import (
 func Fingerprint(s *CompiledSchema) string {
 	h := sha256.New()
 
-	// Sort entities by name for determinism (Entities slice is insertion-ordered,
-	// but we need hash stability regardless of registration order).
-	names := make([]string, 0, len(s.Entities))
+	// Sort entities by QualifiedName for determinism (Entities slice is
+	// insertion-ordered, but we need hash stability regardless of registration order).
+	qnames := make([]string, 0, len(s.Entities))
 	for _, es := range s.Entities {
-		names = append(names, es.Def.EntityName())
+		qnames = append(qnames, es.QualifiedName)
 	}
-	sort.Strings(names)
+	sort.Strings(qnames)
 
-	for _, name := range names {
+	for _, name := range qnames {
 		es := s.ByName[name]
 
 		fmt.Fprintf(h, "entity:%s:system:%v\n", name, es.Def.IsSystem())

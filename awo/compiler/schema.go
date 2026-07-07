@@ -5,6 +5,12 @@ import (
 	"awo.so/awo/registry"
 )
 
+// entityAPIResource derives the plural URL path segment for a local entity name.
+// "organization" → "organizations", "org_assignment" → "org_assignments", "entry" → "entries".
+func entityAPIResource(localName string) string {
+	return def.PluralizeLocal(localName)
+}
+
 // CompiledSchema is the immutable output of the compilation phase. It is the
 // single source of truth for all runtime subsystems. Every subsystem receives
 // a *CompiledSchema at startup and uses it for the lifetime of the process.
@@ -37,6 +43,33 @@ type EntitySchema struct {
 	// Def is the original EntityDefinition. Never mutated after compilation.
 	Def def.EntityDefinition
 
+	// QualifiedName is the globally unique identifier: module + "_" + local name.
+	// e.g. "platform_organization", "iam_user", "finance_invoice".
+	// Used as: DB table name (system entities), Casbin object, Temporal namespace,
+	// Redis cache key prefix, event namespace.
+	QualifiedName string
+
+	// LocalName is the module-local identifier (EntityDefinition.Name without prefix).
+	// e.g. "organization", "user", "invoice".
+	LocalName string
+
+	// Module is the owning module (EntityDefinition.Module).
+	// e.g. "platform", "iam", "finance".
+	Module string
+
+	// APIResource is the plural URL path segment for this entity.
+	// e.g. "organizations", "users", "invoices", "org_assignments".
+	APIResource string
+
+	// RoutePrefix is the base HTTP path for this entity's CRUD routes.
+	// Format: /api/v1/{module}/{plural_local_name}
+	// e.g. "/api/v1/platform/organizations", "/api/v1/iam/users".
+	RoutePrefix string
+
+	// OpenAPITag is the human-readable OpenAPI tag for this entity's module.
+	// e.g. "Platform", "Iam", "Finance".
+	OpenAPITag string
+
 	// FieldsByName provides O(1) lookup of FieldDef by name.
 	FieldsByName map[string]def.FieldDef
 
@@ -66,8 +99,8 @@ type EntitySchema struct {
 	// Resolved at compile time; all link targets are guaranteed to exist.
 	LinkTargets map[string]*EntitySchema
 
-	// TableName is the PostgreSQL table name (equals EntityName for system
-	// entities; "custom_entities" for custom entities with entity_type filter).
+	// TableName is the PostgreSQL table name (equals QualifiedName for system
+	// entities; "custom_entity_records" for custom entities with entity_type filter).
 	TableName string
 }
 
@@ -77,10 +110,13 @@ type RouteDescriptor struct {
 	// Method is the HTTP method (GET, POST, PATCH, DELETE).
 	Method string
 
-	// Path is the Fiber route path, e.g. "/api/v1/entities/finance_invoice/:id".
+	// Path is the Fiber route path.
+	// Format: /api/v1/{module}/{plural_local_name}[/:id][/{action}]
+	// e.g. "/api/v1/finance/invoices/:id".
 	Path string
 
-	// EntityName is the entity this route operates on.
+	// EntityName is the QualifiedName of the entity this route operates on.
+	// e.g. "finance_invoice".
 	EntityName string
 
 	// Operation identifies the semantic operation (list, get, create, update,
@@ -141,10 +177,10 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 	for _, d := range defs {
 		es := buildEntitySchema(d)
 		schema.Entities = append(schema.Entities, es)
-		schema.ByName[d.EntityName()] = es
+		schema.ByName[es.QualifiedName] = es
 	}
 
-	// Phase 2: resolve link targets.
+	// Phase 2: resolve link targets (LinkTarget is always a QualifiedName).
 	for _, es := range schema.Entities {
 		for _, f := range es.Def.EntityFields() {
 			if f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList {
@@ -172,8 +208,19 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 }
 
 func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
+	qname := def.QualifiedName(d)
+	local := def.LocalName(d)
+	module := d.EntityModule()
+	resource := entityAPIResource(local)
+
 	es := &EntitySchema{
 		Def:              d,
+		QualifiedName:    qname,
+		LocalName:        local,
+		Module:           module,
+		APIResource:      resource,
+		RoutePrefix:      "/api/v1/" + module + "/" + resource,
+		OpenAPITag:       def.OpenAPITag(module),
 		FieldsByName:     make(map[string]def.FieldDef),
 		EdgesByName:      make(map[string]def.EdgeDef),
 		ActionsByName:    make(map[string]def.ActionDef),
@@ -185,10 +232,10 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		LinkTargets:      make(map[string]*EntitySchema),
 	}
 
-	// Table name convention: system entities use entity name as table;
-	// custom entities share the "custom_entity_records" table filtered by entity_type.
+	// Table name: system entities use QualifiedName as table name;
+	// custom entities share "custom_entity_records" filtered by entity_type.
 	if d.IsSystem() {
-		es.TableName = d.EntityName()
+		es.TableName = qname
 	} else {
 		es.TableName = "custom_entity_records"
 	}
@@ -223,18 +270,16 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 	return es
 }
 
-const apiBase = "/api/v1/entities"
-
 func emitRoutes(es *EntitySchema) []RouteDescriptor {
-	name := es.Def.EntityName()
-	base := apiBase + "/" + name
+	qname := es.QualifiedName
+	base := es.RoutePrefix
 
 	routes := []RouteDescriptor{
-		{Method: "GET", Path: base, EntityName: name, Operation: "list", RequiredPermission: "read"},
-		{Method: "GET", Path: base + "/:id", EntityName: name, Operation: "get", RequiredPermission: "read"},
-		{Method: "POST", Path: base, EntityName: name, Operation: "create", RequiredPermission: "create"},
-		{Method: "PATCH", Path: base + "/:id", EntityName: name, Operation: "update", RequiredPermission: "write"},
-		{Method: "DELETE", Path: base + "/:id", EntityName: name, Operation: "delete", RequiredPermission: "delete"},
+		{Method: "GET", Path: base, EntityName: qname, Operation: "list", RequiredPermission: "read"},
+		{Method: "GET", Path: base + "/:id", EntityName: qname, Operation: "get", RequiredPermission: "read"},
+		{Method: "POST", Path: base, EntityName: qname, Operation: "create", RequiredPermission: "create"},
+		{Method: "PATCH", Path: base + "/:id", EntityName: qname, Operation: "update", RequiredPermission: "write"},
+		{Method: "DELETE", Path: base + "/:id", EntityName: qname, Operation: "delete", RequiredPermission: "delete"},
 	}
 
 	for _, action := range es.Def.EntityActions() {
@@ -249,7 +294,7 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 		routes = append(routes, RouteDescriptor{
 			Method:             method,
 			Path:               base + "/:id/" + action.Name,
-			EntityName:         name,
+			EntityName:         qname,
 			Operation:          "action",
 			ActionName:         action.Name,
 			RequiredPermission: perm,
@@ -261,7 +306,7 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 
 func emitPolicies(es *EntitySchema) []CasbinPolicy {
 	perms := es.Def.EntityPermissions()
-	name := es.Def.EntityName()
+	name := es.QualifiedName
 
 	var policies []CasbinPolicy
 	for _, subject := range perms.Create {

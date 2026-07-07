@@ -9,9 +9,9 @@ import (
 	"awo.so/awo/registry"
 )
 
-// entityNameRe matches valid entity names: lowercase letters/digits/underscores,
-// must start with a letter, must end with a letter or digit.
-var entityNameRe = regexp.MustCompile(`^[a-z][a-z0-9_]*[a-z0-9]$`)
+// localNameRe matches valid module-local entity names: snake_case, may be a
+// single word ("user", "tenant") or compound ("org_assignment", "audit_log").
+var localNameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)*$`)
 
 // Validate runs semantic validation against the registry and returns Diagnostics.
 // Called internally by Compile; also exported for tooling.
@@ -19,30 +19,34 @@ func Validate(reg *registry.Registry) Diagnostics {
 	var ds Diagnostics
 	defs := reg.All()
 
-	// Build name set for link-target resolution.
+	// Build QualifiedName set for link-target resolution.
 	names := make(map[string]bool, len(defs))
 	for _, d := range defs {
-		names[d.EntityName()] = true
+		names[def.QualifiedName(d)] = true
 	}
 
 	for _, d := range defs {
-		name := d.EntityName()
+		qname := def.QualifiedName(d)
+		name := def.LocalName(d) // module-local
 
-		// Entity name format.
-		if !entityNameRe.MatchString(name) {
+		// Local name format.
+		if !localNameRe.MatchString(name) {
 			ds = append(ds, Diagnostic{
 				Severity:   SeverityError,
-				EntityName: name,
-				Message:    fmt.Sprintf("entity name %q does not match ^[a-z][a-z0-9_]*[a-z0-9]$", name),
+				EntityName: qname,
+				Message:    fmt.Sprintf("local entity name %q must be snake_case (^[a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)*$)", name),
 			})
 		}
 
-		// Entity name must contain at least one underscore (module_noun convention).
-		if !strings.Contains(name, "_") {
+		// Module-prefixed names are transitional — warn to migrate.
+		if def.HasModulePrefix(d) {
 			ds = append(ds, Diagnostic{
 				Severity:   SeverityWarning,
-				EntityName: name,
-				Message:    "entity name should follow {module}_{noun} convention (no underscore found)",
+				EntityName: qname,
+				Message: fmt.Sprintf(
+					"entity Name %q contains the module prefix — use %q and let the compiler derive %q",
+					d.EntityName(), name, qname,
+				),
 			})
 		}
 
@@ -53,7 +57,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 			if fieldNames[f.Name] {
 				ds = append(ds, Diagnostic{
 					Severity:   SeverityError,
-					EntityName: name,
+					EntityName: qname,
 					FieldName:  f.Name,
 					Message:    "duplicate field name",
 				})
@@ -70,7 +74,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 					if strings.HasSuffix(lower, suffix) {
 						ds = append(ds, Diagnostic{
 							Severity:   SeverityWarning,
-							EntityName: name,
+							EntityName: qname,
 							FieldName:  f.Name,
 							Message:    fmt.Sprintf("field %q looks like money but uses type %q — use FieldTypeCurrency instead", f.Name, f.Type),
 						})
@@ -83,7 +87,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 			if f.Type == def.FieldTypeNamingSeries && f.Series == "" {
 				ds = append(ds, Diagnostic{
 					Severity:   SeverityError,
-					EntityName: name,
+					EntityName: qname,
 					FieldName:  f.Name,
 					Message:    "FieldTypeNamingSeries field must have a non-empty Series pattern",
 				})
@@ -94,7 +98,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 				if !names[f.LinkTarget] {
 					ds = append(ds, Diagnostic{
 						Severity:   SeverityError,
-						EntityName: name,
+						EntityName: qname,
 						FieldName:  f.Name,
 						Message:    fmt.Sprintf("link target %q is not registered", f.LinkTarget),
 					})
@@ -105,7 +109,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 			if f.Required && f.Default != nil {
 				ds = append(ds, Diagnostic{
 					Severity:   SeverityWarning,
-					EntityName: name,
+					EntityName: qname,
 					FieldName:  f.Name,
 					Message:    "field is both Required and has a Default — the default satisfies the required constraint; consider removing Required",
 				})
@@ -115,7 +119,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 			if f.Immutable && !f.Required && f.Default == nil {
 				ds = append(ds, Diagnostic{
 					Severity:   SeverityWarning,
-					EntityName: name,
+					EntityName: qname,
 					FieldName:  f.Name,
 					Message:    "Immutable field has neither Required nor Default — it will always be zero-valued and cannot be changed after creation",
 				})
@@ -128,7 +132,7 @@ func Validate(reg *registry.Registry) Diagnostics {
 			if edgeNames[e.Name] {
 				ds = append(ds, Diagnostic{
 					Severity:   SeverityError,
-					EntityName: name,
+					EntityName: qname,
 					Message:    fmt.Sprintf("duplicate edge name %q", e.Name),
 				})
 			}

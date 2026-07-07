@@ -5,18 +5,32 @@ package def
 // this interface so they do not need to distinguish between entity kinds for
 // most operations.
 type EntityDefinition interface {
-	// EntityName returns the stable snake_case name. Format: {module}_{noun}.
-	// Never rename after data is persisted.
+	// EntityName returns the module-local identifier (snake_case, no module prefix).
+	// Examples: "organization", "user", "customer", "org_assignment".
+	//
+	// The globally unique qualified name is derived by the compiler as:
+	//   module + "_" + name  (e.g. "platform_organization", "iam_user")
+	//
+	// Never rename after data is persisted — embedded in migration filenames,
+	// Temporal workflow IDs, and Redis cache keys.
 	EntityName() string
 
-	// EntityModule returns the module this entity belongs to (e.g. "finance").
+	// EntityModule returns the module this entity belongs to (e.g. "platform",
+	// "iam", "finance", "inventory"). Combined with EntityName() to derive the
+	// globally unique qualified identifier.
 	EntityModule() string
 
 	// EntityLabel returns the human-readable singular label.
+	// Derived from EntityName() if not explicitly set.
 	EntityLabel() string
 
 	// EntityLabelPlural returns the human-readable plural label.
+	// Derived from EntityLabel() if not explicitly set.
 	EntityLabelPlural() string
+
+	// EntityDescription returns an optional description of the entity's purpose.
+	// Empty string if not set.
+	EntityDescription() string
 
 	// EntityFields returns all field definitions.
 	EntityFields() []FieldDef
@@ -51,20 +65,32 @@ type EntityDefinition interface {
 // users, tenants, journal entries, and tax entries. Use [CustomDefinition]
 // for all other entity shapes.
 type SystemDefinition struct {
-	// Name is the stable entity identifier. Format: {module}_{noun}.
-	// Embedded in migration filenames, Temporal workflow IDs (stored for
-	// years), and Redis cache keys. Never rename.
+	// Name is the module-local entity identifier (snake_case, no module prefix).
+	// Examples: "organization", "user", "org_assignment", "customer".
+	//
+	// The compiler derives the globally unique qualified name as:
+	//   Module + "_" + Name  (e.g. "platform_organization", "iam_user")
+	//
+	// Never rename after data is persisted — embedded in migration filenames,
+	// Temporal workflow IDs (stored for years), and Redis cache keys.
 	Name string
 
-	// Module is the business domain this entity belongs to (e.g. "finance",
-	// "inventory", "hr"). Used for route namespacing and Casbin policy scope.
+	// Module is the business domain this entity belongs to (e.g. "platform",
+	// "iam", "finance", "inventory"). Combined with Name to derive the
+	// qualified identifier used in routes, tables, and cache keys.
 	Module string
 
 	// Label is the human-readable singular display name (e.g. "Invoice").
+	// Derived from Name if empty: "org_assignment" → "Org Assignment".
 	Label string
 
 	// LabelPlural is the human-readable plural display name (e.g. "Invoices").
+	// Derived from Label if empty: "Org Assignment" → "Org Assignments".
 	LabelPlural string
+
+	// Description is an optional human-readable description of the entity's
+	// purpose. Used in generated documentation and OpenAPI specs.
+	Description string
 
 	// Fields declares all typed columns for this entity.
 	Fields []FieldDef
@@ -92,10 +118,21 @@ type SystemDefinition struct {
 // Ensure SystemDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*SystemDefinition)(nil)
 
-func (d *SystemDefinition) EntityName() string               { return d.Name }
-func (d *SystemDefinition) EntityModule() string             { return d.Module }
-func (d *SystemDefinition) EntityLabel() string              { return d.Label }
-func (d *SystemDefinition) EntityLabelPlural() string        { return d.LabelPlural }
+func (d *SystemDefinition) EntityName() string { return d.Name }
+func (d *SystemDefinition) EntityModule() string { return d.Module }
+func (d *SystemDefinition) EntityLabel() string {
+	if d.Label != "" {
+		return d.Label
+	}
+	return DeriveLabel(LocalName(d))
+}
+func (d *SystemDefinition) EntityLabelPlural() string {
+	if d.LabelPlural != "" {
+		return d.LabelPlural
+	}
+	return DerivePluralLabel(d.EntityLabel())
+}
+func (d *SystemDefinition) EntityDescription() string { return d.Description }
 func (d *SystemDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *SystemDefinition) EntityEdges() []EdgeDef           { return d.Edges }
 func (d *SystemDefinition) EntityHooks() HookSet             { return d.Hooks }
@@ -116,18 +153,23 @@ func (d *SystemDefinition) IsSystem() bool                     { return true }
 // Escalate to SystemDefinition when: >10M records, fields used in financial
 // calculations, or FK constraints to system entity PKs are required.
 type CustomDefinition struct {
-	// Name is the stable entity identifier. Same naming rules as
-	// SystemDefinition.Name.
+	// Name is the module-local entity identifier. Same rules as
+	// SystemDefinition.Name: snake_case, no module prefix.
 	Name string
 
 	// Module is the business domain.
 	Module string
 
 	// Label is the human-readable singular display name.
+	// Derived from Name if empty.
 	Label string
 
 	// LabelPlural is the human-readable plural display name.
+	// Derived from Label if empty.
 	LabelPlural string
+
+	// Description is an optional human-readable description.
+	Description string
 
 	// Fields declares the logical fields. Each field maps to a key in the
 	// JSONB document. The compiler generates GIN indexes for Searchable fields.
@@ -155,10 +197,21 @@ type CustomDefinition struct {
 // Ensure CustomDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*CustomDefinition)(nil)
 
-func (d *CustomDefinition) EntityName() string               { return d.Name }
-func (d *CustomDefinition) EntityModule() string             { return d.Module }
-func (d *CustomDefinition) EntityLabel() string              { return d.Label }
-func (d *CustomDefinition) EntityLabelPlural() string        { return d.LabelPlural }
+func (d *CustomDefinition) EntityName() string { return d.Name }
+func (d *CustomDefinition) EntityModule() string { return d.Module }
+func (d *CustomDefinition) EntityLabel() string {
+	if d.Label != "" {
+		return d.Label
+	}
+	return DeriveLabel(LocalName(d))
+}
+func (d *CustomDefinition) EntityLabelPlural() string {
+	if d.LabelPlural != "" {
+		return d.LabelPlural
+	}
+	return DerivePluralLabel(d.EntityLabel())
+}
+func (d *CustomDefinition) EntityDescription() string { return d.Description }
 func (d *CustomDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *CustomDefinition) EntityEdges() []EdgeDef           { return d.Edges }
 func (d *CustomDefinition) EntityHooks() HookSet             { return d.Hooks }
