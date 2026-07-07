@@ -86,6 +86,3 @@ var SettingDefinition = def.SystemDefinition{
 	},
 }
 
-func init() {
-	def.Register(&SettingDefinition)
-}

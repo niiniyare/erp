@@ -18,7 +18,7 @@ import (
 // UserDefinition is the platform_user entity.
 var UserDefinition = def.SystemDefinition{
 	Name:        "iam_user",
-	Module:      "platform",
+	Module:      "iam",
 	Label:       "User",
 	LabelPlural: "Users",
 
@@ -134,7 +134,7 @@ var UserDefinition = def.SystemDefinition{
 // Roles are tenant-scoped named permission sets managed via Casbin policies.
 var RoleDefinition = def.SystemDefinition{
 	Name:        "iam_role",
-	Module:      "platform",
+	Module:      "iam",
 	Label:       "Role",
 	LabelPlural: "Roles",
 
@@ -180,7 +180,7 @@ var RoleDefinition = def.SystemDefinition{
 // (correct security behaviour — cannot authenticate without session store).
 var SessionDefinition = def.SystemDefinition{
 	Name:        "iam_session",
-	Module:      "platform",
+	Module:      "iam",
 	Label:       "Session",
 	LabelPlural: "Sessions",
 
@@ -243,7 +243,7 @@ var SessionDefinition = def.SystemDefinition{
 // APITokenDefinition is the iam_api_token entity — long-lived machine tokens.
 var APITokenDefinition = def.CustomDefinition{
 	Name:        "iam_api_token",
-	Module:      "platform",
+	Module:      "iam",
 	Label:       "API Token",
 	LabelPlural: "API Tokens",
 
@@ -315,7 +315,7 @@ var APITokenDefinition = def.CustomDefinition{
 // UserRoleDefinition is the iam_user_role entity — join table for user-role assignments.
 var UserRoleDefinition = def.CustomDefinition{
 	Name:        "iam_user_role",
-	Module:      "platform",
+	Module:      "iam",
 	Label:       "User Role",
 	LabelPlural: "User Roles",
 
@@ -337,10 +337,12 @@ var UserRoleDefinition = def.CustomDefinition{
 			Immutable:  true,
 		},
 		{
-			Name:       "org_unit_id",
+			// org_id scopes the role assignment to a specific organization node.
+			// Optional: nil means the role applies tenant-wide.
+			Name:       "org_id",
 			Type:       def.FieldTypeLink,
-			Label:      "Org Unit Scope",
-			LinkTarget: "platform_org_unit",
+			Label:      "Organization Scope",
+			LinkTarget: "platform_organization",
 		},
 	},
 
