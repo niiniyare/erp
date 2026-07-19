@@ -806,7 +806,7 @@ func (r *Router) registerCompiledEntityRoutes(apiRouter fiber.Router) error {
 		g.Delete("/:id", h.Delete) // DELETE /api/v1/{module}/{resource}/:id
 		totalRoutes += 5
 
-		for _, action := range es.Def.EntityActions() {
+		for _, action := range es.Actions {
 			g.Post("/:id/"+action.Name, h.Action(action.Name))
 			totalRoutes++
 		}
