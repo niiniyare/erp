@@ -6,43 +6,21 @@ import (
 
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
+	"awo.so/awo/registry"
 	"awo.so/awo/runtime"
 )
 
-// buildTestSchema constructs a minimal CompiledSchema for test use.
-func buildTestSchema(d def.EntityDefinition) *compiler.CompiledSchema {
-	// Re-implement buildEntitySchema inline to avoid importing compiler internals.
-	// In real tests, use registry.Build() + compiler.Compile().
-	schema := &compiler.CompiledSchema{
-		ByName: map[string]*compiler.EntitySchema{},
+// buildTestSchema compiles a minimal CompiledSchema from a single EntityDefinition.
+func buildTestSchema(t *testing.T, d def.EntityDefinition) *compiler.CompiledSchema {
+	t.Helper()
+	reg, err := registry.BuildFrom([]def.EntityDefinition{d})
+	if err != nil {
+		t.Fatalf("registry.BuildFrom: %v", err)
 	}
-	es := &compiler.EntitySchema{
-		Def:              d,
-		FieldsByName:     map[string]def.FieldDef{},
-		EdgesByName:      map[string]def.EdgeDef{},
-		ActionsByName:    map[string]def.ActionDef{},
-		DefaultValues:    map[string]func() any{},
-		RequiredFields:   map[string]bool{},
-		ImmutableFields:  map[string]bool{},
-		SensitiveFields:  map[string]bool{},
-		SearchableFields: map[string]bool{},
-		LinkTargets:      map[string]*compiler.EntitySchema{},
-		TableName:        d.EntityName(),
+	schema, err := compiler.Compile(reg)
+	if err != nil {
+		t.Fatalf("compiler.Compile: %v", err)
 	}
-	for _, f := range d.EntityFields() {
-		es.FieldsByName[f.Name] = f
-		if f.Required {
-			es.RequiredFields[f.Name] = true
-		}
-		if f.Immutable {
-			es.ImmutableFields[f.Name] = true
-		}
-		if f.Default != nil {
-			es.DefaultValues[f.Name] = f.Default
-		}
-	}
-	schema.Entities = []*compiler.EntitySchema{es}
-	schema.ByName[d.EntityName()] = es
 	return schema
 }
 
@@ -61,7 +39,7 @@ func TestPipeline_RunBeforeCreate_AppliesDefaults(t *testing.T) {
 		},
 	}
 
-	schema := buildTestSchema(d)
+	schema := buildTestSchema(t, d)
 	pipeline := runtime.NewPipeline(schema)
 
 	pctx := &runtime.CreateContext{
@@ -90,7 +68,7 @@ func TestPipeline_RunBeforeCreate_RequiredFieldMissing(t *testing.T) {
 		},
 	}
 
-	schema := buildTestSchema(d)
+	schema := buildTestSchema(t, d)
 	pipeline := runtime.NewPipeline(schema)
 
 	pctx := &runtime.CreateContext{
@@ -120,7 +98,7 @@ func TestPipeline_RunBeforeUpdate_ImmutableField(t *testing.T) {
 		},
 	}
 
-	schema := buildTestSchema(d)
+	schema := buildTestSchema(t, d)
 	pipeline := runtime.NewPipeline(schema)
 
 	current := &def.EntityRecord{
@@ -155,7 +133,7 @@ func TestPipeline_RunBeforeCreate_HookAborts(t *testing.T) {
 		},
 	}
 
-	schema := buildTestSchema(d)
+	schema := buildTestSchema(t, d)
 	pipeline := runtime.NewPipeline(schema)
 
 	pctx := &runtime.CreateContext{

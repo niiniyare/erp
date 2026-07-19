@@ -72,7 +72,7 @@ func (g *Generator) GetPage(ctx context.Context, entityName string, kind PageKin
 	}
 
 	// Check for custom page builder first.
-	pageBuilders := es.Def.EntityPageBuilders()
+	pageBuilders := es.PageBuilders
 	var builder def.PageBuilder
 	switch kind {
 	case PageList:
@@ -124,12 +124,12 @@ func (g *Generator) generate(es *compiler.EntitySchema, kind PageKind) map[strin
 }
 
 func (g *Generator) generateList(es *compiler.EntitySchema) map[string]any {
-	label, labelPlural := entityLabels(es.Def)
+	label, labelPlural := es.Label, es.LabelPlural
 
 	cols := []map[string]any{
 		{"name": "id", "label": "ID", "type": "text", "toggled": false},
 	}
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Hidden || f.Sensitive {
 			continue
 		}
@@ -169,7 +169,7 @@ func (g *Generator) generateList(es *compiler.EntitySchema) map[string]any {
 
 func (g *Generator) generateForm(es *compiler.EntitySchema, mode string) map[string]any {
 	controls := []map[string]any{}
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Hidden || f.ReadOnly || f.Sensitive {
 			continue
 		}
@@ -217,9 +217,9 @@ func (g *Generator) generateForm(es *compiler.EntitySchema, mode string) map[str
 }
 
 func (g *Generator) generateDetail(es *compiler.EntitySchema) map[string]any {
-	label, _ := entityLabels(es.Def)
+	label := es.Label
 	items := []map[string]any{}
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Hidden || f.Sensitive {
 			continue
 		}
@@ -242,19 +242,6 @@ func (g *Generator) generateDetail(es *compiler.EntitySchema) map[string]any {
 	}
 }
 
-// entityLabels extracts singular and plural labels from an EntityDefinition.
-// Falls back to EntityName if the concrete type does not expose labels.
-func entityLabels(d def.EntityDefinition) (label, labelPlural string) {
-	switch v := d.(type) {
-	case *def.SystemDefinition:
-		return v.Label, v.LabelPlural
-	case *def.CustomDefinition:
-		return v.Label, v.LabelPlural
-	default:
-		name := d.EntityName()
-		return name, name + "s"
-	}
-}
 
 // amisColumnType maps FieldType to amis column type.
 func amisColumnType(ft def.FieldType) string {

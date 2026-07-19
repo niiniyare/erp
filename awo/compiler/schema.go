@@ -43,14 +43,14 @@ type CompiledSchema struct {
 }
 
 // EntitySchema is the compiled representation of a single EntityDefinition.
+// It is the sole runtime metadata authority for its entity — no runtime code
+// should call through to the original EntityDefinition after compilation.
 type EntitySchema struct {
-	// Def is the original EntityDefinition. Never mutated after compilation.
-	Def def.EntityDefinition
+	// ── Identity ─────────────────────────────────────────────────────────────
 
 	// QualifiedName is the globally unique identifier: module + "_" + local name.
 	// e.g. "platform_organization", "iam_user", "finance_invoice".
-	// Used as: DB table name (system entities), Casbin object, Temporal namespace,
-	// Redis cache key prefix, event namespace.
+	// Used as: DB table name (system entities), Casbin object, metric label.
 	QualifiedName string
 
 	// LocalName is the module-local identifier (EntityDefinition.Name without prefix).
@@ -60,6 +60,22 @@ type EntitySchema struct {
 	// Module is the owning module (EntityDefinition.Module).
 	// e.g. "platform", "iam", "finance".
 	Module string
+
+	// IsSystem is true for SQL-backed system entities; false for JSONB custom entities.
+	IsSystem bool
+
+	// ── Display ──────────────────────────────────────────────────────────────
+
+	// Label is the human-readable singular display name (e.g. "Invoice").
+	Label string
+
+	// LabelPlural is the human-readable plural display name (e.g. "Invoices").
+	LabelPlural string
+
+	// Description is the optional entity description for docs and OpenAPI.
+	Description string
+
+	// ── HTTP / API ───────────────────────────────────────────────────────────
 
 	// APIResource is the plural URL path segment for this entity.
 	// e.g. "organizations", "users", "invoices", "org_assignments".
@@ -77,6 +93,8 @@ type EntitySchema struct {
 	// APISingular is the singular local name used in URL path segments.
 	// e.g. "organization", "user", "invoice".
 	APISingular string
+
+	// ── Namespace identifiers (all derived once at compile time) ──────────────
 
 	// EventNamespace is the dot-separated namespace for domain events.
 	// Format: module + "." + local_name  (e.g. "iam.user", "finance.invoice").
@@ -99,6 +117,26 @@ type EntitySchema struct {
 	// Format: module + ":" + local_name  (e.g. "iam:user", "finance:invoice").
 	CacheNamespace string
 
+	// TableName is the PostgreSQL table name (equals QualifiedName for system
+	// entities; "custom_entity_records" for custom entities with entity_type filter).
+	TableName string
+
+	// ── Structural metadata (ordered slices for deterministic iteration) ──────
+
+	// Fields is the ordered list of field definitions, mirroring EntityDefinition.Fields.
+	Fields []def.FieldDef
+
+	// Edges is the ordered list of edge definitions, mirroring EntityDefinition.Edges.
+	Edges []def.EdgeDef
+
+	// Actions is the ordered list of custom action definitions.
+	Actions []def.ActionDef
+
+	// Permissions is the RBAC permission set for this entity.
+	Permissions def.PermissionSet
+
+	// ── O(1) lookup maps ─────────────────────────────────────────────────────
+
 	// FieldsByName provides O(1) lookup of FieldDef by name.
 	FieldsByName map[string]def.FieldDef
 
@@ -112,6 +150,8 @@ type EntitySchema struct {
 	// Nil entry means no default — field is zero-valued on omission.
 	DefaultValues map[string]func() any
 
+	// ── Field constraint sets (boolean index maps) ────────────────────────────
+
 	// RequiredFields is the set of field names that are Required: true.
 	RequiredFields map[string]bool
 
@@ -124,13 +164,36 @@ type EntitySchema struct {
 	// SearchableFields is the set of field names that are Searchable: true.
 	SearchableFields map[string]bool
 
+	// FieldValidators maps field names to their custom validator functions.
+	// Extracted once at compile time from FieldDef.Validators.
+	// Runtime validation iterates this map instead of ranging over Fields.
+	FieldValidators map[string][]def.FieldValidator
+
 	// LinkTargets maps FieldTypeLink field names to their target EntitySchema.
 	// Resolved at compile time; all link targets are guaranteed to exist.
 	LinkTargets map[string]*EntitySchema
 
-	// TableName is the PostgreSQL table name (equals QualifiedName for system
-	// entities; "custom_entity_records" for custom entities with entity_type filter).
-	TableName string
+	// ── Runtime lifecycle data ────────────────────────────────────────────────
+
+	// Hooks is the lifecycle hook set, extracted from EntityDefinition at
+	// compile time. Runtime code reads this directly — never call through def.
+	Hooks def.HookSet
+
+	// WorkflowTriggers is the list of Temporal workflow bindings.
+	// Extracted once at compile time. Use directly in the runtime; never call
+	// es.def.EntityWorkflowTriggers() after startup.
+	WorkflowTriggers []def.WorkflowTrigger
+
+	// PageBuilders holds optional SDUI page builder overrides. When a builder
+	// is set for a view kind, it replaces the auto-generated schema for that view.
+	PageBuilders def.PageBuilderSet
+
+	// ── Compile-time reference (not for runtime use) ──────────────────────────
+
+	// def is the original EntityDefinition, retained for compile-phase link
+	// resolution only. Runtime subsystems must use the promoted fields above.
+	// Accessing def after Compile returns is an architectural violation.
+	def def.EntityDefinition
 }
 
 // RouteDescriptor describes a single HTTP route generated from an EntityDefinition.
@@ -218,7 +281,7 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 
 	// Phase 2: resolve link targets (LinkTarget is always a QualifiedName).
 	for _, es := range schema.Entities {
-		for _, f := range es.Def.EntityFields() {
+		for _, f := range es.Fields {
 			if f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList {
 				target, ok := schema.ByName[f.LinkTarget]
 				if !ok {
@@ -251,10 +314,14 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 	dotNS := module + "." + local
 
 	es := &EntitySchema{
-		Def:                 d,
+		def:                 d,
 		QualifiedName:       qname,
 		LocalName:           local,
 		Module:              module,
+		IsSystem:            d.IsSystem(),
+		Label:               d.EntityLabel(),
+		LabelPlural:         d.EntityLabelPlural(),
+		Description:         d.EntityDescription(),
 		APIResource:         resource,
 		APISingular:         local,
 		RoutePrefix:         "/api/v1/" + module + "/" + resource,
@@ -264,9 +331,17 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		PermissionNamespace: qname,
 		MetricNamespace:     qname,
 		CacheNamespace:      module + ":" + local,
+		Fields:           d.EntityFields(),
+		Edges:            d.EntityEdges(),
+		Actions:          d.EntityActions(),
+		Permissions:      d.EntityPermissions(),
+		Hooks:            d.EntityHooks(),
+		WorkflowTriggers: d.EntityWorkflowTriggers(),
+		PageBuilders:     d.EntityPageBuilders(),
 		FieldsByName:     make(map[string]def.FieldDef),
 		EdgesByName:      make(map[string]def.EdgeDef),
 		ActionsByName:    make(map[string]def.ActionDef),
+		FieldValidators:  make(map[string][]def.FieldValidator),
 		DefaultValues:    make(map[string]func() any),
 		RequiredFields:   make(map[string]bool),
 		ImmutableFields:  make(map[string]bool),
@@ -283,7 +358,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		es.TableName = "custom_entity_records"
 	}
 
-	for _, f := range d.EntityFields() {
+	for _, f := range es.Fields {
 		es.FieldsByName[f.Name] = f
 		if f.Required {
 			es.RequiredFields[f.Name] = true
@@ -300,13 +375,16 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		if f.Default != nil {
 			es.DefaultValues[f.Name] = f.Default
 		}
+		if len(f.Validators) > 0 {
+			es.FieldValidators[f.Name] = f.Validators
+		}
 	}
 
-	for _, e := range d.EntityEdges() {
+	for _, e := range es.Edges {
 		es.EdgesByName[e.Name] = e
 	}
 
-	for _, a := range d.EntityActions() {
+	for _, a := range es.Actions {
 		es.ActionsByName[a.Name] = a
 	}
 
@@ -325,7 +403,7 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 		{Method: "DELETE", Path: base + "/:id", EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "delete", RequiredPermission: "delete"},
 	}
 
-	for _, action := range es.Def.EntityActions() {
+	for _, action := range es.Actions {
 		method := string(action.Method)
 		if method == "" {
 			method = "POST"
@@ -350,7 +428,7 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 }
 
 func emitPolicies(es *EntitySchema) []CasbinPolicy {
-	perms := es.Def.EntityPermissions()
+	perms := es.Permissions
 	name := es.QualifiedName
 
 	var policies []CasbinPolicy

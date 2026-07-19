@@ -25,12 +25,12 @@ func (b *Builder) entityURL(entityName string) string {
 
 // ListPage generates a CRUD list page schema for the entity.
 func (b *Builder) ListPage(es *compiler.EntitySchema) ([]byte, error) {
-	name := es.Def.EntityName()
-	label := es.Def.EntityLabel()
+	name := es.LocalName
+	label := es.Label
 	url := b.entityURL(name)
 
 	var columns []Column
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Sensitive || f.Hidden {
 			continue
 		}
@@ -63,8 +63,8 @@ func (b *Builder) ListPage(es *compiler.EntitySchema) ([]byte, error) {
 
 // CreatePage generates a form page for record creation.
 func (b *Builder) CreatePage(es *compiler.EntitySchema) ([]byte, error) {
-	name := es.Def.EntityName()
-	label := es.Def.EntityLabel()
+	name := es.LocalName
+	label := es.Label
 	url := b.entityURL(name)
 
 	form := Form{
@@ -83,8 +83,8 @@ func (b *Builder) CreatePage(es *compiler.EntitySchema) ([]byte, error) {
 
 // EditPage generates a form page for record editing.
 func (b *Builder) EditPage(es *compiler.EntitySchema) ([]byte, error) {
-	name := es.Def.EntityName()
-	label := es.Def.EntityLabel()
+	name := es.LocalName
+	label := es.Label
 	url := b.entityURL(name) + "/${id}"
 
 	form := Form{
@@ -103,13 +103,13 @@ func (b *Builder) EditPage(es *compiler.EntitySchema) ([]byte, error) {
 
 // DetailPage generates a static detail view page.
 func (b *Builder) DetailPage(es *compiler.EntitySchema) ([]byte, error) {
-	name := es.Def.EntityName()
-	label := es.Def.EntityLabel()
+	name := es.LocalName
+	label := es.Label
 	url := b.entityURL(name) + "/${id}"
 
 	// Detail view uses a form in read-only mode.
 	var controls []FormControl
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Sensitive || f.Hidden {
 			continue
 		}
@@ -135,7 +135,7 @@ func (b *Builder) DetailPage(es *compiler.EntitySchema) ([]byte, error) {
 // formControls builds the form body for create (isEdit=false) or edit (isEdit=true).
 func (b *Builder) formControls(es *compiler.EntitySchema, isEdit bool) []FormControl {
 	var controls []FormControl
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Sensitive || f.Hidden {
 			continue
 		}

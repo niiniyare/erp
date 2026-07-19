@@ -240,7 +240,7 @@ func (r *Repository) Create(ctx context.Context, input driver.CreateInput) (*def
 	id := uuid.New() // TODO: switch to UUIDv7 when available
 	now := time.Now().UTC()
 
-	if r.schema.Def.IsSystem() {
+	if r.schema.IsSystem {
 		return r.createSystem(ctx, conn.db(), id, tc.TenantID, input, now)
 	}
 	return r.createCustom(ctx, conn.db(), id, tc.TenantID, input, now)
@@ -302,7 +302,7 @@ func (r *Repository) Update(ctx context.Context, id uuid.UUID, input driver.Upda
 	conn := connFromContext(ctx, r.pool)
 	now := time.Now().UTC()
 
-	if r.schema.Def.IsSystem() {
+	if r.schema.IsSystem {
 		return r.updateSystem(ctx, conn.db(), id, input, now)
 	}
 	return r.updateCustom(ctx, conn.db(), id, input, now)
@@ -397,7 +397,7 @@ func (r *Repository) BulkUpdate(ctx context.Context, f *filter.Filter, patch dri
 
 	now := time.Now().UTC()
 
-	if r.schema.Def.IsSystem() {
+	if r.schema.IsSystem {
 		sets := []string{`"updated_at" = $1`}
 		args := []any{now}
 		for field, val := range patch.Set {
@@ -474,7 +474,7 @@ type rowScanner interface {
 }
 
 func (r *Repository) columnsAndScanner() (string, func(rowScanner) (*def.EntityRecord, error)) {
-	if r.schema.Def.IsSystem() {
+	if r.schema.IsSystem {
 		return r.systemColumnsAndScanner()
 	}
 	return r.customColumnsAndScanner()

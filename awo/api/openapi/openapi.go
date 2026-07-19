@@ -142,7 +142,7 @@ func entitySchema(es *compiler.EntitySchema) map[string]any {
 	}
 	required := []string{}
 
-	for _, f := range es.Def.EntityFields() {
+	for _, f := range es.Fields {
 		if f.Sensitive {
 			continue // never expose sensitive fields in API docs
 		}

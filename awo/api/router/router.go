@@ -1,13 +1,17 @@
 // Package router registers all auto-generated CRUD and action routes derived
 // from the CompiledSchema onto a Fiber app.
 //
-// Route pattern (all under /api/v1/entities/):
-//   - GET    /:entity          → List
-//   - GET    /:entity/:id      → Get
-//   - POST   /:entity          → Create
-//   - PATCH  /:entity/:id      → Update
-//   - DELETE /:entity/:id      → Delete
-//   - POST   /:entity/:id/:action → Action handler
+// Route pattern (per entity, using EntitySchema.RoutePrefix):
+//   - GET    /api/v1/{module}/{resource}          → List
+//   - GET    /api/v1/{module}/{resource}/:id      → Get
+//   - POST   /api/v1/{module}/{resource}          → Create
+//   - PATCH  /api/v1/{module}/{resource}/:id      → Update
+//   - DELETE /api/v1/{module}/{resource}/:id      → Delete
+//   - POST   /api/v1/{module}/{resource}/:id/:action → Action handler
+//
+// Permission checks use EntitySchema.PermissionNamespace as the Casbin object.
+// No entity name or path is constructed at runtime — all values come from
+// the compiled EntitySchema.
 package router
 
 import (
@@ -51,8 +55,10 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		counter = cache.NoopCounter{}
 	}
 
-	// Protected API group — tenant, auth, rate-limit.
-	api := app.Group("/api/v1/entities")
+	// Shared middleware applied once at the /api/v1 group level.
+	// Each entity group inherits these; individual route groups are mounted
+	// directly at their RoutePrefix paths.
+	api := app.Group("/api/v1")
 	if opts.Tenants != nil {
 		api.Use(middleware.TenantResolver(opts.Tenants))
 	}
@@ -61,22 +67,28 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 	}
 	api.Use(middleware.RateLimit(counter, middleware.DefaultRateLimit))
 
+	// One pipeline shared across all entity handlers — it holds the compiled
+	// schema and performs O(1) entity lookup by QualifiedName.
+	pipeline := runtime.NewPipeline(schema)
+
 	for _, es := range schema.Entities {
 		repo := contrib.NewRepository(opts.Pool, es)
-		pipeline := runtime.NewPipeline(schema)
 		svc := service.NewEntityService(es, repo, pipeline, opts.Temporal)
 		h := handler.NewEntityHandler(es, svc)
-		entityName := es.TableName
 
-		entity := api.Group("/" + entityName)
+		// RoutePrefix is already the full path "/api/v1/{module}/{resource}".
+		// Fiber groups interpret the path relative to the app, not the parent group,
+		// when an absolute path is given. Use the compiled prefix directly.
+		perm := es.PermissionNamespace // Casbin object — equals QualifiedName
+		entity := api.Group("/" + es.Module + "/" + es.APIResource)
 
 		// Apply RBAC per HTTP method if an enforcer is wired.
 		if opts.Authz != nil {
-			entity.Get("/", opts.Authz.RequirePermission(entityName, "read"), h.List)
-			entity.Post("/", opts.Authz.RequirePermission(entityName, "create"), h.Create)
-			entity.Get("/:id", opts.Authz.RequirePermission(entityName, "read"), h.Get)
-			entity.Patch("/:id", opts.Authz.RequirePermission(entityName, "write"), h.Update)
-			entity.Delete("/:id", opts.Authz.RequirePermission(entityName, "delete"), h.Delete)
+			entity.Get("/", opts.Authz.RequirePermission(perm, "read"), h.List)
+			entity.Post("/", opts.Authz.RequirePermission(perm, "create"), h.Create)
+			entity.Get("/:id", opts.Authz.RequirePermission(perm, "read"), h.Get)
+			entity.Patch("/:id", opts.Authz.RequirePermission(perm, "write"), h.Update)
+			entity.Delete("/:id", opts.Authz.RequirePermission(perm, "delete"), h.Delete)
 		} else {
 			entity.Get("/", h.List)
 			entity.Post("/", h.Create)
@@ -85,15 +97,15 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 			entity.Delete("/:id", h.Delete)
 		}
 
-		// Register action routes.
-		for actionName := range es.ActionsByName {
-			name := actionName // capture loop var
+		// Register action routes from the compiled Actions slice.
+		for _, action := range es.Actions {
+			actionName := action.Name // capture loop var
 			if opts.Authz != nil {
-				entity.Post("/:id/"+name, opts.Authz.RequirePermission(entityName, name), func(c *fiber.Ctx) error {
+				entity.Post("/:id/"+actionName, opts.Authz.RequirePermission(perm, actionName), func(c *fiber.Ctx) error {
 					return h.Action(c)
 				})
 			} else {
-				entity.Post("/:id/"+name, func(c *fiber.Ctx) error {
+				entity.Post("/:id/"+actionName, func(c *fiber.Ctx) error {
 					return h.Action(c)
 				})
 			}

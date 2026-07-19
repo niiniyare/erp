@@ -16,9 +16,9 @@ func BuildNav(schema *compiler.CompiledSchema) []NavItem {
 	var moduleOrder []string
 
 	for _, es := range schema.Entities {
-		moduleName := es.Def.EntityModule()
-		name := es.Def.EntityName()
-		label := es.Def.EntityLabel()
+		moduleName := es.Module
+		name := es.LocalName
+		label := es.Label
 
 		item := NavItem{
 			Label: label,

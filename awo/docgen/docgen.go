@@ -44,11 +44,10 @@ func WriteMarkdown(w io.Writer, s *compiler.CompiledSchema, opts Options) error 
 	groups := make(map[string][]*compiler.EntitySchema)
 	var moduleOrder []string
 	for _, es := range s.Entities {
-		mod := es.Def.EntityModule()
-		if _, seen := groups[mod]; !seen {
-			moduleOrder = append(moduleOrder, mod)
+		if _, seen := groups[es.Module]; !seen {
+			moduleOrder = append(moduleOrder, es.Module)
 		}
-		groups[mod] = append(groups[mod], es)
+		groups[es.Module] = append(groups[es.Module], es)
 	}
 	sort.Strings(moduleOrder)
 
@@ -71,11 +70,11 @@ func WriteMarkdown(w io.Writer, s *compiler.CompiledSchema, opts Options) error 
 		}
 		entities := groups[mod]
 		sort.Slice(entities, func(i, j int) bool {
-			return entities[i].Def.EntityName() < entities[j].Def.EntityName()
+			return entities[i].LocalName < entities[j].LocalName
 		})
 		for _, es := range entities {
-			anchor := strings.ReplaceAll(es.Def.EntityName(), "_", "-")
-			if _, err := fmt.Fprintf(w, "  - [%s](#%s)\n", es.Def.EntityLabel(), anchor); err != nil {
+			anchor := strings.ReplaceAll(es.LocalName, "_", "-")
+			if _, err := fmt.Fprintf(w, "  - [%s](#%s)\n", es.Label, anchor); err != nil {
 				return err
 			}
 		}
@@ -100,22 +99,20 @@ func WriteMarkdown(w io.Writer, s *compiler.CompiledSchema, opts Options) error 
 }
 
 func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.CompiledSchema, opts Options) error {
-	name := es.Def.EntityName()
-	anchor := strings.ReplaceAll(name, "_", "-")
+	anchor := strings.ReplaceAll(es.LocalName, "_", "-")
 
-	fmt.Fprintf(w, "### %s {#%s}\n\n", es.Def.EntityLabel(), anchor)
-	fmt.Fprintf(w, "**Entity name:** `%s`  \n", name)
+	fmt.Fprintf(w, "### %s {#%s}\n\n", es.Label, anchor)
+	fmt.Fprintf(w, "**Entity name:** `%s`  \n", es.LocalName)
 	kind := "Custom (JSONB)"
-	if es.Def.IsSystem() {
+	if es.IsSystem {
 		kind = "System (SQL)"
 	}
 	fmt.Fprintf(w, "**Storage:** %s  \n", kind)
 	fmt.Fprintf(w, "**Table:** `%s`  \n\n", es.TableName)
 
 	// Fields table.
-	fields := es.Def.EntityFields()
-	visible := make([]def.FieldDef, 0, len(fields))
-	for _, f := range fields {
+	visible := make([]def.FieldDef, 0, len(es.Fields))
+	for _, f := range es.Fields {
 		if f.Sensitive && !opts.IncludeSensitiveFields {
 			continue
 		}
@@ -142,12 +139,11 @@ func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.Comp
 	}
 
 	// Edges.
-	edges := es.Def.EntityEdges()
-	if len(edges) > 0 {
+	if len(es.Edges) > 0 {
 		fmt.Fprintf(w, "#### Edges\n\n")
 		fmt.Fprintf(w, "| Name | Target | Type | Cascade Delete |\n")
 		fmt.Fprintf(w, "|------|--------|------|----------------|\n")
-		for _, e := range edges {
+		for _, e := range es.Edges {
 			fmt.Fprintf(w, "| `%s` | `%s` | `%s` | %s |\n",
 				e.Name, e.Target, e.Type, boolMark(e.CascadeDelete))
 		}
@@ -155,12 +151,11 @@ func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.Comp
 	}
 
 	// Actions.
-	actions := es.Def.EntityActions()
-	if len(actions) > 0 {
+	if len(es.Actions) > 0 {
 		fmt.Fprintf(w, "#### Custom Actions\n\n")
 		fmt.Fprintf(w, "| Name | Method | Permission |\n")
 		fmt.Fprintf(w, "|------|--------|------------|\n")
-		for _, a := range actions {
+		for _, a := range es.Actions {
 			method := string(a.Method)
 			if method == "" {
 				method = "POST"
@@ -176,7 +171,7 @@ func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.Comp
 
 	// Permissions.
 	if opts.IncludePermissions {
-		perms := es.Def.EntityPermissions()
+		perms := es.Permissions
 		if len(perms.Create)+len(perms.Read)+len(perms.Write)+len(perms.Delete) > 0 {
 			fmt.Fprintf(w, "#### Permissions\n\n")
 			fmt.Fprintf(w, "| Operation | Allowed Roles |\n")
@@ -193,7 +188,7 @@ func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.Comp
 	if opts.IncludeRoutes {
 		var entityRoutes []compiler.RouteDescriptor
 		for _, r := range s.Routes {
-			if r.EntityQualifiedName == name {
+			if r.EntityQualifiedName == es.QualifiedName {
 				entityRoutes = append(entityRoutes, r)
 			}
 		}

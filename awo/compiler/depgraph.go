@@ -23,12 +23,12 @@ func Build(s *CompiledSchema) *DepGraph {
 		all:  make(map[string]bool, len(s.Entities)),
 	}
 	for _, es := range s.Entities {
-		name := es.Def.EntityName()
+		name := es.QualifiedName
 		g.all[name] = true
 		if g.deps[name] == nil {
 			g.deps[name] = make(map[string]bool)
 		}
-		for _, f := range es.Def.EntityFields() {
+		for _, f := range es.Fields {
 			if (f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList) && f.LinkTarget != "" {
 				g.deps[name][f.LinkTarget] = true
 			}

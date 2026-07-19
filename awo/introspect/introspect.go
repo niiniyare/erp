@@ -58,10 +58,8 @@ func Inspect(s *compiler.CompiledSchema) SchemaInfo {
 	}
 
 	for _, es := range s.Entities {
-		fields := es.Def.EntityFields()
-
 		var fieldInfos []FieldInfo
-		for _, f := range fields {
+		for _, f := range es.Fields {
 			fieldInfos = append(fieldInfos, FieldInfo{
 				Name:       f.Name,
 				Type:       string(f.Type),
@@ -75,13 +73,13 @@ func Inspect(s *compiler.CompiledSchema) SchemaInfo {
 		info.Entities = append(info.Entities, EntityInfo{
 			Name:        es.QualifiedName,
 			Module:      es.Module,
-			Label:       es.Def.EntityLabel(),
-			IsSystem:    es.Def.IsSystem(),
+			Label:       es.Label,
+			IsSystem:    es.IsSystem,
 			TableName:   es.TableName,
-			FieldCount:  len(fields),
+			FieldCount:  len(es.Fields),
 			Fields:      fieldInfos,
-			EdgeCount:   len(es.Def.EntityEdges()),
-			ActionCount: len(es.Def.EntityActions()),
+			EdgeCount:   len(es.Edges),
+			ActionCount: len(es.Actions),
 			Routes:      routesByEntity[es.QualifiedName],
 		})
 	}

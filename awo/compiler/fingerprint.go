@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+
+	"awo.so/awo/def"
 )
 
 // Fingerprint computes a deterministic SHA-256 hash of the CompiledSchema.
@@ -26,10 +28,11 @@ func Fingerprint(s *CompiledSchema) string {
 	for _, name := range qnames {
 		es := s.ByName[name]
 
-		fmt.Fprintf(h, "entity:%s:system:%v\n", name, es.Def.IsSystem())
+		fmt.Fprintf(h, "entity:%s:system:%v\n", name, es.IsSystem)
 
 		// Fields — sorted by name.
-		fields := es.Def.EntityFields()
+		fields := make([]def.FieldDef, len(es.Fields))
+		copy(fields, es.Fields)
 		sort.Slice(fields, func(i, j int) bool { return fields[i].Name < fields[j].Name })
 		for _, f := range fields {
 			fmt.Fprintf(h, "field:%s:%s:req=%v:uniq=%v:imm=%v:sens=%v:search=%v\n",
@@ -49,21 +52,23 @@ func Fingerprint(s *CompiledSchema) string {
 		}
 
 		// Edges — sorted by name.
-		edges := es.Def.EntityEdges()
+		edges := make([]def.EdgeDef, len(es.Edges))
+		copy(edges, es.Edges)
 		sort.Slice(edges, func(i, j int) bool { return edges[i].Name < edges[j].Name })
 		for _, e := range edges {
 			fmt.Fprintf(h, "edge:%s:%s:%s:cascade=%v\n", e.Name, e.Target, e.Type, e.CascadeDelete)
 		}
 
 		// Actions — sorted by name.
-		actions := es.Def.EntityActions()
+		actions := make([]def.ActionDef, len(es.Actions))
+		copy(actions, es.Actions)
 		sort.Slice(actions, func(i, j int) bool { return actions[i].Name < actions[j].Name })
 		for _, a := range actions {
 			fmt.Fprintf(h, "action:%s:%s\n", a.Name, a.Method)
 		}
 
 		// Permissions.
-		perms := es.Def.EntityPermissions()
+		perms := es.Permissions
 		writePerms := func(label string, subjects []string) {
 			cp := make([]string, len(subjects))
 			copy(cp, subjects)

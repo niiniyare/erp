@@ -172,7 +172,7 @@ func (h *EntityHandler) handleError(c *fiber.Ctx, err error) error {
 		slog.Error("unhandled error",
 			"request_id", c.Locals("request_id"),
 			"tenant_id", c.Locals("tenant_id"),
-			"entity", h.schema.TableName,
+			"entity", h.schema.QualifiedName,
 			"err", err,
 		)
 	}

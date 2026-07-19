@@ -23,12 +23,12 @@ import (
 // driver's Create/Update/Delete, which manage transactions internally and
 // call the after_* hook stage from within the transaction.
 type Pipeline struct {
-	schema *compiler.CompiledSchema
+	reg *RuntimeRegistry
 }
 
-// NewPipeline creates a Pipeline bound to the compiled schema.
+// NewPipeline creates a Pipeline bound to the compiled schema via RuntimeRegistry.
 func NewPipeline(schema *compiler.CompiledSchema) *Pipeline {
-	return &Pipeline{schema: schema}
+	return &Pipeline{reg: NewRuntimeRegistry(schema)}
 }
 
 // CreateContext carries all inputs for a Create pipeline run.
@@ -97,7 +97,7 @@ func (p *Pipeline) RunBeforeCreate(pctx *CreateContext) (*def.EntityRecord, erro
 	// Stage 1: apply defaults for missing fields.
 	p.applyDefaults(record, es)
 
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 
 	// Stage 2: BeforeValidate
 	for _, h := range hooks.BeforeValidate {
@@ -137,7 +137,7 @@ func (p *Pipeline) RunAfterCreate(ctx context.Context, record *def.EntityRecord)
 	if err != nil {
 		return err
 	}
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 
 	for _, h := range hooks.AfterSave {
 		if err := h.AfterSave(ctx, record); err != nil {
@@ -185,7 +185,7 @@ func (p *Pipeline) RunBeforeUpdate(pctx *UpdateContext, current *def.EntityRecor
 		return nil, ve
 	}
 
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 
 	for _, h := range hooks.BeforeValidate {
 		if err := h.BeforeValidate(pctx.Ctx, proposed); err != nil {
@@ -219,7 +219,7 @@ func (p *Pipeline) RunAfterUpdate(ctx context.Context, record, prev *def.EntityR
 	if err != nil {
 		return err
 	}
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 
 	for _, h := range hooks.AfterSave {
 		if err := h.AfterSave(ctx, record); err != nil {
@@ -240,7 +240,7 @@ func (p *Pipeline) RunBeforeDelete(ctx context.Context, record *def.EntityRecord
 	if err != nil {
 		return err
 	}
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 	for _, h := range hooks.BeforeDelete {
 		if err := h.BeforeDelete(ctx, record); err != nil {
 			return fmt.Errorf("before_delete: %w", err)
@@ -255,7 +255,7 @@ func (p *Pipeline) RunAfterDelete(ctx context.Context, record *def.EntityRecord)
 	if err != nil {
 		return err
 	}
-	hooks := es.Def.EntityHooks()
+	hooks := es.Hooks
 	for _, h := range hooks.AfterDelete {
 		if err := h.AfterDelete(ctx, record); err != nil {
 			return fmt.Errorf("after_delete: %w", err)
@@ -267,11 +267,7 @@ func (p *Pipeline) RunAfterDelete(ctx context.Context, record *def.EntityRecord)
 // --- Internal helpers ---
 
 func (p *Pipeline) lookupSchema(entityName string) (*compiler.EntitySchema, error) {
-	es := p.schema.ByName[entityName]
-	if es == nil {
-		return nil, fmt.Errorf("runtime: entity %q not found in compiled schema", entityName)
-	}
-	return es, nil
+	return p.reg.FindEntity(entityName)
 }
 
 func (p *Pipeline) applyDefaults(record *def.EntityRecord, es *compiler.EntitySchema) {
@@ -295,11 +291,11 @@ func (p *Pipeline) validateFields(ctx context.Context, record *def.EntityRecord,
 		}
 	}
 
-	for _, f := range es.Def.EntityFields() {
-		val := record.Get(f.Name)
-		for _, validator := range f.Validators {
+	for fieldName, validators := range es.FieldValidators {
+		val := record.Get(fieldName)
+		for _, validator := range validators {
 			if msg := validator(ctx, val); msg != "" {
-				ve.AddField(f.Name, msg)
+				ve.AddField(fieldName, msg)
 			}
 		}
 	}

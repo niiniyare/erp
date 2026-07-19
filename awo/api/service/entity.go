@@ -53,7 +53,7 @@ func NewEntityService(
 func (s *EntityService) Create(ctx context.Context, data map[string]any, actor *def.Actor) (*def.EntityRecord, error) {
 	pctx := &runtime.CreateContext{
 		Ctx:        ctx,
-		EntityName: s.schema.TableName,
+		EntityName: s.schema.QualifiedName,
 		Data:       data,
 		Actor:      actor,
 	}
@@ -97,7 +97,7 @@ func (s *EntityService) Update(ctx context.Context, id uuid.UUID, data map[strin
 
 	pctx := &runtime.UpdateContext{
 		Ctx:        ctx,
-		EntityName: s.schema.TableName,
+		EntityName: s.schema.QualifiedName,
 		Data:       data,
 		Actor:      actor,
 	}
@@ -161,14 +161,13 @@ func (s *EntityService) Query(ctx context.Context, f *filter.Filter, opts ...dri
 // Runs outside the database transaction — failure does not roll back the record.
 // In production, the outbox pattern provides retry guarantees.
 func (s *EntityService) startWorkflows(ctx context.Context, event def.EventType, record *def.EntityRecord, actor *def.Actor) {
-	triggers := s.schema.Def.EntityWorkflowTriggers()
-	for _, t := range triggers {
+	for _, t := range s.schema.WorkflowTriggers {
 		if t.On != event {
 			continue
 		}
 		if s.temporal == nil {
 			slog.Warn("temporal client not configured — skipping workflow start",
-				"entity", s.schema.TableName,
+				"entity", s.schema.QualifiedName,
 				"event", event,
 				"workflow", t.WorkflowFn,
 			)
@@ -183,7 +182,7 @@ func (s *EntityService) startWorkflows(ctx context.Context, event def.EventType,
 		input, err := t.InputBuilder(record, tc)
 		if err != nil {
 			slog.Error("workflow input builder failed",
-				"entity", s.schema.TableName,
+				"entity", s.schema.QualifiedName,
 				"workflow", t.WorkflowFn,
 				"record_id", record.ID,
 				"err", err,
@@ -202,7 +201,7 @@ func (s *EntityService) startWorkflows(ctx context.Context, event def.EventType,
 		)
 		if err != nil {
 			slog.Error("workflow start failed — will retry via outbox",
-				"entity", s.schema.TableName,
+				"entity", s.schema.QualifiedName,
 				"workflow", t.WorkflowFn,
 				"workflow_id", workflowID,
 				"err", err,
