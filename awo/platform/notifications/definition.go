@@ -22,7 +22,7 @@ import "awo.so/awo/def"
 // attempt per recipient. Immutable after creation except for delivery status
 // fields (sent_at, failed_at, read_at, error_message).
 var NotificationDef = def.SystemDefinition{
-	Name:        "platform_notification",
+	Name:        "notification",
 	Module:      "platform",
 	Label:       "Notification",
 	LabelPlural: "Notifications",
@@ -131,7 +131,7 @@ var NotificationDef = def.SystemDefinition{
 // server-rendered using Go text/template syntax. Variables are passed in the
 // platform_notification.data JSON field.
 var TemplateDef = def.SystemDefinition{
-	Name:        "platform_notification_template",
+	Name:        "notification_template",
 	Module:      "platform",
 	Label:       "Notification Template",
 	LabelPlural: "Notification Templates",

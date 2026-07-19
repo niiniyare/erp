@@ -16,7 +16,7 @@ import (
 // ModuleDefinition is the platform_module entity.
 // One record per installed module in the entire platform (not per tenant).
 var ModuleDefinition = def.SystemDefinition{
-	Name:        "platform_module",
+	Name:        "module",
 	Module:      "platform",
 	Label:       "Module",
 	LabelPlural: "Modules",
@@ -75,7 +75,7 @@ var ModuleDefinition = def.SystemDefinition{
 // TenantModuleDefinition is the platform_tenant_module entity.
 // One record per module per tenant. Tracks activation state.
 var TenantModuleDefinition = def.SystemDefinition{
-	Name:        "platform_tenant_module",
+	Name:        "tenant_module",
 	Module:      "platform",
 	Label:       "Tenant Module",
 	LabelPlural: "Tenant Modules",

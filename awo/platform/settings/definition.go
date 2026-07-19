@@ -21,7 +21,7 @@ import (
 // SettingDefinition is the platform_setting entity.
 // Settings are key-value pairs scoped to a namespace (module.key pattern).
 var SettingDefinition = def.SystemDefinition{
-	Name:        "platform_setting",
+	Name:        "setting",
 	Module:      "platform",
 	Label:       "Setting",
 	LabelPlural: "Settings",

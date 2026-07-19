@@ -128,43 +128,66 @@ The struct fields are described individually in the sections below.
 
 ## 3. Identity Fields
 
-### Name
-
-```go
-Name string  // required
-```
-
-The stable, globally unique identifier for the entity. Used in: URL paths, Redis cache keys, Temporal workflow IDs, Casbin policy tuples, migration filenames, and audit log records.
-
-**Format:** `{module}_{noun}`, lowercase, underscores only. No hyphens, no uppercase, no spaces.
-
-**Examples:** `finance_invoice`, `inventory_stock_move`, `iam_user`, `hr_employee`, `forecourt_shift`
-
-**Immutability:** Entity names MUST NOT be changed after the entity has been registered in any non-development deployment. See [LAW-011](../02-architecture/laws.md#law-011-entity-names-are-globally-unique-and-immutable).
-
-**Uniqueness:** Entity names MUST be globally unique within a deployment. The compiler detects duplicate names and fails compilation.
-
 ### Module
 
 ```go
 Module string  // required
 ```
 
-The name of the module that owns this entity. Module names follow the same format as entity names: lowercase, underscores only. Examples: `finance`, `inventory`, `iam`, `hr`, `crm`.
+The name of the module that owns this entity. Lowercase, underscores only. Unique globally within a deployment. Examples: `finance`, `inventory`, `iam`, `hr`, `crm`, `platform`.
 
 The `Module` field is used to:
+- Derive the qualified name together with `Name`
+- Construct module-scoped API routes (`/api/v1/{module}/{plural}`)
 - Group entities in the SDUI sidebar navigation
 - Scope Casbin roles (`role:{module}.{role_name}`)
 - Group migrations in the file system
 
+### Name
+
+```go
+Name string  // required — module-local identifier
+```
+
+The module-local entity identifier. Unique within the owning module. Does **not** include the module prefix.
+
+**Format:** `{noun}` or `{noun}_{qualifier}`, lowercase snake_case. No module prefix, no hyphens, no uppercase, no spaces.
+
+**Examples:** `invoice`, `stock_move`, `user`, `employee`, `shift`, `org_assignment`
+
+**Qualified name** (compiler-derived): The globally unique identifier is `Module + "_" + Name`, computed by the compiler. Entity authors MUST NOT construct this manually.
+
+| Module | Name | QualifiedName (compiler-derived) |
+|--------|------|----------------------------------|
+| `finance` | `invoice` | `finance_invoice` |
+| `inventory` | `stock_move` | `inventory_stock_move` |
+| `iam` | `user` | `iam_user` |
+| `platform` | `organization` | `platform_organization` |
+
+**Immutability:** Entity names MUST NOT be changed after the entity has been registered in any non-development deployment. The qualified name is embedded in migration filenames, Temporal workflow IDs, Redis cache keys, Casbin policy tuples, and audit log records.
+
+**Uniqueness:** Within a module, `Name` must be unique. Across modules, `QualifiedName` must be unique (enforced by registry).
+
+### PluralName
+
+```go
+PluralName string  // optional — explicit plural override
+```
+
+An explicit plural override for the module-local name used in API resource paths. Leave empty unless automatic pluralization produces the wrong result.
+
+**Example (override needed):** entity `"sheep"` → default `"sheeps"` (wrong) → set `PluralName: "sheep"`.
+
+**Example (override not needed):** entity `"category"` → compiler derives `"categories"` correctly.
+
 ### Label and LabelPlural
 
 ```go
-Label       string  // required — human-readable singular: "Invoice", "Stock Move"
-LabelPlural string  // required — human-readable plural: "Invoices", "Stock Moves"
+Label       string  // optional — human-readable singular: "Invoice", "Stock Move"
+LabelPlural string  // optional — human-readable plural: "Invoices", "Stock Moves"
 ```
 
-Used in SDUI page titles, list headings, breadcrumbs, and error messages. These labels are tenant-overridable via the Settings module if `TenantOverridableLabel: true` is set.
+Used in SDUI page titles, list headings, breadcrumbs, and error messages. Derived automatically from `Name` if not set: `"org_assignment"` → `"Org Assignment"` / `"Org Assignments"`.
 
 ---
 
@@ -588,7 +611,7 @@ EntityDefinitions MUST be registered using `definition.Register()` from an `init
 // internal/core/finance/definition.go
 
 var InvoiceDefinition = entity.EntityDefinition{
-    Name:   "finance_invoice",
+    Name:   "invoice",   // module-local; compiler derives "finance_invoice"
     Module: "finance",
     // ...
 }
@@ -613,15 +636,34 @@ Calling `definition.Register()` after `Registry.Compile()` returns an error (see
 
 | Field | Format | Example |
 |---|---|---|
-| `Name` | `{module}_{noun}`, snake_case | `finance_invoice` |
-| `Module` | snake_case | `finance` |
-| `Label` | Title case | `Invoice` |
-| `LabelPlural` | Title case | `Invoices` |
+| `Module` | snake_case, unique globally | `finance` |
+| `Name` | snake_case, module-local noun (no module prefix) | `invoice` |
+| `PluralName` | snake_case, plural (only when auto-plural is wrong) | `sheep` |
+| `Label` | Title case (auto-derived from Name if omitted) | `Invoice` |
+| `LabelPlural` | Title case (auto-derived from Label if omitted) | `Invoices` |
 | `Fields[*].Name` | snake_case | `total_kes` |
 | `Edges[*].Name` | snake_case | `invoice_lines` |
 | `Actions[*].Name` | snake_case | `submit_for_approval` |
 | `WorkflowTriggers[*].TaskQueue` | `{module}.{noun}.{event}` | `finance.invoice.submit` |
 | `WorkflowTriggers[*].WorkflowFn` | `{Entity}{Event}Workflow` | `InvoiceSubmitWorkflow` |
+
+### Compiler-Derived Identity
+
+The compiler derives all globally-unique identifiers from `Module` + `Name`. Entity authors MUST NOT construct these manually.
+
+| Derived Field | Formula | Example |
+|---|---|---|
+| `QualifiedName` | `module + "_" + name` | `finance_invoice` |
+| `TableName` | `QualifiedName` (system); `custom_entity_records` (custom) | `finance_invoice` |
+| `RoutePrefix` | `/api/v1/{module}/{plural(name)}` | `/api/v1/finance/invoices` |
+| `APIResource` | `plural(name)` or `PluralName` | `invoices` |
+| `APISingular` | `name` | `invoice` |
+| `OpenAPITag` | `Title(module)` | `Finance` |
+| `EventNamespace` | `module + "." + name` | `finance.invoice` |
+| `WorkflowNamespace` | `module + "." + name` | `finance.invoice` |
+| `PermissionNamespace` | `QualifiedName` | `finance_invoice` |
+| `MetricNamespace` | `QualifiedName` | `finance_invoice` |
+| `CacheNamespace` | `module + ":" + name` | `finance:invoice` |
 
 ---
 
@@ -631,7 +673,7 @@ Calling `definition.Register()` after `Registry.Compile()` returns an error (see
 // internal/core/finance/definition.go
 
 var InvoiceDefinition = entity.EntityDefinition{
-    Name:         "finance_invoice",
+    Name:         "invoice",   // module-local; compiler derives "finance_invoice"
     Module:       "finance",
     Label:        "Invoice",
     LabelPlural:  "Invoices",

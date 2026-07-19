@@ -17,7 +17,7 @@ import (
 
 // UserDefinition is the platform_user entity.
 var UserDefinition = def.SystemDefinition{
-	Name:        "iam_user",
+	Name:        "user",
 	Module:      "iam",
 	Label:       "User",
 	LabelPlural: "Users",
@@ -133,7 +133,7 @@ var UserDefinition = def.SystemDefinition{
 // RoleDefinition is the platform_role entity.
 // Roles are tenant-scoped named permission sets managed via Casbin policies.
 var RoleDefinition = def.SystemDefinition{
-	Name:        "iam_role",
+	Name:        "role",
 	Module:      "iam",
 	Label:       "Role",
 	LabelPlural: "Roles",
@@ -179,7 +179,7 @@ var RoleDefinition = def.SystemDefinition{
 // caches the token for fast validation. Redis failure invalidates all sessions
 // (correct security behaviour — cannot authenticate without session store).
 var SessionDefinition = def.SystemDefinition{
-	Name:        "iam_session",
+	Name:        "session",
 	Module:      "iam",
 	Label:       "Session",
 	LabelPlural: "Sessions",
@@ -242,7 +242,7 @@ var SessionDefinition = def.SystemDefinition{
 
 // APITokenDefinition is the iam_api_token entity — long-lived machine tokens.
 var APITokenDefinition = def.CustomDefinition{
-	Name:        "iam_api_token",
+	Name:        "api_token",
 	Module:      "iam",
 	Label:       "API Token",
 	LabelPlural: "API Tokens",
@@ -314,7 +314,7 @@ var APITokenDefinition = def.CustomDefinition{
 
 // UserRoleDefinition is the iam_user_role entity — join table for user-role assignments.
 var UserRoleDefinition = def.CustomDefinition{
-	Name:        "iam_user_role",
+	Name:        "user_role",
 	Module:      "iam",
 	Label:       "User Role",
 	LabelPlural: "User Roles",

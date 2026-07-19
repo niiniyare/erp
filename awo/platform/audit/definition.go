@@ -18,7 +18,7 @@ import (
 
 // LogDefinition is the iam_audit_log entity definition.
 var LogDefinition = def.SystemDefinition{
-	Name:        "iam_audit_log",
+	Name:        "audit_log",
 	Module:      "iam",
 	Label:       "Audit Log",
 	LabelPlural: "Audit Logs",

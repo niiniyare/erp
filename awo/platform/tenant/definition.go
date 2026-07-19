@@ -26,7 +26,7 @@ import (
 // Definition is the SystemDefinition for the platform_tenant entity.
 // Registered in init() — available immediately at process start.
 var Definition = def.SystemDefinition{
-	Name:        "platform_tenant",
+	Name:        "tenant",
 	Module:      "platform",
 	Label:       "Tenant",
 	LabelPlural: "Tenants",

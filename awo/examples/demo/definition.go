@@ -11,7 +11,7 @@ import "awo.so/awo/def"
 // CustomerDefinition is the platform_organization-scoped customer entity.
 // It is intentionally simple: one of everything the framework supports.
 var CustomerDefinition = def.SystemDefinition{
-	Name:        "demo_customer",
+	Name:        "customer",
 	Module:      "demo",
 	Label:       "Customer",
 	LabelPlural: "Customers",

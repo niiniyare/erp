@@ -6,8 +6,12 @@ import (
 )
 
 // entityAPIResource derives the plural URL path segment for a local entity name.
+// Respects an explicit PluralName override when set.
 // "organization" → "organizations", "org_assignment" → "org_assignments", "entry" → "entries".
-func entityAPIResource(localName string) string {
+func entityAPIResource(d def.EntityDefinition, localName string) string {
+	if p := d.EntityPluralName(); p != "" {
+		return p
+	}
 	return def.PluralizeLocal(localName)
 }
 
@@ -69,6 +73,31 @@ type EntitySchema struct {
 	// OpenAPITag is the human-readable OpenAPI tag for this entity's module.
 	// e.g. "Platform", "Iam", "Finance".
 	OpenAPITag string
+
+	// APISingular is the singular local name used in URL path segments.
+	// e.g. "organization", "user", "invoice".
+	APISingular string
+
+	// EventNamespace is the dot-separated namespace for domain events.
+	// Format: module + "." + local_name  (e.g. "iam.user", "finance.invoice").
+	EventNamespace string
+
+	// WorkflowNamespace is the Temporal namespace prefix for this entity's workflows.
+	// Format: module + "." + local_name  (e.g. "iam.user", "finance.invoice").
+	WorkflowNamespace string
+
+	// PermissionNamespace is the Casbin object namespace for this entity.
+	// Equals QualifiedName  (e.g. "iam_user", "finance_invoice").
+	PermissionNamespace string
+
+	// MetricNamespace is the Prometheus metric label prefix.
+	// Format: module + "_" + local_name  (equals QualifiedName).
+	// e.g. "iam_user", "finance_invoice".
+	MetricNamespace string
+
+	// CacheNamespace is the Redis key namespace prefix.
+	// Format: module + ":" + local_name  (e.g. "iam:user", "finance:invoice").
+	CacheNamespace string
 
 	// FieldsByName provides O(1) lookup of FieldDef by name.
 	FieldsByName map[string]def.FieldDef
@@ -211,16 +240,23 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 	qname := def.QualifiedName(d)
 	local := def.LocalName(d)
 	module := d.EntityModule()
-	resource := entityAPIResource(local)
+	resource := entityAPIResource(d, local)
+	dotNS := module + "." + local
 
 	es := &EntitySchema{
-		Def:              d,
-		QualifiedName:    qname,
-		LocalName:        local,
-		Module:           module,
-		APIResource:      resource,
-		RoutePrefix:      "/api/v1/" + module + "/" + resource,
-		OpenAPITag:       def.OpenAPITag(module),
+		Def:                 d,
+		QualifiedName:       qname,
+		LocalName:           local,
+		Module:              module,
+		APIResource:         resource,
+		APISingular:         local,
+		RoutePrefix:         "/api/v1/" + module + "/" + resource,
+		OpenAPITag:          def.OpenAPITag(module),
+		EventNamespace:      dotNS,
+		WorkflowNamespace:   dotNS,
+		PermissionNamespace: qname,
+		MetricNamespace:     qname,
+		CacheNamespace:      module + ":" + local,
 		FieldsByName:     make(map[string]def.FieldDef),
 		EdgesByName:      make(map[string]def.EdgeDef),
 		ActionsByName:    make(map[string]def.ActionDef),

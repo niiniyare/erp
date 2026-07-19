@@ -17,7 +17,7 @@ import (
 // CustomFieldDefinition is the platform_custom_field entity.
 // One record = one tenant-defined extension field on one entity.
 var CustomFieldDefinition = def.SystemDefinition{
-	Name:        "platform_custom_field",
+	Name:        "custom_field",
 	Module:      "platform",
 	Label:       "Custom Field",
 	LabelPlural: "Custom Fields",

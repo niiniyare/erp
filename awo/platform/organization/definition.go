@@ -36,7 +36,7 @@ import "awo.so/awo/def"
 //
 // Visibility is evaluated by OrganizationService.ResolveScope(), not by RLS.
 var Definition = def.SystemDefinition{
-	Name:        "platform_organization",
+	Name:        "organization",
 	Module:      "platform",
 	Label:       "Organization",
 	LabelPlural: "Organizations",
@@ -134,7 +134,7 @@ var Definition = def.SystemDefinition{
 // Common registrations: company, holding, subsidiary, division, department,
 // region, territory, branch, team, store, warehouse, cost_centre.
 var OrgTypeDefinition = def.SystemDefinition{
-	Name:        "platform_org_type",
+	Name:        "org_type",
 	Module:      "platform",
 	Label:       "Organization Type",
 	LabelPlural: "Organization Types",
@@ -195,7 +195,7 @@ var OrgTypeDefinition = def.SystemDefinition{
 //   - Org role (platform_org_assignment.role): position within an org node
 //     (e.g. manager, member, viewer, auditor)
 var OrgAssignmentDefinition = def.SystemDefinition{
-	Name:        "platform_org_assignment",
+	Name:        "org_assignment",
 	Module:      "platform",
 	Label:       "Organization Assignment",
 	LabelPlural: "Organization Assignments",

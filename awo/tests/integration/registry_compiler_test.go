@@ -68,8 +68,10 @@ func TestRegistryModuleLookup(t *testing.T) {
 	if len(demoDefs) != 1 {
 		t.Errorf("expected 1 demo entity, got %d", len(demoDefs))
 	}
-	if demoDefs[0].EntityName() != "demo_customer" {
-		t.Errorf("unexpected entity: %s", demoDefs[0].EntityName())
+	// EntityName() returns the module-local name ("customer", not "demo_customer").
+	// Use def.QualifiedName() to get the full identifier.
+	if demoDefs[0].EntityName() != "customer" {
+		t.Errorf("unexpected local entity name: %s (expected \"customer\")", demoDefs[0].EntityName())
 	}
 }
 

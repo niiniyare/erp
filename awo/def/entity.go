@@ -28,6 +28,12 @@ type EntityDefinition interface {
 	// Derived from EntityLabel() if not explicitly set.
 	EntityLabelPlural() string
 
+	// EntityPluralName returns an explicit plural override for the module-local
+	// name (e.g. "categories" for an entity named "category"). Empty string
+	// means the compiler derives the plural automatically via standard rules.
+	// Only set this when automatic pluralization produces the wrong result.
+	EntityPluralName() string
+
 	// EntityDescription returns an optional description of the entity's purpose.
 	// Empty string if not set.
 	EntityDescription() string
@@ -88,6 +94,13 @@ type SystemDefinition struct {
 	// Derived from Label if empty: "Org Assignment" → "Org Assignments".
 	LabelPlural string
 
+	// PluralName is an explicit plural override for the module-local name used
+	// in API resource paths. Leave empty unless automatic pluralization is wrong.
+	// Example: entity "category" → default "categories" (correct, no override needed).
+	// Example: entity "status" → default "statuses" (correct, no override needed).
+	// Example: entity "sheep" → default "sheeps" (wrong) → set PluralName: "sheep".
+	PluralName string
+
 	// Description is an optional human-readable description of the entity's
 	// purpose. Used in generated documentation and OpenAPI specs.
 	Description string
@@ -132,6 +145,7 @@ func (d *SystemDefinition) EntityLabelPlural() string {
 	}
 	return DerivePluralLabel(d.EntityLabel())
 }
+func (d *SystemDefinition) EntityPluralName() string  { return d.PluralName }
 func (d *SystemDefinition) EntityDescription() string { return d.Description }
 func (d *SystemDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *SystemDefinition) EntityEdges() []EdgeDef           { return d.Edges }
@@ -167,6 +181,10 @@ type CustomDefinition struct {
 	// LabelPlural is the human-readable plural display name.
 	// Derived from Label if empty.
 	LabelPlural string
+
+	// PluralName is an explicit plural override for the module-local name.
+	// Leave empty unless automatic pluralization produces the wrong result.
+	PluralName string
 
 	// Description is an optional human-readable description.
 	Description string
@@ -211,6 +229,7 @@ func (d *CustomDefinition) EntityLabelPlural() string {
 	}
 	return DerivePluralLabel(d.EntityLabel())
 }
+func (d *CustomDefinition) EntityPluralName() string  { return d.PluralName }
 func (d *CustomDefinition) EntityDescription() string { return d.Description }
 func (d *CustomDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *CustomDefinition) EntityEdges() []EdgeDef           { return d.Edges }

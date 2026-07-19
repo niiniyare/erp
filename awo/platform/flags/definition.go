@@ -20,7 +20,7 @@ import (
 
 // FlagDefinition is the platform_feature_flag entity.
 var FlagDefinition = def.SystemDefinition{
-	Name:        "platform_feature_flag",
+	Name:        "feature_flag",
 	Module:      "platform",
 	Label:       "Feature Flag",
 	LabelPlural: "Feature Flags",
@@ -77,7 +77,7 @@ var FlagDefinition = def.SystemDefinition{
 // TenantOverrideDefinition is the platform_flag_tenant_override entity.
 // Stores per-tenant flag overrides. Absence means use the system default.
 var TenantOverrideDefinition = def.SystemDefinition{
-	Name:        "platform_flag_tenant_override",
+	Name:        "flag_tenant_override",
 	Module:      "platform",
 	Label:       "Tenant Flag Override",
 	LabelPlural: "Tenant Flag Overrides",
