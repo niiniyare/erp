@@ -215,7 +215,7 @@ func TestCompilerRoutes(t *testing.T) {
 
 	var customerRoutes []compiler.RouteDescriptor
 	for _, r := range schema.Routes {
-		if r.EntityName == "demo_customer" {
+		if r.EntityQualifiedName == "demo_customer" {
 			customerRoutes = append(customerRoutes, r)
 		}
 	}

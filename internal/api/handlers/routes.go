@@ -28,8 +28,10 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
+	"awo.so/awo/compiler"
 	auditHandler "awo.so/internal/api/handlers/audit"
 	authHandler "awo.so/internal/api/handlers/auth"
+	compiledHandler "awo.so/internal/api/handlers/compiled"
 	contractHandler "awo.so/internal/api/handlers/contracts"
 	entityHandler "awo.so/internal/api/handlers/entity"
 	financeHandler "awo.so/internal/api/handlers/finance"
@@ -89,6 +91,7 @@ const (
 	ModuleSchema    = "schema"
 	ModuleAudit     = "audit"
 	ModuleIAM       = "iam"
+	ModuleCompiled  = "compiled" // auto-generated routes from EntityDefinition compiler output
 
 	// apiV1Prefix is the common versioned prefix for all REST API routes.
 	// Change this once to move all API routes to /api/v2.
@@ -278,6 +281,12 @@ type Dependencies struct {
 	// class (public / API / UI).  Optional — a permissive dev CORS policy is
 	// applied when nil.
 	SecurityManager *middlewarePkg.RouteSecurityManager
+
+	// CompiledSchema is the output of the awo entity compiler. When non-nil,
+	// registerCompiledEntityRoutes iterates Entities and registers one CRUD
+	// group per entity using EntitySchema.RoutePrefix. Optional — compiled
+	// entity routes are skipped when nil.
+	CompiledSchema *compiler.CompiledSchema
 }
 
 // Validate returns an error if any required dependency is missing.
@@ -452,6 +461,7 @@ func (r *Router) registerAPIRoutes(app *fiber.App) error {
 		{ModuleSchema, r.registerSchemaAPI},
 		{ModuleAudit, r.registerAuditAPI},
 		{ModuleIAM, r.registerIAMAPI},
+		{ModuleCompiled, r.registerCompiledEntityRoutes},
 		// ↑ Add new modules here — one line per module.
 	}
 
@@ -755,6 +765,58 @@ func (r *Router) registerEntityAPI(apiRouter fiber.Router) error {
 
 	r.registry.track(ModuleEntity, apiV1Prefix+"/entities", 7)
 	r.deps.Logger.Info("entity API endpoints registered")
+	return nil
+}
+
+// registerCompiledEntityRoutes registers auto-generated CRUD and action routes
+// for every entity in the CompiledSchema. Route paths, module groupings, and
+// permission requirements come exclusively from EntitySchema — no entity name
+// or path segment is hard-coded here.
+//
+// Each entity gets its own Fiber group at EntitySchema.RoutePrefix with the
+// standard authenticate + tenant middleware stack applied. Custom actions
+// declared in EntityDefinition.EntityActions() are registered as additional
+// POST endpoints under /:id/{action}.
+//
+// Optional — skipped when CompiledSchema is nil (prints a Warn).
+func (r *Router) registerCompiledEntityRoutes(apiRouter fiber.Router) error {
+	if r.deps.CompiledSchema == nil {
+		r.deps.Logger.Warn("CompiledSchema not configured — compiled entity routes skipped")
+		return nil
+	}
+
+	totalRoutes := 0
+	for _, es := range r.deps.CompiledSchema.Entities {
+		h := compiledHandler.New(es)
+
+		// RoutePrefix is "/api/v1/{module}/{resource}".
+		// apiRouter is already mounted at "/api", so strip that prefix.
+		relPath := apiV1Prefix + "/" + es.Module + "/" + es.APIResource
+		g := apiRouter.Group(relPath)
+
+		g.Use(r.authenticateMiddleware())
+		if r.deps.TenantMiddleware != nil {
+			g.Use(r.deps.TenantMiddleware)
+		}
+
+		g.Get("/", h.List)      // GET    /api/v1/{module}/{resource}
+		g.Get("/:id", h.Get)    // GET    /api/v1/{module}/{resource}/:id
+		g.Post("/", h.Create)   // POST   /api/v1/{module}/{resource}
+		g.Patch("/:id", h.Update) // PATCH  /api/v1/{module}/{resource}/:id
+		g.Delete("/:id", h.Delete) // DELETE /api/v1/{module}/{resource}/:id
+		totalRoutes += 5
+
+		for _, action := range es.Def.EntityActions() {
+			g.Post("/:id/"+action.Name, h.Action(action.Name))
+			totalRoutes++
+		}
+	}
+
+	r.registry.track(ModuleCompiled, apiV1Prefix+"/{module}/{resource}", totalRoutes)
+	r.deps.Logger.Info(fmt.Sprintf(
+		"compiled entity routes registered: %d routes across %d entities",
+		totalRoutes, len(r.deps.CompiledSchema.Entities),
+	))
 	return nil
 }
 

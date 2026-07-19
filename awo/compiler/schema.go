@@ -144,9 +144,16 @@ type RouteDescriptor struct {
 	// e.g. "/api/v1/finance/invoices/:id".
 	Path string
 
-	// EntityName is the QualifiedName of the entity this route operates on.
-	// e.g. "finance_invoice".
-	EntityName string
+	// EntityQualifiedName is the globally-unique entity identifier.
+	// e.g. "finance_invoice". Use this to look up the EntitySchema via
+	// CompiledSchema.ByName.
+	EntityQualifiedName string
+
+	// Module is the entity's owning module. e.g. "finance", "iam".
+	Module string
+
+	// Resource is the plural URL path segment. e.g. "invoices", "users".
+	Resource string
 
 	// Operation identifies the semantic operation (list, get, create, update,
 	// delete, action).
@@ -311,11 +318,11 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 	base := es.RoutePrefix
 
 	routes := []RouteDescriptor{
-		{Method: "GET", Path: base, EntityName: qname, Operation: "list", RequiredPermission: "read"},
-		{Method: "GET", Path: base + "/:id", EntityName: qname, Operation: "get", RequiredPermission: "read"},
-		{Method: "POST", Path: base, EntityName: qname, Operation: "create", RequiredPermission: "create"},
-		{Method: "PATCH", Path: base + "/:id", EntityName: qname, Operation: "update", RequiredPermission: "write"},
-		{Method: "DELETE", Path: base + "/:id", EntityName: qname, Operation: "delete", RequiredPermission: "delete"},
+		{Method: "GET", Path: base, EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "list", RequiredPermission: "read"},
+		{Method: "GET", Path: base + "/:id", EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "get", RequiredPermission: "read"},
+		{Method: "POST", Path: base, EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "create", RequiredPermission: "create"},
+		{Method: "PATCH", Path: base + "/:id", EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "update", RequiredPermission: "write"},
+		{Method: "DELETE", Path: base + "/:id", EntityQualifiedName: qname, Module: es.Module, Resource: es.APIResource, Operation: "delete", RequiredPermission: "delete"},
 	}
 
 	for _, action := range es.Def.EntityActions() {
@@ -328,12 +335,14 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 			perm = "write"
 		}
 		routes = append(routes, RouteDescriptor{
-			Method:             method,
-			Path:               base + "/:id/" + action.Name,
-			EntityName:         qname,
-			Operation:          "action",
-			ActionName:         action.Name,
-			RequiredPermission: perm,
+			Method:              method,
+			Path:                base + "/:id/" + action.Name,
+			EntityQualifiedName: qname,
+			Module:              es.Module,
+			Resource:            es.APIResource,
+			Operation:           "action",
+			ActionName:          action.Name,
+			RequiredPermission:  perm,
 		})
 	}
 

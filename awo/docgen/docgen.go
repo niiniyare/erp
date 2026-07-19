@@ -193,7 +193,7 @@ func writeEntitySection(w io.Writer, es *compiler.EntitySchema, s *compiler.Comp
 	if opts.IncludeRoutes {
 		var entityRoutes []compiler.RouteDescriptor
 		for _, r := range s.Routes {
-			if r.EntityName == name {
+			if r.EntityQualifiedName == name {
 				entityRoutes = append(entityRoutes, r)
 			}
 		}

@@ -54,7 +54,7 @@ func Inspect(s *compiler.CompiledSchema) SchemaInfo {
 	// Build per-entity route index.
 	routesByEntity := make(map[string][]string)
 	for _, r := range s.Routes {
-		routesByEntity[r.EntityName] = append(routesByEntity[r.EntityName], r.Method+" "+r.Path)
+		routesByEntity[r.EntityQualifiedName] = append(routesByEntity[r.EntityQualifiedName], r.Method+" "+r.Path)
 	}
 
 	for _, es := range s.Entities {

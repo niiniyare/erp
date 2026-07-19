@@ -332,7 +332,7 @@ func TestAllEntitiesHaveRoutes(t *testing.T) {
 
 	routesByEntity := make(map[string]int)
 	for _, r := range s.schema.Routes {
-		routesByEntity[r.EntityName]++
+		routesByEntity[r.EntityQualifiedName]++
 	}
 
 	for _, es := range s.schema.Entities {
