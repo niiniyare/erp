@@ -46,7 +46,7 @@ Not captured in audit log (covered by application log):
 The `iam_audit_log` table is a global table (no RLS) — readable by platform admins across tenants for compliance. Tenant admins can read their own tenant's entries only (enforced in the service layer, not RLS).
 
 ```go
-// In internal/platform/audit/definition.go
+// In internal/platform/audit/def.go
 var AuditLogDefinition = definition.SystemDefinition{
     Name:   "iam_audit_log",
     Module: "audit",

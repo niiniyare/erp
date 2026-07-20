@@ -87,8 +87,8 @@ import (
     "fmt"
     "github.com/google/uuid"
     "github.com/shopspring/decimal"
-    "awo.so/framework/definition"
-    "awo.so/framework/filter"
+    "awo.so/awo/def"
+    "awo.so/awo/filter"
     "awo.so/internal/core/finance"  // import Finance to satisfy its interface
 )
 

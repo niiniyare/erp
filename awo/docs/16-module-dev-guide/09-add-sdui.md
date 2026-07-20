@@ -38,7 +38,7 @@ For `crm_contact`, the detail view needs a tabbed layout (Contact Info | Interac
 ## 2. Declare the PageBuilderSet
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... all previous fields ...
 
@@ -59,7 +59,7 @@ package crm
 
 import (
     "context"
-    "awo.so/framework/entity"
+    "awo.so/awo/entity"
 )
 
 // BuildContactDetailPage builds the detail view for crm_contact.

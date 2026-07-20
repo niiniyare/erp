@@ -71,7 +71,7 @@ Create the file `internal/core/crm/entity_contact.go`:
 package crm
 
 import (
-    "awo.so/framework/definition"
+    "awo.so/awo/def"
 )
 
 var ContactDefinition = definition.SystemDefinition{

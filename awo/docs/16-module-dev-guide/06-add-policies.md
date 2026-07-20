@@ -26,7 +26,7 @@ This document adds RBAC permissions and a `PolicyFunc` row-level filter to `crm_
 ## 1. Add Permissions to ContactDefinition
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges, Hooks ...
 
@@ -73,8 +73,8 @@ package crm
 
 import (
     "context"
-    "awo.so/framework/definition"
-    "awo.so/framework/filter"
+    "awo.so/awo/def"
+    "awo.so/awo/filter"
     "awo.so/internal/platform/iam/session"
 )
 

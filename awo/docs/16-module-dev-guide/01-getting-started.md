@@ -57,7 +57,7 @@ internal/core/crm/
 // internal/core/crm/manifest.go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 var Manifest = definition.ModuleManifest{
     Name:    "crm",
@@ -89,7 +89,7 @@ var Manifest = definition.ModuleManifest{
 // internal/core/crm/crm.go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 func init() {
     // Register the module manifest

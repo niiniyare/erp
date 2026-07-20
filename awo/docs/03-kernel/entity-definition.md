@@ -90,7 +90,7 @@ The subsystem derivations are:
 
 ## 2. EntityDefinition Struct
 
-All EntityDefinitions in Awo are declared as values of type `definition.EntityDefinition`. The package path is `awo.so/framework/definition`. Module authors use the alias `entity` in most module code.
+All EntityDefinitions in Awo are declared as values of type `definition.EntityDefinition`. The package path is `awo.so/awo/def`. Module authors use the alias `entity` in most module code.
 
 ```go
 // Full struct — all fields
@@ -608,7 +608,7 @@ Escalate from `CustomEntity` to `SystemEntity` when:
 EntityDefinitions MUST be registered using `definition.Register()` from an `init()` function. This ensures registration occurs during the [Initialization Phase](../GLOSSARY.md#initialization-phase), before `Registry.Compile()` is called.
 
 ```go
-// internal/core/finance/definition.go
+// internal/core/finance/def.go
 
 var InvoiceDefinition = entity.EntityDefinition{
     Name:   "invoice",   // module-local; compiler derives "finance_invoice"
@@ -670,7 +670,7 @@ The compiler derives all globally-unique identifiers from `Module` + `Name`. Ent
 ## 16. Complete Example
 
 ```go
-// internal/core/finance/definition.go
+// internal/core/finance/def.go
 
 var InvoiceDefinition = entity.EntityDefinition{
     Name:         "invoice",   // module-local; compiler derives "finance_invoice"

@@ -25,7 +25,7 @@ This document adds a `qualify` action to `crm_contact` — a custom operation be
 ## 1. Declare the Action
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges, Hooks, Permissions, Policy ...
 
@@ -62,8 +62,8 @@ package crm
 import (
     "context"
     "fmt"
-    "awo.so/framework/definition"
-    "awo.so/framework/errors"
+    "awo.so/awo/def"
+    "awo.so/awo/errors"
 )
 
 // QualifyContactAction promotes a Lead contact to Active status.

@@ -68,12 +68,12 @@ Dependencies flow **top-down only**. No layer may import from a higher layer.
 
 ## 3. Domain Layer
 
-**Location**: `internal/core/{module}/definition.go`, `hooks.go`, `policy.go`, `validators.go`
+**Location**: `internal/core/{module}/def.go`, `hooks.go`, `policy.go`, `validators.go`
 
 **May import**:
-- `awo.so/framework/definition` — EntityDefinition, FieldDef, HookSet, etc.
-- `awo.so/framework/filter` — Filter DSL predicates
-- `awo.so/framework/session` — ActorFromContext, TenantIDFromContext
+- `awo.so/awo/def` — EntityDefinition, FieldDef, HookSet, etc.
+- `awo.so/awo/filter` — Filter DSL predicates
+- `awo.so/awo/session` — ActorFromContext, TenantIDFromContext
 - `github.com/shopspring/decimal` — for decimal.Decimal in hooks
 - `github.com/google/uuid`
 - `context`, `fmt`, `time`, standard library
@@ -98,7 +98,7 @@ Dependencies flow **top-down only**. No layer may import from a higher layer.
 - `go.temporal.io/sdk/workflow`, `go.temporal.io/sdk/activity`
 - Domain layer types (for input/output structs)
 - Service interfaces (for activities)
-- `awo.so/framework/definition` — for EntityRepository in activities
+- `awo.so/awo/def` — for EntityRepository in activities
 - `context`, `fmt`, standard library
 
 **Must NOT import**:
@@ -125,8 +125,8 @@ Dependencies flow **top-down only**. No layer may import from a higher layer.
 **May import**:
 - `github.com/jackc/pgx/v5`
 - `github.com/jackc/pgx/v5/pgxpool`
-- `awo.so/framework/definition` — EntityRepository interface + types
-- `awo.so/framework/filter` — Filter DSL translation to SQL
+- `awo.so/awo/def` — EntityRepository interface + types
+- `awo.so/awo/filter` — Filter DSL translation to SQL
 - `github.com/shopspring/decimal`
 - Standard library
 
@@ -163,10 +163,10 @@ These packages may be imported from any layer:
 
 | Package | Purpose |
 |---|---|
-| `awo.so/framework/definition` | Core types |
-| `awo.so/framework/filter` | Filter DSL |
-| `awo.so/framework/session` | Actor/tenant context |
-| `awo.so/framework/errors` | Shared error types |
+| `awo.so/awo/def` | Core types |
+| `awo.so/awo/filter` | Filter DSL |
+| `awo.so/awo/session` | Actor/tenant context |
+| `awo.so/awo/errors` | Shared error types |
 | `internal/shared/errors` | HTTP error mapping |
 | `internal/shared/pagination` | PageInfo types |
 | `github.com/shopspring/decimal` | Monetary amounts |

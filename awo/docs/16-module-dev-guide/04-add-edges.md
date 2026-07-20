@@ -25,7 +25,7 @@ This document adds `EdgeDef` declarations to `crm_contact`, establishing the one
 ## 1. Add the Edge to ContactDefinition
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... Name, Module, Label, Fields from previous step ...
 

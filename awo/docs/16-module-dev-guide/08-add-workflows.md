@@ -26,7 +26,7 @@ This document adds a `WorkflowTrigger` and activity to `crm_contact` — a welco
 ## 1. Declare the WorkflowTrigger
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... all previous fields ...
 

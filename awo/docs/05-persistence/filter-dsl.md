@@ -54,10 +54,10 @@ The DSL provides no raw SQL escape hatch. All predicates are parameterized and t
 
 ## 2. Filter Type
 
-`Filter` is an opaque predicate tree. It is constructed using builder functions in the `awo.so/framework/filter` package (import alias: `filter`).
+`Filter` is an opaque predicate tree. It is constructed using builder functions in the `awo.so/awo/filter` package (import alias: `filter`).
 
 ```go
-import "awo.so/framework/filter"
+import "awo.so/awo/filter"
 
 // Simple equality filter
 f := filter.Eq("status", "Draft")

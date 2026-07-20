@@ -48,7 +48,7 @@ internal/core/crm/
 ```go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 func init() {
     definition.RegisterManifest(&Manifest)
@@ -68,7 +68,7 @@ func RegisterActivities(w worker.Worker, deps Dependencies) {
 ```go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 var Manifest = definition.ModuleManifest{
     Name:     "crm",
@@ -87,7 +87,7 @@ var Manifest = definition.ModuleManifest{
 ```go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 var ContactDefinition = definition.EntityDefinition{
     Name:         "crm_contact",

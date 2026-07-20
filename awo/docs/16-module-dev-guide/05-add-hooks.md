@@ -109,7 +109,7 @@ func (h *ContactFirstContactDateSetter) AfterCreate(
 ## 4. Register Hooks in ContactDefinition
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges ...
 

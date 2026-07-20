@@ -119,9 +119,9 @@ All code examples must be correct Go (no pseudocode). Use real package names:
 
 ```go
 import (
-    "awo.so/framework/definition"
-    "awo.so/framework/filter"
-    "awo.so/framework/session"
+    "awo.so/awo/def"
+    "awo.so/awo/filter"
+    "awo.so/awo/session"
 )
 ```
 

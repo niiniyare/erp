@@ -68,7 +68,7 @@ Do not use heading-level emphasis for non-heading text.
 Every Go code block MUST include a comment indicating the file location:
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 package crm
 
 var ContactDefinition = definition.EntityDefinition{...}

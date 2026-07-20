@@ -33,7 +33,7 @@ This document adds `FieldDef` declarations to the `crm_contact` entity, covering
 ## 2. Add Fields to ContactDefinition
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 var ContactDefinition = definition.EntityDefinition{
     Name:         "crm_contact",
     Module:       "crm",

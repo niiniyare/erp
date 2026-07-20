@@ -27,7 +27,7 @@ The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, RECOMMENDED, M
 ## 1. FieldValidator Interface
 
 ```go
-// framework/definition/validator.go
+// framework/def/validator.go
 
 type FieldValidator interface {
     Validate(value any) error

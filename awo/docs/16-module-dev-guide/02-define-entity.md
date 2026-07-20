@@ -46,10 +46,10 @@ If in doubt: start with custom entity. You can escalate to system entity later v
 ## 2. Declare the EntityDefinition
 
 ```go
-// internal/core/crm/definition.go
+// internal/core/crm/def.go
 package crm
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 var ContactDefinition = definition.EntityDefinition{
     // Stable identifier — used in URLs, Redis keys, Temporal IDs, Casbin policies

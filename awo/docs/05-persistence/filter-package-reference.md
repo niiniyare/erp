@@ -18,14 +18,14 @@ related:
 
 **PERS-013 | Status: Accepted | Stability: Frozen**
 
-Complete API reference for `awo.so/framework/filter` — the package that provides the declarative predicate DSL used in all repository queries and policy functions.
+Complete API reference for `awo.so/awo/filter` — the package that provides the declarative predicate DSL used in all repository queries and policy functions.
 
 ---
 
 ## 1. Import Path
 
 ```go
-import "awo.so/framework/filter"
+import "awo.so/awo/filter"
 ```
 
 The `filter` package is the **only** way to express query predicates in Awo. Raw SQL predicates in application code are forbidden (see LAW-003).

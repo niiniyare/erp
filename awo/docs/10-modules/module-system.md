@@ -140,7 +140,7 @@ Entity definitions MUST be registered in an `init()` function so they are availa
 // finance.go
 package finance
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 func init() {
     definition.Register(&InvoiceDefinition)

@@ -18,14 +18,14 @@ related:
 
 **KERN-008 | Status: Accepted | Stability: Frozen**
 
-Complete type and function reference for `awo.so/framework/def` — the package that contains all EntityDefinition primitives consumed by module authors.
+Complete type and function reference for `awo.so/awo/def` — the package that contains all EntityDefinition primitives consumed by module authors.
 
 ---
 
 ## 1. Import Path
 
 ```go
-import "awo.so/framework/def"
+import "awo.so/awo/def"
 ```
 
 This is the only framework package module authors import at the domain layer. All entity-shape declarations, field types, hook interfaces, and lifecycle types live here.

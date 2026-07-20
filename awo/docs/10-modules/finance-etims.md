@@ -76,7 +76,7 @@ var TaxEntryDefinition = definition.SystemDefinition{
 eTIMS submission is triggered after invoice approval. It is not in the main transaction:
 
 ```go
-// finance/definition.go
+// finance/def.go
 WorkflowTriggers: []definition.WorkflowTrigger{
     {
         On:         definition.EventOnSubmit,   // invoice status → Submitted

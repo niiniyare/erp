@@ -51,7 +51,7 @@ The Entity Registry has two responsibilities and one invariant:
 
 ## 2. Registration API
 
-The public API for entity registration is package-level functions in `awo.so/framework/definition`. Module authors use these functions; they do not interact with the registry type directly.
+The public API for entity registration is package-level functions in `awo.so/awo/def`. Module authors use these functions; they do not interact with the registry type directly.
 
 ```go
 package definition
@@ -86,7 +86,7 @@ func RegisterTriggerEvent(eventName string) error
 ```go
 // internal/core/finance/finance.go
 
-import "awo.so/framework/definition"
+import "awo.so/awo/def"
 
 func init() {
     // Register entities — order within init() does not matter
