@@ -12,7 +12,7 @@ related:
   - "[Five-Layer Architecture](five-layer.md)"
   - "[Philosophy](../01-introduction/philosophy.md)"
   - "[Compilation Pipeline](../03-kernel/compilation-pipeline.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
 
@@ -99,9 +99,9 @@ The compilation pipeline itself reads EntityDefinition structs. This is by defin
 
 **Scope:** Entity Registry
 
-The [Entity Registry](../GLOSSARY.md#entity-registry) MUST NOT accept any `definition.Register()` call after `Registry.Compile()` has been called.
+The [Entity Registry](../GLOSSARY.md#entity-registry) MUST NOT accept any `def.Register()` call after `Registry.Compile()` has been called.
 
-`definition.Register()` calls that arrive after compilation MUST return an error or panic. The specific behavior (error vs. panic) is implementation-defined, but the registration MUST NOT succeed.
+`def.Register()` calls that arrive after compilation MUST return an error or panic. The specific behavior (error vs. panic) is implementation-defined, but the registration MUST NOT succeed.
 
 ### Rationale
 
@@ -111,7 +111,7 @@ More concretely: a registration that arrives after the HTTP server has started w
 
 ### Enforcement
 
-`definition.Register()` checks an internal flag set by `Registry.Compile()`. The check is atomic. A test MUST verify that registration after compilation produces the expected failure.
+`def.Register()` checks an internal flag set by `Registry.Compile()`. The check is atomic. A test MUST verify that registration after compilation produces the expected failure.
 
 ---
 

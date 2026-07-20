@@ -159,7 +159,7 @@ Immutability after compilation also enables an important safety property: the fr
 
 The documentation of the Awo Framework is the specification of the Awo Framework. Source code is the implementation of that specification. When the two conflict, the source code is wrong.
 
-This is not a documentation-first development methodology. It is a statement about the ontological status of the documentation: the specification defines what Awo is; the source code is one instantiation of that definition.
+This is not a documentation-first development methodology. It is a statement about the ontological status of the documentation: the specification defines what Awo is; the source code is one instantiation of that def.
 
 ### What This Means
 

@@ -43,7 +43,7 @@ The API Layer is Awo's external boundary. It translates HTTP requests into domai
 ## Prerequisites
 
 - [Five-Layer Architecture](../02-architecture/five-layer.md) — API Layer constraints
-- [EntityDefinition](../03-kernel/entity-definition.md) — what drives route generation
+- [EntityDefinition](../03-kernel/entity-def.md) — what drives route generation
 - [RBAC](../07-iam/rbac.md) — how permissions are checked in route handlers
 - [Sessions](../07-iam/sessions.md) — session validation middleware
 - [Glossary](../GLOSSARY.md) — API Layer, Route Handler, Action, Response Envelope

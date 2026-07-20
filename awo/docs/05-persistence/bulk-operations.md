@@ -43,9 +43,9 @@ type EntityRepository[T Entity] interface {
 ### Usage
 
 ```go
-inputs := make([]definition.CreateInput, len(rows))
+inputs := make([]def.CreateInput, len(rows))
 for i, row := range rows {
-    inputs[i] = definition.CreateInput{
+    inputs[i] = def.CreateInput{
         Fields: map[string]any{
             "product":       row.ProductID,
             "quantity":      row.Quantity,
@@ -99,7 +99,7 @@ count, err := invoiceRepo.BulkUpdate(ctx,
         filter.Eq("customer", customerID),
         filter.Eq("status", "Draft"),
     ),
-    definition.Patch{
+    def.Patch{
         "status":       "Cancelled",
         "cancelled_at": time.Now().UTC(),
     },
@@ -148,7 +148,7 @@ count, err := repo.BulkUpdate(ctx,
         filter.Eq("status", "Draft"),
         filter.LtEq("created_at", cutoffDate),
     ),
-    definition.Patch{"deleted_at": time.Now().UTC()},
+    def.Patch{"deleted_at": time.Now().UTC()},
 )
 ```
 
@@ -179,9 +179,9 @@ func (a *Activities) ImportStockMovesActivity(ctx context.Context, input ImportI
         activity.RecordHeartbeat(ctx, fmt.Sprintf("Processing rows %d-%d", i, min(i+batchSize, len(rows))))
 
         batch := rows[i:min(i+batchSize, len(rows))]
-        inputs := make([]definition.CreateInput, len(batch))
+        inputs := make([]def.CreateInput, len(batch))
         for j, row := range batch {
-            inputs[j] = definition.CreateInput{Fields: rowToFields(row)}
+            inputs[j] = def.CreateInput{Fields: rowToFields(row)}
         }
 
         _, err := a.StockMoveRepo.BulkCreate(ctx, inputs)

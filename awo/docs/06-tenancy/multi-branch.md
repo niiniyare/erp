@@ -25,20 +25,20 @@ Multi-branch support enables a single tenant to operate multiple physical locati
 ## 1. Branch Entity
 
 ```go
-var BranchDefinition = definition.SystemDefinition{
+var BranchDefinition = def.SystemDefinition{
     Name:   "tenant_branch",
     Module: "tenant",
-    Fields: []definition.FieldDef{
-        {Name: "name",       Type: definition.FieldData, Required: true, Searchable: true},
-        {Name: "code",       Type: definition.FieldData, Required: true, Unique: true},
+    Fields: []def.FieldDef{
+        {Name: "name",       Type: def.FieldData, Required: true, Searchable: true},
+        {Name: "code",       Type: def.FieldData, Required: true, Unique: true},
             // Short code used in NamingSeries prefix overrides (e.g. "NBI" for Nairobi)
-        {Name: "address",    Type: definition.FieldSmallText},
-        {Name: "phone",      Type: definition.FieldData},
-        {Name: "manager",    Type: definition.FieldLink, LinkTarget: "iam_user"},
-        {Name: "active",     Type: definition.FieldBool, Default: true},
-        {Name: "timezone",   Type: definition.FieldLink, LinkTarget: "timezone"},
+        {Name: "address",    Type: def.FieldSmallText},
+        {Name: "phone",      Type: def.FieldData},
+        {Name: "manager",    Type: def.FieldLink, LinkTarget: "iam_user"},
+        {Name: "active",     Type: def.FieldBool, Default: true},
+        {Name: "timezone",   Type: def.FieldLink, LinkTarget: "timezone"},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:tenant.admin"},
         Read:   []string{"role:tenant.admin", "role:tenant.user"},
         Write:  []string{"role:tenant.admin"},
@@ -81,7 +81,7 @@ Entities that are branch-scoped use `BranchScoped` policy:
 
 ```go
 // On entities that belong to a specific branch
-Policy: definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+Policy: def.PolicyFunc(func(ctx context.Context) def.Filter {
     branchID := session.BranchIDFromContext(ctx)
     if branchID == uuid.Nil {
         return filter.All()  // No branch context — see all branches (tenant admin)
@@ -106,12 +106,12 @@ threshold, _ := settings.GetDecimalForBranch(ctx, "finance.invoice_approval_thre
 ### Declaring Branch-Overridable Settings
 
 ```go
-SettingInvoiceApprovalThreshold = definition.Setting{
+SettingInvoiceApprovalThreshold = def.Setting{
     Key:         "finance.invoice_approval_threshold",
     Label:       "Invoice Approval Threshold (KES)",
-    Type:        definition.SettingTypeCurrency,
+    Type:        def.SettingTypeCurrency,
     Default:     "50000.0000",
-    Scope:       definition.SettingScopeTenant,
+    Scope:       def.SettingScopeTenant,
     BranchOverridable: true,  // Branches can set their own threshold
 }
 ```
@@ -147,7 +147,7 @@ Roles can be assigned at the branch level:
 A user with `role:forecourt.supervisor` scoped to the Nairobi branch can only supervise shifts at that branch. The PolicyFunc on `forecourt_shift` enforces this:
 
 ```go
-Policy: definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+Policy: def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor.HasGlobalRole("role:tenant.admin") {
         return filter.All()

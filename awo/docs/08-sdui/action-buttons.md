@@ -184,10 +184,10 @@ amis.Button(amis.ButtonProps{
 The `HandlerFunc` for the `reject` action receives the form data in `action.Input`:
 
 ```go
-func RejectInvoiceAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func RejectInvoiceAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     reason, _ := action.Input["reason"].(string)
     if reason == "" {
-        return nil, &definition.ValidationError{
+        return nil, &def.ValidationError{
             Fields: map[string]string{"reason": "Rejection reason is required"},
         }
     }

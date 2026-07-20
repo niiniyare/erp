@@ -156,7 +156,7 @@ func (a *AuthActivities) RecordFailedAttempt(ctx context.Context, userID uuid.UU
     }
     if count >= 10 {
         // Lock account
-        _, err := a.userRepo.Update(ctx, userID, definition.UpdateInput{
+        _, err := a.userRepo.Update(ctx, userID, def.UpdateInput{
             Fields: map[string]any{
                 "locked_until": time.Now().UTC().Add(30 * time.Minute),
             },

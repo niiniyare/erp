@@ -29,7 +29,7 @@ For multi-branch tenants where each branch has its own document numbering:
 ```go
 {
     Name:              "number",
-    Type:              definition.FieldNamingSeries,
+    Type:              def.FieldNamingSeries,
     Series:            "INV-{YYYY}-{SEQ:5}",
     TenantOverridable: true,
     BranchOverridable: true,  // Branch can also override prefix
@@ -62,7 +62,7 @@ Reset the sequence counter at the start of each year:
 ```go
 {
     Name:       "number",
-    Type:       definition.FieldNamingSeries,
+    Type:       def.FieldNamingSeries,
     Series:     "INV-{YYYY}-{SEQ:5}",
     ResetOnYear: true,
 }
@@ -87,7 +87,7 @@ For high-volume operations requiring monthly numbering:
 ```go
 {
     Name:        "number",
-    Type:        definition.FieldNamingSeries,
+    Type:        def.FieldNamingSeries,
     Series:      "SO-{YYYY}-{MM}-{SEQ:4}",
     ResetOnMonth: true,
 }
@@ -110,7 +110,7 @@ Complex series for regulatory compliance:
 // KRA-compliant invoice numbering: PREFIX/YEAR/SEQUENCE
 {
     Name:   "etims_number",
-    Type:   definition.FieldNamingSeries,
+    Type:   def.FieldNamingSeries,
     Series: "{PREFIX}/{YYYY}/{SEQ:6}",
     TenantOverridable: true,
     // Tenant can change PREFIX from "INV" to their registered prefix
@@ -137,15 +137,15 @@ Available tokens:
 An entity can have multiple NamingSeries fields for different numbering systems:
 
 ```go
-Fields: []definition.FieldDef{
+Fields: []def.FieldDef{
     {
         Name:   "internal_number",    // Internal tracking number
-        Type:   definition.FieldNamingSeries,
+        Type:   def.FieldNamingSeries,
         Series: "PO-{YYYY}-{SEQ:5}",
     },
     {
         Name:   "supplier_ref",       // Supplier-facing reference (tenant override)
-        Type:   definition.FieldNamingSeries,
+        Type:   def.FieldNamingSeries,
         Series: "{PREFIX}-{SEQ:6}",
         TenantOverridable: true,
     },
@@ -166,7 +166,7 @@ type SalesOrderNumberHook struct {
     SeriesService NamingSeriesService
 }
 
-func (h *SalesOrderNumberHook) BeforeCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *SalesOrderNumberHook) BeforeCreate(ctx context.Context, record *def.EntityRecord) error {
     orderType, _ := record.Fields["order_type"].(string)
 
     // Different series for different order types

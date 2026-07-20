@@ -11,7 +11,7 @@ related:
   - "[Temporal Integration](temporal-integration.md)"
   - "[Activities](activities.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
 
@@ -325,7 +325,7 @@ The outbox is an implementation detail of the framework's workflow dispatch mech
 
 - [Temporal Integration](temporal-integration.md) — workflow ID format, task queues
 - [Activities](activities.md) — activities that execute within dispatched workflows
-- [EntityDefinition §8](../03-kernel/entity-definition.md#8-workflow-triggers) — WorkflowTrigger declaration
+- [EntityDefinition §8](../03-kernel/entity-def.md#8-workflow-triggers) — WorkflowTrigger declaration
 - [Architecture Laws](../02-architecture/laws.md) — LAW-006 (atomic outbox), LAW-018 (framework-private)
 - [Invariants](../02-architecture/invariants.md) — INV-005 (every committed mutation has outbox entry)
 - [Glossary](../GLOSSARY.md) — Outbox Pattern, Temporal, Workflow, At-Least-Once

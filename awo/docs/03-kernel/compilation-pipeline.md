@@ -8,7 +8,7 @@ audience: [framework-authors, contributors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Entity Registry](registry.md)"
   - "[Startup Sequence](startup-sequence.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
@@ -52,7 +52,7 @@ stateDiagram-v2
 
     note right of Initialization
         init() functions execute
-        definition.Register() accepted
+        def.Register() accepted
         No requests served
     end note
 
@@ -84,14 +84,14 @@ The Initialization Phase begins when the Go runtime executes `init()` functions.
 
 ### What Happens
 
-All module `init()` functions execute during this phase. Each `init()` calls `definition.Register()` for each `EntityDefinition` the module owns. The registry accumulates registrations without validation beyond immediate format checks.
+All module `init()` functions execute during this phase. Each `init()` calls `def.Register()` for each `EntityDefinition` the module owns. The registry accumulates registrations without validation beyond immediate format checks.
 
 ```go
 // internal/core/finance/finance.go
 func init() {
-    definition.Register(&InvoiceDefinition)
-    definition.Register(&InvoiceLineDefinition)
-    definition.Register(&PaymentDefinition)
+    def.Register(&InvoiceDefinition)
+    def.Register(&InvoiceLineDefinition)
+    def.Register(&PaymentDefinition)
 }
 ```
 
@@ -103,7 +103,7 @@ The compiler MUST NOT depend on registration order for correctness. A registrati
 
 ### Permitted Operations
 
-- `definition.Register(&entityDef)` — add an entity to the registry
+- `def.Register(&entityDef)` — add an entity to the registry
 - Driver handler registration — register custom FieldType handlers
 - Event name registration — register custom trigger event names
 - Custom lifecycle stage registration
@@ -149,7 +149,7 @@ flowchart TD
 
 ### Step Details
 
-**Step 1: Seal registry** — The registry state transitions to `Compiling`. Any `definition.Register()` call after this point returns an error immediately. The seal is atomic to prevent race conditions during concurrent `init()` execution in test scenarios.
+**Step 1: Seal registry** — The registry state transitions to `Compiling`. Any `def.Register()` call after this point returns an error immediately. The seal is atomic to prevent race conditions during concurrent `init()` execution in test scenarios.
 
 **Step 2: Name uniqueness** — All registered entity names are collected into a set. Duplicates cause a compilation error listing all entities with the duplicate name. Names are validated against the `{module}_{noun}` regex.
 
@@ -192,7 +192,7 @@ No further schema mutations occur. The `CompiledSchema` is shared across all gor
 
 ### Registration Rejection
 
-Any `definition.Register()` call during the Runtime Phase MUST return an error immediately. The error MUST clearly state that the registry is sealed and no further registrations are accepted.
+Any `def.Register()` call during the Runtime Phase MUST return an error immediately. The error MUST clearly state that the registry is sealed and no further registrations are accepted.
 
 ---
 
@@ -350,7 +350,7 @@ Instances with a divergent content hash MUST be removed from the load balancer r
 ## Related Documents
 
 - [Entity Registry](registry.md) — the registry that accepts inputs to this pipeline
-- [EntityDefinition](entity-definition.md) — the inputs to this pipeline
+- [EntityDefinition](entity-def.md) — the inputs to this pipeline
 - [Startup Sequence](startup-sequence.md) — where Compile() fits in the startup order
 - [Architecture Laws](../02-architecture/laws.md) — LAW-002, LAW-003, LAW-004, LAW-010, LAW-019
 - [Architecture Invariants](../02-architecture/invariants.md) — INV-002, INV-009

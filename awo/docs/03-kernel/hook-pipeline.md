@@ -9,7 +9,7 @@ since: "1.0"
 normative-level: normative
 related:
   - "[Hooks](../04-domain/hooks.md)"
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Startup Sequence](startup-sequence.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -76,10 +76,10 @@ Use for fast, stateless checks that don't need DB access:
 ```go
 type ContactNameValidator struct{}
 
-func (h *ContactNameValidator) BeforeValidate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *ContactNameValidator) BeforeValidate(ctx context.Context, record *def.EntityRecord) error {
     name, _ := record.Fields["name"].(string)
     if len(strings.TrimSpace(name)) < 2 {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "name": "Name must be at least 2 characters",
             },
@@ -95,10 +95,10 @@ Use for business rule enforcement requiring DB reads:
 
 ```go
 type InvoicePeriodLockGuard struct {
-    Repo definition.EntityRepository[AccountingPeriod]
+    Repo def.EntityRepository[AccountingPeriod]
 }
 
-func (h *InvoicePeriodLockGuard) BeforeSave(ctx context.Context, record *definition.EntityRecord, isUpdate bool) error {
+func (h *InvoicePeriodLockGuard) BeforeSave(ctx context.Context, record *def.EntityRecord, isUpdate bool) error {
     invoiceDate, _ := record.Fields["invoice_date"].(time.Time)
 
     locked, err := h.Repo.Exists(ctx, filter.And(
@@ -110,7 +110,7 @@ func (h *InvoicePeriodLockGuard) BeforeSave(ctx context.Context, record *definit
         return fmt.Errorf("InvoicePeriodLockGuard.BeforeSave: check period: %w", err)
     }
     if locked {
-        return &definition.BusinessError{
+        return &def.BusinessError{
             Code:    "finance.period_locked",
             Message: "The accounting period for this invoice date is closed",
             Status:  400,
@@ -126,13 +126,13 @@ Use for side effects that must be atomic with the save:
 
 ```go
 type InvoiceAuditTrail struct {
-    AuditRepo definition.EntityRepository[AuditEntry]
+    AuditRepo def.EntityRepository[AuditEntry]
 }
 
-func (h *InvoiceAuditTrail) AfterSave(ctx context.Context, record *definition.EntityRecord, isUpdate bool) error {
+func (h *InvoiceAuditTrail) AfterSave(ctx context.Context, record *def.EntityRecord, isUpdate bool) error {
     // This runs inside the DB transaction
     // If this fails, the invoice is not saved either
-    _, err := h.AuditRepo.Create(ctx, definition.CreateInput{
+    _, err := h.AuditRepo.Create(ctx, def.CreateInput{
         Fields: map[string]any{
             "entity_type": "finance_invoice",
             "entity_id":   record.ID,
@@ -155,8 +155,8 @@ func (h *InvoiceAuditTrail) AfterSave(ctx context.Context, record *definition.En
 Within each hook stage, hooks run in declaration order:
 
 ```go
-Hooks: definition.HookSet{
-    BeforeSave: []definition.BeforeSaveHook{
+Hooks: def.HookSet{
+    BeforeSave: []def.BeforeSaveHook{
         &PeriodLockGuard{},    // runs first
         &CreditLimitCheck{},   // runs second
         &DuplicateInvoiceCheck{}, // runs third
@@ -233,6 +233,6 @@ For expensive asynchronous work (sending emails, calling external APIs), use `af
 ## Related Documents
 
 - [Hooks](../04-domain/hooks.md) — hook interface definitions and patterns
-- [EntityDefinition](entity-definition.md) — `HookSet` field on EntityDefinition
+- [EntityDefinition](entity-def.md) — `HookSet` field on EntityDefinition
 - [Transactions](../05-persistence/transactions.md) — `after_save` inside TX semantics
 - [Entity Events](../04-domain/events.md) — `OutboxEventWriter` framework hook detail

@@ -147,7 +147,7 @@ Documents that are related to this one, using markdown link format:
 
 ```yaml
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
 ```
 

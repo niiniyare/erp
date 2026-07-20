@@ -28,7 +28,7 @@ Every framework behavior during the Runtime Phase is derived from kernel outputs
 
 | Document | ID | Purpose | Stability |
 |---|---|---|---|
-| [EntityDefinition](entity-definition.md) | KERN-001 | Complete specification of the central declaration primitive | FROZEN |
+| [EntityDefinition](entity-def.md) | KERN-001 | Complete specification of the central declaration primitive | FROZEN |
 | [Compilation Pipeline](compilation-pipeline.md) | KERN-002 | Normative specification of the Initialization → Compile → Runtime phases | FROZEN |
 | [Entity Registry](registry.md) | KERN-003 | Registry contract: registration acceptance, validation, and sealing | FROZEN |
 | [Startup Sequence](startup-sequence.md) | KERN-004 | Hard dependency chain for process startup | STABLE |
@@ -42,7 +42,7 @@ Every framework behavior during the Runtime Phase is derived from kernel outputs
 
 ## Reading Order
 
-1. [EntityDefinition](entity-definition.md) — understand the input to the kernel
+1. [EntityDefinition](entity-def.md) — understand the input to the kernel
 2. [Entity Registry](registry.md) — understand how inputs are accumulated and validated
 3. [Compilation Pipeline](compilation-pipeline.md) — understand how inputs become the CompiledSchema
 4. [Startup Sequence](startup-sequence.md) — understand the full process startup from config to first request

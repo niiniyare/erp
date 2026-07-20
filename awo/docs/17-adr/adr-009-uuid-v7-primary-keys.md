@@ -9,7 +9,7 @@ since: "1.0"
 normative-level: informative
 related:
   - "[System Entities](../05-persistence/system-entities.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
 ---
 

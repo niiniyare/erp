@@ -27,10 +27,10 @@ This document adds RBAC permissions and a `PolicyFunc` row-level filter to `crm_
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges, Hooks ...
 
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         // Who can create contacts
         Create: []string{
             "role:crm.sales_rep",
@@ -80,7 +80,7 @@ import (
 
 // ContactOwnerPolicy restricts contact visibility to the assigned sales rep.
 // Managers and admins bypass the filter.
-func ContactOwnerPolicy(ctx context.Context) definition.Filter {
+func ContactOwnerPolicy(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
 
     // Managers and admins see all contacts
@@ -96,10 +96,10 @@ func ContactOwnerPolicy(ctx context.Context) definition.Filter {
 Register the policy on the definition:
 
 ```go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... previous fields ...
 
-    Policy: definition.PolicyFunc(ContactOwnerPolicy),
+    Policy: def.PolicyFunc(ContactOwnerPolicy),
 }
 ```
 
@@ -163,9 +163,9 @@ func TestContactOwnerPolicy_Manager(t *testing.T) {
 If some fields should be hidden from non-admin roles, use `SensitiveFieldMask`:
 
 ```go
-Policy: definition.ComposePolicy(
+Policy: def.ComposePolicy(
     ContactOwnerPolicy,
-    definition.SensitiveFieldMask([]string{"national_id", "salary"}, []string{
+    def.SensitiveFieldMask([]string{"national_id", "salary"}, []string{
         "role:crm.manager",
         "role:tenant.admin",
     }),

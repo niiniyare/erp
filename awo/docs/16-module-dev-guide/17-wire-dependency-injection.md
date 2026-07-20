@@ -38,7 +38,7 @@ Every injectable component provides a `NewXxx(deps...) *Xxx` constructor. Wire t
 // Hooks with no dependencies (pure logic) are instantiated directly in EntityDefinition.
 func ProvideInvoiceHooks(
     settings service.SettingsService,
-    customerRepo definition.EntityRepository[Customer],
+    customerRepo def.EntityRepository[Customer],
 ) *InvoiceHooks {
     return &InvoiceHooks{
         Settings:     settings,
@@ -114,10 +114,10 @@ func InitializeApp(cfg *config.Config) (*App, error) {
 
 ```go
 // Framework provides this generic constructor
-func ProvideEntityRepository[T definition.Entity](
+func ProvideEntityRepository[T def.Entity](
     pool *pgxpool.Pool,
-    def *definition.EntityDefinition,
-) definition.EntityRepository[T] {
+    def *def.EntityDefinition,
+) def.EntityRepository[T] {
     return &pgxEntityRepository[T]{pool: pool, def: def}
 }
 ```
@@ -127,7 +127,7 @@ Module authors inject `EntityRepository` via constructor:
 ```go
 type InvoiceHooks struct {
     Settings     service.SettingsService
-    CustomerRepo definition.EntityRepository[Customer]  // Wire resolves this
+    CustomerRepo def.EntityRepository[Customer]  // Wire resolves this
 }
 ```
 
@@ -146,7 +146,7 @@ type FinanceService interface {
 
 // internal/core/projects/wire.go
 func ProvideProjectService(
-    repo   definition.EntityRepository[Project],
+    repo   def.EntityRepository[Project],
     finance FinanceService,  // injected — Wire resolves to *finance.FinanceServiceImpl
 ) *ProjectService {
     return &ProjectService{Repo: repo, Finance: finance}
@@ -167,10 +167,10 @@ wire.Bind(new(projects.FinanceService), new(*finance.FinanceServiceImpl)),
 Pure hooks (no I/O, no external dependencies) are instantiated directly in the `EntityDefinition` variable:
 
 ```go
-var InvoiceDefinition = definition.SystemDefinition{
+var InvoiceDefinition = def.SystemDefinition{
     // ...
-    Hooks: definition.HookSet{
-        BeforeSave: []definition.BeforeSaveHook{
+    Hooks: def.HookSet{
+        BeforeSave: []def.BeforeSaveHook{
             &TaskCompletionHook{},  // no dependencies — instantiate directly
         },
     },
@@ -181,7 +181,7 @@ Hooks with dependencies are injected after `EntityDefinition` is declared:
 
 ```go
 // In ProvideFinanceModule(hooks *InvoiceHooks):
-InvoiceDefinition.Hooks.BeforeCreate = []definition.BeforeCreateHook{
+InvoiceDefinition.Hooks.BeforeCreate = []def.BeforeCreateHook{
     &hooks.InvoiceValidator,       // needs SettingsService
     &hooks.InvoiceApprovalGuard,   // needs CustomerRepo
 }

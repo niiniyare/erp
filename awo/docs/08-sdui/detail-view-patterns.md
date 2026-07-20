@@ -28,7 +28,7 @@ Patterns for entity detail views: field groups, related records panels, action b
 The auto-generated detail view shows all fields. To customize:
 
 ```go
-PageBuilders: definition.PageBuilderSet{
+PageBuilders: def.PageBuilderSet{
     Detail: BuildInvoiceDetailPage,
 },
 ```

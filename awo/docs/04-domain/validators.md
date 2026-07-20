@@ -55,11 +55,11 @@ Validators MUST NOT:
 
 ```go
 // Validates RFC 5322 email format
-// Usage: definition.ValidateEmail
+// Usage: def.ValidateEmail
 entity.FieldDef{
     Name:       "email",
-    Type:       definition.FieldData,
-    Validators: []entity.FieldValidator{definition.ValidateEmail},
+    Type:       def.FieldData,
+    Validators: []entity.FieldValidator{def.ValidateEmail},
 }
 ```
 
@@ -69,8 +69,8 @@ entity.FieldDef{
 // Validates international phone number format: +254712345678
 entity.FieldDef{
     Name:       "phone",
-    Type:       definition.FieldData,
-    Validators: []entity.FieldValidator{definition.ValidatePhone},
+    Type:       def.FieldData,
+    Validators: []entity.FieldValidator{def.ValidatePhone},
 }
 ```
 
@@ -80,8 +80,8 @@ entity.FieldDef{
 // Validates HTTPS or HTTP URL format
 entity.FieldDef{
     Name:       "website",
-    Type:       definition.FieldData,
-    Validators: []entity.FieldValidator{definition.ValidateURL},
+    Type:       def.FieldData,
+    Validators: []entity.FieldValidator{def.ValidateURL},
 }
 ```
 
@@ -92,8 +92,8 @@ entity.FieldDef{
 // Format: P followed by 9 digits, or A followed by 9 digits
 entity.FieldDef{
     Name:       "kra_pin",
-    Type:       definition.FieldData,
-    Validators: []entity.FieldValidator{definition.ValidateKRAPIN},
+    Type:       def.FieldData,
+    Validators: []entity.FieldValidator{def.ValidateKRAPIN},
 }
 ```
 
@@ -103,9 +103,9 @@ entity.FieldDef{
 // Validate against a custom pattern
 entity.FieldDef{
     Name: "product_code",
-    Type: definition.FieldData,
+    Type: def.FieldData,
     Validators: []entity.FieldValidator{
-        definition.RegexValidator{
+        def.RegexValidator{
             Pattern: `^[A-Z]{2}-\d{4}$`,
             Message: "Product code must be two uppercase letters, a dash, and four digits (e.g., AB-1234).",
         },
@@ -120,9 +120,9 @@ entity.FieldDef{
 // Use when the message or logic needs more nuance
 entity.FieldDef{
     Name: "discount_percent",
-    Type: definition.FieldFloat,
+    Type: def.FieldFloat,
     Validators: []entity.FieldValidator{
-        definition.RangeValidator{Min: 0, Max: 100, Message: "Discount must be between 0% and 100%."},
+        def.RangeValidator{Min: 0, Max: 100, Message: "Discount must be between 0% and 100%."},
     },
 }
 ```
@@ -161,7 +161,7 @@ Declare on the field:
 ```go
 {
     Name:       "national_id",
-    Type:       definition.FieldData,
+    Type:       def.FieldData,
     Validators: []entity.FieldValidator{KenyaNationalIDValidator{}},
 }
 ```
@@ -177,9 +177,9 @@ Multiple validators on one field run in declaration order. All validators run (n
 ```go
 {
     Name: "email",
-    Type: definition.FieldData,
+    Type: def.FieldData,
     Validators: []entity.FieldValidator{
-        definition.ValidateEmail,            // runs first
+        def.ValidateEmail,            // runs first
         OrganizationEmailValidator{},        // runs second (rejects gmail/yahoo)
         DomainBlocklistValidator{},          // runs third (rejects known spam domains)
     },

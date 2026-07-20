@@ -24,10 +24,10 @@ This checklist must be completed before a new module is submitted for review. Ea
 
 ## Module Structure
 
-- [ ] Module directory follows the standard layout (`definition.go`, `hooks.go`, `policy.go`, `manifest.go`, `{module}.go`)
+- [ ] Module directory follows the standard layout (`def.go`, `hooks.go`, `policy.go`, `manifest.go`, `{module}.go`)
 - [ ] `ModuleManifest` declares `Name`, `Label`, `Version`, `Provides`, `Requires`
-- [ ] All entity definitions registered in `init()` via `definition.Register()`
-- [ ] Module manifest registered via `definition.RegisterManifest()`
+- [ ] All entity definitions registered in `init()` via `def.Register()`
+- [ ] Module manifest registered via `def.RegisterManifest()`
 - [ ] Blank import added to `cmd/server/main.go`
 - [ ] `RegisterActivities()` called in worker setup if module has workflows
 

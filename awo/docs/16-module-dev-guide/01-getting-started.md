@@ -35,7 +35,7 @@ The complete layout you will build:
 internal/core/crm/
     crm.go             ← init() — registers all definitions
     manifest.go        ← ModuleManifest
-    definition.go      ← EntityDefinition variables
+    def.go      ← EntityDefinition variables
     policy.go          ← PolicyFunc implementations
     hooks.go           ← Hook implementations
     service.go         ← Optional: thin service layer
@@ -59,7 +59,7 @@ package crm
 
 import "awo.so/awo/def"
 
-var Manifest = definition.ModuleManifest{
+var Manifest = def.ModuleManifest{
     Name:    "crm",
     Label:   "CRM",
     Version: "1.0.0",
@@ -93,15 +93,15 @@ import "awo.so/awo/def"
 
 func init() {
     // Register the module manifest
-    definition.RegisterManifest(&Manifest)
+    def.RegisterManifest(&Manifest)
 
     // Register entity definitions (declarations added in subsequent steps)
-    definition.Register(&ContactDefinition)
-    definition.Register(&InteractionDefinition)
+    def.Register(&ContactDefinition)
+    def.Register(&InteractionDefinition)
 }
 ```
 
-These registrations are stubs — `ContactDefinition` and `InteractionDefinition` will be declared in `definition.go` in the next step.
+These registrations are stubs — `ContactDefinition` and `InteractionDefinition` will be declared in `def.go` in the next step.
 
 ---
 
@@ -130,7 +130,7 @@ crm.RegisterActivities(w, crmDependencies)
 At this point the module scaffold exists. The server will not compile yet (ContactDefinition is not declared). Proceed to [Define an Entity](02-define-entity.md).
 
 **Dependency chain established:**
-- `definition.Register()` queues definitions for `Registry.Compile()`
+- `def.Register()` queues definitions for `Registry.Compile()`
 - `Registry.Compile()` runs during startup Step 4
 - Until `ContactDefinition` is declared, the build will fail with an undefined symbol
 

@@ -39,10 +39,10 @@ For `crm_contact`, the detail view needs a tabbed layout (Contact Info | Interac
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... all previous fields ...
 
-    PageBuilders: definition.PageBuilderSet{
+    PageBuilders: def.PageBuilderSet{
         // Only override the Detail view — List, Create, Edit use defaults
         Detail: BuildContactDetailPage,
     },

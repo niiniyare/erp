@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Entity Registry](../03-kernel/registry.md)"
   - "[Policy Functions](policies.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
@@ -47,7 +47,7 @@ Hooks are named extension points in the [EntityRecord lifecycle](../GLOSSARY.md#
 The hook system has three design properties:
 
 1. **Deterministic order** — for a given entity and stage, the execution sequence is identical across all invocations. See [LAW-007](../02-architecture/laws.md#law-007-hook-execution-order-is-deterministic).
-2. **Explicit registration** — hooks are registered via `definition.RegisterHook()`, not by implementing a magic interface. Registration is visible and auditable.
+2. **Explicit registration** — hooks are registered via `def.RegisterHook()`, not by implementing a magic interface. Registration is visible and auditable.
 3. **Cross-module sovereignty** — a module may only attach hooks to entities it owns or to entities that declare `HookPolicy: Open`. See [LAW-017](../02-architecture/laws.md#law-017-cross-module-hook-registration-requires-open-policy).
 
 ---
@@ -116,7 +116,7 @@ Registration in `init()`:
 
 ```go
 func init() {
-    definition.RegisterHook(definition.HookRegistration{
+    def.RegisterHook(def.HookRegistration{
         EntityName: "finance_invoice",
         Stage:      "before_create",
         Priority:   100,
@@ -124,7 +124,7 @@ func init() {
         Module:     "finance",
     })
 
-    definition.RegisterHook(definition.HookRegistration{
+    def.RegisterHook(def.HookRegistration{
         EntityName: "finance_invoice",
         Stage:      "after_create",
         Priority:   200,
@@ -275,7 +275,7 @@ var InvoiceDefinition = entity.EntityDefinition{
 }
 
 // In the Audit module's init():
-definition.RegisterHook(definition.HookRegistration{
+def.RegisterHook(def.HookRegistration{
     EntityName: "finance_invoice",
     Stage:      "after_save",
     Priority:   1000,  // run last
@@ -386,7 +386,7 @@ Hooks execute synchronously in the request path. Goroutines spawned in hooks are
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — Hooks field and HookPolicy
+- [EntityDefinition](../03-kernel/entity-def.md) — Hooks field and HookPolicy
 - [Entity Registry](../03-kernel/registry.md) — RegisterHook() API and execution order compilation
 - [Policy Functions](policies.md) — row-level filtering (separate from hooks)
 - [Architecture Laws](../02-architecture/laws.md) — LAW-007 (order), LAW-017 (cross-module)

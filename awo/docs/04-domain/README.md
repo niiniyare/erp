@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors, contributors]
 since: "1.0"
 normative-level: informative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Five-Layer Architecture](../02-architecture/five-layer.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -45,7 +45,7 @@ Domain Layer code has zero external dependencies — it imports only `awo/def/`,
 
 ## Prerequisites
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — the struct that contains all domain declarations
+- [EntityDefinition](../03-kernel/entity-def.md) — the struct that contains all domain declarations
 - [Five-Layer Architecture](../02-architecture/five-layer.md) §4 — Domain Layer responsibilities and import rules
 - [Architecture Laws](../02-architecture/laws.md) — LAW-007 (hook order), LAW-008 (imports), LAW-013 (sensitive fields), LAW-017 (cross-module hooks)
 - [Glossary](../GLOSSARY.md)

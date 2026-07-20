@@ -94,16 +94,16 @@ The sort field is always part of the keyset. `id` (UUID v7, time-ordered) is the
 // Fetch first page
 invoices, pageInfo, err := repo.Query(ctx,
     filter.Eq("status", "Draft"),
-    definition.WithSort("created_at", "desc"),
-    definition.WithLimit(25),
+    def.WithSort("created_at", "desc"),
+    def.WithLimit(25),
 )
 
 // Fetch next page using cursor from response
 invoices, pageInfo, err := repo.Query(ctx,
     filter.Eq("status", "Draft"),
-    definition.WithSort("created_at", "desc"),
-    definition.WithLimit(25),
-    definition.WithCursor(pageInfo.NextCursor),
+    def.WithSort("created_at", "desc"),
+    def.WithLimit(25),
+    def.WithCursor(pageInfo.NextCursor),
 )
 ```
 

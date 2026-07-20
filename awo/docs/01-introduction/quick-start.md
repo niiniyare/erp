@@ -74,20 +74,20 @@ import (
     "awo.so/awo/def"
 )
 
-var ContactDefinition = definition.SystemDefinition{
+var ContactDefinition = def.SystemDefinition{
     Name:        "crm_contact",
     Module:      "crm",
     Label:       "Contact",
     LabelPlural: "Contacts",
-    Fields: []definition.FieldDef{
-        {Name: "name",  Type: definition.FieldData, Required: true, Searchable: true},
-        {Name: "email", Type: definition.FieldData,
-            Validators: []definition.FieldValidator{definition.EmailValidator{}}},
-        {Name: "phone", Type: definition.FieldData},
-        {Name: "status", Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "name",  Type: def.FieldData, Required: true, Searchable: true},
+        {Name: "email", Type: def.FieldData,
+            Validators: []def.FieldValidator{def.EmailValidator{}}},
+        {Name: "phone", Type: def.FieldData},
+        {Name: "status", Type: def.FieldSelect,
             Options: []string{"Lead", "Prospect", "Customer"}, Default: "Lead"},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:crm.sales_rep", "role:tenant.admin"},
         Read:   []string{"role:crm.sales_rep", "role:tenant.admin"},
         Write:  []string{"role:crm.sales_rep", "role:tenant.admin"},
@@ -96,7 +96,7 @@ var ContactDefinition = definition.SystemDefinition{
 }
 
 func init() {
-    definition.Register(&ContactDefinition)
+    def.Register(&ContactDefinition)
 }
 ```
 

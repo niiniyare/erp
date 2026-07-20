@@ -718,7 +718,7 @@ Numeric prefixes communicate reading order at the top level. Subdirectories do n
 Documentation files MUST use lowercase, hyphen-separated names with `.md` extension:
 
 ```
-entity-definition.md       ✓
+entity-def.md       ✓
 filter-dsl.md              ✓
 hook-registration.md       ✓
 EntityDefinition.md        ✗  (uppercase forbidden)

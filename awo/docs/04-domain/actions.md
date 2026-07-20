@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Hooks](hooks.md)"
   - "[API Conventions](../11-api/conventions.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -253,7 +253,7 @@ Custom button positioning, styling, or conditional display requires a `PageBuild
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — Actions field
+- [EntityDefinition](../03-kernel/entity-def.md) — Actions field
 - [API Conventions](../11-api/conventions.md) — Generated route format and response envelope
 - [Hooks](hooks.md) — Lifecycle hooks (separate from actions)
 - [Workflow Layer](../09-workflow/temporal-integration.md) — Triggering workflows from actions

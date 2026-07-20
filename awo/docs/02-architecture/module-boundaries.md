@@ -107,7 +107,7 @@ The Finance module receives `service.CustomerService` via dependency injection (
 // In finance module: invoice links to crm_contact
 {
     Name:       "customer",
-    Type:       definition.FieldLink,
+    Type:       def.FieldLink,
     LinkTarget: "crm_contact",  // cross-module link — OK
     Required:   true,
 }

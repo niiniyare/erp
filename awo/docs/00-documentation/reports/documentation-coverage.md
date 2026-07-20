@@ -83,7 +83,7 @@ related:
 
 ### 03-kernel/
 - `README.md`
-- `entity-definition.md` — Complete EntityDefinition spec (FROZEN)
+- `entity-def.md` — Complete EntityDefinition spec (FROZEN)
 - `compilation-pipeline.md` — Three-phase lifecycle (FROZEN)
 - `registry.md` — Registry contract and state machine (FROZEN)
 - `startup-sequence.md` — 7-step startup with failure modes (STABLE)

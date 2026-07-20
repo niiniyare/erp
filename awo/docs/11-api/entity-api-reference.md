@@ -218,7 +218,7 @@ Soft delete behavior: if the entity has a `deleted_at` field, it is set instead 
 POST /api/v1/entities/{entity-type}/{id}/{action-name}
 ```
 
-Declared via `ActionDef` on the entity definition.
+Declared via `ActionDef` on the entity def.
 
 **Request body**: action-specific payload (declared by `HandlerFunc`).
 

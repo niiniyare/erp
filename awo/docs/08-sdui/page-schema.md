@@ -10,7 +10,7 @@ normative-level: normative
 related:
   - "[Page Builders](page-builders.md)"
   - "[amis Integration](amis-integration.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[RBAC](../07-iam/rbac.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---

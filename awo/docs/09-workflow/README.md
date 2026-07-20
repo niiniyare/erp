@@ -43,5 +43,5 @@ The Workflow Layer handles all asynchronous, durable, long-running processes. It
 
 - [Architecture Laws](../02-architecture/laws.md) — LAW-006 (outbox), LAW-016 (workflow ID format), LAW-018 (outbox is framework-private)
 - [Five-Layer Architecture §5](../02-architecture/five-layer.md#5-workflow-layer) — Workflow Layer responsibilities
-- [EntityDefinition §8](../03-kernel/entity-definition.md#8-workflow-triggers) — WorkflowTrigger declarations
+- [EntityDefinition §8](../03-kernel/entity-def.md#8-workflow-triggers) — WorkflowTrigger declarations
 - [Glossary](../GLOSSARY.md) — Workflow, Activity, Saga Pattern, Outbox Pattern, Temporal, Task Queue, Workflow ID

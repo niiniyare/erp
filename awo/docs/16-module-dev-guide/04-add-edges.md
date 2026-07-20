@@ -26,10 +26,10 @@ This document adds `EdgeDef` declarations to `crm_contact`, establishing the one
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... Name, Module, Label, Fields from previous step ...
 
-    Edges: []definition.EdgeDef{
+    Edges: []def.EdgeDef{
         {
             // Edge name — used in API responses and SDUI
             Name: "interactions",
@@ -38,7 +38,7 @@ var ContactDefinition = definition.EntityDefinition{
             Target: "crm_interaction",
 
             // Edge cardinality
-            Type: definition.EdgeOneToMany,
+            Type: def.EdgeOneToMany,
 
             // Delete all interactions when the contact is deleted
             CascadeDelete: true,
@@ -57,17 +57,17 @@ var ContactDefinition = definition.EntityDefinition{
 The `crm_interaction` entity referenced by the edge:
 
 ```go
-var InteractionDefinition = definition.EntityDefinition{
+var InteractionDefinition = def.EntityDefinition{
     Name:         "crm_interaction",
     Module:       "crm",
     Label:        "Interaction",
     LabelPlural:  "Interactions",
-    StorageModel: definition.StorageCustom,
+    StorageModel: def.StorageCustom,
 
-    Fields: []definition.FieldDef{
+    Fields: []def.FieldDef{
         {
             Name:     "contact",
-            Type:     definition.FieldLink,
+            Type:     def.FieldLink,
             Label:    "Contact",
             LinkTarget: "crm_contact",
             Required: true,
@@ -75,38 +75,38 @@ var InteractionDefinition = definition.EntityDefinition{
         },
         {
             Name:    "type",
-            Type:    definition.FieldSelect,
+            Type:    def.FieldSelect,
             Label:   "Type",
             Options: []string{"Call", "Email", "Meeting", "Note"},
             Required: true,
         },
         {
             Name:  "date",
-            Type:  definition.FieldDateTime,
+            Type:  def.FieldDateTime,
             Label: "Date",
             Required: true,
         },
         {
             Name:  "summary",
-            Type:  definition.FieldSmallText,
+            Type:  def.FieldSmallText,
             Label: "Summary",
             Required: true,
         },
         {
             Name:  "notes",
-            Type:  definition.FieldLongText,
+            Type:  def.FieldLongText,
             Label: "Notes",
         },
         {
             Name:     "conducted_by",
-            Type:     definition.FieldLink,
+            Type:     def.FieldLink,
             Label:    "Conducted By",
             LinkTarget: "user",
             Required: true,
         },
         {
             Name:    "outcome",
-            Type:    definition.FieldSelect,
+            Type:    def.FieldSelect,
             Label:   "Outcome",
             Options: []string{"Positive", "Neutral", "Negative", "Follow-up Required"},
         },
@@ -154,7 +154,7 @@ For a many-to-many relationship (e.g., a contact associated with multiple compan
 {
     Name:   "companies",
     Target: "crm_company",
-    Type:   definition.EdgeManyToMany,
+    Type:   def.EdgeManyToMany,
     // Framework creates a join table: crm_contact_crm_company
     // No CascadeDelete — removing the join row, not the company
 },

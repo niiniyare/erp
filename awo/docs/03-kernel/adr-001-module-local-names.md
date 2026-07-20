@@ -8,7 +8,7 @@ audience: [framework-authors, module-authors, contributors]
 since: "1.1"
 normative-level: normative
 related:
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Compilation Pipeline](compilation-pipeline.md)"
   - "[Entity Registry](registry.md)"
 ---

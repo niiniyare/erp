@@ -95,10 +95,10 @@ import (
 // FinanceEmployeeAdapter implements finance.EmployeeService.
 // HR module exports this adapter for use by the Finance module.
 type FinanceEmployeeAdapter struct {
-    employeeRepo definition.EntityRepository[Employee]
+    employeeRepo def.EntityRepository[Employee]
 }
 
-func NewFinanceEmployeeAdapter(repo definition.EntityRepository[Employee]) finance.EmployeeService {
+func NewFinanceEmployeeAdapter(repo def.EntityRepository[Employee]) finance.EmployeeService {
     return &FinanceEmployeeAdapter{employeeRepo: repo}
 }
 
@@ -116,7 +116,7 @@ func (a *FinanceEmployeeAdapter) GetEmployeeByUserID(ctx context.Context, userID
         return finance.EmployeeInfo{}, fmt.Errorf("FinanceEmployeeAdapter.GetEmployeeByUserID: %w", err)
     }
     if len(employees) == 0 {
-        return finance.EmployeeInfo{}, definition.ErrNotFound
+        return finance.EmployeeInfo{}, def.ErrNotFound
     }
     emp := employees[0]
     return finance.EmployeeInfo{
@@ -178,7 +178,7 @@ type PayslipGeneratorHook struct {
     EmployeeSvc EmployeeService  // interface — no hr package import
 }
 
-func (h *PayslipGeneratorHook) BeforeCreate(ctx context.Context, rec *definition.EntityRecord) error {
+func (h *PayslipGeneratorHook) BeforeCreate(ctx context.Context, rec *def.EntityRecord) error {
     employeeID, _ := rec.GetUUID("employee")
     salary, err := h.EmployeeSvc.GetSalary(ctx, employeeID)
     if err != nil {
@@ -223,7 +223,7 @@ func TestPayslipGeneratorHook_SetsGrossSalary(t *testing.T) {
         EmployeeSvc: &mockEmployeeService{salary: decimal.NewFromFloat(75000)},
     }
 
-    rec := &definition.EntityRecord{}
+    rec := &def.EntityRecord{}
     rec.Set("employee", uuid.New())
 
     if err := hook.BeforeCreate(context.Background(), rec); err != nil {

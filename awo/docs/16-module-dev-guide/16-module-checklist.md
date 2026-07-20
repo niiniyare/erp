@@ -100,7 +100,7 @@ A gate-by-gate checklist for every new module before it is merged to main.
 
 ## Gate 7 — Settings and Feature Flags
 
-- [ ] Configurable thresholds declared as `definition.Setting` (not hard-coded)
+- [ ] Configurable thresholds declared as `def.Setting` (not hard-coded)
 - [ ] Settings read once before loops — not inside loops
 - [ ] Boolean capability switches use Feature Flags, not Settings
 - [ ] Setting keys follow `{module}.{parameter_name}` format

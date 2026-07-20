@@ -163,11 +163,11 @@ For products requiring traceability (pharmaceuticals, electronics, food):
 
 ```go
 // inventory_lot entity
-{Name: "product_id",   Type: definition.FieldLink, LinkTarget: "inventory_product", Required: true},
-{Name: "lot_number",   Type: definition.FieldData, Required: true, Unique: true},
-{Name: "expiry_date",  Type: definition.FieldDate},
-{Name: "manufacture_date", Type: definition.FieldDate},
-{Name: "qty_on_hand",  Type: definition.FieldCurrency},  // computed field
+{Name: "product_id",   Type: def.FieldLink, LinkTarget: "inventory_product", Required: true},
+{Name: "lot_number",   Type: def.FieldData, Required: true, Unique: true},
+{Name: "expiry_date",  Type: def.FieldDate},
+{Name: "manufacture_date", Type: def.FieldDate},
+{Name: "qty_on_hand",  Type: def.FieldCurrency},  // computed field
 ```
 
 Stock moves with lot tracking include `lot_id` reference. Receiving without a lot number on a lot-tracked product is rejected:

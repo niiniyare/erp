@@ -27,11 +27,11 @@ Common patterns for declaring and using edges: parent-child, polymorphic links, 
 The most common pattern — a parent owns child records:
 
 ```go
-Edges: []definition.EdgeDef{
+Edges: []def.EdgeDef{
     {
         Name:          "lines",
         Target:        "finance_invoice_line",
-        Type:          definition.EdgeOneToMany,
+        Type:          def.EdgeOneToMany,
         ForeignKey:    "invoice",         // field on the child entity
         CascadeDelete: true,              // deleting invoice deletes all lines
     },
@@ -41,7 +41,7 @@ Edges: []definition.EdgeDef{
 Loading the edge:
 
 ```go
-invoice, err := repo.Get(ctx, invoiceID, definition.WithEdge("lines"))
+invoice, err := repo.Get(ctx, invoiceID, def.WithEdge("lines"))
 lines := invoice.Edges["lines"].([]InvoiceLine)
 ```
 
@@ -52,10 +52,10 @@ lines := invoice.Edges["lines"].([]InvoiceLine)
 A child pointing to its parent (or any FK relationship):
 
 ```go
-Fields: []definition.FieldDef{
+Fields: []def.FieldDef{
     {
         Name:       "customer",
-        Type:       definition.FieldLink,
+        Type:       def.FieldLink,
         LinkTarget: "crm_customer",
         Required:   true,
     },
@@ -65,7 +65,7 @@ Fields: []definition.FieldDef{
 Loading the linked entity:
 
 ```go
-invoice, err := repo.Get(ctx, invoiceID, definition.WithEdge("customer"))
+invoice, err := repo.Get(ctx, invoiceID, def.WithEdge("customer"))
 customer := invoice.Edges["customer"].(*Customer)
 ```
 
@@ -80,14 +80,14 @@ Not all invoices have a project:
 ```go
 {
     Name:       "project",
-    Type:       definition.FieldLink,
+    Type:       def.FieldLink,
     LinkTarget: "project",
     Required:   false,  // Default — edge is nil when not set
 },
 ```
 
 ```go
-invoice, err := repo.Get(ctx, invoiceID, definition.WithEdge("project"))
+invoice, err := repo.Get(ctx, invoiceID, def.WithEdge("project"))
 project, hasProject := invoice.Edges["project"].(*Project)
 if hasProject {
     // Use project
@@ -102,27 +102,27 @@ Temporal cannot be expressed as a direct EdgeDef — model as two one-to-many ed
 
 ```go
 // project_member join entity
-var ProjectMemberDefinition = definition.SystemDefinition{
+var ProjectMemberDefinition = def.SystemDefinition{
     Name:   "project_member",
     Module: "projects",
-    Fields: []definition.FieldDef{
-        {Name: "project",  Type: definition.FieldLink, LinkTarget: "project",  Required: true, Immutable: true},
-        {Name: "employee", Type: definition.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
-        {Name: "role",     Type: definition.FieldSelect, Options: []string{"Lead", "Member", "Observer"}},
-        {Name: "joined_at", Type: definition.FieldDateTime},
+    Fields: []def.FieldDef{
+        {Name: "project",  Type: def.FieldLink, LinkTarget: "project",  Required: true, Immutable: true},
+        {Name: "employee", Type: def.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
+        {Name: "role",     Type: def.FieldSelect, Options: []string{"Lead", "Member", "Observer"}},
+        {Name: "joined_at", Type: def.FieldDateTime},
     },
 }
 
 // On the project entity:
-Edges: []definition.EdgeDef{
-    {Name: "members", Target: "project_member", Type: definition.EdgeOneToMany, ForeignKey: "project"},
+Edges: []def.EdgeDef{
+    {Name: "members", Target: "project_member", Type: def.EdgeOneToMany, ForeignKey: "project"},
 },
 ```
 
 To get all employees on a project:
 
 ```go
-project, _ := repo.Get(ctx, projectID, definition.WithEdge("members"))
+project, _ := repo.Get(ctx, projectID, def.WithEdge("members"))
 members := project.Edges["members"].([]ProjectMember)
 // members[i].Fields["employee"] is the employee UUID
 // Load employee records separately if needed
@@ -140,20 +140,20 @@ employees, _, _ := employeeRepo.Query(ctx, filter.In("id", employeeIDs))
 When a record can link to different entity types (e.g., an attachment on any entity):
 
 ```go
-var AttachmentDefinition = definition.CustomDefinition{
+var AttachmentDefinition = def.CustomDefinition{
     Name:   "attachment",
     Module: "platform",
-    Fields: []definition.FieldDef{
-        {Name: "linked_entity_type", Type: definition.FieldData, Required: true, Immutable: true},
+    Fields: []def.FieldDef{
+        {Name: "linked_entity_type", Type: def.FieldData, Required: true, Immutable: true},
             // e.g. "finance_invoice", "crm_customer"
-        {Name: "linked_entity_id",   Type: definition.FieldData, Required: true, Immutable: true},
+        {Name: "linked_entity_id",   Type: def.FieldData, Required: true, Immutable: true},
             // UUID string of the linked record
-        {Name: "filename",  Type: definition.FieldData, Required: true},
-        {Name: "file_url",  Type: definition.FieldData, Sensitive: true},
-        {Name: "mime_type", Type: definition.FieldData},
-        {Name: "size_bytes", Type: definition.FieldInt},
+        {Name: "filename",  Type: def.FieldData, Required: true},
+        {Name: "file_url",  Type: def.FieldData, Sensitive: true},
+        {Name: "mime_type", Type: def.FieldData},
+        {Name: "size_bytes", Type: def.FieldInt},
     },
-    Policy: definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+    Policy: def.PolicyFunc(func(ctx context.Context) def.Filter {
         // Actor can only see attachments for entities they have access to
         // This is enforced by the parent entity's RBAC — attachment read is
         // implicitly granted when the parent entity can be read
@@ -178,17 +178,17 @@ attachments, _, _ := attachmentRepo.Query(ctx, filter.And(
 For hierarchical structures like org charts or category trees:
 
 ```go
-var DepartmentDefinition = definition.SystemDefinition{
+var DepartmentDefinition = def.SystemDefinition{
     Name:   "hr_department",
     Module: "hr",
-    Fields: []definition.FieldDef{
-        {Name: "name",   Type: definition.FieldData, Required: true},
-        {Name: "parent", Type: definition.FieldLink, LinkTarget: "hr_department"},
+    Fields: []def.FieldDef{
+        {Name: "name",   Type: def.FieldData, Required: true},
+        {Name: "parent", Type: def.FieldLink, LinkTarget: "hr_department"},
             // Null = root department
-        {Name: "level",  Type: definition.FieldInt, Default: 0},
+        {Name: "level",  Type: def.FieldInt, Default: 0},
     },
-    Edges: []definition.EdgeDef{
-        {Name: "children", Target: "hr_department", Type: definition.EdgeOneToMany, ForeignKey: "parent"},
+    Edges: []def.EdgeDef{
+        {Name: "children", Target: "hr_department", Type: def.EdgeOneToMany, ForeignKey: "parent"},
     },
 }
 ```
@@ -196,7 +196,7 @@ var DepartmentDefinition = definition.SystemDefinition{
 Loading one level of children:
 
 ```go
-dept, _ := deptRepo.Get(ctx, deptID, definition.WithEdge("children"))
+dept, _ := deptRepo.Get(ctx, deptID, def.WithEdge("children"))
 children := dept.Edges["children"].([]Department)
 ```
 
@@ -220,7 +220,7 @@ An entity in one module linking to an entity in another module:
 // finance_invoice links to crm_customer (different modules)
 {
     Name:       "customer",
-    Type:       definition.FieldLink,
+    Type:       def.FieldLink,
     LinkTarget: "crm_customer",  // Framework resolves via EntityRegistry, not import
 }
 ```
@@ -230,7 +230,7 @@ The framework resolves cross-module links via the EntityRegistry — no Go impor
 Loading cross-module edges works identically to same-module edges:
 
 ```go
-invoice, _ := repo.Get(ctx, invoiceID, definition.WithEdge("customer"))
+invoice, _ := repo.Get(ctx, invoiceID, def.WithEdge("customer"))
 ```
 
 ---

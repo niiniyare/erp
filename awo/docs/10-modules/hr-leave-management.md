@@ -29,18 +29,18 @@ Leave request lifecycle, approval workflow, leave balance tracking, and public h
 Defines leave categories for a tenant:
 
 ```go
-var LeaveTypeDefinition = definition.SystemDefinition{
+var LeaveTypeDefinition = def.SystemDefinition{
     Name:        "hr_leave_type",
     Module:      "hr",
     Label:       "Leave Type",
-    Fields: []definition.FieldDef{
-        {Name: "name",             Type: definition.FieldData,   Required: true},
-        {Name: "days_per_year",    Type: definition.FieldInt,    Required: true},
-        {Name: "carry_over_days",  Type: definition.FieldInt,    Default: 0},
-        {Name: "requires_approval",Type: definition.FieldBool,   Default: true},
-        {Name: "is_paid",          Type: definition.FieldBool,   Default: true},
-        {Name: "min_days_notice",  Type: definition.FieldInt,    Default: 3},
-        {Name: "color",            Type: definition.FieldData},  // for calendar UI
+    Fields: []def.FieldDef{
+        {Name: "name",             Type: def.FieldData,   Required: true},
+        {Name: "days_per_year",    Type: def.FieldInt,    Required: true},
+        {Name: "carry_over_days",  Type: def.FieldInt,    Default: 0},
+        {Name: "requires_approval",Type: def.FieldBool,   Default: true},
+        {Name: "is_paid",          Type: def.FieldBool,   Default: true},
+        {Name: "min_days_notice",  Type: def.FieldInt,    Default: 3},
+        {Name: "color",            Type: def.FieldData},  // for calendar UI
     },
 }
 ```
@@ -50,17 +50,17 @@ var LeaveTypeDefinition = definition.SystemDefinition{
 Per-employee annual leave balance:
 
 ```go
-var LeaveBalanceDefinition = definition.SystemDefinition{
+var LeaveBalanceDefinition = def.SystemDefinition{
     Name:        "hr_leave_balance",
     Module:      "hr",
-    Fields: []definition.FieldDef{
-        {Name: "employee",     Type: definition.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
-        {Name: "leave_type",   Type: definition.FieldLink, LinkTarget: "hr_leave_type", Required: true, Immutable: true},
-        {Name: "year",         Type: definition.FieldInt,  Required: true, Immutable: true},
-        {Name: "allocated",    Type: definition.FieldInt,  Required: true},  // total days for the year
-        {Name: "used",         Type: definition.FieldInt,  Default: 0},
-        {Name: "pending",      Type: definition.FieldInt,  Default: 0},      // approved but future
-        {Name: "carry_over",   Type: definition.FieldInt,  Default: 0},
+    Fields: []def.FieldDef{
+        {Name: "employee",     Type: def.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
+        {Name: "leave_type",   Type: def.FieldLink, LinkTarget: "hr_leave_type", Required: true, Immutable: true},
+        {Name: "year",         Type: def.FieldInt,  Required: true, Immutable: true},
+        {Name: "allocated",    Type: def.FieldInt,  Required: true},  // total days for the year
+        {Name: "used",         Type: def.FieldInt,  Default: 0},
+        {Name: "pending",      Type: def.FieldInt,  Default: 0},      // approved but future
+        {Name: "carry_over",   Type: def.FieldInt,  Default: 0},
     },
 }
 ```
@@ -68,30 +68,30 @@ var LeaveBalanceDefinition = definition.SystemDefinition{
 ### `hr_leave_request`
 
 ```go
-var LeaveRequestDefinition = definition.SystemDefinition{
+var LeaveRequestDefinition = def.SystemDefinition{
     Name:        "hr_leave_request",
     Module:      "hr",
     Label:       "Leave Request",
-    Fields: []definition.FieldDef{
-        {Name: "employee",     Type: definition.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
-        {Name: "leave_type",   Type: definition.FieldLink, LinkTarget: "hr_leave_type", Required: true, Immutable: true},
-        {Name: "start_date",   Type: definition.FieldDate, Required: true},
-        {Name: "end_date",     Type: definition.FieldDate, Required: true},
-        {Name: "days",         Type: definition.FieldInt,  Required: true},  // computed, excluding weekends + holidays
-        {Name: "status",       Type: definition.FieldSelect, Required: true,
+    Fields: []def.FieldDef{
+        {Name: "employee",     Type: def.FieldLink, LinkTarget: "hr_employee", Required: true, Immutable: true},
+        {Name: "leave_type",   Type: def.FieldLink, LinkTarget: "hr_leave_type", Required: true, Immutable: true},
+        {Name: "start_date",   Type: def.FieldDate, Required: true},
+        {Name: "end_date",     Type: def.FieldDate, Required: true},
+        {Name: "days",         Type: def.FieldInt,  Required: true},  // computed, excluding weekends + holidays
+        {Name: "status",       Type: def.FieldSelect, Required: true,
             Options: []string{"Draft", "Pending", "Approved", "Rejected", "Cancelled"},
             Default: "Draft"},
-        {Name: "approver",     Type: definition.FieldLink, LinkTarget: "hr_employee"},
-        {Name: "reason",       Type: definition.FieldSmallText},
-        {Name: "rejection_reason", Type: definition.FieldSmallText},
-        {Name: "approved_at",  Type: definition.FieldDateTime},
+        {Name: "approver",     Type: def.FieldLink, LinkTarget: "hr_employee"},
+        {Name: "reason",       Type: def.FieldSmallText},
+        {Name: "rejection_reason", Type: def.FieldSmallText},
+        {Name: "approved_at",  Type: def.FieldDateTime},
     },
-    Hooks: definition.HookSet{
-        BeforeCreate: []definition.BeforeCreateHook{&LeaveBalanceValidator{}},
+    Hooks: def.HookSet{
+        BeforeCreate: []def.BeforeCreateHook{&LeaveBalanceValidator{}},
     },
-    WorkflowTriggers: []definition.WorkflowTrigger{
+    WorkflowTriggers: []def.WorkflowTrigger{
         {
-            On:         definition.EventOnSubmit,
+            On:         def.EventOnSubmit,
             WorkflowFn: "LeaveApprovalWorkflow",
             TaskQueue:  "hr.leave",
         },
@@ -105,11 +105,11 @@ var LeaveRequestDefinition = definition.SystemDefinition{
 
 ```go
 type LeaveBalanceValidator struct {
-    BalanceRepo  definition.EntityRepository[LeaveBalance]
-    HolidayRepo  definition.EntityRepository[HRHoliday]
+    BalanceRepo  def.EntityRepository[LeaveBalance]
+    HolidayRepo  def.EntityRepository[HRHoliday]
 }
 
-func (v *LeaveBalanceValidator) BeforeCreate(ctx context.Context, rec *definition.EntityRecord) error {
+func (v *LeaveBalanceValidator) BeforeCreate(ctx context.Context, rec *def.EntityRecord) error {
     startDate, _ := rec.GetDate("start_date")
     endDate, _ := rec.GetDate("end_date")
     leaveTypeID, _ := rec.GetUUID("leave_type")
@@ -207,7 +207,7 @@ func LeaveApprovalWorkflow(ctx workflow.Context, input LeaveApprovalInput) error
 
 ```go
 // POST /api/v1/entities/hr_leave_request/{id}/approve
-func ApproveLeaveAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ApproveLeaveAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     wfID := fmt.Sprintf("%s.hr_leave_request.%s.on_submit",
         action.Actor.TenantID, action.RecordID)
 
@@ -219,7 +219,7 @@ func ApproveLeaveAction(ctx context.Context, action definition.ActionContext) (*
         return nil, fmt.Errorf("ApproveLeaveAction: signal: %w", err)
     }
 
-    return &definition.ActionResult{Message: "Leave request approved"}, nil
+    return &def.ActionResult{Message: "Leave request approved"}, nil
 }
 ```
 
@@ -253,7 +253,7 @@ func AllocateAnnualLeaveActivity(ctx context.Context, input TenantYearInput) err
             // Carry over from previous year
             carryOver := calculateCarryOver(ctx, a, tenantCtx, employee.ID, leaveType, input.Year-1)
 
-            _, _ = a.BalanceRepo.Create(tenantCtx, definition.CreateInput{
+            _, _ = a.BalanceRepo.Create(tenantCtx, def.CreateInput{
                 Fields: map[string]any{
                     "employee":   employee.ID,
                     "leave_type": leaveType.ID,

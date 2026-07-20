@@ -10,7 +10,7 @@ normative-level: normative
 related:
   - "[Platform Modules](platform-modules.md)"
   - "[Registry](../03-kernel/registry.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Startup Sequence](../03-kernel/startup-sequence.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -30,7 +30,7 @@ The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, RECOMMENDED, M
 
 A module is a Go package (or package group) that:
 - Declares one or more `EntityDefinition`s
-- Registers them via `definition.Register()` in `init()`
+- Registers them via `def.Register()` in `init()`
 - Declares a `ModuleManifest` with capability tokens and dependencies
 - Provides migrations in a `migrations/` subdirectory
 - Optionally provides custom HTTP handlers, Temporal activities, and Temporal workflows
@@ -67,9 +67,9 @@ All modules (platform and business) use the same directory layout:
 
 ```
 internal/{platform|core}/{module}/
-    {module}.go           ← init() — calls definition.Register() for all entities
+    {module}.go           ← init() — calls def.Register() for all entities
     manifest.go           ← ModuleManifest declaration
-    definition.go         ← EntityDefinition variable declarations
+    def.go         ← EntityDefinition variable declarations
     policy.go             ← PolicyFunc implementations
     hooks.go              ← Hook implementations
     service.go            ← Thin service layer on EntityRepository
@@ -94,7 +94,7 @@ Every module MUST declare a `ModuleManifest`:
 
 ```go
 // manifest.go
-var Manifest = definition.ModuleManifest{
+var Manifest = def.ModuleManifest{
     // Unique module identifier — matches the module's entity name prefix
     Name: "finance",
 
@@ -143,10 +143,10 @@ package finance
 import "awo.so/awo/def"
 
 func init() {
-    definition.Register(&InvoiceDefinition)
-    definition.Register(&InvoiceLineDefinition)
-    definition.Register(&PaymentDefinition)
-    definition.RegisterManifest(&Manifest)
+    def.Register(&InvoiceDefinition)
+    def.Register(&InvoiceLineDefinition)
+    def.Register(&PaymentDefinition)
+    def.RegisterManifest(&Manifest)
 }
 ```
 
@@ -222,8 +222,8 @@ Entity-level access control remains with RBAC (Casbin). Module activation is a c
 Step-by-step:
 1. Create directory: `internal/core/{module}/`
 2. Write `manifest.go` with `ModuleManifest`
-3. Write `definition.go` with `EntityDefinition` variables
-4. Write `{module}.go` with `init()` calling `definition.Register` for each entity
+3. Write `def.go` with `EntityDefinition` variables
+4. Write `{module}.go` with `init()` calling `def.Register` for each entity
 5. Write `policy.go` and `hooks.go`
 6. Write `migrations/` SQL files for all system entities
 7. Add a blank import to `cmd/server/main.go`
@@ -237,7 +237,7 @@ The module is then available to be activated per-tenant via the admin UI's Modul
 
 - [Platform Modules](platform-modules.md) — built-in unconditional modules
 - [Registry](../03-kernel/registry.md) — compilation and registration API
-- [EntityDefinition](../03-kernel/entity-definition.md) — module's central primitive
+- [EntityDefinition](../03-kernel/entity-def.md) — module's central primitive
 - [Startup Sequence](../03-kernel/startup-sequence.md) — when init() and Compile() run
 - [Architecture Laws](../02-architecture/laws.md) — LAW-011 (entity names unique)
 - [Glossary](../GLOSSARY.md) — Module, ModuleManifest, Platform Module, Business Module

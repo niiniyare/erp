@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Hook Pipeline](hook-pipeline.md)"
   - "[Route Generation](route-generation.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -339,7 +339,7 @@ func Register(def *EntityDefinition)
 
 ## Related Documents
 
-- [EntityDefinition](entity-definition.md) — conceptual overview and usage guide
+- [EntityDefinition](entity-def.md) — conceptual overview and usage guide
 - [Hook Pipeline](hook-pipeline.md) — hook execution order, TX boundaries
 - [Route Generation](route-generation.md) — how ActionDef generates routes
 - [filter Package Reference](../05-persistence/filter-package-reference.md) — the Filter type used in PolicyFunc

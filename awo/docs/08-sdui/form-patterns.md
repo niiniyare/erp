@@ -123,7 +123,7 @@ Custom field validators in FieldDef also produce this format:
 ```go
 {
     Name: "email",
-    Type: definition.FieldData,
+    Type: def.FieldData,
     Validators: []entity.FieldValidator{EmailValidator{}},
 }
 // EmailValidator.Validate returns: &ValidationError{Fields: {"email": "Invalid email format."}}

@@ -45,37 +45,37 @@ Settings are declared in the module that owns them:
 // internal/core/finance/settings.go
 
 var (
-    SettingInvoiceApprovalThreshold = definition.Setting{
+    SettingInvoiceApprovalThreshold = def.Setting{
         Key:         "finance.invoice_approval_threshold",
         Label:       "Invoice Approval Threshold (KES)",
         Description: "Invoices above this amount require manager approval before submission.",
-        Type:        definition.SettingTypeCurrency,
+        Type:        def.SettingTypeCurrency,
         Default:     "50000.0000",
-        Scope:       definition.SettingScopeTenant,
+        Scope:       def.SettingScopeTenant,
     }
 
-    SettingPaymentTermsDays = definition.Setting{
+    SettingPaymentTermsDays = def.Setting{
         Key:         "finance.payment_terms_days",
         Label:       "Default Payment Terms (days)",
-        Type:        definition.SettingTypeInt,
+        Type:        def.SettingTypeInt,
         Default:     "30",
-        Scope:       definition.SettingScopeTenant,
+        Scope:       def.SettingScopeTenant,
     }
 
-    SettingDefaultCurrency = definition.Setting{
+    SettingDefaultCurrency = def.Setting{
         Key:         "finance.default_currency",
         Label:       "Default Currency",
-        Type:        definition.SettingTypeSelect,
+        Type:        def.SettingTypeSelect,
         Options:     []string{"KES", "USD", "EUR", "GBP"},
         Default:     "KES",
-        Scope:       definition.SettingScopeTenant,
+        Scope:       def.SettingScopeTenant,
     }
 )
 
 func init() {
-    definition.RegisterSetting(&SettingInvoiceApprovalThreshold)
-    definition.RegisterSetting(&SettingPaymentTermsDays)
-    definition.RegisterSetting(&SettingDefaultCurrency)
+    def.RegisterSetting(&SettingInvoiceApprovalThreshold)
+    def.RegisterSetting(&SettingPaymentTermsDays)
+    def.RegisterSetting(&SettingDefaultCurrency)
 }
 ```
 
@@ -184,7 +184,7 @@ NamingSeries fields with `TenantOverridable: true` automatically register a sett
 ```go
 {
     Name:              "number",
-    Type:              definition.FieldNamingSeries,
+    Type:              def.FieldNamingSeries,
     Series:            "INV-{YYYY}-{SEQ:5}",
     TenantOverridable: true,
 }

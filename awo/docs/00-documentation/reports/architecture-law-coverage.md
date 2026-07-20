@@ -17,7 +17,7 @@ related:
 
 **Generated for:** Awo Framework v1.0 documentation set
 
-This report verifies that every Architecture Law and Invariant is enforced in at least one normative document beyond its primary definition.
+This report verifies that every Architecture Law and Invariant is enforced in at least one normative document beyond its primary def.
 
 ---
 
@@ -30,12 +30,12 @@ This report verifies that every Architecture Law and Invariant is enforced in at
 | LAW-003 | Registry sealed after compilation | laws.md | registry.md, startup-sequence.md |
 | LAW-004 | CompiledSchema immutable | laws.md | compilation-pipeline.md |
 | LAW-005 | No store op without tenant context | laws.md | tenant-model.md, rls.md |
-| LAW-006 | Outbox + entity commit atomically | laws.md | outbox-pattern.md, entity-definition.md |
+| LAW-006 | Outbox + entity commit atomically | laws.md | outbox-pattern.md, entity-def.md |
 | LAW-007 | Hook order deterministic | laws.md | hooks.md |
 | LAW-008 | Layer imports strictly downward | laws.md | five-layer.md |
 | LAW-009 | Driver interfaces stable after v1.0 | laws.md | registry.md |
 | LAW-010 | Content hash is schema identity | laws.md | compilation-pipeline.md, page-schema.md |
-| LAW-011 | Entity names globally unique, immutable | laws.md | entity-definition.md, adr-008 |
+| LAW-011 | Entity names globally unique, immutable | laws.md | entity-def.md, adr-008 |
 | LAW-012 | Migrations append-only | laws.md | migrations.md |
 | LAW-013 | Sensitive fields never logged | laws.md | fields.md, security-model.md |
 | LAW-014 | Filter wire format versioned | laws.md | filter-dsl.md |
@@ -65,7 +65,7 @@ This report verifies that every Architecture Law and Invariant is enforced in at
 | INV-009 | Content hash identical across all instances | invariants.md | compilation-pipeline.md, deployment.md |
 | INV-010 | No stack trace in client-facing error response | invariants.md | error-handling.md, security-model.md |
 | INV-011 | Middleware pipeline executes in full | invariants.md | api/conventions.md |
-| INV-012 | Entity names stable after first migration | invariants.md | entity-definition.md, adr-008 |
+| INV-012 | Entity names stable after first migration | invariants.md | entity-def.md, adr-008 |
 
 **Coverage: 12/12 invariants enforced in at least one non-primary document.**
 
@@ -82,6 +82,6 @@ This report verifies that every Architecture Law and Invariant is enforced in at
 | ADR-005 | Server-side sessions over JWT | sessions.md, authentication.md |
 | ADR-006 | Transactional outbox | outbox-pattern.md |
 | ADR-007 | No lazy loading | edges.md, entity-repository.md |
-| ADR-008 | Entity names immutable | entity-definition.md |
+| ADR-008 | Entity names immutable | entity-def.md |
 
 **Coverage: All 8 ADRs reference their corresponding specification documents.**

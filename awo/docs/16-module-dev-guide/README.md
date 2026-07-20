@@ -9,7 +9,7 @@ since: "1.0"
 normative-level: informative
 related:
   - "[Module System](../10-modules/module-system.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -71,5 +71,5 @@ Before starting this guide:
 
 - [Philosophy](../01-introduction/philosophy.md) — understand the foundational axioms
 - [Architecture Overview](../01-introduction/architecture-overview.md) — five-layer mental model
-- [EntityDefinition](../03-kernel/entity-definition.md) — complete field reference
+- [EntityDefinition](../03-kernel/entity-def.md) — complete field reference
 - [Architecture Laws](../02-architecture/laws.md) — the 20 laws you must not violate

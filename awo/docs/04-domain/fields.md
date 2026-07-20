@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Edges](edges.md)"
   - "[Filter DSL](../05-persistence/filter-dsl.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
@@ -338,7 +338,7 @@ The filter DSL supports `DynamicLink` predicates using a compound key: `filter.D
 
 ## 6. Custom Field Types
 
-Third-party modules may register additional field types by calling `definition.RegisterFieldTypeHandler(typeName, handler)` from their `init()` function before any EntityDefinition using that type is registered.
+Third-party modules may register additional field types by calling `def.RegisterFieldTypeHandler(typeName, handler)` from their `init()` function before any EntityDefinition using that type is registered.
 
 The `FieldTypeHandler` interface requires implementing:
 - `ColumnType() string` — PostgreSQL column DDL (e.g., `"uuid"`, `"jsonb"`, `"decimal(10,2)"`)
@@ -410,7 +410,7 @@ System columns are always included in API responses. They are not subject to fie
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — Fields are declared within EntityDefinition
+- [EntityDefinition](../03-kernel/entity-def.md) — Fields are declared within EntityDefinition
 - [Edges](edges.md) — Relationships between entities
 - [Filter DSL](../05-persistence/filter-dsl.md) — How fields are queried
 - [Architecture Laws](../02-architecture/laws.md) — LAW-013 (sensitive fields)

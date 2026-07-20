@@ -29,12 +29,12 @@ Every employee record is linked one-to-one to an IAM user:
 ```go
 // hr_employee entity definition (excerpt)
 Fields: []entity.FieldDef{
-    {Name: "user_id",     Type: definition.FieldLink, LinkTarget: "iam_user", Required: true, Immutable: true},
-    {Name: "employee_no", Type: definition.FieldNamingSeries, Series: "EMP-{SEQ:6}"},
-    {Name: "department",  Type: definition.FieldLink, LinkTarget: "hr_department"},
-    {Name: "position",    Type: definition.FieldLink, LinkTarget: "hr_position"},
-    {Name: "hire_date",   Type: definition.FieldDate, Required: true},
-    {Name: "status",      Type: definition.FieldSelect,
+    {Name: "user_id",     Type: def.FieldLink, LinkTarget: "iam_user", Required: true, Immutable: true},
+    {Name: "employee_no", Type: def.FieldNamingSeries, Series: "EMP-{SEQ:6}"},
+    {Name: "department",  Type: def.FieldLink, LinkTarget: "hr_department"},
+    {Name: "position",    Type: def.FieldLink, LinkTarget: "hr_position"},
+    {Name: "hire_date",   Type: def.FieldDate, Required: true},
+    {Name: "status",      Type: def.FieldSelect,
      Options: []string{"Active", "On Leave", "Terminated", "Probation"},
      Default: "Probation"},
 }

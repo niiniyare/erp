@@ -38,27 +38,27 @@ The integration is:
 Each KRA eTIMS submission creates a `tax_entry` system entity (not a custom entity — regulatory compliance requires SQL constraints):
 
 ```go
-var TaxEntryDefinition = definition.SystemDefinition{
+var TaxEntryDefinition = def.SystemDefinition{
     Name:        "finance_tax_entry",
     Module:      "finance",
     Label:       "Tax Entry",
     LabelPlural: "Tax Entries",
-    Fields: []definition.FieldDef{
-        {Name: "invoice",         Type: definition.FieldLink,     LinkTarget: "finance_invoice", Required: true, Immutable: true},
-        {Name: "invoice_number",  Type: definition.FieldData,     Required: true, Immutable: true},
-        {Name: "customer_pin",    Type: definition.FieldData,     Required: true, Immutable: true},  // KRA PIN
-        {Name: "total_kes",       Type: definition.FieldCurrency, Required: true, Immutable: true},
-        {Name: "vat_kes",         Type: definition.FieldCurrency, Required: true, Immutable: true},
-        {Name: "status",          Type: definition.FieldSelect, Required: true,
+    Fields: []def.FieldDef{
+        {Name: "invoice",         Type: def.FieldLink,     LinkTarget: "finance_invoice", Required: true, Immutable: true},
+        {Name: "invoice_number",  Type: def.FieldData,     Required: true, Immutable: true},
+        {Name: "customer_pin",    Type: def.FieldData,     Required: true, Immutable: true},  // KRA PIN
+        {Name: "total_kes",       Type: def.FieldCurrency, Required: true, Immutable: true},
+        {Name: "vat_kes",         Type: def.FieldCurrency, Required: true, Immutable: true},
+        {Name: "status",          Type: def.FieldSelect, Required: true,
             Options: []string{"Pending", "Submitted", "Accepted", "Rejected", "Error"},
             Default: "Pending"},
-        {Name: "control_unit_number", Type: definition.FieldData},  // assigned by KRA on acceptance
-        {Name: "submitted_at",    Type: definition.FieldDateTime},
-        {Name: "kra_response",    Type: definition.FieldJSON},      // raw KRA response
-        {Name: "error_message",   Type: definition.FieldSmallText},
-        {Name: "retry_count",     Type: definition.FieldInt, Default: 0},
+        {Name: "control_unit_number", Type: def.FieldData},  // assigned by KRA on acceptance
+        {Name: "submitted_at",    Type: def.FieldDateTime},
+        {Name: "kra_response",    Type: def.FieldJSON},      // raw KRA response
+        {Name: "error_message",   Type: def.FieldSmallText},
+        {Name: "retry_count",     Type: def.FieldInt, Default: 0},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Read:   []string{"role:finance.viewer", "role:tenant.admin"},
         Create: []string{"role:system.internal_only"}, // only created by workflow
         Write:  []string{"role:system.internal_only"},
@@ -77,16 +77,16 @@ eTIMS submission is triggered after invoice approval. It is not in the main tran
 
 ```go
 // finance/def.go
-WorkflowTriggers: []definition.WorkflowTrigger{
+WorkflowTriggers: []def.WorkflowTrigger{
     {
-        On:         definition.EventOnSubmit,   // invoice status → Submitted
+        On:         def.EventOnSubmit,   // invoice status → Submitted
         WorkflowFn: "InvoiceETIMSWorkflow",
         TaskQueue:  "finance.etims",
-        Condition: func(rec *definition.EntityRecord) bool {
+        Condition: func(rec *def.EntityRecord) bool {
             // Only trigger if eTIMS flag is enabled
             return flags.IsEnabled(rec.TenantID, "finance.etims_integration")
         },
-        InputBuilder: func(rec *definition.EntityRecord, tc definition.TriggerContext) (any, error) {
+        InputBuilder: func(rec *def.EntityRecord, tc def.TriggerContext) (any, error) {
             return finance.ETIMSInput{
                 TenantID:  rec.TenantID,
                 InvoiceID: rec.ID,
@@ -179,7 +179,7 @@ func (a *ETIMSActivities) SubmitToETIMSActivity(ctx context.Context, input ETIMS
     }
 
     // Update TaxEntry status to Submitted
-    _, err = a.TaxEntryRepo.Update(tenantCtx, input.TaxEntryID, definition.UpdateInput{
+    _, err = a.TaxEntryRepo.Update(tenantCtx, input.TaxEntryID, def.UpdateInput{
         Fields: map[string]any{
             "status":       "Submitted",
             "submitted_at": time.Now().UTC(),

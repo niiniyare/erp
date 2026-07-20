@@ -26,7 +26,7 @@ This document writes the SQL migration files for `crm_contact` and `crm_interact
 
 ## 1. Custom Entity — No Table Migration Needed
 
-For custom entities (`StorageModel: definition.StorageCustom`), the framework uses the shared `custom_entity_records` table:
+For custom entities (`StorageModel: def.StorageCustom`), the framework uses the shared `custom_entity_records` table:
 
 ```sql
 -- Already exists (created by the framework's initial migration):

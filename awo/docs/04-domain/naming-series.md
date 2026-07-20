@@ -9,7 +9,7 @@ since: "1.0"
 normative-level: normative
 related:
   - "[Fields](fields.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[System Entities](../05-persistence/system-entities.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -64,7 +64,7 @@ The `Series` field on `FieldDef` uses format placeholders:
 ```go
 {
     Name:            "number",
-    Type:            definition.FieldNamingSeries,
+    Type:            def.FieldNamingSeries,
     Label:           "Invoice #",
     Series:          "INV-{YYYY}-{SEQ:5}",
     TenantOverridable: true,   // allows tenants to change prefix via Settings

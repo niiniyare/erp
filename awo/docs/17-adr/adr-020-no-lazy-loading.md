@@ -37,8 +37,8 @@ Awo **does not support lazy loading**. All edge loading is explicit. Module auth
 ```go
 // CORRECT — explicit edge loading
 invoice, err := repo.Get(ctx, invoiceID,
-    definition.WithEdge("lines"),
-    definition.WithEdge("customer"),
+    def.WithEdge("lines"),
+    def.WithEdge("customer"),
 )
 
 // WRONG — invoice.Lines will be empty unless explicitly loaded

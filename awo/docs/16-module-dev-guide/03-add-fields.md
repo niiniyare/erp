@@ -34,18 +34,18 @@ This document adds `FieldDef` declarations to the `crm_contact` entity, covering
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     Name:         "crm_contact",
     Module:       "crm",
     Label:        "Contact",
     LabelPlural:  "Contacts",
-    StorageModel: definition.StorageCustom,
+    StorageModel: def.StorageCustom,
 
-    Fields: []definition.FieldDef{
+    Fields: []def.FieldDef{
         // Required text field — short string, GIN-indexed for search
         {
             Name:       "full_name",
-            Type:       definition.FieldData,
+            Type:       def.FieldData,
             Label:      "Full Name",
             Required:   true,
             MaxLen:     128,
@@ -55,19 +55,19 @@ var ContactDefinition = definition.EntityDefinition{
         // Email — unique per tenant, searchable
         {
             Name:       "email",
-            Type:       definition.FieldData,
+            Type:       def.FieldData,
             Label:      "Email",
             Required:   true,
             MaxLen:     256,
             Unique:     true,
             Searchable: true,
-            Validators: []definition.FieldValidator{&EmailValidator{}},
+            Validators: []def.FieldValidator{&EmailValidator{}},
         },
 
         // Phone — optional
         {
             Name:   "phone",
-            Type:   definition.FieldData,
+            Type:   def.FieldData,
             Label:  "Phone",
             MaxLen: 32,
         },
@@ -75,7 +75,7 @@ var ContactDefinition = definition.EntityDefinition{
         // Status — controlled vocabulary
         {
             Name:    "status",
-            Type:    definition.FieldSelect,
+            Type:    def.FieldSelect,
             Label:   "Status",
             Options: []string{"Lead", "Prospect", "Active", "Inactive", "Lost"},
             Default: "Lead",
@@ -84,7 +84,7 @@ var ContactDefinition = definition.EntityDefinition{
         // Assigned sales rep — Link to the user entity (IAM module)
         {
             Name:       "assigned_to",
-            Type:       definition.FieldLink,
+            Type:       def.FieldLink,
             Label:      "Assigned To",
             LinkTarget: "user",
             Required:   true,
@@ -93,14 +93,14 @@ var ContactDefinition = definition.EntityDefinition{
         // Long-form notes — not indexed, not searchable
         {
             Name:  "notes",
-            Type:  definition.FieldLongText,
+            Type:  def.FieldLongText,
             Label: "Notes",
         },
 
         // Source — how the contact was acquired
         {
             Name:    "source",
-            Type:    definition.FieldSelect,
+            Type:    def.FieldSelect,
             Label:   "Source",
             Options: []string{"Referral", "Website", "Event", "Cold Outreach", "Social Media", "Other"},
             Default: "Other",
@@ -109,7 +109,7 @@ var ContactDefinition = definition.EntityDefinition{
         // Tags — multi-select for flexible categorization
         {
             Name:    "tags",
-            Type:    definition.FieldMultiSelect,
+            Type:    def.FieldMultiSelect,
             Label:   "Tags",
             Options: []string{"VIP", "Decision Maker", "Technical", "Finance", "Operations"},
         },
@@ -117,7 +117,7 @@ var ContactDefinition = definition.EntityDefinition{
         // Contact date — when first engaged
         {
             Name:  "first_contact_date",
-            Type:  definition.FieldDate,
+            Type:  def.FieldDate,
             Label: "First Contact Date",
         },
     },
@@ -131,7 +131,7 @@ var ContactDefinition = definition.EntityDefinition{
 The `EmailValidator` referenced in the `email` field:
 
 ```go
-// internal/core/crm/hooks.go (or definition.go)
+// internal/core/crm/hooks.go (or def.go)
 type EmailValidator struct{}
 
 func (v *EmailValidator) Validate(ctx context.Context, value any) error {
@@ -174,7 +174,7 @@ If `crm_contact` needs an auto-generated reference number:
 ```go
 {
     Name:   "ref_number",
-    Type:   definition.FieldNamingSeries,
+    Type:   def.FieldNamingSeries,
     Label:  "Reference #",
     Series: "CRM-{YYYY}-{SEQ:5}",
     // Result: CRM-2024-00001, CRM-2024-00002, ...
@@ -193,7 +193,7 @@ For fields containing PII that should be excluded from logs and standard API res
 ```go
 {
     Name:      "national_id",
-    Type:      definition.FieldData,
+    Type:      def.FieldData,
     Label:     "National ID",
     MaxLen:    20,
     Sensitive: true,  // excluded from logs, error messages, standard API responses

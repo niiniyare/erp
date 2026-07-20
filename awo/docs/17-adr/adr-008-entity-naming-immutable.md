@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: informative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
   - "[Invariants](../02-architecture/invariants.md)"
 ---

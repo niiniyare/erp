@@ -12,7 +12,7 @@ related:
   - "[Design Goals](design-goals.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
   - "[Architecture Invariants](../02-architecture/invariants.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Compilation Pipeline](../03-kernel/compilation-pipeline.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -118,7 +118,7 @@ flowchart LR
     subgraph INIT["Initialization Phase"]
         direction TB
         I1["init() functions\nExecute in module\ndeclaration order"]
-        I2["definition.Register()\ncalled for each\nEntityDefinition"]
+        I2["def.Register()\ncalled for each\nEntityDefinition"]
         I3["Entity Registry\nAccepts registrations\nValidates names,\nfield types, edge targets"]
         I1 --> I2 --> I3
     end
@@ -146,7 +146,7 @@ flowchart LR
 
 ### Why Three Phases Matter
 
-**Registry.Compile() is a barrier.** After it is called, no `definition.Register()` call succeeds. This prevents race conditions in route registration and ensures that the compiled route table is complete before the HTTP server starts accepting connections.
+**Registry.Compile() is a barrier.** After it is called, no `def.Register()` call succeeds. This prevents race conditions in route registration and ensures that the compiled route table is complete before the HTTP server starts accepting connections.
 
 **Compilation validates the entire schema.** An entity that references an edge target that was not registered fails at compilation — before the process accepts any traffic. An entity that uses a `FieldType` that has no registered handler fails at compilation. A permission that references a role that does not exist fails at compilation. The process exits with a clear error message. No invalid schema ever reaches the runtime.
 
@@ -270,8 +270,8 @@ All modules — platform and business — use the same directory structure:
 
 ```
 internal/{platform|core}/<module>/
-    <module>.go       ← init() calls definition.Register()
-    definition.go     ← EntityDefinition variable declarations
+    <module>.go       ← init() calls def.Register()
+    def.go     ← EntityDefinition variable declarations
     policy.go         ← PolicyFunc implementations
     hooks.go          ← HookDef implementations
     service.go        ← Thin service layer on EntityRepository
@@ -470,7 +470,7 @@ Understanding what Awo does not provide is as important as understanding what it
 - [Design Goals](design-goals.md) — the formal goals this architecture satisfies
 - [Architecture Laws](../02-architecture/laws.md) — normative rules derived from this structure
 - [Architecture Invariants](../02-architecture/invariants.md) — runtime properties this structure guarantees
-- [EntityDefinition](../03-kernel/entity-definition.md) — the central primitive described in §1
+- [EntityDefinition](../03-kernel/entity-def.md) — the central primitive described in §1
 - [Compilation Pipeline](../03-kernel/compilation-pipeline.md) — detailed specification of §3
 - [Tenancy Model](../06-tenancy/tenant-model.md) — detailed specification of §4
 - [Module System](../10-modules/module-system.md) — detailed specification of §5

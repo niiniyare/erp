@@ -10,7 +10,7 @@ normative-level: normative
 related:
   - "[Page Schema](page-schema.md)"
   - "[amis Integration](amis-integration.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
 
@@ -184,5 +184,5 @@ Raw amis JSON escapes the type safety of the SchemaBuilder. Use it only when no 
 
 - [Page Schema](page-schema.md) — how schemas are cached and served
 - [amis Integration](amis-integration.md) — available amis features and limitations
-- [EntityDefinition §10](../03-kernel/entity-definition.md#10-page-builders) — PageBuilderSet declaration
+- [EntityDefinition §10](../03-kernel/entity-def.md#10-page-builders) — PageBuilderSet declaration
 - [Glossary](../GLOSSARY.md) — Page Builder, PageBuilderSet, Page Schema, SDUI

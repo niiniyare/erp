@@ -8,7 +8,7 @@ audience: [module-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Hook Pipeline](../03-kernel/hook-pipeline.md)"
   - "[Route Generation](../03-kernel/route-generation.md)"
   - "[Workflow Engine](../09-workflow/workflow-engine.md)"
@@ -40,28 +40,28 @@ Standard CRUD is never replaced — actions extend it.
 ## 2. Declaring an Action
 
 ```go
-var InvoiceDefinition = definition.SystemDefinition{
+var InvoiceDefinition = def.SystemDefinition{
     Name:   "finance_invoice",
     Module: "finance",
     // ...
-    Actions: []definition.ActionDef{
+    Actions: []def.ActionDef{
         {
             Name:        "submit",
-            Method:      definition.ActionMethodPost,
+            Method:      def.ActionMethodPost,
             Label:       "Submit for Approval",
             Permission:  "role:finance.accounts_payable",
             HandlerFunc: SubmitInvoiceAction,
         },
         {
             Name:        "approve",
-            Method:      definition.ActionMethodPost,
+            Method:      def.ActionMethodPost,
             Label:       "Approve",
             Permission:  "role:finance.approver",
             HandlerFunc: ApproveInvoiceAction,
         },
         {
             Name:        "cancel",
-            Method:      definition.ActionMethodPost,
+            Method:      def.ActionMethodPost,
             Label:       "Cancel",
             Permission:  "role:finance.accounts_payable",
             HandlerFunc: CancelInvoiceAction,
@@ -79,11 +79,11 @@ The framework resolves and passes `ActionContext` to every handler. No manual wi
 ```go
 type ActionContext struct {
     // Record being acted on (already loaded, RLS-checked)
-    Record   *definition.EntityRecord
+    Record   *def.EntityRecord
     RecordID uuid.UUID
 
     // Pre-scoped repository — tenant + permissions already applied
-    Repo definition.EntityRepository[definition.EntityRecord]
+    Repo def.EntityRepository[def.EntityRecord]
 
     // Authenticated actor from session
     Actor session.Actor
@@ -107,7 +107,7 @@ type ActionContext struct {
 ## 4. Simple State Transition
 
 ```go
-func SubmitInvoiceAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func SubmitInvoiceAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     record := action.Record
 
     // Guard: only Draft invoices can be submitted
@@ -132,14 +132,14 @@ func SubmitInvoiceAction(ctx context.Context, action definition.ActionContext) (
     }
 
     // Transition
-    updated, err := action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    updated, err := action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{"status": "Submitted"},
     })
     if err != nil {
         return nil, fmt.Errorf("SubmitInvoiceAction: update: %w", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Record:  updated,
         Message: "Invoice submitted for approval",
     }, nil
@@ -153,7 +153,7 @@ func SubmitInvoiceAction(ctx context.Context, action definition.ActionContext) (
 Actions that start long-running processes return `WorkflowID`:
 
 ```go
-func ApproveInvoiceAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ApproveInvoiceAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     record := action.Record
 
     if record.Get("status") != "Submitted" {
@@ -162,7 +162,7 @@ func ApproveInvoiceAction(ctx context.Context, action definition.ActionContext) 
     }
 
     // Update status immediately
-    updated, err := action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    updated, err := action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{
             "status":      "Approved",
             "approved_by": action.Actor.UserID,
@@ -195,7 +195,7 @@ func ApproveInvoiceAction(ctx context.Context, action definition.ActionContext) 
             "err", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Record:     updated,
         Message:    "Invoice approved",
         WorkflowID: wfID,
@@ -213,11 +213,11 @@ Framework maps `ActionResult.HTTPStatus` to response status. Default is 200.
 For actions requiring additional input (reason, date, amount):
 
 ```go
-var InvoiceDefinition = definition.SystemDefinition{
-    Actions: []definition.ActionDef{
+var InvoiceDefinition = def.SystemDefinition{
+    Actions: []def.ActionDef{
         {
             Name:       "partial_payment",
-            Method:     definition.ActionMethodPost,
+            Method:     def.ActionMethodPost,
             Label:      "Record Partial Payment",
             Permission: "role:finance.cashier",
             InputSchema: map[string]any{    // validates body before handler runs
@@ -234,7 +234,7 @@ var InvoiceDefinition = definition.SystemDefinition{
     },
 }
 
-func RecordPartialPaymentAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func RecordPartialPaymentAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     amountKES := action.Body["amount_kes"].(float64)
     paymentDate := action.Body["payment_date"].(string)
 
@@ -253,7 +253,7 @@ Actions can operate on multiple records. Declared with `Bulk: true`:
 ```go
 {
     Name:        "bulk_cancel",
-    Method:      definition.ActionMethodPost,
+    Method:      def.ActionMethodPost,
     Label:       "Cancel Selected",
     Permission:  "role:finance.accounts_payable",
     Bulk:        true,                   // route: POST /entities/{type}/bulk/{action-name}
@@ -264,7 +264,7 @@ Actions can operate on multiple records. Declared with `Bulk: true`:
 Bulk action handler receives a slice of IDs:
 
 ```go
-func BulkCancelInvoiceAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func BulkCancelInvoiceAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     ids := action.BulkRecordIDs   // []uuid.UUID
 
     count, err := action.Repo.BulkUpdate(ctx,
@@ -272,13 +272,13 @@ func BulkCancelInvoiceAction(ctx context.Context, action definition.ActionContex
             filter.In("id", ids),
             filter.Eq("status", "Draft"),
         ),
-        definition.Patch{"status": "Cancelled"},
+        def.Patch{"status": "Cancelled"},
     )
     if err != nil {
         return nil, fmt.Errorf("BulkCancelInvoiceAction: %w", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message: fmt.Sprintf("%d invoices cancelled", count),
     }, nil
 }
@@ -334,7 +334,7 @@ On error:
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — `Actions` field reference
+- [EntityDefinition](../03-kernel/entity-def.md) — `Actions` field reference
 - [Hook Pipeline](../03-kernel/hook-pipeline.md) — how actions relate to the lifecycle
 - [Route Generation](../03-kernel/route-generation.md) — auto-generated action routes
 - [Workflow Engine](../09-workflow/workflow-engine.md) — triggering from action handlers

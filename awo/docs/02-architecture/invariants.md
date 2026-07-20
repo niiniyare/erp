@@ -202,7 +202,7 @@ This invariant is permanent: it applies for the entire operational lifetime of t
 
 **Observable consequence of violation:** An entity name rename after deployment produces inconsistencies in: migration filenames (historical migrations reference the old name, new migrations reference the new name), Temporal workflow IDs stored in event history (months of history reference the old name), Redis cache keys (invalidation must handle both names), Casbin policy tuples (old policies reference the old name, new policies reference the new name), and audit log records (historical records reference the old name).
 
-There is no automated tool that can atomically rename an entity across all of these systems simultaneously. The result of renaming is a partially-migrated state that is inconsistent by definition.
+There is no automated tool that can atomically rename an entity across all of these systems simultaneously. The result of renaming is a partially-migrated state that is inconsistent by def.
 
 **Detection:** The compiler detects entity name format violations. Migration file analysis tools MUST detect entity names referenced in historical migrations that are not present in the current schema. This situation — an entity name in a historical migration absent from the current schema — is either a deletion (permitted, documented) or a rename (invariant violation).
 

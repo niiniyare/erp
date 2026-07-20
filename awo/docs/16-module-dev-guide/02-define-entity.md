@@ -10,7 +10,7 @@ normative-level: informative
 related:
   - "[Getting Started](01-getting-started.md)"
   - "[Add Fields](03-add-fields.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[System Entities](../05-persistence/system-entities.md)"
   - "[Custom Entities](../05-persistence/custom-entities.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -51,7 +51,7 @@ package crm
 
 import "awo.so/awo/def"
 
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // Stable identifier — used in URLs, Redis keys, Temporal IDs, Casbin policies
     // Never rename after the first migration (LAW-011)
     Name:   "crm_contact",
@@ -62,18 +62,18 @@ var ContactDefinition = definition.EntityDefinition{
     LabelPlural: "Contacts",
 
     // Custom entity: data stored in JSONB
-    StorageModel: definition.StorageCustom,
+    StorageModel: def.StorageCustom,
 
     // Fields, Edges, Hooks, Permissions, Actions, WorkflowTriggers, PageBuilders
     // — added in subsequent steps
 }
 
-var InteractionDefinition = definition.EntityDefinition{
+var InteractionDefinition = def.EntityDefinition{
     Name:         "crm_interaction",
     Module:       "crm",
     Label:        "Interaction",
     LabelPlural:  "Interactions",
-    StorageModel: definition.StorageCustom,
+    StorageModel: def.StorageCustom,
 }
 ```
 
@@ -100,7 +100,7 @@ Renaming requires coordinated changes across all of these — treat the entity n
 
 ## 4. What the Framework Generates
 
-After `definition.Register(&ContactDefinition)` and `Registry.Compile()`:
+After `def.Register(&ContactDefinition)` and `Registry.Compile()`:
 
 | Subsystem | What Is Generated |
 |---|---|
@@ -119,12 +119,12 @@ At this point the entity has no fields, no permissions, and all routes return 40
 If you determined the entity should be a system entity:
 
 ```go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     Name:         "crm_contact",
     Module:       "crm",
     Label:        "Contact",
     LabelPlural:  "Contacts",
-    StorageModel: definition.StorageSystem,  // SQL columns, not JSONB
+    StorageModel: def.StorageSystem,  // SQL columns, not JSONB
     // Requires a migration: CREATE TABLE crm_contact (...)
     // See MDG-10 for migration details
 }

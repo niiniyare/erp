@@ -32,10 +32,10 @@ A catalog of the most common mistakes made when building Awo modules, organized 
 
 ```go
 // WRONG
-{Name: "amount", Type: definition.FieldFloat}
+{Name: "amount", Type: def.FieldFloat}
 
 // CORRECT
-{Name: "amount", Type: definition.FieldCurrency}
+{Name: "amount", Type: def.FieldCurrency}
 // → numeric(20,4) in PostgreSQL, decimal.Decimal in Go
 ```
 
@@ -302,7 +302,7 @@ app.Post("/api/v1/invoices", func(c *fiber.Ctx) error {
 })
 
 // CORRECT: no handler needed for standard CRUD
-// definition.Register(&InvoiceDefinition) auto-generates all CRUD routes
+// def.Register(&InvoiceDefinition) auto-generates all CRUD routes
 ```
 
 **Rule**: LAW-001: Never write custom CRUD route handlers.

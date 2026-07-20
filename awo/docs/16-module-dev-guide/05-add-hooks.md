@@ -110,19 +110,19 @@ func (h *ContactFirstContactDateSetter) AfterCreate(
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges ...
 
-    Hooks: definition.HookSet{
-        BeforeCreate: []definition.BeforeCreateHook{
+    Hooks: def.HookSet{
+        BeforeCreate: []def.BeforeCreateHook{
             &ContactEmailUniqueGuard{
                 Repo: nil, // injected at wire time — see below
             },
         },
-        AfterCreate: []definition.AfterCreateHook{
+        AfterCreate: []def.AfterCreateHook{
             &ContactFirstContactDateSetter{},
         },
-        BeforeUpdate: []definition.BeforeUpdateHook{
+        BeforeUpdate: []def.BeforeUpdateHook{
             // Add email uniqueness check on update too:
             &ContactEmailUniqueOnUpdateGuard{Repo: nil},
         },
@@ -151,7 +151,7 @@ func init() {
     emailGuard := &ContactEmailUniqueGuard{}
 
     // Wire dependencies after registry provides the repo
-    definition.OnRegistryReady(func(reg *definition.Registry) {
+    def.OnRegistryReady(func(reg *def.Registry) {
         emailGuard.Repo = reg.RepoFor("crm_contact")
     })
 
@@ -159,9 +159,9 @@ func init() {
         ContactDefinition.Hooks.BeforeCreate, emailGuard,
     )
 
-    definition.RegisterManifest(&Manifest)
-    definition.Register(&ContactDefinition)
-    definition.Register(&InteractionDefinition)
+    def.RegisterManifest(&Manifest)
+    def.Register(&ContactDefinition)
+    def.Register(&InteractionDefinition)
 }
 ```
 

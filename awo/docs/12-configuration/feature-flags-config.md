@@ -29,14 +29,14 @@ Flags are declared in the module that owns the feature:
 // internal/core/finance/flags.go
 
 var (
-    FlagAdvancedAnalytics = definition.FeatureFlag{
+    FlagAdvancedAnalytics = def.FeatureFlag{
         Key:         "finance.advanced_analytics",
         Label:       "Advanced Analytics Dashboard",
         Description: "Enables the profitability analysis and forecasting charts.",
         Default:     false,  // off by default; must be enabled per tenant
     }
 
-    FlagETIMS = definition.FeatureFlag{
+    FlagETIMS = def.FeatureFlag{
         Key:         "finance.etims_integration",
         Label:       "KRA eTIMS Integration",
         Description: "Automatically submits tax entries to KRA eTIMS API.",
@@ -45,8 +45,8 @@ var (
 )
 
 func init() {
-    definition.RegisterFlag(&FlagAdvancedAnalytics)
-    definition.RegisterFlag(&FlagETIMS)
+    def.RegisterFlag(&FlagAdvancedAnalytics)
+    def.RegisterFlag(&FlagETIMS)
 }
 ```
 

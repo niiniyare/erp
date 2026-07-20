@@ -144,7 +144,7 @@ func (a *Activities) ReverseJournalEntryActivity(ctx context.Context, journalID 
     }
 
     // Create reversing journal entry
-    _, err = a.JournalRepo.Create(ctx, definition.CreateInput{
+    _, err = a.JournalRepo.Create(ctx, def.CreateInput{
         Fields: map[string]any{
             "reference":        fmt.Sprintf("REV/%s", journal.Fields["reference"]),
             "reversal_of":      journalID,
@@ -156,7 +156,7 @@ func (a *Activities) ReverseJournalEntryActivity(ctx context.Context, journalID 
     }
 
     // Mark original as reversed
-    _, err = a.JournalRepo.Update(ctx, journalID, definition.UpdateInput{
+    _, err = a.JournalRepo.Update(ctx, journalID, def.UpdateInput{
         Fields: map[string]any{"status": "Reversed"},
     })
     return err

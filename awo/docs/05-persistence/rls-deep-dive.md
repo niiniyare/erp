@@ -159,7 +159,7 @@ func TestRLSIsolation(t *testing.T) {
 
     // Create invoice in tenant A
     ctxA := withTenantContext(t, tenantA.ID)
-    invoice, _ := invoiceRepo.Create(ctxA, definition.CreateInput{
+    invoice, _ := invoiceRepo.Create(ctxA, def.CreateInput{
         Fields: map[string]any{"total_kes": "5000.0000", ...},
     })
 
@@ -171,7 +171,7 @@ func TestRLSIsolation(t *testing.T) {
 
     // Direct ID fetch from wrong tenant — must return 404
     _, err = invoiceRepo.Get(ctxB, invoice.ID)
-    require.ErrorIs(t, err, definition.ErrNotFound)
+    require.ErrorIs(t, err, def.ErrNotFound)
 }
 ```
 

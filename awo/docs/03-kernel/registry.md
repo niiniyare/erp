@@ -8,7 +8,7 @@ audience: [framework-authors, contributors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Compilation Pipeline](compilation-pipeline.md)"
   - "[Architecture Laws](../02-architecture/laws.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -90,15 +90,15 @@ import "awo.so/awo/def"
 
 func init() {
     // Register entities — order within init() does not matter
-    if err := definition.Register(&InvoiceDefinition); err != nil {
+    if err := def.Register(&InvoiceDefinition); err != nil {
         panic(fmt.Sprintf("finance: failed to register invoice: %v", err))
     }
-    if err := definition.Register(&InvoiceLineDefinition); err != nil {
+    if err := def.Register(&InvoiceLineDefinition); err != nil {
         panic(fmt.Sprintf("finance: failed to register invoice_line: %v", err))
     }
 
     // Register hooks on own entities
-    definition.RegisterHook(definition.HookRegistration{
+    def.RegisterHook(def.HookRegistration{
         EntityName:  "finance_invoice",
         Stage:       "before_create",
         Priority:    100,
@@ -210,7 +210,7 @@ func RegisterModule(m ModuleManifest) error
 
 ```go
 func init() {
-    definition.RegisterModule(definition.ModuleManifest{
+    def.RegisterModule(def.ModuleManifest{
         Name:     "so.awo.finance",
         Version:  "1.0.0",
         Provides: []string{"so.awo/capability/finance.ledger"},
@@ -308,7 +308,7 @@ These methods are safe for concurrent use. No locking is required — the Compil
 
 ## Related Documents
 
-- [EntityDefinition](entity-definition.md) — the registration input
+- [EntityDefinition](entity-def.md) — the registration input
 - [Compilation Pipeline](compilation-pipeline.md) — what the registry produces on Compile()
 - [Startup Sequence](startup-sequence.md) — when Compile() is called
 - [Architecture Laws](../02-architecture/laws.md) — LAW-003 (registry sealing), LAW-007 (hook order), LAW-017 (cross-module hooks)

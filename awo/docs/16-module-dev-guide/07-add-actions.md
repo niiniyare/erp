@@ -26,13 +26,13 @@ This document adds a `qualify` action to `crm_contact` — a custom operation be
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... Name, Module, Label, StorageModel, Fields, Edges, Hooks, Permissions, Policy ...
 
-    Actions: []definition.ActionDef{
+    Actions: []def.ActionDef{
         {
             Name:                 "qualify",
-            Method:               definition.ActionMethodPost,
+            Method:               def.ActionMethodPost,
             Label:                "Qualify Contact",
             Permission:           "role:crm.sales_rep",
             HandlerFunc:          QualifyContactAction,
@@ -40,7 +40,7 @@ var ContactDefinition = definition.EntityDefinition{
         },
         {
             Name:        "reassign",
-            Method:      definition.ActionMethodPost,
+            Method:      def.ActionMethodPost,
             Label:       "Reassign",
             Permission:  "role:crm.manager",
             HandlerFunc: ReassignContactAction,
@@ -67,7 +67,7 @@ import (
 )
 
 // QualifyContactAction promotes a Lead contact to Active status.
-func QualifyContactAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func QualifyContactAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     // action.Record contains the pre-loaded contact record
     contact := action.Record
 
@@ -81,7 +81,7 @@ func QualifyContactAction(ctx context.Context, action definition.ActionContext) 
     }
 
     // Update the contact status
-    _, err := action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    _, err := action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{
             "status": "Active",
         },
@@ -93,7 +93,7 @@ func QualifyContactAction(ctx context.Context, action definition.ActionContext) 
     // Optionally trigger a workflow (send qualification email, notify manager, etc.)
     // action.TriggerWorkflow("ContactQualifiedWorkflow", ContactQualifiedInput{...})
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message: "Contact successfully qualified.",
         Data: map[string]any{
             "previous_status": status,
@@ -127,7 +127,7 @@ type ReassignInput struct {
     Reason      string `json:"reason"`
 }
 
-func ReassignContactAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ReassignContactAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     var input ReassignInput
     if err := action.BindInput(&input); err != nil {
         return nil, &errors.ValidationError{
@@ -142,7 +142,7 @@ func ReassignContactAction(ctx context.Context, action definition.ActionContext)
         }
     }
 
-    _, err = action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    _, err = action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{
             "assigned_to": newAssigneeID,
         },
@@ -151,7 +151,7 @@ func ReassignContactAction(ctx context.Context, action definition.ActionContext)
         return nil, fmt.Errorf("ReassignContactAction: %w", err)
     }
 
-    return &definition.ActionResult{Message: "Contact reassigned."}, nil
+    return &def.ActionResult{Message: "Contact reassigned."}, nil
 }
 ```
 

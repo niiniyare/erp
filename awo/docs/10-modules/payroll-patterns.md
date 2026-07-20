@@ -38,30 +38,30 @@ System entities: payslips feed ledger entries and statutory returns (KRA iTax) �
 ## 2. Payroll Run Entity
 
 ```go
-var PayrollRunDefinition = definition.SystemDefinition{
+var PayrollRunDefinition = def.SystemDefinition{
     Name:   "payroll_run",
     Module: "payroll",
-    Fields: []definition.FieldDef{
-        {Name: "run_number",    Type: definition.FieldNamingSeries, Series: "PR-{YYYY}-{MM}-{SEQ:3}"},
-        {Name: "period_month",  Type: definition.FieldInt, Required: true},  // 1–12
-        {Name: "period_year",   Type: definition.FieldInt, Required: true},
-        {Name: "status",        Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "run_number",    Type: def.FieldNamingSeries, Series: "PR-{YYYY}-{MM}-{SEQ:3}"},
+        {Name: "period_month",  Type: def.FieldInt, Required: true},  // 1–12
+        {Name: "period_year",   Type: def.FieldInt, Required: true},
+        {Name: "status",        Type: def.FieldSelect,
             Options: []string{"Draft", "Processing", "Processed", "Approved", "Disbursed"}, Default: "Draft"},
-        {Name: "total_gross",   Type: definition.FieldCurrency},
-        {Name: "total_paye",    Type: definition.FieldCurrency},
-        {Name: "total_nssf",    Type: definition.FieldCurrency},
-        {Name: "total_nhif",    Type: definition.FieldCurrency},
-        {Name: "total_net",     Type: definition.FieldCurrency},
-        {Name: "processed_at",  Type: definition.FieldDateTime},
-        {Name: "approved_by",   Type: definition.FieldLink, LinkTarget: "iam_user"},
+        {Name: "total_gross",   Type: def.FieldCurrency},
+        {Name: "total_paye",    Type: def.FieldCurrency},
+        {Name: "total_nssf",    Type: def.FieldCurrency},
+        {Name: "total_nhif",    Type: def.FieldCurrency},
+        {Name: "total_net",     Type: def.FieldCurrency},
+        {Name: "processed_at",  Type: def.FieldDateTime},
+        {Name: "approved_by",   Type: def.FieldLink, LinkTarget: "iam_user"},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:hr.payroll_admin", "role:tenant.admin"},
         Read:   []string{"role:hr.manager", "role:hr.payroll_admin", "role:tenant.admin"},
         Write:  []string{"role:hr.payroll_admin", "role:tenant.admin"},
         Delete: []string{"role:tenant.admin"},
     },
-    Actions: []definition.ActionDef{
+    Actions: []def.ActionDef{
         {
             Name:        "process",
             Label:       "Process Payroll",
@@ -83,7 +83,7 @@ var PayrollRunDefinition = definition.SystemDefinition{
 ## 3. Payslip Computation
 
 ```go
-func ProcessPayrollAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ProcessPayrollAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     run, err := action.Repo.Get(ctx, action.RecordID)
     if err != nil {
         return nil, fmt.Errorf("ProcessPayrollAction: get run: %w", err)
@@ -91,7 +91,7 @@ func ProcessPayrollAction(ctx context.Context, action definition.ActionContext) 
 
     status, _ := run.Fields["status"].(string)
     if status != "Draft" {
-        return nil, &definition.BusinessError{
+        return nil, &def.BusinessError{
             Code:    "payroll.already_processed",
             Message: "Payroll run has already been processed",
             Status:  409,
@@ -99,14 +99,14 @@ func ProcessPayrollAction(ctx context.Context, action definition.ActionContext) 
     }
 
     // Mark as Processing, then dispatch Temporal workflow
-    _, err = action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    _, err = action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{"status": "Processing"},
     })
     if err != nil {
         return nil, fmt.Errorf("ProcessPayrollAction: update status: %w", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message:    "Payroll processing started",
         WorkflowID: fmt.Sprintf("%s.payroll_run.%s.process", run.TenantID, action.RecordID),
     }, nil
@@ -219,7 +219,7 @@ func (a *Activities) ComputePayslipActivity(ctx context.Context, input PayslipIn
     netPay := grossPay.Sub(nssf).Sub(nhif).Sub(payeAfterRelief)
 
     // Create payslip record
-    payslip, err := a.PayslipRepo.Create(ctx, definition.CreateInput{
+    payslip, err := a.PayslipRepo.Create(ctx, def.CreateInput{
         Fields: map[string]any{
             "run":          input.RunID,
             "employee":     input.EmployeeID,

@@ -11,7 +11,7 @@ related:
   - "[Page Schema](page-schema.md)"
   - "[Page Builders](page-builders.md)"
   - "[amis Integration](amis-integration.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
 
@@ -41,6 +41,6 @@ Awo uses Server-Driven UI (SDUI) to generate all standard ERP views without cust
 
 ## Prerequisites
 
-- [EntityDefinition §10](../03-kernel/entity-definition.md#10-page-builders) — PageBuilderSet declarations
+- [EntityDefinition §10](../03-kernel/entity-def.md#10-page-builders) — PageBuilderSet declarations
 - [Architecture Overview §9](../01-introduction/architecture-overview.md#9-what-is-not-in-the-framework) — SDUI limitations
 - [Glossary](../GLOSSARY.md) — SDUI, amis, Page Schema, Page Builder, PageBuilderSet

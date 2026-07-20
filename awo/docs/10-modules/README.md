@@ -10,7 +10,7 @@ normative-level: informative
 related:
   - "[Module System](module-system.md)"
   - "[Platform Modules](platform-modules.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Registry](../03-kernel/registry.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -50,7 +50,7 @@ A module is a cohesive collection of entity definitions, hooks, policies, activi
 
 ## Prerequisites
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — the central primitive modules build on
+- [EntityDefinition](../03-kernel/entity-def.md) — the central primitive modules build on
 - [Registry](../03-kernel/registry.md) — how modules register their definitions
 - [Startup Sequence](../03-kernel/startup-sequence.md) — when module init() runs
 - [Glossary](../GLOSSARY.md) — Module, ModuleManifest, Platform Module, Business Module

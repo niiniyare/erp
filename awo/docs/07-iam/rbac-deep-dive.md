@@ -181,7 +181,7 @@ Custom actions (`submit`, `approve`, `cancel`) are first-class Casbin actions:
 
 ```go
 // EntityDefinition declares which roles can call this action
-Actions: []definition.ActionDef{
+Actions: []def.ActionDef{
     {
         Name:       "submit",
         Permission: "role:finance.accounts_payable",  // role that can call this action

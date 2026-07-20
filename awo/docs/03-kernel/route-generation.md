@@ -8,7 +8,7 @@ audience: [framework-authors, module-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](entity-definition.md)"
+  - "[EntityDefinition](entity-def.md)"
   - "[Entity Registry](registry.md)"
   - "[Actions](../04-domain/actions.md)"
   - "[Entity API Reference](../11-api/entity-api-reference.md)"
@@ -55,7 +55,7 @@ For each `EntityDefinition` with `Name: "finance_invoice"`:
 Generated route code (framework-internal):
 
 ```go
-func GenerateCRUDRoutes(app *fiber.App, def *definition.EntityDefinition, deps RouteDeps) {
+func GenerateCRUDRoutes(app *fiber.App, def *def.EntityDefinition, deps RouteDeps) {
     base := "/api/v1/entities/" + def.Name
 
     app.Get(base, withPermission(def, "read", deps.makeListHandler(def)))
@@ -77,7 +77,7 @@ For each `ActionDef` in `EntityDefinition.Actions`:
 | `POST` | `/api/v1/entities/{type}/{id}/{action-name}` | From `ActionDef.Permission` |
 
 ```go
-func GenerateActionRoutes(app *fiber.App, def *definition.EntityDefinition, deps RouteDeps) {
+func GenerateActionRoutes(app *fiber.App, def *def.EntityDefinition, deps RouteDeps) {
     for _, action := range def.Actions {
         action := action  // capture for closure
         path := fmt.Sprintf("/api/v1/entities/%s/:id/%s", def.Name, action.Name)
@@ -93,7 +93,7 @@ func GenerateActionRoutes(app *fiber.App, def *definition.EntityDefinition, deps
 Each route is wrapped with permission-checking middleware:
 
 ```go
-func withPermission(def *definition.EntityDefinition, action string, next fiber.Handler) fiber.Handler {
+func withPermission(def *def.EntityDefinition, action string, next fiber.Handler) fiber.Handler {
     return func(c *fiber.Ctx) error {
         ctx := c.UserContext()
         actor := session.ActorFromContext(ctx)
@@ -131,9 +131,9 @@ func withPermission(def *definition.EntityDefinition, action string, next fiber.
 To use a custom handler for a specific route, include a `CustomRoutes` field in `EntityDefinition`:
 
 ```go
-var InvoiceDefinition = definition.SystemDefinition{
+var InvoiceDefinition = def.SystemDefinition{
     // ...
-    CustomRoutes: []definition.CustomRoute{
+    CustomRoutes: []def.CustomRoute{
         {
             Method:  "GET",
             Path:    "/api/v1/entities/finance_invoice/:id/pdf",
@@ -183,7 +183,7 @@ These are served from Redis cache (5min TTL, keyed by entity name + version + te
 
 ## Related Documents
 
-- [EntityDefinition](entity-definition.md) — the source of route generation
+- [EntityDefinition](entity-def.md) — the source of route generation
 - [Entity Registry](registry.md) — sealing the registry triggers route generation
 - [Actions](../04-domain/actions.md) — ActionDef that produces action routes
 - [Entity API Reference](../11-api/entity-api-reference.md) — complete route contract for API consumers

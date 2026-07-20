@@ -51,7 +51,7 @@ Dependencies flow **top-down only**. No layer may import from a higher layer.
 **Location**: `internal/core/{module}/handler.go`, `internal/platform/{module}/handler.go`
 
 **May import**:
-- Domain layer types (`definition.*`, entity structs, service interfaces)
+- Domain layer types (`def.*`, entity structs, service interfaces)
 - Shared utilities (`internal/shared/errors`, `internal/shared/pagination`)
 - `github.com/gofiber/fiber/v2`
 - `context`, `fmt`, `log/slog`, standard library

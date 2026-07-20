@@ -71,7 +71,7 @@ Every Go code block MUST include a comment indicating the file location:
 // internal/core/crm/def.go
 package crm
 
-var ContactDefinition = definition.EntityDefinition{...}
+var ContactDefinition = def.EntityDefinition{...}
 ```
 
 ### Required: Runnable Examples
@@ -89,16 +89,16 @@ Code examples MUST include enough surrounding context to be understood in isolat
 
 ```go
 // Incorrect: ... obscures what comes before Actions
-var InvoiceDefinition = definition.EntityDefinition{
+var InvoiceDefinition = def.EntityDefinition{
     // ...
-    Actions: []definition.ActionDef{...},
+    Actions: []def.ActionDef{...},
 }
 
 // Correct: state what fields are omitted
-var InvoiceDefinition = definition.EntityDefinition{
+var InvoiceDefinition = def.EntityDefinition{
     Name:   "finance_invoice",
     // Fields, Edges, Hooks, Permissions declared above
-    Actions: []definition.ActionDef{
+    Actions: []def.ActionDef{
         {Name: "submit", HandlerFunc: SubmitInvoiceAction},
     },
 }

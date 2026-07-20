@@ -458,7 +458,7 @@ Level 4 — KERNEL SPECIFICATION (requires Level 3)
     └── 03-kernel/types/ui-page.md
     └── 03-kernel/types/module-manifest.md
     └── 03-kernel/types/capability-token.md
-    └── 03-kernel/types/entity-definition.md
+    └── 03-kernel/types/entity-def.md
     └── 03-kernel/types/compiled-schema.md
     └── 03-kernel/invariants.md
 
@@ -813,7 +813,7 @@ See the filter documentation at https://...
 
 ### 7.3 First-Use Rule
 
-When a term is used for the first time in a document, it MUST be linked to its Glossary definition. Subsequent uses in the same document do not require links.
+When a term is used for the first time in a document, it MUST be linked to its Glossary def. Subsequent uses in the same document do not require links.
 
 ```markdown
 <!-- First use in document: link to glossary -->
@@ -859,7 +859,7 @@ Terminology is the most important consistency mechanism in a long-lived document
 
 ### 8.1 Term Ownership
 
-Every term has exactly one definition. That definition lives in `GLOSSARY.md`. No term is defined anywhere else. No term is partially defined in one place and extended in another.
+Every term has exactly one def. That definition lives in `GLOSSARY.md`. No term is defined anywhere else. No term is partially defined in one place and extended in another.
 
 **DLAW-TERM-001:** A term is defined in exactly one place: `GLOSSARY.md`.
 
@@ -881,7 +881,7 @@ Go value (typically a package-level variable) that declares everything the frame
 needs to know about a kind of managed data: its fields, edges, policies, hooks,
 actions, workflow triggers, and UI representation.
 
-An `EntityDefinition` is not a Go struct definition. It is a description of a
+An `EntityDefinition` is not a Go struct def. It is a description of a
 data concept, written in Awo's metadata language, that the compiler transforms into
 routes, SQL templates, hook chains, policy evaluators, and UI trees.
 

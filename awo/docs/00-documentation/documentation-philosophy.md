@@ -54,7 +54,7 @@ ADRs give the decision a permanent record: the context, the alternatives conside
 
 Vague terminology is a source of bugs. In a framework that drives five subsystems from a single `EntityDefinition`, confusion between "entity type" and "entity name" can cause developers to modify the wrong thing.
 
-Awo maintains a Glossary of canonical terms. Every term used in documentation and code has a precise definition. This is not pedantry — it is correctness. The Glossary is the shared vocabulary that makes communication about the framework unambiguous.
+Awo maintains a Glossary of canonical terms. Every term used in documentation and code has a precise def. This is not pedantry — it is correctness. The Glossary is the shared vocabulary that makes communication about the framework unambiguous.
 
 ---
 

@@ -36,22 +36,22 @@ FIFO assumes the oldest stock is sold first. When a stock move exits inventory:
 ## 2. Stock Valuation Layer Entity
 
 ```go
-var StockValuationLayerDefinition = definition.SystemDefinition{
+var StockValuationLayerDefinition = def.SystemDefinition{
     Name:        "inventory_stock_valuation_layer",
     Module:      "inventory",
     Label:       "Stock Valuation Layer",
-    Fields: []definition.FieldDef{
-        {Name: "product",            Type: definition.FieldLink,     LinkTarget: "inventory_product", Required: true, Immutable: true},
-        {Name: "location",           Type: definition.FieldLink,     LinkTarget: "inventory_location", Required: true, Immutable: true},
-        {Name: "stock_move",         Type: definition.FieldLink,     LinkTarget: "inventory_stock_move", Required: true, Immutable: true},
-        {Name: "quantity",           Type: definition.FieldCurrency, Required: true, Immutable: true},  // original quantity received
-        {Name: "quantity_remaining", Type: definition.FieldCurrency, Required: true},                   // decremented on consumption
-        {Name: "cost_per_unit",      Type: definition.FieldCurrency, Required: true, Immutable: true},
-        {Name: "total_value",        Type: definition.FieldCurrency, Required: true, Immutable: true},  // quantity × cost_per_unit
-        {Name: "received_at",        Type: definition.FieldDateTime, Required: true, Immutable: true},
-        {Name: "exhausted_at",       Type: definition.FieldDateTime},                                   // set when quantity_remaining = 0
+    Fields: []def.FieldDef{
+        {Name: "product",            Type: def.FieldLink,     LinkTarget: "inventory_product", Required: true, Immutable: true},
+        {Name: "location",           Type: def.FieldLink,     LinkTarget: "inventory_location", Required: true, Immutable: true},
+        {Name: "stock_move",         Type: def.FieldLink,     LinkTarget: "inventory_stock_move", Required: true, Immutable: true},
+        {Name: "quantity",           Type: def.FieldCurrency, Required: true, Immutable: true},  // original quantity received
+        {Name: "quantity_remaining", Type: def.FieldCurrency, Required: true},                   // decremented on consumption
+        {Name: "cost_per_unit",      Type: def.FieldCurrency, Required: true, Immutable: true},
+        {Name: "total_value",        Type: def.FieldCurrency, Required: true, Immutable: true},  // quantity × cost_per_unit
+        {Name: "received_at",        Type: def.FieldDateTime, Required: true, Immutable: true},
+        {Name: "exhausted_at",       Type: def.FieldDateTime},                                   // set when quantity_remaining = 0
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Read:   []string{"role:inventory.viewer", "role:tenant.admin"},
         Create: []string{"role:system.internal_only"},
         Write:  []string{"role:system.internal_only"},
@@ -70,9 +70,9 @@ When inventory arrives (purchase receipt, production output):
 func (a *InventoryActivities) PostStockReceiptActivity(ctx context.Context, input StockReceiptInput) error {
     tenantCtx, _ := a.TenantStore.SetTenantContext(ctx, input.TenantID)
 
-    return a.StockMoveRepo.WithTx(tenantCtx, func(txCtx context.Context, txRepo definition.EntityRepository[StockMove]) error {
+    return a.StockMoveRepo.WithTx(tenantCtx, func(txCtx context.Context, txRepo def.EntityRepository[StockMove]) error {
         // 1. Create stock move
-        move, err := txRepo.Create(txCtx, definition.CreateInput{
+        move, err := txRepo.Create(txCtx, def.CreateInput{
             Fields: map[string]any{
                 "product":      input.ProductID,
                 "from_location": "virtual_supplier",
@@ -88,7 +88,7 @@ func (a *InventoryActivities) PostStockReceiptActivity(ctx context.Context, inpu
         }
 
         // 2. Create valuation layer
-        _, err = a.ValuationLayerRepo.Create(txCtx, definition.CreateInput{
+        _, err = a.ValuationLayerRepo.Create(txCtx, def.CreateInput{
             Fields: map[string]any{
                 "product":            input.ProductID,
                 "location":           input.LocationID,
@@ -120,7 +120,7 @@ FIFO consumption on stock exit:
 func (a *InventoryActivities) PostStockIssueActivity(ctx context.Context, input StockIssueInput) error {
     tenantCtx, _ := a.TenantStore.SetTenantContext(ctx, input.TenantID)
 
-    return a.StockMoveRepo.WithTx(tenantCtx, func(txCtx context.Context, txRepo definition.EntityRepository[StockMove]) error {
+    return a.StockMoveRepo.WithTx(tenantCtx, func(txCtx context.Context, txRepo def.EntityRepository[StockMove]) error {
         // 1. Fetch FIFO layers — oldest first
         layers, _, err := a.ValuationLayerRepo.Query(txCtx,
             filter.And(
@@ -128,7 +128,7 @@ func (a *InventoryActivities) PostStockIssueActivity(ctx context.Context, input 
                 filter.Eq("location", input.FromLocationID),
                 filter.Gt("quantity_remaining", decimal.Zero),
             ),
-            definition.WithSort("received_at", "asc"),
+            def.WithSort("received_at", "asc"),
         )
         if err != nil {
             return fmt.Errorf("PostStockIssueActivity: query layers: %w", err)
@@ -154,7 +154,7 @@ func (a *InventoryActivities) PostStockIssueActivity(ctx context.Context, input 
                 updateFields["exhausted_at"] = time.Now().UTC()
             }
 
-            if _, err = a.ValuationLayerRepo.Update(txCtx, layer.ID, definition.UpdateInput{
+            if _, err = a.ValuationLayerRepo.Update(txCtx, layer.ID, def.UpdateInput{
                 Fields: updateFields,
             }); err != nil {
                 return fmt.Errorf("PostStockIssueActivity: update layer %s: %w", layer.ID, err)
@@ -170,7 +170,7 @@ func (a *InventoryActivities) PostStockIssueActivity(ctx context.Context, input 
         }
 
         // 3. Create stock move
-        move, err := txRepo.Create(txCtx, definition.CreateInput{
+        move, err := txRepo.Create(txCtx, def.CreateInput{
             Fields: map[string]any{
                 "product":       input.ProductID,
                 "from_location": input.FromLocationID,
@@ -202,7 +202,7 @@ result, err := a.ValuationLayerRepo.Aggregate(ctx,
         filter.Eq("product", productID),
         filter.IsNull("exhausted_at"),
     ),
-    definition.AggregateSpec{
+    def.AggregateSpec{
         Sums: []string{"total_value"},
         // quantity_remaining × cost_per_unit is more accurate but requires join
         // using total_value with quantity_remaining fraction handled separately
@@ -230,7 +230,7 @@ GROUP BY product;
 
 ```go
 func (a *InventoryActivities) postCOGSJournal(ctx context.Context, move StockMove, cogsValue decimal.Decimal) error {
-    _, err := a.JournalEntryRepo.Create(ctx, definition.CreateInput{
+    _, err := a.JournalEntryRepo.Create(ctx, def.CreateInput{
         Fields: map[string]any{
             "reference":   fmt.Sprintf("COGS-%s", move.ID),
             "description": fmt.Sprintf("COGS for stock move %s", move.ID),
@@ -268,13 +268,13 @@ func (a *InventoryActivities) ReconcileStockValuationActivity(ctx context.Contex
     // FIFO total
     fifoResult, _ := a.ValuationLayerRepo.Aggregate(tenantCtx,
         filter.IsNull("exhausted_at"),
-        definition.AggregateSpec{Sums: []string{"quantity_remaining"}},
+        def.AggregateSpec{Sums: []string{"quantity_remaining"}},
     )
 
     // GL inventory account balance
     glResult, _ := a.JournalLineRepo.Aggregate(tenantCtx,
         filter.Eq("account", "1300"),
-        definition.AggregateSpec{Sums: []string{"debit", "credit"}},
+        def.AggregateSpec{Sums: []string{"debit", "credit"}},
     )
 
     glBalance := glResult.Sums["debit"].Sub(glResult.Sums["credit"])

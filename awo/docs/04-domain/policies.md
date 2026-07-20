@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Hooks](hooks.md)"
   - "[Filter DSL](../05-persistence/filter-dsl.md)"
   - "[RBAC](../07-iam/rbac.md)"
@@ -234,7 +234,7 @@ func TestInvoicePolicy_ViewerRole(t *testing.T) {
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — PolicyFn field
+- [EntityDefinition](../03-kernel/entity-def.md) — PolicyFn field
 - [RBAC](../07-iam/rbac.md) — operation-level permission checks (complementary)
 - [Tenancy Model](../06-tenancy/tenant-model.md) — RLS tenant isolation (foundational)
 - [Filter DSL](../05-persistence/filter-dsl.md) — filter.Eq, filter.In, filter.None, filter.Impossible

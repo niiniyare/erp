@@ -185,7 +185,7 @@ Process exits with code 1.
 **Fatal on failure: YES**
 
 ```go
-schema, err := definition.Registry().Compile()
+schema, err := def.Registry().Compile()
 if err != nil {
     // Compile() calls log.Fatal internally after collecting all errors
     // This line is not reached on error

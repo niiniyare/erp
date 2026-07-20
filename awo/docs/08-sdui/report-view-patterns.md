@@ -132,10 +132,10 @@ func (h *ReportHandler) InvoiceSummary(c *fiber.Ctx) error {
     ctx := c.UserContext()
     f := buildInvoiceFilter(c)     // parse date_range, status, customer from query
 
-    total, _, _ := h.invoiceRepo.Query(ctx, f, definition.WithCount())
-    sumResult, _ := h.invoiceRepo.Aggregate(ctx, f, definition.AggregateSpec{
+    total, _, _ := h.invoiceRepo.Query(ctx, f, def.WithCount())
+    sumResult, _ := h.invoiceRepo.Aggregate(ctx, f, def.AggregateSpec{
         Sums: []string{"total_kes"},
-        GroupBy: []definition.GroupBySpec{
+        GroupBy: []def.GroupBySpec{
             {Field: "status"},
         },
     })

@@ -29,20 +29,20 @@ The Module Registry tracks which business modules are installed and activated pe
 Records that a module binary exists in this deployment — set at boot time, not by tenants.
 
 ```go
-var InstalledModuleDefinition = definition.SystemDefinition{
+var InstalledModuleDefinition = def.SystemDefinition{
     Name:        "platform_installed_module",
     Module:      "platform",
     Label:       "Installed Module",
     LabelPlural: "Installed Modules",
-    Fields: []definition.FieldDef{
-        {Name: "module_name",    Type: definition.FieldData,   Required: true, Immutable: true, Unique: true},
-        {Name: "display_name",   Type: definition.FieldData,   Required: true},
-        {Name: "version",        Type: definition.FieldData,   Required: true},
-        {Name: "description",    Type: definition.FieldSmallText},
-        {Name: "dependencies",   Type: definition.FieldJSON},  // []string of module_name
-        {Name: "registered_at",  Type: definition.FieldDateTime, Required: true},
+    Fields: []def.FieldDef{
+        {Name: "module_name",    Type: def.FieldData,   Required: true, Immutable: true, Unique: true},
+        {Name: "display_name",   Type: def.FieldData,   Required: true},
+        {Name: "version",        Type: def.FieldData,   Required: true},
+        {Name: "description",    Type: def.FieldSmallText},
+        {Name: "dependencies",   Type: def.FieldJSON},  // []string of module_name
+        {Name: "registered_at",  Type: def.FieldDateTime, Required: true},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Read:   []string{"role:platform-admin", "role:tenant.admin"},
         Create: []string{"role:platform-admin"},
         Write:  []string{"role:platform-admin"},
@@ -56,22 +56,22 @@ var InstalledModuleDefinition = definition.SystemDefinition{
 Records that a specific tenant has activated a module.
 
 ```go
-var TenantModuleActivationDefinition = definition.SystemDefinition{
+var TenantModuleActivationDefinition = def.SystemDefinition{
     Name:        "tenant_module_activation",
     Module:      "platform",
     Label:       "Module Activation",
     LabelPlural: "Module Activations",
-    Fields: []definition.FieldDef{
-        {Name: "module_name",    Type: definition.FieldData,   Required: true, Immutable: true},
-        {Name: "status",         Type: definition.FieldSelect, Required: true,
+    Fields: []def.FieldDef{
+        {Name: "module_name",    Type: def.FieldData,   Required: true, Immutable: true},
+        {Name: "status",         Type: def.FieldSelect, Required: true,
             Options: []string{"active", "suspended", "deactivating"},
             Default: "active"},
-        {Name: "activated_at",   Type: definition.FieldDateTime, Required: true},
-        {Name: "activated_by",   Type: definition.FieldLink,   LinkTarget: "iam_user"},
-        {Name: "deactivated_at", Type: definition.FieldDateTime},
-        {Name: "config",         Type: definition.FieldJSON},  // module-specific activation config
+        {Name: "activated_at",   Type: def.FieldDateTime, Required: true},
+        {Name: "activated_by",   Type: def.FieldLink,   LinkTarget: "iam_user"},
+        {Name: "deactivated_at", Type: def.FieldDateTime},
+        {Name: "config",         Type: def.FieldJSON},  // module-specific activation config
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Read:   []string{"role:tenant.admin"},
         Create: []string{"role:platform-admin"},
         Write:  []string{"role:platform-admin"},
@@ -96,8 +96,8 @@ func init() {
         Description:  "Double-entry accounting, invoicing, payments",
         Dependencies: []string{"crm"}, // crm must be active before finance can activate
     })
-    definition.Register(&InvoiceDefinition)
-    definition.Register(&JournalEntryDefinition)
+    def.Register(&InvoiceDefinition)
+    def.Register(&JournalEntryDefinition)
     // ...
 }
 ```
@@ -114,7 +114,7 @@ Platform admin activates a module for a tenant. This triggers `ActivateModuleWor
 
 ```go
 // POST /api/v1/platform/tenants/{tenant-id}/modules/{module-name}/activate
-func ActivateModuleAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ActivateModuleAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     moduleName := action.Params["module_name"]
 
     // 1. Verify module is installed
@@ -150,7 +150,7 @@ func ActivateModuleAction(ctx context.Context, action definition.ActionContext) 
         return nil, fmt.Errorf("ActivateModuleAction: start workflow: %w", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message:    "Module activation started",
         WorkflowID: wfID,
     }, nil

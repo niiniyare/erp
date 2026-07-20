@@ -40,7 +40,7 @@ Most common pattern: users see only records assigned to them.
 ```go
 // internal/core/crm/policy.go
 
-var ContactOwnerPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var ContactOwnerPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor == nil {
         return filter.False()  // no actor = no rows
@@ -55,7 +55,7 @@ var ContactOwnerPolicy = definition.PolicyFunc(func(ctx context.Context) definit
 
 ```go
 // Register on EntityDefinition
-var ContactDefinition = definition.SystemDefinition{
+var ContactDefinition = def.SystemDefinition{
     Policy: ContactOwnerPolicy,
 }
 ```
@@ -67,7 +67,7 @@ var ContactDefinition = definition.SystemDefinition{
 Users scoped to a branch see only that branch's records:
 
 ```go
-var ShiftBranchPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var ShiftBranchPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor.HasRole("role:tenant.admin") {
         return filter.True()
@@ -87,7 +87,7 @@ var ShiftBranchPolicy = definition.PolicyFunc(func(ctx context.Context) definiti
 Different filter based on actor's role:
 
 ```go
-var InvoiceViewPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var InvoiceViewPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     switch {
     case actor.HasRole("role:tenant.admin"):
@@ -118,7 +118,7 @@ Combine multiple policies with AND:
 
 ```go
 // Both conditions must be satisfied: correct branch AND owns the record
-var ShiftOwnerAndBranchPolicy = definition.ComposedPolicy(
+var ShiftOwnerAndBranchPolicy = def.ComposedPolicy(
     ShiftBranchPolicy,
     ShiftOwnerPolicy,
 )
@@ -133,7 +133,7 @@ var ShiftOwnerAndBranchPolicy = definition.ComposedPolicy(
 Restrict access to records within a time window (e.g., current accounting period only):
 
 ```go
-var CurrentPeriodLedgerPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var CurrentPeriodLedgerPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor.HasRole("role:finance.auditor") {
         return filter.True()  // auditors can see all periods
@@ -152,7 +152,7 @@ Policy that masks fields rather than filtering rows. Declared separately from th
 
 ```go
 // SensitiveFieldMask is applied when actor lacks the sensitive data role
-var PayslipSensitivePolicy = definition.SensitiveFieldPolicy(
+var PayslipSensitivePolicy = def.SensitiveFieldPolicy(
     func(ctx context.Context) bool {
         actor := session.ActorFromContext(ctx)
         // Only HR admins and the employee themselves can see full salary details
@@ -204,7 +204,7 @@ Policy functions are pure functions — no I/O, no repository calls. Test withou
 
 ```go
 // WRONG: policy calls repository — breaks composability and causes N+1
-var BadPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var BadPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     // DO NOT query the DB in a PolicyFunc
     branchIDs, _ := branchRepo.GetBranchesForUser(ctx, actor.UserID)  // BAD
@@ -218,13 +218,13 @@ PolicyFunc must be pure — compute the filter from context only. Branch IDs sho
 
 ```go
 // WRONG: panics if middleware didn't set actor
-var BadPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var BadPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     return filter.Eq("owner", actor.UserID)  // panics if actor is nil
 })
 
 // CORRECT:
-var GoodPolicy = definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+var GoodPolicy = def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor == nil {
         return filter.False()

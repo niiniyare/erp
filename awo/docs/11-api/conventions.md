@@ -9,7 +9,7 @@ since: "1.0"
 normative-level: normative
 related:
   - "[Error Handling](error-handling.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[RBAC](../07-iam/rbac.md)"
   - "[Sessions](../07-iam/sessions.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -331,7 +331,7 @@ Non-breaking additions (new optional fields, new endpoints) do not require a ver
 ## Related Documents
 
 - [Error Handling](error-handling.md) — error envelope format and HTTP status codes
-- [EntityDefinition](../03-kernel/entity-definition.md) — what drives auto-generated routes
+- [EntityDefinition](../03-kernel/entity-def.md) — what drives auto-generated routes
 - [RBAC](../07-iam/rbac.md) — permission checking in route handlers
 - [Sessions](../07-iam/sessions.md) — session validation and actor resolution
 - [Filter DSL](../05-persistence/filter-dsl.md) — list endpoint filtering

@@ -8,7 +8,7 @@ audience: [module-authors, framework-authors]
 since: "1.0"
 normative-level: normative
 related:
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Fields](fields.md)"
   - "[EntityRepository](../05-persistence/entity-repository.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
@@ -165,7 +165,7 @@ Custom rendering for any edge is achieved by overriding the relevant view in `Pa
 
 ## Related Documents
 
-- [EntityDefinition](../03-kernel/entity-definition.md) — Edges declared within EntityDefinition
+- [EntityDefinition](../03-kernel/entity-def.md) — Edges declared within EntityDefinition
 - [Fields](fields.md) — Link/LinkList/DynamicLink fields (not the same as Edges)
 - [EntityRepository](../05-persistence/entity-repository.md) — QueryOption.WithEdge specification
 - [Hooks](hooks.md) — Cascade delete hook interaction

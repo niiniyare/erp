@@ -240,7 +240,7 @@ func (s *InvoiceApprovalWorkflowTestSuite) TestApprovalTimeout() {
 
 ```go
 func TestEmailValidator(t *testing.T) {
-    v := definition.ValidateEmail
+    v := def.ValidateEmail
 
     tests := []struct {
         name    string

@@ -44,24 +44,24 @@ OPEN → CLOSING → CLOSED
 ```
 
 ```go
-var ShiftDefinition = definition.SystemDefinition{
+var ShiftDefinition = def.SystemDefinition{
     Name:   "forecourt_shift",
     Module: "forecourt",
-    Fields: []definition.FieldDef{
-        {Name: "shift_number",   Type: definition.FieldNamingSeries, Series: "SHF-{YYYY}-{SEQ:6}"},
-        {Name: "attendant",      Type: definition.FieldLink, LinkTarget: "iam_user", Required: true},
-        {Name: "station",        Type: definition.FieldLink, LinkTarget: "inventory_location", Required: true},
-        {Name: "opened_at",      Type: definition.FieldDateTime, Immutable: true},
-        {Name: "closed_at",      Type: definition.FieldDateTime},
-        {Name: "status",         Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "shift_number",   Type: def.FieldNamingSeries, Series: "SHF-{YYYY}-{SEQ:6}"},
+        {Name: "attendant",      Type: def.FieldLink, LinkTarget: "iam_user", Required: true},
+        {Name: "station",        Type: def.FieldLink, LinkTarget: "inventory_location", Required: true},
+        {Name: "opened_at",      Type: def.FieldDateTime, Immutable: true},
+        {Name: "closed_at",      Type: def.FieldDateTime},
+        {Name: "status",         Type: def.FieldSelect,
             Options: []string{"Open", "Closing", "Closed"}, Default: "Open"},
-        {Name: "opening_cash",   Type: definition.FieldCurrency, Required: true},
-        {Name: "closing_cash",   Type: definition.FieldCurrency},
-        {Name: "expected_cash",  Type: definition.FieldCurrency},  // computed on close
-        {Name: "cash_variance",  Type: definition.FieldCurrency},  // closing_cash - expected_cash
-        {Name: "notes",          Type: definition.FieldLongText},
+        {Name: "opening_cash",   Type: def.FieldCurrency, Required: true},
+        {Name: "closing_cash",   Type: def.FieldCurrency},
+        {Name: "expected_cash",  Type: def.FieldCurrency},  // computed on close
+        {Name: "cash_variance",  Type: def.FieldCurrency},  // closing_cash - expected_cash
+        {Name: "notes",          Type: def.FieldLongText},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:forecourt.supervisor", "role:tenant.admin"},
         Read:   []string{"role:forecourt.attendant", "role:forecourt.supervisor", "role:tenant.admin"},
         Write:  []string{"role:forecourt.supervisor", "role:tenant.admin"},
@@ -77,25 +77,25 @@ var ShiftDefinition = definition.SystemDefinition{
 Each pump has an opening and closing totalizer per shift. Volume sold = closing − opening.
 
 ```go
-var MeterReadingDefinition = definition.SystemDefinition{
+var MeterReadingDefinition = def.SystemDefinition{
     Name:   "forecourt_meter_reading",
     Module: "forecourt",
-    Fields: []definition.FieldDef{
-        {Name: "shift",          Type: definition.FieldLink, LinkTarget: "forecourt_shift",
+    Fields: []def.FieldDef{
+        {Name: "shift",          Type: def.FieldLink, LinkTarget: "forecourt_shift",
             Required: true, Immutable: true},
-        {Name: "pump",           Type: definition.FieldLink, LinkTarget: "forecourt_pump",
+        {Name: "pump",           Type: def.FieldLink, LinkTarget: "forecourt_pump",
             Required: true, Immutable: true},
-        {Name: "reading_type",   Type: definition.FieldSelect,
+        {Name: "reading_type",   Type: def.FieldSelect,
             Options: []string{"Opening", "Closing"}, Required: true, Immutable: true},
-        {Name: "totalizer",      Type: definition.FieldCurrency, Required: true},
+        {Name: "totalizer",      Type: def.FieldCurrency, Required: true},
             // Stored as decimal — totalizer values in litres with 4dp precision
-        {Name: "recorded_at",    Type: definition.FieldDateTime, Required: true},
-        {Name: "recorded_by",    Type: definition.FieldLink, LinkTarget: "iam_user"},
+        {Name: "recorded_at",    Type: def.FieldDateTime, Required: true},
+        {Name: "recorded_by",    Type: def.FieldLink, LinkTarget: "iam_user"},
     },
-    Hooks: definition.HookSet{
-        BeforeCreate: []definition.BeforeCreateHook{&MeterReadingValidator{}},
+    Hooks: def.HookSet{
+        BeforeCreate: []def.BeforeCreateHook{&MeterReadingValidator{}},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:forecourt.attendant", "role:forecourt.supervisor", "role:tenant.admin"},
         Read:   []string{"role:forecourt.attendant", "role:forecourt.supervisor", "role:tenant.admin"},
         Write:  []string{"role:system.internal_only"},  // immutable once recorded
@@ -108,10 +108,10 @@ var MeterReadingDefinition = definition.SystemDefinition{
 
 ```go
 type MeterReadingValidator struct {
-    Repo definition.EntityRepository[MeterReading]
+    Repo def.EntityRepository[MeterReading]
 }
 
-func (h *MeterReadingValidator) BeforeCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *MeterReadingValidator) BeforeCreate(ctx context.Context, record *def.EntityRecord) error {
     pumpID, _ := record.Fields["pump"].(uuid.UUID)
     shiftID, _ := record.Fields["shift"].(uuid.UUID)
     readingType, _ := record.Fields["reading_type"].(string)
@@ -126,7 +126,7 @@ func (h *MeterReadingValidator) BeforeCreate(ctx context.Context, record *defini
         return fmt.Errorf("MeterReadingValidator.BeforeCreate: check duplicate: %w", err)
     }
     if exists {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "reading_type": fmt.Sprintf("%s reading already recorded for this pump and shift", readingType),
             },
@@ -141,7 +141,7 @@ func (h *MeterReadingValidator) BeforeCreate(ctx context.Context, record *defini
         }
         closing, _ := record.Fields["totalizer"].(decimal.Decimal)
         if closing.LessThan(opening) {
-            return &definition.ValidationError{
+            return &def.ValidationError{
                 Fields: map[string]string{
                     "totalizer": "Closing totalizer cannot be less than opening totalizer",
                 },
@@ -162,7 +162,7 @@ func (h *MeterReadingValidator) getOpeningTotalizer(ctx context.Context, pumpID,
         return decimal.Zero, fmt.Errorf("getOpeningTotalizer: %w", err)
     }
     if len(readings) == 0 {
-        return decimal.Zero, &definition.BusinessError{
+        return decimal.Zero, &def.BusinessError{
             Code:    "forecourt.no_opening_reading",
             Message: "No opening reading found for this pump and shift",
             Status:  400,
@@ -177,10 +177,10 @@ func (h *MeterReadingValidator) getOpeningTotalizer(ctx context.Context, pumpID,
 ## 4. Shift Close Action
 
 ```go
-Actions: []definition.ActionDef{
+Actions: []def.ActionDef{
     {
         Name:        "close",
-        Method:      definition.ActionMethodPost,
+        Method:      def.ActionMethodPost,
         Label:       "Close Shift",
         Permission:  "role:forecourt.supervisor",
         HandlerFunc: CloseShiftAction,
@@ -189,7 +189,7 @@ Actions: []definition.ActionDef{
 ```
 
 ```go
-func CloseShiftAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func CloseShiftAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     shift, err := action.Repo.Get(ctx, action.RecordID)
     if err != nil {
         return nil, fmt.Errorf("CloseShiftAction: get shift: %w", err)
@@ -197,7 +197,7 @@ func CloseShiftAction(ctx context.Context, action definition.ActionContext) (*de
 
     status, _ := shift.Fields["status"].(string)
     if status != "Open" {
-        return nil, &definition.BusinessError{
+        return nil, &def.BusinessError{
             Code:    "forecourt.shift_not_open",
             Message: "Only open shifts can be closed",
             Status:  409,
@@ -213,7 +213,7 @@ func CloseShiftAction(ctx context.Context, action definition.ActionContext) (*de
     closingCash, _ := action.Input["closing_cash"].(decimal.Decimal)
     variance := closingCash.Sub(expectedCash)
 
-    _, err = action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    _, err = action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{
             "status":        "Closing",
             "closed_at":     time.Now().UTC(),
@@ -227,7 +227,7 @@ func CloseShiftAction(ctx context.Context, action definition.ActionContext) (*de
     }
 
     // Trigger ShiftSettlementWorkflow — posts journal entries, updates inventory
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message:    "Shift closing initiated",
         WorkflowID: fmt.Sprintf("%s.forecourt_shift.%s.on_close", shift.TenantID, action.RecordID),
     }, nil
@@ -263,7 +263,7 @@ func (a *Activities) ReconcileFuelInventoryActivity(ctx context.Context, input S
             continue
         }
 
-        _, err = a.StockMoveRepo.Create(ctx, definition.CreateInput{
+        _, err = a.StockMoveRepo.Create(ctx, def.CreateInput{
             Fields: map[string]any{
                 "product":       pump.Fields["fuel_product"],
                 "from_location": pump.Fields["tank_location"],
@@ -331,18 +331,18 @@ func ShiftSettlementWorkflow(ctx workflow.Context, input ShiftSettlementInput) e
 Fuel prices are managed as a system entity with effective dating:
 
 ```go
-var FuelPriceDefinition = definition.SystemDefinition{
+var FuelPriceDefinition = def.SystemDefinition{
     Name:   "forecourt_fuel_price",
     Module: "forecourt",
-    Fields: []definition.FieldDef{
-        {Name: "fuel_type",      Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "fuel_type",      Type: def.FieldSelect,
             Options: []string{"Petrol", "Diesel", "Kerosene"}, Required: true},
-        {Name: "price_per_litre", Type: definition.FieldCurrency, Required: true},
-        {Name: "effective_from", Type: definition.FieldDateTime, Required: true},
-        {Name: "effective_to",   Type: definition.FieldDateTime},  // null = currently active
-        {Name: "set_by",         Type: definition.FieldLink, LinkTarget: "iam_user"},
+        {Name: "price_per_litre", Type: def.FieldCurrency, Required: true},
+        {Name: "effective_from", Type: def.FieldDateTime, Required: true},
+        {Name: "effective_to",   Type: def.FieldDateTime},  // null = currently active
+        {Name: "set_by",         Type: def.FieldLink, LinkTarget: "iam_user"},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:forecourt.supervisor", "role:tenant.admin"},
         Read:   []string{"role:forecourt.attendant", "role:forecourt.supervisor", "role:tenant.admin"},
         Write:  []string{"role:forecourt.supervisor", "role:tenant.admin"},
@@ -354,7 +354,7 @@ var FuelPriceDefinition = definition.SystemDefinition{
 Active price lookup:
 
 ```go
-func GetActiveFuelPrice(ctx context.Context, repo definition.EntityRepository[FuelPrice], fuelType string) (decimal.Decimal, error) {
+func GetActiveFuelPrice(ctx context.Context, repo def.EntityRepository[FuelPrice], fuelType string) (decimal.Decimal, error) {
     now := time.Now().UTC()
     prices, _, err := repo.Query(ctx, filter.And(
         filter.Eq("fuel_type", fuelType),
@@ -368,7 +368,7 @@ func GetActiveFuelPrice(ctx context.Context, repo definition.EntityRepository[Fu
         return decimal.Zero, fmt.Errorf("GetActiveFuelPrice: %w", err)
     }
     if len(prices) == 0 {
-        return decimal.Zero, &definition.BusinessError{
+        return decimal.Zero, &def.BusinessError{
             Code:    "forecourt.no_active_price",
             Message: fmt.Sprintf("No active price for fuel type: %s", fuelType),
             Status:  400,

@@ -36,33 +36,33 @@ The Metadata module solves this without:
 ## 2. Custom Field Definition Entity
 
 ```go
-var CustomFieldDefDefinition = definition.SystemDefinition{
+var CustomFieldDefDefinition = def.SystemDefinition{
     Name:   "metadata_custom_field",
     Module: "metadata",
-    Fields: []definition.FieldDef{
-        {Name: "entity_type",   Type: definition.FieldData, Required: true, Immutable: true},
+    Fields: []def.FieldDef{
+        {Name: "entity_type",   Type: def.FieldData, Required: true, Immutable: true},
             // e.g. "finance_invoice", "crm_customer"
-        {Name: "field_name",    Type: definition.FieldData, Required: true, Immutable: true},
+        {Name: "field_name",    Type: def.FieldData, Required: true, Immutable: true},
             // snake_case, becomes the key in custom_fields JSONB
-        {Name: "field_label",   Type: definition.FieldData, Required: true},
-        {Name: "field_type",    Type: definition.FieldSelect,
+        {Name: "field_label",   Type: def.FieldData, Required: true},
+        {Name: "field_type",    Type: def.FieldSelect,
             Options: []string{"text", "number", "date", "boolean", "select", "multiselect"},
             Required: true, Immutable: true},
-        {Name: "options",       Type: definition.FieldJSON},
+        {Name: "options",       Type: def.FieldJSON},
             // For select/multiselect: []string of allowed values
-        {Name: "required",      Type: definition.FieldBool, Default: false},
-        {Name: "searchable",    Type: definition.FieldBool, Default: false},
+        {Name: "required",      Type: def.FieldBool, Default: false},
+        {Name: "searchable",    Type: def.FieldBool, Default: false},
             // If true, framework adds GIN index path on custom_fields
-        {Name: "display_order", Type: definition.FieldInt, Default: 0},
-        {Name: "active",        Type: definition.FieldBool, Default: true},
-        {Name: "description",   Type: definition.FieldSmallText},
+        {Name: "display_order", Type: def.FieldInt, Default: 0},
+        {Name: "active",        Type: def.FieldBool, Default: true},
+        {Name: "description",   Type: def.FieldSmallText},
     },
-    Hooks: definition.HookSet{
-        BeforeCreate: []definition.BeforeCreateHook{&CustomFieldNameValidator{}},
-        AfterCreate:  []definition.AfterCreateHook{&CustomFieldRegistrar{}},
-        AfterUpdate:  []definition.AfterUpdateHook{&CustomFieldRegistrar{}},
+    Hooks: def.HookSet{
+        BeforeCreate: []def.BeforeCreateHook{&CustomFieldNameValidator{}},
+        AfterCreate:  []def.AfterCreateHook{&CustomFieldRegistrar{}},
+        AfterUpdate:  []def.AfterUpdateHook{&CustomFieldRegistrar{}},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:tenant.admin"},
         Read:   []string{"role:tenant.admin", "role:tenant.user"},
         Write:  []string{"role:tenant.admin"},
@@ -77,16 +77,16 @@ var CustomFieldDefDefinition = definition.SystemDefinition{
 
 ```go
 type CustomFieldNameValidator struct {
-    Repo definition.EntityRepository[CustomFieldDef]
+    Repo def.EntityRepository[CustomFieldDef]
 }
 
-func (h *CustomFieldNameValidator) BeforeCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *CustomFieldNameValidator) BeforeCreate(ctx context.Context, record *def.EntityRecord) error {
     fieldName, _ := record.Fields["field_name"].(string)
     entityType, _ := record.Fields["entity_type"].(string)
 
     // Must be valid snake_case identifier
     if !regexp.MustCompile(`^[a-z][a-z0-9_]{0,62}$`).MatchString(fieldName) {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "field_name": "Must be lowercase snake_case, 1-63 characters, starting with a letter",
             },
@@ -96,7 +96,7 @@ func (h *CustomFieldNameValidator) BeforeCreate(ctx context.Context, record *def
     // Must not conflict with system field names
     systemDef, err := registry.GetDefinition(entityType)
     if err != nil {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "entity_type": fmt.Sprintf("Unknown entity type: %s", entityType),
             },
@@ -104,7 +104,7 @@ func (h *CustomFieldNameValidator) BeforeCreate(ctx context.Context, record *def
     }
     for _, f := range systemDef.Fields {
         if f.Name == fieldName {
-            return &definition.ValidationError{
+            return &def.ValidationError{
                 Fields: map[string]string{
                     "field_name": fmt.Sprintf("Field name '%s' conflicts with a system field", fieldName),
                 },
@@ -121,7 +121,7 @@ func (h *CustomFieldNameValidator) BeforeCreate(ctx context.Context, record *def
         return fmt.Errorf("CustomFieldNameValidator: check unique: %w", err)
     }
     if exists {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "field_name": "A custom field with this name already exists for this entity type",
             },
@@ -141,7 +141,7 @@ type CustomFieldRegistrar struct {
     CustomRegistry *registry.CustomEntityRegistry
 }
 
-func (h *CustomFieldRegistrar) AfterCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *CustomFieldRegistrar) AfterCreate(ctx context.Context, record *def.EntityRecord) error {
     tenantID := session.TenantIDFromContext(ctx)
     entityType, _ := record.Fields["entity_type"].(string)
 
@@ -207,11 +207,11 @@ This UI is auto-generated from the `metadata_custom_field` entity definition —
 Module hooks can read custom field values like any other field:
 
 ```go
-func (h *InvoiceValidator) BeforeCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *InvoiceValidator) BeforeCreate(ctx context.Context, record *def.EntityRecord) error {
     // Custom field access — same as system field
     containerNum, hasContainerNum := record.Fields["container_number"]
     if hasContainerNum && containerNum == "" {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "container_number": "Container number cannot be empty when provided",
             },

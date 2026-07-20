@@ -28,7 +28,7 @@ This document shows the complete, final state of all files for the `crm` module 
 internal/core/crm/
     crm.go
     manifest.go
-    definition.go
+    def.go
     hooks.go
     policy.go
     workflows/
@@ -51,9 +51,9 @@ package crm
 import "awo.so/awo/def"
 
 func init() {
-    definition.RegisterManifest(&Manifest)
-    definition.Register(&ContactDefinition)
-    definition.Register(&InteractionDefinition)
+    def.RegisterManifest(&Manifest)
+    def.Register(&ContactDefinition)
+    def.Register(&InteractionDefinition)
 }
 
 func RegisterActivities(w worker.Worker, deps Dependencies) {
@@ -70,7 +70,7 @@ package crm
 
 import "awo.so/awo/def"
 
-var Manifest = definition.ModuleManifest{
+var Manifest = def.ModuleManifest{
     Name:     "crm",
     Label:    "CRM",
     Version:  "1.0.0",
@@ -82,61 +82,61 @@ var Manifest = definition.ModuleManifest{
 
 ---
 
-## definition.go — Entity Definitions
+## def.go — Entity Definitions
 
 ```go
 package crm
 
 import "awo.so/awo/def"
 
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     Name:         "crm_contact",
     Module:       "crm",
     Label:        "Contact",
     LabelPlural:  "Contacts",
-    StorageModel: definition.StorageCustom,
+    StorageModel: def.StorageCustom,
 
-    Fields: []definition.FieldDef{
-        {Name: "full_name",          Type: definition.FieldData,        Label: "Full Name",        Required: true,  MaxLen: 128, Searchable: true},
-        {Name: "email",              Type: definition.FieldData,        Label: "Email",             Required: true,  MaxLen: 256, Unique: true, Searchable: true, Validators: []definition.FieldValidator{&EmailValidator{}}},
-        {Name: "phone",              Type: definition.FieldData,        Label: "Phone",             MaxLen: 32},
-        {Name: "status",             Type: definition.FieldSelect,      Label: "Status",            Options: []string{"Lead","Prospect","Active","Inactive","Lost"}, Default: "Lead"},
-        {Name: "assigned_to",        Type: definition.FieldLink,        Label: "Assigned To",       LinkTarget: "user", Required: true},
-        {Name: "notes",              Type: definition.FieldLongText,    Label: "Notes"},
-        {Name: "source",             Type: definition.FieldSelect,      Label: "Source",            Options: []string{"Referral","Website","Event","Cold Outreach","Social Media","Other"}, Default: "Other"},
-        {Name: "tags",               Type: definition.FieldMultiSelect, Label: "Tags",              Options: []string{"VIP","Decision Maker","Technical","Finance","Operations"}},
-        {Name: "first_contact_date", Type: definition.FieldDate,        Label: "First Contact Date"},
+    Fields: []def.FieldDef{
+        {Name: "full_name",          Type: def.FieldData,        Label: "Full Name",        Required: true,  MaxLen: 128, Searchable: true},
+        {Name: "email",              Type: def.FieldData,        Label: "Email",             Required: true,  MaxLen: 256, Unique: true, Searchable: true, Validators: []def.FieldValidator{&EmailValidator{}}},
+        {Name: "phone",              Type: def.FieldData,        Label: "Phone",             MaxLen: 32},
+        {Name: "status",             Type: def.FieldSelect,      Label: "Status",            Options: []string{"Lead","Prospect","Active","Inactive","Lost"}, Default: "Lead"},
+        {Name: "assigned_to",        Type: def.FieldLink,        Label: "Assigned To",       LinkTarget: "user", Required: true},
+        {Name: "notes",              Type: def.FieldLongText,    Label: "Notes"},
+        {Name: "source",             Type: def.FieldSelect,      Label: "Source",            Options: []string{"Referral","Website","Event","Cold Outreach","Social Media","Other"}, Default: "Other"},
+        {Name: "tags",               Type: def.FieldMultiSelect, Label: "Tags",              Options: []string{"VIP","Decision Maker","Technical","Finance","Operations"}},
+        {Name: "first_contact_date", Type: def.FieldDate,        Label: "First Contact Date"},
     },
 
-    Edges: []definition.EdgeDef{
-        {Name: "interactions", Target: "crm_interaction", Type: definition.EdgeOneToMany, CascadeDelete: true},
+    Edges: []def.EdgeDef{
+        {Name: "interactions", Target: "crm_interaction", Type: def.EdgeOneToMany, CascadeDelete: true},
     },
 
-    Hooks: definition.HookSet{
-        BeforeCreate: []definition.BeforeCreateHook{&ContactEmailUniqueGuard{}},
-        AfterCreate:  []definition.AfterCreateHook{&ContactFirstContactDateSetter{}},
+    Hooks: def.HookSet{
+        BeforeCreate: []def.BeforeCreateHook{&ContactEmailUniqueGuard{}},
+        AfterCreate:  []def.AfterCreateHook{&ContactFirstContactDateSetter{}},
     },
 
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:crm.sales_rep", "role:crm.manager", "role:tenant.admin"},
         Read:   []string{"role:crm.sales_rep", "role:crm.manager", "role:crm.viewer", "role:tenant.admin"},
         Write:  []string{"role:crm.sales_rep", "role:crm.manager", "role:tenant.admin"},
         Delete: []string{"role:crm.manager", "role:tenant.admin"},
     },
 
-    Policy: definition.PolicyFunc(ContactOwnerPolicy),
+    Policy: def.PolicyFunc(ContactOwnerPolicy),
 
-    Actions: []definition.ActionDef{
-        {Name: "qualify",  Method: definition.ActionMethodPost, Label: "Qualify Contact", Permission: "role:crm.sales_rep", HandlerFunc: QualifyContactAction, ConfirmationRequired: true},
-        {Name: "reassign", Method: definition.ActionMethodPost, Label: "Reassign",         Permission: "role:crm.manager",   HandlerFunc: ReassignContactAction},
+    Actions: []def.ActionDef{
+        {Name: "qualify",  Method: def.ActionMethodPost, Label: "Qualify Contact", Permission: "role:crm.sales_rep", HandlerFunc: QualifyContactAction, ConfirmationRequired: true},
+        {Name: "reassign", Method: def.ActionMethodPost, Label: "Reassign",         Permission: "role:crm.manager",   HandlerFunc: ReassignContactAction},
     },
 
-    WorkflowTriggers: []definition.WorkflowTrigger{
+    WorkflowTriggers: []def.WorkflowTrigger{
         {
-            On:         definition.EventOnCreate,
+            On:         def.EventOnCreate,
             WorkflowFn: "ContactWelcomeWorkflow",
             TaskQueue:  "crm.contact.create",
-            InputBuilder: func(rec *definition.EntityRecord, tc definition.TriggerContext) (any, error) {
+            InputBuilder: func(rec *def.EntityRecord, tc def.TriggerContext) (any, error) {
                 return workflows.ContactWelcomeInput{
                     TenantID:  rec.TenantID,
                     ContactID: rec.ID,
@@ -147,25 +147,25 @@ var ContactDefinition = definition.EntityDefinition{
         },
     },
 
-    PageBuilders: definition.PageBuilderSet{
+    PageBuilders: def.PageBuilderSet{
         Detail: BuildContactDetailPage,
     },
 }
 
-var InteractionDefinition = definition.EntityDefinition{
+var InteractionDefinition = def.EntityDefinition{
     Name:         "crm_interaction",
     Module:       "crm",
     Label:        "Interaction",
     LabelPlural:  "Interactions",
-    StorageModel: definition.StorageCustom,
-    Fields: []definition.FieldDef{
-        {Name: "contact",       Type: definition.FieldLink,     Label: "Contact",       LinkTarget: "crm_contact", Required: true, Immutable: true},
-        {Name: "type",          Type: definition.FieldSelect,   Label: "Type",          Options: []string{"Call","Email","Meeting","Note"}, Required: true},
-        {Name: "date",          Type: definition.FieldDateTime, Label: "Date",          Required: true},
-        {Name: "summary",       Type: definition.FieldSmallText,Label: "Summary",       Required: true},
-        {Name: "notes",         Type: definition.FieldLongText, Label: "Notes"},
-        {Name: "conducted_by",  Type: definition.FieldLink,     Label: "Conducted By",  LinkTarget: "user", Required: true},
-        {Name: "outcome",       Type: definition.FieldSelect,   Label: "Outcome",       Options: []string{"Positive","Neutral","Negative","Follow-up Required"}},
+    StorageModel: def.StorageCustom,
+    Fields: []def.FieldDef{
+        {Name: "contact",       Type: def.FieldLink,     Label: "Contact",       LinkTarget: "crm_contact", Required: true, Immutable: true},
+        {Name: "type",          Type: def.FieldSelect,   Label: "Type",          Options: []string{"Call","Email","Meeting","Note"}, Required: true},
+        {Name: "date",          Type: def.FieldDateTime, Label: "Date",          Required: true},
+        {Name: "summary",       Type: def.FieldSmallText,Label: "Summary",       Required: true},
+        {Name: "notes",         Type: def.FieldLongText, Label: "Notes"},
+        {Name: "conducted_by",  Type: def.FieldLink,     Label: "Conducted By",  LinkTarget: "user", Required: true},
+        {Name: "outcome",       Type: def.FieldSelect,   Label: "Outcome",       Options: []string{"Positive","Neutral","Negative","Follow-up Required"}},
     },
 }
 ```
@@ -216,7 +216,7 @@ POST /api/v1/entities/crm_contact
 |---|---|---|
 | `manifest.go` | MDG-01 | Module identity and dependencies |
 | `crm.go` | MDG-01 | init() registration |
-| `definition.go` | MDG-02 to MDG-09 | All entity definitions |
+| `def.go` | MDG-02 to MDG-09 | All entity definitions |
 | `hooks.go` | MDG-05 | Lifecycle hook implementations |
 | `policy.go` | MDG-06 | Row-level filter functions |
 | `handler.go` | MDG-07, MDG-09 | Action handlers + page builders |

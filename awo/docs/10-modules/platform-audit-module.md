@@ -47,32 +47,32 @@ The `iam_audit_log` table is a global table (no RLS) — readable by platform ad
 
 ```go
 // In internal/platform/audit/def.go
-var AuditLogDefinition = definition.SystemDefinition{
+var AuditLogDefinition = def.SystemDefinition{
     Name:   "iam_audit_log",
     Module: "audit",
-    Fields: []definition.FieldDef{
-        {Name: "tenant_id",      Type: definition.FieldData, Required: true, Immutable: true},
-        {Name: "entity_type",    Type: definition.FieldData, Required: true, Immutable: true},
-        {Name: "entity_id",      Type: definition.FieldData, Required: true, Immutable: true},
-        {Name: "action",         Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "tenant_id",      Type: def.FieldData, Required: true, Immutable: true},
+        {Name: "entity_type",    Type: def.FieldData, Required: true, Immutable: true},
+        {Name: "entity_id",      Type: def.FieldData, Required: true, Immutable: true},
+        {Name: "action",         Type: def.FieldSelect,
             Options: []string{"create", "update", "delete", "action", "login", "logout",
                 "login_failed", "permission_denied", "session_created", "session_revoked"},
             Required: true, Immutable: true},
-        {Name: "actor_id",       Type: definition.FieldData, Immutable: true},  // user UUID or "system"
-        {Name: "actor_type",     Type: definition.FieldSelect,
+        {Name: "actor_id",       Type: def.FieldData, Immutable: true},  // user UUID or "system"
+        {Name: "actor_type",     Type: def.FieldSelect,
             Options: []string{"user", "api_client", "system", "workflow"},
             Immutable: true},
-        {Name: "ip_address",     Type: definition.FieldData, Immutable: true},
-        {Name: "user_agent",     Type: definition.FieldData, Immutable: true},
-        {Name: "request_id",     Type: definition.FieldData, Immutable: true},
-        {Name: "before_data",    Type: definition.FieldJSON, Immutable: true},  // JSONB snapshot before change
-        {Name: "after_data",     Type: definition.FieldJSON, Immutable: true},  // JSONB snapshot after change
-        {Name: "changed_fields", Type: definition.FieldJSON, Immutable: true},  // []string field names changed
-        {Name: "action_name",    Type: definition.FieldData, Immutable: true},  // for custom actions
-        {Name: "metadata",       Type: definition.FieldJSON, Immutable: true},  // extra context (workflow ID etc.)
-        {Name: "occurred_at",    Type: definition.FieldDateTime, Required: true, Immutable: true},
+        {Name: "ip_address",     Type: def.FieldData, Immutable: true},
+        {Name: "user_agent",     Type: def.FieldData, Immutable: true},
+        {Name: "request_id",     Type: def.FieldData, Immutable: true},
+        {Name: "before_data",    Type: def.FieldJSON, Immutable: true},  // JSONB snapshot before change
+        {Name: "after_data",     Type: def.FieldJSON, Immutable: true},  // JSONB snapshot after change
+        {Name: "changed_fields", Type: def.FieldJSON, Immutable: true},  // []string field names changed
+        {Name: "action_name",    Type: def.FieldData, Immutable: true},  // for custom actions
+        {Name: "metadata",       Type: def.FieldJSON, Immutable: true},  // extra context (workflow ID etc.)
+        {Name: "occurred_at",    Type: def.FieldDateTime, Required: true, Immutable: true},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:system.internal_only"},  // only framework writes audit log
         Read:   []string{"role:tenant.admin", "role:platform-admin"},
         Write:  []string{"role:system.internal_only"},
@@ -90,10 +90,10 @@ Every entity mutation automatically creates an audit log entry. This is wired in
 ```go
 // framework/audit/auto_hook.go (framework-internal)
 type AutoAuditHook struct {
-    AuditRepo definition.EntityRepository[AuditLog]
+    AuditRepo def.EntityRepository[AuditLog]
 }
 
-func (h *AutoAuditHook) AfterSave(ctx context.Context, record *definition.EntityRecord, isUpdate bool) error {
+func (h *AutoAuditHook) AfterSave(ctx context.Context, record *def.EntityRecord, isUpdate bool) error {
     actor := session.ActorFromContext(ctx)
     requestMeta := request.MetaFromContext(ctx)
 
@@ -102,7 +102,7 @@ func (h *AutoAuditHook) AfterSave(ctx context.Context, record *definition.Entity
         action = "update"
     }
 
-    entry := definition.CreateInput{
+    entry := def.CreateInput{
         Fields: map[string]any{
             "tenant_id":      record.TenantID,
             "entity_type":    record.EntityType,
@@ -170,11 +170,11 @@ Module authors can query the audit log for compliance UI or entity history views
 
 ```go
 // Get full history for a specific record
-func GetEntityHistory(ctx context.Context, repo definition.EntityRepository[AuditLog], entityType string, entityID uuid.UUID) ([]AuditLog, error) {
+func GetEntityHistory(ctx context.Context, repo def.EntityRepository[AuditLog], entityType string, entityID uuid.UUID) ([]AuditLog, error) {
     entries, _, err := repo.Query(ctx, filter.And(
         filter.Eq("entity_type", entityType),
         filter.Eq("entity_id", entityID.String()),
-    ), definition.WithSort("occurred_at", "desc"))
+    ), def.WithSort("occurred_at", "desc"))
     if err != nil {
         return nil, fmt.Errorf("GetEntityHistory: %w", err)
     }

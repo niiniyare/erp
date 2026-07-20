@@ -29,12 +29,12 @@ All monetary amounts MUST use `FieldCurrency` → `numeric(20,4)` → `decimal.D
 
 ```go
 // CORRECT
-{Name: "amount", Type: definition.FieldCurrency, Required: true}
+{Name: "amount", Type: def.FieldCurrency, Required: true}
 // Go type: decimal.Decimal
 // SQL type: numeric(20,4)
 
 // WRONG
-{Name: "amount", Type: definition.FieldFloat}  // float64 — precision loss on addition
+{Name: "amount", Type: def.FieldFloat}  // float64 — precision loss on addition
 ```
 
 Arithmetic on `decimal.Decimal`:

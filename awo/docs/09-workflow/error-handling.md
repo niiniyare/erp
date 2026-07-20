@@ -127,9 +127,9 @@ Workflow timeout means the entire workflow did not complete within the allowed w
 
 ```go
 // In workflow trigger
-WorkflowTriggers: []definition.WorkflowTrigger{
+WorkflowTriggers: []def.WorkflowTrigger{
     {
-        On:         definition.EventOnSubmit,
+        On:         def.EventOnSubmit,
         WorkflowFn: "InvoiceSubmissionWorkflow",
         Options: workflow.StartWorkflowOptions{
             WorkflowExecutionTimeout: 24 * time.Hour,  // Max lifetime

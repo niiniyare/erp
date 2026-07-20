@@ -151,7 +151,7 @@ A named, structured data object managed by the framework. Every entity has a sta
 The stable string identifier for an → Entity. Format: `{module}_{noun}`, all lowercase, underscores only. Examples: `finance_invoice`, `inventory_stock_move`, `iam_user`. Embedded in URL paths, Temporal workflow IDs, Redis keys, and Casbin policies. Globally unique within a deployment. Must never be renamed after first use. See: → LAW-011.
 
 **EntityDefinition**
-The central primitive of the Awo Framework. A single `EntityDefinition` declaration drives five subsystems simultaneously: persistence routing, API generation, SDUI generation, permission evaluation, and workflow triggering. Registered at startup via `definition.Register()`. The EntityDefinition is the only way to introduce an entity into the framework; direct table creation or route registration is prohibited.
+The central primitive of the Awo Framework. A single `EntityDefinition` declaration drives five subsystems simultaneously: persistence routing, API generation, SDUI generation, permission evaluation, and workflow triggering. Registered at startup via `def.Register()`. The EntityDefinition is the only way to introduce an entity into the framework; direct table creation or route registration is prohibited.
 
 **EntityRecord**
 The runtime representation of a single persisted → Entity instance. Contains: `ID` (UUID v7), `TenantID`, typed field values, computed edge references (when loaded), and lifecycle metadata (`CreatedAt`, `UpdatedAt`, `CreatedBy`). EntityRecords are always tenant-scoped; the framework rejects any operation on an EntityRecord without a resolved → TenantContext.
@@ -227,7 +227,7 @@ The → Platform Module (`internal/platform/iam`) that manages users, roles, per
 A field constraint indicating the field value may be set on create but never changed on update. The framework rejects any → UpdateInput that includes an immutable field with a value different from the persisted value.
 
 **Initialization Phase**
-The startup stage during which → EntityDefinition registrations are accepted by the → Entity Registry. Begins when the process starts. Ends when `EntityRegistry.Compile()` is called, after which no further registrations are accepted. All `definition.Register()` calls must occur during this phase, typically in `init()` functions. See: → LAW-003.
+The startup stage during which → EntityDefinition registrations are accepted by the → Entity Registry. Begins when the process starts. Ends when `EntityRegistry.Compile()` is called, after which no further registrations are accepted. All `def.Register()` calls must occur during this phase, typically in `init()` functions. See: → LAW-003.
 
 ---
 

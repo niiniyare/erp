@@ -10,7 +10,7 @@ normative-level: normative
 related:
   - "[Sessions](sessions.md)"
   - "[Policy Functions](../04-domain/policies.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
 
@@ -175,5 +175,5 @@ This prevents UI-layer information leakage: an actor without `delete` permission
 
 - [Sessions](sessions.md) — Actor extraction from session context
 - [Policy Functions](../04-domain/policies.md) — row-level filtering (complementary to RBAC)
-- [EntityDefinition](../03-kernel/entity-definition.md) — PermissionSet declaration
+- [EntityDefinition](../03-kernel/entity-def.md) — PermissionSet declaration
 - [Glossary](../GLOSSARY.md) — RBAC, Casbin, Actor, Role, Permission, Platform Admin

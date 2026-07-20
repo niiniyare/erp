@@ -30,7 +30,7 @@ Awo has two distinct registries:
 
 | Registry | Populated when | Contents | Immutable after |
 |---|---|---|---|
-| **Entity Registry** | Startup (Initialization Phase) | System + Custom entity type definitions from `definition.Register()` | Registry seal at startup |
+| **Entity Registry** | Startup (Initialization Phase) | System + Custom entity type definitions from `def.Register()` | Registry seal at startup |
 | **Custom Entity Registry** | Runtime, per tenant | Tenant-specific custom entity schemas | Not immutable — per-tenant mutations possible |
 
 The Entity Registry governs the framework's type system. The Custom Entity Registry governs per-tenant runtime schema extensions (custom field additions, custom entity definitions added by tenants via admin UI).

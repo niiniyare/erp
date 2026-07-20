@@ -45,7 +45,7 @@ The persistence section specifies the interfaces and DSLs through which all enti
 
 ## Prerequisites
 
-- [EntityDefinition](../03-kernel/entity-definition.md)
+- [EntityDefinition](../03-kernel/entity-def.md)
 - [Five-Layer Architecture §6](../02-architecture/five-layer.md#6-store-layer) — Store Layer responsibilities
 - [Architecture Laws](../02-architecture/laws.md) — LAW-005 (tenant context), LAW-014 (filter versioning)
 - [Tenancy Model](../06-tenancy/tenant-model.md) — RLS, set_tenant_context()

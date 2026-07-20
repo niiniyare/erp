@@ -27,13 +27,13 @@ This document adds a `WorkflowTrigger` and activity to `crm_contact` — a welco
 
 ```go
 // internal/core/crm/def.go
-var ContactDefinition = definition.EntityDefinition{
+var ContactDefinition = def.EntityDefinition{
     // ... all previous fields ...
 
-    WorkflowTriggers: []definition.WorkflowTrigger{
+    WorkflowTriggers: []def.WorkflowTrigger{
         {
             // Trigger on record creation
-            On: definition.EventOnCreate,
+            On: def.EventOnCreate,
 
             // Name of the registered workflow function
             WorkflowFn: "ContactWelcomeWorkflow",
@@ -42,7 +42,7 @@ var ContactDefinition = definition.EntityDefinition{
             TaskQueue: "crm.contact.create",
 
             // Builds the workflow input from the created record
-            InputBuilder: func(rec *definition.EntityRecord, tc definition.TriggerContext) (any, error) {
+            InputBuilder: func(rec *def.EntityRecord, tc def.TriggerContext) (any, error) {
                 email, _ := rec.Fields["email"].(string)
                 name, _  := rec.Fields["full_name"].(string)
                 if email == "" {

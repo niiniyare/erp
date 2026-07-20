@@ -46,7 +46,7 @@ All three layers are required. Database constraints are the last line of defense
 ```go
 {
     Name:     "email",
-    Type:     definition.FieldData,
+    Type:     def.FieldData,
     Required: true,
     MaxLen:   254,        // RFC 5321 max email length
     Validators: []entity.FieldValidator{EmailValidator{}},
@@ -54,14 +54,14 @@ All three layers are required. Database constraints are the last line of defense
 
 {
     Name: "quantity",
-    Type: definition.FieldInt,
+    Type: def.FieldInt,
     Min:  1,
     Max:  10000,
 }
 
 {
     Name: "code",
-    Type: definition.FieldData,
+    Type: def.FieldData,
     Unique: true,
     MaxLen: 20,
 }
@@ -206,7 +206,7 @@ Fields declared `Sensitive: true` are:
 ```go
 {
     Name:      "tax_pin",
-    Type:      definition.FieldData,
+    Type:      def.FieldData,
     Sensitive: true,
     // Only returned via a dedicated, permission-gated endpoint
 }

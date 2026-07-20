@@ -39,33 +39,33 @@ Patterns for customer relationship management: contacts, companies, leads, oppor
 ## 2. Customer Entity
 
 ```go
-var CustomerDefinition = definition.SystemDefinition{
+var CustomerDefinition = def.SystemDefinition{
     Name:   "crm_customer",
     Module: "crm",
-    Fields: []definition.FieldDef{
-        {Name: "name",          Type: definition.FieldData, Required: true, Searchable: true},
-        {Name: "type",          Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "name",          Type: def.FieldData, Required: true, Searchable: true},
+        {Name: "type",          Type: def.FieldSelect,
             Options: []string{"Company", "Individual"}, Default: "Company"},
-        {Name: "kra_pin",       Type: definition.FieldData,
-            Validators: []definition.FieldValidator{definition.KRAPINValidator{}}},
-        {Name: "email",         Type: definition.FieldData,
-            Validators: []definition.FieldValidator{definition.EmailValidator{}}},
-        {Name: "phone",         Type: definition.FieldData},
-        {Name: "address",       Type: definition.FieldSmallText},
-        {Name: "credit_limit",  Type: definition.FieldCurrency},
-        {Name: "payment_terms", Type: definition.FieldInt, Default: 30},
+        {Name: "kra_pin",       Type: def.FieldData,
+            Validators: []def.FieldValidator{def.KRAPINValidator{}}},
+        {Name: "email",         Type: def.FieldData,
+            Validators: []def.FieldValidator{def.EmailValidator{}}},
+        {Name: "phone",         Type: def.FieldData},
+        {Name: "address",       Type: def.FieldSmallText},
+        {Name: "credit_limit",  Type: def.FieldCurrency},
+        {Name: "payment_terms", Type: def.FieldInt, Default: 30},
             // Days
-        {Name: "status",        Type: definition.FieldSelect,
+        {Name: "status",        Type: def.FieldSelect,
             Options: []string{"Active", "Inactive", "Blocked"}, Default: "Active"},
-        {Name: "account_balance", Type: definition.FieldCurrency},
+        {Name: "account_balance", Type: def.FieldCurrency},
             // Computed: sum of unpaid invoices (read-only, maintained by finance module)
     },
-    Edges: []definition.EdgeDef{
-        {Name: "contacts",     Target: "crm_contact",     Type: definition.EdgeOneToMany},
-        {Name: "opportunities", Target: "crm_opportunity", Type: definition.EdgeOneToMany},
-        {Name: "invoices",     Target: "finance_invoice",  Type: definition.EdgeOneToMany},
+    Edges: []def.EdgeDef{
+        {Name: "contacts",     Target: "crm_contact",     Type: def.EdgeOneToMany},
+        {Name: "opportunities", Target: "crm_opportunity", Type: def.EdgeOneToMany},
+        {Name: "invoices",     Target: "finance_invoice",  Type: def.EdgeOneToMany},
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:crm.sales_rep", "role:tenant.admin"},
         Read:   []string{"role:crm.sales_rep", "role:finance.viewer", "role:tenant.admin"},
         Write:  []string{"role:crm.sales_rep", "role:tenant.admin"},
@@ -82,11 +82,11 @@ A `BeforeSave` hook on `finance_invoice` enforces the customer's credit limit:
 
 ```go
 type CreditLimitGuard struct {
-    CustomerRepo definition.EntityRepository[Customer]
-    InvoiceRepo  definition.EntityRepository[Invoice]
+    CustomerRepo def.EntityRepository[Customer]
+    InvoiceRepo  def.EntityRepository[Invoice]
 }
 
-func (h *CreditLimitGuard) BeforeSave(ctx context.Context, record *definition.EntityRecord, isUpdate bool) error {
+func (h *CreditLimitGuard) BeforeSave(ctx context.Context, record *def.EntityRecord, isUpdate bool) error {
     customerID, _ := record.Fields["customer"].(uuid.UUID)
     invoiceTotal, _ := record.Fields["total_kes"].(decimal.Decimal)
 
@@ -106,7 +106,7 @@ func (h *CreditLimitGuard) BeforeSave(ctx context.Context, record *definition.En
             filter.Eq("customer", customerID),
             filter.In("status", []string{"Draft", "Submitted", "Approved"}),
         ),
-        definition.AggregateSpec{Op: "sum", Field: "total_kes"},
+        def.AggregateSpec{Op: "sum", Field: "total_kes"},
     )
     if err != nil {
         return fmt.Errorf("CreditLimitGuard.BeforeSave: aggregate outstanding: %w", err)
@@ -114,7 +114,7 @@ func (h *CreditLimitGuard) BeforeSave(ctx context.Context, record *definition.En
 
     total := outstanding.Value.Add(invoiceTotal)
     if total.GreaterThan(creditLimit) {
-        return &definition.BusinessError{
+        return &def.BusinessError{
             Code:    "crm.credit_limit_exceeded",
             Message: fmt.Sprintf("This invoice would exceed the customer's credit limit of KES %s", creditLimit),
             Status:  400,
@@ -130,7 +130,7 @@ func (h *CreditLimitGuard) BeforeSave(ctx context.Context, record *definition.En
 ## 4. Lead-to-Customer Conversion Action
 
 ```go
-Actions: []definition.ActionDef{
+Actions: []def.ActionDef{
     {
         Name:        "convert",
         Label:       "Convert to Customer",
@@ -141,7 +141,7 @@ Actions: []definition.ActionDef{
 ```
 
 ```go
-func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*definition.ActionResult, error) {
+func ConvertLeadAction(ctx context.Context, action def.ActionContext) (*def.ActionResult, error) {
     lead, err := action.Repo.Get(ctx, action.RecordID)
     if err != nil {
         return nil, fmt.Errorf("ConvertLeadAction: get lead: %w", err)
@@ -149,7 +149,7 @@ func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*d
 
     status, _ := lead.Fields["status"].(string)
     if status != "Qualified" {
-        return nil, &definition.BusinessError{
+        return nil, &def.BusinessError{
             Code:    "crm.lead_not_qualified",
             Message: "Only qualified leads can be converted to customers",
             Status:  400,
@@ -157,7 +157,7 @@ func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*d
     }
 
     // Create customer from lead data
-    customer, err := action.Services.CustomerRepo.Create(ctx, definition.CreateInput{
+    customer, err := action.Services.CustomerRepo.Create(ctx, def.CreateInput{
         Fields: map[string]any{
             "name":  lead.Fields["company_name"],
             "email": lead.Fields["email"],
@@ -170,7 +170,7 @@ func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*d
     }
 
     // Update lead status and link to customer
-    _, err = action.Repo.Update(ctx, action.RecordID, definition.UpdateInput{
+    _, err = action.Repo.Update(ctx, action.RecordID, def.UpdateInput{
         Fields: map[string]any{
             "status":            "Converted",
             "converted_to":      customer.ID,
@@ -182,7 +182,7 @@ func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*d
         return nil, fmt.Errorf("ConvertLeadAction: update lead: %w", err)
     }
 
-    return &definition.ActionResult{
+    return &def.ActionResult{
         Message: fmt.Sprintf("Lead converted to customer: %s", customer.Fields["name"]),
         Data:    map[string]any{"customer_id": customer.ID},
     }, nil
@@ -196,7 +196,7 @@ func ConvertLeadAction(ctx context.Context, action definition.ActionContext) (*d
 Sales reps see only customers they own:
 
 ```go
-Policy: definition.PolicyFunc(func(ctx context.Context) definition.Filter {
+Policy: def.PolicyFunc(func(ctx context.Context) def.Filter {
     actor := session.ActorFromContext(ctx)
     if actor.HasRole("role:tenant.admin") || actor.HasRole("role:crm.manager") {
         return filter.All()

@@ -37,21 +37,21 @@ Feature flags are **boolean only**. For numeric/string parameters, use the [Sett
 ## 2. Flag Entity
 
 ```go
-var FeatureFlagDefinition = definition.SystemDefinition{
+var FeatureFlagDefinition = def.SystemDefinition{
     Name:   "platform_feature_flag",
     Module: "flags",
-    Fields: []definition.FieldDef{
-        {Name: "key",           Type: definition.FieldData, Required: true, Immutable: true, Unique: true},
+    Fields: []def.FieldDef{
+        {Name: "key",           Type: def.FieldData, Required: true, Immutable: true, Unique: true},
             // e.g. "inventory.lot_tracking", "finance.etims_integration"
-        {Name: "label",         Type: definition.FieldData, Required: true},
-        {Name: "description",   Type: definition.FieldSmallText},
-        {Name: "default_value", Type: definition.FieldBool, Default: false},
-        {Name: "lifecycle",     Type: definition.FieldSelect,
+        {Name: "label",         Type: def.FieldData, Required: true},
+        {Name: "description",   Type: def.FieldSmallText},
+        {Name: "default_value", Type: def.FieldBool, Default: false},
+        {Name: "lifecycle",     Type: def.FieldSelect,
             Options: []string{"Experimental", "Beta", "GA", "Deprecated"}, Default: "Experimental"},
-        {Name: "module",        Type: definition.FieldData},  // owning module name
-        {Name: "since_version", Type: definition.FieldData},  // e.g. "1.2"
+        {Name: "module",        Type: def.FieldData},  // owning module name
+        {Name: "since_version", Type: def.FieldData},  // e.g. "1.2"
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:platform-admin"},
         Read:   []string{"role:platform-admin", "role:tenant.admin"},
         Write:  []string{"role:platform-admin"},
@@ -63,21 +63,21 @@ var FeatureFlagDefinition = definition.SystemDefinition{
 ### Flag Override Entity (per-tenant/user)
 
 ```go
-var FlagOverrideDefinition = definition.SystemDefinition{
+var FlagOverrideDefinition = def.SystemDefinition{
     Name:   "platform_flag_override",
     Module: "flags",
-    Fields: []definition.FieldDef{
-        {Name: "flag_key",    Type: definition.FieldData, Required: true, Immutable: true},
-        {Name: "scope",       Type: definition.FieldSelect,
+    Fields: []def.FieldDef{
+        {Name: "flag_key",    Type: def.FieldData, Required: true, Immutable: true},
+        {Name: "scope",       Type: def.FieldSelect,
             Options: []string{"tenant", "user"}, Required: true, Immutable: true},
-        {Name: "scope_id",    Type: definition.FieldData, Required: true, Immutable: true},
+        {Name: "scope_id",    Type: def.FieldData, Required: true, Immutable: true},
             // tenant UUID for scope=tenant, user UUID for scope=user
-        {Name: "value",       Type: definition.FieldBool, Required: true},
-        {Name: "set_by",      Type: definition.FieldLink, LinkTarget: "iam_user"},
-        {Name: "reason",      Type: definition.FieldSmallText},
-        {Name: "expires_at",  Type: definition.FieldDateTime},  // optional expiry for rollouts
+        {Name: "value",       Type: def.FieldBool, Required: true},
+        {Name: "set_by",      Type: def.FieldLink, LinkTarget: "iam_user"},
+        {Name: "reason",      Type: def.FieldSmallText},
+        {Name: "expires_at",  Type: def.FieldDateTime},  // optional expiry for rollouts
     },
-    Permissions: definition.PermissionSet{
+    Permissions: def.PermissionSet{
         Create: []string{"role:platform-admin", "role:tenant.admin"},
         Read:   []string{"role:platform-admin", "role:tenant.admin"},
         Write:  []string{"role:platform-admin", "role:tenant.admin"},
@@ -154,28 +154,28 @@ func flagCacheKey(key, tenantID, userID string) string {
 // internal/core/inventory/flags.go
 
 var (
-    FlagLotTracking = definition.FeatureFlag{
+    FlagLotTracking = def.FeatureFlag{
         Key:         "inventory.lot_tracking",
         Label:       "Lot / Batch Tracking",
         Description: "Enable serial number and batch tracking on stock moves.",
         Default:     false,
-        Lifecycle:   definition.FlagLifecycleBeta,
+        Lifecycle:   def.FlagLifecycleBeta,
         Module:      "inventory",
     }
 
-    FlagReorderAlerts = definition.FeatureFlag{
+    FlagReorderAlerts = def.FeatureFlag{
         Key:         "inventory.reorder_alerts",
         Label:       "Reorder Point Alerts",
         Description: "Notify purchasing when stock falls below reorder point.",
         Default:     true,
-        Lifecycle:   definition.FlagLifecycleGA,
+        Lifecycle:   def.FlagLifecycleGA,
         Module:      "inventory",
     }
 )
 
 func init() {
-    definition.RegisterFlag(&FlagLotTracking)
-    definition.RegisterFlag(&FlagReorderAlerts)
+    def.RegisterFlag(&FlagLotTracking)
+    def.RegisterFlag(&FlagReorderAlerts)
 }
 ```
 
@@ -227,14 +227,14 @@ func BuildStockMoveForm(ctx context.Context, actor session.Actor) ([]byte, error
 ### In Hooks
 
 ```go
-func (h *LotTrackingGuard) BeforeCreate(ctx context.Context, record *definition.EntityRecord) error {
+func (h *LotTrackingGuard) BeforeCreate(ctx context.Context, record *def.EntityRecord) error {
     enabled, err := h.Flags.Evaluate(ctx, "inventory.lot_tracking")
     if err != nil || !enabled {
         return nil  // Lot tracking off — skip validation
     }
 
     if record.Fields["lot_number"] == nil || record.Fields["lot_number"] == "" {
-        return &definition.ValidationError{
+        return &def.ValidationError{
             Fields: map[string]string{
                 "lot_number": "Lot/serial number required when lot tracking is enabled",
             },

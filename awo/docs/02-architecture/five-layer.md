@@ -11,7 +11,7 @@ related:
   - "[Architecture Laws](laws.md)"
   - "[Architecture Invariants](invariants.md)"
   - "[Architecture Overview](../01-introduction/architecture-overview.md)"
-  - "[EntityDefinition](../03-kernel/entity-definition.md)"
+  - "[EntityDefinition](../03-kernel/entity-def.md)"
   - "[EntityRepository](../05-persistence/entity-repository.md)"
   - "[Awo Glossary](../GLOSSARY.md)"
 ---
@@ -153,7 +153,7 @@ The Domain Layer has no external dependencies. It imports only `awo/def/`, `awo/
 
 ### What Belongs Here
 
-**EntityDefinition declarations** — The `definition.go` file in each module declares all EntityDefinitions and calls `definition.Register()` in `init()`.
+**EntityDefinition declarations** — The `def.go` file in each module declares all EntityDefinitions and calls `def.Register()` in `init()`.
 
 **Hook implementations** — Structs implementing the hook interfaces (`BeforeCreateHook`, `AfterCreateHook`, etc.). Hooks receive an `EntityRecord` and may mutate it (before-hooks) or perform side effects using the `EntityRepository` passed in the hook context. Hooks MUST NOT perform I/O outside of `EntityRepository` calls — external API calls, email sends, and file operations belong in Workflow Layer activities.
 
@@ -200,8 +200,8 @@ No database. No Redis. No HTTP server. Compile, run, done.
 
 ```
 internal/{platform|core}/<module>/
-    <module>.go      ← init() calls definition.Register()
-    definition.go    ← EntityDefinition variable declarations
+    <module>.go      ← init() calls def.Register()
+    def.go    ← EntityDefinition variable declarations
     policy.go        ← PolicyFunc implementations
     hooks.go         ← HookDef implementations
     service.go       ← Thin service functions
@@ -473,7 +473,7 @@ func InvoiceSubmissionWorkflow(ctx workflow.Context, input Input) error {
 - [Architecture Laws](laws.md) — LAW-008 is the normative basis for this document
 - [Architecture Invariants](invariants.md) — INV-003, INV-006, INV-010 are maintained by this model
 - [Architecture Overview](../01-introduction/architecture-overview.md) — informal introduction to this model
-- [EntityDefinition](../03-kernel/entity-definition.md) — the Domain layer's central type
+- [EntityDefinition](../03-kernel/entity-def.md) — the Domain layer's central type
 - [EntityRepository](../05-persistence/entity-repository.md) — the interface between Domain and Store
 - [Hook System](../04-domain/hooks.md) — the Domain layer extension mechanism
 - [Temporal Integration](../09-workflow/temporal-integration.md) — Workflow layer specification
