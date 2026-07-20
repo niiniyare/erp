@@ -64,12 +64,12 @@ This document specifies the Finance module — the canonical reference module fo
 
 ### Custom Actions
 
-| Action | Method | Permission | Trigger |
-|--------|--------|-----------|---------|
-| `submit` | POST | `role:finance.accounts_payable` | Status: Draft → Submitted. Emits `finance.invoice.submitted`. Starts `InvoiceApprovalWorkflow`. |
-| `approve` | POST | `role:finance.manager` | Status: Submitted → Approved. Emits `finance.invoice.approved`. Four-eyes: approver ≠ submitter. |
-| `cancel` | POST | `role:finance.manager` | Status: any except Paid → Cancelled. Body: `{reason}`. Emits `finance.invoice.cancelled`. |
-| `record_payment` | POST | `role:finance.accounts_payable` | Creates `finance_payment`. Status: Approved → Paid. |
+| Action | Method | Permission Identifier | Trigger |
+|--------|--------|----------------------|---------|
+| `submit` | POST | `finance.invoice.submit` | Status: Draft → Submitted. Emits `finance.invoice.submitted`. Starts `InvoiceApprovalWorkflow`. |
+| `approve` | POST | `finance.invoice.approve` | Status: Submitted → Approved. Emits `finance.invoice.approved`. Four-eyes: approver ≠ submitter. |
+| `cancel` | POST | `finance.invoice.cancel` | Status: any except Paid → Cancelled. Body: `{reason}`. Emits `finance.invoice.cancelled`. |
+| `record_payment` | POST | `finance.invoice.record_payment` | Creates `finance_payment`. Status: Approved → Paid. |
 
 ### Workflow Triggers
 
@@ -147,14 +147,41 @@ KRA eTIMS compliance record. Created automatically when an invoice is paid.
 
 ---
 
-## Permissions Summary
+## Permission Identifiers
 
-| Role | Create | Read | Write | Delete |
-|------|--------|------|-------|--------|
-| `role:finance.viewer` | — | ✓ | — | — |
-| `role:finance.accounts_payable` | Invoice, Payment | ✓ | Invoice (Draft→Submitted) | — |
-| `role:finance.manager` | All | ✓ | All | JournalEntry |
-| `role:tenant.admin` | All | ✓ | All | All |
+The Finance module declares these permission identifiers on `PermissionSet`. The IAM module maps roles to these identifiers separately.
+
+| Permission Identifier | Operation |
+|-----------------------|-----------|
+| `finance.invoice.create` | Create invoices |
+| `finance.invoice.read` | Read invoices and invoice lines |
+| `finance.invoice.update` | Update draft invoice fields |
+| `finance.invoice.delete` | Delete invoices |
+| `finance.invoice.submit` | Submit invoice for approval |
+| `finance.invoice.approve` | Approve submitted invoice |
+| `finance.invoice.cancel` | Cancel an invoice |
+| `finance.invoice.record_payment` | Record payment against invoice |
+| `finance.customer.create` | Create customers |
+| `finance.customer.read` | Read customers |
+| `finance.customer.update` | Update customers |
+| `finance.journal_entry.create` | Create journal entries |
+| `finance.journal_entry.read` | Read journal entries and lines |
+| `finance.journal_entry.post` | Post a journal entry |
+| `finance.ledger_entry.read` | Read ledger entries (immutable — no create/update/delete) |
+| `finance.ledger_account.create` | Create ledger accounts |
+| `finance.ledger_account.read` | Read ledger accounts |
+| `finance.ledger_account.update` | Update ledger accounts |
+| `finance.payment.create` | Create payment records |
+| `finance.payment.read` | Read payment records |
+
+**Role-to-permission mapping** (managed by IAM module, not EntityDefinition):
+
+| Role | Permissions granted |
+|------|---------------------|
+| `role:finance.viewer` | All `finance.*.read` permissions |
+| `role:finance.accounts_payable` | `finance.invoice.*`, `finance.payment.*`, `finance.customer.*` |
+| `role:finance.manager` | All finance permissions including `approve`, `post`, `journal_entry.*` |
+| `role:tenant.admin` | All finance permissions including delete |
 
 ---
 

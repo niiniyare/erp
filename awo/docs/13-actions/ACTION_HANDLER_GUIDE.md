@@ -33,21 +33,21 @@ var InvoiceDefinition = def.SystemDefinition{
             Name:        "submit",
             Method:      def.ActionMethodPost,
             Label:       "Submit for Approval",
-            Permission:  "role:finance.accounts_payable",
+            Permission:  "finance.invoice.submit",
             HandlerFunc: SubmitInvoiceAction,
         },
         {
             Name:        "approve",
             Method:      def.ActionMethodPost,
             Label:       "Approve Invoice",
-            Permission:  "role:finance.manager",
+            Permission:  "finance.invoice.approve",
             HandlerFunc: ApproveInvoiceAction,
         },
         {
             Name:        "cancel",
             Method:      def.ActionMethodPost,
             Label:       "Cancel Invoice",
-            Permission:  "role:tenant.admin",
+            Permission:  "finance.invoice.cancel",
             HandlerFunc: CancelInvoiceAction,
         },
     },
@@ -58,7 +58,7 @@ var InvoiceDefinition = def.SystemDefinition{
 - `Name`: snake_case action name. Used in route path and workflow IDs.
 - `Method`: `ActionMethodPost` (default and required for mutations) or `ActionMethodGet` (read-only actions).
 - `Label`: human-readable label. Used in SDUI action buttons.
-- `Permission`: role string checked before the handler is called.
+- `Permission`: permission identifier checked by `PolicyEvaluator` before the handler is called. Format: `"{module}.{entity}.{action}"`. MUST NOT be a role name.
 - `HandlerFunc`: the implementation.
 
 ---
@@ -238,7 +238,7 @@ func CancelInvoiceAction(ctx context.Context, action def.ActionContext) (*def.Ac
     Name:        "preview_pdf",
     Method:      def.ActionMethodGet,
     Label:       "Preview PDF",
-    Permission:  "role:finance.viewer",
+    Permission:  "finance.invoice.read",
     HandlerFunc: PreviewInvoicePDF,
 },
 ```

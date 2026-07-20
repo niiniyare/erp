@@ -36,7 +36,7 @@ This document is the canonical record of all architectural decisions (ADRs) for 
 
 **Decision:** Two distinct layers:
 
-- **Declaration layer** (`awo/def`): `PermissionSet` on `EntityDefinition`. Module authors declare which roles can perform which operations. Pure Go struct. Engine-agnostic.
+- **Declaration layer** (`awo/def`): `PermissionSet` on `EntityDefinition`. Module authors declare **permission identifiers** — stable names for capabilities (e.g., `"finance.invoice.create"`). No roles, no subjects, no backend constructs. Pure Go struct. Fully engine-agnostic.
 
 - **Enforcement layer** (`awo/auth`): `PolicyEvaluator` interface. Runtime consults it per request. Default implementation: Casbin. Replaceable by any engine (OPA, ReBAC, custom).
 
@@ -227,19 +227,21 @@ Hook recursion on the same entity type is never correct. It indicates a design e
 
 ## ADR-011: Compiler Output Naming
 
-**Decision:** `CompiledSchema.CasbinPolicies []CasbinPolicy` is renamed to `CompiledSchema.CapabilityGrants []CapabilityGrant`. The compiler output MUST NOT reference a specific authorization engine.
+**Decision:** `CompiledSchema.CasbinPolicies []CasbinPolicy` is renamed to `CompiledSchema.CapabilityGrants []CapabilityGrant`. The compiler output MUST NOT reference a specific authorization engine. `PermissionSet` MUST contain permission identifiers — never roles.
 
 ```go
 type CapabilityGrant struct {
-    Role   string  // e.g. "role:finance.accounts_payable"
-    Entity string  // qualified entity name
-    Action string  // "create" | "read" | "write" | "delete" | custom action name
+    Permission string  // e.g. "finance.invoice.create" (from PermissionSet)
+    Entity     string  // qualified entity name, e.g. "finance_invoice"
+    Action     string  // "create" | "read" | "update" | "delete" | custom action name
 }
 ```
 
-The `PolicyEvaluator` implementation (ADR-001) loads `CapabilityGrants` and translates them into its engine's format (e.g., Casbin `p` assertions).
+The `PolicyEvaluator` implementation (ADR-001) loads `CapabilityGrants` and translates them into its engine's format. The Casbin implementation loads them as `p` assertions binding permission identifiers to entity+action pairs. A separate role-to-permission mapping (managed by the IAM module) is loaded as `g` assertions.
 
 **Rejected:** Keeping `CasbinPolicies`. The compiler must not depend on the Casbin package or its policy format.
+
+**Rejected:** Storing role names in `PermissionSet`. Role-to-permission mapping belongs in the IAM module, not in EntityDefinition. EntityDefinition must remain authorization-backend agnostic.
 
 ---
 

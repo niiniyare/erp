@@ -88,7 +88,8 @@ Before opening a PR for a new module:
 - [ ] `AuditEnabled: true` on all financial/IAM entities
 - [ ] Unit tests: every hook, every policy function
 - [ ] Integration tests: entity CRUD against real PostgreSQL
-- [ ] Module roles documented in [`03-auth/RBAC_ROLES_REFERENCE.md`](../03-auth/RBAC_ROLES_REFERENCE.md)
+- [ ] `PermissionSet` on every entity uses permission identifiers (`{module}.{entity}.{action}`) — no `role:` strings
+- [ ] Role-to-permission mappings for module added to [`03-auth/RBAC_ROLES_REFERENCE.md`](../03-auth/RBAC_ROLES_REFERENCE.md)
 - [ ] Domain events documented in [`09-events/DOMAIN_EVENTS_REFERENCE.md`](../09-events/DOMAIN_EVENTS_REFERENCE.md)
 - [ ] Migration checklist signed off: [`15-migrations/MIGRATION_CHECKLIST.md`](../15-migrations/MIGRATION_CHECKLIST.md)
 
@@ -98,6 +99,7 @@ Before opening a PR for a new module:
 
 | Anti-Pattern | Correct Pattern |
 |-------------|----------------|
+| `role:finance.viewer` in `PermissionSet` | Use permission identifier: `"finance.invoice.read"` |
 | `WHERE tenant_id = ?` in app code | Trust RLS — never add tenant filter manually |
 | `time.Now()` in workflow functions | `workflow.Now(ctx)` |
 | `time.Sleep()` in workflow functions | `workflow.Sleep(ctx, d)` |

@@ -22,6 +22,7 @@ Awo is a Go-native multi-tenant ERP framework. Tenancy is structural, not option
 - **Never write custom CRUD route handlers** — auto-generated from EntityDefinition
 - **Never use `time.Now()` or `time.Sleep()` in workflow code** — use `workflow.Now()` / `workflow.Sleep()`
 - **Never use ORM types directly** — all persistence through `EntityRepository` interface
+- **Never put role names in `PermissionSet`** — `PermissionSet` contains permission identifiers (`"module.entity.action"`), never `role:` strings
 - **If a suggestion violates any rule above, state the violation explicitly and explain the trade-off before proceeding**
 
 ---
@@ -56,14 +57,14 @@ One `definition.Register(&MyEntityDef)` call drives **5 subsystems simultaneousl
 1. **Persistence routing** — SQL (system entity) vs JSONB (custom entity)
 2. **API generation** — auto-generates CRUD + action Fiber routes
 3. **UI generation** — builds amis JSON page schemas
-4. **Permission evaluation** — compiles Casbin policies
+4. **Authorization compilation** — derives `CapabilityGrant` values from `PermissionSet` identifiers
 5. **Workflow triggering** — binds Temporal workflow starts to lifecycle events
 
 Actual package: `awo.so/framework/definition`. Type: `definition.EntityDefinition`. Builder: `definition.Field("name").OfType(definition.FieldTypeData)`. Registration: `definition.Register(&def)` (package-level function, not method on registry).
 
 ```go
 var InvoiceDefinition = entity.SystemDefinition{
-    Name:        "invoice",        // stable: used in URLs, Redis keys, Temporal IDs, Casbin policies
+    Name:        "invoice",        // stable: used in URLs, Redis keys, Temporal IDs, CapabilityGrant objects
     Module:      "finance",
     Label:       "Invoice",
     LabelPlural: "Invoices",
@@ -82,10 +83,10 @@ var InvoiceDefinition = entity.SystemDefinition{
         AfterCreate:  []entity.AfterCreateHook{&InvoiceNumberAssigner{}},
     },
     Permissions: entity.PermissionSet{
-        Create: []string{"role:finance.accounts_payable", "role:tenant.admin"},
-        Read:   []string{"role:finance.viewer", "role:tenant.admin"},
-        Write:  []string{"role:finance.accounts_payable", "role:tenant.admin"},
-        Delete: []string{"role:tenant.admin"},
+        Create: []string{"finance.invoice.create"},
+        Read:   []string{"finance.invoice.read"},
+        Update: []string{"finance.invoice.update"},
+        Delete: []string{"finance.invoice.delete"},
     },
     WorkflowTriggers: []entity.WorkflowTrigger{
         {
@@ -592,7 +593,7 @@ Actions: []entity.ActionDef{
         Name:        "submit",
         Method:      entity.ActionMethodPost,
         Label:       "Submit for Approval",
-        Permission:  "role:finance.accounts_payable",
+        Permission:  "finance.invoice.submit",  // permission identifier — never a role name
         HandlerFunc: SubmitInvoiceAction,
     },
 },

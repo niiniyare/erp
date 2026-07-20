@@ -89,10 +89,10 @@ var StockItemDefinition = def.SystemDefinition{
         {Name: "cost_price",  Type: def.FieldTypeCurrency},
     },
     Permissions: def.PermissionSet{
-        Create: []string{"role:inventory.manager", "role:tenant.admin"},
-        Read:   []string{"role:inventory.viewer",  "role:tenant.admin"},
-        Write:  []string{"role:inventory.manager", "role:tenant.admin"},
-        Delete: []string{"role:tenant.admin"},
+        Create: []string{"inventory.stock_item.create"},
+        Read:   []string{"inventory.stock_item.read"},
+        Update: []string{"inventory.stock_item.update"},
+        Delete: []string{"inventory.stock_item.delete"},
     },
     AuditEnabled: true,
 }
@@ -182,13 +182,15 @@ Hooks: def.HookSet{
 ```go
 // policy.go
 
-// StockItemViewerPolicy restricts stock items to the viewer's assigned warehouse.
-func StockItemViewerPolicy(ctx context.Context) def.Filter {
+// StockItemWarehousePolicy restricts stock items to the viewer's assigned warehouse.
+// Actors without a warehouse assignment (managers, admins) see all items.
+func StockItemWarehousePolicy(ctx context.Context) def.Filter {
     viewer := auth.ViewerFromContext(ctx)
-    if viewer.HasRole("role:tenant.admin") || viewer.HasRole("role:inventory.manager") {
+    warehouseID := viewer.Actor().WarehouseID // set by IAM provisioning for warehouse staff
+    if warehouseID == uuid.Nil {
         return nil // no restriction
     }
-    return filter.Eq("warehouse_id", viewer.Actor().UserID) // warehouse staff see only their warehouse
+    return filter.Eq("warehouse_id", warehouseID)
 }
 ```
 
@@ -220,7 +222,8 @@ Before merging a new module:
 - [ ] `AuditEnabled: true` on all financial/IAM entities
 - [ ] Unit tests for every hook and policy
 - [ ] Integration tests for entity CRUD against real PostgreSQL
-- [ ] Module roles added to [`03-auth/RBAC_ROLES_REFERENCE.md`](../03-auth/RBAC_ROLES_REFERENCE.md)
+- [ ] `PermissionSet` on every entity uses permission identifiers (`{module}.{entity}.{action}`) — no `role:` strings
+- [ ] Role-to-permission mappings for module added to [`03-auth/RBAC_ROLES_REFERENCE.md`](../03-auth/RBAC_ROLES_REFERENCE.md)
 - [ ] Domain events added to [`09-events/DOMAIN_EVENTS_REFERENCE.md`](../09-events/DOMAIN_EVENTS_REFERENCE.md)
 
 ---

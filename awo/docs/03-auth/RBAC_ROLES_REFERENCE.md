@@ -9,7 +9,7 @@
 
 ## Purpose
 
-This document is the exhaustive reference for all built-in role names, their scopes, and their naming conventions. Module authors declare these role names in `PermissionSet` declarations.
+This document is the exhaustive reference for all built-in role names, their scopes, and their naming conventions. Role names are **PolicyEvaluator configuration** — they map roles to permission identifiers in the IAM module. They MUST NOT appear inside `PermissionSet` declarations on `EntityDefinition`.
 
 ---
 
