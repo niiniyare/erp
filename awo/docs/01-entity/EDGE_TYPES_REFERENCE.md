@@ -68,7 +68,7 @@ Entity A belongs to one Target record.
 Entity A holds the FK column referencing Target.
 ```
 
-The inverse of `EdgeOneToMany`. Usually declared on the "child" side of the relationship for clarity in the definition.
+The inverse of `EdgeOneToMany`. Usually declared on the "child" side of the relationship for clarity in the def.
 
 **Example:** An `InvoiceLine` belongs to one `Invoice`.
 

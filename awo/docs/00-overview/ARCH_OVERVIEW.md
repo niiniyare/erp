@@ -24,7 +24,7 @@ None. This document has no prerequisites.
 
 Awo is a Go-native framework for building multi-tenant ERP systems. It is not an application. It is a framework that module authors use to declare entities, and that the framework uses to automatically generate persistence, API routes, UI schemas, authorization policies, and workflow triggers.
 
-**The central primitive is the `EntityDefinition`.** One `definition.Register(&MyEntityDef)` call drives five subsystems simultaneously:
+**The central primitive is the `EntityDefinition`.** One `def.Register(&MyEntityDef)` call drives five subsystems simultaneously:
 
 | Subsystem | What it does |
 |-----------|-------------|
@@ -155,7 +155,7 @@ The following sequence is a hard dependency chain. Any failure before Fiber star
 3. Redis client init (ping; exit if unreachable)
        ↓
 4. EntityRegistry init
-   → all modules call definition.Register() via init()
+   → all modules call def.Register() via init()
    → Build() validates all definitions
    → Compile() produces CompiledSchema
        ↓

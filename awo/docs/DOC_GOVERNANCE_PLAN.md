@@ -84,7 +84,7 @@ Content about PostgreSQL, decimal types, JSONB — mostly framework-agnostic. Li
 
 **`04-event-architecture/` — NEEDS REFACTOR**
 
-Event outbox concept exists in the frozen architecture (ADR-008). These files may contain useful implementation detail about the event bus, but they predate the outbox schema definition. Content cannot be canonical because the outbox schema (`event_outbox` table) is defined in the ARCH_FREEZE_REVIEW, not here.
+Event outbox concept exists in the frozen architecture (ADR-008). These files may contain useful implementation detail about the event bus, but they predate the outbox schema def. Content cannot be canonical because the outbox schema (`event_outbox` table) is defined in the ARCH_FREEZE_REVIEW, not here.
 
 **`05-observability/` — GOOD**
 
