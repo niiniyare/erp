@@ -1,39 +1,51 @@
 package def
 
-// PermissionSet declares the RBAC gates for each operation on an entity.
-// Each field is a list of Casbin role or user subjects that are allowed to
-// perform the operation. An empty slice means "deny all" (no one can perform
-// the operation).
+// PermissionSet declares the authorization gates for each operation on an entity.
+// Each field is a list of permission identifiers — stable, engine-agnostic
+// capability names that identify what a subject must be granted to perform the
+// operation. An empty slice means "deny all" (no one can perform the operation).
 //
-// The platform-admin role ("role:platform-admin") bypasses all Casbin checks
-// and is never listed here — it is granted unconditionally by the IAM
-// middleware.
+// Permission identifiers use the format "{module}.{entity}.{operation}".
+// Examples: "finance.invoice.create", "iam.user.read", "inventory.stock_item.delete".
 //
-// Subject formats:
-//   - "role:{name}"  — e.g. "role:tenant.admin", "role:finance.accounts_payable"
-//   - "user:{uuid}"  — per-user grant (uncommon; prefer role-based grants)
+// Permission identifiers are NEVER role names. Role-to-permission mapping is
+// managed by the IAM module and loaded separately by the PolicyEvaluator at
+// startup. Mixing roles into PermissionSet would couple EntityDefinition to a
+// specific authorization backend — a violation of ADR-001 and ADR-011.
 //
-// Role inheritance accumulates permissions upward via Casbin g assertions.
-// Granting a parent role implicitly grants all child role permissions.
+// The platform-admin role bypasses all authorization checks unconditionally and
+// is never referenced here — the PolicyEvaluator short-circuits it before
+// consulting the compiled CapabilityGrants.
+//
+// The compiler transforms PermissionSet values into [CapabilityGrant] records.
+// The PolicyEvaluator loads CapabilityGrants and a separate role-to-permission
+// mapping to resolve authorization decisions at request time.
 type PermissionSet struct {
-	// Create lists subjects allowed to create new records.
+	// Create lists permission identifiers required to create new records.
+	// e.g. []string{"finance.invoice.create"}
 	Create []string
 
-	// Read lists subjects allowed to read records.
+	// Read lists permission identifiers required to read records.
+	// e.g. []string{"finance.invoice.read"}
 	Read []string
 
-	// Write lists subjects allowed to update existing records.
+	// Write lists permission identifiers required to update existing records.
+	// e.g. []string{"finance.invoice.update"}
 	Write []string
 
-	// Delete lists subjects allowed to delete records.
+	// Delete lists permission identifiers required to delete records.
+	// e.g. []string{"finance.invoice.delete"}
 	Delete []string
 
-	// Actions maps action names to their allowed subjects. The framework
-	// merges these with the route-level permission declared on [ActionDef].
-	// If both are set, both are checked (AND semantics).
+	// Actions maps action names to the permission identifiers required to invoke
+	// them. The framework verifies the caller holds the permission declared on
+	// [ActionDef.Permission] before the action handler is invoked.
+	// e.g. map[string][]string{"submit": {"finance.invoice.submit"}}
 	Actions map[string][]string
 
 	// Policy is the row-level filter applied to all read operations for this
-	// entity. Nil means no additional row restriction beyond RLS.
+	// entity. Nil means no additional row restriction beyond RLS. Policy runs
+	// after the PolicyEvaluator's operation-level check and may further narrow
+	// the result set based on the authenticated viewer's attributes.
 	Policy PolicyFunc
 }
