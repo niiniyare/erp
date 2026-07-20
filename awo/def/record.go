@@ -148,7 +148,7 @@ type TriggerContext struct {
 }
 
 // ActionContext is the parameter received by [ActionDef.HandlerFunc].
-// It provides a permission-scoped repository, the target record ID, and the
+// It provides a permission-scoped runtime, the target record ID, and the
 // actor — all pre-resolved by the framework before the handler is called.
 type ActionContext struct {
 	// Ctx is the request context, carrying TenantContext and cancellation.
@@ -162,6 +162,12 @@ type ActionContext struct {
 
 	// Body is the raw JSON body of the action request, if any.
 	Body []byte
+
+	// Runtime provides access to all framework services: repositories,
+	// transactions, event publishing, workflow start, notifications, cache,
+	// clock, and logger. Constructed and injected by the framework before
+	// the handler is called. Never nil.
+	Runtime ActionRuntime
 }
 
 // ActionResult is returned by [ActionDef.HandlerFunc] to communicate the

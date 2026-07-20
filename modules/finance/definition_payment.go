@@ -1,6 +1,9 @@
 package finance
 
 import (
+	"context"
+	"fmt"
+
 	"awo.so/awo/def"
 	"awo.so/awo/runtime"
 )
@@ -242,22 +245,98 @@ var AllocationDefinition = def.SystemDefinition{
 }
 
 func processPayment(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: load payment, verify status=="submitted", verify period open,
-	// determine GL accounts from payment method, create JournalEntry+lines,
-	// post the journal entry, set payment status="processed"
-	return nil, &runtime.BusinessError{
-		Code:    "finance.not_implemented",
-		Message: "process payment requires PostingService — wire EntityRepository first",
-		Status:  501,
+	rt := ctx.Runtime
+	paymentRepo := rt.Repo("finance_payment")
+	periodRepo := rt.Repo("finance_accounting_period")
+
+	payment, err := paymentRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.process_payment: %w", err)
 	}
+	if s := payment.GetString("status"); s != "submitted" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.payment.invalid_status",
+			Message: "only submitted payments can be processed; status: " + s,
+			Status:  400,
+		}
+	}
+
+	// Verify accounting period is open.
+	periodID := payment.GetUUID("accounting_period_id")
+	period, err := periodRepo.Get(ctx.Ctx, periodID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.process_payment: load period: %w", err)
+	}
+	if s := period.GetString("status"); s != "open" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.payment.period_not_open",
+			Message: "accounting period is not open; status: " + s,
+			Status:  400,
+		}
+	}
+
+	if err := rt.Tx(ctx.Ctx, func(txCtx context.Context) error {
+		_, err := paymentRepo.Update(txCtx, ctx.RecordID, map[string]any{"status": "processed"})
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("finance.process_payment: %w", err)
+	}
+
+	// Trigger payment processing workflow (journal entry creation, bank reconciliation).
+	wfID, _ := rt.StartWorkflow(ctx.Ctx, def.ActionWorkflowSpec{
+		WorkflowFn: "PaymentProcessingWorkflow",
+		TaskQueue:  "finance.payment.process",
+		Input: PaymentProcessingInput{
+			TenantID:  rt.TenantID(),
+			PaymentID: ctx.RecordID,
+			ActorID:   rt.Actor().UserID,
+		},
+	})
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.payment.processed",
+		Payload: map[string]any{"payment_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message:    "Payment processed.",
+		Data:       map[string]any{"payment_id": ctx.RecordID, "status": "processed"},
+		WorkflowID: wfID,
+	}, nil
 }
 
 func cancelPayment(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: verify status in ("submitted","processed"), reverse journal entry if exists,
-	// set status="cancelled"
-	return nil, &runtime.BusinessError{
-		Code:    "finance.not_implemented",
-		Message: "cancel payment not yet implemented",
-		Status:  501,
+	rt := ctx.Runtime
+	paymentRepo := rt.Repo("finance_payment")
+
+	payment, err := paymentRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.cancel_payment: %w", err)
 	}
+
+	s := payment.GetString("status")
+	if s != "draft" && s != "submitted" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.payment.cannot_cancel",
+			Message: "cannot cancel a payment with status: " + s,
+			Status:  400,
+		}
+	}
+
+	if err := rt.Tx(ctx.Ctx, func(txCtx context.Context) error {
+		_, err := paymentRepo.Update(txCtx, ctx.RecordID, map[string]any{"status": "cancelled"})
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("finance.cancel_payment: %w", err)
+	}
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.payment.cancelled",
+		Payload: map[string]any{"payment_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message: "Payment cancelled.",
+		Data:    map[string]any{"payment_id": ctx.RecordID, "status": "cancelled"},
+	}, nil
 }

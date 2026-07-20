@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/google/uuid"
+
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
+	"awo.so/awo/naming"
 )
 
 // Pipeline executes the entity lifecycle hook sequence for a mutation
@@ -23,12 +26,21 @@ import (
 // driver's Create/Update/Delete, which manage transactions internally and
 // call the after_* hook stage from within the transaction.
 type Pipeline struct {
-	reg *RuntimeRegistry
+	reg     *RuntimeRegistry
+	naming  *naming.NamingSeriesService
 }
 
 // NewPipeline creates a Pipeline bound to the compiled schema via RuntimeRegistry.
 func NewPipeline(schema *compiler.CompiledSchema) *Pipeline {
 	return &Pipeline{reg: NewRuntimeRegistry(schema)}
+}
+
+// WithNamingService attaches a NamingSeriesService to the Pipeline. When set,
+// RunBeforeCreate automatically allocates naming-series values for every
+// FieldTypeNamingSeries field that has no value already provided.
+func (p *Pipeline) WithNamingService(svc *naming.NamingSeriesService) *Pipeline {
+	p.naming = svc
+	return p
 }
 
 // CreateContext carries all inputs for a Create pipeline run.
@@ -96,6 +108,13 @@ func (p *Pipeline) RunBeforeCreate(pctx *CreateContext) (*def.EntityRecord, erro
 
 	// Stage 1: apply defaults for missing fields.
 	p.applyDefaults(record, es)
+
+	// Stage 1b: allocate naming-series values for unset NamingSeries fields.
+	if p.naming != nil {
+		if err := p.applyNamingSeries(pctx.Ctx, record, es); err != nil {
+			return nil, err
+		}
+	}
 
 	hooks := es.Hooks
 
@@ -302,6 +321,42 @@ func (p *Pipeline) validateFields(ctx context.Context, record *def.EntityRecord,
 
 	if !ve.IsEmpty() {
 		return ve
+	}
+	return nil
+}
+
+func (p *Pipeline) applyNamingSeries(ctx context.Context, record *def.EntityRecord, es *compiler.EntitySchema) error {
+	tenantID := record.TenantID
+	if tenantID == uuid.Nil {
+		// Extract from context if not set on record yet (middleware sets it later).
+		// Skip silently — the driver will set tenant_id before persist.
+		return nil
+	}
+	for _, f := range es.Fields {
+		if f.Type != def.FieldTypeNamingSeries {
+			continue
+		}
+		// Allow manual override: if a value is already set, keep it.
+		if v := record.GetString(f.Name); v != "" {
+			continue
+		}
+		if f.Series == "" {
+			continue
+		}
+		orgCode := record.GetString("organization_code")
+		if orgCode == "" {
+			orgCode = record.GetString("org_code")
+		}
+		id, err := p.naming.AllocateForRecord(ctx, naming.NamingFieldContext{
+			FieldName: f.Name,
+			Pattern:   f.Series,
+			TenantID:  tenantID,
+			OrgCode:   orgCode,
+		})
+		if err != nil {
+			return fmt.Errorf("naming_series %q: %w", f.Name, err)
+		}
+		record.Set(f.Name, id)
 	}
 	return nil
 }

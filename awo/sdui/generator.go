@@ -191,6 +191,30 @@ func (g *Generator) generateForm(es *compiler.EntitySchema, mode string) map[str
 			}
 			ctrl["options"] = opts
 		}
+		if (f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList) {
+			if lk, ok := es.FieldLookups[f.Name]; ok {
+				ctrl["type"] = "select"
+				ctrl["source"] = map[string]any{
+					"method": "get",
+					"url":    lk.SearchURL,
+					"data": map[string]any{
+						"keywords": "${keywords}",
+					},
+					"responseData": map[string]any{
+						"options": "${items}",
+					},
+				}
+				ctrl["valueField"] = lk.ValueField
+				ctrl["labelField"] = lk.LabelField
+				ctrl["searchable"] = true
+				ctrl["clearable"] = !f.Required
+				if lk.Multiple {
+					ctrl["multiple"] = true
+					ctrl["extractValue"] = true
+				}
+				ctrl["placeholder"] = "Search " + lk.TargetLabel + "..."
+			}
+		}
 		if f.MaxLen > 0 {
 			ctrl["maxLength"] = f.MaxLen
 		}

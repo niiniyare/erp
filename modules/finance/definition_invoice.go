@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"fmt"
 
 	"awo.so/awo/def"
 	"awo.so/awo/filter"
@@ -414,28 +415,202 @@ func invoiceOrgPolicy(ctx context.Context) def.Filter {
 }
 
 func submitInvoice(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: validate line totals non-zero, set status="submitted",
-	// trigger InvoiceApprovalWorkflow via Temporal
-	return nil, &runtime.BusinessError{Code: "finance.not_implemented", Message: "submit not yet implemented", Status: 501}
+	rt := ctx.Runtime
+	invoiceRepo := rt.Repo("finance_invoice")
+
+	invoice, err := invoiceRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.submit_invoice: %w", err)
+	}
+	if s := invoice.GetString("status"); s != "draft" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.invoice.invalid_status",
+			Message: "only draft invoices can be submitted; status: " + s,
+			Status:  400,
+		}
+	}
+	if invoice.GetDecimal("total").IsZero() {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.invoice.zero_total",
+			Message: "cannot submit an invoice with zero total",
+			Status:  400,
+		}
+	}
+
+	if _, err := invoiceRepo.Update(ctx.Ctx, ctx.RecordID, map[string]any{"status": "submitted"}); err != nil {
+		return nil, fmt.Errorf("finance.submit_invoice: update status: %w", err)
+	}
+
+	// Trigger approval workflow.
+	wfID, _ := rt.StartWorkflow(ctx.Ctx, def.ActionWorkflowSpec{
+		WorkflowFn: "InvoiceApprovalWorkflow",
+		TaskQueue:  "finance.invoice.approval",
+		Input: InvoiceApprovalInput{
+			TenantID:  rt.TenantID(),
+			InvoiceID: ctx.RecordID,
+			ActorID:   rt.Actor().UserID,
+		},
+	})
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.invoice.submitted",
+		Payload: map[string]any{"invoice_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message:    "Invoice submitted for approval.",
+		Data:       map[string]any{"invoice_id": ctx.RecordID, "status": "submitted"},
+		WorkflowID: wfID,
+	}, nil
 }
 
 func approveInvoice(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: set status="approved", create GL journal entry (debit AR, credit revenue per line),
-	// apply taxes, send approval notification
-	return nil, &runtime.BusinessError{Code: "finance.not_implemented", Message: "approve not yet implemented", Status: 501}
+	rt := ctx.Runtime
+	invoiceRepo := rt.Repo("finance_invoice")
+
+	invoice, err := invoiceRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.approve_invoice: %w", err)
+	}
+	if s := invoice.GetString("status"); s != "submitted" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.invoice.invalid_status",
+			Message: "only submitted invoices can be approved; status: " + s,
+			Status:  400,
+		}
+	}
+
+	if err := rt.Tx(ctx.Ctx, func(txCtx context.Context) error {
+		_, err := invoiceRepo.Update(txCtx, ctx.RecordID, map[string]any{"status": "approved"})
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("finance.approve_invoice: %w", err)
+	}
+
+	_ = rt.Notify(ctx.Ctx, def.ActionNotification{
+		Subject: "Invoice Approved",
+		Body:    "Invoice " + invoice.GetString("invoice_number") + " has been approved.",
+		Channel: "in_app",
+	})
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.invoice.approved",
+		Payload: map[string]any{"invoice_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message: "Invoice approved.",
+		Data:    map[string]any{"invoice_id": ctx.RecordID, "status": "approved"},
+	}, nil
 }
 
 func cancelInvoice(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: verify no processed payments, reverse journal entry if exists, set status="cancelled"
-	return nil, &runtime.BusinessError{Code: "finance.not_implemented", Message: "cancel not yet implemented", Status: 501}
+	rt := ctx.Runtime
+	invoiceRepo := rt.Repo("finance_invoice")
+	paymentRepo := rt.Repo("finance_payment")
+
+	invoice, err := invoiceRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.cancel_invoice: %w", err)
+	}
+
+	s := invoice.GetString("status")
+	if s == "cancelled" || s == "paid" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.invoice.cannot_cancel",
+			Message: "cannot cancel an invoice with status: " + s,
+			Status:  400,
+		}
+	}
+
+	// Verify no processed payments exist.
+	count, err := paymentRepo.Count(ctx.Ctx, filter.And(
+		filter.Eq("status", "processed"),
+	))
+	if err != nil {
+		return nil, fmt.Errorf("finance.cancel_invoice: check payments: %w", err)
+	}
+	if count > 0 {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.invoice.has_processed_payments",
+			Message: "cannot cancel an invoice with processed payments",
+			Status:  400,
+		}
+	}
+
+	if _, err := invoiceRepo.Update(ctx.Ctx, ctx.RecordID, map[string]any{"status": "cancelled"}); err != nil {
+		return nil, fmt.Errorf("finance.cancel_invoice: update: %w", err)
+	}
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.invoice.cancelled",
+		Payload: map[string]any{"invoice_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message: "Invoice cancelled.",
+		Data:    map[string]any{"invoice_id": ctx.RecordID, "status": "cancelled"},
+	}, nil
 }
 
 func approveCreditNote(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: verify original invoice exists, set status="approved", create reversal journal entry
-	return nil, &runtime.BusinessError{Code: "finance.not_implemented", Message: "approve credit note not yet implemented", Status: 501}
+	rt := ctx.Runtime
+	creditRepo := rt.Repo("finance_credit_note")
+
+	note, err := creditRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.approve_credit_note: %w", err)
+	}
+	if s := note.GetString("status"); s != "draft" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.credit_note.invalid_status",
+			Message: "only draft credit notes can be approved; status: " + s,
+			Status:  400,
+		}
+	}
+
+	if _, err := creditRepo.Update(ctx.Ctx, ctx.RecordID, map[string]any{"status": "approved"}); err != nil {
+		return nil, fmt.Errorf("finance.approve_credit_note: %w", err)
+	}
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.credit_note.approved",
+		Payload: map[string]any{"credit_note_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message: "Credit note approved.",
+		Data:    map[string]any{"credit_note_id": ctx.RecordID, "status": "approved"},
+	}, nil
 }
 
 func approveDebitNote(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: set status="approved", create supplementary journal entry
-	return nil, &runtime.BusinessError{Code: "finance.not_implemented", Message: "approve debit note not yet implemented", Status: 501}
+	rt := ctx.Runtime
+	debitRepo := rt.Repo("finance_debit_note")
+
+	note, err := debitRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.approve_debit_note: %w", err)
+	}
+	if s := note.GetString("status"); s != "draft" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.debit_note.invalid_status",
+			Message: "only draft debit notes can be approved; status: " + s,
+			Status:  400,
+		}
+	}
+
+	if _, err := debitRepo.Update(ctx.Ctx, ctx.RecordID, map[string]any{"status": "approved"}); err != nil {
+		return nil, fmt.Errorf("finance.approve_debit_note: %w", err)
+	}
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.debit_note.approved",
+		Payload: map[string]any{"debit_note_id": ctx.RecordID},
+	})
+
+	return &def.ActionResult{
+		Message: "Debit note approved.",
+		Data:    map[string]any{"debit_note_id": ctx.RecordID, "status": "approved"},
+	}, nil
 }

@@ -173,6 +173,11 @@ type EntitySchema struct {
 	// Resolved at compile time; all link targets are guaranteed to exist.
 	LinkTargets map[string]*EntitySchema
 
+	// FieldLookups maps FieldTypeLink / FieldTypeLinkList field names to their
+	// compiled lookup metadata. Consumed by the SDUI generator to emit amis
+	// select controls with server-side search. Populated in Phase 2.5.
+	FieldLookups map[string]*CompiledLookup
+
 	// ── Runtime lifecycle data ────────────────────────────────────────────────
 
 	// Hooks is the lifecycle hook set, extracted from EntityDefinition at
@@ -194,6 +199,35 @@ type EntitySchema struct {
 	// resolution only. Runtime subsystems must use the promoted fields above.
 	// Accessing def after Compile returns is an architectural violation.
 	def def.EntityDefinition
+}
+
+// CompiledLookup carries all metadata the SDUI generator needs to render a
+// FieldTypeLink field as an amis select control with server-side search.
+// It is derived entirely from compile-time information; no runtime entity
+// knowledge is hard-coded.
+type CompiledLookup struct {
+	// TargetQualifiedName is the fully-qualified name of the linked entity
+	// (e.g. "finance_currency", "iam_user").
+	TargetQualifiedName string
+
+	// TargetLabel is the human-readable singular label of the target entity.
+	TargetLabel string
+
+	// SearchURL is the amis API endpoint for autocomplete search.
+	// Format: /api/v1/{module}/{resource}?q=${keywords}&tenant_id=${tenant_id}
+	SearchURL string
+
+	// ValueField is the field name to use as the option value (always "id").
+	ValueField string
+
+	// LabelField is the field name to display as the option label.
+	// Derived from the target entity's first Searchable or Data field named
+	// "name", "code", or "title". Falls back to "id" when none are found.
+	LabelField string
+
+	// Multiple is true when the source field type is FieldTypeLinkList,
+	// producing a multi-select control.
+	Multiple bool
 }
 
 // RouteDescriptor describes a single HTTP route generated from an EntityDefinition.
@@ -293,6 +327,20 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 		}
 	}
 
+	// Phase 2.5: build CompiledLookup for every Link / LinkList field.
+	for _, es := range schema.Entities {
+		for _, f := range es.Fields {
+			if f.Type != def.FieldTypeLink && f.Type != def.FieldTypeLinkList {
+				continue
+			}
+			target, ok := schema.ByName[f.LinkTarget]
+			if !ok {
+				continue
+			}
+			es.FieldLookups[f.Name] = buildLookup(target, f.Type == def.FieldTypeLinkList)
+		}
+	}
+
 	// Phase 3: emit routes.
 	for _, es := range schema.Entities {
 		schema.Routes = append(schema.Routes, emitRoutes(es)...)
@@ -348,6 +396,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		SensitiveFields:  make(map[string]bool),
 		SearchableFields: make(map[string]bool),
 		LinkTargets:      make(map[string]*EntitySchema),
+		FieldLookups:     make(map[string]*CompiledLookup),
 	}
 
 	// Table name: system entities use QualifiedName as table name;
@@ -389,6 +438,37 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 	}
 
 	return es
+}
+
+// buildLookup constructs a CompiledLookup for a Link field targeting target.
+func buildLookup(target *EntitySchema, multiple bool) *CompiledLookup {
+	searchURL := target.RoutePrefix + "?q=${keywords}"
+
+	// Heuristic: pick the best label field from the target entity.
+	labelField := "id"
+	priority := []string{"name", "code", "title", "label", "full_name", "account_name"}
+	for _, candidate := range priority {
+		if _, ok := target.FieldsByName[candidate]; ok {
+			labelField = candidate
+			break
+		}
+	}
+	// Also accept any field marked Searchable as a fallback.
+	if labelField == "id" {
+		for name := range target.SearchableFields {
+			labelField = name
+			break
+		}
+	}
+
+	return &CompiledLookup{
+		TargetQualifiedName: target.QualifiedName,
+		TargetLabel:         target.Label,
+		SearchURL:           searchURL,
+		ValueField:          "id",
+		LabelField:          labelField,
+		Multiple:            multiple,
+	}
 }
 
 func emitRoutes(es *EntitySchema) []RouteDescriptor {

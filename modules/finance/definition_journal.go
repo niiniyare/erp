@@ -1,7 +1,11 @@
 package finance
 
 import (
+	"context"
+	"fmt"
+
 	"awo.so/awo/def"
+	"awo.so/awo/filter"
 	"awo.so/awo/runtime"
 )
 
@@ -339,22 +343,187 @@ var LedgerEntryDefinition = def.SystemDefinition{
 }
 
 func postJournalEntry(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: load journal entry, verify status=="submitted", load lines,
-	// validate sum(debit)==sum(credit), verify period is open,
-	// create LedgerEntry per line, set status="posted"
-	return nil, &runtime.BusinessError{
-		Code:    "finance.not_implemented",
-		Message: "post action requires PostingService — wire EntityRepository first",
-		Status:  501,
+	rt := ctx.Runtime
+	entryRepo := rt.Repo("finance_journal_entry")
+	lineRepo := rt.Repo("finance_journal_entry_line")
+	ledgerRepo := rt.Repo("finance_ledger_entry")
+	periodRepo := rt.Repo("finance_accounting_period")
+
+	// Load the journal entry.
+	entry, err := entryRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.post: load entry: %w", err)
 	}
+
+	status := entry.GetString("status")
+	if status != "submitted" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.journal_entry.invalid_status_for_post",
+			Message: fmt.Sprintf("journal entry must be in 'submitted' status to post; current status: %s", status),
+			Status:  400,
+		}
+	}
+
+	// Verify accounting period is open.
+	periodID := entry.GetUUID("accounting_period_id")
+	period, err := periodRepo.Get(ctx.Ctx, periodID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.post: load period: %w", err)
+	}
+	if s := period.GetString("status"); s != "open" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.journal_entry.period_not_open",
+			Message: fmt.Sprintf("accounting period status is '%s'; only open periods accept postings", s),
+			Status:  400,
+		}
+	}
+
+	// Load lines.
+	lines, err := lineRepo.Query(ctx.Ctx,
+		filter.Eq("journal_entry_id", ctx.RecordID),
+		def.WithActionOrder("created_at ASC"),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("finance.post: load lines: %w", err)
+	}
+	if len(lines) < 2 {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.journal_entry.insufficient_lines",
+			Message: "journal entry must have at least two lines",
+			Status:  400,
+		}
+	}
+
+	// Validate double-entry balance.
+	if err := ValidateBalance(lines); err != nil {
+		return nil, err
+	}
+
+	// Execute within a transaction: create ledger entries + update status.
+	var created int
+	if err := rt.Tx(ctx.Ctx, func(txCtx context.Context) error {
+		// Create one LedgerEntry per line.
+		postingDate := entry.GetString("posting_date")
+		currencyID := entry.GetUUID("currency_id")
+		exchangeRate := entry.GetDecimal("exchange_rate")
+		memo := entry.GetString("memo")
+
+		for _, line := range lines {
+			ledgerData := map[string]any{
+				"account_id":            line.GetUUID("account_id"),
+				"journal_entry_id":      ctx.RecordID,
+				"journal_entry_line_id": line.ID,
+				"posting_date":          postingDate,
+				"debit_amount":          line.GetDecimal("debit_amount"),
+				"credit_amount":         line.GetDecimal("credit_amount"),
+				"currency_id":           currencyID,
+				"exchange_rate":         exchangeRate,
+				"memo":                  memo,
+				"cost_center_id":        line.GetUUID("cost_center_id"),
+				"is_cancelled":          false,
+			}
+			if _, err := ledgerRepo.Create(txCtx, ledgerData); err != nil {
+				return fmt.Errorf("finance.post: create ledger entry: %w", err)
+			}
+			created++
+		}
+
+		// Update entry status to posted.
+		_, err := entryRepo.Update(txCtx, ctx.RecordID, map[string]any{"status": "posted"})
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("finance.post: transaction: %w", err)
+	}
+
+	// Publish domain event (outside TX).
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.journal_entry.posted",
+		Payload: map[string]any{"entry_id": ctx.RecordID, "ledger_entries_created": created},
+	})
+
+	return &def.ActionResult{
+		Message: fmt.Sprintf("Journal entry posted. %d ledger entries created.", created),
+		Data:    map[string]any{"entry_id": ctx.RecordID, "status": "posted"},
+	}, nil
 }
 
 func reverseJournalEntry(ctx *def.ActionContext) (*def.ActionResult, error) {
-	// TODO: verify status=="posted", create mirror JournalEntry with is_reversal=true,
-	// mirror lines with swapped debit/credit, post the reversal, set original status="reversed"
-	return nil, &runtime.BusinessError{
-		Code:    "finance.not_implemented",
-		Message: "reverse action requires PostingService — wire EntityRepository first",
-		Status:  501,
+	rt := ctx.Runtime
+	entryRepo := rt.Repo("finance_journal_entry")
+	lineRepo := rt.Repo("finance_journal_entry_line")
+
+	// Load the journal entry.
+	entry, err := entryRepo.Get(ctx.Ctx, ctx.RecordID)
+	if err != nil {
+		return nil, fmt.Errorf("finance.reverse: load entry: %w", err)
 	}
+
+	if entry.GetString("status") != "posted" {
+		return nil, &runtime.BusinessError{
+			Code:    "finance.journal_entry.not_posted",
+			Message: "only posted journal entries can be reversed",
+			Status:  400,
+		}
+	}
+
+	// Load original lines.
+	lines, err := lineRepo.Query(ctx.Ctx, filter.Eq("journal_entry_id", ctx.RecordID))
+	if err != nil {
+		return nil, fmt.Errorf("finance.reverse: load lines: %w", err)
+	}
+
+	var reversalID interface{}
+
+	if err := rt.Tx(ctx.Ctx, func(txCtx context.Context) error {
+		// Create reversal journal entry.
+		reversalData := map[string]any{
+			"journal_id":           entry.GetUUID("journal_id"),
+			"posting_date":         entry.GetString("posting_date"),
+			"accounting_period_id": entry.GetUUID("accounting_period_id"),
+			"status":               "submitted",
+			"memo":                 "Reversal of " + entry.GetString("entry_number"),
+			"currency_id":          entry.GetUUID("currency_id"),
+			"exchange_rate":        entry.GetDecimal("exchange_rate"),
+			"is_reversal":          true,
+			"reversal_of_id":       ctx.RecordID,
+		}
+		reversal, err := entryRepo.Create(txCtx, reversalData)
+		if err != nil {
+			return fmt.Errorf("finance.reverse: create reversal entry: %w", err)
+		}
+		reversalID = reversal.ID
+
+		// Mirror lines with swapped debit/credit.
+		for _, line := range lines {
+			mirrorData := map[string]any{
+				"journal_entry_id": reversal.ID,
+				"account_id":       line.GetUUID("account_id"),
+				"cost_center_id":   line.GetUUID("cost_center_id"),
+				// Swap debit ↔ credit.
+				"debit_amount":  line.GetDecimal("credit_amount"),
+				"credit_amount": line.GetDecimal("debit_amount"),
+				"memo":          line.GetString("memo"),
+			}
+			if _, err := lineRepo.Create(txCtx, mirrorData); err != nil {
+				return fmt.Errorf("finance.reverse: create mirror line: %w", err)
+			}
+		}
+
+		// Mark original as reversed.
+		_, err = entryRepo.Update(txCtx, ctx.RecordID, map[string]any{"status": "reversed"})
+		return err
+	}); err != nil {
+		return nil, fmt.Errorf("finance.reverse: transaction: %w", err)
+	}
+
+	_ = rt.Publish(ctx.Ctx, def.ActionEvent{
+		Topic:   "finance.journal_entry.reversed",
+		Payload: map[string]any{"original_id": ctx.RecordID, "reversal_id": reversalID},
+	})
+
+	return &def.ActionResult{
+		Message:    "Reversal entry created and submitted for posting.",
+		Data:       map[string]any{"original_id": ctx.RecordID, "reversal_entry_id": reversalID},
+		WorkflowID: "",
+	}, nil
 }
