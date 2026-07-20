@@ -91,20 +91,42 @@ The inheritance hierarchy is seeded at module registration time and is not tenan
 
 ---
 
-## 5. Declaring Roles in PermissionSet
+## 5. Role-to-Permission Mapping
+
+Role names MUST NOT appear in `PermissionSet` declarations. `PermissionSet` contains permission identifiers only (ADR-001). Role-to-permission mapping is data owned by the IAM module, not code in EntityDefinition.
+
+The IAM module seeds role-to-permission bindings at tenant bootstrap via `iam_role_permissions`:
+
+```sql
+-- Example: which roles grant finance.invoice.create
+-- This lives in a migration seed, NOT in any EntityDefinition
+INSERT INTO iam_role_permissions (role_id, permission_identifier) VALUES
+    ('role:tenant.admin',             'finance.invoice.create'),
+    ('role:finance.manager',          'finance.invoice.create'),
+    ('role:finance.accounts_payable', 'finance.invoice.create');
+```
+
+The corresponding `PermissionSet` declares only the permission identifier:
 
 ```go
+// CORRECT: permission identifiers only
 Permissions: def.PermissionSet{
-    // Use exact role name strings. No typo tolerance at declaration time.
-    Create: []string{"role:finance.accounts_payable", "role:tenant.admin"},
-    Read:   []string{"role:finance.viewer", "role:tenant.admin"},
-    Write:  []string{"role:finance.accounts_payable", "role:tenant.admin"},
-    Delete: []string{"role:tenant.admin"},
+    Create: []string{"finance.invoice.create"},
+    Read:   []string{"finance.invoice.read"},
+    Write:  []string{"finance.invoice.update"},
+    Delete: []string{"finance.invoice.delete"},
     Actions: map[string][]string{
-        "approve": {"role:finance.approver", "role:tenant.admin"},
+        "approve": {"finance.invoice.approve"},
     },
 },
+
+// WRONG: role names in PermissionSet — rejected at compile time
+Permissions: def.PermissionSet{
+    Create: []string{"role:finance.accounts_payable"},  // ← compiler error
+},
 ```
+
+See [`03-auth/AUTHORIZATION_SPEC.md`](AUTHORIZATION_SPEC.md) for the full two-layer authorization model.
 
 ---
 

@@ -40,10 +40,10 @@ var CurrencyDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.currency.create"},
+		Read:   []string{"finance.currency.read"},
+		Write:  []string{"finance.currency.update"},
+		Delete: []string{"finance.currency.delete"},
 	},
 }
 
@@ -91,9 +91,9 @@ var ExchangeRateDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
+		Create: []string{"finance.exchange_rate.create"},
+		Read:   []string{"finance.exchange_rate.read"},
 		Write:  []string{},  // immutable — create a new rate instead
-		Delete: []string{"role:tenant.admin"},
+		Delete: []string{"finance.exchange_rate.delete"},
 	},
 }

@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 
+	"awo.so/awo/def"
 	"github.com/google/uuid"
 )
 
@@ -38,6 +39,11 @@ type ViewerContext interface {
 	// IsPlatformAdmin returns true if the viewer holds "role:platform-admin".
 	// Platform admins bypass all PolicyEvaluator checks unconditionally.
 	IsPlatformAdmin() bool
+
+	// Actor constructs a [def.Actor] from this ViewerContext for use in hooks
+	// and action handlers. The returned Actor contains a defensive copy of Roles.
+	// Implementations MUST NOT return nil for authenticated requests (ADR-002).
+	Actor() *def.Actor
 }
 
 // viewerKey is an unexported context key type for ViewerContext, preventing
@@ -109,6 +115,14 @@ func (v *DefaultViewer) ServiceAccountID() uuid.UUID { return v.serviceAccountID
 func (v *DefaultViewer) Roles() []string             { return v.roles }
 func (v *DefaultViewer) HasRole(role string) bool    { return v.roleSet[role] }
 func (v *DefaultViewer) IsPlatformAdmin() bool       { return v.roleSet["role:platform-admin"] }
+func (v *DefaultViewer) Actor() *def.Actor {
+	return &def.Actor{
+		UserID:           v.userID,
+		ServiceAccountID: v.serviceAccountID,
+		TenantID:         v.tenantID,
+		Roles:            append([]string(nil), v.roles...),
+	}
+}
 
 // SystemViewer represents a platform-level background process (Temporal
 // activity, scheduled job, migration script). It carries "role:platform-admin"
@@ -135,3 +149,11 @@ func (v *SystemViewer) ServiceAccountID() uuid.UUID { return uuid.Nil }
 func (v *SystemViewer) Roles() []string             { return []string{"role:platform-admin"} }
 func (v *SystemViewer) HasRole(role string) bool    { return role == "role:platform-admin" }
 func (v *SystemViewer) IsPlatformAdmin() bool       { return true }
+func (v *SystemViewer) Actor() *def.Actor {
+	return &def.Actor{
+		UserID:           uuid.Nil,
+		ServiceAccountID: uuid.Nil,
+		TenantID:         v.tenantID,
+		Roles:            []string{"role:platform-admin"},
+	}
+}

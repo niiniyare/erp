@@ -7,6 +7,7 @@ import (
 
 	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
+	"awo.so/awo/def"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -40,6 +41,14 @@ func (v *testViewer) ServiceAccountID() uuid.UUID { return v.serviceAccountID }
 func (v *testViewer) Roles() []string             { return v.roles }
 func (v *testViewer) HasRole(role string) bool    { return v.roleSet[role] }
 func (v *testViewer) IsPlatformAdmin() bool       { return v.roleSet["role:platform-admin"] }
+func (v *testViewer) Actor() *def.Actor {
+	return &def.Actor{
+		UserID:           v.userID,
+		ServiceAccountID: v.serviceAccountID,
+		TenantID:         v.tenantID,
+		Roles:            append([]string(nil), v.roles...),
+	}
+}
 
 // testGrants returns a minimal set of CapabilityGrants for finance_invoice.
 func testGrants() []compiler.CapabilityGrant {

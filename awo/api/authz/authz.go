@@ -1,121 +1,51 @@
-// Package authz integrates Casbin RBAC with the Awo framework.
+// Package authz provides the Fiber middleware bridge between the HTTP layer
+// and the Awo authorization subsystem (ADR-001, ADR-002).
 //
-// Policy model: (subject, domain, object, action)
-//   - subject: "user:{uuid}" or "role:{name}"
-//   - domain:  "_platform_" or tenant UUID string
-//   - object:  entity type name (e.g. "finance_invoice")
-//   - action:  "read", "write", "create", "delete", or action name
+// Enforcement architecture:
 //
-// The Casbin enforcer is loaded once at startup from the compiled schema's
-// CapabilityGrants slice (Phase 1). Role-to-permission bindings are loaded
-// separately via AddRoleForUser (Phase 2). Per-request enforcement happens
-// in the RequirePermission middleware.
+//  1. Session middleware populates a [auth.ViewerContext] into the request
+//     context via [auth.WithViewer].
+//  2. [RequirePermission] reads the viewer with [auth.ViewerFromContext].
+//  3. Platform admins (viewer.IsPlatformAdmin() == true) bypass Casbin entirely.
+//  4. All other requests are evaluated by [auth.PolicyEvaluator.CanPerform]:
+//     (true, nil) → next handler; (false, nil) → 403; (_, err) → 500.
 //
-// Role hierarchy is expressed via Casbin `g` grouping assertions:
-//
-//	g, role:tenant.admin, role:tenant.user, {tenant_uuid}
-//
-// Inheritance accumulates upward — an admin also has all user permissions.
+// This package contains no policy data and no Casbin state.
+// Policy loading lives in [awo/auth.NewCasbinEvaluator].
+// Permission identifiers live in EntityDefinition.Permissions (PermissionSet).
 package authz
 
 import (
-	"fmt"
-
-	"github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/awo/api/response"
-	"awo.so/awo/compiler"
+	"awo.so/awo/auth"
 	"awo.so/awo/runtime"
 )
 
-const casbinModel = `
-[request_definition]
-r = sub, obj, act
-
-[policy_definition]
-p = sub, obj, act
-
-[role_definition]
-g = _, _
-
-[policy_effect]
-e = some(where (p.eft == allow))
-
-[matchers]
-m = g(r.sub, p.sub) && r.obj == p.obj && r.act == p.act
-`
-
-// Enforcer wraps the Casbin enforcer with a domain-aware check API.
-type Enforcer struct {
-	e *casbin.Enforcer
-}
-
-// NewEnforcer creates a Casbin enforcer loaded with policies from the compiled schema.
-func NewEnforcer(schema *compiler.CompiledSchema) (*Enforcer, error) {
-	m, err := model.NewModelFromString(casbinModel)
-	if err != nil {
-		return nil, fmt.Errorf("authz: parse casbin model: %w", err)
-	}
-
-	e, err := casbin.NewEnforcer(m)
-	if err != nil {
-		return nil, fmt.Errorf("authz: create enforcer: %w", err)
-	}
-
-	// Load CapabilityGrants as Casbin p assertions (Phase 1).
-	// Each grant binds a permission identifier to an entity+action pair.
-	// Role-to-permission bindings (Phase 2) are loaded separately via AddRoleForUser.
-	for _, g := range schema.CapabilityGrants {
-		if _, err := e.AddPolicy(g.Permission, g.Entity, g.Action); err != nil {
-			return nil, fmt.Errorf("authz: add capability grant %v: %w", g, err)
-		}
-	}
-
-	return &Enforcer{e: e}, nil
-}
-
-// Can reports whether subject (e.g. "role:tenant.admin") is allowed to perform
-// action on object.
-func (en *Enforcer) Can(subject, object, action string) (bool, error) {
-	return en.e.Enforce(subject, object, action)
-}
-
-// AddRoleForUser grants role to user.
-func (en *Enforcer) AddRoleForUser(user, role string) error {
-	_, err := en.e.AddRoleForUser(user, role)
-	return err
-}
-
-// RemoveRoleForUser revokes role from user.
-func (en *Enforcer) RemoveRoleForUser(user, role string) error {
-	_, err := en.e.DeleteRoleForUser(user, role)
-	return err
-}
-
-// RequirePermission returns a Fiber middleware that enforces RBAC.
-// entityName is the entity being accessed; action is "read", "write", etc.
+// RequirePermission returns a Fiber middleware that enforces RBAC for the
+// named entity and action.
 //
-// The middleware reads user_id from c.Locals (set by RequireAuth) and
-// tenant_id from c.Locals (set by TenantResolver).
+// entityName is the qualified entity name (e.g. "finance_invoice").
+// action is one of "create", "read", "update", "delete", or a custom action
+// name declared in ActionDef.Name (e.g. "submit", "approve").
 //
-// Platform admins bypass Casbin entirely.
-func (en *Enforcer) RequirePermission(entityName, action string) fiber.Handler {
+// The middleware expects [auth.ViewerContext] to be present in the request
+// context — set by the session validation middleware via [auth.WithViewer].
+// If the viewer is absent the request panics (fail-fast; session middleware
+// must always run before this middleware).
+//
+// Platform admins bypass Casbin entirely and are always allowed through.
+func RequirePermission(eval auth.PolicyEvaluator, entityName, action string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		userIDStr, _ := c.Locals("user_id").(string)
-		_, hasTenant := c.Locals("tenant_id").(string)
+		viewer := auth.ViewerFromContext(c.UserContext())
 
-		if userIDStr == "" || !hasTenant {
-			return c.Status(fiber.StatusUnauthorized).JSON(response.Wrap(&runtime.PermissionError{
-				EntityName: entityName,
-				Action:     action,
-			}))
+		// Platform admins bypass all Casbin checks.
+		if viewer.IsPlatformAdmin() {
+			return c.Next()
 		}
 
-		subject := "user:" + userIDStr
-
-		ok, err := en.Can(subject, entityName, action)
+		ok, err := eval.CanPerform(c.UserContext(), viewer, entityName, action)
 		if err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(response.Wrap(err))
 		}

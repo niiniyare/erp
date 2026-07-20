@@ -24,10 +24,10 @@ var TaxGroupDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.tax_group.create"},
+		Read:   []string{"finance.tax_group.read"},
+		Write:  []string{"finance.tax_group.update"},
+		Delete: []string{"finance.tax_group.delete"},
 	},
 }
 
@@ -101,10 +101,10 @@ var TaxDefinition = def.SystemDefinition{
 		{Name: "description", Type: def.FieldTypeSmallText},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.tax.create"},
+		Read:   []string{"finance.tax.read"},
+		Write:  []string{"finance.tax.update"},
+		Delete: []string{"finance.tax.delete"},
 	},
 }
 
@@ -182,7 +182,7 @@ var TaxEntryDefinition = def.SystemDefinition{
 	// Empty = framework writes; API cannot create/modify/delete tax entries
 	Permissions: def.PermissionSet{
 		Create: []string{},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
+		Read:   []string{"finance.tax_entry.read"},
 		Write:  []string{},
 		Delete: []string{},
 	},

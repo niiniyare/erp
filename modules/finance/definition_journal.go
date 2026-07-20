@@ -52,10 +52,10 @@ var JournalDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.journal.create"},
+		Read:   []string{"finance.journal.read"},
+		Write:  []string{"finance.journal.update"},
+		Delete: []string{"finance.journal.delete"},
 	},
 }
 
@@ -152,7 +152,7 @@ var JournalEntryDefinition = def.SystemDefinition{
 			Method:      def.ActionMethodPost,
 			Label:       "Post Entry",
 			Description: "Validate balance and create immutable ledger entries.",
-			Permission:  "role:finance.accountant",
+			Permission:  "finance.journal_entry.post",
 			Icon:        "fa fa-check",
 			HandlerFunc: postJournalEntry,
 		},
@@ -161,7 +161,7 @@ var JournalEntryDefinition = def.SystemDefinition{
 			Method:         def.ActionMethodPost,
 			Label:          "Reverse Entry",
 			Description:    "Create a mirror entry with swapped debits/credits.",
-			Permission:     "role:finance.manager",
+			Permission:     "finance.journal_entry.reverse",
 			Icon:           "fa fa-undo",
 			ConfirmMessage: "This will create a reversal entry. Continue?",
 			HandlerFunc:    reverseJournalEntry,
@@ -182,13 +182,13 @@ var JournalEntryDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Delete: []string{"role:tenant.admin", "role:finance.manager"},
+		Create: []string{"finance.journal_entry.create"},
+		Read:   []string{"finance.journal_entry.read"},
+		Write:  []string{"finance.journal_entry.update"},
+		Delete: []string{"finance.journal_entry.delete"},
 		Actions: map[string][]string{
-			"post":    {"role:finance.accountant", "role:finance.manager", "role:tenant.admin"},
-			"reverse": {"role:finance.manager", "role:tenant.admin"},
+			"post":    {"finance.journal_entry.post"},
+			"reverse": {"finance.journal_entry.reverse"},
 		},
 	},
 }
@@ -241,10 +241,10 @@ var JournalEntryLineDefinition = def.SystemDefinition{
 		BeforeCreate: []def.BeforeCreateHook{&LineBalanceValidator{}},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Delete: []string{"role:tenant.admin", "role:finance.manager"},
+		Create: []string{"finance.journal_entry_line.create"},
+		Read:   []string{"finance.journal_entry_line.read"},
+		Write:  []string{"finance.journal_entry_line.update"},
+		Delete: []string{"finance.journal_entry_line.delete"},
 	},
 }
 
@@ -336,7 +336,7 @@ var LedgerEntryDefinition = def.SystemDefinition{
 	// Empty slices = framework writes this, API cannot
 	Permissions: def.PermissionSet{
 		Create: []string{},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
+		Read:   []string{"finance.ledger_entry.read"},
 		Write:  []string{},
 		Delete: []string{},
 	},

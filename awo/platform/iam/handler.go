@@ -1,126 +1,153 @@
-// Package iam — handler.go exposes authentication endpoints over HTTP.
-//
-// Routes registered by RegisterAuthRoutes (called from api/router):
-//
-//	POST /api/v1/auth/login   — exchange credentials for session token
-//	POST /api/v1/auth/logout  — revoke the current session
-//	GET  /api/v1/auth/me      — return claims for the current session
 package iam
 
 import (
-	"encoding/json"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
-	"awo.so/awo/api/response"
+	"awo.so/awo/auth"
 	"awo.so/awo/runtime"
 )
 
-// RegisterAuthRoutes mounts the IAM authentication routes onto app.
-// These routes intentionally bypass the RequireAuth middleware (login cannot
-// require a token; logout and /me do their own token extraction).
-func RegisterAuthRoutes(app *fiber.App, svc *Service) {
+func registerRoutes(app *fiber.App, svc *AuthService) {
+	h := &authHandler{svc: svc}
+
 	auth := app.Group("/api/v1/auth")
-	auth.Post("/login", loginHandler(svc))
-	auth.Post("/logout", logoutHandler(svc))
-	auth.Get("/me", meHandler(svc))
+	auth.Post("/login",  h.login)
+	auth.Post("/logout", h.logout)
+	auth.Get("/me",      h.me)
 }
+
+type authHandler struct {
+	svc *AuthService
+}
+
+// ── POST /api/v1/auth/login ───────────────────────────────────────────────────
 
 type loginRequest struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+	TenantID string `json:"tenant_id"`
+	DeviceID string `json:"device_id,omitempty"`
 }
 
-func loginHandler(svc *Service) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		var req loginRequest
-		if err := json.Unmarshal(c.Body(), &req); err != nil {
-			return c.Status(fiber.StatusBadRequest).JSON(response.Wrap(&runtime.ValidationError{
-				Fields: map[string]string{"_body": "invalid JSON"},
-			}))
-		}
-		if req.Email == "" || req.Password == "" {
-			return c.Status(fiber.StatusUnprocessableEntity).JSON(response.Wrap(&runtime.ValidationError{
-				Fields: map[string]string{
-					"email":    ifEmpty(req.Email, "required"),
-					"password": ifEmpty(req.Password, "required"),
-				},
-			}))
-		}
+type loginResponse struct {
+	Token     string `json:"token"`
+	ExpiresAt string `json:"expires_at"`
+	UserID    string `json:"user_id"`
+	TenantID  string `json:"tenant_id"`
+}
 
-		token, claims, err := svc.Login(c.UserContext(), req.Email, req.Password)
-		if err != nil {
-			return c.Status(response.HTTPStatus(err)).JSON(response.Wrap(err))
-		}
-
-		return c.Status(fiber.StatusOK).JSON(response.Success{
-			Data: fiber.Map{
-				"token":      token,
-				"user_id":    claims.UserID,
-				"tenant_id":  claims.TenantID,
-				"expires_at": claims.ExpiresAt,
-			},
+func (h *authHandler) login(c *fiber.Ctx) error {
+	var req loginRequest
+	if err := c.BodyParser(&req); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fiber.Map{"code": "invalid_body", "message": "Request body must be valid JSON."},
 		})
 	}
-}
 
-func logoutHandler(svc *Service) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		token := extractBearerTokenFromHeader(c)
-		if token == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(response.Wrap(&runtime.BusinessError{
-				Code:    "iam.missing_token",
-				Message: "Authentication token is required",
-				Status:  401,
-			}))
-		}
-		if err := svc.Logout(c.UserContext(), token); err != nil {
-			return c.Status(response.HTTPStatus(err)).JSON(response.Wrap(err))
-		}
-		return c.SendStatus(fiber.StatusNoContent)
-	}
-}
-
-func meHandler(svc *Service) fiber.Handler {
-	return func(c *fiber.Ctx) error {
-		token := extractBearerTokenFromHeader(c)
-		if token == "" {
-			return c.Status(fiber.StatusUnauthorized).JSON(response.Wrap(&runtime.BusinessError{
-				Code:    "iam.missing_token",
-				Message: "Authentication token is required",
-				Status:  401,
-			}))
-		}
-		claims, err := svc.ValidateToken(c.UserContext(), token)
-		if err != nil {
-			return c.Status(response.HTTPStatus(err)).JSON(response.Wrap(err))
-		}
-		return c.JSON(response.Success{
-			Data: fiber.Map{
-				"user_id":    claims.UserID,
-				"session_id": claims.SessionID,
-				"tenant_id":  claims.TenantID,
-				"email":      claims.Email,
-				"roles":      claims.Roles,
-				"expires_at": claims.ExpiresAt,
-			},
+	if req.Email == "" || req.Password == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fiber.Map{"code": "validation_error", "message": "email and password are required."},
 		})
 	}
+
+	tenantID, err := uuid.Parse(req.TenantID)
+	if err != nil || tenantID == uuid.Nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fiber.Map{"code": "validation_error", "message": "tenant_id must be a valid UUID."},
+		})
+	}
+
+	result, err := h.svc.Login(c.UserContext(), LoginInput{
+		Email:     req.Email,
+		Password:  req.Password,
+		TenantID:  tenantID,
+		DeviceID:  req.DeviceID,
+		IPAddress: c.IP(),
+	})
+	if err != nil {
+		return handleAuthError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": loginResponse{
+			Token:     result.Token,
+			ExpiresAt: result.Session.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+			UserID:    result.Session.UserID.String(),
+			TenantID:  result.Session.TenantID.String(),
+		},
+	})
 }
 
-func extractBearerTokenFromHeader(c *fiber.Ctx) string {
-	auth := c.Get("Authorization")
-	const prefix = "Bearer "
-	if len(auth) > len(prefix) && auth[:len(prefix)] == prefix {
-		return auth[len(prefix):]
+// ── POST /api/v1/auth/logout ──────────────────────────────────────────────────
+
+func (h *authHandler) logout(c *fiber.Ctx) error {
+	// Session must exist in context (set by session middleware).
+	session, ok := c.Locals("session").(*auth.Session)
+	if !ok || session == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": fiber.Map{"code": "unauthenticated", "message": "No active session."},
+		})
 	}
-	return ""
+
+	if err := h.svc.Logout(c.UserContext(), session); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": fiber.Map{"code": "logout_failed", "message": "Failed to revoke session."},
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": fiber.Map{"message": "Logged out successfully."},
+	})
 }
 
-// ifEmpty returns msg if s is empty, otherwise "".
-func ifEmpty(s, msg string) string {
-	if s == "" {
-		return msg
+// ── GET /api/v1/auth/me ───────────────────────────────────────────────────────
+
+type meResponse struct {
+	UserID    string   `json:"user_id"`
+	TenantID  string   `json:"tenant_id"`
+	Roles     []string `json:"roles"`
+	IssuedAt  string   `json:"issued_at"`
+	ExpiresAt string   `json:"expires_at"`
+}
+
+func (h *authHandler) me(c *fiber.Ctx) error {
+	session, ok := c.Locals("session").(*auth.Session)
+	if !ok || session == nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": fiber.Map{"code": "unauthenticated", "message": "No active session."},
+		})
 	}
-	return ""
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"data": meResponse{
+			UserID:    session.UserID.String(),
+			TenantID:  session.TenantID.String(),
+			Roles:     session.Roles,
+			IssuedAt:  session.IssuedAt.Format("2006-01-02T15:04:05Z07:00"),
+			ExpiresAt: session.ExpiresAt.Format("2006-01-02T15:04:05Z07:00"),
+		},
+	})
+}
+
+// ── Error mapping ─────────────────────────────────────────────────────────────
+
+func handleAuthError(c *fiber.Ctx, err error) error {
+	status := runtime.HTTPStatus(err)
+	return c.Status(status).JSON(fiber.Map{
+		"error": fiber.Map{
+			"code":    errorCode(err),
+			"message": err.Error(),
+		},
+	})
+}
+
+func errorCode(err error) string {
+	var be *runtime.BusinessError
+	if errors.As(err, &be) {
+		return be.Code
+	}
+	return "internal_error"
 }

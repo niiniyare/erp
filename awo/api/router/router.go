@@ -24,6 +24,7 @@ import (
 	"awo.so/awo/api/handler"
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/service"
+	"awo.so/awo/auth"
 	"awo.so/awo/cache"
 	"awo.so/awo/compiler"
 	contrib "awo.so/awo/contrib/pgx"
@@ -38,9 +39,9 @@ import (
 type RegisterOptions struct {
 	Pool     *pgxlib.Pool
 	Redis    *goredis.Client
-	IAM      *iam.Service                               // required for RequireAuth
+	IAM      *iam.AuthService                           // required for RequireAuth
 	Tenants  driver.EntityRepository[*def.EntityRecord] // required for TenantResolver
-	Authz    *authz.Enforcer                            // nil = RBAC disabled (dev/test)
+	Authz    auth.PolicyEvaluator                       // nil = RBAC disabled (dev/test)
 	Temporal temporalclient.Client                      // nil = degraded mode (no workflow starts)
 }
 
@@ -82,13 +83,13 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		perm := es.PermissionNamespace // Casbin object — equals QualifiedName
 		entity := api.Group("/" + es.Module + "/" + es.APIResource)
 
-		// Apply RBAC per HTTP method if an enforcer is wired.
+		// Apply RBAC per HTTP method if an evaluator is wired.
 		if opts.Authz != nil {
-			entity.Get("/", opts.Authz.RequirePermission(perm, "read"), h.List)
-			entity.Post("/", opts.Authz.RequirePermission(perm, "create"), h.Create)
-			entity.Get("/:id", opts.Authz.RequirePermission(perm, "read"), h.Get)
-			entity.Patch("/:id", opts.Authz.RequirePermission(perm, "write"), h.Update)
-			entity.Delete("/:id", opts.Authz.RequirePermission(perm, "delete"), h.Delete)
+			entity.Get("/", authz.RequirePermission(opts.Authz, perm, "read"), h.List)
+			entity.Post("/", authz.RequirePermission(opts.Authz, perm, "create"), h.Create)
+			entity.Get("/:id", authz.RequirePermission(opts.Authz, perm, "read"), h.Get)
+			entity.Patch("/:id", authz.RequirePermission(opts.Authz, perm, "write"), h.Update)
+			entity.Delete("/:id", authz.RequirePermission(opts.Authz, perm, "delete"), h.Delete)
 		} else {
 			entity.Get("/", h.List)
 			entity.Post("/", h.Create)
@@ -101,7 +102,7 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		for _, action := range es.Actions {
 			actionName := action.Name // capture loop var
 			if opts.Authz != nil {
-				entity.Post("/:id/"+actionName, opts.Authz.RequirePermission(perm, actionName), func(c *fiber.Ctx) error {
+				entity.Post("/:id/"+actionName, authz.RequirePermission(opts.Authz, perm, actionName), func(c *fiber.Ctx) error {
 					return h.Action(c)
 				})
 			} else {

@@ -56,10 +56,10 @@ var PaymentMethodDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.payment_method.create"},
+		Read:   []string{"finance.payment_method.read"},
+		Write:  []string{"finance.payment_method.update"},
+		Delete: []string{"finance.payment_method.delete"},
 	},
 }
 
@@ -159,7 +159,7 @@ var PaymentDefinition = def.SystemDefinition{
 			Method:      def.ActionMethodPost,
 			Label:       "Process Payment",
 			Description: "Create GL journal entry and mark payment as processed.",
-			Permission:  "role:finance.accountant",
+			Permission:  "finance.payment.process",
 			Icon:        "fa fa-check",
 			HandlerFunc: processPayment,
 		},
@@ -167,7 +167,7 @@ var PaymentDefinition = def.SystemDefinition{
 			Name:           "cancel",
 			Method:         def.ActionMethodPost,
 			Label:          "Cancel Payment",
-			Permission:     "role:finance.manager",
+			Permission:     "finance.payment.cancel",
 			Icon:           "fa fa-times",
 			ConfirmMessage: "Cancel this payment?",
 			HandlerFunc:    cancelPayment,
@@ -188,13 +188,13 @@ var PaymentDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Delete: []string{"role:tenant.admin", "role:finance.manager"},
+		Create: []string{"finance.payment.create"},
+		Read:   []string{"finance.payment.read"},
+		Write:  []string{"finance.payment.update"},
+		Delete: []string{"finance.payment.delete"},
 		Actions: map[string][]string{
-			"process": {"role:finance.accountant", "role:finance.manager", "role:tenant.admin"},
-			"cancel":  {"role:finance.manager", "role:tenant.admin"},
+			"process": {"finance.payment.process"},
+			"cancel":  {"finance.payment.cancel"},
 		},
 	},
 }
@@ -237,10 +237,10 @@ var AllocationDefinition = def.SystemDefinition{
 		BeforeCreate: []def.BeforeCreateHook{&AllocationValidator{}},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin", "role:finance.manager"},
+		Create: []string{"finance.allocation.create"},
+		Read:   []string{"finance.allocation.read"},
+		Write:  []string{"finance.allocation.update"},
+		Delete: []string{"finance.allocation.delete"},
 	},
 }
 

@@ -39,10 +39,10 @@ var ChartOfAccountsDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.chart_of_accounts.create"},
+		Read:   []string{"finance.chart_of_accounts.read"},
+		Write:  []string{"finance.chart_of_accounts.update"},
+		Delete: []string{"finance.chart_of_accounts.delete"},
 	},
 }
 
@@ -140,10 +140,10 @@ var AccountDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.account.create"},
+		Read:   []string{"finance.account.read"},
+		Write:  []string{"finance.account.update"},
+		Delete: []string{"finance.account.delete"},
 	},
 }
 
@@ -200,9 +200,9 @@ var CostCenterDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.cost_center.create"},
+		Read:   []string{"finance.cost_center.read"},
+		Write:  []string{"finance.cost_center.update"},
+		Delete: []string{"finance.cost_center.delete"},
 	},
 }

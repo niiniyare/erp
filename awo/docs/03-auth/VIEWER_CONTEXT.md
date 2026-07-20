@@ -1,6 +1,6 @@
 # ViewerContext Specification
 
-**Classification:** Specification — Tier 1
+**Classification:** Specification — Tier 0
 **Owner:** `03-auth/VIEWER_CONTEXT.md`
 **Status:** Frozen at v1.0 (ADR-002)
 **Package:** `awo.so/awo/auth`
@@ -22,8 +22,10 @@ This specification covers:
 
 ## Dependencies
 
-- [`03-auth/SESSION_MODEL.md`](SESSION_MODEL.md) — Session → ViewerContext construction
-- [`03-auth/ACTOR_MODEL.md`](ACTOR_MODEL.md) — Actor (a projection of ViewerContext)
+- [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md) — ADR-002
+- [`03-auth/SESSION_SPEC.md`](SESSION_SPEC.md) — Session → ViewerContext construction
+- [`03-auth/ACTOR_SPEC.md`](ACTOR_SPEC.md) — def.Actor (returned by Actor() method)
+- [`03-auth/AUTHORIZATION_SPEC.md`](AUTHORIZATION_SPEC.md) — PolicyEvaluator consumes ViewerContext
 
 ---
 
@@ -63,6 +65,12 @@ type ViewerContext interface {
     // IsPlatformAdmin returns true if the viewer holds "role:platform-admin".
     // Platform admins bypass all PolicyEvaluator checks.
     IsPlatformAdmin() bool
+
+    // Actor returns the def.Actor representation of this viewer.
+    // Provides access to actor identity inside hooks and action handlers where
+    // the def package is the correct dependency level.
+    // Callers MUST NOT modify the returned Actor.
+    Actor() *def.Actor
 }
 ```
 
@@ -148,6 +156,7 @@ func (v *DefaultViewer) ServiceAccountID() uuid.UUID  { return v.serviceAccountI
 func (v *DefaultViewer) Roles() []string              { return v.roles }
 func (v *DefaultViewer) HasRole(role string) bool     { return v.roleSet[role] }
 func (v *DefaultViewer) IsPlatformAdmin() bool        { return v.roleSet["role:platform-admin"] }
+func (v *DefaultViewer) Actor() *def.Actor            { return v.actor }
 ```
 
 `HasRole` is O(1) via the pre-built map.
@@ -201,6 +210,12 @@ func (v *SystemViewer) ServiceAccountID() uuid.UUID  { return uuid.Nil }
 func (v *SystemViewer) Roles() []string              { return []string{"role:platform-admin"} }
 func (v *SystemViewer) HasRole(role string) bool     { return role == "role:platform-admin" }
 func (v *SystemViewer) IsPlatformAdmin() bool        { return true }
+func (v *SystemViewer) Actor() *def.Actor {
+    return &def.Actor{
+        TenantID: v.tenantID,
+        Roles:    []string{"role:platform-admin"},
+    }
+}
 ```
 
 `SystemViewer` carries `"role:platform-admin"` because background platform operations bypass authorization. Use it only for legitimate platform operations, not as an authorization bypass in module code.
@@ -233,10 +248,15 @@ func (v *testViewer) UserID() uuid.UUID           { return v.userID }
 func (v *testViewer) ServiceAccountID() uuid.UUID { return uuid.Nil }
 func (v *testViewer) Roles() []string             { return v.roles }
 func (v *testViewer) HasRole(role string) bool {
-    for _, r := range v.roles { if r == role { return true } }
+    for _, r := range v.roles {
+        if r == role { return true }
+    }
     return false
 }
 func (v *testViewer) IsPlatformAdmin() bool { return v.HasRole("role:platform-admin") }
+func (v *testViewer) Actor() *def.Actor {
+    return &def.Actor{TenantID: v.tenantID, UserID: v.userID, Roles: v.roles}
+}
 ```
 
 ---
@@ -250,13 +270,14 @@ func (v *testViewer) IsPlatformAdmin() bool { return v.HasRole("role:platform-ad
 - `ViewerContext` MUST NOT be stored beyond the lifetime of the request.
 - Module authors MUST NOT construct `DefaultViewer` directly — it is constructed by the framework middleware.
 - `SystemViewer` MUST be used for background operations that require a ViewerContext.
+- `Actor()` MUST return an immutable `*def.Actor` — callers MUST NOT modify it.
 
 ---
 
 ## References
 
-- `awo/auth/viewer.go` — ViewerContext interface and DefaultViewer
-- [`03-auth/SESSION_MODEL.md`](SESSION_MODEL.md) — Session → DefaultViewer construction
-- [`03-auth/ACTOR_MODEL.md`](ACTOR_MODEL.md) — Actor (hook/action handler projection)
+- `awo/auth/viewer.go` — ViewerContext interface, DefaultViewer, SystemViewer
+- [`03-auth/SESSION_SPEC.md`](SESSION_SPEC.md) — Session → DefaultViewer construction
+- [`03-auth/ACTOR_SPEC.md`](ACTOR_SPEC.md) — def.Actor (hook/action handler projection)
 - [`03-auth/AUTHORIZATION_SPEC.md`](AUTHORIZATION_SPEC.md) — PolicyEvaluator using ViewerContext
 - ADR-002 in [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md)

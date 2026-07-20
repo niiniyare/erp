@@ -1,841 +1,690 @@
-# Awo Framework — CLAUDE.md
+# CLAUDE.md — AWO ERP
 
-Awo is a Go-native multi-tenant ERP framework. Tenancy is structural, not optional — every abstraction assumes one process serves many isolated tenants simultaneously.
+Technical reference for Claude (and Claude Code) working on this repository. Assumes Go + PostgreSQL familiarity.
 
----
-
-## CRITICAL RULES
-
-- **Never run `go build`, `go run`, `go vet`, `go test`** — tell user to run them instead
-- **Never auto-migrate** — all schema changes go through reviewed `.up.sql` / `.down.sql` files
-- **Never raw SQL in business logic** — use `EntityRepository` interface and Filter DSL
-- **Never `WHERE tenant_id = ?` in app code** — RLS enforces this at DB level automatically
-- **Never store money as float** — always `Currency` field type → `numeric(20,4)` → `decimal.Decimal`
-- **Never call `registry.RegisterCustomForTenant` from a request handler** — races with concurrent reads
-- **Never lazy-load edges** — explicitly request related data via `QueryOption`s
-- **Never update amis SDK version** without a full compatibility audit of all page builder output
-- **Never bypass `set_tenant_context()`** — it is the single RLS enforcement point
-- **Never expose internal stack traces to clients** — structured error envelope only
-- **Never hard-code secrets** — environment variables or secret manager (Vault in prod)
-- **Never write custom React/JS for standard ERP views** — amis JSON schemas only
-- **Never write I/O inside Temporal workflow functions** — I/O goes in activities only
-- **Never write custom CRUD route handlers** — auto-generated from EntityDefinition
-- **Never use `time.Now()` or `time.Sleep()` in workflow code** — use `workflow.Now()` / `workflow.Sleep()`
-- **Never use ORM types directly** — all persistence through `EntityRepository` interface
-- **Never put role names in `PermissionSet`** — `PermissionSet` contains permission identifiers (`"module.entity.action"`), never `role:` strings
-- **If a suggestion violates any rule above, state the violation explicitly and explain the trade-off before proceeding**
+**Repository root:** `/data/data/com.termux/files/home/project/erp/`
+**Module path:** `awo.so`
+**Framework package root:** `awo.so/awo/...`
+**Stage:** Pre-v1.0 kernel freeze — validating architecture before module implementations.
 
 ---
 
-## Project Layout
+## Table of Contents
+
+1. [Architecture Overview](#1-architecture-overview)
+2. [Repository Layout](#2-repository-layout)
+3. [Kernel Packages](#3-kernel-packages)
+4. [Key Patterns](#4-key-patterns)
+5. [Authorization Model](#5-authorization-model)
+6. [Multi-Tenancy](#6-multi-tenancy)
+7. [Entity Definitions](#7-entity-definitions)
+8. [Migrations](#8-migrations)
+9. [Workflow (Temporal)](#9-workflow-temporal)
+10. [SDUI (AMIS)](#10-sdui-amis)
+11. [Known Architectural Contradictions](#11-known-architectural-contradictions)
+12. [Roadmap](#12-roadmap)
+13. [Code Guidelines](#13-code-guidelines)
+14. [Module Development Checklist](#14-module-development-checklist)
+
+---
+
+## 1. Architecture Overview
+
+**Core thesis:** Multi-tenant, permission-centric ERP kernel in Go. One `EntityDefinition` registration drives five subsystems simultaneously — persistence, API generation, SDUI, authorization, and workflow.
+
+**Stack:**
+
+| Layer | Technology |
+|---|---|
+| HTTP | Fiber v2 |
+| Database | PostgreSQL + Row-Level Security (RLS) |
+| Query gen | SQLC |
+| DI | Google Wire |
+| Authorization | Casbin v2 / CEL expressions |
+| Async workflows | Temporal SDK |
+| Cache | Redis (go-redis/v8) |
+| Web UI | AMIS-based Server-Driven UI (SDUI) |
+| Mobile | Flutter (planned) |
+| Observability | OpenTelemetry + Prometheus |
+
+**Primary application:** AwoERP (in `awo/` subdirectory)
+
+---
+
+## 2. Repository Layout
 
 ```
-cmd/
-  server/           ← API + Temporal worker entrypoint (main.go)
-  migrate/          ← Migration runner (separate process, CI-safe)
-internal/
-  platform/         ← Built-in platform modules (tenant, iam, flags, settings, audit, metadata, registry)
-  core/             ← Business domain modules
-  shared/           ← Shared utilities (errors, pagination, etc.)
-  config/           ← Typed config struct + env loader
-db/
-  migration/        ← golang-migrate .up.sql / .down.sql pairs
-web/
-  pages/            ← index.html sidebar + amis embed
-  schemas/pages/    ← amis JSON schema files
-  sdk/              ← Pinned amis SDK (sdk.js, sdk.css, charts)
-framework/
-  definition/       ← EntityDefinition, FieldDef, EdgeDef, HookDef, PolicyFunc types
+erp/
+├── CLAUDE.md                  ← this file
+├── ENTITY_DEFINITION_SPEC.md  ← entity def canonical reference
+├── ACTOR_MODEL.md             ← stub, see awo/docs/03-auth/ACTOR_SPEC.md
+├── AUTHORIZATION_SPEC.md      ← stub, see awo/docs/03-auth/AUTHORIZATION_SPEC.md
+├── SESSION_MODEL.md           ← stub, see awo/docs/03-auth/SESSION_SPEC.md
+├── modules/
+│   └── finance/               ← Finance module entity definitions
+│       ├── definition_bank.go
+│       ├── definition_coa.go
+│       ├── definition_currency.go
+│       ├── definition_invoice.go
+│       ├── definition_journal.go
+│       ├── definition_payment.go
+│       ├── definition_period.go
+│       └── definition_tax.go
+└── awo/                       ← Framework + ERP app (module: awo.so)
+    ├── go.mod
+    ├── cmd/server/main.go     ← entry point
+    ├── bootstrap/             ← startup sequence
+    ├── api/
+    │   ├── authz/             ← RequirePermission middleware
+    │   ├── handler/           ← entity CRUD handlers
+    │   ├── middleware/        ← TenantResolver, RequireAuth, RateLimit
+    │   └── router/            ← auto-generated routes from CompiledSchema
+    ├── auth/                  ← Session, ViewerContext, Actor
+    ├── compiler/              ← EntityDefinition → CompiledSchema
+    ├── contrib/
+    │   ├── pgx/               ← PostgreSQL EntityRepository impl
+    │   └── redis/             ← Redis cache impl
+    ├── def/                   ← DSL layer (EntityDefinition, FieldDef, PermissionSet)
+    ├── driver/                ← EntityRepository[T] interface
+    ├── events/outbox/         ← transactional outbox relay
+    ├── filter/                ← query filter predicates
+    ├── naming/                ← NamingSeries auto-ID generation
+    ├── observability/
+    │   ├── health/
+    │   └── metrics/
+    ├── platform/
+    │   ├── audit/
+    │   ├── flags/
+    │   ├── iam/               ← login, session management, RBAC
+    │   ├── metadata/
+    │   ├── settings/
+    │   └── tenant/            ← tenant lifecycle, context propagation
+    ├── registry/              ← runtime entity/action/policy registry
+    ├── runtime/               ← entity lifecycle pipeline
+    └── docs/
+        └── 03-auth/           ← Frozen Tier-0 auth specs
 ```
 
 ---
 
-## The EntityDefinition — Central Primitive
+## 3. Kernel Packages
 
-One `definition.Register(&MyEntityDef)` call drives **5 subsystems simultaneously**:
+### `awo/def` — Metadata / DSL Layer
 
-1. **Persistence routing** — SQL (system entity) vs JSONB (custom entity)
-2. **API generation** — auto-generates CRUD + action Fiber routes
-3. **UI generation** — builds amis JSON page schemas
-4. **Authorization compilation** — derives `CapabilityGrant` values from `PermissionSet` identifiers
-5. **Workflow triggering** — binds Temporal workflow starts to lifecycle events
+Single source of truth for all entity metadata. Module authors touch only this package when declaring entities.
 
-Actual package: `awo.so/framework/definition`. Type: `definition.EntityDefinition`. Builder: `definition.Field("name").OfType(definition.FieldTypeData)`. Registration: `definition.Register(&def)` (package-level function, not method on registry).
+**Key types:**
 
 ```go
-var InvoiceDefinition = entity.SystemDefinition{
-    Name:        "invoice",        // stable: used in URLs, Redis keys, Temporal IDs, CapabilityGrant objects
-    Module:      "finance",
-    Label:       "Invoice",
-    LabelPlural: "Invoices",
-    Fields: []entity.FieldDef{
-        {Name: "number",     Type: entity.FieldNamingSeries, Series: "INV-{YYYY}-{SEQ:5}"},
-        {Name: "customer",   Type: entity.FieldLink, LinkTarget: "customer", Required: true},
-        {Name: "status",     Type: entity.FieldSelect, Options: []string{"Draft","Submitted","Paid","Cancelled"}, Default: "Draft"},
-        {Name: "total_kes",  Type: entity.FieldCurrency, Required: true},
-        {Name: "notes",      Type: entity.FieldLongText},
-    },
-    Edges: []entity.EdgeDef{
-        {Name: "lines", Target: "invoice_line", Type: entity.EdgeOneToMany, CascadeDelete: true},
-    },
-    Hooks: entity.HookSet{
-        BeforeCreate: []entity.BeforeCreateHook{&InvoiceValidator{}},
-        AfterCreate:  []entity.AfterCreateHook{&InvoiceNumberAssigner{}},
-    },
-    Permissions: entity.PermissionSet{
-        Create: []string{"finance.invoice.create"},
-        Read:   []string{"finance.invoice.read"},
-        Update: []string{"finance.invoice.update"},
-        Delete: []string{"finance.invoice.delete"},
-    },
-    WorkflowTriggers: []entity.WorkflowTrigger{
-        {
-            On:         entity.EventOnSubmit,
-            WorkflowFn: "InvoiceSubmissionWorkflow",
-            TaskQueue:  "finance.invoice.submit",
-            InputBuilder: func(rec *entity.EntityRecord, ctx entity.TriggerContext) (any, error) {
-                return finance.InvoiceSubmissionInput{TenantID: rec.TenantID, InvoiceID: rec.ID}, nil
-            },
-        },
-    },
+// EntityDefinition — implemented by SystemDefinition and CustomDefinition
+type EntityDefinition interface {
+    EntityName() string
+    EntityFields() []FieldDef
+    EntityPermissions() PermissionSet
+    EntityHooks() HookSet
+    EntityActions() []ActionDef
+    EntityWorkflows() []WorkflowDef
 }
 
+// SystemDefinition — typed PostgreSQL columns; use for financial, IAM, inventory
+type SystemDefinition struct { ... }
+
+// CustomDefinition — JSONB in custom_entity_records; use for tenant-specific schemas
+type CustomDefinition struct { ... }
+
+// PermissionSet — permission identifiers only; NO role names
+type PermissionSet struct {
+    Create  []string
+    Read    []string
+    Update  []string
+    Delete  []string
+    Actions map[string][]string
+}
+```
+
+**Register in `init()` only:**
+
+```go
 func init() {
-    definition.Register(&InvoiceDefinition)
+    def.Register(&MyEntityDefinition)
 }
 ```
 
----
+Never call `Register` from a handler or after bootstrap.
 
-## Two Entity Types
+### `awo/compiler` — Schema Compiler
 
-### System Entity — Go struct, typed SQL columns
+Validates EntityDefinitions and compiles them into `CompiledSchema` with `CapabilityGrant` values used by the runtime and authz layer.
 
-Use when: financial integrity required, inventory accuracy required, IAM data, high-frequency writes (>hundreds/sec).
+**Key output:** `CapabilityGrant` — binds a permission identifier to a compiled enforcement rule.
 
-These **must always** be system entities (non-negotiable, enforced by EntityRegistry validator):
+### `awo/registry` — Runtime Registry
 
-| Entity | Reason |
-|---|---|
-| LedgerEntry | Double-entry accounting; SQL numeric constraints |
-| StockMove | Inventory accounting; SQL quantity constraints |
-| Payment | Financial transaction; SQL constraints + audit triggers |
-| User | IAM data; JSONB corruption risk |
-| Tenant | Platform identity; accessible before per-tenant schemas load |
-| JournalEntry | Double-entry; debit/credit balance enforced at DB level |
-| TaxEntry | KRA eTIMS record; regulatory compliance |
+Maintains all registered `SystemDefinition` and `CustomDefinition` entities. Populated during bootstrap via `init()` side effects. Read-only after bootstrap completes.
 
-### Custom Entity — DB records, JSONB storage
+### `awo/runtime` — Entity Lifecycle
 
-Use when: tenant-specific data, frequently evolving schema, no financial/inventory/IAM participation, low write rate.
-
-Good candidates: site visit records, inspection checklists, survey responses, approval metadata, industry-specific classification fields.
-
-**Escalate custom→system when**: >10M records, fields used in financial calculations requiring precision, FK constraints to system entity PKs needed.
-
-### Entity Naming Convention
-
-Format: `{module}_{noun}` — e.g. `finance_journal`, `inventory_stock_move`, `forecourt_shift`.
-
-**Never rename entity names** — embedded in migration filenames, Temporal workflow IDs (stored for years), Redis cache keys.
-
----
-
-## Five-Layer Architecture (strict top-down dependencies)
+Executes the entity lifecycle pipeline for every mutating operation:
 
 ```
-UI Layer      → amis JSON schemas served from API
-API Layer     → Fiber v2, middleware pipeline, thin route handlers (~50 lines max)
-Domain Layer  → EntityDefinition, hooks, validators, permission policies (stateless)
-Workflow Layer→ Temporal workflows + activities (async, durable)
-Store Layer   → EntityRepository interface → PostgreSQL via pgx
+BeforeCreate → Validate → Authorize → Persist → AfterCreate
 ```
 
-No layer may import from a higher layer. Domain layer has zero external dependencies at the interface level.
+Same pattern for Update, Delete. Hooks fire at each stage.
 
----
-
-## Startup Order (hard dependency chain)
-
-```
-Config load & validate
-    ↓
-PostgreSQL pool init (ping)
-    ↓
-Redis client init (ping)
-    ↓
-EntityRegistry init + system entity registration (all modules via init())
-    ↓
-Fiber app init + route registration (derived from EntityRegistry)
-    ↓
-Fiber server start
-    ↓ (concurrent)
-Temporal worker start
-```
-
-- EntityRegistry failure = **fatal** (process exits — cannot serve requests without registered routes)
-- Temporal failure = **degraded** (CRUD works; workflow starts fail gracefully)
-- Redis failure = **503 on all auth** (session validation requires Redis; security-correct behavior)
-- PostgreSQL failure = **hard dependency** (process exits at startup if pool fails; 503 during operation)
-
----
-
-## Multi-Tenancy
-
-### Tenant Identification (priority order)
-
-1. `X-Tenant-ID` header (UUID) — preferred for API clients
-2. `tenant_id` query param — webhooks/legacy only; disable in production
-3. Subdomain parsing — browser access (`bo.`, `portal.`, `app.`, `api.` prefixes handled)
-
-### RLS Enforcement
-
-Every tenant-scoped table has `FORCE ROW LEVEL SECURITY`:
-
-```sql
-CREATE POLICY tenant_isolation ON invoice
-    USING (tenant_id = current_tenant_id());
-```
-
-`current_tenant_id()` reads `app.current_tenant_id` PostgreSQL transaction-local var, set by:
+### `awo/driver` — Storage Abstraction
 
 ```go
-store.SetTenantContextFromCtx(ctx)  // calls set_tenant_context($1) stored procedure
-```
-
-`set_tenant_context()` validates tenant exists + `status = 'ACTIVE'`, then `set_config('app.current_tenant_id', $1, TRUE)`. `TRUE` = transaction-local, resets on COMMIT/ROLLBACK automatically.
-
-**Requires PgBouncer in transaction mode** — session mode breaks the transaction-local reset.
-
-### Global Tables (no RLS, read-only for app role)
-
-`tenants`, `audit_log`, `timezones`, `currencies`, `countries`, `paye_bands`, `platform_admins`
-
-### Tenant Status Machine
-
-```
-PENDING → ACTIVE → SUSPENDED → ACTIVE    (payment resolved)
-PENDING → ARCHIVED                        (abandoned)
-ACTIVE  → ARCHIVED                        (account deletion)
-SUSPENDED → ARCHIVED                      (grace period expired)
-```
-
-ARCHIVED = terminal. HTTP responses: PENDING→503 + Retry-After:60, SUSPENDED→402, ARCHIVED→410.
-
----
-
-## EntityRecord Lifecycle (every mutation)
-
-```
-ASSEMBLE → before_validate → VALIDATE → AUTHORIZE → before_save
-         → [TX begins] → PERSIST → after_save → [TX commits]
-         → Temporal workflow start (OUTSIDE TX)
-```
-
-| Hook | Inside TX? | Abort via |
-|---|---|---|
-| `before_validate` | No | `ValidationError` |
-| `before_save` | No (TX starts after) | `BusinessError` |
-| `after_save` | **Yes** | error → rollback |
-
-Temporal `StartWorkflow` is outside the transaction. If TX commits but Temporal call fails → failure recorded in retry queue for re-attempt. Entity record is saved with workflow ID pre-set.
-
-Hook execution order within each stage = declaration order in `HookSet`.
-
----
-
-## EntityRepository Interface
-
-```go
-type EntityRepository[T Entity] interface {
-    // Reads
+// EntityRepository[T] — generic interface; impl in contrib/pgx
+type EntityRepository[T any] interface {
+    Create(ctx context.Context, record T) (T, error)
     Get(ctx context.Context, id uuid.UUID) (T, error)
-    Query(ctx context.Context, f Filter, opts ...QueryOption) ([]T, PageInfo, error)
-    Exists(ctx context.Context, f Filter) (bool, error)
-    Count(ctx context.Context, f Filter) (int, error)
-    Aggregate(ctx context.Context, f Filter, spec AggregateSpec) (AggregateResult, error)
-    // Writes
-    Create(ctx context.Context, input CreateInput) (T, error)
-    Update(ctx context.Context, id uuid.UUID, input UpdateInput) (T, error)
+    Update(ctx context.Context, id uuid.UUID, patch T) (T, error)
     Delete(ctx context.Context, id uuid.UUID) error
-    BulkCreate(ctx context.Context, inputs []CreateInput) ([]T, error)
-    BulkUpdate(ctx context.Context, f Filter, patch Patch) (int, error)
-    // Transactions
-    WithTx(ctx context.Context, fn func(ctx context.Context, repo EntityRepository[T]) error) error
+    Query(ctx context.Context, opts QueryOptions) ([]T, error)
 }
 ```
 
-Interface deliberately excludes: raw SQL, ORM types, connection management, lazy loading, schema-specific predicates.
+All DB access goes through this interface. No raw SQL outside drivers.
 
----
+### `awo/filter` — Query Filtering
 
-## Field Types Reference
-
-### Scalar
-| Type | PostgreSQL | Notes |
-|---|---|---|
-| `Data` | `varchar(n)` | Short strings, indexed. `Searchable()` → GIN trgm index |
-| `SmallText` | `varchar(1024)` | Medium prose, no B-tree index |
-| `LongText` | `text` | Free-form, no index. Use tsvector for FTS |
-| `Int` | `bigint` | Counts, quantities, sequences. Never money |
-| `Float` | `double precision` | Scientific/percentages only. **Never money** |
-| `Currency` | `numeric(20,4)` | **Only correct type for money**. Go: `decimal.Decimal` |
-| `Bool` | `boolean` | — |
-| `Date` | `date` | — |
-| `DateTime` | `timestamptz` | Stored UTC, serialized as EAT offset ISO 8601 for Kenyan tenants |
-| `Time` | `time` | — |
-
-### Structured
-| Type | Notes |
-|---|---|
-| `Select` | Generates SQL `CHECK (col IN (...))`. Options declared in FieldDef |
-| `MultiSelect` | Array column |
-| `NamingSeries` | Format: `INV-{YYYY}-{SEQ:5}`. Atomic counter, configurable reset. `TenantOverridable: true` for prefix overrides |
-| `JSON` | Freeform JSONB. GIN indexed |
-
-### Relational
-| Type | Notes |
-|---|---|
-| `Link` | FK to another entity. Generates FK column + index |
-| `LinkList` | Many references |
-| `DynamicLink` | Polymorphic — `link_type` + `link_name` pattern |
-
-### Field Constraints
-`Required`, `Unique`, `Immutable` (set-once, rejected on update), `Sensitive` (excluded from logs/standard responses), `Searchable` (GIN trgm), `MaxLen`, `Min`, `Max`, custom `Validators []FieldValidator`
-
----
-
-## Privacy Policies (Row Filtering)
-
-RBAC = operation-level gate. Privacy policies = row-level filter. Both required. Policies inject WHERE predicates into every query — declared once, enforced everywhere, cannot be forgotten.
+Composable filter predicates for queries:
 
 ```go
-// Declared on EntityDefinition
-Policy: entity.PolicyFunc(func(ctx context.Context) entity.Filter {
-    actor := session.ActorFromContext(ctx)
-    return filter.Eq("assigned_to", actor.UserID)  // OwnerOnly example
-})
+filter.And(
+    filter.Eq("status", "active"),
+    filter.Gt("amount", 0),
+)
 ```
 
-Built-in policies: `TenantIsolation` (automatic), `OwnerOnly`, `BranchScoped`, `SensitiveFieldMask`
+CEL-based expression evaluation for complex predicates. Type-safety gaps exist (see §11).
 
----
+### `awo/auth` — Session & ViewerContext
 
-## Custom Fields (Runtime Schema Extension)
-
-Tenants add fields to any entity via admin UI — no migration, no redeploy.
-
-- **On system entities**: stored in `custom_fields jsonb` column (every system entity has one; GIN indexed)
-- **On custom entities**: additional keys in same JSONB doc
-
-API, SDUI, and Filter DSL treat custom fields identically to system fields.
-
----
-
-## RBAC (Casbin)
-
-Policy model: `(subject, domain, object, action)`
-- Subject: `user:{uuid}` or `role:{name}`
-- Domain: `_platform_` or tenant UUID
-- Object: entity type name
-- Action: `read`, `write`, `create`, `delete`, `submit`, `cancel`, etc.
-
-**System roles** (seeded at tenant bootstrap, cannot delete):
-
-| Role | Scope |
-|---|---|
-| `role:platform-admin` | Bypasses Casbin entirely. All tenants, platform config |
-| `role:tenant.admin` | Full access within one tenant |
-| `role:tenant.user` | Standard, customized per tenant |
-| `role:api-client` | Machine-to-machine, limited scopes |
-
-Role hierarchy via Casbin `g` assertions — inheritance accumulates permissions upward.
-
----
-
-## Middleware Pipeline (fixed order)
-
-1. Request ID (from `X-Request-ID` or generated UUID)
-2. Structured logging (`slog`, JSON format)
-3. Panic recovery
-4. CORS (per-tenant subdomain origin validation)
-5. Tenant resolution → `set_tenant_context()`
-6. Session validation (Redis lookup, expiry check)
-7. Rate limiting (Redis sliding window, per-tenant + per-user)
-
-**Order is not configurable at runtime** — changing it requires code change + redeploy. This is intentional (security-sensitive).
-
----
-
-## SDUI Layer (amis)
-
-amis (Baidu open-source React renderer) interprets JSON schemas. Server generates complete UI descriptions in Go; browser renders without custom JS or build step.
-
-**Ideal for**: CRUD forms/lists (90% of ERP UI), dashboards, approval flows, report pages.
-**Not ideal for**: real-time/streaming UI, pixel-perfect branded portals, drag-and-drop, mobile-native.
-
-### Default Page Generation
-
-Every `EntityDefinition` auto-generates: list, create form, edit form, detail view. Cached in Redis (5min TTL, keyed by entity name + version). Custom `PageBuilderSet` overrides any view.
+**Session** — stored in Redis (`session:{token}`) and PostgreSQL (durable).
 
 ```go
-PageBuilders: entity.PageBuilderSet{
-    Detail: BuildInvoiceDetailPage,  // only override what you need
-},
-```
-
-**Permission-gated elements are absent from schema** (not just disabled). Permission check runs at schema-serve time, not just data-fetch time.
-
-### amis SDK
-
-- Pinned in `web/sdk/` — **never auto-update**
-- Update only after full compatibility audit of all page builder output
-- No `theme("dark")` built-in dark CSS (none exists for `classPrefix: "dark-"`) — override CSS custom property tokens at `html.dark` root instead
-
----
-
-## Workflow Engine (Temporal)
-
-### Why Temporal
-
-- **Durability**: workflow state persists across crashes; auto-replay from last checkpoint
-- **Audit trail**: complete event history (Temporal Web UI), months retention
-- **Long-running**: approval chains spanning days (signal-based gates)
-- **Saga pattern**: compensating transactions for distributed failures
-
-### Workflow Rules (Determinism)
-
-Workflow code **must be deterministic** — same history = same decisions on replay:
-- No `time.Now()` → use `workflow.Now(ctx)`
-- No `time.Sleep()` → use `workflow.Sleep(ctx, duration)`
-- No `rand` → use `workflow.SideEffect`
-- No direct I/O → call activities
-- No goroutines → use `workflow.Go`
-
-### Activity Pattern
-
-```go
-// Activities struct allows dependency injection for testability
-type Activities struct {
-    EmailClient notifications.EmailClient
-    Repo        entity.EntityRepository
-}
-
-func (a *Activities) SendWelcomeEmailActivity(ctx context.Context, input Input) error {
-    return a.EmailClient.Send(ctx, ...)
+type Session struct {
+    Token            string
+    UserID           *uuid.UUID
+    ServiceAccountID *uuid.UUID
+    TenantID         uuid.UUID
+    Roles            []string
+    ExpiresAt        time.Time
+    IssuedAt         time.Time
+    DeviceID         string
+    IPAddress        string
+    RequestID        string
 }
 ```
 
-### Saga Pattern
-
-Each activity registers a compensation. Failure at step N → compensations run N-1 through 1 in reverse order. Framework provides `SagaCompensator` helper.
-
-### Workflow ID Convention
-
-`{tenant-uuid}.{entity-type}.{record-id}.{event}` — e.g. `abc123.invoice.inv456.on_submit`
-
-### Triggering from EntityDefinition
+**ViewerContext** — authorization subject, injected into every request context:
 
 ```go
-WorkflowTriggers: []entity.WorkflowTrigger{
-    {
-        On:         entity.EventOnSubmit,
-        WorkflowFn: "InvoiceSubmissionWorkflow",
-        TaskQueue:  "finance.invoice.submit",
-        InputBuilder: func(rec *entity.EntityRecord, tc entity.TriggerContext) (any, error) {
-            return InvoiceSubmissionInput{TenantID: rec.TenantID, InvoiceID: rec.ID}, nil
-        },
+type ViewerContext interface {
+    TenantID() uuid.UUID
+    UserID() *uuid.UUID
+    ServiceAccountID() *uuid.UUID
+    Roles() []string
+    HasRole(role string) bool
+    IsPlatformAdmin() bool  // derived from Roles; never a bool field (ADR-003)
+}
+```
+
+Retrieve with `auth.ViewerFromContext(ctx)` — panics if middleware was bypassed (fail-fast by design).
+
+### `awo/platform/iam` — Identity & Access Management
+
+Login, session management, role loading. Dual-plane IAM:
+
+- **Platform Plane:** manages tenants, platform admins, billing
+- **Tenant Plane:** manages users, OU hierarchy, roles within a tenant
+
+ltree-based OU scoping for hierarchical access delegation.
+
+### `awo/events/outbox` — Transactional Outbox
+
+Domain events written to the outbox table within the same DB transaction as the mutation. Relay polls and publishes asynchronously.
+
+### `awo/naming` — NamingSeries
+
+Auto-generates formatted sequential IDs:
+
+```
+INV-{YYYY}-{SEQ:6}   →   INV-2026-000001
+PAY-{YYYY}-{SEQ:6}   →   PAY-2026-000001
+JE-{YYYY}-{SEQ:5}    →   JE-2026-00001
+```
+
+Tenants can override prefixes via `TenantOverridable: true`.
+
+---
+
+## 4. Key Patterns
+
+### HTTP Routes
+
+Auto-generated from `CompiledSchema`:
+
+```
+GET    /api/v1/{module}/{resource}               List
+GET    /api/v1/{module}/{resource}/:id           Get
+POST   /api/v1/{module}/{resource}               Create
+PATCH  /api/v1/{module}/{resource}/:id           Update
+DELETE /api/v1/{module}/{resource}/:id           Delete
+POST   /api/v1/{module}/{resource}/:id/:action   Custom action
+```
+
+### Middleware Stack
+
+Applied at the `/api/v1` group in order:
+
+1. `TenantResolver` — extracts tenant from host/header, validates, injects into context
+2. `RequireAuth` — validates session token, builds `ViewerContext`, injects via `auth.WithViewer(ctx, viewer)`
+3. `RateLimit` — per-tenant/user, Redis-backed
+
+### Dependency Injection (Wire)
+
+All services use Google Wire. No global state.
+
+```go
+// Provider declaration
+func NewMyService(repo driver.EntityRepository[MyEntity], ...) *MyService { ... }
+
+// Wire provider set
+var MyServiceSet = wire.NewSet(NewMyService)
+```
+
+Wire generates `wire_gen.go` at build time. Never edit generated files.
+
+### Bootstrap Sequence
+
+```
+1. Config validation (DatabaseURL, RedisURL required)
+2. PostgreSQL pool init + ping
+3. Redis client init + ping
+4. EntityRegistry init (all modules via init())
+5. Schema compilation → CompiledSchema
+6. Fiber app init + route registration
+7. HTTP server start
+8. Temporal worker start (concurrent; degraded-ok if Temporal unavailable)
+```
+
+---
+
+## 5. Authorization Model
+
+**Two-layer architecture (ADR-001, ADR-011). Frozen at v1.0.**
+
+### Layer 1 — Declaration (`awo/def`)
+
+`PermissionSet` on `EntityDefinition`. Permission identifiers only — stable names for capabilities.
+
+```go
+Permissions: def.PermissionSet{
+    Create: []string{"finance.invoice.create"},
+    Read:   []string{"finance.invoice.read"},
+    Update: []string{"finance.invoice.update"},
+    Delete: []string{"finance.invoice.delete"},
+    Actions: map[string][]string{
+        "submit": {"finance.invoice.submit"},
+        "cancel": {"finance.invoice.cancel"},
     },
 },
 ```
 
-Temporal start is **outside PostgreSQL transaction**. Failure → retry queue, not rollback.
+**Critical invariant:** `EntityDefinition` MUST NOT reference role names, JWT claims, RBAC constructs, or any authorization backend detail. These belong exclusively to `PolicyEvaluator`.
+
+### Layer 2 — Enforcement (`awo/auth`)
+
+`PolicyEvaluator` interface. Default: Casbin. Replaceable with OPA, ReBAC, or custom engine without touching entity definitions.
+
+```go
+type PolicyEvaluator interface {
+    CanPerform(ctx context.Context, viewer ViewerContext, permissionID string) (bool, error)
+}
+```
+
+### Authorization Flow (per request)
+
+```
+Request
+  → TenantResolver (inject tenant)
+  → RequireAuth (inject ViewerContext)
+  → RequirePermission middleware:
+      if viewer.IsPlatformAdmin() → bypass (no Casbin call)
+      else → PolicyEvaluator.CanPerform(permissionID)
+              true  → continue
+              false → 403 Forbidden
+              error → 500 Internal Server Error
+  → Handler
+  → RLS (PostgreSQL policies enforce row visibility)
+```
+
+### Platform Admin Bypass
+
+`IsPlatformAdmin()` is derived from `Roles` at runtime. Not a stored boolean field (ADR-003). Platform admins skip Casbin entirely — all rows across all tenants are visible.
+
+### PolicyFunc (Row-Level Authorization)
+
+Beyond `PermissionSet`, entities can declare a `PolicyFunc` that injects additional filter predicates into every query, restricting which rows a viewer can see at the application layer (before RLS).
 
 ---
 
-## Platform Modules (Built-in)
+## 6. Multi-Tenancy
 
-7 modules in `internal/platform/` — unconditional, every deployment:
+### Tenant Context Propagation
 
-| Module | What |
-|---|---|
-| **Tenant** | Top-level isolation boundary, lifecycle state machine |
-| **IAM** | Users, roles, permissions, sessions, auth |
-| **Feature Flags** | Per-tenant on/off switches; Redis-cached; no deploys needed |
-| **Settings** | Hierarchical config: system→tenant→branch |
-| **Audit Log** | Tamper-evident record of every data change; legal compliance |
-| **Metadata** | Custom fields runtime extension |
-| **Module Registry** | Tracks installed/activated business modules per tenant |
+Every request carries a `TenantID` extracted by `TenantResolver`. Never pass tenant ID as a function argument through business logic — always carry it in `context.Context`.
 
-**No special framework path** — platform modules use identical patterns to business modules (Finance, HR, CRM). Same `EntityDefinition`, `Register()`, `PolicyFunc`, `HookDef`, migrations.
+```go
+// Inject (in middleware)
+ctx = tenant.WithTenant(ctx, tenantID)
 
-### Module Directory Layout (all modules, platform or business)
-
-```
-internal/platform/<module>/
-    <module>.go       ← init() calls definition.Register()
-    definition.go     ← EntityDefinition variable declarations
-    policy.go         ← PolicyFunc implementations
-    hooks.go          ← HookDef function implementations
-    service.go        ← thin service layer on EntityStore
-    handler.go        ← custom HTTP handlers (if needed beyond CRUD)
-    migrations/
-        YYYYMMDDHHMMSS_create_<table>.up.sql
-        YYYYMMDDHHMMSS_create_<table>.down.sql
+// Retrieve (in service/repo)
+tenantID := tenant.FromContext(ctx)  // panics if missing
 ```
 
----
+### PostgreSQL RLS
 
-## Database Migrations
-
-Tool: `golang-migrate` with PostgreSQL driver. Files: `.up.sql` / `.down.sql` pairs.
-
-**File naming**: Unix timestamp (14 digits) + description slug:
-```
-20241215143022_create_contact.up.sql
-20241215143022_create_contact.down.sql
-```
-
-**Never auto-migrate** — silent column drops, no down-migration, no audit trail.
-
-**Single shared schema** = one migration applies to ALL tenants simultaneously. Per-tenant differences go in seed data (provisioning workflow), not schema differences.
-
-### Zero-Downtime Migration Patterns
-
-Adding column: `ADD COLUMN ... DEFAULT NULL` first, then backfill, then add constraint.
-Adding index: `CREATE INDEX CONCURRENTLY` — no table lock.
-Renaming: add new column, dual-write, backfill, switch reads, drop old. Never single-step rename in production.
-
-### RLS-Aware: Every New Tenant-Scoped Table Needs
+Every `SystemDefinition` table has a `tenant_id` column and a PostgreSQL RLS policy:
 
 ```sql
-ALTER TABLE my_entity ENABLE ROW LEVEL SECURITY;
-ALTER TABLE my_entity FORCE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation ON my_entity
+-- Policy on every entity table
+CREATE POLICY tenant_isolation ON finance_invoice
     USING (tenant_id = current_tenant_id());
+
+-- current_tenant_id() reads from session variable set per connection
 ```
+
+The PostgreSQL function `current_tenant_id()` is set via a connection-level `SET LOCAL` before every query execution in `contrib/pgx`.
+
+**RLS is the last line of defense.** Application-layer filters (PolicyFunc) run first. RLS catches anything that leaks through.
+
+### Tenant Isolation Invariant
+
+No query must ever return rows from another tenant, even if the application layer has a bug. RLS enforces this at the database level unconditionally.
 
 ---
 
-## Redis Usage
+## 7. Entity Definitions
 
-| Use | Key Pattern | TTL |
+See `ENTITY_DEFINITION_SPEC.md` for the full field type table and constraint reference.
+
+### Naming Convention
+
+```
+{module}_{noun}   →   finance_invoice, iam_user, platform_tenant
+```
+
+- Module prefix = Go package name of owning module
+- Noun = singular snake_case
+- **Never rename** — embedded in migration filenames, Temporal workflow IDs, Redis keys, Casbin policies
+
+### Field Types Reference
+
+| Type | PostgreSQL | Go |
 |---|---|---|
-| Session tokens | `session:{token}` | Session expiry |
-| Feature flag results | `eval:{sha256(flag+tenant+user)}` | 5 min |
-| amis page schemas | `page:{entity}:{version}:{tenant}` | 5 min |
-| Rate limiting | `rl:{tenant}:{user}:{window}` | Window duration |
+| `FieldTypeData` | `varchar(n)` | `string` |
+| `FieldTypeCurrency` | `numeric(20,4)` | `decimal.Decimal` |
+| `FieldTypeLink` | FK + index | `uuid.UUID` |
+| `FieldTypeNamingSeries` | `varchar(100)` | `string` (auto-generated) |
+| `FieldTypeSelect` | `varchar` + CHECK | `string` |
+| `FieldTypeJSON` | `jsonb` | `map[string]any` |
 
-Redis is **not** source of truth for any data — PostgreSQL is. Redis failure degrades gracefully for flags/cache; **hard failure for session validation** (correct behavior: cannot authenticate without session store).
+### Finance Module Entities
 
----
-
-## Error Handling Pattern
-
-```go
-// Repository layer
-func parseTenantDBError(err error, op string) error {
-    // pgx error codes → domain sentinel or *BusinessError
-    // 23505 → unique constraint violation
-    // 23514 → check constraint violation
-}
-
-// Handler layer
-func mapTenantError(err error) *BusinessError {
-    // domain sentinel → *BusinessError with HTTP status
-}
-
-// shared/errors/http.go
-// Use errors.As (not type switch) to unwrap — critical for error chain
-```
-
-Always chain errors with `fmt.Errorf("op: %w", err)`. Never type-switch on errors directly — use `errors.As` to unwrap chains.
-
----
-
-## API Conventions
-
-- Base URL: `/api/v1/entities/{entity-type}`
-- Standard CRUD auto-generated: `GET /`, `GET /:id`, `POST /`, `PATCH /:id`, `DELETE /:id`
-- Custom actions: `POST /api/v1/entities/{entity-type}/{id}/{action-name}`
-- Response envelope: `{"data": {...}, "meta": {...}}` (success), `{"error": {"code": "...", "message": "...", "fields": {...}}}` (error)
-- Validation errors: HTTP 422 with field-level messages in amis error format
-- Workflow-triggered responses: HTTP 202 Accepted with `{data: {id}, workflow_id: "..."}`
-- DateTime serialization: stored UTC, returned as EAT-offset ISO 8601 for Kenyan tenants
-- Currency serialization: formatted as `KES 1,234.5600` in Kenya locale contexts
-
----
-
-## Feature Flags
-
-Evaluation order: system default → tenant override → user override.
-Cache: Redis `eval:{sha256(flag+tenant+user)}`, 5min TTL.
-Flag changes invalidate cache immediately.
-Used to gate: UI elements (absent from schema if flagged off), API behavior, module activation.
-
----
-
-## Docs Conventions
-
-- `related:` frontmatter uses markdown link format: `"[Title](relative-path.md)"` — never `path:/title:` YAML
-- `section:` for Portal 4 files: `04-backend-engineering`
-- MDG directory numbers: service=`06-service-layer`, handler=`07-handler-layer`, repo=`05-repository-layer`, wire=`09-wire-registration`
-
----
-
-## Custom Actions
-
-Standard CRUD = zero boilerplate. Custom actions declared in entity `Actions` field:
-
-```go
-Actions: []entity.ActionDef{
-    {
-        Name:        "submit",
-        Method:      entity.ActionMethodPost,
-        Label:       "Submit for Approval",
-        Permission:  "finance.invoice.submit",  // permission identifier — never a role name
-        HandlerFunc: SubmitInvoiceAction,
-    },
-},
-```
-
-Auto-generates route: `POST /api/v1/entities/{entity-type}/{id}/{action-name}`
-
-```go
-func SubmitInvoiceAction(ctx context.Context, action entity.ActionContext) (*entity.ActionResult, error) {
-    // action.Repo — scoped EntityRepository (tenant + permissions already applied)
-    // action.RecordID — target record UUID
-    // action.Actor — authenticated user from session context
-    // TODO: implement business logic
-    return &entity.ActionResult{Message: "Submitted"}, nil
-}
-```
-
-Handler receives pre-resolved, permission-checked context. No manual tenant or auth wiring.
-
----
-
-## Error Handling — Full Pattern
-
-### Error Types
-
-```go
-// ValidationError — field-level, HTTP 422
-type ValidationError struct {
-    Fields map[string]string  // field name → user-facing message
-}
-
-// BusinessError — domain rule violation, HTTP 400/409/etc.
-type BusinessError struct {
-    Code    string  // machine-readable: "invoice.already_submitted"
-    Message string  // user-facing
-    Status  int     // HTTP status
-}
-
-// NotFoundError — HTTP 404
-// PermissionError — HTTP 403
-```
-
-### Repository Layer
-
-```go
-func parseDBError(err error, op string) error {
-    var pgErr *pgconn.PgError
-    if errors.As(err, &pgErr) {
-        switch pgErr.Code {
-        case "23505": // unique_violation
-            return &BusinessError{Code: "duplicate", Message: "Record already exists", Status: 409}
-        case "23514": // check_violation
-            return &BusinessError{Code: "constraint", Message: pgErr.Message, Status: 400}
-        }
-    }
-    return fmt.Errorf("%s: %w", op, err)
-}
-```
-
-### Handler Layer
-
-```go
-func mapEntityError(err error) (int, ErrorResponse) {
-    var be *BusinessError
-    if errors.As(err, &be) {   // errors.As — not type switch — unwraps chains
-        return be.Status, ErrorResponse{Code: be.Code, Message: be.Message}
-    }
-    var ve *ValidationError
-    if errors.As(err, &ve) {
-        return 422, ErrorResponse{Code: "validation_error", Fields: ve.Fields}
-    }
-    // Never expose internals
-    slog.Error("unhandled error", "err", err)
-    return 500, ErrorResponse{Code: "internal_error", Message: "An unexpected error occurred"}
-}
-```
-
-Always log with context:
-```go
-slog.Error("operation failed",
-    "request_id", requestID,
-    "tenant_id",  tenantID,
-    "user_id",    userID,
-    "err",        err,
-)
-```
-
----
-
-## Testing Guidelines
-
-- Unit test hooks, policies, service logic using `EntityRepository` mocks (mock satisfies interface)
-- Test workflows with Temporal's `testsuite.WorkflowTestSuite`
-- Test activities independently — inject mock dependencies via struct receivers
-- Never mock the database in integration tests — use real PostgreSQL (past incident: mock/prod divergence masked broken migration)
-- **Never auto-run `go test` or `go vet`** — provide test code, tell user to run
-- Place unit tests alongside source: `entity_contact_test.go` next to `entity_contact.go`
-- Table-driven tests preferred for validators and hook logic
-
-```go
-// Hook unit test pattern
-func TestInvoiceValidator_BeforeCreate(t *testing.T) {
-    repo := &mockEntityRepository{}  // mock satisfies EntityRepository[Invoice]
-    hook := &InvoiceValidator{repo: repo}
-
-    tests := []struct{
-        name    string
-        record  *entity.EntityRecord
-        wantErr bool
-    }{
-        {"valid invoice", validInvoiceRecord(), false},
-        {"missing customer", missingCustomerRecord(), true},
-    }
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            err := hook.BeforeCreate(context.Background(), tt.record)
-            if (err != nil) != tt.wantErr {
-                t.Errorf("got err=%v, wantErr=%v", err, tt.wantErr)
-            }
-        })
-    }
-}
-```
-
----
-
-## Configuration and Secrets
-
-- All config via environment variables; load into typed struct at startup
-- Validate all config fields at startup — fail fast, never silently default to insecure values
-- **Never hard-code**: DB passwords, Redis credentials, Temporal namespace tokens, API keys, JWT signing keys
-- Production secret management: HashiCorp Vault (or equivalent); inject as env vars at process start
-- Config struct carries typed fields (not raw `map[string]string`):
-
-```go
-type Config struct {
-    Port        int           `env:"PORT,required"`
-    DatabaseURL string        `env:"DATABASE_URL,required"`
-    RedisURL    string        `env:"REDIS_URL,required"`
-    TemporalHost string       `env:"TEMPORAL_HOST,required"`
-    LogLevel    slog.Level    `env:"LOG_LEVEL" envDefault:"info"`
-    // Sensitive — never log these fields
-    JWTSecret   string        `env:"JWT_SECRET,required"`
-}
-```
-
-Sensitive config fields must never appear in logs or error responses.
-
----
-
-## Performance
-
-- **Cache stampede prevention**: use Redis `SET NX` + short jitter on TTL for heavily-contested keys
-- **No per-tenant connection pools** — single PgBouncer pool for all tenants; isolation via RLS
-- **GIN indexes** on all JSONB columns and `Searchable()` fields — generated automatically by framework
-- **Avoid N+1 queries** — use `QueryOption`s to explicitly load edges in one query, not per-record loops
-- **Batch operations** for bulk writes — `BulkCreate`, `BulkUpdate` instead of looping `Create`/`Update`
-- **`CREATE INDEX CONCURRENTLY`** for all production index additions — never lock production tables
-- **Page schema cache** (Redis, 5min TTL) — invalidate on permission change or feature flag change, not on every request
-- **Feature flag cache** (Redis, 5min TTL, SHA-256 keyed) — evaluate once per request, not per check
-
----
-
-## Observability
-
-### Structured Logging
-
-All log entries carry: `request_id`, `tenant_id`, `user_id`, `method`, `path`, `duration_ms`.
-
-```go
-slog.Info("request completed",
-    "request_id",  c.Locals("request_id"),
-    "tenant_id",   tenantID,
-    "user_id",     userID,
-    "method",      c.Method(),
-    "path",        c.Path(),
-    "status",      c.Response().StatusCode(),
-    "duration_ms", time.Since(start).Milliseconds(),
-)
-```
-
-### Prometheus Metrics (expose at `/metrics`)
-
-Key metrics to instrument:
-- `http_request_duration_seconds` (histogram, labels: method, path, status)
-- `db_query_duration_seconds` (histogram, labels: entity, operation)
-- `workflow_started_total` (counter, labels: workflow_type, tenant)
-- `workflow_failed_total` (counter, labels: workflow_type, tenant)
-- `cache_hit_total` / `cache_miss_total` (counter, labels: cache_key_type)
-
-### Health Checks
-
-```
-GET /health/live   → 200 if process is running (no dependencies checked)
-GET /health/ready  → 200 only if PostgreSQL + Redis reachable and EntityRegistry populated
-```
-
-Readiness check fails → remove from load balancer rotation. Liveness check fails → restart process.
-
----
-
-## Code Generation Standards
-
-All generated code must follow:
-
-| Construct | Convention |
+| Entity | Purpose |
 |---|---|
-| Go structs / types | `PascalCase` |
-| Go fields / vars | `camelCase` |
-| DB column names | `snake_case` |
-| Entity names | `snake_case`, `{module}_{noun}` |
-| Hook struct names | `{Entity}{Purpose}Hook` e.g. `InvoiceSubmitGuard` |
-| Activity func names | `{Verb}{Noun}Activity` e.g. `SendWelcomeEmailActivity` |
-| Workflow func names | `{Entity}{Event}Workflow` e.g. `InvoiceApprovalWorkflow` |
+| `finance_currency` | ISO 4217 currency master |
+| `finance_exchange_rate` | Point-in-time forex snapshots (immutable) |
+| `finance_chart_of_accounts` | COA master header |
+| `finance_account` | GL account in COA hierarchy |
+| `finance_bank_account` | Tenant bank account mapped to GL |
+| `finance_bank_transaction` | Imported bank statement lines (immutable amount/date) |
+| `finance_journal` | Journal master (GL, Sales, Purchase, Bank, Cash, Opening) |
+| `finance_journal_entry` | Double-entry header — draft → submitted → posted → reversed |
+| `finance_payment` | Payment record — draft → submitted → processed → reconciled |
+| `finance_payment_method` | Payment method master mapped to GL account |
+| `finance_tax_group` | Tax grouping for VAT, withholding |
+| `finance_tax` | Individual tax rate (percentage, fixed, compound) |
+| `finance_fiscal_year` | Fiscal year with lifecycle locking |
+| `finance_accounting_period` | Monthly/quarterly period — must be open for journal entries |
 
-Every function interacting with DB or external services takes `context.Context` as first arg.
+Double-entry integrity enforced by PostgreSQL triggers. SQLC safe queries only.
 
-Use `// TODO:` comments for all placeholder logic — never leave silent no-ops.
+---
+
+## 8. Migrations
+
+**Two-tier migration system:**
+
+| Tier | Table | Owns |
+|---|---|---|
+| Framework | `awo_schema_migrations` | Core tables (tenants, sessions, IAM, RLS policies) |
+| Application | `schema_migrations` | Module entity tables, indexes, triggers |
+
+Framework migrations run first at bootstrap. Application migrations run after entity registration.
+
+**Migration file naming:** `{seq}_{description}.sql`
+- seq = 6-digit zero-padded integer (e.g., `001002`)
+- Keep framework and app sequences in separate namespaces
+
+---
+
+## 9. Workflow (Temporal)
+
+Temporal SDK handles async, multi-step entity lifecycle operations.
+
+**When to use Temporal:**
+- Any operation requiring multiple DB writes that must be atomic across time
+- Long-running approvals, reconciliation, scheduled jobs
+- Operations that need retry/compensation logic
+
+**When NOT to use Temporal:**
+- User-facing queries (synchronous reads)
+- Simple single-table writes
+
+**Workflow skeleton:**
 
 ```go
-// TODO: validate customer credit limit before allowing invoice creation
+// Definition (in workflow package)
+func (w *InvoiceWorkflow) SubmitInvoice(ctx workflow.Context, invoiceID uuid.UUID) error {
+    ao := workflow.ActivityOptions{StartToCloseTimeout: 30 * time.Second}
+    ctx = workflow.WithActivityOptions(ctx, ao)
+
+    var a *InvoiceActivities
+    if err := workflow.ExecuteActivity(ctx, a.ValidateInvoice, invoiceID).Get(ctx, nil); err != nil {
+        return err
+    }
+    return workflow.ExecuteActivity(ctx, a.PostJournalEntry, invoiceID).Get(ctx, nil)
+}
+
+// Call from handler
+workflowRun, err := temporal.Client().ExecuteWorkflow(ctx,
+    client.StartWorkflowOptions{ID: "invoice-submit-" + invoiceID.String()},
+    workflow.InvoiceWorkflow.SubmitInvoice,
+    invoiceID,
+)
 ```
 
-Include error context in all wraps:
-```go
-return fmt.Errorf("invoice.BeforeCreate: validate customer: %w", err)
+Workflow IDs use entity name + record ID to ensure idempotency.
+
+---
+
+## 10. SDUI (AMIS)
+
+AMIS-based Server-Driven UI. Blocks defined in Go, rendered on web/mobile.
+
+- Web UI: `awo/web/pages/index.html` — sidebar + AMIS embed
+- Schemas: `awo/web/schemas/pages/*.json`
+- SDK: `awo/web/sdk/` (sdk.js, sdk.css, charts)
+
+**Dark mode:** No built-in AMIS dark CSS. Override CSS custom property tokens at root — scale `--colors-neutral-*` vars on `html.dark`. Never override individual `.cxd-*` backgrounds with `!important`.
+
+SDUI blocks are defined in `awo/sdui` package and composed at the framework level from EntityDefinition metadata.
+
+---
+
+## 11. Known Architectural Contradictions
+
+These are unresolved at the time of kernel freeze. Each has a documented decision for v1.0; full resolution is post-freeze work.
+
+### 1. Hook Dependency Injection — Early Lifecycle, Multi-Module Coordination
+
+**Problem:** Hooks fire before Wire-injected dependencies are fully available in multi-module scenarios. Module A's `BeforeCreate` hook may need Module B's service, but Wire builds a single graph — cross-module hook dependencies create circular DI risk.
+
+**v1.0 decision:** Hooks receive only the minimal `HookContext` (actor, tenant, record). Cross-module coordination must go through Temporal workflows (async) or events (outbox). Direct service injection into hooks is prohibited at v1.0.
+
+### 2. Plugin Entity Registration — Avoiding Central Coupling
+
+**Problem:** `def.Register()` uses a global registry populated by `init()`. Pure plugin model (load `.so` at runtime) conflicts with Go's `init()` compile-time guarantee. Dynamic loading without a compile-time registry risks registration races.
+
+**v1.0 decision:** All modules are compiled into the binary. Runtime plugin loading (`.so`) deferred to post-v1.0. `init()` registration is the only supported pattern.
+
+### 3. Row-Visibility Enforcement Layer Arbitration
+
+**Problem:** Two layers enforce row visibility — `PolicyFunc` (application layer) and PostgreSQL RLS. These can produce inconsistent counts (e.g., `Count()` at app layer vs. DB layer), unexpected empty results when only one layer is correctly configured, and double-filtering overhead.
+
+**v1.0 decision:** RLS is authoritative for correctness. `PolicyFunc` is an optional performance optimization (pre-filter before DB round-trip). If `PolicyFunc` is absent, RLS alone is sufficient. Never rely on `PolicyFunc` as a security boundary.
+
+### 4. Type-Safety Gaps in Filter / Expression Evaluation
+
+**Problem:** `filter` package accepts `any` values for predicate operands. CEL evaluation is dynamic. No compile-time guarantee that a filter like `filter.Eq("amount", "string")` against a `numeric(20,4)` column is type-safe. Runtime panics possible.
+
+**v1.0 decision:** Document the gap. Add runtime type assertion in `contrib/pgx` filter translator with descriptive error messages. Compile-time typed filter DSL deferred to post-v1.0.
+
+### 5. Dual-Plane IAM — JWT Key Separation at Runtime
+
+**Problem:** Platform Plane and Tenant Plane use separate JWT signing keys. Key rotation must be coordinated. During rotation, in-flight sessions signed with old keys must still validate. Redis session cache does not store the signing key version, making zero-downtime rotation complex.
+
+**v1.0 decision:** Single key pair at v1.0. Dual-key rotation support deferred. Document as known limitation. Session table stores `issued_at` for future key-version correlation.
+
+### 6. Metadata Compiler — Missing Dependency Graph and Conflict Detection
+
+**Problem:** `awo/compiler` validates individual EntityDefinitions but does not build a cross-entity dependency graph. Circular FK references, orphaned `FieldTypeLink` targets, and conflicting migration sequences are not caught at compile time — they fail at migration run time or at first query.
+
+**v1.0 decision:** Add a compiler report pass before freeze: compilation summary, dependency graph, conflict checks, migration fingerprint. This is a pre-freeze addition requirement. Implement before declaring v1.0 kernel frozen.
+
+---
+
+## 12. Roadmap
+
+```
+Current:   Resolve kernel contradictions → finalize architecture
+           Add metadata compiler report (§11 item 6)
+           ↓
+Freeze:    v1.0 kernel — all packages in §3 locked
+           ↓
+Phase 1:   Finance module as readiness test
+           Build using ONLY existing framework primitives
+           Any missing primitive → add to framework first, then use
+           ↓
+Phase 2:   Inventory module
+Phase 3:   CRM module
+Phase 4:   Procurement + Sales modules
+Phase 5:   HR + Assets + Manufacturing modules
+           ↓
+Future:    Extract awo/ into separate repo (awo.so/awo/...)
+           AwoERP depends on awo as external module
+           Open-source kernel; ERP is the reference implementation
 ```
 
 ---
 
-## Quick Reference: What Goes Where
+## 13. Code Guidelines
 
-| Concern | Layer | Location |
-|---|---|---|
-| Entity shape + fields | Domain | `definition.go` |
-| Permission policy | Domain | `policy.go` or `Permissions` in EntityDef |
-| Business rules (pre-save) | Domain | `hooks.go` → `before_save` hook |
-| Post-save side effects | Domain | `hooks.go` → `after_save` hook (inside TX) |
-| HTTP route handler | API | `handler.go` (thin, ~50 lines max) |
-| Multi-step async process | Workflow | `workflows/` → Temporal workflow |
-| External API calls | Workflow | `workflows/` → Temporal activity |
-| Schema change | Store | `migrations/` → `.up.sql` + `.down.sql` |
-| UI description | SDUI | `PageBuilderSet` on EntityDefinition |
-| Tenant-specific config | Settings module | `tenant_configs` table |
-| Runtime field extensions | Metadata module | `CustomFieldDef` entity |
+### General
+
+- All kernel packages require godoc-quality comments on exported types and functions
+- Use Wire for DI; no global state (exception: `def.Register` global registry — by design)
+- No raw SQL outside `contrib/pgx` and `contrib/redis`; use SQLC for all generated queries
+- Temporal for async workflows; synchronous paths for user-facing queries only
+- `errors.As` for error unwrapping — never type switch on errors
+
+### Security
+
+- RLS-first: every entity query passes through PostgreSQL policies
+- Never set `SET LOCAL tenant_id` from user-supplied input without validation
+- `Sensitive: true` fields must be excluded from logs and standard API responses
+- Platform admin bypass is in `authz` middleware only — never replicate this check in business logic
+
+### Testing
+
+- Cover multi-tenant isolation: verify tenant A cannot read tenant B's rows
+- Cover RLS enforcement: drop `PolicyFunc`, verify DB-level RLS still blocks cross-tenant reads
+- Cover permission evaluation: test 403 response for actors without required permission identifiers
+- Use `cache.NoopCounter` and noop implementations for unit test isolation
+
+### Do Not
+
+- Call `def.Register` outside of `init()`
+- Rename an entity after its migration has been applied to any environment
+- Add role names or RBAC constructs to `EntityDefinition`
+- Write raw SQL in handler or service layers
+- Mock the database in integration tests (RLS enforcement requires a real PostgreSQL connection)
+- Run `go build`, `go run`, `go vet`, or `go test` — tell the user to run these (Termux constraint)
+
+---
+
+## 14. Module Development Checklist
+
+Use this when building a new module (Finance is the Phase 1 reference):
+
+### Define
+
+- [ ] Declare entities using `def.SystemDefinition` (or `CustomDefinition` for tenant-specific)
+- [ ] Follow naming convention: `{module}_{noun}` in singular snake_case
+- [ ] Set `PermissionSet` with permission identifiers only (`"{module}.{entity}.{operation}"`)
+- [ ] Declare `HookSet` for lifecycle extension points
+- [ ] Declare `ActionDef` for custom actions with their permission identifiers
+- [ ] Declare `WorkflowDef` for any async multi-step operations
+- [ ] Register in `init()` via `def.Register(&MyEntityDefinition)`
+
+### Compile & Validate
+
+- [ ] Run `awo/compiler` validation — check for field type errors, duplicate names, circular links
+- [ ] Verify compiler report: dependency graph, migration fingerprint, conflict checks
+
+### Persistence
+
+- [ ] Write SQLC schema (`.sql` files for entity tables)
+- [ ] Add RLS policy: `USING (tenant_id = current_tenant_id())`
+- [ ] Run SQLC codegen; review generated Go types
+- [ ] Write migration file in correct sequence under `db/migration/`
+
+### API
+
+- [ ] Implement handlers in Fiber using `awo/api` patterns
+- [ ] Register custom action handlers for `ActionDef` actions
+- [ ] Verify routes auto-generated correctly from CompiledSchema
+
+### Authorization
+
+- [ ] Confirm `PermissionSet` identifiers are assigned to roles in Casbin policy
+- [ ] Test: actor with permission → 200; actor without → 403
+- [ ] Test: platform admin → bypass (200 on all operations)
+
+### Multi-Tenant Isolation
+
+- [ ] Test: tenant A creates record; tenant B query returns empty (RLS working)
+- [ ] Test: `current_tenant_id()` correctly set per connection in `contrib/pgx`
+- [ ] Test: `PolicyFunc` (if declared) does not produce different count than RLS count
+
+### Workflows
+
+- [ ] Implement Temporal workflows for any async multi-step operations
+- [ ] Use `{entity}-{action}-{recordID}` as workflow ID for idempotency
+- [ ] Test workflow replay correctness
+
+### SDUI
+
+- [ ] Define AMIS block schemas for list, form, detail views
+- [ ] Test dark mode rendering (override CSS tokens, not `.cxd-*` classes)
+
+### Documentation
+
+- [ ] Write module overview in `awo/docs/`
+- [ ] Document any new framework primitives added during module development
+- [ ] Update this checklist if new patterns emerge

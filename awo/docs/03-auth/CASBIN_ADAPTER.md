@@ -46,7 +46,10 @@ At startup, the Casbin adapter loads `CapabilityGrant` values from `CompiledSche
 ```go
 func (a *CasbinAdapter) LoadCapabilityGrants(grants []compiler.CapabilityGrant) error {
     for _, g := range grants {
-        if _, err := a.enforcer.AddPolicy(g.Subject, g.Object, g.Action); err != nil {
+        // g.Permission is the policy subject: "finance.invoice.create"
+        // g.Entity    is the policy object:  "finance_invoice"
+        // g.Action    is the policy action:  "create"
+        if _, err := a.enforcer.AddPolicy(g.Permission, g.Entity, g.Action); err != nil {
             return fmt.Errorf("casbin load grant: %w", err)
         }
     }

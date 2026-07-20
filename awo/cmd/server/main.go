@@ -28,20 +28,19 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 
-	"awo.so/awo/api/authz"
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
 	"awo.so/awo/api/router"
+	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
 	contrib "awo.so/awo/contrib/pgx"
-	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/events/outbox"
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
 	"awo.so/awo/platform/iam"
 
 	// Platform module init() calls — imports drive entity registration.
-	// platform/iam is already imported above for iam.NewService; the init()
+	// platform/iam is already imported above for iam.New; the init()
 	// side effect (entity registration) is included via that import.
 	_ "awo.so/awo/platform/audit"
 	_ "awo.so/awo/platform/flags"
@@ -69,23 +68,9 @@ func main() {
 	}
 	defer bootstrap.Shutdown(context.Background(), result)
 
-	// Build shared infrastructure clients.
-	redisClient := contribredis.New(result.Redis)
-
-	// IAM service — requires the iam_user/iam_session entity schemas.
-	iamSchema, ok := result.Schema.ByName["iam_user"]
-	if !ok {
-		slog.Error("iam_user entity not found in schema — platform/iam not registered")
-		os.Exit(1)
-	}
-	iamSessionSchema, ok := result.Schema.ByName["iam_session"]
-	if !ok {
-		slog.Error("iam_session entity not found in schema — platform/iam not registered")
-		os.Exit(1)
-	}
-	userRepo := contrib.NewRepository(result.Pool, iamSchema)
-	sessionRepo := contrib.NewRepository(result.Pool, iamSessionSchema)
-	iamSvc := iam.NewService(userRepo, sessionRepo, redisClient)
+	// IAM module — authenticates users and manages sessions.
+	// iam.New wires Redis into the UserRoleChangeHook singleton and returns the Module.
+	iamModule := iam.New(result.Pool, result.Redis)
 
 	// Tenant entity repository for TenantResolver middleware.
 	tenantSchema, ok := result.Schema.ByName["platform_tenant"]
@@ -126,7 +111,7 @@ func main() {
 	app.Get("/metrics", metrics.Handler())
 
 	// Auth routes (login/logout/me — no upstream RequireAuth middleware).
-	iam.RegisterAuthRoutes(app, iamSvc)
+	iamModule.RegisterRoutes(app)
 
 	// OpenAPI schema endpoint (no auth required).
 	app.Get("/api/openapi.json", func(c *fiber.Ctx) error {
@@ -134,10 +119,15 @@ func main() {
 		return c.JSON(doc)
 	})
 
-	// Build RBAC enforcer from compiled Casbin policies.
-	enforcer, err := authz.NewEnforcer(result.Schema)
+	// Build RBAC evaluator from compiled capability grants + IAM role-permission bindings.
+	rolePerms, err := iamModule.Auth.LoadRolePermissions(ctx)
 	if err != nil {
-		slog.Error("casbin enforcer init failed", "err", err)
+		slog.Error("load role permissions failed", "err", err)
+		os.Exit(1)
+	}
+	evaluator, err := auth.NewCasbinEvaluator(result.Schema.CapabilityGrants, rolePerms)
+	if err != nil {
+		slog.Error("casbin evaluator init failed", "err", err)
 		os.Exit(1)
 	}
 
@@ -145,9 +135,9 @@ func main() {
 	router.Register(app, result.Schema, router.RegisterOptions{
 		Pool:     result.Pool,
 		Redis:    result.Redis,
-		IAM:      iamSvc,
+		IAM:      iamModule.Auth,
 		Tenants:  tenantRepo,
-		Authz:    enforcer,
+		Authz:    evaluator,
 		Temporal: nil, // TODO: wire Temporal client when worker is configured
 	})
 

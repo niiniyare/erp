@@ -56,10 +56,10 @@ var BankAccountDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager"},
-		Delete: []string{"role:tenant.admin"},
+		Create: []string{"finance.bank_account.create"},
+		Read:   []string{"finance.bank_account.read"},
+		Write:  []string{"finance.bank_account.update"},
+		Delete: []string{"finance.bank_account.delete"},
 	},
 }
 
@@ -133,9 +133,9 @@ var BankTransactionDefinition = def.SystemDefinition{
 		},
 	},
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
-		Read:   []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant", "role:finance.viewer"},
-		Write:  []string{"role:tenant.admin", "role:finance.manager", "role:finance.accountant"},
+		Create: []string{"finance.bank_transaction.create"},
+		Read:   []string{"finance.bank_transaction.read"},
+		Write:  []string{"finance.bank_transaction.update"},
 		Delete: []string{},
 	},
 }
