@@ -16,6 +16,8 @@
 package authz
 
 import (
+	"log/slog"
+
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/awo/api/response"
@@ -41,7 +43,17 @@ func RequirePermission(eval auth.PolicyEvaluator, entityName, action string) fib
 		viewer := auth.ViewerFromContext(c.UserContext())
 
 		// Platform admins bypass all Casbin checks.
+		// Log every bypass for audit trail — platform admin access is
+		// privileged and must be detectable in log analysis.
 		if viewer.IsPlatformAdmin() {
+			slog.InfoContext(c.UserContext(), "authz: platform-admin bypass",
+				"entity",    entityName,
+				"action",    action,
+				"user_id",   viewer.UserID().String(),
+				"tenant_id", viewer.TenantID().String(),
+				"path",      c.Path(),
+				"method",    c.Method(),
+			)
 			return c.Next()
 		}
 

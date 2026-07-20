@@ -54,6 +54,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// loginLimiterKey is a sentinel no-op handler used when no rate limiter is set.
+// Using a real handler avoids a nil-check in registerRoutes.
+var passthroughHandler fiber.Handler = func(c *fiber.Ctx) error { return c.Next() }
+
 // Module bundles all IAM subsystem components into a single unit for
 // framework-level registration. Construct with [New], then call
 // [Module.RegisterRoutes] to attach HTTP endpoints to a Fiber application.
@@ -64,6 +68,11 @@ type Module struct {
 	// Auth is the primary IAM service. Exposes Login, Logout,
 	// RevokeUserSessions, and LoadRolePermissions for startup wiring.
 	Auth *AuthService
+
+	// loginLimiter is applied to POST /auth/login before the handler runs.
+	// Defaults to passthroughHandler (no rate limiting) if not set via
+	// [Module.WithLoginRateLimiter].
+	loginLimiter fiber.Handler
 }
 
 // New constructs the IAM Module with its required runtime dependencies and
@@ -84,8 +93,24 @@ func New(db *pgxpool.Pool, redis *redis.Client) *Module {
 	userRoleChangeHook.Redis = redis
 
 	return &Module{
-		Auth: &AuthService{DB: db, Redis: redis},
+		Auth:         &AuthService{DB: db, Redis: redis},
+		loginLimiter: passthroughHandler,
 	}
+}
+
+// WithLoginRateLimiter sets the Fiber handler applied to POST /auth/login
+// before the login handler runs. Intended for use with
+// [middleware.LoginRateLimit].
+//
+// Call before [Module.RegisterRoutes]. Calling after RegisterRoutes has no
+// effect on already-registered routes.
+//
+//	m := iam.New(db, redis).WithLoginRateLimiter(
+//	    middleware.LoginRateLimit(counter, middleware.DefaultLoginRateLimit),
+//	)
+func (m *Module) WithLoginRateLimiter(h fiber.Handler) *Module {
+	m.loginLimiter = h
+	return m
 }
 
 // RegisterRoutes attaches the IAM HTTP endpoints to the Fiber application.
@@ -96,7 +121,7 @@ func New(db *pgxpool.Pool, redis *redis.Client) *Module {
 //	POST  /api/v1/auth/logout  — revoke the current session (requires session)
 //	GET   /api/v1/auth/me      — return the current viewer's identity (requires session)
 func (m *Module) RegisterRoutes(app *fiber.App) {
-	registerRoutes(app, m.Auth)
+	registerRoutes(app, m.Auth, m.loginLimiter)
 }
 
 func init() {

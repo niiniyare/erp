@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"awo.so/awo/auth"
-	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -51,8 +50,8 @@ func (v *testViewer) Actor() *def.Actor {
 }
 
 // testGrants returns a minimal set of CapabilityGrants for finance_invoice.
-func testGrants() []compiler.CapabilityGrant {
-	return []compiler.CapabilityGrant{
+func testGrants() []auth.CapabilityGrant {
+	return []auth.CapabilityGrant{
 		{Permission: "finance.invoice.create", Entity: "finance_invoice", Action: "create"},
 		{Permission: "finance.invoice.read", Entity: "finance_invoice", Action: "read"},
 		{Permission: "finance.invoice.update", Entity: "finance_invoice", Action: "write"},
@@ -252,7 +251,7 @@ func TestCasbinEvaluator_Reload(t *testing.T) {
 func TestCasbinEvaluator_DenyByDefault_NoPermissionsDeclared(t *testing.T) {
 	// Entity with no capability grants = deny all non-platform-admin
 	eval, err := auth.NewCasbinEvaluator(
-		[]compiler.CapabilityGrant{}, // no grants
+		[]auth.CapabilityGrant{}, // no grants
 		[]auth.RolePermission{},      // no role perms
 	)
 	require.NoError(t, err)

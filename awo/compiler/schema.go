@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"awo.so/awo/auth"
 	"awo.so/awo/def"
 	"awo.so/awo/registry"
 )
@@ -36,7 +37,11 @@ type CompiledSchema struct {
 	// derived from PermissionSet declarations at compile time. Each grant
 	// binds a permission identifier to an entity + action pair. Consumed by
 	// the PolicyEvaluator implementation at startup (ADR-011).
-	CapabilityGrants []CapabilityGrant
+	//
+	// The type is [auth.CapabilityGrant] (not a compiler-local type) so that
+	// the auth package is self-contained and extractable without a compiler
+	// dependency.
+	CapabilityGrants []auth.CapabilityGrant
 
 	// Diagnostics contains warnings and informational messages from the
 	// compilation phase. Error-severity diagnostics cause Compile to return
@@ -264,31 +269,6 @@ type RouteDescriptor struct {
 	// RequiredPermission is the Casbin action string checked before executing
 	// the route handler (e.g. "read", "write", "create", "delete", "submit").
 	RequiredPermission string
-}
-
-// CapabilityGrant is an engine-agnostic capability assertion derived from a
-// [def.PermissionSet] declaration. It binds a permission identifier to the
-// entity and operation it controls. The compiler emits one CapabilityGrant per
-// permission identifier per operation declared in the PermissionSet.
-//
-// CapabilityGrant deliberately contains no reference to roles, users, or any
-// specific authorization backend (ADR-011). The PolicyEvaluator implementation
-// loads CapabilityGrants alongside a separate role-to-permission mapping to
-// resolve authorization decisions at request time.
-type CapabilityGrant struct {
-	// Permission is the permission identifier from the PermissionSet.
-	// Format: "{module}.{entity}.{operation}"
-	// e.g. "finance.invoice.create", "iam.user.read".
-	Permission string
-
-	// Entity is the qualified entity name this grant applies to.
-	// e.g. "finance_invoice", "iam_user".
-	Entity string
-
-	// Action is the operation this grant controls.
-	// Standard: "create", "read", "write", "delete".
-	// Custom: any action name declared in ActionDef.
-	Action string
 }
 
 // Compile transforms the sealed registry into a CompiledSchema.
@@ -529,26 +509,26 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 // The resulting grants are loaded by the PolicyEvaluator at startup. The
 // evaluator pairs them with a separate role-to-permission mapping (managed by
 // the IAM module) to resolve authorization decisions. No role names appear here.
-func emitCapabilityGrants(es *EntitySchema) []CapabilityGrant {
+func emitCapabilityGrants(es *EntitySchema) []auth.CapabilityGrant {
 	perms := es.Permissions
 	entity := es.QualifiedName
 
-	var grants []CapabilityGrant
+	var grants []auth.CapabilityGrant
 	for _, perm := range perms.Create {
-		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "create"})
+		grants = append(grants, auth.CapabilityGrant{Permission: perm, Entity: entity, Action: "create"})
 	}
 	for _, perm := range perms.Read {
-		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "read"})
+		grants = append(grants, auth.CapabilityGrant{Permission: perm, Entity: entity, Action: "read"})
 	}
 	for _, perm := range perms.Write {
-		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "write"})
+		grants = append(grants, auth.CapabilityGrant{Permission: perm, Entity: entity, Action: "write"})
 	}
 	for _, perm := range perms.Delete {
-		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "delete"})
+		grants = append(grants, auth.CapabilityGrant{Permission: perm, Entity: entity, Action: "delete"})
 	}
 	for actionName, perms := range perms.Actions {
 		for _, perm := range perms {
-			grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: actionName})
+			grants = append(grants, auth.CapabilityGrant{Permission: perm, Entity: entity, Action: actionName})
 		}
 	}
 

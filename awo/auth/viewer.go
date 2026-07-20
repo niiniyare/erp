@@ -126,10 +126,26 @@ func (v *DefaultViewer) Actor() *def.Actor {
 
 // SystemViewer represents a platform-level background process (Temporal
 // activity, scheduled job, migration script). It carries "role:platform-admin"
-// because background platform operations bypass authorization.
+// which causes it to bypass all PolicyEvaluator checks unconditionally.
 //
-// Use SystemViewer only for legitimate platform operations. Using it in module
-// code to bypass authorization is a security violation.
+// # Security warning
+//
+// SystemViewer MUST NEVER be used in request-handling code paths. It exists
+// solely for background goroutines and Temporal activities that operate outside
+// any HTTP request context (e.g. scheduled jobs, data migrations, provisioning
+// workflows).
+//
+// Using SystemViewer in a request handler to bypass authorization is a
+// CRITICAL security violation. It silently grants platform-admin access to
+// every entity and action, including cross-tenant reads and writes.
+//
+// Legitimate use:
+//
+//	ctx = auth.WithViewer(ctx, auth.NewSystemViewer(tenantID)) // in Temporal activity
+//
+// NEVER:
+//
+//	ctx = auth.WithViewer(c.UserContext(), auth.NewSystemViewer(tenantID)) // in HTTP handler
 type SystemViewer struct {
 	tenantID uuid.UUID
 }
