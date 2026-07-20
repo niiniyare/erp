@@ -1,17 +1,22 @@
-// Command migrate runs database migrations using golang-migrate.
+// Command migrate runs database migrations for the AWO framework.
+//
+// Two modes are supported:
+//
+//	-mode=embedded (default)
+//	    Uses all migrations registered by framework module init() functions.
+//	    Import side effects from the blank imports below drive registration.
+//	    This is the standard production mode — no separate SQL directory needed.
+//
+//	-mode=file
+//	    Reads SQL files from -dir (default: ./db/migration).
+//	    Preserved for local development and emergency manual overrides.
 //
 // Usage:
 //
-//	migrate -dir ./db/migration -db $DATABASE_URL up
-//	migrate -dir ./db/migration -db $DATABASE_URL down 1
-//	migrate -dir ./db/migration -db $DATABASE_URL version
-//	migrate -dir ./db/migration -db $DATABASE_URL force <version>
-//
-// This command runs as a separate process from the API server. It is designed
-// to run in CI (before deployment) and is never invoked automatically at
-// server startup — auto-migration is explicitly prohibited.
-//
-// The process exits with code 0 on success, non-zero on failure.
+//	migrate [-mode=embedded|file] [-dir ./db/migration] -db $DATABASE_URL up
+//	migrate [-mode=embedded|file] [-dir ./db/migration] -db $DATABASE_URL down [N]
+//	migrate [-mode=embedded|file] [-dir ./db/migration] -db $DATABASE_URL version
+//	migrate [-mode=embedded|file] [-dir ./db/migration] -db $DATABASE_URL force <version>
 package main
 
 import (
@@ -25,10 +30,20 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/golang-migrate/migrate/v4/source/iofs"
+
+	"awo.so/awo/migration"
+
+	// Blank imports register all framework module migrations.
+	// Add new framework modules here as they are created.
+	_ "awo.so/awo/migration/bootstrap"
+	_ "awo.so/awo/platform/iam/migrations"
+	_ "awo.so/awo/platform/tenant/migrations"
 )
 
 func main() {
-	dir := flag.String("dir", "./db/migration", "migration files directory")
+	mode := flag.String("mode", "embedded", "migration source: embedded | file")
+	dir := flag.String("dir", "./db/migration", "SQL files directory (file mode only)")
 	db := flag.String("db", os.Getenv("DATABASE_URL"), "database connection URL")
 	flag.Parse()
 
@@ -41,7 +56,7 @@ func main() {
 		log.Fatal("migrate: command required: up | down [N] | version | force <version>")
 	}
 
-	m, err := newMigrate(*db, *dir)
+	m, err := newMigrate(*mode, *db, *dir)
 	if err != nil {
 		log.Fatalf("migrate: init: %v", err)
 	}
@@ -94,9 +109,18 @@ func main() {
 	}
 }
 
-func newMigrate(dbURL, dir string) (*migrate.Migrate, error) {
-	sourceURL := "file://" + dir
-	// golang-migrate postgres driver expects the standard PostgreSQL DSN.
-	// Prepend "postgres://" if the URL uses "postgresql://" scheme variant.
-	return migrate.New(sourceURL, dbURL)
+func newMigrate(mode, dbURL, dir string) (*migrate.Migrate, error) {
+	switch mode {
+	case "embedded":
+		vfs := migration.BuildFS()
+		d, err := iofs.New(vfs, ".")
+		if err != nil {
+			return nil, fmt.Errorf("build iofs source: %w", err)
+		}
+		return migrate.NewWithSourceInstance("iofs", d, dbURL)
+	case "file":
+		return migrate.New("file://"+dir, dbURL)
+	default:
+		return nil, fmt.Errorf("unknown mode %q; use embedded or file", mode)
+	}
 }

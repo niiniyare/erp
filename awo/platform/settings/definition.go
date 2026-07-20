@@ -79,10 +79,15 @@ var SettingDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin"},
+		// Permission identifiers follow "platform.setting.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.setting.{create,read,update,delete}
+		//   role:tenant.admin   → platform.setting.{create,read,update}
+		//   role:tenant.user    → platform.setting.read
+		Create: []string{"platform.setting.create"},
+		Read:   []string{"platform.setting.read"},
+		Write:  []string{"platform.setting.update"},
+		Delete: []string{"platform.setting.delete"},
 	},
 }
 

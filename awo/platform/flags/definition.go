@@ -67,10 +67,14 @@ var FlagDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{"role:platform-admin"},
-		Delete: []string{"role:platform-admin"},
+		// Permission identifiers follow "platform.feature_flag.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.feature_flag.{create,read,update,delete}
+		//   role:tenant.admin   → platform.feature_flag.read
+		Create: []string{"platform.feature_flag.create"},
+		Read:   []string{"platform.feature_flag.read"},
+		Write:  []string{"platform.feature_flag.update"},
+		Delete: []string{"platform.feature_flag.delete"},
 	},
 }
 
@@ -100,10 +104,14 @@ var TenantOverrideDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+		// Permission identifiers follow "platform.flag_tenant_override.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.flag_tenant_override.{create,read,update,delete}
+		//   role:tenant.admin   → platform.flag_tenant_override.{create,read,update,delete}
+		Create: []string{"platform.flag_tenant_override.create"},
+		Read:   []string{"platform.flag_tenant_override.read"},
+		Write:  []string{"platform.flag_tenant_override.update"},
+		Delete: []string{"platform.flag_tenant_override.delete"},
 	},
 }
 

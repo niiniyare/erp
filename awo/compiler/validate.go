@@ -9,6 +9,10 @@ import (
 	"awo.so/awo/registry"
 )
 
+// permissionIdentifierRe matches the required format for permission identifiers:
+// "{module}.{entity}.{operation}" — all lowercase, dot-separated, no spaces.
+var permissionIdentifierRe = regexp.MustCompile(`^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$`)
+
 // localNameRe matches valid module-local entity names: snake_case, may be a
 // single word ("user", "tenant") or compound ("org_assignment", "audit_log").
 var localNameRe = regexp.MustCompile(`^[a-z][a-z0-9]*(?:_[a-z][a-z0-9]*)*$`)
@@ -126,6 +130,39 @@ func Validate(reg *registry.Registry) Diagnostics {
 			}
 		}
 
+		// Permission identifier format.
+		// PermissionSet values MUST be "{module}.{entity}.{operation}" identifiers.
+		// Role names ("role:*") are NOT allowed — they violate ADR-001/ADR-011 and
+		// produce malformed CapabilityGrant records that Casbin can never satisfy.
+		for _, perm := range collectPermissions(d.EntityPermissions()) {
+			if strings.HasPrefix(perm, "role:") {
+				// Derive a suggested permission identifier from the entity's module+name.
+				module := d.EntityModule()
+				local := def.LocalName(d)
+				suggested := module + "." + local + ".read"
+				ds = append(ds, Diagnostic{
+					Severity:   SeverityError,
+					EntityName: qname,
+					Message: fmt.Sprintf(
+						"PermissionSet entry %q is a role name, not a permission identifier; "+
+							"this violates ADR-001/ADR-011. Use \"{module}.{entity}.{operation}\" format "+
+							"(e.g. %q). Seed the role-to-permission mapping in iam_role_permissions instead.",
+						perm, suggested,
+					),
+				})
+			} else if !permissionIdentifierRe.MatchString(perm) {
+				ds = append(ds, Diagnostic{
+					Severity:   SeverityWarning,
+					EntityName: qname,
+					Message: fmt.Sprintf(
+						"PermissionSet entry %q does not match the expected format "+
+							"\"{module}.{entity}.{operation}\" (e.g. \"finance.invoice.create\")",
+						perm,
+					),
+				})
+			}
+		}
+
 		// Edge name uniqueness.
 		edgeNames := make(map[string]bool)
 		for _, e := range d.EntityEdges() {
@@ -141,4 +178,18 @@ func Validate(reg *registry.Registry) Diagnostics {
 	}
 
 	return ds
+}
+
+// collectPermissions flattens all permission identifier strings from a PermissionSet
+// into a single slice for validation purposes.
+func collectPermissions(ps def.PermissionSet) []string {
+	var all []string
+	all = append(all, ps.Create...)
+	all = append(all, ps.Read...)
+	all = append(all, ps.Write...)
+	all = append(all, ps.Delete...)
+	for _, perms := range ps.Actions {
+		all = append(all, perms...)
+	}
+	return all
 }

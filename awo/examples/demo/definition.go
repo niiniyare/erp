@@ -79,9 +79,12 @@ var CustomerDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:tenant.admin", "role:tenant.user"},
-		Read:   []string{"role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:tenant.admin", "role:tenant.user"},
-		Delete: []string{"role:tenant.admin"},
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:tenant.admin → demo.customer.{create,read,update,delete}
+		//   role:tenant.user  → demo.customer.{create,read,update}
+		Create: []string{"demo.customer.create"},
+		Read:   []string{"demo.customer.read"},
+		Write:  []string{"demo.customer.update"},
+		Delete: []string{"demo.customer.delete"},
 	},
 }

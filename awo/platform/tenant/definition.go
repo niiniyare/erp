@@ -128,10 +128,14 @@ var Definition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{"role:platform-admin"},
-		Delete: []string{}, // tenants are never hard-deleted — use ARCHIVED
+		// Permission identifiers follow the format "platform.tenant.{operation}".
+		// Role-to-permission mappings are seeded in iam_role_permissions:
+		//   role:platform-admin → platform.tenant.{create,read,update}
+		//   role:tenant.admin   → platform.tenant.read
+		Create: []string{"platform.tenant.create"},
+		Read:   []string{"platform.tenant.read"},
+		Write:  []string{"platform.tenant.update"},
+		Delete: []string{}, // tenants are never hard-deleted — use ARCHIVED transition
 	},
 }
 

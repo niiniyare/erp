@@ -65,10 +65,14 @@ var ModuleDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{"role:platform-admin"},
-		Delete: []string{"role:platform-admin"},
+		// Permission identifiers follow "platform.module.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.module.{create,read,update,delete}
+		//   role:tenant.admin   → platform.module.read
+		Create: []string{"platform.module.create"},
+		Read:   []string{"platform.module.read"},
+		Write:  []string{"platform.module.update"},
+		Delete: []string{"platform.module.delete"},
 	},
 }
 
@@ -109,10 +113,14 @@ var TenantModuleDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
-		Write:  []string{"role:platform-admin"},
-		Delete: []string{"role:platform-admin"},
+		// Permission identifiers follow "platform.tenant_module.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.tenant_module.{create,read,update,delete}
+		//   role:tenant.admin   → platform.tenant_module.{create,read}
+		Create: []string{"platform.tenant_module.create"},
+		Read:   []string{"platform.tenant_module.read"},
+		Write:  []string{"platform.tenant_module.update"},
+		Delete: []string{"platform.tenant_module.delete"},
 	},
 }
 

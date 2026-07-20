@@ -6,7 +6,8 @@
 //
 // The iam_audit_log entity is a system entity stored in the global schema
 // (no RLS) so that compliance and investigation queries can span tenants
-// without context switching. Access requires role:platform-admin.
+// without context switching. Access is gated by the "iam.audit_log.read"
+// permission; role-to-permission mapping is seeded in iam_role_permissions.
 //
 // Retention: entries are never deleted by the application. Archival to cold
 // storage is an ops concern, not a framework concern.
@@ -92,10 +93,13 @@ var LogDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		// Only platform admins can read the audit log.
-		// Tenant admins get a scoped view via a separate query that filters by tenant_id_ref.
-		Create: []string{}, // written by framework hooks only
-		Read:   []string{"role:platform-admin", "role:tenant.admin"},
+		// Permission identifiers follow the format "iam.audit_log.{operation}".
+		// The entity's Module is "iam", so its qualified name is "iam_audit_log".
+		// Role-to-permission mappings are seeded in iam_role_permissions:
+		//   role:platform-admin → iam.audit_log.read
+		//   role:tenant.admin   → iam.audit_log.read  (row-level filter by tenant_id_ref applies)
+		Create: []string{}, // written by framework hooks only — no API-level create
+		Read:   []string{"iam.audit_log.read"},
 		Write:  []string{}, // immutable
 		Delete: []string{}, // never deleted
 	},

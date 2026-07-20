@@ -120,10 +120,14 @@ var Definition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.organization.{create,read,update,delete}
+		//   role:tenant.admin   → platform.organization.{create,read,update,delete}
+		//   role:tenant.user    → platform.organization.read
+		Create: []string{"platform.organization.create"},
+		Read:   []string{"platform.organization.read"},
+		Write:  []string{"platform.organization.update"},
+		Delete: []string{"platform.organization.delete"},
 	},
 }
 
@@ -177,10 +181,14 @@ var OrgTypeDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.org_type.{create,read,update,delete}
+		//   role:tenant.admin   → platform.org_type.{create,read,update,delete}
+		//   role:tenant.user    → platform.org_type.read
+		Create: []string{"platform.org_type.create"},
+		Read:   []string{"platform.org_type.read"},
+		Write:  []string{"platform.org_type.update"},
+		Delete: []string{"platform.org_type.delete"},
 	},
 }
 
@@ -245,9 +253,13 @@ var OrgAssignmentDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.org_assignment.{create,read,update,delete}
+		//   role:tenant.admin   → platform.org_assignment.{create,read,update,delete}
+		//   role:tenant.user    → platform.org_assignment.read
+		Create: []string{"platform.org_assignment.create"},
+		Read:   []string{"platform.org_assignment.read"},
+		Write:  []string{"platform.org_assignment.update"},
+		Delete: []string{"platform.org_assignment.delete"},
 	},
 }

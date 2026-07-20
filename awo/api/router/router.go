@@ -31,7 +31,6 @@ import (
 	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
-	"awo.so/awo/platform/iam"
 	"awo.so/awo/runtime"
 )
 
@@ -39,7 +38,10 @@ import (
 type RegisterOptions struct {
 	Pool     *pgxlib.Pool
 	Redis    *goredis.Client
-	IAM      *iam.AuthService                           // required for RequireAuth
+	// IAM provides session and API token validation. The interface type keeps
+	// the router decoupled from the concrete *iam.AuthService implementation,
+	// which is important for framework extraction readiness.
+	IAM      middleware.SessionValidator                // required for RequireAuth
 	Tenants  driver.EntityRepository[*def.EntityRecord] // required for TenantResolver
 	Authz    auth.PolicyEvaluator                       // nil = RBAC disabled (dev/test)
 	Temporal temporalclient.Client                      // nil = degraded mode (no workflow starts)

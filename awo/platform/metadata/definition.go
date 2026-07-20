@@ -94,10 +94,15 @@ var CustomFieldDefinition = def.SystemDefinition{
 	},
 
 	Permissions: def.PermissionSet{
-		Create: []string{"role:platform-admin", "role:tenant.admin"},
-		Read:   []string{"role:platform-admin", "role:tenant.admin", "role:tenant.user"},
-		Write:  []string{"role:platform-admin", "role:tenant.admin"},
-		Delete: []string{"role:platform-admin", "role:tenant.admin"},
+		// Permission identifiers follow "platform.custom_field.{operation}".
+		// Role-to-permission mappings seeded in iam_role_permissions:
+		//   role:platform-admin → platform.custom_field.{create,read,update,delete}
+		//   role:tenant.admin   → platform.custom_field.{create,read,update,delete}
+		//   role:tenant.user    → platform.custom_field.read
+		Create: []string{"platform.custom_field.create"},
+		Read:   []string{"platform.custom_field.read"},
+		Write:  []string{"platform.custom_field.update"},
+		Delete: []string{"platform.custom_field.delete"},
 	},
 }
 

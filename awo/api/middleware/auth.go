@@ -71,6 +71,13 @@ func RequireAuth(svc SessionValidator) fiber.Handler {
 			}
 		}
 
+		// Populate the ephemeral RequestID for log correlation. This field
+		// is explicitly excluded from Redis storage (json:"-") — it is set
+		// fresh on every request from the X-Request-ID header.
+		if reqID, ok := c.Locals("request_id").(string); ok {
+			session.RequestID = reqID
+		}
+
 		viewer := session.ToViewer()
 
 		// Embed viewer in Go context so hooks and policies can call auth.ViewerFromContext.
