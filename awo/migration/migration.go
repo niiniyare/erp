@@ -38,11 +38,12 @@ package migration
 
 import (
 	"fmt"
+	"io"
 	"io/fs"
 	"sort"
 	"strconv"
 	"strings"
-	"testing/fstest"
+	"time"
 )
 
 // Source describes all SQL migrations contributed by one framework module.
@@ -74,7 +75,7 @@ type Source struct {
 	FS fs.FS
 }
 
-var registry []Source
+var globalRegistry []Source
 
 // Register adds a module's migrations to the global registry.
 // Must be called only from init() functions; never after bootstrap starts.
@@ -85,14 +86,13 @@ func Register(s Source) {
 	if s.FS == nil {
 		panic(fmt.Sprintf("migration.Register: FS is nil for module %q", s.Module))
 	}
-	registry = append(registry, s)
+	globalRegistry = append(globalRegistry, s)
 }
 
 // All returns all registered sources in topologically-sorted order.
 // Panics if a dependency cycle or missing dependency is detected.
-// The returned slice is a snapshot; future Register calls are not reflected.
 func All() []Source {
-	return topoSort(registry)
+	return TopoSortSources(globalRegistry)
 }
 
 // BuildFS constructs a single fs.FS containing all migration files from all
@@ -102,14 +102,18 @@ func All() []Source {
 //
 // Panics if any two sources produce a colliding global version number.
 func BuildFS() fs.FS {
-	return BuildFSFrom(registry)
+	return BuildFSFrom(globalRegistry)
 }
 
 // BuildFSFrom constructs a virtual fs.FS from an explicit list of sources,
 // bypassing the global registry. Intended for use in tests and tooling.
 func BuildFSFrom(sources []Source) fs.FS {
-	sorted := topoSort(sources)
-	mfs := make(fstest.MapFS)
+	sorted := TopoSortSources(sources)
+	mem := make(memFS)
+	// Track used global versions across all modules for collision detection.
+	// Two modules with the same Priority and the same local step number produce
+	// the same global version — that is a configuration error.
+	usedVersions := make(map[int]string) // globalVer → "module:stepname"
 
 	for _, src := range sorted {
 		steps, err := readSteps(src)
@@ -118,24 +122,122 @@ func BuildFSFrom(sources []Source) fs.FS {
 		}
 		for _, step := range steps {
 			globalVer := src.Priority*1000 + step.localNum
-			upName := fmt.Sprintf("%06d_%s_%s.up.sql", globalVer, src.Module, step.name)
-			if _, exists := mfs[upName]; exists {
-				panic(fmt.Sprintf("migration: version collision at %d (module %q, step %q)", globalVer, src.Module, step.name))
+			if prev, exists := usedVersions[globalVer]; exists {
+				panic(fmt.Sprintf("migration: version collision at global version %d: %s vs %s:%s",
+					globalVer, prev, src.Module, step.name))
 			}
-			mfs[upName] = &fstest.MapFile{Data: []byte(step.up)}
+			usedVersions[globalVer] = src.Module + ":" + step.name
+			upName := fmt.Sprintf("%06d_%s_%s.up.sql", globalVer, src.Module, step.name)
+			mem[upName] = []byte(step.up)
 			if step.down != "" {
 				downName := fmt.Sprintf("%06d_%s_%s.down.sql", globalVer, src.Module, step.name)
-				mfs[downName] = &fstest.MapFile{Data: []byte(step.down)}
+				mem[downName] = []byte(step.down)
 			}
 		}
 	}
-	return mfs
+	return mem
 }
 
 // TopoSortSources sorts sources by dependency order. Exported for testing.
 func TopoSortSources(sources []Source) []Source {
 	return topoSort(sources)
 }
+
+// ── In-memory fs.FS ──────────────────────────────────────────────────────────
+
+// memFS is a simple in-memory fs.FS. Keys are file names (no directory prefix).
+type memFS map[string][]byte
+
+func (m memFS) Open(name string) (fs.File, error) {
+	if name == "." {
+		return &memDir{files: m}, nil
+	}
+	data, ok := m[name]
+	if !ok {
+		return nil, &fs.PathError{Op: "open", Path: name, Err: fs.ErrNotExist}
+	}
+	return &memFile{name: name, data: data, r: strings.NewReader(string(data))}, nil
+}
+
+// memFile implements fs.File for a single in-memory file.
+type memFile struct {
+	name string
+	data []byte
+	r    *strings.Reader
+}
+
+func (f *memFile) Stat() (fs.FileInfo, error) { return &memFileInfo{name: f.name, size: int64(len(f.data))}, nil }
+func (f *memFile) Read(b []byte) (int, error) { return f.r.Read(b) }
+func (f *memFile) Close() error               { return nil }
+
+// memDir implements fs.File for the root directory listing.
+type memDir struct {
+	files   memFS
+	entries []fs.DirEntry
+	pos     int
+}
+
+func (d *memDir) Stat() (fs.FileInfo, error) {
+	return &memFileInfo{name: ".", isDir: true}, nil
+}
+func (d *memDir) Read([]byte) (int, error) { return 0, io.EOF }
+func (d *memDir) Close() error             { return nil }
+func (d *memDir) ReadDir(n int) ([]fs.DirEntry, error) {
+	if d.entries == nil {
+		for name, data := range d.files {
+			d.entries = append(d.entries, &memDirEntry{name: name, size: int64(len(data))})
+		}
+		sort.Slice(d.entries, func(i, j int) bool {
+			return d.entries[i].Name() < d.entries[j].Name()
+		})
+	}
+	if n <= 0 {
+		// Return all remaining entries and advance to end.
+		result := d.entries[d.pos:]
+		d.pos = len(d.entries)
+		return result, nil
+	}
+	if d.pos >= len(d.entries) {
+		return nil, io.EOF
+	}
+	end := d.pos + n
+	if end > len(d.entries) {
+		end = len(d.entries)
+	}
+	result := d.entries[d.pos:end]
+	d.pos = end
+	return result, nil
+}
+
+type memFileInfo struct {
+	name  string
+	size  int64
+	isDir bool
+}
+
+func (fi *memFileInfo) Name() string      { return fi.name }
+func (fi *memFileInfo) Size() int64       { return fi.size }
+func (fi *memFileInfo) Mode() fs.FileMode {
+	if fi.isDir {
+		return fs.ModeDir | 0o555
+	}
+	return 0o444
+}
+func (fi *memFileInfo) ModTime() time.Time { return time.Time{} }
+func (fi *memFileInfo) IsDir() bool        { return fi.isDir }
+func (fi *memFileInfo) Sys() any           { return nil }
+
+type memDirEntry struct {
+	name string
+	size int64
+}
+
+func (e *memDirEntry) Name() string               { return e.name }
+func (e *memDirEntry) IsDir() bool                { return false }
+func (e *memDirEntry) Type() fs.FileMode          { return 0 }
+func (e *memDirEntry) Info() (fs.FileInfo, error) { return &memFileInfo{name: e.name, size: e.size}, nil }
+
+// ── Internal helpers ─────────────────────────────────────────────────────────
 
 // step is an internal representation of one migration file pair.
 type step struct {
@@ -146,7 +248,7 @@ type step struct {
 }
 
 // readSteps reads and parses SQL files from src.FS.
-// Files not matching the naming convention are silently ignored.
+// Files not matching the naming convention are silently skipped.
 func readSteps(src Source) ([]step, error) {
 	entries, err := fs.ReadDir(src.FS, ".")
 	if err != nil {
@@ -193,13 +295,11 @@ func readSteps(src Source) ([]step, error) {
 
 // parseSQLFilename parses "NNN_description.up.sql" → (NNN, description, "up", true).
 func parseSQLFilename(name string) (num int, desc, direction string, ok bool) {
-	// Must end in .sql
 	if !strings.HasSuffix(name, ".sql") {
 		return
 	}
 	name = strings.TrimSuffix(name, ".sql")
 
-	// Must end in .up or .down
 	var dir string
 	switch {
 	case strings.HasSuffix(name, ".up"):
@@ -212,7 +312,6 @@ func parseSQLFilename(name string) (num int, desc, direction string, ok bool) {
 		return
 	}
 
-	// Must have NNN_ prefix
 	idx := strings.Index(name, "_")
 	if idx < 1 {
 		return
@@ -224,15 +323,14 @@ func parseSQLFilename(name string) (num int, desc, direction string, ok bool) {
 	return n, name[idx+1:], dir, true
 }
 
-// topoSort returns sources sorted by dependency order. Panics on cycle or
-// missing dependency.
+// topoSort returns sources sorted by dependency order.
+// Panics on cycle or missing dependency.
 func topoSort(sources []Source) []Source {
 	byModule := make(map[string]Source, len(sources))
 	for _, s := range sources {
 		byModule[s.Module] = s
 	}
 
-	// Validate DependsOn references.
 	for _, s := range sources {
 		for _, dep := range s.DependsOn {
 			if _, ok := byModule[dep]; !ok {
@@ -255,7 +353,6 @@ func topoSort(sources []Source) []Source {
 		}
 		inStack[module] = true
 		s := byModule[module]
-		// Sort DependsOn for determinism.
 		deps := append([]string(nil), s.DependsOn...)
 		sort.Strings(deps)
 		for _, dep := range deps {
@@ -266,7 +363,6 @@ func topoSort(sources []Source) []Source {
 		result = append(result, s)
 	}
 
-	// Sort sources by Priority then Module for deterministic iteration.
 	sorted := append([]Source(nil), sources...)
 	sort.Slice(sorted, func(i, j int) bool {
 		if sorted[i].Priority != sorted[j].Priority {

@@ -103,7 +103,7 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResult
 	// The TRUE (is_local) flag makes the setting transaction-local — it reverts
 	// automatically on COMMIT or ROLLBACK, so the connection returned to the pool
 	// is clean and will not leak the tenant context to the next request.
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", input.TenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, input.TenantID); err != nil {
 		return nil, fmt.Errorf("iam: login: set tenant context: %w", err)
 	}
 
@@ -112,11 +112,7 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResult
 		passwordHash string
 		status       string
 	)
-	err = tx.QueryRow(ctx, `
-		SELECT id, password_hash, status
-		FROM iam_users
-		WHERE email = $1
-	`, input.Email).Scan(&userID, &passwordHash, &status)
+	err = tx.QueryRow(ctx, sqlLookupCredentials, input.Email).Scan(&userID, &passwordHash, &status)
 	if err != nil {
 		// Rollback the read transaction before writing the failure audit.
 		tx.Rollback(ctx)
@@ -211,13 +207,13 @@ func (s *AuthService) auditLogin(ctx context.Context, session *auth.Session, inp
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", session.TenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, session.TenantID); err != nil {
 		return
 	}
 
 	_ = s.insertSessionRecord(ctx, tx, session)
 	_ = s.insertLoginAudit(ctx, tx, session.TenantID, session.UserID, uuid.Nil, "login", input.IPAddress, input.DeviceID, "")
-	_, _ = tx.Exec(ctx, `UPDATE iam_users SET last_login_at = $1 WHERE id = $2`, session.IssuedAt, session.UserID)
+	_, _ = tx.Exec(ctx, sqlUpdateLastLoginAt, session.IssuedAt, session.UserID)
 
 	_ = tx.Commit(ctx)
 }
@@ -261,14 +257,11 @@ func (s *AuthService) auditLogout(ctx context.Context, session *auth.Session) {
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", session.TenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, session.TenantID); err != nil {
 		return
 	}
 
-	_, _ = tx.Exec(ctx, `
-		UPDATE iam_sessions SET revoked_at = now()
-		WHERE token_hash = $1 AND tenant_id = $2
-	`, hash, session.TenantID)
+	_, _ = tx.Exec(ctx, sqlRevokeSessionByHash, hash, session.TenantID)
 
 	_ = s.insertLoginAudit(ctx, tx, session.TenantID, session.UserID, uuid.Nil, "logout", session.IPAddress, session.DeviceID, "")
 
@@ -328,14 +321,11 @@ func (s *AuthService) auditRevoke(ctx context.Context, tenantID, userID uuid.UUI
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, tenantID); err != nil {
 		return
 	}
 
-	_, _ = tx.Exec(ctx, `
-		UPDATE iam_sessions SET revoked_at = now()
-		WHERE token_hash = ANY($1) AND tenant_id = $2 AND revoked_at IS NULL
-	`, hashes, tenantID)
+	_, _ = tx.Exec(ctx, sqlRevokeSessionsByHashes, hashes, tenantID)
 
 	_ = s.insertLoginAudit(ctx, tx, tenantID, userID, uuid.Nil, "session_revoked", "", "", "admin_revoke_all")
 
@@ -481,7 +471,7 @@ func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID 
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", tenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, tenantID); err != nil {
 		return nil, fmt.Errorf("iam: lookup api token: set tenant context: %w", err)
 	}
 
@@ -491,16 +481,7 @@ func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID 
 		isRevoked        bool
 		saStatus         string
 	)
-	err = tx.QueryRow(ctx, `
-		SELECT
-			at.service_account_id,
-			at.expires_at,
-			at.is_revoked,
-			sa.status
-		FROM iam_api_tokens at
-		JOIN iam_service_accounts sa ON sa.id = at.service_account_id
-		WHERE at.token_hash = $1
-	`, hash).Scan(&serviceAccountID, &expiresAt, &isRevoked, &saStatus)
+	err = tx.QueryRow(ctx, sqlLookupAPIToken, hash).Scan(&serviceAccountID, &expiresAt, &isRevoked, &saStatus)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return nil, &runtime.BusinessError{
@@ -576,11 +557,7 @@ func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID 
 // iam_role_permissions is a global table (no tenant_id, no RLS). This method
 // queries it without setting tenant context.
 func (s *AuthService) LoadRolePermissions(ctx context.Context) ([]auth.RolePermission, error) {
-	rows, err := s.DB.Query(ctx, `
-		SELECT role_name, permission_identifier
-		FROM iam_role_permissions
-		ORDER BY role_name, permission_identifier
-	`)
+	rows, err := s.DB.Query(ctx, sqlLoadRolePermissions)
 	if err != nil {
 		return nil, fmt.Errorf("iam: load role permissions: %w", err)
 	}
@@ -606,10 +583,7 @@ func (s *AuthService) LoadRolePermissions(ctx context.Context) ([]auth.RolePermi
 // the user within the tenant. Must be called within a transaction that has
 // already established the tenant RLS context via set_tenant_context.
 func (s *AuthService) loadUserRoles(ctx context.Context, tx pgx.Tx, tenantID, userID uuid.UUID) ([]string, error) {
-	rows, err := tx.Query(ctx, `
-		SELECT role_name FROM iam_user_roles
-		WHERE tenant_id = $1 AND user_id = $2
-	`, tenantID, userID)
+	rows, err := tx.Query(ctx, sqlLoadUserRoles, tenantID, userID)
 	if err != nil {
 		return nil, fmt.Errorf("iam: load user roles: query: %w", err)
 	}
@@ -663,13 +637,7 @@ func (s *AuthService) storeSession(ctx context.Context, session *auth.Session) e
 // insertSessionRecord writes a session audit record to iam_sessions.
 // Must be called within a transaction that has established tenant RLS context.
 func (s *AuthService) insertSessionRecord(ctx context.Context, tx pgx.Tx, session *auth.Session) error {
-	_, err := tx.Exec(ctx, `
-		INSERT INTO iam_sessions
-			(id, tenant_id, token_hash, user_id, service_account_id,
-			 issued_at, expires_at, device_id, ip_address)
-		VALUES
-			(gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8)
-	`,
+	_, err := tx.Exec(ctx, sqlInsertSessionRecord,
 		session.TenantID,
 		tokenHash(session.Token),
 		nullUUID(session.UserID),
@@ -688,13 +656,7 @@ func (s *AuthService) insertSessionRecord(ctx context.Context, tx pgx.Tx, sessio
 // insertLoginAudit writes an authentication event to iam_login_audits.
 // Must be called within a transaction that has established tenant RLS context.
 func (s *AuthService) insertLoginAudit(ctx context.Context, tx pgx.Tx, tenantID, userID, serviceAccountID uuid.UUID, event, ipAddress, deviceID, failureReason string) error {
-	_, err := tx.Exec(ctx, `
-		INSERT INTO iam_login_audits
-			(id, tenant_id, event, user_id, service_account_id,
-			 ip_address, device_id, failure_reason, created_at)
-		VALUES
-			(gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, now())
-	`,
+	_, err := tx.Exec(ctx, sqlInsertLoginAudit,
 		tenantID,
 		event,
 		nullUUID(userID),
@@ -719,7 +681,7 @@ func (s *AuthService) writeFailedLoginAudit(ctx context.Context, input LoginInpu
 	}
 	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, "SELECT set_tenant_context($1)", input.TenantID); err != nil {
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, input.TenantID); err != nil {
 		return
 	}
 	_ = s.insertLoginAudit(ctx, tx, input.TenantID, userID, uuid.Nil, "failed_login", input.IPAddress, input.DeviceID, reason)

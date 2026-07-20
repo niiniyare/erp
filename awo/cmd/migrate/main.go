@@ -41,6 +41,7 @@ import (
 	_ "awo.so/awo/platform/tenant/migrations"
 )
 
+
 func main() {
 	mode := flag.String("mode", "embedded", "migration source: embedded | file")
 	dir := flag.String("dir", "./db/migration", "SQL files directory (file mode only)")
