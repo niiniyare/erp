@@ -7,8 +7,9 @@
 //   - action:  "read", "write", "create", "delete", or action name
 //
 // The Casbin enforcer is loaded once at startup from the compiled schema's
-// CasbinPolicies slice. Per-request enforcement happens in the RequirePermission
-// middleware.
+// CapabilityGrants slice (Phase 1). Role-to-permission bindings are loaded
+// separately via AddRoleForUser (Phase 2). Per-request enforcement happens
+// in the RequirePermission middleware.
 //
 // Role hierarchy is expressed via Casbin `g` grouping assertions:
 //
@@ -63,10 +64,12 @@ func NewEnforcer(schema *compiler.CompiledSchema) (*Enforcer, error) {
 		return nil, fmt.Errorf("authz: create enforcer: %w", err)
 	}
 
-	// Load compiled policies.
-	for _, p := range schema.CasbinPolicies {
-		if _, err := e.AddPolicy(p.Subject, p.Object, p.Action); err != nil {
-			return nil, fmt.Errorf("authz: add policy %v: %w", p, err)
+	// Load CapabilityGrants as Casbin p assertions (Phase 1).
+	// Each grant binds a permission identifier to an entity+action pair.
+	// Role-to-permission bindings (Phase 2) are loaded separately via AddRoleForUser.
+	for _, g := range schema.CapabilityGrants {
+		if _, err := e.AddPolicy(g.Permission, g.Entity, g.Action); err != nil {
+			return nil, fmt.Errorf("authz: add capability grant %v: %w", g, err)
 		}
 	}
 

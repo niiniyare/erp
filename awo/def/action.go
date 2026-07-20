@@ -10,7 +10,7 @@ package def
 // (e.g. "submit", "approve", "cancel", "send_email").
 type ActionDef struct {
 	// Name is the stable identifier for this action. Used in the URL path,
-	// Casbin policy objects, and Temporal workflow trigger matching.
+	// CapabilityGrant action values, and Temporal workflow trigger matching.
 	// Convention: lowercase, underscore-separated verb (e.g. "submit",
 	// "send_email", "request_approval").
 	Name string
@@ -25,9 +25,11 @@ type ActionDef struct {
 	// Description is shown as a tooltip or help text in the SDUI.
 	Description string
 
-	// Permission is the Casbin subject required to invoke this action.
-	// Format: "role:{name}" or "user:{uuid}".
-	// If empty, the action inherits the entity's Write permission.
+	// Permission is the permission identifier required to invoke this action.
+	// Format: "{module}.{entity}.{operation}" — e.g. "finance.invoice.submit".
+	// MUST NOT be a role name. Role-to-permission mapping is managed separately
+	// by the IAM module. If empty, the action inherits the entity's Write
+	// permission identifier.
 	Permission string
 
 	// HandlerFunc is the business logic for this action. It receives a

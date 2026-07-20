@@ -205,10 +205,10 @@ func TestFinanceModule_RoutesGenerated(t *testing.T) {
 	}
 }
 
-func TestFinanceModule_CasbinPoliciesEmitted(t *testing.T) {
+func TestFinanceModule_CapabilityGrantsEmitted(t *testing.T) {
 	schema := buildFinanceSchema(t)
-	if len(schema.CasbinPolicies) == 0 {
-		t.Error("expected Casbin policies to be emitted for finance entities")
+	if len(schema.CapabilityGrants) == 0 {
+		t.Error("expected CapabilityGrants to be emitted for finance entities")
 	}
 }
 

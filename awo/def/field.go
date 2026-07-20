@@ -4,14 +4,14 @@ import "context"
 
 // FieldDef describes a single field on an entity. The compiler translates a
 // FieldDef into a SQL column definition, an index (if applicable), an amis
-// form widget, a Casbin policy scope, and a Filter DSL predicate builder.
+// form widget, a CapabilityGrant scope key, and a Filter DSL predicate builder.
 type FieldDef struct {
 	// Name is the stable snake_case identifier for this field. It is used in:
 	//   - SQL column name
 	//   - API JSON key
 	//   - Filter DSL predicates
 	//   - Redis cache keys
-	//   - Casbin policy objects
+	//   - CapabilityGrant entity identifiers
 	// Never rename a field after data has been persisted.
 	Name string
 

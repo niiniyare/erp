@@ -112,21 +112,54 @@ type RecordMeta struct {
 }
 
 // Actor represents the authenticated principal performing an operation.
+// It is constructed from [auth.Session] at request time and embedded in the
+// request context. Hooks and action handlers receive it via RecordMeta.Actor
+// or ActionContext.
+//
+// ADR-003: IsPlatformAdmin is a method, not a field. ServiceAccountID
+// replaces the removed IsPlatformAdmin bool. Privileges belong in Roles.
 type Actor struct {
-	// UserID is the UUID of the authenticated user, or uuid.Nil for service
-	// accounts.
+	// UserID is the UUID of the authenticated human user.
+	// uuid.Nil for service account sessions.
 	UserID uuid.UUID
+
+	// ServiceAccountID is the UUID of the authenticated service account.
+	// uuid.Nil for human user sessions. Exactly one of UserID and
+	// ServiceAccountID is non-nil for any given Actor.
+	ServiceAccountID uuid.UUID
 
 	// TenantID is the tenant the actor is operating within.
 	TenantID uuid.UUID
 
-	// Roles is the set of role names assigned to this actor, e.g.
-	// "role:tenant.admin", "role:finance.accounts_payable".
+	// Roles is the complete set of role names held by this principal within
+	// the current tenant scope. Format: "role:{domain}.{name}".
 	Roles []string
+}
 
-	// IsPlatformAdmin is true when the actor has the platform-admin role,
-	// which bypasses Casbin policy checks entirely.
-	IsPlatformAdmin bool
+// IsPlatformAdmin reports whether this actor holds the platform-admin role,
+// which bypasses all PolicyEvaluator checks unconditionally (ADR-003).
+func (a *Actor) IsPlatformAdmin() bool {
+	for _, r := range a.Roles {
+		if r == "role:platform-admin" {
+			return true
+		}
+	}
+	return false
+}
+
+// IsServiceAccount reports whether this actor is a machine/service principal.
+func (a *Actor) IsServiceAccount() bool {
+	return a.ServiceAccountID != uuid.Nil
+}
+
+// HasRole reports whether this actor holds the named role (exact match).
+func (a *Actor) HasRole(role string) bool {
+	for _, r := range a.Roles {
+		if r == role {
+			return true
+		}
+	}
+	return false
 }
 
 // OperationType identifies the mutation being performed.

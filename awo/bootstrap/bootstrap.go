@@ -116,7 +116,7 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 	slog.Info("schema compiled",
 		"entities", len(schema.Entities),
 		"routes", len(schema.Routes),
-		"casbin_policies", len(schema.CasbinPolicies),
+		"capability_grants", len(schema.CapabilityGrants),
 	)
 
 	return &Result{Pool: pool, Redis: rdb, Schema: schema}, nil

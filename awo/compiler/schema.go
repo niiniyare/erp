@@ -32,9 +32,11 @@ type CompiledSchema struct {
 	// consumed by the API layer to register Fiber routes.
 	Routes []RouteDescriptor
 
-	// CasbinPolicies is the list of Casbin policy assertions derived from
-	// PermissionSet declarations. Consumed by the IAM module at startup.
-	CasbinPolicies []CasbinPolicy
+	// CapabilityGrants is the engine-agnostic list of capability assertions
+	// derived from PermissionSet declarations at compile time. Each grant
+	// binds a permission identifier to an entity + action pair. Consumed by
+	// the PolicyEvaluator implementation at startup (ADR-011).
+	CapabilityGrants []CapabilityGrant
 
 	// Diagnostics contains warnings and informational messages from the
 	// compilation phase. Error-severity diagnostics cause Compile to return
@@ -104,7 +106,7 @@ type EntitySchema struct {
 	// Format: module + "." + local_name  (e.g. "iam.user", "finance.invoice").
 	WorkflowNamespace string
 
-	// PermissionNamespace is the Casbin object namespace for this entity.
+	// PermissionNamespace is the entity namespace used in CapabilityGrant.Entity.
 	// Equals QualifiedName  (e.g. "iam_user", "finance_invoice").
 	PermissionNamespace string
 
@@ -264,16 +266,28 @@ type RouteDescriptor struct {
 	RequiredPermission string
 }
 
-// CasbinPolicy is a Casbin policy assertion derived from a PermissionSet.
-type CasbinPolicy struct {
-	// Subject is the role or user (e.g. "role:tenant.admin").
-	Subject string
+// CapabilityGrant is an engine-agnostic capability assertion derived from a
+// [def.PermissionSet] declaration. It binds a permission identifier to the
+// entity and operation it controls. The compiler emits one CapabilityGrant per
+// permission identifier per operation declared in the PermissionSet.
+//
+// CapabilityGrant deliberately contains no reference to roles, users, or any
+// specific authorization backend (ADR-011). The PolicyEvaluator implementation
+// loads CapabilityGrants alongside a separate role-to-permission mapping to
+// resolve authorization decisions at request time.
+type CapabilityGrant struct {
+	// Permission is the permission identifier from the PermissionSet.
+	// Format: "{module}.{entity}.{operation}"
+	// e.g. "finance.invoice.create", "iam.user.read".
+	Permission string
 
-	// Object is the entity name.
-	Object string
+	// Entity is the qualified entity name this grant applies to.
+	// e.g. "finance_invoice", "iam_user".
+	Entity string
 
-	// Action is the Casbin action ("read", "write", "create", "delete", or a
-	// custom action name).
+	// Action is the operation this grant controls.
+	// Standard: "create", "read", "write", "delete".
+	// Custom: any action name declared in ActionDef.
 	Action string
 }
 
@@ -346,9 +360,9 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 		schema.Routes = append(schema.Routes, emitRoutes(es)...)
 	}
 
-	// Phase 4: emit Casbin policies.
+	// Phase 4: emit CapabilityGrants from PermissionSet permission identifiers.
 	for _, es := range schema.Entities {
-		schema.CasbinPolicies = append(schema.CasbinPolicies, emitPolicies(es)...)
+		schema.CapabilityGrants = append(schema.CapabilityGrants, emitCapabilityGrants(es)...)
 	}
 
 	return schema, nil
@@ -507,28 +521,36 @@ func emitRoutes(es *EntitySchema) []RouteDescriptor {
 	return routes
 }
 
-func emitPolicies(es *EntitySchema) []CasbinPolicy {
+// emitCapabilityGrants converts a compiled EntitySchema's PermissionSet into
+// a flat list of CapabilityGrant records. Each permission identifier in the
+// PermissionSet produces exactly one CapabilityGrant binding that identifier
+// to the entity and operation it controls.
+//
+// The resulting grants are loaded by the PolicyEvaluator at startup. The
+// evaluator pairs them with a separate role-to-permission mapping (managed by
+// the IAM module) to resolve authorization decisions. No role names appear here.
+func emitCapabilityGrants(es *EntitySchema) []CapabilityGrant {
 	perms := es.Permissions
-	name := es.QualifiedName
+	entity := es.QualifiedName
 
-	var policies []CasbinPolicy
-	for _, subject := range perms.Create {
-		policies = append(policies, CasbinPolicy{Subject: subject, Object: name, Action: "create"})
+	var grants []CapabilityGrant
+	for _, perm := range perms.Create {
+		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "create"})
 	}
-	for _, subject := range perms.Read {
-		policies = append(policies, CasbinPolicy{Subject: subject, Object: name, Action: "read"})
+	for _, perm := range perms.Read {
+		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "read"})
 	}
-	for _, subject := range perms.Write {
-		policies = append(policies, CasbinPolicy{Subject: subject, Object: name, Action: "write"})
+	for _, perm := range perms.Write {
+		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "write"})
 	}
-	for _, subject := range perms.Delete {
-		policies = append(policies, CasbinPolicy{Subject: subject, Object: name, Action: "delete"})
+	for _, perm := range perms.Delete {
+		grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: "delete"})
 	}
-	for actionName, subjects := range perms.Actions {
-		for _, subject := range subjects {
-			policies = append(policies, CasbinPolicy{Subject: subject, Object: name, Action: actionName})
+	for actionName, perms := range perms.Actions {
+		for _, perm := range perms {
+			grants = append(grants, CapabilityGrant{Permission: perm, Entity: entity, Action: actionName})
 		}
 	}
 
-	return policies
+	return grants
 }
