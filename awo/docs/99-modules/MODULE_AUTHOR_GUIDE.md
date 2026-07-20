@@ -27,7 +27,7 @@ internal/
   core/
     {module}/
       {module}.go         ← package doc + module-level constants
-      definition.go       ← EntityDefinition variable declarations
+      def.go       ← EntityDefinition variable declarations
       hooks.go            ← BeforeCreate/AfterCreate/etc. implementations
       policy.go           ← PolicyFunc implementations
       actions.go          ← ActionHandlerFunc implementations
@@ -74,7 +74,7 @@ import (
 ## 4. Minimal Entity Definition
 
 ```go
-// definition.go
+// def.go
 var StockItemDefinition = def.SystemDefinition{
     Name:        "stock_item",
     Module:      "inventory",
