@@ -5,9 +5,10 @@ import (
 	"crypto/sha256"
 	"fmt"
 
+	"awo.so/awo/auth"
 	"awo.so/awo/def"
 	"awo.so/awo/runtime"
-	"github.com/go-redis/redis/v8"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -70,7 +71,7 @@ func (h *UserPasswordHasher) hashPassword(record *def.EntityRecord) error {
 // ── UserRoleChangeHook ────────────────────────────────────────────────────────
 
 // UserRoleChangeHook runs after a user_role record is created or deleted and
-// revokes all active Redis sessions for the affected user.
+// revokes all active sessions for the affected user.
 //
 // When a user's role set changes, their existing sessions carry stale role data.
 // The Awo session model (ADR-004) specifies that roles are loaded once at login
@@ -79,23 +80,21 @@ func (h *UserPasswordHasher) hashPassword(record *def.EntityRecord) error {
 //
 // # Session revocation mechanism
 //
-// Sessions are located via the Redis sorted set at key:
-//
-//	user_sessions:{tenantID}:{userID}
-//
-// This set is maintained by [AuthService.Login] (ZADD on login) and
-// [AuthService.Logout] (ZREM on logout). The hook reads all members, issues
-// Redis DEL for each "session:{token}" key, then DELs the index set itself.
+// Sessions are enumerated via [auth.SessionStore.ListUserTokens] (which reads the
+// per-user index) then deleted in bulk via [auth.SessionStore.DeleteAll]. The
+// hook does not interact with the session store directly — it delegates entirely
+// to the SessionStore abstraction.
 //
 // # Transaction boundary note
 //
-// AfterCreate and AfterDelete hooks run INSIDE the database transaction. The
-// Redis DEL is NOT transactional. If Redis succeeds but the DB transaction later
-// rolls back (e.g. due to a subsequent hook), sessions are invalidated but the
-// role change is not applied. This is a safe-fail outcome: the user re-logs in
-// and continues with their previous roles unchanged.
+// AfterCreate and AfterDelete hooks run INSIDE the database transaction. Session
+// deletion via SessionStore is NOT transactional with the database. If the store
+// succeeds but the DB transaction later rolls back (e.g. due to a subsequent
+// hook), sessions are invalidated but the role change is not applied. This is
+// the safe-fail outcome: the user re-logs in and continues with their previous
+// roles unchanged.
 type UserRoleChangeHook struct {
-	Redis *redis.Client
+	Sessions auth.SessionStore
 }
 
 var (
@@ -104,35 +103,25 @@ var (
 )
 
 func (h *UserRoleChangeHook) AfterCreate(ctx context.Context, record *def.EntityRecord) error {
-	return h.revokeUserSessions(ctx, record.TenantID.String(), record.GetUUID("user_id").String())
+	return h.revokeUserSessions(ctx, record.TenantID, record.GetUUID("user_id"))
 }
 
 func (h *UserRoleChangeHook) AfterDelete(ctx context.Context, record *def.EntityRecord) error {
-	return h.revokeUserSessions(ctx, record.TenantID.String(), record.GetUUID("user_id").String())
+	return h.revokeUserSessions(ctx, record.TenantID, record.GetUUID("user_id"))
 }
 
-// revokeUserSessions DELs all active session keys for the given user from Redis.
-// It uses the "user_sessions:{tenantID}:{userID}" sorted set as the index.
-func (h *UserRoleChangeHook) revokeUserSessions(ctx context.Context, tenantID, userID string) error {
-	indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID, userID)
-
-	tokens, err := h.Redis.ZRange(ctx, indexKey, 0, -1).Result()
+// revokeUserSessions enumerates all active sessions for the user and deletes
+// them via the SessionStore.
+func (h *UserRoleChangeHook) revokeUserSessions(ctx context.Context, tenantID, userID uuid.UUID) error {
+	tokens, err := h.Sessions.ListUserTokens(ctx, tenantID, userID)
 	if err != nil {
-		return fmt.Errorf("iam: revoke sessions for user %s: read index: %w", userID, err)
+		return fmt.Errorf("iam: revoke sessions for user %s: list tokens: %w", userID, err)
 	}
 	if len(tokens) == 0 {
 		return nil
 	}
-
-	// Build the list of session keys to delete.
-	keys := make([]string, 0, len(tokens)+1)
-	for _, token := range tokens {
-		keys = append(keys, "session:"+token)
-	}
-	keys = append(keys, indexKey) // delete the index set too
-
-	if err := h.Redis.Del(ctx, keys...).Err(); err != nil {
-		return fmt.Errorf("iam: revoke sessions for user %s: redis DEL: %w", userID, err)
+	if err := h.Sessions.DeleteAll(ctx, tenantID, userID, tokens); err != nil {
+		return fmt.Errorf("iam: revoke sessions for user %s: delete: %w", userID, err)
 	}
 	return nil
 }

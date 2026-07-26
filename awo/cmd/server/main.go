@@ -34,6 +34,7 @@ import (
 	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
 	contrib "awo.so/awo/contrib/pgx"
+	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/events/outbox"
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
@@ -69,8 +70,11 @@ func main() {
 	defer bootstrap.Shutdown(context.Background(), result)
 
 	// IAM module — authenticates users and manages sessions.
-	// iam.New wires Redis into the UserRoleChangeHook singleton and returns the Module.
-	iamModule := iam.New(result.Pool, result.Redis)
+	// Construct the SessionStore and token cache from the shared Redis client,
+	// then inject them into iam.New as abstract interfaces.
+	sessions := contribredis.NewSessionStore(result.Redis)
+	tokenCache := contribredis.New(result.Redis)
+	iamModule := iam.New(result.Pool, sessions, tokenCache)
 
 	// Tenant entity repository for TenantResolver middleware.
 	tenantSchema, ok := result.Schema.ByName["platform_tenant"]

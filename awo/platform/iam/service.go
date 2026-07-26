@@ -2,14 +2,13 @@ package iam
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
 	"awo.so/awo/auth"
+	"awo.so/awo/cache"
 	"awo.so/awo/runtime"
-	goredis "github.com/go-redis/redis/v8"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -35,17 +34,17 @@ const (
 // that the API middleware and IAM handlers depend on.
 //
 // It is the sole writer to:
-//   - Redis session store ("session:{token}" keys)
-//   - Redis user session index ("user_sessions:{tenantID}:{userID}" sorted sets)
-//   - Redis API token cache ("iam:api_token:{sha256_hex}" keys)
+//   - Session store (human sessions, via [Sessions])
+//   - API token cache (service account token cache, via [Cache])
 //   - iam_sessions table (SQL audit trail for human sessions)
 //   - iam_login_audits table (append-only auth event log)
 //
 // AuthService is constructed once at startup by [New] and shared across all
 // concurrent requests. All methods are goroutine-safe.
 type AuthService struct {
-	DB    *pgxpool.Pool
-	Redis *goredis.Client
+	DB       *pgxpool.Pool
+	Sessions auth.SessionStore
+	Cache    cache.Cache
 }
 
 // ── Login ──────────────────────────────────────────────────────────────────────
@@ -228,15 +227,11 @@ func (s *AuthService) auditLogin(ctx context.Context, session *auth.Session, inp
 //  3. UPDATE iam_sessions SET revoked_at in a tenant-scoped transaction.
 //  4. INSERT iam_login_audits logout event.
 func (s *AuthService) Logout(ctx context.Context, session *auth.Session) error {
-	indexKey := fmt.Sprintf("user_sessions:%s:%s", session.TenantID, session.UserID)
-
-	// Redis is the authoritative session store. Revocation is a DEL + ZREM,
-	// executed atomically via pipeline to minimize race window.
-	pipe := s.Redis.Pipeline()
-	pipe.Del(ctx, session.RedisKey())
-	pipe.ZRem(ctx, indexKey, session.Token)
-	if _, err := pipe.Exec(ctx); err != nil {
-		return fmt.Errorf("iam: logout: redis: %w", err)
+	// SessionStore.Delete is the authoritative revocation. The primary session
+	// key removal is critical (error returned on failure); the user index entry
+	// is removed best-effort inside Delete.
+	if err := s.Sessions.Delete(ctx, session); err != nil {
+		return fmt.Errorf("iam: logout: %w", err)
 	}
 
 	// Best-effort: mark the SQL audit record revoked and write a logout event.
@@ -283,27 +278,21 @@ func (s *AuthService) auditLogout(ctx context.Context, session *auth.Session) {
 // This edge case cannot be avoided without making session creation synchronous
 // on the sorted set write.
 func (s *AuthService) RevokeUserSessions(ctx context.Context, tenantID, userID uuid.UUID) error {
-	indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID, userID)
-	tokens, err := s.Redis.ZRange(ctx, indexKey, 0, -1).Result()
+	tokens, err := s.Sessions.ListUserTokens(ctx, tenantID, userID)
 	if err != nil {
-		return fmt.Errorf("iam: revoke user sessions: read index: %w", err)
+		return fmt.Errorf("iam: revoke user sessions: list tokens: %w", err)
 	}
 	if len(tokens) == 0 {
 		return nil
 	}
 
-	// Build the list of session keys to delete.  Use the same key format as
-	// Session.RedisKey() ("session:{token}") to avoid format drift.
-	keys := make([]string, 0, len(tokens)+1)
-	hashes := make([]string, 0, len(tokens))
-	for _, tok := range tokens {
-		keys = append(keys, "session:"+tok) // matches auth.Session.RedisKey()
-		hashes = append(hashes, tokenHash(tok))
+	hashes := make([]string, len(tokens))
+	for i, tok := range tokens {
+		hashes[i] = tokenHash(tok)
 	}
-	keys = append(keys, indexKey) // delete the index set itself
 
-	if err := s.Redis.Del(ctx, keys...).Err(); err != nil {
-		return fmt.Errorf("iam: revoke user sessions: redis DEL: %w", err)
+	if err := s.Sessions.DeleteAll(ctx, tenantID, userID, tokens); err != nil {
+		return fmt.Errorf("iam: revoke user sessions: delete: %w", err)
 	}
 
 	// Best-effort: mark sessions revoked in SQL and write audit event.
@@ -347,19 +336,18 @@ func (s *AuthService) auditRevoke(ctx context.Context, tenantID, userID uuid.UUI
 // The Redis TTL provides primary expiry enforcement. The IsExpired wall-clock
 // check is a defense-in-depth measure in case of clock skew or TTL misconfiguration.
 func (s *AuthService) ValidateToken(ctx context.Context, token string) (*auth.Session, error) {
-	data, err := s.Redis.Get(ctx, "session:"+token).Bytes()
+	session, err := s.Sessions.Load(ctx, token)
 	if err != nil {
-		if errors.Is(err, goredis.Nil) {
-			// Session key not found — it was never issued, has expired (TTL), or
-			// was explicitly revoked via DEL by Logout/RevokeUserSessions.
+		if errors.Is(err, auth.ErrSessionNotFound) {
+			// Key absent — never issued, TTL-expired, or explicitly revoked.
 			return nil, &runtime.BusinessError{
 				Code:    "iam.session.not_found",
 				Message: "Session not found or expired.",
 				Status:  401,
 			}
 		}
-		// Infrastructure failure — Redis is unavailable.  Return 503 so the
-		// client knows to retry rather than re-authenticate unnecessarily.
+		// Infrastructure failure — store unavailable. Return 503 so the client
+		// knows to retry rather than re-authenticate unnecessarily.
 		return nil, &runtime.BusinessError{
 			Code:    "iam.service_unavailable",
 			Message: "Authentication service temporarily unavailable.",
@@ -367,13 +355,8 @@ func (s *AuthService) ValidateToken(ctx context.Context, token string) (*auth.Se
 		}
 	}
 
-	var session auth.Session
-	if err := json.Unmarshal(data, &session); err != nil {
-		return nil, fmt.Errorf("iam: validate token: unmarshal session: %w", err)
-	}
-
-	// Defense-in-depth: check wall-clock expiry even though Redis TTL should
-	// have already removed the key.  Protects against clock skew or TTL bugs.
+	// Defense-in-depth: check wall-clock expiry even though store TTL should
+	// have already evicted the key. Protects against clock skew or TTL bugs.
 	if session.IsExpired(time.Now()) {
 		return nil, &runtime.BusinessError{
 			Code:    "iam.session.expired",
@@ -382,7 +365,7 @@ func (s *AuthService) ValidateToken(ctx context.Context, token string) (*auth.Se
 		}
 	}
 
-	return &session, nil
+	return session, nil
 }
 
 // ── ValidateAPIToken ──────────────────────────────────────────────────────────
@@ -411,27 +394,24 @@ func (s *AuthService) ValidateAPIToken(ctx context.Context, rawToken string, ten
 	hash := tokenHash(rawToken)
 	cacheKey := "iam:api_token:" + hash
 
-	// Fast path: check the Redis cache first (60-second TTL).
-	data, err := s.Redis.Get(ctx, cacheKey).Bytes()
+	// Fast path: check the token cache (60-second TTL).
+	var cached auth.Session
+	err := s.Cache.Get(ctx, cacheKey, &cached)
 	if err == nil {
-		// Cache hit — deserialize and validate.
-		var session auth.Session
-		if jsonErr := json.Unmarshal(data, &session); jsonErr != nil {
-			return nil, fmt.Errorf("iam: validate api token: unmarshal cache: %w", jsonErr)
-		}
-		if session.IsExpired(time.Now()) {
-			// Token expired since it was cached.  Evict the stale cache entry.
-			_ = s.Redis.Del(ctx, cacheKey).Err()
+		// Cache hit — validate expiry.
+		if cached.IsExpired(time.Now()) {
+			// Token expired since it was cached. Evict the stale entry.
+			_ = s.Cache.Delete(ctx, cacheKey)
 			return nil, &runtime.BusinessError{
 				Code:    "iam.api_token.expired",
 				Message: "API token has expired.",
 				Status:  401,
 			}
 		}
-		return &session, nil
+		return &cached, nil
 	}
-	if !errors.Is(err, goredis.Nil) {
-		// Infrastructure failure — Redis is unavailable.
+	if !errors.Is(err, cache.ErrMiss) {
+		// Infrastructure failure — cache unavailable.
 		return nil, &runtime.BusinessError{
 			Code:    "iam.service_unavailable",
 			Message: "Authentication service temporarily unavailable.",
@@ -446,16 +426,14 @@ func (s *AuthService) ValidateAPIToken(ctx context.Context, rawToken string, ten
 		return nil, err
 	}
 
-	// Populate the cache for subsequent requests.  TTL is the minimum of
+	// Populate cache for subsequent requests. TTL is the minimum of
 	// apiTokenCacheTTL and the remaining token lifetime.
 	ttl := apiTokenCacheTTL
 	if remaining := session.TTL(time.Now()); remaining < ttl {
 		ttl = remaining
 	}
 	if ttl > 0 {
-		if cacheData, marshalErr := json.Marshal(session); marshalErr == nil {
-			_ = s.Redis.Set(ctx, cacheKey, cacheData, ttl).Err()
-		}
+		_ = s.Cache.Set(ctx, cacheKey, session, ttl)
 	}
 
 	return session, nil
@@ -600,36 +578,11 @@ func (s *AuthService) loadUserRoles(ctx context.Context, tx pgx.Tx, tenantID, us
 	return roles, rows.Err()
 }
 
-// storeSession serializes the session to JSON and stores it in Redis under
-// session:{token} with a TTL matching the session's ExpiresAt.
-//
-// Additionally, the token is added to the user_sessions:{tenantID}:{userID}
-// sorted set (scored by expiry unix timestamp) to enable bulk revocation via
-// [RevokeUserSessions]. The sorted set write is best-effort: if it fails, the
-// session is still valid but RevokeUserSessions may not find it.
+// storeSession persists the session via [SessionStore.Store].
+// Called on the critical login path — failure aborts login.
 func (s *AuthService) storeSession(ctx context.Context, session *auth.Session) error {
-	data, err := json.Marshal(session)
-	if err != nil {
-		return fmt.Errorf("iam: store session: marshal: %w", err)
-	}
-
-	ttl := session.TTL(time.Now())
-	if ttl <= 0 {
-		return fmt.Errorf("iam: store session: session already expired")
-	}
-
-	if err := s.Redis.Set(ctx, session.RedisKey(), data, ttl).Err(); err != nil {
-		return fmt.Errorf("iam: store session: redis SET: %w", err)
-	}
-
-	// Add to the user session index for bulk revocation on role changes.
-	// Score = expiry unix timestamp; expired members can be pruned by ZRANGEBYSCORE.
-	indexKey := fmt.Sprintf("user_sessions:%s:%s", session.TenantID, session.UserID)
-	score := float64(session.ExpiresAt.Unix())
-	if err := s.Redis.ZAdd(ctx, indexKey, &goredis.Z{Score: score, Member: session.Token}).Err(); err != nil {
-		// Non-fatal: the session is live; only bulk revocation is impaired.
-		// TODO: emit metric for index write failure
-		_ = err
+	if err := s.Sessions.Store(ctx, session); err != nil {
+		return fmt.Errorf("iam: store session: %w", err)
 	}
 	return nil
 }

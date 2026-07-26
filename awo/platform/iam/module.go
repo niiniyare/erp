@@ -24,7 +24,10 @@
 //
 // # Usage
 //
-//	m := iam.New(db, redisClient)
+//	rdb := goredis.NewClient(...)
+//	sessions := redis.NewSessionStore(rdb)
+//	tokenCache := redis.New(rdb)
+//	m := iam.New(db, sessions, tokenCache)
 //	m.RegisterRoutes(app)
 //	rolePerms, _ := m.Auth.LoadRolePermissions(ctx)
 //	evaluator, _ := auth.NewCasbinEvaluator(schema.CapabilityGrants, rolePerms)
@@ -37,8 +40,10 @@
 //   - ERP configuration
 //   - ERP workflows or business logic
 //
-// Dependencies allowed: awo/def, awo/auth, awo/filter, awo/runtime, and
-// third-party infrastructure libraries (Fiber, pgx, redis, bcrypt).
+// Dependencies allowed: awo/def, awo/auth, awo/cache, awo/filter, awo/runtime,
+// and third-party infrastructure libraries (Fiber, pgx, bcrypt). Direct
+// dependency on go-redis is eliminated — the caller injects [auth.SessionStore]
+// and [cache.Cache] abstractions instead.
 //
 // # Migration location
 //
@@ -48,8 +53,9 @@
 package iam
 
 import (
+	"awo.so/awo/auth"
+	"awo.so/awo/cache"
 	"awo.so/awo/def"
-	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -82,18 +88,21 @@ type Module struct {
 // Calling New after the first HTTP request is a data race.
 //
 // deps:
-//   - db:    PostgreSQL connection pool. Used for user lookup, role loading,
-//             and audit trail writes.
-//   - redis: Redis client. Used for session storage, user session index, and
-//             API token caching.
-func New(db *pgxpool.Pool, redis *redis.Client) *Module {
-	// Wire the UserRoleChangeHook singleton with the Redis client.
+//   - db:         PostgreSQL connection pool. Used for user lookup, role loading,
+//                 and audit trail writes.
+//   - sessions:   Session store. Used for session persistence, retrieval, and
+//                 revocation. Production: [contrib/redis.RedisSessionStore].
+//   - tokenCache: Cache for API token validation results. Avoids a database
+//                 round-trip on every service account request. Production:
+//                 [contrib/redis.Client] (implements [cache.Cache]).
+func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache) *Module {
+	// Wire the UserRoleChangeHook singleton with the session store.
 	// The singleton is referenced by UserRoleDefinition.Hooks at init() time;
-	// we populate its fields here before the first request is handled.
-	userRoleChangeHook.Redis = redis
+	// its Sessions field must be set before the first request is handled.
+	userRoleChangeHook.Sessions = sessions
 
 	return &Module{
-		Auth:         &AuthService{DB: db, Redis: redis},
+		Auth:         &AuthService{DB: db, Sessions: sessions, Cache: tokenCache},
 		loginLimiter: passthroughHandler,
 	}
 }

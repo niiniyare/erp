@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"awo.so/awo/auth"
+	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/platform/iam"
 	"awo.so/awo/runtime"
 )
@@ -58,7 +59,7 @@ func storeAPITokenCache(t *testing.T, mr *miniredis.Miniredis, rawToken string, 
 
 func TestValidateToken_ValidSession_Succeeds(t *testing.T) {
 	mr, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	session := &auth.Session{
 		Token:     "good-token",
@@ -78,7 +79,7 @@ func TestValidateToken_ValidSession_Succeeds(t *testing.T) {
 
 func TestValidateToken_MissingKey_Returns401(t *testing.T) {
 	_, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	_, err := svc.ValidateToken(context.Background(), "nonexistent-token")
 	require.Error(t, err)
@@ -91,7 +92,7 @@ func TestValidateToken_MissingKey_Returns401(t *testing.T) {
 
 func TestValidateToken_WallClockExpired_Returns401(t *testing.T) {
 	mr, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	// Key present in Redis but session timestamp is already expired.
 	session := &auth.Session{
@@ -115,7 +116,7 @@ func TestValidateToken_WallClockExpired_Returns401(t *testing.T) {
 
 func TestValidateToken_RedisDown_Returns503(t *testing.T) {
 	mr, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	mr.Close() // simulate Redis outage
 
@@ -133,7 +134,7 @@ func TestValidateToken_RedisDown_Returns503(t *testing.T) {
 func TestValidateAPIToken_CacheHit_ReturnsCachedSession(t *testing.T) {
 	mr, client := newTestRedis(t)
 	// No DB wired — DB path must not be reached on a cache hit.
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	rawToken := "svc-api-key-abc"
 	tenantID := uuid.New()
@@ -158,7 +159,7 @@ func TestValidateAPIToken_CacheHit_ReturnsCachedSession(t *testing.T) {
 
 func TestValidateAPIToken_ExpiredCacheEntry_Returns401(t *testing.T) {
 	mr, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	rawToken := "expired-api-key"
 	tenantID := uuid.New()
@@ -184,7 +185,7 @@ func TestValidateAPIToken_ExpiredCacheEntry_Returns401(t *testing.T) {
 
 func TestValidateAPIToken_RedisDown_Returns503(t *testing.T) {
 	mr, client := newTestRedis(t)
-	svc := &iam.AuthService{Redis: client}
+	svc := &iam.AuthService{Sessions: contribredis.NewSessionStore(client), Cache: contribredis.New(client)}
 
 	mr.Close()
 

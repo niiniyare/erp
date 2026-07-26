@@ -87,6 +87,10 @@ func (s *Session) ToViewer() ViewerContext {
 
 // RedisKey returns the Redis key for storing this session.
 // Format: "session:{token}"
+//
+// Deprecated: RedisKey couples the domain object to a storage implementation
+// detail. Use [SessionStore] implementations instead, which define their own
+// internal key functions. This method will be removed in Phase N+6H.
 func (s *Session) RedisKey() string {
 	return "session:" + s.Token
 }

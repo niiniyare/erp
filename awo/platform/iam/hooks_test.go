@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	goredis "github.com/go-redis/redis/v8"
@@ -14,6 +15,7 @@ import (
 
 	"awo.so/awo/def"
 	"awo.so/awo/platform/iam"
+	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/runtime"
 )
 
@@ -103,9 +105,12 @@ func setupRoleHookRedis(t *testing.T, tenantID, userID uuid.UUID, tokens []strin
 	mr, client := newTestRedis(t)
 
 	// Populate the user_sessions index sorted set.
+	// Scores must be future Unix timestamps so ListUserTokens does not prune
+	// them via ZREMRANGEBYSCORE before returning the token list.
 	indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID, userID)
+	futureBase := float64(time.Now().Add(time.Hour).Unix())
 	for i, tok := range tokens {
-		client.ZAdd(context.Background(), indexKey, &goredis.Z{Score: float64(i), Member: tok})
+		client.ZAdd(context.Background(), indexKey, &goredis.Z{Score: futureBase + float64(i), Member: tok})
 		client.Set(context.Background(), "session:"+tok, `{"token":"`+tok+`"}`, 0)
 	}
 	return mr, client
@@ -117,7 +122,7 @@ func TestUserRoleChangeHook_AfterCreate_RevokesUserSessions(t *testing.T) {
 	tokens := []string{"tok1", "tok2", "tok3"}
 
 	_, client := setupRoleHookRedis(t, tenantID, userID, tokens)
-	h := &iam.UserRoleChangeHook{Redis: client}
+	h := &iam.UserRoleChangeHook{Sessions: contribredis.NewSessionStore(client)}
 
 	rec := &def.EntityRecord{
 		ID:       uuid.New(),
@@ -142,7 +147,7 @@ func TestUserRoleChangeHook_AfterCreate_RevokesUserSessions(t *testing.T) {
 
 func TestUserRoleChangeHook_NoSessions_IsNoop(t *testing.T) {
 	_, client := newTestRedis(t)
-	h := &iam.UserRoleChangeHook{Redis: client}
+	h := &iam.UserRoleChangeHook{Sessions: contribredis.NewSessionStore(client)}
 
 	rec := &def.EntityRecord{
 		ID:       uuid.New(),
