@@ -1,0 +1,2628 @@
+ ▐▛███▜▌   Claude Code v2.1.76
+▝▜█████▛▘  Sonnet 4.6 · Claude Pro
+  ▘▘ ▝▝    ~/project/erp
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+● Searched for 1 pattern, read 7 files (ctrl+o to expand)
+
+● Good. Now I have everything. Let me implement all files.
+
+● Write(awo/auth/session_store.go)
+  ⎿  Wrote 86 lines to awo/auth/session_store.go
+     // Package auth — session_store.go
+     //
+     // SessionStore is the persistence interface for short-lived human 
+     sessions.
+     // It is defined here (in awo/auth) so that platform/iam can depend on 
+     the
+     // abstraction without importing any infrastructure library. The 
+     production
+     // implementation lives in awo/contrib/redis.
+     package auth
+
+     import (
+       "context"
+
+     … +76 lines (ctrl+o to expand)
+
+● Now the Redis adapter:
+
+● Write(awo/contrib/redis/session_store.go)
+  ⎿  Wrote 180 lines to awo/contrib/redis/session_store.go
+     // Package redis — session_store.go
+     //
+     // RedisSessionStore implements [auth.SessionStore] using go-redis 
+     sorted sets
+     // for the per-user session index and plain string keys for session 
+     payloads.
+     //
+     // # Key layout
+     //
+     //   session:{token}                      — JSON-encoded auth.Session; 
+     TTL = ExpiresAt
+     //   user_sessions:{tenantID}:{userID}    — sorted set; member = token,
+      score = expiry unix
+     //
+
+     … +170 lines (ctrl+o to expand)
+
+● Now update auth/session.go to deprecate RedisKey():
+
+● Update(awo/auth/session.go)
+  ⎿  Added 4 lines
+      87                                                                 
+      88  // RedisKey returns the Redis key for storing this session.    
+      89  // Format: "session:{token}"                                   
+      90 +//                                                             
+      91 +// Deprecated: RedisKey couples the domain object to a storage 
+         + implementation                                                
+      92 +// detail. Use [SessionStore] implementations instead, which   
+         +define their own                                               
+      93 +// internal key functions. This method will be removed in      
+         +Phase N+6H.                                                    
+      94  func (s *Session) RedisKey() string {                          
+      95    return "session:" + s.Token                                  
+      96  }                                                              
+
+● Now update hooks.go:
+
+● Update(awo/platform/iam/hooks.go)
+  ⎿  Added 2 lines, removed 1 line
+       5    "crypto/sha256"                                              
+       6    "fmt"                                                        
+       7                                                                 
+       8 +  "awo.so/awo/auth"                                            
+       9    "awo.so/awo/def"                                             
+      10    "awo.so/awo/runtime"                                         
+      11 -  "github.com/go-redis/redis/v8"                               
+      11 +  "github.com/google/uuid"                                     
+      12    "golang.org/x/crypto/bcrypt"                                 
+      13  )                                                              
+      14                                                                 
+
+● Update(awo/platform/iam/hooks.go)
+  ⎿  Added 21 lines, removed 33 lines
+      71  // ── UserRoleChangeHook                                       
+          ────────────────────────────────────────────────────────       
+      72                                                                 
+      73  // UserRoleChangeHook runs after a user_role record is created 
+           or deleted and                                                
+      74 -// revokes all active Redis sessions for the affected user.    
+      74 +// revokes all active sessions for the affected user.          
+      75  //                                                             
+      76  // When a user's role set changes, their existing sessions     
+          carry stale role data.                                         
+      77  // The Awo session model (ADR-004) specifies that roles are    
+          loaded once at login                                           
+     ...
+       80  //                                                            
+       81  // # Session revocation mechanism                             
+       82  //                                                            
+       83 -// Sessions are located via the Redis sorted set at key:      
+       83 +// Sessions are enumerated via                                
+          +[auth.SessionStore.ListUserTokens] (which reads the           
+       84 +// per-user index) then deleted in bulk via                   
+          +[auth.SessionStore.DeleteAll]. The                            
+       85 +// hook does not interact with the session store directly —   
+          +it delegates entirely                                         
+       86 +// to the SessionStore abstraction.                           
+       87  //                                                            
+       88 //    user_sessions:{tenantID}:{userID}                           
+     -
+
+       89 -//                                                            
+       90 -// This set is maintained by [AuthService.Login] (ZADD on     
+          -login) and                                                    
+       91 -// [AuthService.Logout] (ZREM on logout). The hook reads all  
+          -members, issues                                               
+       92 -// Redis DEL for each "session:{token}" key, then DELs the    
+          -index set itself.                                             
+       93 -//                                                            
+       88  // # Transaction boundary note                                
+       89  //                                                            
+       90 -// AfterCreate and AfterDelete hooks run INSIDE the database  
+          -transaction. The                                              
+       91 -// Redis DEL is NOT transactional. If Redis succeeds but the  
+          -DB transaction later                                          
+       92 -// rolls back (e.g. due to a subsequent hook), sessions are   
+          -invalidated but the                                           
+       93 -// role change is not applied. This is a safe-fail outcome:   
+          -the user re-logs in                                           
+       94 -// and continues with their previous roles unchanged.         
+       90 +// AfterCreate and AfterDelete hooks run INSIDE the database  
+          +transaction. Session                                          
+       91 +// deletion via SessionStore is NOT transactional with the    
+          +database. If the store                                        
+       92 +// succeeds but the DB transaction later rolls back (e.g. due 
+          + to a subsequent                                              
+       93 +// hook), sessions are invalidated but the role change is not 
+          + applied. This is                                             
+       94 +// the safe-fail outcome: the user re-logs in and continues   
+          +with their previous                                           
+       95 +// roles unchanged.                                           
+       96  type UserRoleChangeHook struct {                              
+       97 -  Redis *redis.Client                                         
+       97 +  Sessions auth.SessionStore                                  
+       98  }                                                             
+       99                                                                
+      100  var (                                                         
+     ...
+      105  )                                                             
+      106                                                                
+      107  func (h *UserRoleChangeHook) AfterCreate(ctx context.Context, 
+            record *def.EntityRecord) error {                            
+      108 -  return h.revokeUserSessions(ctx, record.TenantID.String()   
+          -, record.GetUUID("user_id").String())                         
+      108 +  return h.revokeUserSessions(ctx, record.TenantID            
+          +, record.GetUUID("user_id"))                                  
+      109  }                                                             
+      110                                                                
+      111  func (h *UserRoleChangeHook) AfterDelete(ctx context.Context, 
+            record *def.EntityRecord) error {                            
+      112 -  return h.revokeUserSessions(ctx, record.TenantID.String()   
+          -, record.GetUUID("user_id").String())                         
+      112 +  return h.revokeUserSessions(ctx, record.TenantID            
+          +, record.GetUUID("user_id"))                                  
+      113  }                                                             
+      114                                                                
+      115 -// revokeUserSessions DELs all active session keys for the    
+          -given user from Redis.                                        
+      116 -// It uses the "user_sessions:{tenantID}:{userID}" sorted set 
+          - as the index.                                                
+      117 -func (h *UserRoleChangeHook) revokeUserSessions(ctx           
+          -context.Context, tenantID, userID string) error {             
+      118 -  indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID,    
+          -userID)                                                       
+      119 -                                                              
+      120 -  tokens, err := h.Redis.ZRange(ctx, indexKey, 0,             
+          --1).Result()                                                  
+      115 +// revokeUserSessions enumerates all active sessions for the  
+          +user and deletes                                              
+      116 +// them via the SessionStore.                                 
+      117 +func (h *UserRoleChangeHook) revokeUserSessions(ctx           
+          +context.Context, tenantID, userID uuid.UUID) error {          
+      118 +  tokens, err := h.Sessions.ListUserTokens(ctx, tenantID,     
+          +userID)                                                       
+      119    if err != nil {                                             
+      120 -    return fmt.Errorf("iam: revoke sessions for user %s: read 
+          -index: %w", userID, err)                                      
+      120 +    return fmt.Errorf("iam: revoke sessions for user %s: list 
+          +tokens: %w", userID, err)                                     
+      121    }                                                           
+      122    if len(tokens) == 0 {                                       
+      123      return nil                                                
+      124    }                                                           
+      125 -                                                              
+      126 -  // Build the list of session keys to delete.                
+      127 -  keys := make([]string, 0, len(tokens)+1)                    
+      128 -  for _, token := range tokens {                              
+      129 -    keys = append(keys, "session:"+token)                     
+      125 +  if err := h.Sessions.DeleteAll(ctx, tenantID, userID,       
+          +tokens); err != nil {                                         
+      126 +    return fmt.Errorf("iam: revoke sessions for user %s:      
+          +delete: %w", userID, err)                                     
+      127    }                                                           
+      128 -  keys = append(keys, indexKey) // delete the index set too   
+      129 -                                                              
+      130 -  if err := h.Redis.Del(ctx, keys...).Err(); err != nil {     
+      131 -    return fmt.Errorf("iam: revoke sessions for user %s:      
+          -redis DEL: %w", userID, err)                                  
+      132 -  }                                                           
+      128    return nil                                                  
+      129  }                                                             
+      130                                                                
+
+● Now update service.go — struct, imports, and all Redis calls:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 1 line, removed 2 lines
+       2                                                                 
+       3  import (                                                       
+       4    "context"                                                    
+       5 -  "encoding/json"                                              
+       5    "errors"                                                     
+       6    "fmt"                                                        
+       7    "time"                                                       
+       8                                                                 
+       9    "awo.so/awo/auth"                                            
+      10 +  "awo.so/awo/cache"                                           
+      11    "awo.so/awo/runtime"                                         
+      12 -  goredis "github.com/go-redis/redis/v8"                       
+      12    "github.com/google/uuid"                                     
+      13    "github.com/jackc/pgx/v5"                                    
+      14    "github.com/jackc/pgx/v5/pgxpool"                            
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 5 lines, removed 5 lines
+      34  // that the API middleware and IAM handlers depend on.         
+      35  //                                                             
+      36  // It is the sole writer to:                                   
+      37 -//   - Redis session store ("session:{token}" keys)            
+      38 -//   - Redis user session index                                
+         -("user_sessions:{tenantID}:{userID}" sorted sets)              
+      39 -//   - Redis API token cache ("iam:api_token:{sha256_hex}"     
+         -keys)                                                          
+      37 +//   - Session store (human sessions, via [Sessions])          
+      38 +//   - API token cache (service account token cache, via       
+         +[Cache])                                                       
+      39  //   - iam_sessions table (SQL audit trail for human sessions) 
+      40  //   - iam_login_audits table (append-only auth event log)     
+      41  //                                                             
+      42  // AuthService is constructed once at startup by [New] and     
+          shared across all                                              
+      43  // concurrent requests. All methods are goroutine-safe.        
+      44  type AuthService struct {                                      
+      45 -  DB    *pgxpool.Pool                                          
+      46 -  Redis *goredis.Client                                        
+      45 +  DB       *pgxpool.Pool                                       
+      46 +  Sessions auth.SessionStore                                   
+      47 +  Cache    cache.Cache                                         
+      48  }                                                              
+      49                                                                 
+      50  // ── Login ────────────────────────────────────────────────── 
+          ────────────────────                                           
+
+● Now update storeSession:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 4 lines, removed 29 lines
+      599    return roles, rows.Err()                                    
+      600  }                                                             
+      601                                                                
+      602 -// storeSession serializes the session to JSON and stores it  
+          -in Redis under                                                
+      603 -// session:{token} with a TTL matching the session's          
+          -ExpiresAt.                                                    
+      604 -//                                                            
+      605 -// Additionally, the token is added to the                    
+          -user_sessions:{tenantID}:{userID}                             
+      606 -// sorted set (scored by expiry unix timestamp) to enable     
+          -bulk revocation via                                           
+      607 -// [RevokeUserSessions]. The sorted set write is best-effort: 
+          - if it fails, the                                             
+      608 -// session is still valid but RevokeUserSessions may not find 
+          - it.                                                          
+      602 +// storeSession persists the session via                      
+          +[SessionStore.Store].                                         
+      603 +// Called on the critical login path — failure aborts login.  
+      604  func (s *AuthService) storeSession(ctx context.Context,       
+           session *auth.Session) error {                                
+      605 -  data, err := json.Marshal(session)                          
+      606 -  if err != nil {                                             
+      607 -    return fmt.Errorf("iam: store session: marshal: %w", err) 
+      605 +  if err := s.Sessions.Store(ctx, session); err != nil {      
+      606 +    return fmt.Errorf("iam: store session: %w", err)          
+      607    }                                                           
+      608 -                                                              
+      609 -  ttl := session.TTL(time.Now())                              
+      610 -  if ttl <= 0 {                                               
+      611 -    return fmt.Errorf("iam: store session: session already    
+          -expired")                                                     
+      612 -  }                                                           
+      613 -                                                              
+      614 -  if err := s.Redis.Set(ctx, session.RedisKey(), data,        
+          -ttl).Err(); err != nil {                                      
+      615 -    return fmt.Errorf("iam: store session: redis SET: %w",    
+          -err)                                                          
+      616 -  }                                                           
+      617 -                                                              
+      618 -  // Add to the user session index for bulk revocation on     
+          -role changes.                                                 
+      619 -  // Score = expiry unix timestamp; expired members can be    
+          -pruned by ZRANGEBYSCORE.                                      
+      620 -  indexKey := fmt.Sprintf("user_sessions:%s:%s",              
+          -session.TenantID, session.UserID)                             
+      621 -  score := float64(session.ExpiresAt.Unix())                  
+      622 -  if err := s.Redis.ZAdd(ctx, indexKey, &goredis.Z{Score:     
+          -score, Member: session.Token}).Err(); err != nil {            
+      623 -    // Non-fatal: the session is live; only bulk revocation   
+          -is impaired.                                                  
+      624 -    // TODO: emit metric for index write failure              
+      625 -    _ = err                                                   
+      626 -  }                                                           
+      608    return nil                                                  
+      609  }                                                             
+      610                                                                
+
+● Now update Logout:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 5 lines, removed 9 lines
+      227  //  3. UPDATE iam_sessions SET revoked_at in a tenant-scoped  
+           transaction.                                                  
+      228  //  4. INSERT iam_login_audits logout event.                  
+      229  func (s *AuthService) Logout(ctx context.Context, session     
+           *auth.Session) error {                                        
+      230 -  indexKey := fmt.Sprintf("user_sessions:%s:%s",              
+          -session.TenantID, session.UserID)                             
+      231 -                                                              
+      232 -  // Redis is the authoritative session store. Revocation is  
+          -a DEL + ZREM,                                                 
+      233 -  // executed atomically via pipeline to minimize race        
+          -window.                                                       
+      234 -  pipe := s.Redis.Pipeline()                                  
+      235 -  pipe.Del(ctx, session.RedisKey())                           
+      236 -  pipe.ZRem(ctx, indexKey, session.Token)                     
+      237 -  if _, err := pipe.Exec(ctx); err != nil {                   
+      238 -    return fmt.Errorf("iam: logout: redis: %w", err)          
+      230 +  // SessionStore.Delete is the authoritative revocation. The 
+          + primary session                                              
+      231 +  // key removal is critical (error returned on failure); the 
+          + user index entry                                             
+      232 +  // is removed best-effort inside Delete.                    
+      233 +  if err := s.Sessions.Delete(ctx, session); err != nil {     
+      234 +    return fmt.Errorf("iam: logout: %w", err)                 
+      235    }                                                           
+      236                                                                
+      237    // Best-effort: mark the SQL audit record revoked and write 
+            a logout event.                                              
+
+● Now update RevokeUserSessions:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 7 lines, removed 13 lines
+      278  // This edge case cannot be avoided without making session    
+           creation synchronous                                          
+      279  // on the sorted set write.                                   
+      280  func (s *AuthService) RevokeUserSessions(ctx context.Context, 
+            tenantID, userID uuid.UUID) error {                          
+      281 -  indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID,    
+          -userID)                                                       
+      282 -  tokens, err := s.Redis.ZRange(ctx, indexKey, 0,             
+          --1).Result()                                                  
+      281 +  tokens, err := s.Sessions.ListUserTokens(ctx, tenantID,     
+          +userID)                                                       
+      282    if err != nil {                                             
+      283 -    return fmt.Errorf("iam: revoke user sessions: read index  
+          -: %w", err)                                                   
+      283 +    return fmt.Errorf("iam: revoke user sessions: list tokens 
+          +: %w", err)                                                   
+      284    }                                                           
+      285    if len(tokens) == 0 {                                       
+      286      return nil                                                
+      287    }                                                           
+      288                                                                
+      289 -  // Build the list of session keys to delete.  Use the same  
+          -key format as                                                 
+      290 -  // Session.RedisKey() ("session:{token}") to avoid format   
+          -drift.                                                        
+      291 -  keys := make([]string, 0, len(tokens)+1)                    
+      292 -  hashes := make([]string, 0, len(tokens))                    
+      293 -  for _, tok := range tokens {                                
+      294 -    keys = append(keys, "session:"+tok) // matches            
+          -auth.Session.RedisKey()                                       
+      295 -    hashes = append(hashes, tokenHash(tok))                   
+      289 +  hashes := make([]string, len(tokens))                       
+      290 +  for i, tok := range tokens {                                
+      291 +    hashes[i] = tokenHash(tok)                                
+      292    }                                                           
+      293 -  keys = append(keys, indexKey) // delete the index set       
+          -itself                                                        
+      293                                                                
+      294 -  if err := s.Redis.Del(ctx, keys...).Err(); err != nil {     
+      295 -    return fmt.Errorf("iam: revoke user sessions: redis DEL   
+          -: %w", err)                                                   
+      294 +  if err := s.Sessions.DeleteAll(ctx, tenantID, userID,       
+          +tokens); err != nil {                                         
+      295 +    return fmt.Errorf("iam: revoke user sessions: delete      
+          +: %w", err)                                                   
+      296    }                                                           
+      297                                                                
+      298    // Best-effort: mark sessions revoked in SQL and write      
+           audit event.                                                  
+
+● Now update ValidateToken:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 8 lines, removed 14 lines
+      336  // The Redis TTL provides primary expiry enforcement. The     
+           IsExpired wall-clock                                          
+      337  // check is a defense-in-depth measure in case of clock skew  
+           or TTL misconfiguration.                                      
+      338  func (s *AuthService) ValidateToken(ctx context.Context,      
+           token string) (*auth.Session, error) {                        
+      339 -  data, err := s.Redis.Get(ctx, "session:"+token).Bytes()     
+      339 +  session, err := s.Sessions.Load(ctx, token)                 
+      340    if err != nil {                                             
+      341 -    if errors.Is(err, goredis.Nil) {                          
+      342 -      // Session key not found — it was never issued, has     
+          -expired (TTL), or                                             
+      343 -      // was explicitly revoked via DEL by                    
+          -Logout/RevokeUserSessions.                                    
+      341 +    if errors.Is(err, auth.ErrSessionNotFound) {              
+      342 +      // Key absent — never issued, TTL-expired, or           
+          +explicitly revoked.                                           
+      343        return nil, &runtime.BusinessError{                     
+      344          Code:    "iam.session.not_found",                     
+      345          Message: "Session not found or expired.",             
+      346          Status:  401,                                         
+      347        }                                                       
+      348      }                                                         
+      349 -    // Infrastructure failure — Redis is unavailable.         
+          -Return 503 so the                                             
+      350 -    // client                                                 
+          -knows to retry rather than re-authenticate unnecessarily.     
+      349 +    // Infrastructure failure — store unavailable.            
+          +Return 503 so the client                                      
+      350 +    //                                                        
+          +knows to retry rather than re-authenticate unnecessarily.     
+      351      return nil, &runtime.BusinessError{                       
+      352        Code:    "iam.service_unavailable",                     
+      353        Message: "Authentication service temporarily            
+           unavailable.",                                                
+     ...
+      356      }                                                         
+      357    }                                                           
+      358                                                                
+      359 -  var session auth.Session                                    
+      360 -  if err := json.Unmarshal(data, &session); err != nil {      
+      361 -    return nil, fmt.Errorf("iam: validate token: unmarshal    
+          -session: %w", err)                                            
+      362 -  }                                                           
+      363 -                                                              
+      364 -  // Defense-in-depth: check wall-clock expiry even though    
+          -Redis TTL should                                              
+      365 -  // have already removed the key.  Protects against clock    
+          -skew or TTL bugs.                                             
+      359 +  // Defense-in-depth: check wall-clock expiry even though    
+          +store TTL should                                              
+      360 +  // have already evicted the key. Protects against clock     
+          +skew or TTL bugs.                                             
+      361    if session.IsExpired(time.Now()) {                          
+      362      return nil, &runtime.BusinessError{                       
+      363        Code:    "iam.session.expired",                         
+     ...
+      371      }                                                         
+      372    }                                                           
+      373                                                                
+      374 -  return &session, nil                                        
+      374 +  return session, nil                                         
+      375  }                                                             
+      376                                                                
+      377  // ── ValidateAPIToken                                        
+           ──────────────────────────────────────────────────────────    
+
+● Now update ValidateAPIToken:
+
+● Update(awo/platform/iam/service.go)
+  ⎿  Added 12 lines, removed 17 lines
+      394    hash := tokenHash(rawToken)                                 
+      395    cacheKey := "iam:api_token:" + hash                         
+      396                                                                
+      397 -  // Fast path: check the Redis cache first (60-second TTL).  
+      398 -  data, err := s.Redis.Get(ctx, cacheKey).Bytes()             
+      397 +  // Fast path: check the token cache (60-second TTL).        
+      398 +  var cached auth.Session                                     
+      399 +  err := s.Cache.Get(ctx, cacheKey, &cached)                  
+      400    if err == nil {                                             
+      401 -    // Cache hit — deserialize and validate.                  
+      402 -    var session auth.Session                                  
+      403 -    if jsonErr := json.Unmarshal(data, &session); jsonErr !=  
+          -nil {                                                         
+      404 -      return nil, fmt.Errorf("iam: validate api token:        
+          -unmarshal cache: %w", jsonErr)                                
+      405 -    }                                                         
+      406 -    if session.IsExpired(time.Now()) {                        
+      407 -      // Token expired since it was cached.  Evict the stale  
+          -cache entry.                                                  
+      408 -      _ = s.Redis.Del(ctx, cacheKey).Err()                    
+      401 +    // Cache hit — validate expiry.                           
+      402 +    if cached.IsExpired(time.Now()) {                         
+      403 +      // Token expired since it was cached. Evict the stale   
+          +entry.                                                        
+      404 +      _ = s.Cache.Delete(ctx, cacheKey)                       
+      405        return nil, &runtime.BusinessError{                     
+      406          Code:    "iam.api_token.expired",                     
+      407          Message: "API token has expired.",                    
+      408          Status:  401,                                         
+      409        }                                                       
+      410      }                                                         
+      411 -    return &session, nil                                      
+      411 +    return &cached, nil                                       
+      412    }                                                           
+      413 -  if !errors.Is(err, goredis.Nil) {                           
+      414 -    // Infrastructure failure — Redis is unavailable.         
+      413 +  if !errors.Is(err, cache.ErrMiss) {                         
+      414 +    // Infrastructure failure — cache unavailable.            
+      415      return nil, &runtime.BusinessError{                       
+      416        Code:    "iam.service_unavailable",                     
+      417        Message: "Authentication service temporarily            
+           unavailable.",                                                
+     ...
+      429      return nil, err                                           
+      430    }                                                           
+      431                                                                
+      432 -  // Populate the cache for subsequent requests.              
+          -TTL is the minimum of                                         
+      432 +  // Populate cache for subsequent requests.                  
+          +TTL is the minimum of                                         
+      433    // apiTokenCacheTTL and the remaining token lifetime.       
+      434    ttl := apiTokenCacheTTL                                     
+      435    if remaining := session.TTL(time.Now()); remaining < ttl {  
+      436      ttl = remaining                                           
+      437    }                                                           
+      438    if ttl > 0 {                                                
+      439 -    if cacheData, marshalErr := json.Marshal(session);        
+          -marshalErr == nil {                                           
+      440 -      _ = s.Redis.Set(ctx, cacheKey, cacheData, ttl).Err()    
+      441 -    }                                                         
+      439 +    _ = s.Cache.Set(ctx, cacheKey, session, ttl)              
+      440    }                                                           
+      441                                                                
+      442    return session, nil                                         
+
+● Now update module.go:
+
+● Update(awo/platform/iam/module.go)
+  ⎿  Added 2 lines, removed 1 line
+      48  package iam                                                    
+      49                                                                 
+      50  import (                                                       
+      51 +  "awo.so/awo/auth"                                            
+      52 +  "awo.so/awo/cache"                                           
+      53    "awo.so/awo/def"                                             
+      54 -  "github.com/go-redis/redis/v8"                               
+      54    "github.com/gofiber/fiber/v2"                                
+      55    "github.com/jackc/pgx/v5/pgxpool"                            
+      56  )                                                              
+
+● Update(awo/platform/iam/module.go)
+  ⎿  Added 12 lines, removed 9 lines
+       83  // Calling New after the first HTTP request is a data race.   
+       84  //                                                            
+       85  // deps:                                                      
+       86 -//   - db:                                                    
+          -PostgreSQL connection pool. Used for user lookup, role        
+          -loading,                                                      
+       87 -//             and audit trail writes.                        
+       88 -//   - redis: Redis client. Used for session storage, user    
+          -session index, and                                            
+       89 -//             API token caching.                             
+       90 -func New(db *pgxpool.Pool, redis *redis.Client) *Module {     
+       91 -  // Wire the UserRoleChangeHook singleton with the Redis     
+          -client.                                                       
+       86 +//   - db:                                                    
+          +PostgreSQL connection pool. Used for user lookup, role        
+          +loading,                                                      
+       87 +//                 and audit trail writes.                    
+       88 +//   - sessions:   Session store. Used for session            
+          +persistence, retrieval, and                                   
+       89 +//                 revocation. Production:                    
+          +[contrib/redis.RedisSessionStore].                            
+       90 +//   - tokenCache: Cache for API token validation results.    
+          +Avoids a database                                             
+       91 +//                 round-trip on every service account        
+          +request. Production:                                          
+       92 +//                 [contrib/redis.Client] (implements         
+          +[cache.Cache]).                                               
+       93 +func New(db *pgxpool.Pool, sessions auth.SessionStore,        
+          +tokenCache cache.Cache) *Module {                             
+       94 +  // Wire the UserRoleChangeHook singleton with the session   
+          +store.                                                        
+       95    // The singleton is referenced by UserRoleDefinition.Hooks  
+           at init() time;                                               
+       96 -  // we populate its fields here                              
+          -before the first request is handled.                          
+       97 -  userRoleChangeHook.Redis = redis                            
+       96 +  // its Sessions field must be set                           
+          +before the first request is handled.                          
+       97 +  userRoleChangeHook.Sessions = sessions                      
+       98                                                                
+       99    return &Module{                                             
+      100 -    Auth:         &AuthService{DB: db, Redis: redis},         
+      100 +    Auth:         &AuthService{DB: db, Sessions:              
+          +sessions, Cache: tokenCache},                                 
+      101      loginLimiter: passthroughHandler,                         
+      102    }                                                           
+      103  }                                                             
+
+● Also update the module.go doc comment and usage example:
+
+● Update(awo/platform/iam/module.go)
+  ⎿  Added 4 lines, removed 1 line
+      24  //                                                             
+      25  // # Usage                                                     
+      26  //                                                             
+      27 //     m := iam.New(db, redisClient)                                
+     -
+
+      27 //     rdb := goredis.NewClient(...)                                
+     +
+
+      28 //     sessions := redis.NewSessionStore(rdb)                       
+     +
+
+      29 //     tokenCache := redis.New(rdb)                                 
+     +
+
+      30 //     m := iam.New(db, sessions, tokenCache)                       
+     +
+
+      31 //     m.RegisterRoutes(app)                                        
+
+
+      32 //     rolePerms, _ := m.Auth.LoadRolePermissions(ctx)              
+
+
+      33 //     evaluator, _ :=                                              
+
+
+          auth.NewCasbinEvaluator(schema.CapabilityGrants, rolePerms)    
+
+● Also update the allowed-dependencies comment to remove redis:
+
+● Update(awo/platform/iam/module.go)
+  ⎿  Added 4 lines, removed 2 lines
+      40  //   - ERP configuration                                       
+      41  //   - ERP workflows or business logic                         
+      42  //                                                             
+      43 -// Dependencies allowed: awo/def, awo/auth, awo/               
+         -filter, awo/runtime, and                                       
+      44 -// third-party infrastructure libraries (Fiber, pgx, redis,    
+         -bcrypt).                                                       
+      43 +// Dependencies allowed: awo/def, awo/auth, awo/cache, awo/    
+         +filter, awo/runtime,                                           
+      44 +// and third-party infrastructure libraries (Fiber, pgx,       
+         +bcrypt). Direct                                                
+      45 +// dependency on go-redis is eliminated — the caller injects   
+         +[auth.SessionStore]                                            
+      46 +// and [cache.Cache] abstractions instead.                     
+      47  //                                                             
+      48  // # Migration location                                        
+      49  //                                                             
+
+● Now check if there's a cmd/server/main.go that calls iam.New with the old
+  signature:
+
+● Read 2 files (ctrl+o to expand)
+
+● Update(awo/cmd/server/main.go)
+  ⎿  Added 1 line
+      34    "awo.so/awo/auth"                                            
+      35    "awo.so/awo/bootstrap"                                       
+      36    contrib "awo.so/awo/contrib/pgx"                             
+      37 +  contribredis "awo.so/awo/contrib/redis"                      
+      38    "awo.so/awo/events/outbox"                                   
+      39    "awo.so/awo/observability/health"                            
+      40    "awo.so/awo/observability/metrics"                           
+
+● Update(awo/cmd/server/main.go)
+  ⎿  Added 5 lines, removed 2 lines
+      70    defer bootstrap.Shutdown(context.Background(), result)       
+      71                                                                 
+      72    // IAM module — authenticates users and manages sessions.    
+      73 -  // iam.New wires Redis into the UserRoleChangeHook singleton 
+         - and returns the Module.                                       
+      74 -  iamModule := iam.New(result.Pool, result.Redis)              
+      73 +  // Construct the SessionStore and token cache from the       
+         +shared Redis client,                                           
+      74 +  // then inject them into iam.New as abstract interfaces.     
+      75 +  sessions := contribredis.NewSessionStore(result.Redis)       
+      76 +  tokenCache := contribredis.New(result.Redis)                 
+      77 +  iamModule := iam.New(result.Pool, sessions, tokenCache)      
+      78                                                                 
+      79    // Tenant entity repository for TenantResolver middleware.   
+      80    tenantSchema, ok := result.Schema.ByName["platform_tenant"]  
+
+● Now verify the final state of key files is clean:
+
+● Read 1 file (ctrl+o to expand)
+
+● Good. Let me verify the frappe-iam.md file that's staged — it's an unrelated
+  pending file, not my concern. Let me do a quick sanity check that hooks.go is
+  correct:
+
+● Read 1 file (ctrl+o to expand)
+
+● Phase N+6B implementation complete. Summary of changes:
+
+  New files:
+  - awo/auth/session_store.go — SessionStore interface + ErrSessionNotFound
+  sentinel
+  - awo/contrib/redis/session_store.go — RedisSessionStore adapter (sequential
+  DEL + best-effort ZREM, slog for index failures)
+
+  Modified files:
+  - awo/auth/session.go — RedisKey() marked Deprecated
+  - awo/platform/iam/hooks.go — UserRoleChangeHook.Redis *redis.Client →
+  .Sessions auth.SessionStore; revokeUserSessions delegates to ListUserTokens +
+  DeleteAll
+  - awo/platform/iam/service.go — AuthService.Redis replaced by .Sessions 
+  auth.SessionStore + .Cache cache.Cache; all 5 Redis call sites updated
+  - awo/platform/iam/module.go — New(db, redis) → New(db, sessions, tokenCache);
+   go-redis import removed
+  - awo/cmd/server/main.go — constructs RedisSessionStore + redis.Client (as
+  cache.Cache) before calling iam.New
+
+  All required changes from the review applied: R1 (ErrSessionNotFound in
+  awo/auth), R2 (no Redis vocabulary in interface docs), R3 (adapter owns key
+  functions, not session.RedisKey()), R4 (sequential DEL + best-effort ZREM), R5
+   (N/A — MemSessionStore deferred to tests written alongside test suite), R6
+  (implementation co-committed with tests when user runs the test phase).
+
+❯ sumerry of what we've done so far                                             
+  ⎿  API Error: 403 terminated · Please run /login
+
+❯ /login                                                                        
+  ⎿  Login interrupted
+
+❯ /login                                                                        
+  ⎿  Login successful
+
+❯ sumerry of what we've done so far                                             
+
+● AWO ERP — Work Summary
+
+  Foundation (prior sessions)
+
+  Auth architecture:
+  - Replaced Casbin role model with permission-identifier system
+  ("{module}.{entity}.{operation}")
+  - PermissionSet — permission IDs only, never role names (ADR-001/ADR-011)
+  - PolicyEvaluator interface — Casbin as default impl, swappable
+  - CasbinEvaluator — loads role→permission bindings from iam_role_permissions
+  at startup
+  - Rate limiting on login endpoint
+
+  IAM hardening (Phase N+4):
+  - tokenHash() — SHA-256 of raw token before DB storage
+  - UserRoleChangeHook — revokes Redis sessions on role assignment change
+  - LoginAuditImmutableGuard — blocks update/delete on audit records
+
+  Compiler validation (Phase N+5):
+  - awo/compiler/validate.go emits SeverityError for role:* in any PermissionSet
+  - Fixed all violations: platform/organization (3 entities), examples/demo
+  (demo_customer)
+  - All platform modules migrated to permission identifiers: audit, flags,
+  settings, metadata, registry, tenant, organization
+
+  ---
+  This Session
+
+  Phase N+6A — SQL Isolation:
+  - Created awo/platform/iam/queries.go — all 10 SQL strings extracted from
+  service.go
+  - Each constant documents: why it exists, EntityRepository viability,
+  migration phase
+  - service.go — pure orchestration, zero SQL literals
+
+  Phase N+6B — SessionStore abstraction:
+
+  ┌────────────────────────────────────┬─────────────────────────────────────┐
+  │                File                │               Change                │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │ awo/auth/session_store.go          │ NEW — SessionStore interface +      │
+  │                                    │ ErrSessionNotFound sentinel         │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │ awo/contrib/redis/session_store.go │ NEW — RedisSessionStore adapter     │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │ awo/auth/session.go                │ RedisKey() marked deprecated        │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │ awo/platform/iam/hooks.go          │ UserRoleChangeHook.Redis →          │
+  │                                    │ .Sessions auth.SessionStore         │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │                                    │ AuthService.Redis → .Sessions +     │
+  │ awo/platform/iam/service.go        │ .Cache; all 5 Redis call sites      │
+  │                                    │ updated                             │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │ awo/platform/iam/module.go         │ New(db, redis) → New(db, sessions,  │
+  │                                    │ tokenCache); go-redis import gone   │
+  ├────────────────────────────────────┼─────────────────────────────────────┤
+  │                                    │ Constructs RedisSessionStore +      │
+  │ awo/cmd/server/main.go             │ redis.Client (as cache.Cache),      │
+  │                                    │ injects both                        │
+  └────────────────────────────────────┴─────────────────────────────────────┘
+
+  Key design decisions enforced:
+  - ErrSessionNotFound in awo/auth — NOT cache.ErrMiss (avoids auth → cache
+  import)
+  - Interface docs: behaviour-level only, no Redis vocabulary
+  - Adapter owns sessionKey() / userIndexKey() — not session.RedisKey()
+  - Delete: sequential DEL (critical) + ZREM (best-effort/slog)
+  - Store: SET (critical) + ZADD (best-effort/slog)
+  - ListUserTokens: prunes expired via ZREMRANGEBYSCORE before ZRANGE
+
+  ---
+  Next Phases (designed, not yet approved)
+
+  - N+6C — EntityRepository for session/audit entity ops (replace raw pgx)
+  - N+6D — DatabaseQuerier interface for 3 irreplaceable SQL queries
+  - N+6E — explicit cache.Cache wiring for API token cache
+  - N+6F — unified audit_event entity
+  - N+6G — awo/observability Logger/Meter interfaces
+  - N+6H — tokenHash → awo/auth/token.go as SHA256Hex
+
+❯ /caveman:caveman-commit                                                       
+
+● Bash(git diff --stat HEAD && git status --short)
+  ⎿  Error: EACCES: permission denied, mkdir '/tmp/claude-10337'
+
+● Bash(git diff HEAD --stat && git status -s)
+  ⎿  Error: EACCES: permission denied, mkdir '/tmp/claude-10337'
+
+● Agent(Git status and diff for commit)
+  ⎿  Done (4 tool uses · 17.1k tokens · 35s)
+  (ctrl+o to expand)
+
+● Bash tool broken (Termux /tmp issue). Based on changes made this session:
+
+  refactor(iam): abstract session store behind SessionStore interface
+
+  Direct go-redis dependency removed from platform/iam. AuthService and
+  UserRoleChangeHook now depend on auth.SessionStore and cache.Cache
+  interfaces; Redis details live in contrib/redis only.
+
+  - auth.SessionStore interface + ErrSessionNotFound sentinel (awo/auth)
+  - RedisSessionStore adapter with sorted-set user index (contrib/redis)
+  - Sequential DEL + best-effort ZREM on Delete — asymmetric error handling
+  - ListUserTokens prunes expired entries via ZREMRANGEBYSCORE before read
+  - session.RedisKey() deprecated — adapter owns key format
+  - iam.New signature: (db, sessions, tokenCache) replaces (db, redis)
+
+  Part of Phase N+6B (framework extraction readiness).
+
+✻ Crunched for 56s
+
+❯ awo.so/awo/platform/iam_test [awo.so/awo/platform/iam.test]                   
+awo/platform/iam/hooks_test.go:120:31: unknown field Redis in struct literal of 
+ type iam.UserRoleChangeHook                                                    
+awo/platform/iam/hooks_test.go:145:31: unknown field Redis in struct literal of 
+ type iam.UserRoleChangeHook                                                    
+awo/platform/iam/service_test.go:61:26: unknown field Redis in struct literal   
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:81:26: unknown field Redis in struct literal   
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:94:26: unknown field Redis in struct literal   
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:118:26: unknown field Redis in struct literal  
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:136:26: unknown field Redis in struct literal  
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:161:26: unknown field Redis in struct literal  
+of type iam.AuthService                                                         
+awo/platform/iam/service_test.go:187:26: unknown field Redis in struct literal  
+of type iam.AuthService                                                         
+
+● Read 2 files (ctrl+o to expand)
+
+● Tests use Redis: client directly. Fix: wrap client with RedisSessionStore +
+  cache.Client at construction. Both still talk to miniredis — behavior
+  unchanged.
+
+● Update(awo/platform/iam/hooks_test.go)
+  ⎿  Added 1 line
+      14                                                                 
+      15    "awo.so/awo/def"                                             
+      16    "awo.so/awo/platform/iam"                                    
+      17 +  contribredis "awo.so/awo/contrib/redis"                      
+      18    "awo.so/awo/runtime"                                         
+      19  )                                                              
+      20                                                                 
+
+● Update(awo/platform/iam/hooks_test.go)
+  ⎿  Added 1 line, removed 1 line
+      118    tokens := []string{"tok1", "tok2", "tok3"}                  
+      119                                                                
+      120    _, client := setupRoleHookRedis(t, tenantID, userID,        
+           tokens)                                                       
+      121 -  h := &iam.UserRoleChangeHook{Redis: client}                 
+      121 +  h := &iam.UserRoleChangeHook{Sessions:                      
+          +contribredis.NewSessionStore(client)}                         
+      122                                                                
+      123    rec := &def.EntityRecord{                                   
+      124      ID:       uuid.New(),                                     
+
+● Update(awo/platform/iam/hooks_test.go)
+  ⎿  Added 1 line, removed 1 line
+      143                                                                
+      144  func TestUserRoleChangeHook_NoSessions_IsNoop(t *testing.T) { 
+      145    _, client := newTestRedis(t)                                
+      146 -  h := &iam.UserRoleChangeHook{Redis: client}                 
+      146 +  h := &iam.UserRoleChangeHook{Sessions:                      
+          +contribredis.NewSessionStore(client)}                         
+      147                                                                
+      148    rec := &def.EntityRecord{                                   
+      149      ID:       uuid.New(),                                     
+
+● Now service_test.go:
+
+● Update(awo/platform/iam/service_test.go)
+  ⎿  Added 1 line
+      15    "github.com/stretchr/testify/require"                        
+      16                                                                 
+      17    "awo.so/awo/auth"                                            
+      18 +  contribredis "awo.so/awo/contrib/redis"                      
+      19    "awo.so/awo/platform/iam"                                    
+      20    "awo.so/awo/runtime"                                         
+      21  )                                                              
+
+● Now replace all 7 AuthService{Redis: client} occurrences:
+
+● Update(awo/platform/iam/service_test.go)
+  ⎿  Added 7 lines, removed 7 lines
+      59                                                                 
+      60  func TestValidateToken_ValidSession_Succeeds(t *testing.T) {   
+      61    mr, client := newTestRedis(t)                                
+      62 -  svc := &iam.AuthService{Redis: client}                       
+      62 +  svc := &iam.AuthService{Sessions:                            
+         +contribredis.NewSessionStore(client), Cache:                   
+         +contribredis.New(client)}                                      
+      63                                                                 
+      64    session := &auth.Session{                                    
+      65      Token:     "good-token",                                   
+     ...
+      79                                                                 
+      80  func TestValidateToken_MissingKey_Returns401(t *testing.T) {   
+      81    _, client := newTestRedis(t)                                 
+      82 -  svc := &iam.AuthService{Redis: client}                       
+      82 +  svc := &iam.AuthService{Sessions:                            
+         +contribredis.NewSessionStore(client), Cache:                   
+         +contribredis.New(client)}                                      
+      83                                                                 
+      84    _, err := svc.ValidateToken(context.Background(),            
+          "nonexistent-token")                                           
+      85    require.Error(t, err)                                        
+     ...
+      92                                                                 
+      93  func TestValidateToken_WallClockExpired_Returns401(t           
+          *testing.T) {                                                  
+      94    mr, client := newTestRedis(t)                                
+      95 -  svc := &iam.AuthService{Redis: client}                       
+      95 +  svc := &iam.AuthService{Sessions:                            
+         +contribredis.NewSessionStore(client), Cache:                   
+         +contribredis.New(client)}                                      
+      96                                                                 
+      97    // Key present in Redis but session timestamp is already     
+          expired.                                                       
+      98    session := &auth.Session{                                    
+     ...
+      116                                                                
+      117  func TestValidateToken_RedisDown_Returns503(t *testing.T) {   
+      118    mr, client := newTestRedis(t)                               
+      119 -  svc := &iam.AuthService{Redis: client}                      
+      119 +  svc := &iam.AuthService{Sessions:                           
+          +contribredis.NewSessionStore(client), Cache:                  
+          +contribredis.New(client)}                                     
+      120                                                                
+      121    mr.Close() // simulate Redis outage                         
+      122                                                                
+     ...
+      134  func TestValidateAPIToken_CacheHit_ReturnsCachedSession(t     
+           *testing.T) {                                                 
+      135    mr, client := newTestRedis(t)                               
+      136    // No DB wired — DB path must not be reached on a cache     
+           hit.                                                          
+      137 -  svc := &iam.AuthService{Redis: client}                      
+      137 +  svc := &iam.AuthService{Sessions:                           
+          +contribredis.NewSessionStore(client), Cache:                  
+          +contribredis.New(client)}                                     
+      138                                                                
+      139    rawToken := "svc-api-key-abc"                               
+      140    tenantID := uuid.New()                                      
+     ...
+      159                                                                
+      160  func TestValidateAPIToken_ExpiredCacheEntry_Returns401(t      
+           *testing.T) {                                                 
+      161    mr, client := newTestRedis(t)                               
+      162 -  svc := &iam.AuthService{Redis: client}                      
+      162 +  svc := &iam.AuthService{Sessions:                           
+          +contribredis.NewSessionStore(client), Cache:                  
+          +contribredis.New(client)}                                     
+      163                                                                
+      164    rawToken := "expired-api-key"                               
+      165    tenantID := uuid.New()                                      
+     ...
+      185                                                                
+      186  func TestValidateAPIToken_RedisDown_Returns503(t *testing.T)  
+           {                                                             
+      187    mr, client := newTestRedis(t)                               
+      188 -  svc := &iam.AuthService{Redis: client}                      
+      188 +  svc := &iam.AuthService{Sessions:                           
+          +contribredis.NewSessionStore(client), Cache:                  
+          +contribredis.New(client)}                                     
+      189                                                                
+      190    mr.Close()                                                  
+      191                                                                
+
+● Now verify storeSessionInRedis still works — it writes "session:{token}"
+  directly to miniredis, and RedisSessionStore.Load reads "session:{token}" via
+  the same client. Key format matches. storeAPITokenCache writes JSON to
+  "iam:api_token:{hash}" and cache.Client.Get reads + JSON-unmarshals from same
+  key. Both correct.
+
+  One edge case: miniredis is used and closed before the test runs... let me
+  verify the 503 test for ValidateAPIToken:
+
+  The mr.Close() call closes the miniredis server. Then contribredis.New(client)
+   (same client) tries to connect — fails with connection error.
+  cache.Client.Get returns non-cache.ErrMiss error → 503. ✓
+
+  All 9 compile errors fixed. Run tests again to confirm.
+
+✻ Cooked for 1m 24s
+
+❯ PASS: TestUserPasswordHasher_BeforeUpdate_NewPassword_ReplacesHash (0.75s)    
+=== RUN   TestUserRoleChangeHook_AfterCreate_RevokesUserSessions                
+    hooks_test.go:136:                                                          
+                Error Trace:                                                    
+/data/data/com.termux/files/home/project/erp/awo/platform/iam/hooks_test.go:136 
+                Error:          Not equal:                                      
+                                expected: 0                                     
+                                actual  : 1                                     
+                Test:                                                           
+TestUserRoleChangeHook_AfterCreate_RevokesUserSessions                          
+                Messages:       session:tok1 should be deleted                  
+    hooks_test.go:136:                                                          
+                Error Trace:                                                    
+/data/data/com.termux/files/home/project/erp/awo/platform/iam/hooks_test.go:136 
+                Error:          Not equal:                                      
+                                expected: 0                                     
+                                actual  : 1                                     
+                Test:                                                           
+TestUserRoleChangeHook_AfterCreate_RevokesUserSessions                          
+                Messages:       session:tok2 should be deleted                  
+    hooks_test.go:136:                                                          
+                Error Trace:                                                    
+/data/data/com.termux/files/home/project/erp/awo/platform/iam/hooks_test.go:136 
+                Error:          Not equal:                                      
+                                expected: 0                                     
+                                actual  : 1                                     
+                Test:                                                           
+TestUserRoleChangeHook_AfterCreate_RevokesUserSessions                          
+                Messages:       session:tok3 should be deleted                  
+--- FAIL: TestUserRoleChangeHook_AfterCreate_RevokesUserSessions (0.01s)        
+
+● Root cause: setupRoleHookRedis sets scores 0, 1, 2 (epoch 1970).
+  ListUserTokens calls ZREMRANGEBYSCORE "-inf" <now> — prunes all three as
+  "expired". Returns empty list → no deletions.
+
+  Fix: use future expiry scores.
+
+● Update(awo/platform/iam/hooks_test.go)
+  ⎿  Added 4 lines, removed 1 line
+      104    mr, client := newTestRedis(t)                               
+      105                                                                
+      106    // Populate the user_sessions index sorted set.             
+      107 +  // Scores must be future Unix timestamps so ListUserTokens  
+          +does not prune                                                
+      108 +  // them via ZREMRANGEBYSCORE before returning the token     
+          +list.                                                         
+      109    indexKey := fmt.Sprintf("user_sessions:%s:%s", tenantID,    
+           userID)                                                       
+      110 +  futureBase := float64(time.Now().Add(time.Hour).Unix())     
+      111    for i, tok := range tokens {                                
+      112 -    client.ZAdd(context.Background(), indexKey,               
+          -&goredis.Z{Score: float64(i), Member: tok})                   
+      112 +    client.ZAdd(context.Background(), indexKey,               
+          +&goredis.Z{Score: futureBase + float64(i), Member: tok})      
+      113      client.Set(context.Background(), "session:"+tok,          
+           `{"token":"`+tok+`"}`, 0)                                     
+      114    }                                                           
+      115    return mr, client                                           
+
+● Also need "time" import in hooks_test.go:
+
+● Update(awo/platform/iam/hooks_test.go)
+  ⎿  Added 1 line
+       4    "context"                                                    
+       5    "fmt"                                                        
+       6    "testing"                                                    
+       7 +  "time"                                                       
+       8                                                                 
+       9    "github.com/alicebob/miniredis/v2"                           
+      10    goredis "github.com/go-redis/redis/v8"                       
+
+✻ Brewed for 31s
+
+❯ # Awo Framework Architecture Review — Phase N+6C (EntityRepository Migration) 
+                                                                                
+You are continuing the architecture review from the completed migrations below. 
+                                                                                
+## Previously Completed Foundation                                              
+                                                                                
+### Permission Architecture                                                     
+- Permission identifiers replaced role-based permissions.                       
+- PermissionSet stores only permission identifiers (`module.entity.operation`). 
+- PolicyEvaluator introduced as the authorization boundary.                     
+- CasbinEvaluator is the default implementation.                                
+- Login endpoint already has rate limiting.                                     
+                                                                                
+### IAM Hardening (N+4)                                                         
+- tokenHash() stores SHA-256 hashes of session tokens.                          
+- UserRoleChangeHook revokes active sessions after role changes.                
+- LoginAuditImmutableGuard prevents modification of audit records.              
+                                                                                
+### Compiler Validation (N+5)                                                   
+- Compiler rejects role names inside PermissionSet.                             
+- Entire framework migrated to permission identifiers.                          
+                                                                                
+### Phase N+6A                                                                  
+- All SQL extracted from service.go into queries.go.                            
+- service.go is orchestration only.                                             
+- Ten SQL statements documented individually.                                   
+                                                                                
+### Phase N+6B                                                                  
+Session storage is now fully abstracted.                                        
+                                                                                
+Completed changes:                                                              
+                                                                                
+- auth.SessionStore interface                                                   
+- RedisSessionStore adapter                                                     
+- SessionStore injected into AuthService                                        
+- SessionStore injected into UserRoleChangeHook                                 
+- Redis removed from platform/iam                                               
+- Session index encapsulated                                                    
+- Redis key construction moved into adapter                                     
+- Sequential DEL/ZREM semantics adopted                                         
+- Expired index pruning added                                                   
+- SessionStore owns all session lifecycle behaviour                             
+                                                                                
+Current architecture after N+6B:                                                
+                                                                                
+AuthService                                                                     
+    ├── Database (*pgxpool.Pool)                                                
+    ├── SessionStore                                                            
+    └── Cache                                                                   
+                                                                                
+The only remaining infrastructure dependency inside AuthService is the          
+database.                                                                       
+                                                                                
+---                                                                             
+                                                                                
+# Objective                                                                     
+                                                                                
+Review the design for **Phase N+6C**, whose goal is to eliminate direct         
+database access for all entity CRUD operations by introducing framework         
+EntityRepository abstractions while preserving raw SQL only where repositories  
+are not appropriate.                                                            
+                                                                                
+This review should determine:                                                   
+                                                                                
+- exactly which SQL should migrate                                              
+- which SQL must remain                                                         
+- whether EntityRepository is the correct abstraction                           
+- repository boundaries                                                         
+- transaction ownership                                                         
+- dependency inversion                                                          
+- future compatibility with N+6D (DatabaseQuerier)                              
+                                                                                
+Be extremely critical.                                                          
+                                                                                
+Assume this is intended for a production-grade ERP framework.                   
+                                                                                
+---                                                                             
+                                                                                
+# Existing SQL Inventory                                                        
+                                                                                
+Review every SQL operation currently used by IAM.                               
+                                                                                
+Classify each individually.                                                     
+                                                                                
+## Login                                                                        
+- load user by username/email                                                   
+- verify password                                                               
+- update last_login                                                             
+- write login audit                                                             
+- create session audit                                                          
+                                                                                
+## Logout                                                                       
+- write logout audit                                                            
+                                                                                
+## API Token                                                                    
+- validate API token                                                            
+- update last_used                                                              
+                                                                                
+## User Management                                                              
+- revoke sessions                                                               
+- role assignments                                                              
+- permission lookups                                                            
+                                                                                
+For every query determine:                                                      
+                                                                                
+- EntityRepository                                                              
+- DatabaseQuerier                                                               
+- Raw SQL forever                                                               
+                                                                                
+Explain why.                                                                    
+                                                                                
+---                                                                             
+                                                                                
+# Repository Suitability Review                                                 
+                                                                                
+For every entity determine whether it deserves an EntityRepository.             
+                                                                                
+Review:                                                                         
+                                                                                
+- User                                                                          
+- Role                                                                          
+- Permission                                                                    
+- LoginAudit                                                                    
+- SessionAudit                                                                  
+- APIToken                                                                      
+- RoleAssignment                                                                
+- Tenant                                                                        
+- Organization                                                                  
+                                                                                
+For each explain:                                                               
+                                                                                
+- CRUD suitability                                                              
+- lifecycle hooks                                                               
+- privacy policies                                                              
+- entity definition compatibility                                               
+- whether repository adds value                                                 
+                                                                                
+Reject repositories that exist only to wrap SQL.                                
+                                                                                
+---                                                                             
+                                                                                
+# Transaction Boundary Review                                                   
+                                                                                
+Review transaction ownership after repositories are introduced.                 
+                                                                                
+Determine:                                                                      
+                                                                                
+- who begins transactions                                                       
+- who commits                                                                   
+- repository responsibilities                                                   
+- service responsibilities                                                      
+- hook execution                                                                
+- audit writes                                                                  
+                                                                                
+Explain how transactions compose.                                               
+                                                                                
+---                                                                             
+                                                                                
+# EntityRepository Interface Review                                             
+                                                                                
+Review whether existing framework EntityRepository is sufficient.               
+                                                                                
+Determine:                                                                      
+                                                                                
+- missing methods                                                               
+- unnecessary methods                                                           
+- transaction integration                                                       
+- privacy integration                                                           
+- hook integration                                                              
+                                                                                
+Avoid introducing IAM-specific repository methods unless absolutely necessary.  
+                                                                                
+---                                                                             
+                                                                                
+# SQL That Must Remain                                                          
+                                                                                
+Identify every SQL statement that should NOT migrate.                           
+                                                                                
+Examples may include:                                                           
+                                                                                
+- complex joins                                                                 
+- aggregate queries                                                             
+- authentication lookups                                                        
+- permission graph loading                                                      
+- high-performance queries                                                      
+                                                                                
+Explain why repositories would be the wrong abstraction.                        
+                                                                                
+---                                                                             
+                                                                                
+# DatabaseQuerier Preparation                                                   
+                                                                                
+Assume N+6D introduces:                                                         
+                                                                                
+DatabaseQuerier                                                                 
+                                                                                
+Review whether N+6C cleanly prepares for it.                                    
+                                                                                
+Determine:                                                                      
+                                                                                
+- remaining SQL count                                                           
+- remaining pgx usage                                                           
+- constructor changes                                                           
+- dependency graph                                                              
+                                                                                
+Show the architecture after N+6C and after N+6D.                                
+                                                                                
+---                                                                             
+                                                                                
+# Dependency Analysis                                                           
+                                                                                
+Produce dependency graphs for:                                                  
+                                                                                
+Before N+6C                                                                     
+                                                                                
+After N+6C                                                                      
+                                                                                
+After N+6D                                                                      
+                                                                                
+Verify:                                                                         
+                                                                                
+- dependency inversion                                                          
+- package ownership                                                             
+- infrastructure isolation                                                      
+- no circular dependencies                                                      
+                                                                                
+---                                                                             
+                                                                                
+# Migration Plan                                                                
+                                                                                
+Produce the safest implementation order.                                        
+                                                                                
+For every step include:                                                         
+                                                                                
+- files changed                                                                 
+- behavioural impact                                                            
+- rollback strategy                                                             
+- compilation risk                                                              
+                                                                                
+Do not skip intermediate steps.                                                 
+                                                                                
+---                                                                             
+                                                                                
+# Test Strategy                                                                 
+                                                                                
+Review how tests change.                                                        
+                                                                                
+Determine:                                                                      
+                                                                                
+- repository unit tests                                                         
+- AuthService unit tests                                                        
+- integration tests                                                             
+- transaction tests                                                             
+- privacy policy tests                                                          
+- hook tests                                                                    
+                                                                                
+Explain what should be mocked and what should use real implementations.         
+                                                                                
+---                                                                             
+                                                                                
+# Performance Review                                                            
+                                                                                
+Determine whether introducing repositories causes:                              
+                                                                                
+- additional allocations                                                        
+- extra queries                                                                 
+- unnecessary abstractions                                                      
+- transaction overhead                                                          
+                                                                                
+Recommend optimizations where appropriate.                                      
+                                                                                
+---                                                                             
+                                                                                
+# Architectural Risks                                                           
+                                                                                
+Identify every remaining architectural risk after N+6C.                         
+                                                                                
+Classify each as:                                                               
+                                                                                
+- Critical                                                                      
+- High                                                                          
+- Medium                                                                        
+- Low                                                                           
+                                                                                
+Provide mitigation strategies.                                                  
+                                                                                
+---                                                                             
+                                                                                
+# Final Verdict                                                                 
+                                                                                
+Return one of:                                                                  
+                                                                                
+- APPROVE                                                                       
+- APPROVE WITH REQUIRED CHANGES                                                 
+- REJECT                                                                        
+                                                                                
+If changes are required:                                                        
+                                                                                
+List them in strict implementation order.                                       
+                                                                                
+Mark each as:                                                                   
+                                                                                
+- Required                                                                      
+- Strongly Recommended                                                          
+- Optional                                                                      
+                                                                                
+Explain why.                                                                    
+                                                                                
+---                                                                             
+                                                                                
+# Output Requirements                                                           
+                                                                                
+Do NOT summarize.                                                               
+                                                                                
+Do NOT rewrite previous phases.                                                 
+                                                                                
+Assume N+6A and N+6B are already implemented.                                   
+                                                                                
+Focus entirely on N+6C.                                                         
+                                                                                
+Question every abstraction.                                                     
+                                                                                
+Challenge every repository.                                                     
+                                                                                
+Preserve behavioural compatibility unless there is a compelling architectural   
+reason to change it.                                                            
+                                                                                
+The review should be detailed enough to guide implementation of a               
+production-ready framework migration.                                           
+
+● Phase N+6C Architecture Review — EntityRepository Migration
+
+  ---
+  SQL Inventory Classification
+
+  Ten SQL statements exist after N+6A. Each gets one of three verdicts:
+  EntityRepository, DatabaseQuerier, Raw SQL forever.
+
+  ---
+  sqlSetTenantContext — SELECT set_tenant_context($1)
+
+  Classification: Framework infrastructure — eliminate from service layer 
+  entirely.
+
+  This is not IAM SQL. It is a framework prerequisite that contrib/pgx must
+  handle automatically when operating from a pool. IAM calls it explicitly only
+  because it holds raw pgx.Tx handles. As repositories absorb those
+  transactions, the explicit call disappears from service.go.
+
+  However: WithTx(tx) path is different. When IAM hands a pre-opened pgx.Tx to a
+   repo via WithTx, the repo cannot know whether set_tenant_context has already
+  been called on that connection. Two options:
+
+  - contrib/pgx calls it again on every WithTx op — safe but redundant
+  - contrib/pgx trusts the caller set it — fragile
+
+  Decision for N+6C: wherever IAM opens a transaction manually (credential
+  verification, best-effort audit), it still calls sqlSetTenantContext
+  explicitly before the first repo.WithTx call. sqlSetTenantContext leaves
+  queries.go last — only in N+6D when DatabaseQuerier takes over transaction
+  ownership.
+
+  ---
+  sqlLookupCredentials — SELECT id, password_hash, status FROM iam_users WHERE 
+  email = $1
+
+  Classification: DatabaseQuerier (N+6D). Do NOT touch in N+6C.
+
+  Fatal incompatibility with EntityRepository: password_hash is Sensitive: true.
+   The framework strips sensitive fields from repository responses at the API
+  boundary. Whether stripping happens inside contrib/pgx or at the handler layer
+   is implementation-defined — but the intent is that sensitive fields do not
+  travel through normal data paths. A credential lookup that depends on reading
+  password_hash cannot go through a standard repository call.
+
+  Secondary issue: this query runs inside the credential verification
+  transaction, which is not best-effort. Error semantics are strict.
+  EntityRepository abstractions add indirection to error handling that is not
+  appropriate here.
+
+  This statement defines the boundary between N+6C and N+6D. It is the primary
+  reason *pgxpool.Pool survives into N+6D.
+
+  ---
+  sqlUpdateLastLoginAt — UPDATE iam_users SET last_login_at = $1 WHERE id = $2
+
+  Classification: DatabaseQuerier (N+6D). Do NOT touch in N+6C.
+
+  Two blockers:
+
+  Blocker 1 — Hook interference. UserPasswordHasher is registered on
+  BeforeUpdate for iam_user. An EntityRepository update — even via BulkUpdate —
+  may trigger the hook pipeline. If BulkUpdate fires per-record hooks, each
+  invocation would check password_hash, find it absent in the patch, attempt to
+  restore from the existing record, and issue an additional GET. For a
+  best-effort write in the audit path, this is unacceptable overhead and fragile
+   behavior.
+
+  Clarification needed before any migration: does BulkUpdate fire BeforeUpdate
+  hooks per record? If the answer is yes, EntityRepository is permanently wrong
+  for this statement. If the answer is no, reassess in N+6D.
+
+  Blocker 2 — Field availability. last_login_at may be a system-managed field
+  excluded from the writable field set in UserDefinition. If the
+  EntityDefinition marks it as ReadOnly: true or simply omits it from the update
+   path, repo.Update and BulkUpdate will silently ignore it or return an error.
+  Check UserDefinition before attempting migration.
+
+  ---
+  sqlInsertSessionRecord — INSERT INTO iam_sessions ...
+
+  Classification: EntityRepository (N+6C). Migrate.
+
+  SessionDefinition exists as a registered entity. No BeforeCreate hook is
+  defined on it. The record fields (tenant_id, user_id, token_hash, ip_address,
+  device_id, issued_at, expires_at) map cleanly to the entity definition. No
+  sensitive fields involved.
+
+  Migration path: sessionRepo.Create(ctx, record). The repo extracts TenantID
+  from context for RLS. The best-effort audit transaction currently combining
+  this write with others can be split: three independent repo.Create calls are
+  acceptable since the entire block is already best-effort.
+
+  If atomicity of the three audit writes is required: use sessionRepo.WithTx(tx)
+   after opening a manual transaction and calling set_tenant_context. This
+  preserves current semantics exactly.
+
+  ---
+  sqlRevokeSessionByHash — UPDATE iam_sessions SET revoked_at = now() WHERE 
+  token_hash = $1 AND tenant_id = $2
+
+  Classification: EntityRepository BulkUpdate (N+6C). Migrate — with 
+  precondition.
+
+  Precondition: confirm BulkUpdate does NOT fire per-record BeforeUpdate hooks.
+  If it does, this statement stays in DatabaseQuerier.
+
+  Assuming precondition holds: sessionRepo.BulkUpdate(ctx, 
+  filter.And(filter.Eq("token_hash", hash), filter.Eq("tenant_id", tenantID)), 
+  driver.Patch{Fields: {"revoked_at": time.Now()}}).
+
+  One concern: token_hash must be a queryable field in SessionDefinition. If it
+  is Hidden: true or excluded from filter evaluation, the filter predicate will
+  fail silently or return zero rows. Verify field is filterable before
+  migration.
+
+  ---
+  sqlRevokeSessionsByHashes — UPDATE iam_sessions SET revoked_at WHERE 
+  token_hash = ANY($1) AND tenant_id = $2
+
+  Classification: EntityRepository BulkUpdate (N+6C). Same precondition as 
+  above.
+
+  Replaces the PostgreSQL ANY($1) array parameter with filter.In("token_hash", 
+  hashes). Requires filter.In to exist in the filter package. If filter.In does
+  not exist, this is a framework gap that must be filled before migration — add
+  it to awo/filter, not to IAM.
+
+  ---
+  sqlInsertLoginAudit — INSERT INTO iam_login_audits ...
+
+  Classification: EntityRepository (N+6C). Migrate.
+
+  LoginAuditDefinition exists. LoginAuditImmutableGuard blocks BeforeUpdate and
+  BeforeDelete only — BeforeCreate is unconstrained. Fields (tenant_id, user_id,
+   service_account_id, event_type, ip_address, device_id, failure_reason,
+  occurred_at) map to entity definition fields.
+
+  Migration path: loginAuditRepo.Create(ctx, record). No transaction required —
+  each audit event is independent. The repo handles RLS via context. Best-effort
+   semantics preserved.
+
+  Note: insertLoginAudit is called from multiple sites (login success, login
+  failure, logout, session revoke). After migration, every call site becomes a
+  repo.Create. The current helper function insertLoginAudit(ctx, tx, ...)
+  signature changes — the tx parameter disappears.
+
+  ---
+  sqlLookupAPIToken — JOIN across iam_api_tokens and iam_service_accounts
+
+  Classification: DatabaseQuerier (N+6D). Do NOT touch in N+6C.
+
+  EntityRepository is per-entity. A JOIN across two entities has no
+  representation in the repository abstraction. Decomposing into two sequential
+  queries (fetch token by hash, then fetch service account by ID) would work
+  functionally but changes the atomicity semantics and adds a round-trip to the
+  auth hot path.
+
+  This is a permanent DatabaseQuerier candidate. It is one of the primary
+  reasons N+6D exists.
+
+  ---
+  sqlLoadRolePermissions — SELECT role_name, permission_id FROM 
+  iam_role_permissions
+
+  Classification: DatabaseQuerier (N+6D). Do NOT touch in N+6C.
+
+  iam_role_permissions has no EntityDefinition. It is a global table with no
+  tenant_id column and no RLS policy. EntityRepository requires an
+  EntityDefinition and assumes tenant scoping. This table is categorically
+  outside the EntityRepository contract.
+
+  Called once at startup for CasbinEvaluator initialization. Performance is not
+  a concern. Simplicity is. Keep as raw SQL wrapped in DatabaseQuerier.
+
+  ---
+  sqlLoadUserRoles — SELECT role_name FROM iam_user_roles WHERE tenant_id = $1 
+  AND user_id = $2
+
+  Classification: EntityRepository (N+6C). Migrate — with acknowledged 
+  awkwardness.
+
+  UserRoleDefinition exists and is registered. The query is a simple filter on
+  (tenant_id, user_id). EntityRepository.Query with
+  filter.And(filter.Eq("tenant_id", tenantID), filter.Eq("user_id", userID))
+  returns []def.EntityRecord. Caller extracts record.GetString("role_name") from
+   each.
+
+  The awkwardness: the result type goes from []string to []def.EntityRecord
+  requiring extraction. This is a minor caller-side inconvenience with no
+  correctness risk, only a compile-time gap (wrong field name = runtime empty
+  string, not compiler error).
+
+  Transaction constraint: loadUserRoles currently runs inside the credential
+  verification transaction. With migration, options are:
+
+  - userRoleRepo.WithTx(tx) — preserves transaction membership
+  - userRoleRepo.Query(ctx, ...) — opens independent transaction via pool
+
+  The independent query is safer from an abstraction standpoint. RLS context is
+  set from the context value. The login flow can commit its credential
+  transaction first, then query roles independently. Roles are tenant-scoped via
+   RLS; no cross-tenant leak is possible. The behavioral change (roles loaded
+  outside the credential transaction) is acceptable — they were always
+  committed-read-consistent anyway.
+
+  ---
+  Repository Suitability Review
+
+  iam_user
+
+  Suitability: Partial.
+
+  For standard CRUD (admin creates user, updates status, lists users) — fully
+  suitable. EntityRepository.Create fires UserPasswordHasher.BeforeCreate, which
+   is exactly what should happen for user creation. EntityRepository.Update
+  fires UserPasswordHasher.BeforeUpdate, which handles password change
+  correctly.
+
+  For authentication credential lookup — not suitable. password_hash is
+  sensitive. Standard repository access cannot be used for login.
+
+  For last_login_at update — not suitable in N+6C. Hook interference from
+  UserPasswordHasher.BeforeUpdate makes the update path unsafe without hook
+  bypass capability.
+
+  Verdict: Create a UserRepository scoped to admin CRUD operations. Do NOT use
+  for credential lookup or last_login_at updates. The authentication path must
+  go through DatabaseQuerier.
+
+  ---
+  iam_user_role
+
+  Suitability: Full.
+
+  Simple join table entity. UserRoleDefinition is registered. UserRoleChangeHook
+   fires after create/delete and revokes sessions — this hook should fire
+  through the normal entity pipeline when an admin assigns or removes a role.
+  EntityRepository.Create and Delete are correct. EntityRepository.Query for
+  role loading in the login flow is workable with field extraction.
+
+  Verdict: Migrate. Repository adds value: hook execution, permission
+  enforcement, audit trail through standard pipeline.
+
+  ---
+  iam_login_audit
+
+  Suitability: Full.
+
+  Append-only entity. LoginAuditDefinition is registered.
+  LoginAuditImmutableGuard defends against mutation through the hook pipeline —
+  exactly the right mechanism. EntityRepository.Create is the only operation
+  needed. No reads, no updates, no deletes.
+
+  Verdict: Migrate. Repository is the correct abstraction. Immutability is
+  enforced at the framework level, not the service level.
+
+  ---
+  iam_session
+
+  Suitability: Partial.
+
+  SessionDefinition exists. Session records are the SQL audit trail for human
+  sessions; they are NOT the authoritative session store (Redis via SessionStore
+   is authoritative). EntityRepository.Create for initial record, BulkUpdate for
+   revoked_at, are both workable — subject to the BulkUpdate hook precondition.
+
+  One tension: iam_session records are an audit trail for auth.Session objects
+  managed by auth.SessionStore. The two representations (SQL and Redis) are
+  parallel. Repository writes to iam_session are intentionally best-effort; they
+   do not affect authentication correctness. This argues against adding
+  lifecycle hooks to SessionDefinition that could fail and block audit writes.
+
+  Verdict: Migrate Create and BulkUpdate. No hooks should be registered on
+  SessionDefinition for the revocation path. Confirm SessionDefinition.Hooks is
+  empty or hooks do not block.
+
+  ---
+  iam_api_token
+
+  Suitability: Partial.
+
+  For admin operations (create token, revoke token, list tokens) —
+  EntityRepository is appropriate.
+
+  For validation in the auth hot path — not suitable. Validation requires a JOIN
+   with iam_service_accounts. Standard repository access cannot perform this
+  join.
+
+  Verdict: Create a repository for admin CRUD. The hot path stays in
+  DatabaseQuerier.
+
+  ---
+  iam_role_permissions
+
+  Suitability: None.
+
+  No EntityDefinition. Global table. No tenant_id. No RLS. EntityRepository
+  contract requires all three. This table does not belong in the repository
+  tier.
+
+  Verdict: DatabaseQuerier permanently.
+
+  ---
+  platform_tenant
+
+  Suitability: Full, but out of scope for N+6C.
+
+  Tenant is a platform entity managed by platform/tenant, not IAM. IAM reads
+  tenant data through TenantResolver middleware and auth.ViewerContext. No
+  direct SQL to tenant tables exists in IAM. No action needed.
+
+  ---
+  platform_organization
+
+  Suitability: Full, but out of scope for N+6C.
+
+  Same as tenant. Out of scope.
+
+  ---
+  Transaction Boundary Review
+
+  Current state (after N+6B)
+
+  AuthService owns all transaction lifecycles explicitly:
+
+  Login:
+    tx1 = DB.Begin()
+      set_tenant_context
+      lookupCredentials          ← pgx direct
+      loadUserRoles              ← pgx direct (within tx1)
+    tx1.Commit()
+    Sessions.Store()             ← SessionStore
+    tx2 = DB.Begin() [best-effort]
+      set_tenant_context
+      insertSessionRecord        ← pgx direct (within tx2)
+      insertLoginAudit           ← pgx direct (within tx2)
+      updateLastLoginAt          ← pgx direct (within tx2)
+    tx2.Commit()
+
+  Logout:
+    Sessions.Delete()            ← SessionStore
+    tx3 = DB.Begin() [best-effort]
+      set_tenant_context
+      revokeSessionByHash        ← pgx direct (within tx3)
+      insertLoginAudit           ← pgx direct (within tx3)
+    tx3.Commit()
+
+  After N+6C (target)
+
+  Credential verification transaction stays manual — raw pgx, no repos.
+  Best-effort audit writes migrate to individual repository calls. Tenant
+  context comes from context.Context (set by TenantResolver), not manual
+  set_tenant_context calls.
+
+  Login:
+    tx1 = DB.Begin()
+      set_tenant_context         ← still explicit (for credential lookup)
+      lookupCredentials          ← pgx direct (stays raw)
+      userRoleRepo.WithTx(tx1).Query(...)  ← OR: separate query after
+  tx1.Commit()
+    tx1.Commit()
+    Sessions.Store()             ← SessionStore
+    [best-effort, no transaction]
+      sessionRepo.Create(ctx, ...)     ← repo opens own tx internally
+      loginAuditRepo.Create(ctx, ...) ← repo opens own tx internally
+      DB.Exec(sqlUpdateLastLoginAt)   ← still raw (hook issue)
+
+  Logout:
+    Sessions.Delete()            ← SessionStore
+    [best-effort, no transaction]
+      sessionRepo.BulkUpdate(...)      ← repo opens own tx internally
+      loginAuditRepo.Create(ctx, ...) ← repo opens own tx internally
+
+  Behavioral change: atomicity of best-effort audit writes.
+
+  Currently, insertSessionRecord + insertLoginAudit + updateLastLoginAt are
+  atomic within tx2. After N+6C, each is independent. If sessionRepo.Create
+  succeeds but loginAuditRepo.Create fails, the session record exists without a
+  corresponding audit event. This was always best-effort (neither failure
+  affected authentication correctness), but the partial failure surface
+  increases from 0 to 2 independent failure points.
+
+  This is acceptable for the audit tier. If strict atomicity of audit writes is
+  required, use WithTx across all repos within a single manually-opened
+  transaction. The cleaner path: accept independent writes, increase
+  observability (log each failure individually rather than once per
+  transaction).
+
+  Transaction ownership decision
+
+  AuthService retains transaction ownership for the credential verification 
+  transaction. This transaction is security-critical; no abstraction boundary
+  should own it other than the service layer.
+
+  Best-effort audit transactions are eliminated. Repos handle their own
+  transactions internally. The best-effort semantics are preserved: call the
+  repo, ignore errors (log them), continue.
+
+  set_tenant_context fate
+
+  After N+6C:
+  - Still called manually inside the credential verification transaction (for
+  sqlLookupCredentials)
+  - Removed from audit path (repos handle via context)
+  - Removed from loadUserRoles if that migrates to standalone repo call
+
+  After N+6D (when DatabaseQuerier takes the credential transaction):
+  - set_tenant_context disappears from service.go entirely — DatabaseQuerier
+  handles it internally
+
+  ---
+  EntityRepository Interface Review
+
+  WithTx(tx pgx.Tx) EntityRepository[T]
+
+  Essential for N+6C. Without it, repos cannot participate in the credential
+  verification transaction for loadUserRoles. The interface must support it. If
+  driver.EntityRepository does not currently define WithTx, add it to the
+  interface before N+6C begins.
+
+  Implementation concern: contrib/pgx must call set_tenant_context internally
+  when operating from a pool. When operating via WithTx, it must trust the
+  caller has already set the context — or call it again (idempotent, safe).
+  Document which behavior contrib/pgx implements.
+
+  BulkUpdate(ctx, *filter.Filter, Patch) (int64, error)
+
+  Required for session revocation by token_hash. Must NOT fire per-record
+  BeforeUpdate hooks — this is the critical precondition. If BulkUpdate fires
+  hooks, session revocation via EntityRepository is infeasible; the statement
+  stays raw until DatabaseQuerier.
+
+  Return value should be the count of updated rows. Callers can log zero-row
+  updates for observability.
+
+  Missing: BulkCreate
+
+  Not needed for N+6C. Future consideration.
+
+  Missing: Hook bypass option
+
+  There is no mechanism to call repo.Update while bypassing lifecycle hooks.
+  This gap is why sqlUpdateLastLoginAt cannot migrate in N+6C. If a hook bypass
+  mechanism existed (e.g., repo.WithoutHooks().Update(...)), last_login_at could
+   migrate. Do NOT add hook bypass in N+6C — it undermines the hook contract.
+  Correct approach is DatabaseQuerier.
+
+  Unnecessary: entity-specific methods
+
+  Do not add IAM-specific methods to EntityRepository (e.g., GetByEmail,
+  GetByTokenHash). These would couple the generic interface to IAM domain
+  concepts. Residual special-case queries belong in DatabaseQuerier.
+
+  ---
+  SQL That Must Remain Raw (or DatabaseQuerier)
+
+  sqlLookupCredentials
+
+  Sensitive field. Auth hot path. No EntityRepository path exists without
+  framework changes that would weaken the sensitive field contract. Stays raw
+  until N+6D wraps it in DatabaseQuerier.
+
+  sqlLookupAPIToken
+
+  Cross-entity JOIN. EntityRepository is per-entity. No decomposition is safe on
+   the auth hot path (round-trip cost, atomicity loss). Stays raw until N+6D.
+
+  sqlLoadRolePermissions
+
+  Global table. No EntityDefinition. No tenant scope. Outside EntityRepository
+  contract permanently.
+
+  sqlUpdateLastLoginAt
+
+  Hook interference from UserPasswordHasher.BeforeUpdate. Best-effort path. Raw
+  SQL is the right call until DatabaseQuerier abstracts the entire
+  credential-tier connection.
+
+  sqlSetTenantContext
+
+  Infrastructure, not business logic. Survives in service.go only as long as
+  service.go holds raw pgx.Tx. Gone after N+6D.
+
+  ---
+  DatabaseQuerier Preparation (N+6D readiness)
+
+  Remaining SQL count after N+6C
+
+  ┌───────────────────────────┬──────────────────────────────────────────────┐
+  │         Statement         │              Status after N+6C               │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlSetTenantContext       │ Survives — used in credential tx             │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlLookupCredentials      │ Survives — sensitive field                   │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlUpdateLastLoginAt      │ Survives — hook interference                 │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlLookupAPIToken         │ Survives — cross-entity JOIN                 │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlLoadRolePermissions    │ Survives — no entity definition              │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlInsertSessionRecord    │ ELIMINATED — migrated to sessionRepo         │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlRevokeSessionByHash    │ ELIMINATED — migrated to                     │
+  │                           │ sessionRepo.BulkUpdate                       │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlRevokeSessionsByHashes │ ELIMINATED — migrated to                     │
+  │                           │ sessionRepo.BulkUpdate                       │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlInsertLoginAudit       │ ELIMINATED — migrated to loginAuditRepo      │
+  ├───────────────────────────┼──────────────────────────────────────────────┤
+  │ sqlLoadUserRoles          │ ELIMINATED — migrated to userRoleRepo.Query  │
+  └───────────────────────────┴──────────────────────────────────────────────┘
+
+  Five statements eliminated. Five remain. All five remaining statements are
+  cohesive — they form the DatabaseQuerier interface for N+6D:
+
+  type DatabaseQuerier interface {
+      LookupCredentials(ctx, tenantID, email) (userID, passwordHash, status,
+  error)
+      UpdateLastLoginAt(ctx, tenantID, userID, at) error
+      LookupAPIToken(ctx, tenantID, tokenHash) (*APITokenRecord, error)
+      LoadRolePermissions(ctx) ([]auth.RolePermission, error)
+      // set_tenant_context is internal to DatabaseQuerier — callers never see 
+  it
+  }
+
+  AuthService after N+6C
+
+  type AuthService struct {
+      DB           *pgxpool.Pool                              // residual raw 
+  SQL (5 statements)
+      Sessions     auth.SessionStore
+      Cache        cache.Cache
+      IAMSessions  driver.EntityRepository[def.EntityRecord] // iam_session
+      LoginAudits  driver.EntityRepository[def.EntityRecord] // iam_login_audit
+      UserRoles    driver.EntityRepository[def.EntityRecord] // iam_user_role
+  }
+
+  AuthService after N+6D
+
+  type AuthService struct {
+      DB           DatabaseQuerier                            // 5 residual SQL 
+  statements
+      Sessions     auth.SessionStore
+      Cache        cache.Cache
+      IAMSessions  driver.EntityRepository[def.EntityRecord]
+      LoginAudits  driver.EntityRepository[def.EntityRecord]
+      UserRoles    driver.EntityRepository[def.EntityRecord]
+  }
+
+  *pgxpool.Pool is completely gone. platform/iam has no direct PostgreSQL
+  dependency. The framework extraction boundary is clean.
+
+  ---
+  Dependency Graphs
+
+  Before N+6C
+
+  platform/iam
+      ├── awo/auth           (SessionStore, ViewerContext)
+      ├── awo/cache          (Cache)
+      ├── awo/runtime        (BusinessError, ValidationError)
+      ├── awo/def            (EntityRecord, Actor)
+      ├── pgx/v5/pgxpool     (direct — Pool, Tx)
+      ├── pgx/v5             (direct — pgx.Tx, pgx.ErrNoRows)
+      └── golang.org/x/crypto/bcrypt
+
+  After N+6C
+
+  platform/iam
+      ├── awo/auth           (SessionStore, ViewerContext)
+      ├── awo/cache          (Cache)
+      ├── awo/runtime        (BusinessError, ValidationError)
+      ├── awo/def            (EntityRecord, Actor)
+      ├── awo/driver         (EntityRepository — NEW)
+      ├── awo/filter         (NEW — for BulkUpdate predicates)
+      ├── pgx/v5/pgxpool     (still direct — 5 residual SQL statements)
+      ├── pgx/v5             (still direct — pgx.Tx for credential tx)
+      └── golang.org/x/crypto/bcrypt
+
+  contrib/pgx
+      └── implements driver.EntityRepository[T] using pgxpool + pgx.Tx
+
+  contrib/redis
+      └── implements auth.SessionStore + cache.Cache
+
+  After N+6D
+
+  platform/iam
+      ├── awo/auth           (SessionStore, ViewerContext, DatabaseQuerier)
+      ├── awo/cache          (Cache)
+      ├── awo/runtime        (BusinessError, ValidationError)
+      ├── awo/def            (EntityRecord, Actor)
+      ├── awo/driver         (EntityRepository)
+      ├── awo/filter         (query predicates)
+      └── golang.org/x/crypto/bcrypt
+
+      pgx/v5             GONE from platform/iam
+      pgx/v5/pgxpool     GONE from platform/iam
+
+  contrib/pgx
+      ├── implements driver.EntityRepository[T]
+      └── implements auth.DatabaseQuerier (NEW in N+6D)
+
+  Dependency inversion is complete after N+6D. platform/iam depends exclusively
+  on framework interfaces. Infrastructure dependencies are pushed to the
+  bootstrap layer and contrib/.
+
+  ---
+  Migration Plan
+
+  Precondition 0 — Verify BulkUpdate hook behavior
+
+  Before writing a single line of N+6C code, read contrib/pgx BulkUpdate
+  implementation and confirm whether BeforeUpdate hooks fire per row. If they
+  do, sqlRevokeSession* cannot migrate. Adjust scope accordingly.
+
+  Files: awo/contrib/pgx/repository.go (or equivalent)
+  Behavioral impact: None — read only
+  Rollback: N/A
+
+  ---
+  Step 1 — Add filter.In if absent
+
+  Check whether awo/filter has an In predicate. If not, add it before touching
+  IAM. This is a framework-level addition that other modules may need.
+
+  Files: awo/filter/filter.go (or predicates.go)
+  Behavioral impact: Additive — no existing callers affected
+  Rollback: Revert filter addition — no IAM code changed yet
+  Compilation risk: Low — pure addition
+
+  ---
+  Step 2 — Define repos on AuthService, inject via constructor
+
+  Add three repo fields to AuthService. Add three parameters to New(). Wire in
+  module.go and main.go. All existing SQL paths continue to execute — repos are
+  present but unused.
+
+  // AuthService additions
+  IAMSessions  driver.EntityRepository[def.EntityRecord]
+  LoginAudits  driver.EntityRepository[def.EntityRecord]
+  UserRoles    driver.EntityRepository[def.EntityRecord]
+
+  // New() signature change
+  func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache,
+      iamSessions, loginAudits, userRoles 
+  driver.EntityRepository[def.EntityRecord]) *Module
+
+  Files: service.go, module.go, cmd/server/main.go
+  Behavioral impact: Zero — repos exist but no call sites yet
+  Rollback: Remove fields and constructor params — trivial
+  Compilation risk: Medium — constructor signature change requires updating all
+  callers
+
+  ---
+  Step 3 — Migrate insertLoginAudit to loginAuditRepo.Create
+
+  Replace the insertLoginAudit(ctx, tx, ...) helper. Remove tx pgx.Tx parameter
+  from signature. Each call site now does a standalone repo.Create rather than a
+   within-transaction insert.
+
+  func (s *AuthService) insertLoginAudit(ctx context.Context, tenantID, userID, 
+  saID uuid.UUID,
+      eventType, ip, device, failureReason string) {
+      record := def.EntityRecord{...}
+      if err := s.LoginAudits.Create(ctx, record); err != nil {
+          slog.Warn("iam: insert login audit failed", "event_type", eventType,
+  "error", err)
+      }
+  }
+
+  Update all call sites: auditLogin, auditLogout, auditRevoke,
+  writeFailedLoginAudit.
+
+  Remove sqlInsertLoginAudit from queries.go after all call sites converted.
+
+  Files: service.go, queries.go
+  Behavioral impact: Audit writes become independent of surrounding transaction.
+   Minor atomicity reduction (best-effort path only — acceptable).
+  Rollback: Restore raw SQL helper and update call sites
+  Compilation risk: Low — internal function signature change, all sites in same
+  file
+
+  ---
+  Step 4 — Migrate insertSessionRecord to sessionRepo.Create
+
+  Replace insertSessionRecord(ctx, tx, session). Same pattern as Step 3.
+
+  func (s *AuthService) insertSessionRecord(ctx context.Context, session 
+  *auth.Session) {
+      record := def.EntityRecord{...}
+      if err := s.IAMSessions.Create(ctx, record); err != nil {
+          slog.Warn("iam: insert session record failed", "user_id",
+  session.UserID, "error", err)
+      }
+  }
+
+  Remove sqlInsertSessionRecord from queries.go.
+
+  Files: service.go, queries.go
+  Behavioral impact: Same as Step 3 — best-effort write becomes independent
+  Rollback: Restore raw SQL helper
+  Compilation risk: Low
+
+  ---
+  Step 5 — Migrate session revocation to sessionRepo.BulkUpdate
+
+  Gated on Precondition 0. If BulkUpdate fires per-record hooks, skip this step.
+
+  Replace sqlRevokeSessionByHash (single) and sqlRevokeSessionsByHashes (array)
+  in auditLogout and auditRevoke.
+
+  // Single token revocation
+  s.IAMSessions.BulkUpdate(ctx,
+      filter.And(filter.Eq("token_hash", hash), filter.Eq("tenant_id",
+  tenantID)),
+      driver.Patch{Fields: map[string]any{"revoked_at": time.Now()}},
+  )
+
+  // Bulk token revocation
+  s.IAMSessions.BulkUpdate(ctx,
+      filter.And(filter.In("token_hash", hashes), filter.Eq("tenant_id",
+  tenantID)),
+      driver.Patch{Fields: map[string]any{"revoked_at": time.Now()}},
+  )
+
+  Remove sqlRevokeSessionByHash and sqlRevokeSessionsByHashes from queries.go.
+
+  Files: service.go, queries.go
+  Behavioral impact: Revocation is best-effort — no correctness impact. Redis
+  revocation (via SessionStore) already occurred.
+  Rollback: Restore two SQL constants and call sites
+  Compilation risk: Medium — BulkUpdate API must be verified
+
+  ---
+  Step 6 — Migrate loadUserRoles to userRoleRepo.Query
+
+  Replace loadUserRoles(ctx, tx, tenantID, userID). The function currently takes
+   a pgx.Tx. After migration, it queries the repo independently (outside the
+  credential transaction).
+
+  func (s *AuthService) loadUserRoles(ctx context.Context, tenantID, userID 
+  uuid.UUID) ([]string, error) {
+      records, err := s.UserRoles.Query(ctx, driver.QueryOptions{
+          Filter: filter.And(
+              filter.Eq("tenant_id", tenantID),
+              filter.Eq("user_id", userID),
+          ),
+      })
+      if err != nil {
+          return nil, fmt.Errorf("iam: load user roles: %w", err)
+      }
+      roles := make([]string, 0, len(records))
+      for _, rec := range records {
+          roles = append(roles, rec.GetString("role_name"))
+      }
+      return roles, nil
+  }
+
+  The caller in Login must restructure: commit the credential transaction, THEN
+  load roles. This is safe — roles are tenant-scoped, RLS enforces this, and the
+   credential transaction was a read-only lookup.
+
+  Remove sqlLoadUserRoles from queries.go.
+
+  Files: service.go, queries.go
+  Behavioral impact: Role loading moves outside credential transaction. Minimal
+  — roles are stable during login; no transactional dependency exists between
+  credential check and role load.
+  Rollback: Restore loadUserRoles with pgx.Tx parameter
+  Compilation risk: Low — only internal callers
+
+  ---
+  Step 7 — Clean up manual transaction pattern in best-effort audit paths
+
+  auditLogin and auditLogout currently open transactions (DB.Begin()) for audit
+  writes. After Steps 3–5, those transactions no longer wrap any writes. Remove
+  the manual transaction entirely from these helpers.
+
+  // auditLogin before Step 7:
+  func (s *AuthService) auditLogin(...) {
+      tx, _ := s.DB.Begin(ctx)
+      defer tx.Rollback(ctx)
+      tx.Exec(ctx, sqlSetTenantContext, ...)  // no longer needed
+      s.insertSessionRecord(ctx, ...)         // now standalone (Step 4)
+      s.insertLoginAudit(ctx, ...)            // now standalone (Step 3)
+      tx.Exec(ctx, sqlUpdateLastLoginAt, ...) // still raw
+      tx.Commit(ctx)
+  }
+
+  // auditLogin after Step 7:
+  func (s *AuthService) auditLogin(...) {
+      s.insertSessionRecord(ctx, ...)          // standalone repo call
+      s.insertLoginAudit(ctx, ...)             // standalone repo call
+      // sqlUpdateLastLoginAt still raw — stays in DB.Exec with manual tx
+      tx, _ := s.DB.Begin(ctx)
+      defer tx.Rollback(ctx)
+      tx.Exec(ctx, sqlSetTenantContext, session.TenantID)
+      tx.Exec(ctx, sqlUpdateLastLoginAt, session.IssuedAt, session.UserID)
+      tx.Commit(ctx)
+  }
+
+  If sqlUpdateLastLoginAt migrates later (N+6D), the last manual transaction in
+  auditLogin disappears.
+
+  Files: service.go
+  Behavioral impact: Audit writes are now three independent operations instead
+  of one atomic transaction. Still best-effort.
+  Rollback: Restore transaction wrappers
+  Compilation risk: Low
+
+  ---
+  Step 8 — Verify queries.go contains exactly the five DatabaseQuerier-bound 
+  statements
+
+  After Steps 3–7, queries.go should contain exactly:
+  - sqlSetTenantContext
+  - sqlLookupCredentials
+  - sqlUpdateLastLoginAt
+  - sqlLookupAPIToken
+  - sqlLoadRolePermissions
+
+  Run tests. If any statement was missed, the compiler will report unused
+  constants (depending on Go version and tooling). Address any stragglers.
+
+  Files: queries.go
+  Behavioral impact: None — cleanup only
+  Rollback: N/A
+
+  ---
+  Test Strategy
+
+  What changes in the test suite
+
+  hooks_test.go — Unchanged. UserRoleChangeHook tests use SessionStore already
+  (N+6B). No repo dependency in the hook.
+
+  service_test.go — Requires new repo doubles for IAMSessions, LoginAudits,
+  UserRoles.
+
+  Two options:
+
+  Option A: NoopRepo doubles (preferred for unit tests)
+
+  type noopRepo struct{}
+  func (r *noopRepo) Create(ctx context.Context, record def.EntityRecord) 
+  (def.EntityRecord, error) { return record, nil }
+  func (r *noopRepo) BulkUpdate(ctx context.Context, f *filter.Filter, patch 
+  driver.Patch) (int64, error) { return 0, nil }
+  // ... implement remaining interface methods as no-ops
+
+  Unit tests for ValidateToken, ValidateAPIToken don't need repos at all — those
+   paths don't call audit writes. Use noopRepo for completeness to satisfy the
+  constructor.
+
+  Option B: Real miniredis-equivalent for SQL (integration tests only)
+
+  Integration tests that verify audit writes (session record created on login,
+  audit event on logout) must use a real PostgreSQL instance. Mock repos would
+  make these tests useless for catching RLS or trigger issues.
+
+  Test coverage after N+6C:
+
+  Test: ValidateToken (hit/miss/expired/503)
+  Repo: noopRepo
+  DB: noTestRedis (SessionStore)
+  Notes: No DB path
+  ────────────────────────────────────────
+  Test: ValidateAPIToken (cache hit/miss)
+  Repo: noopRepo
+  DB: mock or real
+  Notes: DB path for cache miss
+  ────────────────────────────────────────
+  Test: Login credential success/failure
+  Repo: noopRepo
+  DB: real PostgreSQL
+  Notes: RLS required
+  ────────────────────────────────────────
+  Test: Login audit write success
+  Repo: spyRepo
+  DB: none
+  Notes: Verify Create called
+  ────────────────────────────────────────
+  Test: Login audit write failure
+  Repo: failRepo
+  DB: none
+  Notes: Verify failure logged, login still succeeds
+  ────────────────────────────────────────
+  Test: Logout session revocation
+  Repo: spyRepo
+  DB: SessionStore
+  Notes: Verify BulkUpdate called
+  ────────────────────────────────────────
+  Test: loadUserRoles empty/populated
+  Repo: spyRepo or real
+  DB: real PostgreSQL
+  Notes: Role data requires real DB
+  ────────────────────────────────────────
+  Test: Hook — role change revocation
+  Repo: SessionStore
+  DB: none
+  Notes: No repo in hook
+
+  spy/fail repo types:
+
+  // spyRepo records calls for assertion
+  type spyRepo struct {
+      creates []def.EntityRecord
+      bulkUpdates []bulkUpdateCall
+  }
+
+  // failRepo always returns error — tests fault tolerance
+  type failRepo struct{ err error }
+
+  These live in service_test.go (package iam_test). Not exported. Not in a
+  separate package. Following R6 from N+6B review: implementation and tests
+  co-committed.
+
+  Integration test requirements (CLAUDE.md §13):
+  - Login flow: requires real PostgreSQL for RLS enforcement on iam_users lookup
+  - Cross-tenant isolation: tenant A login cannot read tenant B user record —
+  requires real DB
+  - Role loading: iam_user_roles RLS scoping — requires real DB
+  - Audit writes: verify records exist in correct tables post-login — requires
+  real DB
+
+  Do NOT mock the database for integration tests.
+
+  ---
+  Performance Review
+
+  Additional allocations
+
+  userRoleRepo.Query returns []def.EntityRecord instead of scanning directly
+  into []string. Each EntityRecord allocates a map[string]any for its Data
+  field. For a typical user with 2-3 roles, this is 2-3 additional map
+  allocations per login. Negligible — login is not a hot path; it happens once
+  per session.
+
+  Extra queries
+
+  No additional queries introduced. The migration is 1:1 — each SQL statement
+  maps to one repository call. The credential verification transaction does not
+  gain extra round-trips.
+
+  Exception: if loadUserRoles is moved outside the credential transaction (Step
+  6), the connection acquisition from the pool becomes a separate pool checkout.
+   On a healthy pool, this is microseconds. Acceptable.
+
+  Transaction overhead
+
+  Current auditLogin holds one mini-transaction for three writes. After N+6C,
+  two writes become standalone repo calls (two independent transactions), one
+  write remains in a manual transaction. Net change: two additional transaction
+  open/commit cycles, each a single round-trip. On a local PostgreSQL
+  connection, this is ~1ms per transaction. For best-effort audit, unacceptable
+  overhead is not defined — these were never latency-critical.
+
+  Unnecessary abstractions
+
+  filter.And(filter.Eq("token_hash", hash), filter.Eq("tenant_id", tenantID)) to
+   replace a direct WHERE clause is more verbose but not slower — the predicate
+  generates equivalent SQL. The abstraction adds compile-time type safety at the
+   field-value boundary (partially — field names are still strings).
+
+  ---
+  Architectural Risks
+
+  Critical
+
+  C1 — BulkUpdate fires per-record hooks
+
+  If contrib/pgx BulkUpdate invokes BeforeUpdate per row, session revocation via
+   EntityRepository becomes O(N) in DB round-trips. For a user with 10 active
+  sessions, that's 10 reads (to fetch prev records for UserPasswordHasher) + 10
+  hook invocations + 1 bulk update. For a force-logout-all operation affecting
+  1,000 users, this is catastrophic.
+
+  Mitigation: verify before Step 5. If hooks fire, sqlRevokeSession* stays raw
+  and becomes DatabaseQuerier in N+6D. No loss — scope reduction, not failure.
+
+  ---
+  High
+
+  H1 — Sensitive field regression
+
+  If, in any future refactor, someone replaces sqlLookupCredentials with
+  userRepo.Get(ctx, id) or userRepo.Query(ctx, filter.Eq("email", email)), and
+  the framework strips password_hash at the repository layer, login silently
+  breaks — bcrypt.CompareHashAndPassword receives an empty hash and rejects all
+  credentials.
+
+  Mitigation: add a comment to sqlLookupCredentials documenting why
+  EntityRepository cannot replace it. Enforce in code review. N+6D's
+  DatabaseQuerier.LookupCredentials method signature returns typed (passwordHash
+   string, ...) — making the intent explicit and testable.
+
+  ---
+  H2 — Constructor explosion
+
+  New() gains three parameters in Step 2. With six parameters total, Wire DI
+  graph becomes harder to audit. A transient dependency issue during wiring is
+  hard to debug.
+
+  Mitigation: group the three repos into a IAMRepositories struct:
+
+  type IAMRepositories struct {
+      Sessions  driver.EntityRepository[def.EntityRecord]
+      Audits    driver.EntityRepository[def.EntityRecord]
+      UserRoles driver.EntityRepository[def.EntityRecord]
+  }
+  func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache,
+   repos IAMRepositories) *Module
+
+  Reduces constructor parameter count. Keeps N+6D migration cleaner (one struct
+  field changes, not three).
+
+  ---
+  H3 — filter.In absent from awo/filter
+
+  If filter.In does not exist, sqlRevokeSessionsByHashes cannot migrate in N+6C.
+   The array-parameter version stays raw. This is a scope reduction, not a
+  failure. The statement joins DatabaseQuerier.
+
+  Mitigation: check awo/filter package before planning Step 5. If filter.In is
+  absent, add it as a framework extension (Step 1 extended). Do not add
+  IAM-specific workarounds.
+
+  ---
+  Medium
+
+  M1 — Field name magic in EntityRecord extraction
+
+  rec.GetString("role_name") is a runtime string lookup. A field rename in
+  UserRoleDefinition would not produce a compiler error — it would silently
+  return empty strings and every user would authenticate with zero roles, which
+  Casbin would treat as having no permissions. Login would succeed but every
+  subsequent authorization check would fail.
+
+  Mitigation: add a unit test that asserts loadUserRoles returns non-empty
+  results for a seeded user. This catches field name drift. Consider typed
+  accessor helpers in the iam package:
+
+  func roleNameFromRecord(r def.EntityRecord) string {
+      return r.GetString("role_name")  // single point of change if field 
+  renamed
+  }
+
+  ---
+  M2 — WithTx RLS context ownership
+
+  contrib/pgx may or may not call set_tenant_context when handling WithTx
+  operations. If it doesn't, and N+6C retains WithTx calls, callers must
+  remember to set it manually before the first repo operation on each
+  transaction. This is an invisible invariant — violating it causes RLS to see
+  no tenant, returning empty rows rather than an error.
+
+  Mitigation: if contrib/pgx.WithTx does NOT set tenant context, document this
+  prominently in the method's godoc. Alternatively, have contrib/pgx.WithTx
+  always re-call set_tenant_context at the start of the first operation —
+  idempotent and safe.
+
+  ---
+  M3 — Test double proliferation
+
+  Three repo types (noop, spy, fail) need to implement the full
+  EntityRepository[T] interface for each test scenario. As the interface gains
+  methods (BulkCreate, BulkUpdate, WithTx, etc.), test doubles require updates.
+  This is maintenance overhead.
+
+  Mitigation: define a single baseNoopRepo that implements all methods as
+  no-ops. Embed it in spy/fail variants that override only the methods under
+  test. This is the standard Go test double pattern.
+
+  ---
+  Low
+
+  L1 — Best-effort atomicity reduction
+
+  Audit writes that were atomic in one transaction become three independent
+  writes. In pathological scenarios (DB goes down between writes), a session
+  record exists without a corresponding audit event, or vice versa. Audit tables
+   are not operational — they are investigational. Inconsistency is tolerable
+  for post-hoc analysis.
+
+  Mitigation: none required. Document the behavior change in auditLogin and
+  auditLogout godoc.
+
+  ---
+  L2 — queries.go shrinkage may cause confusion
+
+  After N+6C, queries.go contains only five statements. Developers may wonder
+  why five statements remain raw when the others migrated. Without context, this
+   looks like incomplete work.
+
+  Mitigation: update the file comment to explain that the five remaining
+  statements are intentionally non-migratable in N+6C and are targeted for N+6D
+  DatabaseQuerier. Each constant's documentation already explains this (from
+  N+6A).
+
+  ---
+  Final Verdict
+
+  APPROVE WITH REQUIRED CHANGES
+
+  ---
+  Required changes (implementation order)
+
+  R1 — Verify BulkUpdate hook behavior before Step 5
+  Read contrib/pgx BulkUpdate implementation. Confirm whether BeforeUpdate hooks
+   fire per row. If they fire: remove session revocation from N+6C scope
+  entirely. sqlRevokeSession* goes directly to N+6D DatabaseQuerier. Do not
+  attempt Step 5 without this verification.
+
+  R2 — Add filter.In predicate to awo/filter if absent
+  Required before Step 5. If missing, either add it to the framework or remove
+  sqlRevokeSessionsByHashes migration from N+6C scope. Do not add IAM-specific
+  workarounds.
+
+  R3 — Do NOT migrate sqlUpdateLastLoginAt in N+6C
+  Hook interference from UserPasswordHasher.BeforeUpdate makes this unsafe via
+  EntityRepository. Stays raw until N+6D DatabaseQuerier.
+
+  R4 — Do NOT migrate sqlLookupCredentials in N+6C
+  Sensitive field contract cannot be satisfied by EntityRepository. Stays raw.
+
+  R5 — Group repo fields into IAMRepositories struct before Step 2
+  Constructor with six parameters is unwieldy and error-prone in Wire DI. Group
+  IAMSessions, LoginAudits, UserRoles into a IAMRepositories value type injected
+   as a single parameter.
+
+  R6 — Verify contrib/pgx RLS behavior for pool-originated vs WithTx operations
+  Document whether set_tenant_context is called automatically for pool
+  operations. Document whether WithTx operations trust the caller to have set
+  it. This affects whether sqlSetTenantContext must remain in service.go for the
+   credential transaction path.
+
+  ---
+  Strongly recommended
+
+  S1 — Add typed accessor helper for role_name extraction
+  roleNameFromRecord(r def.EntityRecord) string in iam package. Single point of
+  change if UserRoleDefinition field names change. Catches field drift at one
+  location.
+
+  S2 — Commit Steps 3–7 as separate commits
+  Each step independently compiles and passes tests. Atomic commits allow
+  surgical rollback. Do not combine Steps 3–7 into one diff.
+
+  S3 — Add spy/fail repo doubles to test file before Step 3
+  Test doubles needed starting at Step 3. Write them in Step 2's commit
+  alongside the constructor change. Avoids a gap where the constructor is
+  updated but tests cannot yet build against it.
+
+  S4 — Update auditLogin and auditLogout godoc after Step 7
+  Document that audit writes are no longer atomic. Future readers should not
+  assume transactional consistency across session record + audit event +
+  last_login_at.
+
+  ---
+  Optional
+
+  O1 — Move loadUserRoles outside credential transaction at Step 6
+  Currently runs within tx1. If moved outside, tx1 becomes a two-statement
+  transaction (set_tenant_context + lookupCredentials) — simpler, shorter hold
+  time. The role load runs against the pool independently. Minor simplification.
+   Not required for correctness.
+
+  O2 — Add observability counters for repo error paths in best-effort writes
+  slog.Warn is adequate for N+6C. N+6G will introduce proper metric counters.
+  Defer to N+6G.
+
+✻ Crunched for 5m 55s
+
+❯ /export @awo/n_plus_c.text                                                    
+  ⎿  Failed to export conversation: ENOENT: no such file or directory, open
+     '/data/data/com.termux/files/home/project/erp/@awo/n_plus_c.txt'
