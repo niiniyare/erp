@@ -19,6 +19,7 @@ package secrets
 import (
 	"context"
 	"fmt"
+	"maps"
 	"os"
 	"strings"
 	"sync"
@@ -109,9 +110,7 @@ type StaticProvider struct {
 // NewStaticProvider creates a StaticProvider with the given key-value pairs.
 func NewStaticProvider(m map[string]string) *StaticProvider {
 	s := make(map[string]string, len(m))
-	for k, v := range m {
-		s[k] = v
-	}
+	maps.Copy(s, m)
 	return &StaticProvider{secrets: s}
 }
 
