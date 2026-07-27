@@ -40,6 +40,14 @@ type Node struct {
 	// For lists: not used.
 	Name string
 
+	// Description is the help text shown beneath a form field.
+	// Corresponds to FieldDef.Description. Empty means no help text.
+	Description string
+
+	// Placeholder is the input placeholder text shown when the field is empty.
+	// Derived from FieldDef.MaxLen or FieldDef.Description by the generator.
+	Placeholder string
+
 	// Required marks a form field as required in the UI.
 	// Does not duplicate server-side validation — both apply independently.
 	Required bool
@@ -53,6 +61,38 @@ type Node struct {
 	// included in the tree) must be used instead. Hidden is reserved for
 	// internal bookkeeping fields that are API-accessible but not shown in UI.
 	Hidden bool
+
+	// Collapsible makes a NodeSection collapsible (rendered as amis fieldSet
+	// with a collapse toggle). Requires Label to be non-empty.
+	Collapsible bool
+
+	// Collapsed sets the initial collapsed state for Collapsible sections.
+	// false (default) = expanded; true = collapsed on first render.
+	Collapsed bool
+
+	// ── AMIS expression fields ────────────────────────────────────────────────
+	//
+	// Expression strings are AMIS JavaScript expressions evaluated in the
+	// browser, referencing form data via the `data` object.
+	// Example: "data.status === 'active'"
+	// Empty means the expression does not apply (the boolean field is used).
+
+	// VisibleOn is an AMIS expression controlling visibility.
+	// When truthy the node is shown; when falsy, hidden.
+	// Empty means always visible.
+	VisibleOn string
+
+	// HiddenOn is an AMIS expression that hides the node when truthy.
+	// Empty means never hidden. Inverse of VisibleOn.
+	HiddenOn string
+
+	// DisabledOn is an AMIS expression that disables a field when truthy.
+	// Takes precedence over ReadOnly when non-empty.
+	DisabledOn string
+
+	// RequiredOn is an AMIS expression that makes a field required when truthy.
+	// Takes precedence over Required when non-empty.
+	RequiredOn string
 
 	// Props contains renderer-specific properties not expressible in the typed
 	// fields above. Props are merged last and override computed defaults.
@@ -144,6 +184,11 @@ type DataSource struct {
 
 	// Method is the HTTP method (default: "GET").
 	Method string
+
+	// ReadURL is the GET endpoint used to pre-populate a form with existing
+	// record data (amis initApi). Empty means no pre-population (create forms).
+	// Distinct from URL to avoid conflating submit and load endpoints.
+	ReadURL string
 
 	// SendOn is a condition expression for conditional data fetching.
 	// Empty means always fetch.

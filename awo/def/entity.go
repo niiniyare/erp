@@ -59,6 +59,11 @@ type EntityDefinition interface {
 	// EntityPageBuilders returns optional SDUI page builder overrides.
 	EntityPageBuilders() PageBuilderSet
 
+	// EntityLayout returns the SDUI layout declaration for form and detail views.
+	// Zero value (LayoutDef{}) produces a flat field list (default behavior).
+	// Set Tabs or Sections to group fields into tabs, sections, and columns.
+	EntityLayout() LayoutDef
+
 	// IsSystem returns true for SQL-backed system entities (typed columns),
 	// false for JSONB-backed custom entities.
 	IsSystem() bool
@@ -126,6 +131,11 @@ type SystemDefinition struct {
 
 	// PageBuilders optionally overrides auto-generated SDUI page schemas.
 	PageBuilders PageBuilderSet
+
+	// Layout declares the SDUI layout for form and detail views.
+	// Zero value produces a flat field list. Set Tabs or Sections to group
+	// fields into tabs, collapsible sections, and multi-column rows.
+	Layout LayoutDef
 }
 
 // Ensure SystemDefinition implements EntityDefinition at compile time.
@@ -156,6 +166,7 @@ func (d *SystemDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 	return d.WorkflowTriggers
 }
 func (d *SystemDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
+func (d *SystemDefinition) EntityLayout() LayoutDef            { return d.Layout }
 func (d *SystemDefinition) IsSystem() bool                     { return true }
 
 // CustomDefinition declares a custom entity: JSONB-backed, tenant-specific
@@ -210,6 +221,11 @@ type CustomDefinition struct {
 
 	// PageBuilders optionally overrides auto-generated SDUI pages.
 	PageBuilders PageBuilderSet
+
+	// Layout declares the SDUI layout for form and detail views.
+	// Zero value produces a flat field list. Set Tabs or Sections to group
+	// fields into tabs, collapsible sections, and multi-column rows.
+	Layout LayoutDef
 }
 
 // Ensure CustomDefinition implements EntityDefinition at compile time.
@@ -240,4 +256,5 @@ func (d *CustomDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 	return d.WorkflowTriggers
 }
 func (d *CustomDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
+func (d *CustomDefinition) EntityLayout() LayoutDef            { return d.Layout }
 func (d *CustomDefinition) IsSystem() bool                     { return false }

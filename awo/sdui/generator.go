@@ -402,15 +402,33 @@ func skipListColumn(f def.FieldDef) bool {
 
 func (g *pageGen) buildForm(_ context.Context, es *compiler.EntitySchema, _ auth.ViewerContext, isEdit bool) (*widget.Node, error) {
 	var children []*widget.Node
-	for _, f := range es.Fields {
-		if f.Hidden || f.Name == "tenant_id" {
-			continue
+
+	// Use declared layout if present; fall back to flat field list.
+	if layoutNodes := buildLayoutNodes(es, isEdit); layoutNodes != nil {
+		children = layoutNodes
+	} else {
+		for _, f := range es.Fields {
+			if f.Hidden || f.Name == "tenant_id" {
+				continue
+			}
+			children = append(children, fieldToNode(f, es, isEdit))
 		}
-		children = append(children, fieldToNode(f, es, isEdit))
 	}
+
 	for _, edge := range es.Edges {
 		if edge.Hidden || edge.Type != def.EdgeOneToMany {
 			continue
+		}
+		// Generate column nodes for the inline child table by looking up
+		// the target EntitySchema. Fall back to an empty table on miss.
+		var cols []*widget.Node
+		if target, ok := g.schema.ByName[edge.Target]; ok {
+			for _, tf := range target.Fields {
+				if skipListColumn(tf) {
+					continue
+				}
+				cols = append(cols, fieldToNode(tf, target, false))
+			}
 		}
 		children = append(children, &widget.Node{
 			Kind:  widget.NodeTable,
@@ -419,14 +437,21 @@ func (g *pageGen) buildForm(_ context.Context, es *compiler.EntitySchema, _ auth
 				URL:    "/api/v1/" + edge.Target + "?parent_id=${id}",
 				Method: "GET",
 			},
+			Children: cols,
 		})
 	}
 
-	var method, apiURL, label string
+	var method, apiURL, readURL, label string
 	if isEdit {
-		method, apiURL, label = "PATCH", es.RoutePrefix+"/${id}", "Edit "+es.Label
+		method = "PATCH"
+		apiURL = es.RoutePrefix + "/${id}"
+		readURL = es.RoutePrefix + "/${id}" // initApi: pre-populate form with existing record
+		label = "Edit " + es.Label
 	} else {
-		method, apiURL, label = "POST", es.RoutePrefix, "Create "+es.Label
+		method = "POST"
+		apiURL = es.RoutePrefix
+		// readURL is empty for create — no existing record to load.
+		label = "Create " + es.Label
 	}
 
 	return &widget.Node{
@@ -435,8 +460,12 @@ func (g *pageGen) buildForm(_ context.Context, es *compiler.EntitySchema, _ auth
 		Children: []*widget.Node{{
 			Kind:  widget.NodeForm,
 			Label: label,
-			DataSource: &widget.DataSource{URL: apiURL, Method: method},
-			Children:   children,
+			DataSource: &widget.DataSource{
+				URL:     apiURL,
+				Method:  method,
+				ReadURL: readURL,
+			},
+			Children: children,
 		}},
 	}, nil
 }
@@ -445,13 +474,21 @@ func (g *pageGen) buildForm(_ context.Context, es *compiler.EntitySchema, _ auth
 
 func (g *pageGen) buildDetail(ctx context.Context, es *compiler.EntitySchema, viewer auth.ViewerContext) (*widget.Node, error) {
 	var children []*widget.Node
-	for _, f := range es.Fields {
-		if f.Hidden || f.Name == "tenant_id" {
-			continue
+
+	// Layout for detail view: same as form but all fields forced read-only.
+	if layoutNodes := buildLayoutNodes(es, false); layoutNodes != nil {
+		// Walk every leaf field node in the layout tree and set ReadOnly.
+		setAllReadOnly(layoutNodes)
+		children = layoutNodes
+	} else {
+		for _, f := range es.Fields {
+			if f.Hidden || f.Name == "tenant_id" {
+				continue
+			}
+			n := fieldToNode(f, es, false)
+			n.ReadOnly = true
+			children = append(children, n)
 		}
-		n := fieldToNode(f, es, false)
-		n.ReadOnly = true
-		children = append(children, n)
 	}
 
 	var actions []*widget.ActionNode
@@ -472,15 +509,18 @@ func (g *pageGen) buildDetail(ctx context.Context, es *compiler.EntitySchema, vi
 		})
 	}
 
+	detailURL := es.RoutePrefix + "/${id}"
 	return &widget.Node{
 		Kind:  widget.NodePage,
 		Label: es.Label,
 		Children: []*widget.Node{{
-			Kind:     widget.NodeForm,
-			Label:    es.Label,
-			DataSource: &widget.DataSource{URL: es.RoutePrefix + "/${id}", Method: "GET"},
-			Children: children,
-			Actions:  actions,
+			Kind:  widget.NodeForm,
+			Label: es.Label,
+			// Detail view: no submit (no api/URL), only initApi to load the record.
+			// Use ReadURL so the renderer sets initApi; URL empty → no api config.
+			DataSource: &widget.DataSource{ReadURL: detailURL},
+			Children:   children,
+			Actions:    actions,
 		}},
 		Actions: actions,
 	}, nil
@@ -488,12 +528,109 @@ func (g *pageGen) buildDetail(ctx context.Context, es *compiler.EntitySchema, vi
 
 // ── Field → Node translation ──────────────────────────────────────────────────
 
+// buildLayoutNodes converts es.Layout into WidgetTree section/tab nodes.
+// Returns nil when the layout is empty (signals caller to use flat field list).
+func buildLayoutNodes(es *compiler.EntitySchema, isEdit bool) []*widget.Node {
+	layout := es.Layout
+	if len(layout.Tabs) == 0 && len(layout.Sections) == 0 {
+		return nil
+	}
+	if len(layout.Tabs) > 0 {
+		tabsNode := &widget.Node{Kind: widget.NodeTabs}
+		for _, tab := range layout.Tabs {
+			tabNode := &widget.Node{
+				Kind:     widget.NodeSection,
+				Label:    tab.Label,
+				Children: buildSectionNodes(es, tab.Sections, isEdit),
+			}
+			tabsNode.Children = append(tabsNode.Children, tabNode)
+		}
+		return []*widget.Node{tabsNode}
+	}
+	return buildSectionNodes(es, layout.Sections, isEdit)
+}
+
+// buildSectionNodes converts a slice of SectionDef into NodeSection nodes.
+// Each section's columns are flattened into field children; column span hints
+// are applied as columnClassName Props on individual field nodes.
+func buildSectionNodes(es *compiler.EntitySchema, sections []def.SectionDef, isEdit bool) []*widget.Node {
+	var nodes []*widget.Node
+	for _, sec := range sections {
+		secNode := &widget.Node{
+			Kind:        widget.NodeSection,
+			Label:       sec.Label,
+			Collapsible: sec.Collapsible,
+			Collapsed:   sec.Collapsed,
+		}
+
+		if len(sec.Columns) == 0 {
+			// No columns declared — section has no fields (unusual but valid;
+			// caller may use Props to inject content via PageBuilder).
+		} else if len(sec.Columns) == 1 {
+			// Single column: render fields in a vertical flow with no span class.
+			for _, fname := range sec.Columns[0].Fields {
+				f, ok := es.FieldsByName[fname]
+				if !ok || f.Hidden || f.Name == "tenant_id" {
+					continue
+				}
+				secNode.Children = append(secNode.Children, fieldToNode(f, es, isEdit))
+			}
+		} else {
+			// Multiple columns: compute span class for each column's fields.
+			// Equal span = 12 / numColumns when ColumnDef.Span is 0.
+			autoSpan := 12 / len(sec.Columns)
+			for _, col := range sec.Columns {
+				span := col.Span
+				if span <= 0 {
+					span = autoSpan
+				}
+				colClass := fmt.Sprintf("col-md-%d", span)
+				for _, fname := range col.Fields {
+					f, ok := es.FieldsByName[fname]
+					if !ok || f.Hidden || f.Name == "tenant_id" {
+						continue
+					}
+					n := fieldToNode(f, es, isEdit)
+					if n.Props == nil {
+						n.Props = make(map[string]any)
+					}
+					n.Props["columnClassName"] = colClass
+					secNode.Children = append(secNode.Children, n)
+				}
+			}
+		}
+		nodes = append(nodes, secNode)
+	}
+	return nodes
+}
+
+// setAllReadOnly recursively marks every leaf field node in a WidgetTree
+// branch as read-only. Used by buildDetail to force the layout into a
+// read-only state without duplicating the layout construction logic.
+func setAllReadOnly(nodes []*widget.Node) {
+	for _, n := range nodes {
+		if len(n.Children) > 0 {
+			setAllReadOnly(n.Children)
+		} else {
+			// Leaf node: field widget. Force read-only; clear expression
+			// so DisabledOn doesn't override (detail is always read-only).
+			n.ReadOnly = true
+			n.DisabledOn = ""
+		}
+	}
+}
+
 func fieldToNode(f def.FieldDef, es *compiler.EntitySchema, isEdit bool) *widget.Node {
 	n := &widget.Node{
-		Name:     f.Name,
-		Label:    fieldLabel(f),
-		Required: f.Required,
-		ReadOnly: f.ReadOnly,
+		Name:        f.Name,
+		Label:       fieldLabel(f),
+		Description: f.Description,
+		Required:    f.Required,
+		ReadOnly:    f.ReadOnly,
+		VisibleOn:   f.VisibleOn,
+		HiddenOn:    f.HiddenOn,
+		DisabledOn:  f.DisabledOn,
+		RequiredOn:  f.RequiredOn,
 	}
 	if f.Immutable && isEdit {
 		n.ReadOnly = true

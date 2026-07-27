@@ -89,6 +89,35 @@ type FieldDef struct {
 
 	// ReadOnly renders the field as read-only in SDUI edit views.
 	ReadOnly bool
+
+	// ── AMIS expression fields ────────────────────────────────────────────────
+	//
+	// Expression fields accept AMIS JavaScript expression strings evaluated
+	// in the browser. They reference form data via the `data` object.
+	// Example: "data.status === 'active'"
+	//
+	// Expressions are schema-driven — no handwritten JavaScript required.
+	// They are passed through to the rendered amis JSON unchanged.
+	// Server-side validation is always applied regardless of expression state.
+
+	// VisibleOn is an AMIS expression that controls visibility.
+	// When truthy, the field is shown; when falsy, hidden.
+	// Empty means always visible (default).
+	VisibleOn string
+
+	// HiddenOn is an AMIS expression that hides the field when truthy.
+	// Inverse of VisibleOn. Empty means never hidden (default).
+	HiddenOn string
+
+	// DisabledOn is an AMIS expression that disables the field when truthy.
+	// Takes precedence over ReadOnly when non-empty.
+	// Example: "data.status !== 'draft'" (disable once submitted)
+	DisabledOn string
+
+	// RequiredOn is an AMIS expression that makes the field required when truthy.
+	// Takes precedence over the Required boolean when non-empty.
+	// Example: "data.type === 'invoice'" (conditionally required)
+	RequiredOn string
 }
 
 // FieldValidator is a custom validation function for a single field value.

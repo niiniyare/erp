@@ -159,7 +159,11 @@ func (r *DefaultRenderer) renderActions(actions []*widget.ActionNode) []any {
 	return out
 }
 
-// applyCommon sets name, label, required, disabled on a field schema.
+// applyCommon sets name, label, required, disabled, description, placeholder,
+// and AMIS expression fields on a field schema from the typed Node fields.
+//
+// Expression fields (VisibleOn, HiddenOn, DisabledOn, RequiredOn) take
+// precedence over the corresponding boolean fields (ReadOnly, Required).
 func applyCommon(n *widget.Node, out map[string]any) {
 	if n.Name != "" {
 		out["name"] = n.Name
@@ -167,11 +171,30 @@ func applyCommon(n *widget.Node, out map[string]any) {
 	if n.Label != "" {
 		out["label"] = n.Label
 	}
-	if n.Required {
+	// Required: expression takes precedence over boolean.
+	if n.RequiredOn != "" {
+		out["requiredOn"] = n.RequiredOn
+	} else if n.Required {
 		out["required"] = true
 	}
-	if n.ReadOnly {
+	// Disabled: expression takes precedence over ReadOnly boolean.
+	if n.DisabledOn != "" {
+		out["disabledOn"] = n.DisabledOn
+	} else if n.ReadOnly {
 		out["disabled"] = true
+	}
+	if n.Description != "" {
+		out["description"] = n.Description
+	}
+	if n.Placeholder != "" {
+		out["placeholder"] = n.Placeholder
+	}
+	// Visibility expressions.
+	if n.VisibleOn != "" {
+		out["visibleOn"] = n.VisibleOn
+	}
+	if n.HiddenOn != "" {
+		out["hiddenOn"] = n.HiddenOn
 	}
 }
 
@@ -211,7 +234,12 @@ func (r *DefaultRenderer) renderForm(n *widget.Node) (map[string]any, error) {
 	}
 	if n.DataSource != nil && n.DataSource.URL != "" {
 		out["api"] = buildAPI(n.DataSource)
-		out["initApi"] = n.DataSource.Method + ":" + n.DataSource.URL + "/${id}"
+	}
+	// initApi pre-populates the form with existing record data.
+	// Only set when DataSource.ReadURL is provided (edit and detail views).
+	// Create forms omit initApi — there is no existing record to load.
+	if n.DataSource != nil && n.DataSource.ReadURL != "" {
+		out["initApi"] = "GET:" + n.DataSource.ReadURL
 	}
 	if acts := r.renderActions(n.Actions); len(acts) > 0 {
 		out["actions"] = acts
@@ -292,12 +320,31 @@ func (r *DefaultRenderer) renderSection(n *widget.Node) (map[string]any, error) 
 	if err != nil {
 		return nil, err
 	}
+
+	// fieldSet: labeled or collapsible section — renders as a named container
+	// with an optional collapse toggle. Used for ERP form sections.
+	//
+	// group: unlabeled horizontal grouping — places children side-by-side.
+	// Used internally by the layout engine for multi-column rows.
+	if n.Label != "" || n.Collapsible {
+		out := map[string]any{
+			"type": "fieldSet",
+			"body": body,
+		}
+		if n.Label != "" {
+			out["title"] = n.Label
+		}
+		if n.Collapsible {
+			out["collapsable"] = true // note: AMIS uses "collapsable" (not "collapsible")
+			out["collapsed"] = n.Collapsed
+		}
+		return out, nil
+	}
+
+	// Unlabeled, non-collapsible — use group for horizontal flow.
 	out := map[string]any{
 		"type": "group",
 		"body": body,
-	}
-	if n.Label != "" {
-		out["label"] = n.Label
 	}
 	return out, nil
 }

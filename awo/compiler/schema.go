@@ -200,6 +200,12 @@ type EntitySchema struct {
 	// is set for a view kind, it replaces the auto-generated schema for that view.
 	PageBuilders def.PageBuilderSet
 
+	// Layout is the SDUI layout declaration for form and detail views.
+	// Zero value (LayoutDef{}) produces a flat field list (the default).
+	// When set, the SDUI generator arranges fields into tabs, sections, and
+	// multi-column rows as declared.
+	Layout def.LayoutDef
+
 	// ── Compile-time reference (not for runtime use) ──────────────────────────
 
 	// def is the original EntityDefinition, retained for compile-phase link
@@ -380,6 +386,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		Hooks:               d.EntityHooks(),
 		WorkflowTriggers:    d.EntityWorkflowTriggers(),
 		PageBuilders:        d.EntityPageBuilders(),
+		Layout:              d.EntityLayout(),
 		FieldsByName:        make(map[string]def.FieldDef),
 		EdgesByName:         make(map[string]def.EdgeDef),
 		ActionsByName:       make(map[string]def.ActionDef),
