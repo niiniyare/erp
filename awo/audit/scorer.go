@@ -100,6 +100,30 @@ func (rs *RiskScorer) Score(record *AuditRecord) int {
 	return score
 }
 
+// severityFromScore maps a 0–100 risk score to a Severity level.
+//
+// Thresholds (AUDIT_ARCH.md §2.5):
+//
+//	≥70 → CRITICAL
+//	≥50 → HIGH
+//	≥30 → MEDIUM
+//	≥10 → LOW
+//	 <10 → INFO
+func severityFromScore(score int) Severity {
+	switch {
+	case score >= 70:
+		return SeverityCritical
+	case score >= 50:
+		return SeverityHigh
+	case score >= 30:
+		return SeverityMedium
+	case score >= 10:
+		return SeverityLow
+	default:
+		return SeverityInfo
+	}
+}
+
 func operationBaseScore(op OperationType) int {
 	switch op {
 	case OperationDelete:

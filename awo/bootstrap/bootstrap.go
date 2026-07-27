@@ -25,6 +25,7 @@ import (
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"awo.so/awo/audit"
 	"awo.so/awo/compiler"
 	"awo.so/awo/registry"
 )
@@ -106,6 +107,11 @@ func Run(ctx context.Context, cfg Config) (*Result, error) {
 	// via init() before this point. Import side effects drive registration.
 	reg := registry.Build()
 	slog.Info("entity registry built", "entities", len(reg.All()))
+
+	// Seal the audit config registry — no further Register calls are permitted.
+	// This must happen after all init() functions have run (guaranteed by the
+	// time Run is called) and before any request is served.
+	audit.Seal()
 
 	schema, err := compiler.Compile(reg)
 	if err != nil {

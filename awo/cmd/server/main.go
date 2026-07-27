@@ -88,7 +88,15 @@ func main() {
 	// Audit writer — writes AuditRecord to platform_audit_log inside the entity
 	// transaction. contrib.NewPoolQuerier provides the fallback connection for
 	// standalone auth writes that occur outside an entity transaction.
-	auditWriter := audit.NewTransactionalWriter(contrib.NewPoolQuerier(result.Pool))
+	//
+	// Sanitizer strips sensitive fields before any INSERT; RiskScorer computes
+	// the 0-100 risk score and derives the Severity for each record.
+	auditSanitizer := audit.NewSanitizer()
+	auditScorer := audit.NewRiskScorer()
+	if err := auditScorer.Warm(ctx); err != nil {
+		slog.Warn("audit scorer warm failed; using default scoring rules", "err", err)
+	}
+	auditWriter := audit.NewTransactionalWriter(contrib.NewPoolQuerier(result.Pool), auditSanitizer, auditScorer)
 
 	// Outbox relay — delivers domain events from the transactional outbox.
 	relay := outbox.New(result.Pool)

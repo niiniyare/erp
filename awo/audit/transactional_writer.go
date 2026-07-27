@@ -14,6 +14,13 @@ import (
 // It writes AuditRecord values to platform_audit_log using the connection
 // (transaction or pool) carried in context.
 //
+// Before any database write, TransactionalWriter:
+//  1. Sanitizes BeforeData and AfterData through the Sanitizer — sensitive
+//     fields are replaced with "[REDACTED]" so they never appear in the DB.
+//  2. Computes ChangedFields from the sanitized snapshots.
+//  3. Merges EntityAuditConfig.ComplianceFlags into AuditRecord.ComplianceFlags.
+//  4. Scores the record with RiskScorer and derives Severity.
+//
 // When called from within an EntityService repo.WithTx callback, the record
 // is written inside the active transaction — guaranteeing that no mutation
 // escapes the audit trail. If Write fails and the failure policy is Propagate,
@@ -31,7 +38,9 @@ type TransactionalWriter struct {
 	// It is a pool-backed tx.Querier created by contrib/pgx.NewPoolQuerier.
 	// May be nil in test environments where all writes go through a
 	// recording writer or are validated without a real DB.
-	fallback tx.Querier
+	fallback  tx.Querier
+	sanitizer *Sanitizer
+	scorer    *RiskScorer
 }
 
 // NewTransactionalWriter returns a TransactionalWriter.
@@ -40,11 +49,25 @@ type TransactionalWriter struct {
 // database transaction (e.g. auth events triggered by IAM handlers).
 // In production, pass contrib/pgx.NewPoolQuerier(pool) as the fallback.
 // In tests that exercise only the validation path, nil is acceptable.
-func NewTransactionalWriter(fallback tx.Querier) *TransactionalWriter {
-	return &TransactionalWriter{fallback: fallback}
+//
+// sanitizer and scorer must not be nil.
+func NewTransactionalWriter(fallback tx.Querier, sanitizer *Sanitizer, scorer *RiskScorer) *TransactionalWriter {
+	if sanitizer == nil {
+		panic("audit.NewTransactionalWriter: sanitizer must not be nil")
+	}
+	if scorer == nil {
+		panic("audit.NewTransactionalWriter: scorer must not be nil")
+	}
+	return &TransactionalWriter{fallback: fallback, sanitizer: sanitizer, scorer: scorer}
 }
 
 // Write inserts record into platform_audit_log.
+//
+// Before inserting, Write:
+//  1. Sanitizes BeforeData and AfterData (sensitive fields → "[REDACTED]").
+//  2. Computes ChangedFields from the sanitized snapshots.
+//  3. Merges EntityAuditConfig.ComplianceFlags.
+//  4. Computes RiskScore and derives Severity.
 //
 // Connection selection order:
 //  1. tx.QuerierFromContext(ctx) — active transaction (entity mutation path).
@@ -57,6 +80,31 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 	if err := record.Validate(); err != nil {
 		return err
 	}
+
+	// Step 1: Sanitize snapshots — sensitive fields must never reach the DB.
+	record.BeforeData = w.sanitizer.Strip(record.EntityName, record.BeforeData)
+	record.AfterData = w.sanitizer.Strip(record.EntityName, record.AfterData)
+
+	// Step 2: Compute changed fields from sanitized maps (Update only).
+	record.ChangedFields = ComputeChangedFields(record.BeforeData, record.AfterData)
+
+	// Step 3: Merge EntityAuditConfig.ComplianceFlags into the record.
+	// Config-level flags are the baseline; record-level flags override.
+	cfg := ConfigFor(record.EntityName)
+	if len(cfg.ComplianceFlags) > 0 {
+		merged := make(map[string]bool, len(cfg.ComplianceFlags)+len(record.ComplianceFlags))
+		for k, v := range cfg.ComplianceFlags {
+			merged[k] = v
+		}
+		for k, v := range record.ComplianceFlags {
+			merged[k] = v
+		}
+		record.ComplianceFlags = merged
+	}
+
+	// Step 4: Score risk and derive severity.
+	record.RiskScore = w.scorer.Score(&record)
+	record.Severity = severityFromScore(record.RiskScore)
 
 	// Assign ID and timestamp if not already set by caller.
 	if record.ID == uuid.Nil {

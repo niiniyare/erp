@@ -74,3 +74,34 @@ func TestRiskScorer_Score_Cap(t *testing.T) {
 		t.Errorf("Score must be capped at 100, got %d", got)
 	}
 }
+
+func TestSeverityFromScore_Thresholds(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		score int
+		want  Severity
+	}{
+		{0, SeverityInfo},
+		{9, SeverityInfo},
+		{10, SeverityLow},
+		{29, SeverityLow},
+		{30, SeverityMedium},
+		{49, SeverityMedium},
+		{50, SeverityHigh},
+		{69, SeverityHigh},
+		{70, SeverityCritical},
+		{100, SeverityCritical},
+	}
+
+	for _, tc := range cases {
+		tc := tc
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+			got := severityFromScore(tc.score)
+			if got != tc.want {
+				t.Errorf("severityFromScore(%d) = %q, want %q", tc.score, got, tc.want)
+			}
+		})
+	}
+}
