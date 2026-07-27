@@ -13,6 +13,7 @@ import (
 	"awo.so/awo/api/filterparse"
 	"awo.so/awo/api/response"
 	"awo.so/awo/api/service"
+	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
@@ -203,13 +204,11 @@ func parseUUID(c *fiber.Ctx, param string) (uuid.UUID, error) {
 }
 
 func actorFromContext(c *fiber.Ctx) *def.Actor {
-	userIDStr, _ := c.Locals("user_id").(string)
-	if userIDStr == "" {
+	// Use the ViewerContext stored by RequireAuth — it carries the full identity
+	// (UserID, ServiceAccountID, TenantID, Roles) rather than just a user_id local.
+	viewer, ok := c.Locals("viewer").(auth.ViewerContext)
+	if !ok || viewer == nil {
 		return nil
 	}
-	id, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return nil
-	}
-	return &def.Actor{UserID: id}
+	return viewer.Actor()
 }

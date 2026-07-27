@@ -45,7 +45,10 @@ func Generate(schema *compiler.CompiledSchema, serverURL string) map[string]any 
 func entityPaths(es *compiler.EntitySchema, paths, schemas map[string]any) {
 	name := es.TableName
 	schemaName := toPascalCase(name)
-	base := fmt.Sprintf("/api/v1/entities/%s", name)
+	// Use the entity's canonical RoutePrefix (e.g. /api/v1/finance/invoices)
+	// rather than the generic /api/v1/entities/{table} pattern, which does not
+	// match any registered Fiber route.
+	base := es.RoutePrefix
 
 	// Register schema component.
 	schemas[schemaName] = entitySchema(es)

@@ -1,6 +1,8 @@
 package audit
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/google/uuid"
@@ -103,5 +105,99 @@ func TestSeverityFromScore_Thresholds(t *testing.T) {
 				t.Errorf("severityFromScore(%d) = %q, want %q", tc.score, got, tc.want)
 			}
 		})
+	}
+}
+
+// TestRiskScorer_Warm_WithLoader verifies that Warm() populates sensitive
+// entities and they receive the +20 premium in subsequent Score() calls.
+func TestRiskScorer_Warm_WithLoader(t *testing.T) {
+	t.Parallel()
+
+	rs := NewRiskScorer().WithLoader(func(_ context.Context) ([]string, error) {
+		return []string{"finance_invoice"}, nil
+	})
+	if err := rs.Warm(context.Background()); err != nil {
+		t.Fatalf("Warm: unexpected error %v", err)
+	}
+
+	rec := &AuditRecord{
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate, // base = 10
+		EventCategory: CategoryData,    // premium = 0
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+	// 10 + 0 + 20 (sensitive) = 30
+	if got := rs.Score(rec); got != 30 {
+		t.Errorf("Score after Warm with sensitive entity = %d, want 30", got)
+	}
+
+	// Non-sensitive entity must not receive the premium.
+	other := &AuditRecord{
+		EntityName:    "platform_tenant",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+	if got := rs.Score(other); got != 10 {
+		t.Errorf("Score for non-sensitive entity = %d, want 10", got)
+	}
+}
+
+// TestRiskScorer_Warm_NoLoader verifies the scorer works with default rules
+// when no loader is configured.
+func TestRiskScorer_Warm_NoLoader(t *testing.T) {
+	t.Parallel()
+
+	rs := NewRiskScorer() // no WithLoader
+	if err := rs.Warm(context.Background()); err != nil {
+		t.Fatalf("Warm with no loader: unexpected error %v", err)
+	}
+	rec := &AuditRecord{
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+	// 10 + 0 + 0 = 10 (no sensitive premium without loader)
+	if got := rs.Score(rec); got != 10 {
+		t.Errorf("Score with no loader = %d, want 10", got)
+	}
+}
+
+// TestRiskScorer_Warm_LoaderError verifies that a loader error causes Warm
+// to return the error while leaving the scorer on default rules.
+func TestRiskScorer_Warm_LoaderError(t *testing.T) {
+	t.Parallel()
+
+	wantErr := errors.New("db unavailable")
+	rs := NewRiskScorer().WithLoader(func(_ context.Context) ([]string, error) {
+		return nil, wantErr
+	})
+	err := rs.Warm(context.Background())
+	if !errors.Is(err, wantErr) {
+		t.Errorf("Warm loader error: got %v, want %v", err, wantErr)
+	}
+	// Scorer must still be operational (default rules) after error.
+	rec := &AuditRecord{
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+	if got := rs.Score(rec); got < 0 || got > 100 {
+		t.Errorf("Score after loader error = %d, must be in [0,100]", got)
+	}
+}
+
+// TestRiskScorer_Warm_EmptyLoader verifies that nil, nil from a loader
+// is treated as "no sensitive entities" without error.
+func TestRiskScorer_Warm_EmptyLoader(t *testing.T) {
+	t.Parallel()
+
+	rs := NewRiskScorer().WithLoader(func(_ context.Context) ([]string, error) {
+		return nil, nil // table not yet migrated
+	})
+	if err := rs.Warm(context.Background()); err != nil {
+		t.Fatalf("Warm with empty loader: unexpected error %v", err)
 	}
 }

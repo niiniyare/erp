@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Awo ERP</title>
+
+  <!-- Amis SDK (pinned version — do not upgrade without compatibility audit) -->
+  <link rel="stylesheet" href="/static/sdk/sdk.css" />
+  <link rel="stylesheet" href="/static/sdk/iconfont.css" />
+
+  <style>
+    /* ── CSS Custom Property Theme Tokens ───────────────────────────────────
+     * Override these to customise branding without touching .cxd-* classes.
+     * Dark mode: invert neutral scale on html.dark (see MEMORY.md dark theme).
+     * ───────────────────────────────────────────────────────────────────── */
+    :root {
+      --colors-brand-primary:      #1677ff;
+      --colors-brand-primary-dark: #0958d9;
+      --background:                #f5f5f5;
+      --body-bg:                   #f5f5f5;
+      --Page-main-bg:              #f5f5f5;
+      --Panel-bg-color:            #ffffff;
+      --Table-bg:                  #ffffff;
+    }
+
+    html.dark {
+      /* Invert neutral fill scale — all amis components inherit */
+      --colors-neutral-fill-11:    #141414;
+      --colors-neutral-fill-10:    #1d1d1d;
+      --colors-neutral-fill-9:     #2a2a2a;
+      --colors-neutral-fill-8:     #333333;
+      --colors-neutral-text-2:     #e0e0e0;
+      --colors-neutral-line-8:     #3a3a3a;
+      --background:                #141414;
+      --body-bg:                   #141414;
+      --Page-main-bg:              #1a1a1a;
+      --Panel-bg-color:            #1d1d1d;
+      --Table-bg:                  #1d1d1d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--body-bg);
+    }
+
+    #app {
+      min-height: 100vh;
+    }
+
+    .awo-layout {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .awo-sidebar {
+      width: 240px;
+      background: var(--Panel-bg-color);
+      border-right: 1px solid var(--colors-neutral-line-8, #f0f0f0);
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+
+    .awo-main {
+      flex: 1;
+      overflow: auto;
+      background: var(--Page-main-bg);
+    }
+
+    .awo-logo {
+      padding: 16px 20px;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--colors-brand-primary);
+      border-bottom: 1px solid var(--colors-neutral-line-8, #f0f0f0);
+    }
+
+    .awo-content {
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="awo-layout">
+    <!-- Sidebar: auto-populated by navigation schema -->
+    <nav class="awo-sidebar">
+      <div class="awo-logo">Awo ERP</div>
+      <div id="nav"></div>
+    </nav>
+
+    <!-- Main content: amis renders schemas here -->
+    <main class="awo-main">
+      <div id="content" class="awo-content"></div>
+    </main>
+  </div>
+</div>
+
+<script src="/static/sdk/sdk.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  // ── Dark mode detection ────────────────────────────────────────────────────
+  function applyTheme() {
+    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', dark);
+  }
+  applyTheme();
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+  }
+
+  // ── Route parsing ──────────────────────────────────────────────────────────
+  // URL format: /ui/{module}/{resource}[/{id}][/edit|create]
+  function parseRoute() {
+    var parts = location.pathname.replace(/^\/ui\//, '').split('/');
+    return {
+      module:   parts[0] || '',
+      resource: parts[1] || '',
+      id:       parts[2] && parts[2] !== 'create' && parts[2] !== 'edit' ? parts[2] : null,
+      view:     parts[parts.length - 1] === 'edit'   ? 'edit'
+              : parts[parts.length - 1] === 'create' ? 'create'
+              : parts[2]                              ? 'detail'
+              :                                        'list',
+    };
+  }
+
+  // ── Amis schema loading ────────────────────────────────────────────────────
+  function loadPage(route) {
+    if (!route.module || !route.resource) return;
+
+    var entity = route.module + '_' + route.resource.replace(/-/g, '_').replace(/s$/, '');
+    var url = '/api/sdui/page/' + entity + '/' + route.view;
+
+    fetch(url, { credentials: 'include' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (schema) {
+        renderAmis(schema);
+      })
+      .catch(function (err) {
+        renderAmis({
+          type: 'page',
+          title: 'Error',
+          body: { type: 'alert', level: 'danger', body: 'Failed to load page: ' + err.message }
+        });
+      });
+  }
+
+  // ── Amis rendering ─────────────────────────────────────────────────────────
+  var currentApp = null;
+  function renderAmis(schema) {
+    var el = document.getElementById('content');
+    if (currentApp) {
+      amis.unmount(el);
+    }
+    currentApp = amis.embed(el, schema, {}, {
+      fetcher: function (opts) {
+        return fetch(opts.url, {
+          method: opts.method || 'GET',
+          headers: Object.assign({ 'Content-Type': 'application/json' }, opts.headers),
+          body: opts.data ? JSON.stringify(opts.data) : undefined,
+          credentials: 'include',
+        }).then(function (r) { return r.json(); });
+      }
+    });
+  }
+
+  // ── Bootstrap ──────────────────────────────────────────────────────────────
+  var route = parseRoute();
+  if (route.module) {
+    loadPage(route);
+  } else {
+    renderAmis({
+      type: 'page',
+      title: 'Awo ERP',
+      body: { type: 'tpl', tpl: 'Select a module from the sidebar.' }
+    });
+  }
+
+  // Handle browser navigation.
+  window.addEventListener('popstate', function () {
+    loadPage(parseRoute());
+  });
+})();
+</script>
+</body>
+</html>

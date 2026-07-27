@@ -3,12 +3,23 @@ package audit
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/google/uuid"
 
 	"awo.so/awo/tx"
 )
+
+// FlagLoader reads the feature flag that gates the unified audit system.
+// The result is cached after the first call — restarts are required to
+// pick up flag changes (acceptable for v1). A nil FlagLoader defaults to
+// enabled (used in tests and when the feature flag table is not yet migrated).
+//
+// Production implementation: query platform_audit_config WHERE key =
+// 'feature.unified_audit.enabled'. Return true if value == "true".
+type FlagLoader func(ctx context.Context) bool
 
 // TransactionalWriter is the production AuditWriter implementation.
 // It writes AuditRecord values to platform_audit_log using the connection
@@ -41,6 +52,13 @@ type TransactionalWriter struct {
 	fallback  tx.Querier
 	sanitizer *Sanitizer
 	scorer    *RiskScorer
+
+	// Feature flag: unified audit is active only when the flag is true.
+	// Loaded once on first Write() call; cached for the process lifetime.
+	// ADR-019 Phase 2: flag defaults to false; enabled in Phase 3.
+	flagLoader  FlagLoader
+	flagOnce    sync.Once
+	flagEnabled bool
 }
 
 // NewTransactionalWriter returns a TransactionalWriter.
@@ -61,13 +79,25 @@ func NewTransactionalWriter(fallback tx.Querier, sanitizer *Sanitizer, scorer *R
 	return &TransactionalWriter{fallback: fallback, sanitizer: sanitizer, scorer: scorer}
 }
 
+// WithFlagLoader configures a FlagLoader for the feature flag check.
+// Call before the first Write(). The loader is called exactly once; the
+// result is cached for the process lifetime.
+//
+// When not set (nil), the writer defaults to enabled — correct for tests and
+// deployments where platform_audit_config is not yet migrated.
+func (w *TransactionalWriter) WithFlagLoader(loader FlagLoader) *TransactionalWriter {
+	w.flagLoader = loader
+	return w
+}
+
 // Write inserts record into platform_audit_log.
 //
 // Before inserting, Write:
-//  1. Sanitizes BeforeData and AfterData (sensitive fields → "[REDACTED]").
-//  2. Computes ChangedFields from the sanitized snapshots.
-//  3. Merges EntityAuditConfig.ComplianceFlags.
-//  4. Computes RiskScore and derives Severity.
+//  1. Checks the feature flag (platform_audit_config); returns nil if disabled.
+//  2. Sanitizes BeforeData and AfterData (sensitive fields → "[REDACTED]").
+//  3. Computes ChangedFields from the sanitized snapshots.
+//  4. Merges EntityAuditConfig.ComplianceFlags.
+//  5. Computes RiskScore and derives Severity.
 //
 // Connection selection order:
 //  1. tx.QuerierFromContext(ctx) — active transaction (entity mutation path).
@@ -77,6 +107,25 @@ func NewTransactionalWriter(fallback tx.Querier, sanitizer *Sanitizer, scorer *R
 // are returned regardless of the failure policy — they indicate programming
 // errors, not DB errors.
 func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) error {
+	// Lazy-load the feature flag on first call. sync.Once guarantees the loader
+	// runs exactly once across all concurrent goroutines.
+	w.flagOnce.Do(func() {
+		if w.flagLoader == nil {
+			// No loader configured: default to enabled.
+			// Correct for: test environments, pre-migration deployments where
+			// the caller has verified the flag is irrelevant.
+			w.flagEnabled = true
+			return
+		}
+		w.flagEnabled = w.flagLoader(ctx)
+		if !w.flagEnabled {
+			slog.WarnContext(ctx, "audit: unified audit disabled by feature flag (platform_audit_config)")
+		}
+	})
+	if !w.flagEnabled {
+		return nil // ADR-019 Phase 2 no-op — legacy system remains authoritative
+	}
+
 	if err := record.Validate(); err != nil {
 		return err
 	}

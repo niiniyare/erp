@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/cache"
+	"awo.so/awo/def"
 	"awo.so/awo/runtime"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -37,14 +39,15 @@ const (
 //   - Session store (human sessions, via [Sessions])
 //   - API token cache (service account token cache, via [Cache])
 //   - iam_sessions table (SQL audit trail for human sessions)
-//   - iam_login_audits table (append-only auth event log)
+//   - platform_audit_log (unified audit trail, via [AuditWriter])
 //
 // AuthService is constructed once at startup by [New] and shared across all
 // concurrent requests. All methods are goroutine-safe.
 type AuthService struct {
-	DB       *pgxpool.Pool
-	Sessions auth.SessionStore
-	Cache    cache.Cache
+	DB          *pgxpool.Pool
+	Sessions    auth.SessionStore
+	Cache       cache.Cache
+	AuditWriter audit.AuditWriter // nil = audit disabled (dev/test)
 }
 
 // ── Login ──────────────────────────────────────────────────────────────────────
@@ -211,10 +214,18 @@ func (s *AuthService) auditLogin(ctx context.Context, session *auth.Session, inp
 	}
 
 	_ = s.insertSessionRecord(ctx, tx, session)
-	_ = s.insertLoginAudit(ctx, tx, session.TenantID, session.UserID, uuid.Nil, "login", input.IPAddress, input.DeviceID, "")
 	_, _ = tx.Exec(ctx, sqlUpdateLastLoginAt, session.IssuedAt, session.UserID)
 
 	_ = tx.Commit(ctx)
+
+	// Write the unified audit record after the TX commits — platform_audit_log
+	// has no RLS so no tenant context is required; the fallback querier is used.
+	s.writeAuthAudit(ctx, session.TenantID,
+		&def.Actor{UserID: session.UserID, TenantID: session.TenantID},
+		audit.OperationLogin,
+		input.IPAddress,
+		map[string]any{"device_id": input.DeviceID},
+	)
 }
 
 // ── Logout ────────────────────────────────────────────────────────────────────
@@ -258,9 +269,15 @@ func (s *AuthService) auditLogout(ctx context.Context, session *auth.Session) {
 
 	_, _ = tx.Exec(ctx, sqlRevokeSessionByHash, hash, session.TenantID)
 
-	_ = s.insertLoginAudit(ctx, tx, session.TenantID, session.UserID, uuid.Nil, "logout", session.IPAddress, session.DeviceID, "")
-
 	_ = tx.Commit(ctx)
+
+	// Write the unified audit record after TX commits.
+	s.writeAuthAudit(ctx, session.TenantID,
+		&def.Actor{UserID: session.UserID, TenantID: session.TenantID},
+		audit.OperationLogout,
+		session.IPAddress,
+		map[string]any{"device_id": session.DeviceID},
+	)
 }
 
 // ── RevokeUserSessions ────────────────────────────────────────────────────────
@@ -316,9 +333,15 @@ func (s *AuthService) auditRevoke(ctx context.Context, tenantID, userID uuid.UUI
 
 	_, _ = tx.Exec(ctx, sqlRevokeSessionsByHashes, hashes, tenantID)
 
-	_ = s.insertLoginAudit(ctx, tx, tenantID, userID, uuid.Nil, "session_revoked", "", "", "admin_revoke_all")
-
 	_ = tx.Commit(ctx)
+
+	// Write the unified audit record after TX commits.
+	s.writeAuthAudit(ctx, tenantID,
+		&def.Actor{UserID: userID, TenantID: tenantID},
+		audit.OperationSystem,
+		"",
+		map[string]any{"reason": "admin_revoke_all", "session_count": len(hashes)},
+	)
 }
 
 // ── ValidateToken ─────────────────────────────────────────────────────────────
@@ -555,6 +578,29 @@ func (s *AuthService) LoadRolePermissions(ctx context.Context) ([]auth.RolePermi
 	return result, nil
 }
 
+// ── Audit helpers ──────────────────────────────────────────────────────────────
+
+// writeAuthAudit emits an AUTH-category audit record to the unified pipeline.
+// Best-effort — failures are silently ignored; session state is already committed.
+//
+// op should be OperationLogin, OperationLogout, or OperationSystem.
+// actor carries the authenticated principal; context carries event-specific metadata.
+func (s *AuthService) writeAuthAudit(ctx context.Context, tenantID uuid.UUID, actor *def.Actor, op audit.OperationType, ipAddress string, extra map[string]any) {
+	if s.AuditWriter == nil {
+		return
+	}
+	rec := audit.AuditRecord{
+		TenantID:      tenantID,
+		EntityName:    "iam_session",
+		Operation:     op,
+		EventCategory: audit.CategoryAuth,
+		Actor:         actor,
+		IPAddress:     ipAddress,
+		Context:       extra,
+	}
+	_ = s.AuditWriter.Write(ctx, rec)
+}
+
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
 // loadUserRoles queries the iam_user_roles table for all role names assigned to
@@ -606,39 +652,16 @@ func (s *AuthService) insertSessionRecord(ctx context.Context, tx pgx.Tx, sessio
 	return nil
 }
 
-// insertLoginAudit writes an authentication event to iam_login_audits.
-// Must be called within a transaction that has established tenant RLS context.
-func (s *AuthService) insertLoginAudit(ctx context.Context, tx pgx.Tx, tenantID, userID, serviceAccountID uuid.UUID, event, ipAddress, deviceID, failureReason string) error {
-	_, err := tx.Exec(ctx, sqlInsertLoginAudit,
-		tenantID,
-		event,
-		nullUUID(userID),
-		nullUUID(serviceAccountID),
-		ipAddress,
-		deviceID,
-		failureReason,
-	)
-	if err != nil {
-		return fmt.Errorf("iam: insert login audit: %w", err)
-	}
-	return nil
-}
-
-// writeFailedLoginAudit writes a failed_login event in its own mini-transaction.
-// The caller's transaction (if any) is already rolled back or not yet committed,
-// so a separate connection is needed. Best-effort — failure is silently ignored.
+// writeFailedLoginAudit writes a failed_login audit record to the unified pipeline.
+// Best-effort — failures are silently ignored; the login error is already returned to
+// the caller. platform_audit_log has no RLS so no TX or tenant context is required.
 func (s *AuthService) writeFailedLoginAudit(ctx context.Context, input LoginInput, userID uuid.UUID, reason string) {
-	tx, err := s.DB.Begin(ctx)
-	if err != nil {
-		return
-	}
-	defer tx.Rollback(ctx)
-
-	if _, err := tx.Exec(ctx, sqlSetTenantContext, input.TenantID); err != nil {
-		return
-	}
-	_ = s.insertLoginAudit(ctx, tx, input.TenantID, userID, uuid.Nil, "failed_login", input.IPAddress, input.DeviceID, reason)
-	_ = tx.Commit(ctx)
+	s.writeAuthAudit(ctx, input.TenantID,
+		&def.Actor{UserID: userID, TenantID: input.TenantID},
+		audit.OperationLogin,
+		input.IPAddress,
+		map[string]any{"device_id": input.DeviceID, "failure_reason": reason, "failed": true},
+	)
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────

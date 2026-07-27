@@ -33,6 +33,7 @@ import (
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
 	"awo.so/awo/runtime"
+	"awo.so/awo/sdui"
 )
 
 // RegisterOptions carries dependencies needed to build handlers.
@@ -50,6 +51,15 @@ type RegisterOptions struct {
 	// disabled and audit.NoopAuditWriter{} is used automatically. In production,
 	// pass audit.NewTransactionalWriter(contrib.NewPoolQuerier(pool)).
 	AuditWriter audit.AuditWriter
+
+	// AuditSigningSecret is the HMAC-SHA256 key used to derive a non-reversible
+	// SessionID for audit records. Set from the AUDIT_SIGNING_SECRET env var.
+	// An empty string disables session correlation (acceptable in dev/test).
+	AuditSigningSecret string
+
+	// SDUIGenerator generates amis JSON page schemas from EntitySchema +
+	// ViewerContext. When nil, the /api/sdui/* endpoints are not registered.
+	SDUIGenerator *sdui.Generator
 }
 
 // Register mounts the full auto-generated API onto app under /api/v1/entities/.
@@ -71,7 +81,7 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		api.Use(middleware.TenantResolver(opts.Tenants))
 	}
 	if opts.IAM != nil {
-		api.Use(middleware.RequireAuth(opts.IAM))
+		api.Use(middleware.RequireAuth(opts.IAM, opts.AuditSigningSecret))
 	}
 	api.Use(middleware.RateLimit(counter, middleware.DefaultRateLimit))
 
@@ -124,6 +134,50 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 			}
 		}
 	}
+
+	// SDUI: /api/sdui/page/:entity/:view — returns amis JSON schema.
+	// Registered only when SDUIGenerator is provided.
+	// Auth middleware from /api/v1 does NOT apply here — mount a separate group.
+	if opts.SDUIGenerator != nil {
+		registerSDUI(app, opts)
+	}
+}
+
+// registerSDUI mounts the SDUI schema endpoint group.
+// Applies the same tenant + auth middleware as the REST API.
+func registerSDUI(app *fiber.App, opts RegisterOptions) {
+	var counter cache.Counter
+	if opts.Redis != nil {
+		counter = contribredis.New(opts.Redis)
+	} else {
+		counter = cache.NoopCounter{}
+	}
+
+	sdg := app.Group("/api/sdui")
+	if opts.Tenants != nil {
+		sdg.Use(middleware.TenantResolver(opts.Tenants))
+	}
+	if opts.IAM != nil {
+		sdg.Use(middleware.RequireAuth(opts.IAM, opts.AuditSigningSecret))
+	}
+	sdg.Use(middleware.RateLimit(counter, middleware.DefaultRateLimit))
+
+	gen := opts.SDUIGenerator
+	sdg.Get("/page/:entity/:view", func(c *fiber.Ctx) error {
+		viewer := auth.ViewerFromContext(c.UserContext())
+		entityName := c.Params("entity")
+		view := def.PageKind(c.Params("view"))
+
+		schema, err := gen.GetPage(c.UserContext(), entityName, view, viewer)
+		if err != nil {
+			return fiber.NewError(fiber.StatusNotFound, err.Error())
+		}
+		return c.JSON(schema)
+	})
+
+	// Navigation: returns per-module menu entries derived from CompiledSchema.
+	// GET /api/sdui/nav
+	sdg.Get("/nav", handler.SDUINav(opts.SDUIGenerator))
 }
 
 // RegisterMiddleware applies the global (pre-auth) middleware pipeline to app.

@@ -58,8 +58,10 @@ type PermissionSet struct {
     // Applies to Get, Query, Count, Exists, and related operations.
     Read []string
 
-    // Update lists permission identifiers required to update records of this entity.
-    Update []string
+    // Write lists permission identifiers required to update records of this entity.
+    // Note: the struct field is named Write (not Update) to reflect that PATCH
+    // routes enforce this permission using the action string "write".
+    Write []string
 
     // Delete lists permission identifiers required to delete records of this entity.
     Delete []string
@@ -80,7 +82,7 @@ Examples: `"finance.invoice.create"`, `"finance.invoice.submit"`, `"inventory.st
 Permissions: def.PermissionSet{
     Create: []string{"finance.invoice.create"},
     Read:   []string{"finance.invoice.read"},
-    Update: []string{"finance.invoice.update"},
+    Write:  []string{"finance.invoice.update"},
     Delete: []string{"finance.invoice.delete"},
     Actions: map[string][]string{
         "submit":         {"finance.invoice.submit"},

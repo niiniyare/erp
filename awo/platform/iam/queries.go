@@ -235,29 +235,6 @@ const sqlLoadUserRoles = `
 `
 
 // ── Login audit ────────────────────────────────────────────────────────────────
-
-// sqlInsertLoginAudit writes an authentication event record to iam_login_audits.
-// This table is append-only; updates and deletes are prohibited by the
-// LoginAuditImmutableGuard hook and the absence of Write/Delete permissions.
-//
-// gen_random_uuid() produces the row ID in PostgreSQL. now() records the exact
-// server timestamp for the event (not the Go time.Now() which could differ from
-// DB time under NTP skew).
-//
-// Why SQL: Could be replaced by EntityRepository.Create on the iam_login_audit
-// entity definition. Will migrate in Phase N+6C.
-//
-// Note: In Phase N+6F, iam_login_audits will be retired in favour of the
-// unified audit_event table. The new table will also use EntityRepository.Create.
-//
-// EntityRepository replacement: Yes — direct Create call.
-// Will migrate in Phase N+6C; table will be unified in Phase N+6F.
-//
-// Limitation: Framework (EntityRepository not yet used here — transitional).
-const sqlInsertLoginAudit = `
-	INSERT INTO iam_login_audits
-		(id, tenant_id, event, user_id, service_account_id,
-		 ip_address, device_id, failure_reason, created_at)
-	VALUES
-		(gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, now())
-`
+// Login/logout/failed-login events now write to platform_audit_log via
+// AuthService.writeAuthAudit → AuditWriter.Write. The iam_login_audits table
+// is retained for backward compatibility but receives no new inserts (ADR-019).

@@ -436,7 +436,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 
 // buildLookup constructs a CompiledLookup for a Link field targeting target.
 func buildLookup(target *EntitySchema, multiple bool) *CompiledLookup {
-	searchURL := target.RoutePrefix + "?q=${keywords}"
+	searchURL := target.RoutePrefix + "?q=${keywords}&tenant_id=${tenant_id}"
 
 	// Heuristic: pick the best label field from the target entity.
 	labelField := "id"

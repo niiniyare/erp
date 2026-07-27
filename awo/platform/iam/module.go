@@ -53,6 +53,7 @@
 package iam
 
 import (
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/cache"
 	"awo.so/awo/def"
@@ -105,6 +106,15 @@ func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache) *
 		Auth:         &AuthService{DB: db, Sessions: sessions, Cache: tokenCache},
 		loginLimiter: passthroughHandler,
 	}
+}
+
+// WithAuditWriter sets the AuditWriter used to emit login, logout, and
+// session-revocation events to the unified platform_audit_log table.
+//
+// Call before [Module.RegisterRoutes]. Nil disables audit writes (dev/test).
+func (m *Module) WithAuditWriter(aw audit.AuditWriter) *Module {
+	m.Auth.AuditWriter = aw
+	return m
 }
 
 // WithLoginRateLimiter sets the Fiber handler applied to POST /auth/login

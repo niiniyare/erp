@@ -34,12 +34,14 @@ import (
 	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
+	"awo.so/awo/cache"
 	contrib "awo.so/awo/contrib/pgx"
 	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/events/outbox"
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
 	"awo.so/awo/platform/iam"
+	"awo.so/awo/sdui"
 
 	// Platform module init() calls — imports drive entity registration.
 	// platform/iam is already imported above for iam.New; the init()
@@ -70,12 +72,62 @@ func main() {
 	}
 	defer bootstrap.Shutdown(context.Background(), result)
 
+	// Audit writer — writes AuditRecord to platform_audit_log inside the entity
+	// transaction. contrib.NewPoolQuerier provides the fallback connection for
+	// standalone auth writes that occur outside an entity transaction.
+	//
+	// Sanitizer strips sensitive fields before any INSERT; RiskScorer computes
+	// the 0-100 risk score and derives the Severity for each record.
+	auditSanitizer := audit.NewSanitizer()
+	// SensitiveEntityLoader queries audit_sensitive_entities (Phase 2 migration).
+	// When the table does not yet exist, the query fails and the loader returns
+	// nil, nil — the scorer falls back to default rules (no risk premium).
+	pool := result.Pool
+	auditScorer := audit.NewRiskScorer().WithLoader(func(ctx context.Context) ([]string, error) {
+		rows, err := pool.Query(ctx, "SELECT entity_name FROM audit_sensitive_entities")
+		if err != nil {
+			// Table may not exist pre-Phase-2 migration; treat as empty.
+			slog.WarnContext(ctx, "audit: sensitive entity table not available; using defaults", "err", err)
+			return nil, nil
+		}
+		defer rows.Close()
+		var entities []string
+		for rows.Next() {
+			var name string
+			if err := rows.Scan(&name); err != nil {
+				return nil, err
+			}
+			entities = append(entities, name)
+		}
+		return entities, rows.Err()
+	})
+	if err := auditScorer.Warm(ctx); err != nil {
+		slog.Warn("audit scorer warm failed; using default scoring rules", "err", err)
+	}
+	// FlagLoader reads the feature flag from platform_audit_config.
+	// When the table does not exist (pre-migration), the query fails and the
+	// loader returns false — legacy audit system remains active (ADR-019 Phase 2).
+	auditFlagLoader := audit.FlagLoader(func(ctx context.Context) bool {
+		var value string
+		err := pool.QueryRow(ctx,
+			"SELECT value FROM platform_audit_config WHERE key = 'feature.unified_audit.enabled'",
+		).Scan(&value)
+		if err != nil {
+			slog.Warn("audit: feature flag read failed; unified audit disabled", "err", err)
+			return false
+		}
+		return value == "true"
+	})
+
+	auditWriter := audit.NewTransactionalWriter(contrib.NewPoolQuerier(result.Pool), auditSanitizer, auditScorer).
+		WithFlagLoader(auditFlagLoader)
+
 	// IAM module — authenticates users and manages sessions.
 	// Construct the SessionStore and token cache from the shared Redis client,
 	// then inject them into iam.New as abstract interfaces.
 	sessions := contribredis.NewSessionStore(result.Redis)
 	tokenCache := contribredis.New(result.Redis)
-	iamModule := iam.New(result.Pool, sessions, tokenCache)
+	iamModule := iam.New(result.Pool, sessions, tokenCache).WithAuditWriter(auditWriter)
 
 	// Tenant entity repository for TenantResolver middleware.
 	tenantSchema, ok := result.Schema.ByName["platform_tenant"]
@@ -84,19 +136,6 @@ func main() {
 		os.Exit(1)
 	}
 	tenantRepo := contrib.NewRepository(result.Pool, tenantSchema)
-
-	// Audit writer — writes AuditRecord to platform_audit_log inside the entity
-	// transaction. contrib.NewPoolQuerier provides the fallback connection for
-	// standalone auth writes that occur outside an entity transaction.
-	//
-	// Sanitizer strips sensitive fields before any INSERT; RiskScorer computes
-	// the 0-100 risk score and derives the Severity for each record.
-	auditSanitizer := audit.NewSanitizer()
-	auditScorer := audit.NewRiskScorer()
-	if err := auditScorer.Warm(ctx); err != nil {
-		slog.Warn("audit scorer warm failed; using default scoring rules", "err", err)
-	}
-	auditWriter := audit.NewTransactionalWriter(contrib.NewPoolQuerier(result.Pool), auditSanitizer, auditScorer)
 
 	// Outbox relay — delivers domain events from the transactional outbox.
 	relay := outbox.New(result.Pool)
@@ -149,15 +188,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	// SDUI generator — produces amis JSON page schemas from EntitySchema.
+	// Cache backed by Redis when available; nil disables caching (dev mode).
+	var sduiCache cache.Cache
+	if result.Redis != nil {
+		sduiCache = contribredis.New(result.Redis)
+	}
+	sduiGen := sdui.New(result.Schema, evaluator, sduiCache)
+
 	// CRUD routes for all registered entities — full middleware pipeline applied inside.
 	router.Register(app, result.Schema, router.RegisterOptions{
-		Pool:        result.Pool,
-		Redis:       result.Redis,
-		IAM:         iamModule.Auth,
-		Tenants:     tenantRepo,
-		Authz:       evaluator,
-		Temporal:    nil, // TODO: wire Temporal client when worker is configured
-		AuditWriter: auditWriter,
+		Pool:               result.Pool,
+		Redis:              result.Redis,
+		IAM:                iamModule.Auth,
+		Tenants:            tenantRepo,
+		Authz:              evaluator,
+		Temporal:           nil, // TODO: wire Temporal client when worker is configured
+		AuditWriter:        auditWriter,
+		AuditSigningSecret: getEnv("AUDIT_SIGNING_SECRET", ""),
+		SDUIGenerator:      sduiGen,
+	})
+
+	// Static file serving — amis SDK assets.
+	// Serve /static/* from awo/web/static/ relative to the binary working dir.
+	app.Static("/static", "./awo/web/static", fiber.Static{
+		Compress: true,
+		MaxAge:   86400, // 1 day — SDK files are pinned and content-stable
+	})
+
+	// Web UI fallback — serve index.html for all /ui/* paths (SPA routing).
+	app.Get("/ui/*", func(c *fiber.Ctx) error {
+		return c.SendFile("./awo/web/pages/index.html")
 	})
 
 	// Start server.

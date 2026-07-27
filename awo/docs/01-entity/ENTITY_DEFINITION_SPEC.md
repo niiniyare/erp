@@ -309,10 +309,12 @@ var CustomerDefinition = def.SystemDefinition{
         {Name: "email", Type: def.FieldTypeData, Unique: true},
     },
     Permissions: def.PermissionSet{
-        Create: []string{"role:crm.sales", "role:tenant.admin"},
-        Read:   []string{"role:crm.viewer", "role:tenant.admin"},
-        Write:  []string{"role:crm.sales", "role:tenant.admin"},
-        Delete: []string{"role:tenant.admin"},
+        // Permission identifiers only — NEVER role names (ADR-011).
+        // Role-to-permission mapping is managed by the IAM module separately.
+        Create: []string{"crm.customer.create"},
+        Read:   []string{"crm.customer.read"},
+        Write:  []string{"crm.customer.update"},
+        Delete: []string{"crm.customer.delete"},
     },
 }
 ```
@@ -340,12 +342,13 @@ var InvoiceDefinition = def.SystemDefinition{
         AfterCreate:  []def.AfterCreateHook{&InvoiceNumberAssigner{}},
     },
     Permissions: def.PermissionSet{
-        Create: []string{"role:finance.accounts_payable", "role:tenant.admin"},
-        Read:   []string{"role:finance.viewer", "role:tenant.admin"},
-        Write:  []string{"role:finance.accounts_payable", "role:tenant.admin"},
-        Delete: []string{"role:tenant.admin"},
+        // Permission identifiers only — NEVER role names (ADR-011).
+        Create: []string{"finance.invoice.create"},
+        Read:   []string{"finance.invoice.read"},
+        Write:  []string{"finance.invoice.update"},
+        Delete: []string{"finance.invoice.delete"},
         Actions: map[string][]string{
-            "submit": {"role:finance.accounts_payable", "role:tenant.admin"},
+            "submit": {"finance.invoice.submit"},
         },
     },
     Actions: []def.ActionDef{

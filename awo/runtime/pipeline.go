@@ -325,6 +325,15 @@ func (p *Pipeline) RunAuditRecord(ctx context.Context, record *def.EntityRecord,
 		AfterData:     after,
 	}
 
+	// Populate HTTP correlation fields from the audit.RequestContext injected
+	// by RequireAuth. Background operations (Temporal, cron) do not carry a
+	// RequestContext; those fields are left as zero values.
+	if rc, ok := audit.RequestContextFromContext(ctx); ok {
+		rec.RequestID = rc.RequestID
+		rec.IPAddress = rc.IPAddress
+		rec.SessionID = rc.SessionID
+	}
+
 	return audit.Apply(ctx, p.auditWriter, rec)
 }
 

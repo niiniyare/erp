@@ -7,6 +7,15 @@ import (
 	"unsafe"
 )
 
+// SensitiveEntityLoader returns the set of entity names that carry an
+// additional risk premium during scoring. Called once by Warm(). The
+// production implementation queries audit_sensitive_entities (Phase 2
+// migration). Return nil, nil from a nil or no-op loader to use defaults.
+//
+// If the underlying table does not yet exist, the loader should return
+// nil, nil — the scorer falls back to default rules (same as pre-Warm).
+type SensitiveEntityLoader func(ctx context.Context) ([]string, error)
+
 // RiskScorer computes a 0–100 risk score for an AuditRecord based on the
 // operation type, actor, entity category, and runtime configuration loaded
 // from the database.
@@ -17,7 +26,8 @@ import (
 type RiskScorer struct {
 	// state is an atomically-swapped pointer to scorerState.
 	// Uses unsafe.Pointer to allow lock-free reads.
-	state unsafe.Pointer // *scorerState
+	state  unsafe.Pointer // *scorerState
+	loader SensitiveEntityLoader
 }
 
 // scorerState holds the immutable snapshot used during scoring.
@@ -39,21 +49,51 @@ func NewRiskScorer() *RiskScorer {
 	return rs
 }
 
-// Warm loads runtime scoring configuration from the database. It is called
-// once during bootstrap after the database connection is available.
+// WithLoader configures a SensitiveEntityLoader that Warm uses to populate
+// the sensitive-entity risk premium table. Call before Warm().
 //
-// If the audit_sensitive_fields table does not yet exist (pre-Phase-2
-// migration), Warm logs a warning and returns nil — the scorer falls back to
-// default rules. This allows Phase 1 code to function before Phase 2
-// migrations are applied.
-func (rs *RiskScorer) Warm(_ context.Context) error {
-	// Phase 1: no DB query yet — Phase 2 will add the actual query against
-	// audit_sensitive_fields. For now, store the default state.
-	//
-	// This stub exists so that callers (main.go) can call Warm without
-	// conditional compilation and Phase 2 can add the DB query here without
-	// changing any call sites.
-	slog.Info("audit: RiskScorer warmed with default rules (audit_sensitive_fields not yet migrated)")
+// Production usage in main.go:
+//
+//	scorer.WithLoader(func(ctx context.Context) ([]string, error) {
+//	    rows, err := pool.Query(ctx, "SELECT entity_name FROM audit_sensitive_entities")
+//	    ...
+//	})
+func (rs *RiskScorer) WithLoader(loader SensitiveEntityLoader) *RiskScorer {
+	rs.loader = loader
+	return rs
+}
+
+// Warm loads runtime scoring configuration by calling the registered
+// SensitiveEntityLoader. It is called once during bootstrap after the
+// database connection is available.
+//
+// If no loader is configured, or the loader returns nil, nil (e.g. because
+// the audit_sensitive_entities table does not yet exist), Warm uses default
+// rules and returns nil. This allows Phase 1 deployments to function before
+// Phase 2 migrations are applied.
+func (rs *RiskScorer) Warm(ctx context.Context) error {
+	if rs.loader == nil {
+		slog.InfoContext(ctx, "audit: RiskScorer using default rules (no loader configured)")
+		return nil
+	}
+	entities, err := rs.loader(ctx)
+	if err != nil {
+		// Non-fatal: log and continue with defaults. Caller in main.go
+		// also logs a warn-level message on non-nil error return.
+		slog.WarnContext(ctx, "audit: RiskScorer loader failed; using default rules", "err", err)
+		return err
+	}
+	if len(entities) == 0 {
+		slog.InfoContext(ctx, "audit: RiskScorer warmed with default rules (no sensitive entities configured)")
+		return nil
+	}
+	m := make(map[string]struct{}, len(entities))
+	for _, e := range entities {
+		m[e] = struct{}{}
+	}
+	next := &scorerState{sensitiveEntities: m}
+	atomic.StorePointer(&rs.state, unsafe.Pointer(next))
+	slog.InfoContext(ctx, "audit: RiskScorer warmed", "sensitive_entity_count", len(entities))
 	return nil
 }
 

@@ -1,31 +1,56 @@
-// Package sdui generates amis JSON page schemas from EntityDefinitions.
+// Package sdui is the SDUI generator — the orchestrator that converts an
+// EntitySchema and ViewerContext into a WidgetTree (*widget.Node) for a
+// given page view, then renders it to amis JSON.
 //
-// Every EntityDefinition auto-generates: list page, create form, edit form,
-// detail view. Custom PageBuilderSet overrides any view.
+// Architecture (ADR-006):
 //
-// Generated schemas are cached in Redis:
+//	EntityDefinition
+//	    ↓  (compiler)
+//	EntitySchema
+//	    ↓  (sdui.Generator.GetPage)
+//	*widget.Node           ← WidgetTree IR (awo/sdui/widget)
+//	    ↓  (amis.Renderer.Render)
+//	map[string]any         ← amis JSON
+//	    ↓  (json.Marshal + HTTP response)
+//	browser
 //
-//	Key: page:{entity}:{view}:{tenant_id}
+// The generator reads EntitySchema (compiler output), never the original
+// EntityDefinition. Permission-gated elements are absent from the tree —
+// not present with Hidden: true — per WIDGET_TREE_SPEC.md §7.
+//
+// If the entity declares a PageBuilder for the requested PageKind and the
+// builder returns a non-nil map, that map is used directly (bypasses the
+// WidgetTree path). Returning nil falls back to auto-generation.
+//
+// Package dependencies (ADR-006):
+//
+//	sdui       → sdui/widget, sdui/amis, compiler, def, auth, cache
+//	sdui/amis  → sdui/widget  (no compiler, def, or auth)
+//	sdui/widget → (none)
+//
+// Cache key format (AMIS_RENDERER_SPEC.md §8):
+//
+//	page:{entity_qualified_name}:{view}:{viewer_roles_hash}:{tenant_id}
 //	TTL: 5 minutes
-//	Invalidation: on permission change or feature flag change
-//
-// Permission-gated elements are ABSENT from the schema (not disabled).
-// The permission check runs at schema-serve time, not data-fetch time.
-//
-// amis documentation: https://aisuda.bce.baidu.com/amis/zh-CN/docs/intro
 package sdui
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
+	"awo.so/awo/auth"
 	"awo.so/awo/cache"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
+	"awo.so/awo/sdui/amis"
+	"awo.so/awo/sdui/widget"
 )
 
 const (
@@ -33,282 +58,550 @@ const (
 	sduiCachePrefix = "page:"
 )
 
-// Generator produces amis JSON page schemas.
+// Generator produces amis JSON page schemas for entity views.
+//
+// Internally the generator builds a WidgetTree (*widget.Node) and renders it
+// through the amis renderer. The rendered schema is cached in Redis per the
+// cache key format specified in AMIS_RENDERER_SPEC.md §8.
+//
+// All methods are goroutine-safe; the Generator holds no mutable state.
 type Generator struct {
-	schema *compiler.CompiledSchema
-	cache  cache.Cache
+	schema    *compiler.CompiledSchema
+	evaluator auth.PolicyEvaluator // may be nil (all actions permitted)
+	cache     cache.Cache
+	renderer  amis.Renderer
 }
 
-// New creates a Generator.
-func New(schema *compiler.CompiledSchema, c cache.Cache) *Generator {
-	return &Generator{schema: schema, cache: c}
-}
-
-// PageKind identifies which view to generate.
-type PageKind string
-
-const (
-	PageList   PageKind = "list"
-	PageCreate PageKind = "create"
-	PageEdit   PageKind = "edit"
-	PageDetail PageKind = "detail"
-)
-
-// GetPage returns the amis JSON schema for the requested page.
-// Uses cache; falls back to generation on miss.
-// tenantID is used for cache key scoping only — permission filtering
-// should be applied by the caller before returning the schema.
-func (g *Generator) GetPage(ctx context.Context, entityName string, kind PageKind, tenantID uuid.UUID) (map[string]any, error) {
-	cacheKey := fmt.Sprintf("%s%s:%s:%s", sduiCachePrefix, entityName, kind, tenantID)
-
-	var schema map[string]any
-	if err := g.cache.Get(ctx, cacheKey, &schema); err == nil {
-		return schema, nil
+// New returns a Generator backed by schema, evaluator, and c.
+//
+//   - evaluator may be nil: all actions permitted (tests / admin tools).
+//   - c may be nil: caching disabled (schemas generated on every request).
+func New(schema *compiler.CompiledSchema, evaluator auth.PolicyEvaluator, c cache.Cache) *Generator {
+	if schema == nil {
+		panic("sdui.New: schema must not be nil")
 	}
+	return &Generator{
+		schema:    schema,
+		evaluator: evaluator,
+		cache:     c,
+		renderer:  amis.New(),
+	}
+}
 
+// GetPage returns the amis JSON schema for the given entity view.
+//
+// entityName is the qualified entity name (e.g. "finance_invoice").
+// view is one of the def.PageKind constants.
+// viewer is the authenticated principal.
+//
+// Cache lookup is attempted first (key: AMIS_RENDERER_SPEC.md §8 format).
+// On miss the WidgetTree is generated, rendered to amis JSON, and cached.
+//
+// If the entity's PageBuilder for view returns a non-nil map, that map is
+// returned directly without going through the WidgetTree path.
+func (g *Generator) GetPage(ctx context.Context, entityName string, view def.PageKind, viewer auth.ViewerContext) (map[string]any, error) {
 	es, ok := g.schema.ByName[entityName]
 	if !ok {
-		return nil, fmt.Errorf("sdui: unknown entity %q", entityName)
+		return nil, fmt.Errorf("sdui: entity %q not found in compiled schema", entityName)
 	}
 
-	// Check for custom page builder first.
-	pageBuilders := es.PageBuilders
-	var builder def.PageBuilder
-	switch kind {
-	case PageList:
-		builder = pageBuilders.List
-	case PageCreate:
-		builder = pageBuilders.Create
-	case PageEdit:
-		builder = pageBuilders.Edit
-	case PageDetail:
-		builder = pageBuilders.Detail
-	}
-
-	var page map[string]any
-	var err error
-	if builder != nil {
-		pctx := def.PageContext{EntityName: entityName}
-		page, err = builder(ctx, pctx)
+	// Check for custom PageBuilder — bypasses WidgetTree entirely.
+	if builder := pageBuilderFor(es, view); builder != nil {
+		pctx := def.PageContext{
+			EntityName: entityName,
+			Kind:       view,
+		}
+		if viewer != nil {
+			pctx.Actor = viewer.Actor()
+		}
+		result, err := builder(ctx, pctx)
 		if err != nil {
-			return nil, fmt.Errorf("sdui: custom builder for %s/%s: %w", entityName, kind, err)
+			return nil, fmt.Errorf("sdui: custom builder for %s/%s: %w", entityName, view, err)
 		}
-	} else {
-		page = g.generate(es, kind)
+		if result != nil {
+			return result, nil
+		}
+		// nil → fall through to auto-generation.
 	}
 
-	// Cache the result.
-	_ = g.cache.Set(ctx, cacheKey, page, sduiCacheTTL)
-	return page, nil
+	// Cache key: page:{entity}:{view}:{roles_hash}:{tenant_id}
+	cacheKey := g.cacheKey(entityName, view, viewer)
+	if g.cache != nil {
+		var cached map[string]any
+		if err := g.cache.Get(ctx, cacheKey, &cached); err == nil {
+			return cached, nil
+		}
+	}
+
+	// Build WidgetTree.
+	gen := &pageGen{
+		schema:    g.schema,
+		evaluator: g.evaluator,
+	}
+	root, err := gen.GetPage(ctx, entityName, view, viewer)
+	if err != nil {
+		return nil, err
+	}
+
+	// Render WidgetTree → amis JSON.
+	schema, err := g.renderer.Render(root)
+	if err != nil {
+		return nil, fmt.Errorf("sdui: render %s/%s: %w", entityName, view, err)
+	}
+
+	// Cache the rendered schema.
+	if g.cache != nil {
+		_ = g.cache.Set(ctx, cacheKey, schema, sduiCacheTTL)
+	}
+
+	return schema, nil
 }
 
-// Invalidate clears all cached pages for an entity.
+// GetWidgetTree builds and returns the raw WidgetTree for the given entity view.
+// Use this when the caller needs the IR rather than the rendered amis JSON
+// (e.g. for testing or alternative renderers).
+func (g *Generator) GetWidgetTree(ctx context.Context, entityName string, view def.PageKind, viewer auth.ViewerContext) (*widget.Node, error) {
+	gen := &pageGen{schema: g.schema, evaluator: g.evaluator}
+	return gen.GetPage(ctx, entityName, view, viewer)
+}
+
+// Invalidate clears all cached pages for an entity across all views, viewers,
+// and tenants. Call after permission changes or feature flag changes.
 func (g *Generator) Invalidate(ctx context.Context, entityName string) error {
+	if g.cache == nil {
+		return nil
+	}
 	return g.cache.DeletePrefix(ctx, sduiCachePrefix+entityName+":")
-}
-
-// generate produces the default amis schema for the given entity and view.
-func (g *Generator) generate(es *compiler.EntitySchema, kind PageKind) map[string]any {
-	switch kind {
-	case PageList:
-		return g.generateList(es)
-	case PageCreate:
-		return g.generateForm(es, "create")
-	case PageEdit:
-		return g.generateForm(es, "edit")
-	case PageDetail:
-		return g.generateDetail(es)
-	default:
-		return map[string]any{"type": "page", "body": "Unknown view"}
-	}
-}
-
-func (g *Generator) generateList(es *compiler.EntitySchema) map[string]any {
-	label, labelPlural := es.Label, es.LabelPlural
-
-	cols := []map[string]any{
-		{"name": "id", "label": "ID", "type": "text", "toggled": false},
-	}
-	for _, f := range es.Fields {
-		if f.Hidden || f.Sensitive {
-			continue
-		}
-		col := map[string]any{
-			"name":  f.Name,
-			"label": f.Label,
-			"type":  amisColumnType(f.Type),
-		}
-		cols = append(cols, col)
-	}
-	cols = append(cols,
-		map[string]any{"name": "created_at", "label": "Created", "type": "datetime"},
-	)
-
-	return map[string]any{
-		"type":  "page",
-		"title": labelPlural,
-		"body": map[string]any{
-			"type":    "crud",
-			"api":     "/api/v1/entities/" + es.TableName,
-			"columns": cols,
-			"toolbar": []map[string]any{
-				{
-					"type":       "button",
-					"label":      "New " + label,
-					"icon":       "fa fa-plus",
-					"actionType": "dialog",
-					"dialog": map[string]any{
-						"title": "New " + label,
-						"body":  g.generateForm(es, "create"),
-					},
-				},
-			},
-		},
-	}
-}
-
-func (g *Generator) generateForm(es *compiler.EntitySchema, mode string) map[string]any {
-	controls := []map[string]any{}
-	for _, f := range es.Fields {
-		if f.Hidden || f.ReadOnly || f.Sensitive {
-			continue
-		}
-		if f.Immutable && mode == "edit" {
-			continue // immutable fields not shown in edit form
-		}
-		ctrl := map[string]any{
-			"type":  amisFormControl(f.Type),
-			"name":  f.Name,
-			"label": f.Label,
-		}
-		if f.Required {
-			ctrl["required"] = true
-		}
-		if f.Type == def.FieldTypeSelect && len(f.Options) > 0 {
-			opts := make([]map[string]any, len(f.Options))
-			for i, o := range f.Options {
-				opts[i] = map[string]any{"label": o, "value": o}
-			}
-			ctrl["options"] = opts
-		}
-		if f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList {
-			if lk, ok := es.FieldLookups[f.Name]; ok {
-				ctrl["type"] = "select"
-				ctrl["source"] = map[string]any{
-					"method": "get",
-					"url":    lk.SearchURL,
-					"data": map[string]any{
-						"keywords": "${keywords}",
-					},
-					"responseData": map[string]any{
-						"options": "${items}",
-					},
-				}
-				ctrl["valueField"] = lk.ValueField
-				ctrl["labelField"] = lk.LabelField
-				ctrl["searchable"] = true
-				ctrl["clearable"] = !f.Required
-				if lk.Multiple {
-					ctrl["multiple"] = true
-					ctrl["extractValue"] = true
-				}
-				ctrl["placeholder"] = "Search " + lk.TargetLabel + "..."
-			}
-		}
-		if f.MaxLen > 0 {
-			ctrl["maxLength"] = f.MaxLen
-		}
-		controls = append(controls, ctrl)
-	}
-
-	apiURL := "/api/v1/entities/" + es.TableName
-	if mode == "edit" {
-		apiURL = apiURL + "/${id}"
-	}
-	method := "post"
-	if mode == "edit" {
-		method = "patch"
-	}
-
-	return map[string]any{
-		"type": "form",
-		"api": map[string]any{
-			"method": method,
-			"url":    apiURL,
-		},
-		"body": controls,
-	}
-}
-
-func (g *Generator) generateDetail(es *compiler.EntitySchema) map[string]any {
-	label := es.Label
-	items := []map[string]any{}
-	for _, f := range es.Fields {
-		if f.Hidden || f.Sensitive {
-			continue
-		}
-		items = append(items, map[string]any{
-			"type":  "static",
-			"name":  f.Name,
-			"label": f.Label,
-		})
-	}
-	return map[string]any{
-		"type":  "page",
-		"title": label,
-		"body": map[string]any{
-			"type":    "form",
-			"mode":    "horizontal",
-			"api":     "/api/v1/entities/" + es.TableName + "/${id}",
-			"body":    items,
-			"actions": []map[string]any{},
-		},
-	}
-}
-
-// amisColumnType maps FieldType to amis column type.
-func amisColumnType(ft def.FieldType) string {
-	switch ft {
-	case def.FieldTypeBool:
-		return "boolean"
-	case def.FieldTypeDate:
-		return "date"
-	case def.FieldTypeDateTime:
-		return "datetime"
-	case def.FieldTypeCurrency, def.FieldTypeFloat, def.FieldTypeInt:
-		return "number"
-	default:
-		return "text"
-	}
-}
-
-// amisFormControl maps FieldType to amis form control type.
-func amisFormControl(ft def.FieldType) string {
-	switch ft {
-	case def.FieldTypeSelect:
-		return "select"
-	case def.FieldTypeMultiSelect:
-		return "select" // multiple: true added by caller
-	case def.FieldTypeBool:
-		return "switch"
-	case def.FieldTypeDate:
-		return "date"
-	case def.FieldTypeDateTime:
-		return "datetime"
-	case def.FieldTypeLongText:
-		return "textarea"
-	case def.FieldTypeCurrency, def.FieldTypeFloat:
-		return "input-number"
-	case def.FieldTypeInt:
-		return "input-number"
-	case def.FieldTypeJSON:
-		return "json-editor"
-	default:
-		return "input-text"
-	}
 }
 
 // MarshalPage serializes a page schema to JSON bytes.
 func MarshalPage(page map[string]any) ([]byte, error) {
 	return json.Marshal(page)
+}
+
+// cacheKey builds the canonical cache key for a page request.
+// Format: page:{entity}:{view}:{roles_hash}:{tenant_id}
+// (AMIS_RENDERER_SPEC.md §8)
+func (g *Generator) cacheKey(entityName string, view def.PageKind, viewer auth.ViewerContext) string {
+	var rolesHash string
+	var tenantID uuid.UUID
+	if viewer != nil {
+		rolesHash = viewerRolesHash(viewer.Roles())
+		tenantID = viewer.TenantID()
+	}
+	return fmt.Sprintf("%s%s:%s:%s:%s", sduiCachePrefix, entityName, view, rolesHash, tenantID)
+}
+
+// viewerRolesHash returns the first 16 hex chars of SHA-256(sorted_roles).
+// Per AMIS_RENDERER_SPEC.md §8: ensures per-role-set cache isolation.
+func viewerRolesHash(roles []string) string {
+	sorted := append([]string(nil), roles...)
+	sort.Strings(sorted)
+	h := sha256.New()
+	for _, r := range sorted {
+		h.Write([]byte(r))
+		h.Write([]byte{0}) // separator
+	}
+	return fmt.Sprintf("%x", h.Sum(nil))[:16]
+}
+
+// NavEntry is a single navigation item in the sidebar menu.
+type NavEntry struct {
+	// Module is the owning module (e.g. "finance").
+	Module string `json:"module"`
+	// Label is the human-readable plural display name (e.g. "Invoices").
+	Label string `json:"label"`
+	// Entity is the qualified entity name (e.g. "finance_invoice").
+	Entity string `json:"entity"`
+	// ListURL is the SDUI page URL for the list view.
+	ListURL string `json:"listUrl"`
+}
+
+// NavModule groups NavEntry values by module.
+type NavModule struct {
+	Module  string     `json:"module"`
+	Label   string     `json:"label"`
+	Entries []NavEntry `json:"entries"`
+}
+
+// Nav returns the navigation schema for the sidebar menu.
+// Entities are grouped by module in the order they appear in CompiledSchema.
+// Only entities with a declared Read permission are included.
+func (g *Generator) Nav() []NavModule {
+	seen := make(map[string]int) // module → index in result
+	var result []NavModule
+
+	for _, es := range g.schema.Entities {
+		if len(es.Permissions.Read) == 0 {
+			continue // inaccessible entity — omit from nav
+		}
+		idx, ok := seen[es.Module]
+		if !ok {
+			idx = len(result)
+			seen[es.Module] = idx
+			// Capitalise first letter for the module display label.
+			moduleLabel := es.Module
+			if len(moduleLabel) > 0 {
+				moduleLabel = strings.ToUpper(moduleLabel[:1]) + moduleLabel[1:]
+			}
+			result = append(result, NavModule{
+				Module: es.Module,
+				Label:  moduleLabel,
+			})
+		}
+		result[idx].Entries = append(result[idx].Entries, NavEntry{
+			Module:  es.Module,
+			Label:   es.LabelPlural,
+			Entity:  es.QualifiedName,
+			ListURL: "/ui/" + es.Module + "/" + es.APIResource,
+		})
+	}
+	return result
+}
+
+// pageBuilderFor returns the PageBuilder for the given view kind, or nil.
+func pageBuilderFor(es *compiler.EntitySchema, view def.PageKind) def.PageBuilder {
+	switch view {
+	case def.PageKindList:
+		return es.PageBuilders.List
+	case def.PageKindCreate:
+		return es.PageBuilders.Create
+	case def.PageKindEdit:
+		return es.PageBuilders.Edit
+	case def.PageKindDetail:
+		return es.PageBuilders.Detail
+	}
+	return nil
+}
+
+// ── pageGen: WidgetTree construction ─────────────────────────────────────────
+
+// pageGen builds WidgetTree nodes from EntitySchema + ViewerContext.
+// It is the inner layer of the Generator — separated for testability.
+type pageGen struct {
+	schema    *compiler.CompiledSchema
+	evaluator auth.PolicyEvaluator
+}
+
+// GetPage generates the WidgetTree root node for the given entity view.
+func (g *pageGen) GetPage(ctx context.Context, entityName string, view def.PageKind, viewer auth.ViewerContext) (*widget.Node, error) {
+	es, ok := g.schema.ByName[entityName]
+	if !ok {
+		return nil, fmt.Errorf("sdui: entity %q not found in compiled schema", entityName)
+	}
+	switch view {
+	case def.PageKindList:
+		return g.buildList(ctx, es, viewer)
+	case def.PageKindCreate:
+		return g.buildForm(ctx, es, viewer, false)
+	case def.PageKindEdit:
+		return g.buildForm(ctx, es, viewer, true)
+	case def.PageKindDetail:
+		return g.buildDetail(ctx, es, viewer)
+	default:
+		return nil, fmt.Errorf("sdui: unknown PageKind %q", view)
+	}
+}
+
+// ── List view ─────────────────────────────────────────────────────────────────
+
+func (g *pageGen) buildList(ctx context.Context, es *compiler.EntitySchema, viewer auth.ViewerContext) (*widget.Node, error) {
+	var cols []*widget.Node
+	for _, f := range es.Fields {
+		if skipListColumn(f) {
+			continue
+		}
+		cols = append(cols, fieldToNode(f, es, false))
+	}
+
+	var toolbarActions []*widget.ActionNode
+	if canPerform(ctx, g.evaluator, viewer, es.QualifiedName, "create") {
+		toolbarActions = append(toolbarActions, &widget.ActionNode{
+			Label:      "New " + es.Label,
+			ActionType: "link",
+			Level:      "primary",
+			Href:       "/ui/" + es.Module + "/" + es.APIResource + "/create",
+		})
+	}
+
+	// Row actions: absent (not hidden) when permission denied.
+	var rowActions []any
+	if canPerform(ctx, g.evaluator, viewer, es.QualifiedName, "read") {
+		rowActions = append(rowActions, map[string]any{
+			"type": "button", "label": "View", "actionType": "link", "level": "default",
+			"link": "/ui/" + es.Module + "/" + es.APIResource + "/${id}",
+		})
+	}
+	if canPerform(ctx, g.evaluator, viewer, es.QualifiedName, "update") {
+		rowActions = append(rowActions, map[string]any{
+			"type": "button", "label": "Edit", "actionType": "link", "level": "default",
+			"link": "/ui/" + es.Module + "/" + es.APIResource + "/${id}/edit",
+		})
+	}
+	if canPerform(ctx, g.evaluator, viewer, es.QualifiedName, "delete") {
+		rowActions = append(rowActions, map[string]any{
+			"type": "button", "label": "Delete", "actionType": "ajax", "level": "danger",
+			"api":         "DELETE:" + es.RoutePrefix + "/${id}",
+			"confirmText": "Delete this " + es.Label + "? This action cannot be undone.",
+		})
+	}
+	for _, a := range es.Actions {
+		if a.Hidden || !canPerform(ctx, g.evaluator, viewer, es.QualifiedName, a.Name) {
+			continue
+		}
+		btn := map[string]any{
+			"type": "button", "label": a.Label,
+			"actionType": "ajax", "level": "default",
+			"api": string(a.Method) + ":" + es.RoutePrefix + "/${id}/" + a.Name,
+		}
+		if a.ConfirmMessage != "" {
+			btn["confirmText"] = a.ConfirmMessage
+		}
+		rowActions = append(rowActions, btn)
+	}
+
+	listNode := &widget.Node{
+		Kind:  widget.NodeList,
+		Label: es.LabelPlural,
+		DataSource: &widget.DataSource{
+			URL:    es.RoutePrefix + "?q=${keywords}&page=${page}&perPage=${perPage}",
+			Method: "GET",
+		},
+		Children: cols,
+		Actions:  toolbarActions,
+	}
+	if len(rowActions) > 0 {
+		if listNode.Props == nil {
+			listNode.Props = make(map[string]any)
+		}
+		listNode.Props["rowActions"] = rowActions
+	}
+
+	return &widget.Node{
+		Kind:     widget.NodePage,
+		Label:    es.LabelPlural,
+		Children: []*widget.Node{listNode},
+		Actions:  toolbarActions,
+	}, nil
+}
+
+// skipListColumn returns true for fields excluded from auto-generated list columns.
+// (SDUI_FIELD_WIDGET_MAP.md — List View Column Exclusions)
+func skipListColumn(f def.FieldDef) bool {
+	switch f.Name {
+	case "id", "tenant_id", "custom_fields":
+		return true
+	}
+	if f.Type == def.FieldTypeLongText || f.Type == def.FieldTypeJSON {
+		return true
+	}
+	return f.Sensitive || f.Hidden
+}
+
+// ── Form views (Create / Edit) ────────────────────────────────────────────────
+
+func (g *pageGen) buildForm(_ context.Context, es *compiler.EntitySchema, _ auth.ViewerContext, isEdit bool) (*widget.Node, error) {
+	var children []*widget.Node
+	for _, f := range es.Fields {
+		if f.Hidden || f.Name == "tenant_id" {
+			continue
+		}
+		children = append(children, fieldToNode(f, es, isEdit))
+	}
+	for _, edge := range es.Edges {
+		if edge.Hidden || edge.Type != def.EdgeOneToMany {
+			continue
+		}
+		children = append(children, &widget.Node{
+			Kind:  widget.NodeTable,
+			Label: edge.Label,
+			DataSource: &widget.DataSource{
+				URL:    "/api/v1/" + edge.Target + "?parent_id=${id}",
+				Method: "GET",
+			},
+		})
+	}
+
+	var method, apiURL, label string
+	if isEdit {
+		method, apiURL, label = "PATCH", es.RoutePrefix+"/${id}", "Edit "+es.Label
+	} else {
+		method, apiURL, label = "POST", es.RoutePrefix, "Create "+es.Label
+	}
+
+	return &widget.Node{
+		Kind:  widget.NodePage,
+		Label: label,
+		Children: []*widget.Node{{
+			Kind:  widget.NodeForm,
+			Label: label,
+			DataSource: &widget.DataSource{URL: apiURL, Method: method},
+			Children:   children,
+		}},
+	}, nil
+}
+
+// ── Detail view ───────────────────────────────────────────────────────────────
+
+func (g *pageGen) buildDetail(ctx context.Context, es *compiler.EntitySchema, viewer auth.ViewerContext) (*widget.Node, error) {
+	var children []*widget.Node
+	for _, f := range es.Fields {
+		if f.Hidden || f.Name == "tenant_id" {
+			continue
+		}
+		n := fieldToNode(f, es, false)
+		n.ReadOnly = true
+		children = append(children, n)
+	}
+
+	var actions []*widget.ActionNode
+	if canPerform(ctx, g.evaluator, viewer, es.QualifiedName, "update") {
+		actions = append(actions, &widget.ActionNode{
+			Label: "Edit", ActionType: "link", Level: "primary",
+			Href: "/ui/" + es.Module + "/" + es.APIResource + "/${id}/edit",
+		})
+	}
+	for _, a := range es.Actions {
+		if a.Hidden || !canPerform(ctx, g.evaluator, viewer, es.QualifiedName, a.Name) {
+			continue
+		}
+		actions = append(actions, &widget.ActionNode{
+			Label: a.Label, ActionType: "ajax", Level: "default",
+			API:         string(a.Method) + ":" + es.RoutePrefix + "/${id}/" + a.Name,
+			ConfirmText: a.ConfirmMessage,
+		})
+	}
+
+	return &widget.Node{
+		Kind:  widget.NodePage,
+		Label: es.Label,
+		Children: []*widget.Node{{
+			Kind:     widget.NodeForm,
+			Label:    es.Label,
+			DataSource: &widget.DataSource{URL: es.RoutePrefix + "/${id}", Method: "GET"},
+			Children: children,
+			Actions:  actions,
+		}},
+		Actions: actions,
+	}, nil
+}
+
+// ── Field → Node translation ──────────────────────────────────────────────────
+
+func fieldToNode(f def.FieldDef, es *compiler.EntitySchema, isEdit bool) *widget.Node {
+	n := &widget.Node{
+		Name:     f.Name,
+		Label:    fieldLabel(f),
+		Required: f.Required,
+		ReadOnly: f.ReadOnly,
+	}
+	if f.Immutable && isEdit {
+		n.ReadOnly = true
+	}
+
+	switch f.Type {
+	case def.FieldTypeData:
+		n.Kind = widget.NodeText
+		if f.MaxLen > 0 {
+			n.Props = map[string]any{"maxLength": f.MaxLen}
+		}
+	case def.FieldTypeSmallText:
+		n.Kind = widget.NodeTextArea
+		n.Props = map[string]any{"rows": 2}
+	case def.FieldTypeLongText:
+		n.Kind = widget.NodeTextArea
+		n.Props = map[string]any{"rows": 4}
+	case def.FieldTypeInt:
+		n.Kind = widget.NodeNumber
+		n.Props = numberProps(f, 0)
+	case def.FieldTypeFloat:
+		n.Kind = widget.NodeNumber
+		n.Props = numberProps(f, 6)
+	case def.FieldTypeCurrency:
+		n.Kind = widget.NodeNumber
+		n.Props = numberProps(f, 4)
+	case def.FieldTypeBool:
+		n.Kind = widget.NodeSwitch
+	case def.FieldTypeDate:
+		n.Kind = widget.NodeDate
+	case def.FieldTypeDateTime:
+		n.Kind = widget.NodeDateTime
+	case def.FieldTypeTime:
+		n.Kind = widget.NodeDateTime
+		n.Props = map[string]any{"format": "HH:mm"}
+	case def.FieldTypeSelect:
+		n.Kind = widget.NodeSelect
+		if len(f.Options) > 0 {
+			n.Props = map[string]any{"options": optionsList(f.Options)}
+		}
+	case def.FieldTypeMultiSelect:
+		n.Kind = widget.NodeSelect
+		n.Props = map[string]any{"multiple": true, "options": optionsList(f.Options)}
+	case def.FieldTypeNamingSeries:
+		n.Kind = widget.NodeText
+		if isEdit {
+			n.ReadOnly = true
+		}
+	case def.FieldTypeJSON:
+		n.Kind = widget.NodeEditor
+	case def.FieldTypeLink:
+		n.Kind = widget.NodeSelect
+		n.DataSource = linkDataSource(f, es)
+		n.Props = map[string]any{"searchable": true}
+	case def.FieldTypeLinkList:
+		n.Kind = widget.NodeSelect
+		n.DataSource = linkDataSource(f, es)
+		n.Props = map[string]any{"searchable": true, "multiple": true}
+	case def.FieldTypeDynamicLink:
+		n.Kind = widget.NodeField
+	default:
+		n.Kind = widget.NodeText
+	}
+	return n
+}
+
+func optionsList(options []string) []map[string]any {
+	out := make([]map[string]any, 0, len(options))
+	for _, o := range options {
+		out = append(out, map[string]any{"label": o, "value": o})
+	}
+	return out
+}
+
+func linkDataSource(f def.FieldDef, es *compiler.EntitySchema) *widget.DataSource {
+	if lookup, ok := es.FieldLookups[f.Name]; ok {
+		return &widget.DataSource{
+			URL:        lookup.SearchURL,
+			Method:     "GET",
+			LabelField: lookup.LabelField,
+			ValueField: lookup.ValueField,
+		}
+	}
+	return &widget.DataSource{
+		URL: "/api/v1/" + f.LinkTarget + "?q=${keywords}", Method: "GET",
+		LabelField: "name", ValueField: "id",
+	}
+}
+
+func numberProps(f def.FieldDef, precision int) map[string]any {
+	props := map[string]any{"precision": precision}
+	if f.Min != nil {
+		props["min"] = *f.Min
+	}
+	if f.Max != nil {
+		props["max"] = *f.Max
+	}
+	return props
+}
+
+// canPerform checks whether viewer may perform action on entity.
+// Fails open on evaluator error — the API layer enforces the actual permission.
+// A superfluous button that gets a 403 is acceptable; a missing button for an
+// admin panel is a UX regression.
+func canPerform(ctx context.Context, evaluator auth.PolicyEvaluator, viewer auth.ViewerContext, entity, action string) bool {
+	if evaluator == nil || viewer == nil || viewer.IsPlatformAdmin() {
+		return true
+	}
+	ok, _ := evaluator.CanPerform(ctx, viewer, entity, action)
+	return ok
 }

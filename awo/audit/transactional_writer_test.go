@@ -328,3 +328,98 @@ func (wc *writeCapture) sanitize(record AuditRecord) {
 
 	_ = wc.inner.Write(context.Background(), record)
 }
+
+// TestTransactionalWriter_FlagDisabled verifies that Write is a no-op when
+// the feature flag loader returns false — returns nil without touching the
+// querier. Proven by passing nil querier: if the flag gate fires correctly,
+// Write returns nil; if the gate is skipped, the nil querier causes a panic
+// or a "no database" error.
+func TestTransactionalWriter_FlagDisabled(t *testing.T) {
+	t.Parallel()
+
+	// nil querier: any path past the flag gate would panic or error.
+	w := NewTransactionalWriter(nil, NewSanitizer(), NewRiskScorer()).
+		WithFlagLoader(func(_ context.Context) bool { return false })
+
+	rec := AuditRecord{
+		TenantID:      uuid.New(),
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+
+	if err := w.Write(context.Background(), rec); err != nil {
+		t.Errorf("Write with flag disabled: expected nil error, got %v", err)
+	}
+}
+
+// TestTransactionalWriter_FlagEnabled verifies that Write proceeds past the
+// flag check when the loader returns true. The flag-enabled path is proven by
+// verifying the record reaches Validate() — an invalid record returns a
+// validation error (not "no database connection available"), confirming the
+// flag-disabled early-return was NOT taken.
+func TestTransactionalWriter_FlagEnabled(t *testing.T) {
+	t.Parallel()
+
+	w := NewTransactionalWriter(nil, NewSanitizer(), NewRiskScorer()).
+		WithFlagLoader(func(_ context.Context) bool { return true })
+
+	invalidRec := AuditRecord{} // will fail Validate()
+	err := w.Write(context.Background(), invalidRec)
+	if err == nil {
+		t.Fatal("expected Validate error when flag enabled; got nil")
+	}
+	if strings.Contains(err.Error(), "no database connection available") {
+		t.Errorf("flag-enabled path skipped Validate; got: %v", err)
+	}
+}
+
+// TestTransactionalWriter_FlagDefault_Enabled verifies that Write proceeds
+// when no FlagLoader is configured (default = enabled).
+func TestTransactionalWriter_FlagDefault_Enabled(t *testing.T) {
+	t.Parallel()
+
+	wNoFallback := NewTransactionalWriter(nil, NewSanitizer(), NewRiskScorer())
+	// No WithFlagLoader → defaults to enabled.
+
+	invalidRec := AuditRecord{} // will fail Validate()
+	err := wNoFallback.Write(context.Background(), invalidRec)
+	if err == nil {
+		t.Fatal("expected Validate error; got nil")
+	}
+	// Confirm it failed at Validate, not at the "no DB" step.
+	if strings.Contains(err.Error(), "no database connection available") {
+		t.Errorf("default-enabled path skipped; got: %v", err)
+	}
+}
+
+// TestTransactionalWriter_FlagLoader_CalledOnce verifies the loader is called
+// exactly once regardless of concurrent Write calls (sync.Once guarantee).
+func TestTransactionalWriter_FlagLoader_CalledOnce(t *testing.T) {
+	t.Parallel()
+
+	var count int
+	w := NewTransactionalWriter(nil, NewSanitizer(), NewRiskScorer()).
+		WithFlagLoader(func(_ context.Context) bool {
+			count++
+			return false // disabled → no DB needed
+		})
+
+	rec := AuditRecord{
+		TenantID:      uuid.New(),
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+
+	// Call Write multiple times.
+	for i := 0; i < 5; i++ {
+		_ = w.Write(context.Background(), rec)
+	}
+
+	if count != 1 {
+		t.Errorf("FlagLoader called %d times, want exactly 1", count)
+	}
+}

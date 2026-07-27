@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"awo.so/awo/api/middleware"
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/runtime"
 )
@@ -37,8 +38,12 @@ func (s *stubValidator) ValidateAPIToken(_ context.Context, _ string, _ uuid.UUI
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func appWith(svc middleware.SessionValidator) *fiber.App {
+	return appWithSecret(svc, "")
+}
+
+func appWithSecret(svc middleware.SessionValidator, secret string) *fiber.App {
 	app := fiber.New()
-	app.Get("/", middleware.RequireAuth(svc), func(c *fiber.Ctx) error {
+	app.Get("/", middleware.RequireAuth(svc, secret), func(c *fiber.Ctx) error {
 		return c.SendStatus(fiber.StatusOK)
 	})
 	return app
@@ -128,4 +133,52 @@ func TestRequireAuth_APITokenFallback_NoTenantHeader_Returns401(t *testing.T) {
 	// no X-Tenant-ID header → cannot attempt API token
 	status := request(t, appWith(svc), "api-key", "")
 	assert.Equal(t, 401, status)
+}
+
+func TestRequireAuth_InjectsRequestContext(t *testing.T) {
+	svc := &stubValidator{session: validSession()}
+	const secret = "test-signing-secret"
+
+	var gotRC audit.RequestContext
+	var gotOK bool
+
+	app := fiber.New()
+	app.Get("/", middleware.RequireAuth(svc, secret), func(c *fiber.Ctx) error {
+		gotRC, gotOK = audit.RequestContextFromContext(c.UserContext())
+		return c.SendStatus(fiber.StatusOK)
+	})
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Authorization", "Bearer mytoken")
+	resp, err := app.Test(req, -1)
+	require.NoError(t, err)
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.True(t, gotOK, "audit.RequestContext should be present in context")
+	// SessionID must be a non-empty HMAC digest, never the raw token.
+	assert.NotEmpty(t, gotRC.SessionID, "SessionID must be set when secret is non-empty")
+	assert.NotEqual(t, "mytoken", gotRC.SessionID, "SessionID must not be the raw token")
+}
+
+func TestRequireAuth_EmptySecret_NoSessionID(t *testing.T) {
+	svc := &stubValidator{session: validSession()}
+
+	var gotRC audit.RequestContext
+	app := fiber.New()
+	app.Get("/", middleware.RequireAuth(svc, ""), func(c *fiber.Ctx) error {
+		gotRC, _ = audit.RequestContextFromContext(c.UserContext())
+		return c.SendStatus(fiber.StatusOK)
+	})
+
+	req := httptest.NewRequest("GET", "/", nil)
+	req.Header.Set("Authorization", "Bearer mytoken")
+	resp, err := app.Test(req, -1)
+	require.NoError(t, err)
+	io.Copy(io.Discard, resp.Body)
+	resp.Body.Close()
+
+	assert.Equal(t, 200, resp.StatusCode)
+	assert.Empty(t, gotRC.SessionID, "SessionID must be empty when signing secret is not configured")
 }

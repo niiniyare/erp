@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"awo.so/awo/api/response"
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/runtime"
 )
@@ -35,6 +36,10 @@ type SessionValidator interface {
 // RequireAuth validates the Bearer token, loads the session from the store,
 // builds a ViewerContext, and stores both in Fiber locals for downstream handlers.
 //
+// auditSigningSecret is the HMAC-SHA256 key used to derive AuditRecord.SessionID.
+// Pass the AUDIT_SIGNING_SECRET environment variable value. An empty string
+// disables session ID correlation in audit records (acceptable in dev/test).
+//
 // Authentication strategy (tried in order):
 //  1. Human session token — validated via [SessionValidator.ValidateToken].
 //  2. Service account API key — tried only when (1) returns 401, using
@@ -46,7 +51,7 @@ type SessionValidator interface {
 //
 // Redis failure on (1) causes 503 — cannot authenticate without session store.
 // Redis failure on (2) also causes 503 — API token cache is mandatory for safety.
-func RequireAuth(svc SessionValidator) fiber.Handler {
+func RequireAuth(svc SessionValidator, auditSigningSecret string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		token := extractBearerToken(c)
 		if token == "" {
@@ -74,14 +79,27 @@ func RequireAuth(svc SessionValidator) fiber.Handler {
 		// Populate the ephemeral RequestID for log correlation. This field
 		// is explicitly excluded from Redis storage (json:"-") — it is set
 		// fresh on every request from the X-Request-ID header.
-		if reqID, ok := c.Locals("request_id").(string); ok {
-			session.RequestID = reqID
-		}
+		reqID, _ := c.Locals("request_id").(string)
+		session.RequestID = reqID
 
 		viewer := session.ToViewer()
 
-		// Embed viewer in Go context so hooks and policies can call auth.ViewerFromContext.
+		// Inject audit.RequestContext so pipeline.RunAuditRecord can populate
+		// AuditRecord.RequestID, AuditRecord.IPAddress, AuditRecord.SessionID
+		// without reaching back into the Fiber context.
+		var sessionID string
+		if auditSigningSecret != "" {
+			sessionID = audit.HashSessionToken(token, auditSigningSecret)
+		}
+		rc := audit.RequestContext{
+			RequestID: reqID,
+			IPAddress: c.IP(),
+			SessionID: sessionID,
+		}
+
+		// Embed viewer and audit context into the Go context propagation chain.
 		ctx := auth.WithViewer(c.UserContext(), viewer)
+		ctx = audit.WithRequestContext(ctx, rc)
 		c.SetUserContext(ctx)
 
 		// Store session and viewer in Fiber locals for handlers that need them directly.
