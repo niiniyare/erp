@@ -90,4 +90,3 @@ var SettingDefinition = def.SystemDefinition{
 		Delete: []string{"platform.setting.delete"},
 	},
 }
-

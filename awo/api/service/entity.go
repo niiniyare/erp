@@ -74,6 +74,9 @@ func (s *EntityService) Create(ctx context.Context, data map[string]any, actor *
 		if txErr != nil {
 			return txErr
 		}
+		if txErr = s.pipeline.RunAuditRecord(txCtx, created, nil, created.Data); txErr != nil {
+			return txErr
+		}
 		return s.pipeline.RunAfterCreate(txCtx, created)
 	}); err != nil {
 		return nil, err
@@ -117,6 +120,9 @@ func (s *EntityService) Update(ctx context.Context, id uuid.UUID, data map[strin
 		if txErr != nil {
 			return txErr
 		}
+		if txErr = s.pipeline.RunAuditRecord(txCtx, updated, current.Data, updated.Data); txErr != nil {
+			return txErr
+		}
 		return s.pipeline.RunAfterUpdate(txCtx, updated, current)
 	}); err != nil {
 		return nil, err
@@ -141,6 +147,9 @@ func (s *EntityService) Delete(ctx context.Context, id uuid.UUID, actor *def.Act
 
 	return s.repo.WithTx(ctx, func(txCtx context.Context) error {
 		if err := s.repo.Delete(txCtx, id); err != nil {
+			return err
+		}
+		if err := s.pipeline.RunAuditRecord(txCtx, current, current.Data, nil); err != nil {
 			return err
 		}
 		return s.pipeline.RunAfterDelete(txCtx, current)

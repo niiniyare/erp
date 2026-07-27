@@ -5,8 +5,8 @@
 //
 // # Key layout
 //
-//   session:{token}                      — JSON-encoded auth.Session; TTL = ExpiresAt
-//   user_sessions:{tenantID}:{userID}    — sorted set; member = token, score = expiry unix
+//	session:{token}                      — JSON-encoded auth.Session; TTL = ExpiresAt
+//	user_sessions:{tenantID}:{userID}    — sorted set; member = token, score = expiry unix
 //
 // The sorted set enables O(log N) pruning of expired members via ZREMRANGEBYSCORE
 // and O(N) enumeration for bulk revocation. This is the only data structure that

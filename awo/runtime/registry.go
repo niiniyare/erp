@@ -27,13 +27,13 @@ type RuntimeRegistry struct {
 	byQualifiedName map[string]*compiler.EntitySchema
 
 	// Secondary indexes — each maps a namespace string to EntitySchema.
-	byTable       map[string]*compiler.EntitySchema // TableName → EntitySchema
-	byPermission  map[string]*compiler.EntitySchema // PermissionNamespace → EntitySchema
-	byWorkflow    map[string]*compiler.EntitySchema // WorkflowNamespace → EntitySchema
-	byEvent       map[string]*compiler.EntitySchema // EventNamespace → EntitySchema
-	byCache       map[string]*compiler.EntitySchema // CacheNamespace → EntitySchema
-	byMetric      map[string]*compiler.EntitySchema // MetricNamespace → EntitySchema
-	byRoute       map[string]*compiler.RouteDescriptor // Path → RouteDescriptor
+	byTable      map[string]*compiler.EntitySchema    // TableName → EntitySchema
+	byPermission map[string]*compiler.EntitySchema    // PermissionNamespace → EntitySchema
+	byWorkflow   map[string]*compiler.EntitySchema    // WorkflowNamespace → EntitySchema
+	byEvent      map[string]*compiler.EntitySchema    // EventNamespace → EntitySchema
+	byCache      map[string]*compiler.EntitySchema    // CacheNamespace → EntitySchema
+	byMetric     map[string]*compiler.EntitySchema    // MetricNamespace → EntitySchema
+	byRoute      map[string]*compiler.RouteDescriptor // Path → RouteDescriptor
 }
 
 // NewRuntimeRegistry builds a RuntimeRegistry from the compiled schema.

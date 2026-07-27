@@ -55,20 +55,20 @@ var ExchangeRateDefinition = def.SystemDefinition{
 	Description: "Point-in-time exchange rate snapshot. Immutable — create a new rate to update.",
 	Fields: []def.FieldDef{
 		{
-			Name:      "from_currency",
-			Type:      def.FieldTypeLink,
-			Label:     "From Currency",
+			Name:       "from_currency",
+			Type:       def.FieldTypeLink,
+			Label:      "From Currency",
 			LinkTarget: "finance_currency",
-			Required:  true,
-			Immutable: true,
+			Required:   true,
+			Immutable:  true,
 		},
 		{
-			Name:      "to_currency",
-			Type:      def.FieldTypeLink,
-			Label:     "To Currency",
+			Name:       "to_currency",
+			Type:       def.FieldTypeLink,
+			Label:      "To Currency",
 			LinkTarget: "finance_currency",
-			Required:  true,
-			Immutable: true,
+			Required:   true,
+			Immutable:  true,
 		},
 		{
 			Name:      "rate",
@@ -93,7 +93,7 @@ var ExchangeRateDefinition = def.SystemDefinition{
 	Permissions: def.PermissionSet{
 		Create: []string{"finance.exchange_rate.create"},
 		Read:   []string{"finance.exchange_rate.read"},
-		Write:  []string{},  // immutable — create a new rate instead
+		Write:  []string{}, // immutable — create a new rate instead
 		Delete: []string{"finance.exchange_rate.delete"},
 	},
 }

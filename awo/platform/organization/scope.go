@@ -9,12 +9,12 @@ package organization
 // Tenant isolation (Stage 1) is handled by PostgreSQL RLS and is never
 // affected by VisibilityMode. The two stages are orthogonal:
 //
-//   Stage 1: RLS fires on every DB query — tenant_id = current_tenant_id().
-//            This prevents cross-tenant leaks. VisibilityMode plays no role.
+//	Stage 1: RLS fires on every DB query — tenant_id = current_tenant_id().
+//	         This prevents cross-tenant leaks. VisibilityMode plays no role.
 //
-//   Stage 2: ResolveScope(viewer) → []uuid.UUID of visible org IDs.
-//            Application service appends org_id IN (…) to the filter.
-//            Repositories receive only typed filter predicates.
+//	Stage 2: ResolveScope(viewer) → []uuid.UUID of visible org IDs.
+//	         Application service appends org_id IN (…) to the filter.
+//	         Repositories receive only typed filter predicates.
 //
 // Repositories are organization-agnostic. They never compute visibility.
 // They receive the resolved filter and execute queries inside the tenant
@@ -22,14 +22,14 @@ package organization
 //
 // # Canonical request pipeline
 //
-//   Request
-//     → Authentication (session validation)
-//     → ViewerContext (load org assignments, roles)
-//     → OrganizationService.ResolveScope()   ← Stage 2
-//     → Append org filter to query predicates
-//     → Repository.Query()
-//     → Tenant RLS fires                     ← Stage 1
-//     → Database
+//	Request
+//	  → Authentication (session validation)
+//	  → ViewerContext (load org assignments, roles)
+//	  → OrganizationService.ResolveScope()   ← Stage 2
+//	  → Append org filter to query predicates
+//	  → Repository.Query()
+//	  → Tenant RLS fires                     ← Stage 1
+//	  → Database
 type VisibilityMode int
 
 const (

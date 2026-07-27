@@ -191,7 +191,7 @@ func (g *Generator) generateForm(es *compiler.EntitySchema, mode string) map[str
 			}
 			ctrl["options"] = opts
 		}
-		if (f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList) {
+		if f.Type == def.FieldTypeLink || f.Type == def.FieldTypeLinkList {
 			if lk, ok := es.FieldLookups[f.Name]; ok {
 				ctrl["type"] = "select"
 				ctrl["source"] = map[string]any{
@@ -265,7 +265,6 @@ func (g *Generator) generateDetail(es *compiler.EntitySchema) map[string]any {
 		},
 	}
 }
-
 
 // amisColumnType maps FieldType to amis column type.
 func amisColumnType(ft def.FieldType) string {

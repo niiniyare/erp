@@ -213,10 +213,10 @@ type memoryAdapter struct{}
 
 var _ persist.Adapter = (*memoryAdapter)(nil)
 
-func (*memoryAdapter) LoadPolicy(_ model.Model) error                            { return nil }
-func (*memoryAdapter) SavePolicy(_ model.Model) error                            { return nil }
-func (*memoryAdapter) AddPolicy(_ string, _ string, _ []string) error            { return nil }
-func (*memoryAdapter) RemovePolicy(_ string, _ string, _ []string) error         { return nil }
+func (*memoryAdapter) LoadPolicy(_ model.Model) error                    { return nil }
+func (*memoryAdapter) SavePolicy(_ model.Model) error                    { return nil }
+func (*memoryAdapter) AddPolicy(_ string, _ string, _ []string) error    { return nil }
+func (*memoryAdapter) RemovePolicy(_ string, _ string, _ []string) error { return nil }
 func (*memoryAdapter) RemoveFilteredPolicy(_ string, _ string, _ int, _ ...string) error {
 	return nil
 }

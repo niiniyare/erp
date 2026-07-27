@@ -799,10 +799,10 @@ func (r *Router) registerCompiledEntityRoutes(apiRouter fiber.Router) error {
 			g.Use(r.deps.TenantMiddleware)
 		}
 
-		g.Get("/", h.List)      // GET    /api/v1/{module}/{resource}
-		g.Get("/:id", h.Get)    // GET    /api/v1/{module}/{resource}/:id
-		g.Post("/", h.Create)   // POST   /api/v1/{module}/{resource}
-		g.Patch("/:id", h.Update) // PATCH  /api/v1/{module}/{resource}/:id
+		g.Get("/", h.List)         // GET    /api/v1/{module}/{resource}
+		g.Get("/:id", h.Get)       // GET    /api/v1/{module}/{resource}/:id
+		g.Post("/", h.Create)      // POST   /api/v1/{module}/{resource}
+		g.Patch("/:id", h.Update)  // PATCH  /api/v1/{module}/{resource}/:id
 		g.Delete("/:id", h.Delete) // DELETE /api/v1/{module}/{resource}/:id
 		totalRoutes += 5
 

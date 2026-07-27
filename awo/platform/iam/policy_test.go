@@ -19,7 +19,7 @@ func ctxWithViewer(v auth.ViewerContext) context.Context {
 	return auth.WithViewer(context.Background(), v)
 }
 
-func nowPlusHour() time.Time  { return time.Now().Add(time.Hour) }
+func nowPlusHour() time.Time    { return time.Now().Add(time.Hour) }
 func nowMinusMinute() time.Time { return time.Now().Add(-time.Minute) }
 
 func sessionViewer(userID uuid.UUID, roles ...string) auth.ViewerContext {

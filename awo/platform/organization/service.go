@@ -135,7 +135,7 @@ type CreateInput struct {
 	TenantID    uuid.UUID
 	Name        string
 	Code        string
-	Type        string    // references platform_org_type.name; not validated by framework
+	Type        string // references platform_org_type.name; not validated by framework
 	Description string
 	ParentID    uuid.UUID // uuid.Nil = root node
 	Active      bool

@@ -25,11 +25,11 @@ var InvoiceDefinition = def.SystemDefinition{
 			TenantOverridable: true,
 		},
 		{
-			Name:       "customer_id",
-			Type:       def.FieldTypeData,
-			Label:      "Customer ID",
-			Required:   true,
-			MaxLen:     36,
+			Name:     "customer_id",
+			Type:     def.FieldTypeData,
+			Label:    "Customer ID",
+			Required: true,
+			MaxLen:   36,
 		},
 		{
 			Name:       "customer_name",
@@ -186,10 +186,10 @@ var InvoiceLineDefinition = def.SystemDefinition{
 			MaxLen:   255,
 		},
 		{
-			Name:    "quantity",
-			Type:    def.FieldTypeCurrency,
+			Name:     "quantity",
+			Type:     def.FieldTypeCurrency,
 			Required: true,
-			Default: func() any { return "1.0000" },
+			Default:  func() any { return "1.0000" },
 		},
 		{Name: "unit_price", Type: def.FieldTypeCurrency, Label: "Unit Price", Required: true},
 		{
@@ -398,7 +398,7 @@ var ReceiptDefinition = def.SystemDefinition{
 	Permissions: def.PermissionSet{
 		Create: []string{"finance.receipt.create"},
 		Read:   []string{"finance.receipt.read"},
-		Write:  []string{},  // receipts are immutable
+		Write:  []string{}, // receipts are immutable
 		Delete: []string{},
 	},
 }

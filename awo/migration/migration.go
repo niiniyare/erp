@@ -166,7 +166,9 @@ type memFile struct {
 	r    *strings.Reader
 }
 
-func (f *memFile) Stat() (fs.FileInfo, error) { return &memFileInfo{name: f.name, size: int64(len(f.data))}, nil }
+func (f *memFile) Stat() (fs.FileInfo, error) {
+	return &memFileInfo{name: f.name, size: int64(len(f.data))}, nil
+}
 func (f *memFile) Read(b []byte) (int, error) { return f.r.Read(b) }
 func (f *memFile) Close() error               { return nil }
 
@@ -215,8 +217,8 @@ type memFileInfo struct {
 	isDir bool
 }
 
-func (fi *memFileInfo) Name() string      { return fi.name }
-func (fi *memFileInfo) Size() int64       { return fi.size }
+func (fi *memFileInfo) Name() string { return fi.name }
+func (fi *memFileInfo) Size() int64  { return fi.size }
 func (fi *memFileInfo) Mode() fs.FileMode {
 	if fi.isDir {
 		return fs.ModeDir | 0o555
@@ -232,10 +234,12 @@ type memDirEntry struct {
 	size int64
 }
 
-func (e *memDirEntry) Name() string               { return e.name }
-func (e *memDirEntry) IsDir() bool                { return false }
-func (e *memDirEntry) Type() fs.FileMode          { return 0 }
-func (e *memDirEntry) Info() (fs.FileInfo, error) { return &memFileInfo{name: e.name, size: e.size}, nil }
+func (e *memDirEntry) Name() string      { return e.name }
+func (e *memDirEntry) IsDir() bool       { return false }
+func (e *memDirEntry) Type() fs.FileMode { return 0 }
+func (e *memDirEntry) Info() (fs.FileInfo, error) {
+	return &memFileInfo{name: e.name, size: e.size}, nil
+}
 
 // ── Internal helpers ─────────────────────────────────────────────────────────
 

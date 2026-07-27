@@ -13,9 +13,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
 
+	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/def"
 	"awo.so/awo/platform/iam"
-	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/runtime"
 )
 

@@ -108,7 +108,7 @@ func TestVerify_WrongSecret(t *testing.T) {
 
 func TestHash(t *testing.T) {
 	h := crypto.Hash([]byte("hello"))
-	assert.Len(t, h, 64) // SHA-256 = 32 bytes = 64 hex chars
+	assert.Len(t, h, 64)                             // SHA-256 = 32 bytes = 64 hex chars
 	assert.Equal(t, h, crypto.Hash([]byte("hello"))) // deterministic
 	assert.NotEqual(t, h, crypto.Hash([]byte("world")))
 }

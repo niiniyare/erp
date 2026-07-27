@@ -131,12 +131,12 @@ var AccountDefinition = def.SystemDefinition{
 	},
 	Edges: []def.EdgeDef{
 		{
-			Name:      "children",
-			Target:    "finance_account",
-			Type:      def.EdgeOneToMany,
+			Name:       "children",
+			Target:     "finance_account",
+			Type:       def.EdgeOneToMany,
 			ForeignKey: "parent_id",
-			Label:     "Sub-Accounts",
-			OrderBy:   "code ASC",
+			Label:      "Sub-Accounts",
+			OrderBy:    "code ASC",
 		},
 	},
 	Permissions: def.PermissionSet{
@@ -191,12 +191,12 @@ var CostCenterDefinition = def.SystemDefinition{
 	},
 	Edges: []def.EdgeDef{
 		{
-			Name:      "children",
-			Target:    "finance_cost_center",
-			Type:      def.EdgeOneToMany,
+			Name:       "children",
+			Target:     "finance_cost_center",
+			Type:       def.EdgeOneToMany,
 			ForeignKey: "parent_id",
-			Label:     "Sub-Cost Centers",
-			OrderBy:   "code ASC",
+			Label:      "Sub-Cost Centers",
+			OrderBy:    "code ASC",
 		},
 	},
 	Permissions: def.PermissionSet{

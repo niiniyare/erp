@@ -20,9 +20,9 @@ import (
 // ── stub SessionValidator ─────────────────────────────────────────────────────
 
 type stubValidator struct {
-	session   *auth.Session
+	session    *auth.Session
 	sessionErr error
-	apiSession   *auth.Session
+	apiSession *auth.Session
 	apiErr     error
 }
 

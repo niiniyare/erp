@@ -31,6 +31,7 @@ import (
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
 	"awo.so/awo/api/router"
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
 	contrib "awo.so/awo/contrib/pgx"
@@ -83,6 +84,11 @@ func main() {
 		os.Exit(1)
 	}
 	tenantRepo := contrib.NewRepository(result.Pool, tenantSchema)
+
+	// Audit writer — writes AuditRecord to platform_audit_log inside the entity
+	// transaction. contrib.NewPoolQuerier provides the fallback connection for
+	// standalone auth writes that occur outside an entity transaction.
+	auditWriter := audit.NewTransactionalWriter(contrib.NewPoolQuerier(result.Pool))
 
 	// Outbox relay — delivers domain events from the transactional outbox.
 	relay := outbox.New(result.Pool)
@@ -137,12 +143,13 @@ func main() {
 
 	// CRUD routes for all registered entities — full middleware pipeline applied inside.
 	router.Register(app, result.Schema, router.RegisterOptions{
-		Pool:     result.Pool,
-		Redis:    result.Redis,
-		IAM:      iamModule.Auth,
-		Tenants:  tenantRepo,
-		Authz:    evaluator,
-		Temporal: nil, // TODO: wire Temporal client when worker is configured
+		Pool:        result.Pool,
+		Redis:       result.Redis,
+		IAM:         iamModule.Auth,
+		Tenants:     tenantRepo,
+		Authz:       evaluator,
+		Temporal:    nil, // TODO: wire Temporal client when worker is configured
+		AuditWriter: auditWriter,
 	})
 
 	// Start server.

@@ -24,7 +24,7 @@ type stubViewer struct {
 	roles           []string
 }
 
-func (v *stubViewer) TenantID() uuid.UUID        { return uuid.New() }
+func (v *stubViewer) TenantID() uuid.UUID         { return uuid.New() }
 func (v *stubViewer) UserID() uuid.UUID           { return uuid.New() }
 func (v *stubViewer) ServiceAccountID() uuid.UUID { return uuid.Nil }
 func (v *stubViewer) Roles() []string             { return v.roles }

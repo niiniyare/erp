@@ -89,12 +89,12 @@ type Module struct {
 //
 // deps:
 //   - db:         PostgreSQL connection pool. Used for user lookup, role loading,
-//                 and audit trail writes.
+//     and audit trail writes.
 //   - sessions:   Session store. Used for session persistence, retrieval, and
-//                 revocation. Production: [contrib/redis.RedisSessionStore].
+//     revocation. Production: [contrib/redis.RedisSessionStore].
 //   - tokenCache: Cache for API token validation results. Avoids a database
-//                 round-trip on every service account request. Production:
-//                 [contrib/redis.Client] (implements [cache.Cache]).
+//     round-trip on every service account request. Production:
+//     [contrib/redis.Client] (implements [cache.Cache]).
 func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache) *Module {
 	// Wire the UserRoleChangeHook singleton with the session store.
 	// The singleton is referenced by UserRoleDefinition.Hooks at init() time;

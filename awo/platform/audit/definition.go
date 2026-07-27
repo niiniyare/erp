@@ -104,4 +104,3 @@ var LogDefinition = def.SystemDefinition{
 		Delete: []string{}, // never deleted
 	},
 }
-

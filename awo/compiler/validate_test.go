@@ -36,7 +36,6 @@ func TestValidate_Clean(t *testing.T) {
 	assert.False(t, ds.HasErrors(), "expected no errors: %v", ds.Errors())
 }
 
-
 func TestValidate_RequiredAndDefault_Warning(t *testing.T) {
 	d := &def.SystemDefinition{
 		Name: "mod_item", Module: "mod", Label: "Item", LabelPlural: "Items",

@@ -131,7 +131,7 @@ type SystemDefinition struct {
 // Ensure SystemDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*SystemDefinition)(nil)
 
-func (d *SystemDefinition) EntityName() string { return d.Name }
+func (d *SystemDefinition) EntityName() string   { return d.Name }
 func (d *SystemDefinition) EntityModule() string { return d.Module }
 func (d *SystemDefinition) EntityLabel() string {
 	if d.Label != "" {
@@ -145,8 +145,8 @@ func (d *SystemDefinition) EntityLabelPlural() string {
 	}
 	return DerivePluralLabel(d.EntityLabel())
 }
-func (d *SystemDefinition) EntityPluralName() string  { return d.PluralName }
-func (d *SystemDefinition) EntityDescription() string { return d.Description }
+func (d *SystemDefinition) EntityPluralName() string         { return d.PluralName }
+func (d *SystemDefinition) EntityDescription() string        { return d.Description }
 func (d *SystemDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *SystemDefinition) EntityEdges() []EdgeDef           { return d.Edges }
 func (d *SystemDefinition) EntityHooks() HookSet             { return d.Hooks }
@@ -215,7 +215,7 @@ type CustomDefinition struct {
 // Ensure CustomDefinition implements EntityDefinition at compile time.
 var _ EntityDefinition = (*CustomDefinition)(nil)
 
-func (d *CustomDefinition) EntityName() string { return d.Name }
+func (d *CustomDefinition) EntityName() string   { return d.Name }
 func (d *CustomDefinition) EntityModule() string { return d.Module }
 func (d *CustomDefinition) EntityLabel() string {
 	if d.Label != "" {
@@ -229,8 +229,8 @@ func (d *CustomDefinition) EntityLabelPlural() string {
 	}
 	return DerivePluralLabel(d.EntityLabel())
 }
-func (d *CustomDefinition) EntityPluralName() string  { return d.PluralName }
-func (d *CustomDefinition) EntityDescription() string { return d.Description }
+func (d *CustomDefinition) EntityPluralName() string         { return d.PluralName }
+func (d *CustomDefinition) EntityDescription() string        { return d.Description }
 func (d *CustomDefinition) EntityFields() []FieldDef         { return d.Fields }
 func (d *CustomDefinition) EntityEdges() []EdgeDef           { return d.Edges }
 func (d *CustomDefinition) EntityHooks() HookSet             { return d.Hooks }

@@ -138,5 +138,3 @@ var Definition = def.SystemDefinition{
 		Delete: []string{}, // tenants are never hard-deleted — use ARCHIVED transition
 	},
 }
-
-

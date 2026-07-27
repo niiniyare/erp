@@ -513,7 +513,7 @@ func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID 
 	}
 
 	session := &auth.Session{
-		Token:            "",             // not stored in Redis under session:{token}
+		Token:            "", // not stored in Redis under session:{token}
 		UserID:           uuid.Nil,
 		ServiceAccountID: serviceAccountID,
 		TenantID:         tenantID,

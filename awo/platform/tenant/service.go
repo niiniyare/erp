@@ -53,14 +53,14 @@ type ListOptions struct {
 
 // TenantDTO is the read model returned by TenantService methods.
 type TenantDTO struct {
-	ID          uuid.UUID
-	Name        string
-	Slug        string
-	Status      string
-	Plan        string
-	Country     string
-	Locale      string
-	Timezone    string
+	ID       uuid.UUID
+	Name     string
+	Slug     string
+	Status   string
+	Plan     string
+	Country  string
+	Locale   string
+	Timezone string
 	Currency string
 }
 

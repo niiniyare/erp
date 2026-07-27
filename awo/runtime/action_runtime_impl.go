@@ -139,9 +139,9 @@ type defaultActionRuntime struct {
 
 var _ def.ActionRuntime = (*defaultActionRuntime)(nil)
 
-func (r *defaultActionRuntime) TenantID() uuid.UUID { return r.tenantID }
-func (r *defaultActionRuntime) Actor() *def.Actor   { return r.actor }
-func (r *defaultActionRuntime) Clock() time.Time    { return time.Now().UTC() }
+func (r *defaultActionRuntime) TenantID() uuid.UUID  { return r.tenantID }
+func (r *defaultActionRuntime) Actor() *def.Actor    { return r.actor }
+func (r *defaultActionRuntime) Clock() time.Time     { return time.Now().UTC() }
 func (r *defaultActionRuntime) Logger() *slog.Logger { return r.log }
 
 func (r *defaultActionRuntime) Repo(entityName string) def.ActionEntityRepo {

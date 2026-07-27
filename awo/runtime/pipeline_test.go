@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"awo.so/awo/audit"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/registry"
@@ -40,7 +41,7 @@ func TestPipeline_RunBeforeCreate_AppliesDefaults(t *testing.T) {
 	}
 
 	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema)
+	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
 
 	pctx := &runtime.CreateContext{
 		Ctx:        context.Background(),
@@ -69,7 +70,7 @@ func TestPipeline_RunBeforeCreate_RequiredFieldMissing(t *testing.T) {
 	}
 
 	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema)
+	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
 
 	pctx := &runtime.CreateContext{
 		Ctx:        context.Background(),
@@ -99,7 +100,7 @@ func TestPipeline_RunBeforeUpdate_ImmutableField(t *testing.T) {
 	}
 
 	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema)
+	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
 
 	current := &def.EntityRecord{
 		EntityName: "test_contract",
@@ -134,7 +135,7 @@ func TestPipeline_RunBeforeCreate_HookAborts(t *testing.T) {
 	}
 
 	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema)
+	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
 
 	pctx := &runtime.CreateContext{
 		Ctx:        context.Background(),

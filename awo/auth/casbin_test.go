@@ -34,7 +34,7 @@ func newTestViewer(tenantID, userID uuid.UUID, roles ...string) *testViewer {
 	}
 }
 
-func (v *testViewer) TenantID() uuid.UUID        { return v.tenantID }
+func (v *testViewer) TenantID() uuid.UUID         { return v.tenantID }
 func (v *testViewer) UserID() uuid.UUID           { return v.userID }
 func (v *testViewer) ServiceAccountID() uuid.UUID { return v.serviceAccountID }
 func (v *testViewer) Roles() []string             { return v.roles }
@@ -252,7 +252,7 @@ func TestCasbinEvaluator_DenyByDefault_NoPermissionsDeclared(t *testing.T) {
 	// Entity with no capability grants = deny all non-platform-admin
 	eval, err := auth.NewCasbinEvaluator(
 		[]auth.CapabilityGrant{}, // no grants
-		[]auth.RolePermission{},      // no role perms
+		[]auth.RolePermission{},  // no role perms
 	)
 	require.NoError(t, err)
 
@@ -268,10 +268,10 @@ func TestCasbinEvaluator_DenyByDefault_NoPermissionsDeclared(t *testing.T) {
 
 func TestFullAuthFlow_SessionToViewer_ToEvaluator(t *testing.T) {
 	s := &auth.Session{
-		Token:    "test-token",
-		UserID:   uuid.New(),
-		TenantID: uuid.New(),
-		Roles:    []string{"role:finance.accounts_payable"},
+		Token:     "test-token",
+		UserID:    uuid.New(),
+		TenantID:  uuid.New(),
+		Roles:     []string{"role:finance.accounts_payable"},
 		ExpiresAt: time.Now().Add(time.Hour),
 		IssuedAt:  time.Now(),
 	}

@@ -26,8 +26,8 @@
 //
 // Stage 1 (framework):  tenant isolation via RLS
 // Stage 2 (application): org scope via OrganizationService.ResolveScope
-//                         + operation permissions (RBAC)
-//                         + business policies (EntityDefinition.Policy)
+//   - operation permissions (RBAC)
+//   - business policies (EntityDefinition.Policy)
 //
 // # Request flow
 //

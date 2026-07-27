@@ -14,9 +14,9 @@ func registerRoutes(app *fiber.App, svc *AuthService, loginLimiter fiber.Handler
 	h := &authHandler{svc: svc}
 
 	ag := app.Group("/api/v1/auth")
-	ag.Post("/login",  loginLimiter, h.login)
+	ag.Post("/login", loginLimiter, h.login)
 	ag.Post("/logout", h.logout)
-	ag.Get("/me",      h.me)
+	ag.Get("/me", h.me)
 }
 
 type authHandler struct {

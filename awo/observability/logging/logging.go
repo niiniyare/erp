@@ -125,9 +125,9 @@ func nop() *Logger {
 type noopHandler struct{}
 
 func (noopHandler) Enabled(_ context.Context, _ slog.Level) bool  { return false }
-func (noopHandler) Handle(_ context.Context, _ slog.Record) error  { return nil }
-func (h noopHandler) WithAttrs(_ []slog.Attr) slog.Handler         { return h }
-func (h noopHandler) WithGroup(_ string) slog.Handler              { return h }
+func (noopHandler) Handle(_ context.Context, _ slog.Record) error { return nil }
+func (h noopHandler) WithAttrs(_ []slog.Attr) slog.Handler        { return h }
+func (h noopHandler) WithGroup(_ string) slog.Handler             { return h }
 
 // Global is a package-level logger used by framework internals before a
 // context is established (e.g. startup, migration). Replace in main():

@@ -109,7 +109,7 @@ func NewViewer(s *Session) *DefaultViewer {
 // Ensure DefaultViewer implements ViewerContext at compile time.
 var _ ViewerContext = (*DefaultViewer)(nil)
 
-func (v *DefaultViewer) TenantID() uuid.UUID        { return v.tenantID }
+func (v *DefaultViewer) TenantID() uuid.UUID         { return v.tenantID }
 func (v *DefaultViewer) UserID() uuid.UUID           { return v.userID }
 func (v *DefaultViewer) ServiceAccountID() uuid.UUID { return v.serviceAccountID }
 func (v *DefaultViewer) Roles() []string             { return v.roles }
@@ -159,7 +159,7 @@ func NewSystemViewer(tenantID uuid.UUID) *SystemViewer {
 // Ensure SystemViewer implements ViewerContext at compile time.
 var _ ViewerContext = (*SystemViewer)(nil)
 
-func (v *SystemViewer) TenantID() uuid.UUID        { return v.tenantID }
+func (v *SystemViewer) TenantID() uuid.UUID         { return v.tenantID }
 func (v *SystemViewer) UserID() uuid.UUID           { return uuid.Nil }
 func (v *SystemViewer) ServiceAccountID() uuid.UUID { return uuid.Nil }
 func (v *SystemViewer) Roles() []string             { return []string{"role:platform-admin"} }

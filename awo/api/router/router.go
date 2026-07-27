@@ -24,6 +24,7 @@ import (
 	"awo.so/awo/api/handler"
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/service"
+	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/cache"
 	"awo.so/awo/compiler"
@@ -36,8 +37,8 @@ import (
 
 // RegisterOptions carries dependencies needed to build handlers.
 type RegisterOptions struct {
-	Pool     *pgxlib.Pool
-	Redis    *goredis.Client
+	Pool  *pgxlib.Pool
+	Redis *goredis.Client
 	// IAM provides session and API token validation. The interface type keeps
 	// the router decoupled from the concrete *iam.AuthService implementation,
 	// which is important for framework extraction readiness.
@@ -45,6 +46,10 @@ type RegisterOptions struct {
 	Tenants  driver.EntityRepository[*def.EntityRecord] // required for TenantResolver
 	Authz    auth.PolicyEvaluator                       // nil = RBAC disabled (dev/test)
 	Temporal temporalclient.Client                      // nil = degraded mode (no workflow starts)
+	// AuditWriter is the production audit implementation. When nil, auditing is
+	// disabled and audit.NoopAuditWriter{} is used automatically. In production,
+	// pass audit.NewTransactionalWriter(contrib.NewPoolQuerier(pool)).
+	AuditWriter audit.AuditWriter
 }
 
 // Register mounts the full auto-generated API onto app under /api/v1/entities/.
@@ -72,7 +77,12 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 
 	// One pipeline shared across all entity handlers — it holds the compiled
 	// schema and performs O(1) entity lookup by QualifiedName.
-	pipeline := runtime.NewPipeline(schema)
+	// NewPipeline panics on nil auditWriter; guard here so callers don't need to.
+	aw := opts.AuditWriter
+	if aw == nil {
+		aw = audit.NoopAuditWriter{}
+	}
+	pipeline := runtime.NewPipeline(schema, aw)
 
 	for _, es := range schema.Entities {
 		repo := contrib.NewRepository(opts.Pool, es)

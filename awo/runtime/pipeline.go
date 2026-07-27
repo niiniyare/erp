@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"awo.so/awo/audit"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/naming"
@@ -18,21 +19,31 @@ import (
 //	         → BeforeSave / BeforeCreate / BeforeUpdate
 //	         → [TX begins]  (delegated to the driver)
 //	         → PERSIST      (delegated to the driver)
+//	         → AUDIT RECORD (AuditWriter.Write inside same TX)
 //	         → AfterSave / AfterCreate / AfterUpdate
 //	         → [TX commits] (delegated to the driver)
 //	         → Workflow start (outside TX)
 //
 // The Pipeline does not open database transactions directly. It calls the
 // driver's Create/Update/Delete, which manage transactions internally and
-// call the after_* hook stage from within the transaction.
+// call the audit and after_* hook stages from within the transaction.
 type Pipeline struct {
-	reg     *RuntimeRegistry
-	naming  *naming.NamingSeriesService
+	reg         *RuntimeRegistry
+	naming      *naming.NamingSeriesService
+	auditWriter audit.AuditWriter
 }
 
 // NewPipeline creates a Pipeline bound to the compiled schema via RuntimeRegistry.
-func NewPipeline(schema *compiler.CompiledSchema) *Pipeline {
-	return &Pipeline{reg: NewRuntimeRegistry(schema)}
+//
+// auditWriter must not be nil. Callers that do not require audit writes must
+// pass [audit.NoopAuditWriter]{}. Passing nil causes a panic at construction
+// time — this is intentional to prevent silent audit gaps from misconfigured
+// deployments.
+func NewPipeline(schema *compiler.CompiledSchema, auditWriter audit.AuditWriter) *Pipeline {
+	if auditWriter == nil {
+		panic("runtime: NewPipeline: auditWriter must not be nil; pass audit.NoopAuditWriter{} to disable auditing")
+	}
+	return &Pipeline{reg: NewRuntimeRegistry(schema), auditWriter: auditWriter}
 }
 
 // WithNamingService attaches a NamingSeriesService to the Pipeline. When set,
@@ -281,6 +292,52 @@ func (p *Pipeline) RunAfterDelete(ctx context.Context, record *def.EntityRecord)
 		}
 	}
 	return nil
+}
+
+// RunAuditRecord writes an audit record for the given entity mutation within
+// the caller's active database transaction (the txCtx carries the transaction
+// set by repo.WithTx). It is called by EntityService between PERSIST and the
+// after_save hook stage, always inside the transaction.
+//
+// before holds the field snapshot before the mutation (nil on Create).
+// after holds the field snapshot after the mutation (nil on Delete).
+//
+// If the entity's audit configuration has Enabled == false, RunAuditRecord
+// returns nil immediately without calling the AuditWriter.
+//
+// Failure policy is applied by [audit.Apply]: ADMIN and SECURITY categories
+// propagate the error (causing the transaction to roll back); all other
+// categories suppress the error (mutation succeeds, failure is logged).
+func (p *Pipeline) RunAuditRecord(ctx context.Context, record *def.EntityRecord, before, after map[string]any) error {
+	cfg := audit.ConfigFor(record.EntityName)
+	if !cfg.Enabled {
+		return nil
+	}
+
+	rec := audit.AuditRecord{
+		TenantID:      record.TenantID,
+		EntityName:    record.EntityName,
+		RecordID:      record.ID,
+		Operation:     auditOperationFor(before, after),
+		EventCategory: cfg.Category,
+		Actor:         record.Meta.Actor,
+		BeforeData:    before,
+		AfterData:     after,
+	}
+
+	return audit.Apply(ctx, p.auditWriter, rec)
+}
+
+// auditOperationFor derives the audit OperationType from the presence of the
+// before/after snapshots. Nil before → Create; nil after → Delete; both set → Update.
+func auditOperationFor(before, after map[string]any) audit.OperationType {
+	if before == nil {
+		return audit.OperationCreate
+	}
+	if after == nil {
+		return audit.OperationDelete
+	}
+	return audit.OperationUpdate
 }
 
 // --- Internal helpers ---

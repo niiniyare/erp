@@ -81,8 +81,13 @@ func Fingerprint(s *CompiledSchema) string {
 		writePerms("read", perms.Read)
 		writePerms("write", perms.Write)
 		writePerms("delete", perms.Delete)
-		for actionName, subjects := range perms.Actions {
-			writePerms(actionName, subjects)
+		actionNames := make([]string, 0, len(perms.Actions))
+		for actionName := range perms.Actions {
+			actionNames = append(actionNames, actionName)
+		}
+		sort.Strings(actionNames)
+		for _, actionName := range actionNames {
+			writePerms(actionName, perms.Actions[actionName])
 		}
 	}
 
