@@ -230,18 +230,36 @@ See [`08-workflow/OUTBOX_SPEC.md`](../08-workflow/OUTBOX_SPEC.md).
 
 ---
 
-## 3. Transaction Boundary
+## 3. Transaction Boundary and Ownership
 
-The transaction boundary is:
+**Transaction ownership (ADR-013):** The driver implementation (`contrib/pgx`) owns and manages all database transactions. The pipeline is stateless with respect to transactions — it does not open, commit, or roll back transactions.
+
+The driver's internal execution sequence:
 
 ```
-TX begins: immediately before PERSIST
-TX commits: immediately after after_save completes without error
-TX rolls back: when after_save returns an error
+driver.Create(ctx, input):
+  1. [TX begins]
+  2. Executes PERSIST (SQL INSERT/UPDATE/DELETE)
+  3. Calls pipeline.RunAuditRecord(ctx, record)     ← inside TX
+  4. Calls pipeline.RunAfterCreate(ctx, record)      ← inside TX
+  5. [TX commits] if all succeed
+  6. [TX rolls back] if any step 2–4 returns error
 ```
+
+The `context.Context` carries the active transaction connection. Any database operation inside `RunAuditRecord` or `RunAfterCreate` that uses the context-carried connection participates in the same transaction automatically.
+
+The transaction boundary from the pipeline stage perspective:
+
+```
+TX begins: inside driver.Create/Update/Delete, before PERSIST
+TX commits: after after_save completes without error
+TX rolls back: when PERSIST, AUDIT RECORD, or after_save returns an error
+```
+
+**Consequence for wrappers:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then performs additional writes would execute those writes OUTSIDE the committed transaction. The repository wrapper pattern MUST NOT be used for any operation that requires atomicity with the entity mutation (e.g., audit writing). See ADR-013 and ADR-014.
 
 Hooks that run before `before_save` (inclusive) MUST NOT assume a TX is open.
-Hooks that run from PERSIST onwards MUST be written to be atomic with the mutation.
+Hooks that run from PERSIST onwards (AUDIT RECORD, after_save) run inside the driver-managed TX.
 
 ---
 
@@ -294,5 +312,8 @@ This panic is intentional and catches programming errors at development time.
 - `awo/runtime/pipeline.go` — Implementation
 - [`02-pipeline/HOOK_CONTRACT.md`](HOOK_CONTRACT.md) — Hook interface signatures
 - [`02-pipeline/ERROR_MODEL.md`](ERROR_MODEL.md) — Error types and HTTP mapping
-- [`12-audit/AUDIT_SPEC.md`](../12-audit/AUDIT_SPEC.md) — AuditRecord schema
+- [`12-audit/AUDIT_SPEC.md`](../12-audit/AUDIT_SPEC.md) — AuditRecord schema and AuditWriter interface
+- [`12-audit/AUDIT_ARCH.md`](../12-audit/AUDIT_ARCH.md) — Full audit architecture
 - [`08-workflow/OUTBOX_SPEC.md`](../08-workflow/OUTBOX_SPEC.md) — Workflow outbox
+- ADR-013 in [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md) — Transaction ownership
+- ADR-014 in [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md) — Audit integration point

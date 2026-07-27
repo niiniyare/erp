@@ -2,160 +2,330 @@
 
 **Classification:** Specification — Tier 1
 **Owner:** `12-audit/AUDIT_SPEC.md`
-**Status:** Frozen at v1.0 (ADR-005)
+**Status:** Updated — v1.0 (ADR-005, ADR-013 through ADR-019)
 **Package:** `awo.so/awo/audit`
 
 ---
 
 ## Purpose
 
-This document specifies the audit pipeline stage (ADR-005), the `AuditRecord` schema, the `AuditEnabled` flag on `EntityDefinition`, and the immutability and compliance properties of the audit log.
+This document specifies:
+
+1. The AUDIT RECORD pipeline stage (ADR-005) — its position, transactional guarantees, and skip conditions.
+2. The `AuditWriter` interface — the contract between the pipeline and the audit subsystem.
+3. The `AuditRecord` schema — the data written per mutation event.
+4. The `EntityAuditConfig` registry — per-entity audit configuration without modifying frozen kernel types.
+5. Sensitive field handling — what is included and excluded from snapshots.
+6. Normative requirements.
+
+For the full unified audit architecture, storage schema, partitioning, failure policy, migration strategy, and operational model, see [`12-audit/AUDIT_ARCH.md`](AUDIT_ARCH.md).
 
 ---
 
 ## 1. ADR-005: Audit Is a Mandatory Pipeline Stage
 
-Before ADR-005, audit logging was an optional `after_save` hook. This created two problems:
-1. Hook authors could forget to add audit hooks.
-2. Hooks could be removed without removing audit side effects.
-
-ADR-005 makes audit a non-optional pipeline stage between `PERSIST` and `after_save`. The audit record is written inside the same database transaction as the entity record. If the entity write succeeds but the audit write fails, the transaction rolls back — no silent audit gaps.
-
-The pipeline order is:
+Audit is a non-optional pipeline stage inserted by the runtime between PERSIST and after_save, inside the driver-managed transaction:
 
 ```
 PERSIST → AUDIT RECORD (inside TX) → after_save → [TX commits]
 ```
 
+**Why inside the transaction:** If the entity write succeeds but the audit write fails (and the failure policy for the entity's category is Propagate), the transaction rolls back. The entity record and its audit trail are always consistent — either both exist or neither exists.
+
+**Why not a hook:** ADR-005 rejected optional audit hooks because hook authors can forget to add them or remove them without removing audit side effects. Mandatory stage eliminates silent compliance gaps.
+
+**Transaction ownership (ADR-013):** The driver (`contrib/pgx`) owns and manages the transaction. The pipeline does not open or commit transactions. The driver calls `pipeline.RunAuditRecord(ctx, record)` from within the open transaction. The `AuditWriter` implementation executes its INSERT using the transaction-carrying context. See [`02-pipeline/LIFECYCLE_SPEC.md`](../02-pipeline/LIFECYCLE_SPEC.md) for the complete pipeline with transaction boundary.
+
 ---
 
-## 2. AuditEnabled Flag
-
-`EntityDefinition` carries `AuditEnabled bool` (default: `true`). Setting it to `false` suppresses audit records for that entity entirely:
+## 2. AuditWriter Interface
 
 ```go
-var SystemLogDefinition = def.SystemDefinition{
-    Name:         "system_log",
-    Module:       "platform",
-    AuditEnabled: false,  // high-volume, no audit needed
-    // ...
+// Package awo.so/awo/audit
+
+// AuditWriter is the contract between the pipeline's AUDIT RECORD stage
+// and the audit storage backend. It is injected into the pipeline at
+// bootstrap construction time.
+//
+// The pipeline guarantees that Write is called:
+//   - after PERSIST succeeds
+//   - before after_save hooks run
+//   - inside the driver-managed database transaction (ctx carries the TX)
+//
+// Implementations must use the context-carried transaction connection
+// for their INSERT. Using a separate connection breaks the atomicity
+// guarantee.
+type AuditWriter interface {
+    // Write appends one audit record. ctx must carry an active database
+    // transaction. Write participates in that transaction.
+    //
+    // If the entity's EntityAuditConfig.Enabled is false, Write returns
+    // nil without writing (no-op per ADR-016).
+    //
+    // Failure behaviour is governed by ADR-017:
+    //   - ADMIN / SECURITY category: return the error (pipeline rolls back TX)
+    //   - All other categories: log + meter, return nil (mutation proceeds)
+    Write(ctx context.Context, record AuditRecord) error
 }
-```
 
-Entities that MUST NOT set `AuditEnabled: false`:
-- Any entity in the Finance module (regulatory compliance)
-- `User`, `Tenant`, `Role` (IAM audit requirement)
-- `JournalEntry`, `LedgerEntry`, `Payment` (financial integrity)
-- Any entity with `Sensitive: true` fields (sensitive field access must be logged)
+// NoopAuditWriter discards all audit records. Use in unit tests
+// and in non-production environments where audit storage is not configured.
+type NoopAuditWriter struct{}
+
+func (NoopAuditWriter) Write(_ context.Context, _ AuditRecord) error { return nil }
+```
 
 ---
 
-## 3. AuditRecord Schema
-
-```sql
-CREATE TABLE audit_log (
-    id           uuid        PRIMARY KEY DEFAULT gen_random_uuid(),
-    tenant_id    uuid        NOT NULL,
-    entity_type  text        NOT NULL,   -- qualified entity name, e.g. "finance_invoice"
-    record_id    uuid        NOT NULL,   -- primary key of the affected record
-    operation    text        NOT NULL    CHECK (operation IN ('create', 'update', 'delete')),
-    actor_id     uuid,                   -- user UUID; NULL for service account operations
-    service_acct uuid,                   -- service account UUID; NULL for user operations
-    before_data  jsonb,                  -- NULL on create
-    after_data   jsonb,                  -- NULL on delete
-    changed_fields text[],              -- field names that changed (update only)
-    request_id   text,                   -- X-Request-ID from middleware
-    ip_address   inet,                   -- client IP from request
-    created_at   timestamptz NOT NULL DEFAULT now()
-);
-
--- No UPDATE or DELETE on this table — ever.
--- Access: INSERT for awo_app role; SELECT for audit readers; no UPDATE/DELETE for any role.
-CREATE INDEX audit_log_entity ON audit_log (entity_type, record_id, created_at DESC);
-CREATE INDEX audit_log_actor  ON audit_log (actor_id, created_at DESC) WHERE actor_id IS NOT NULL;
-CREATE INDEX audit_log_tenant ON audit_log (tenant_id, created_at DESC);
-```
-
-`audit_log` is a global table — no RLS, no `tenant_id` FK constraint. It is accessible before per-tenant schemas load, and it records events for all tenants in one place for compliance reporting.
-
----
-
-## 4. AuditRecord (Go Struct)
+## 3. AuditRecord
 
 ```go
-// Package: awo.so/awo/audit
-
-// AuditRecord is written by the framework for every entity mutation
-// when AuditEnabled is true on the EntityDefinition.
+// AuditRecord is produced by the pipeline for every entity mutation
+// where EntityAuditConfig.Enabled is true (default).
 type AuditRecord struct {
-    ID            uuid.UUID
-    TenantID      uuid.UUID
-    EntityType    string          // qualified name e.g. "finance_invoice"
-    RecordID      uuid.UUID
-    Operation     OperationType   // "create" | "update" | "delete"
-    ActorID       *uuid.UUID      // nil for service account operations
-    ServiceAcctID *uuid.UUID      // nil for user operations
-    BeforeData    map[string]any  // nil on create
-    AfterData     map[string]any  // nil on delete
-    ChangedFields []string        // populated on update only
-    RequestID     string
-    IPAddress     string
-    CreatedAt     time.Time
+    // Identity
+    ID        uuid.UUID
+    TenantID  uuid.UUID
+    RequestID string    // X-Request-ID from middleware; empty for system ops
+
+    // Entity
+    EntityName string        // qualified name, e.g. "finance_invoice"
+    RecordID   uuid.UUID     // primary key of the affected record
+    Operation  OperationType // Create | Update | Delete
+
+    // Actor — exactly one of Actor or SystemActor is set
+    Actor       *def.Actor  // nil for system operations (ADR-015)
+    SystemActor SystemActor // empty for human/service-account operations
+
+    // Request context (nil for system operations)
+    IPAddress string
+    SessionID string // HMAC-SHA256(session_token, server_secret) — never raw token
+
+    // Snapshots — sensitive fields excluded before population (§5)
+    BeforeData    map[string]any // nil on Create
+    AfterData     map[string]any // nil on Delete
+    ChangedFields []string       // populated on Update only
+
+    // Classification
+    EventCategory EventCategory // DATA | AUTH | ACCESS | ADMIN | WORKFLOW | SYSTEM | OUTBOUND | SECURITY
+    Severity      Severity      // CRITICAL | HIGH | MEDIUM | LOW | INFO
+    RiskScore     int           // 0–100 composite score
+    ComplianceFlags map[string]bool // GDPR, PCI_DSS, KRA_ETIMS, etc.
+
+    // Context — event-type-specific JSONB blob; schema by EventCategory
+    Context map[string]any
+
+    // Timestamps
+    CreatedAt time.Time
 }
+
+// OperationType represents the mutation operation.
+type OperationType string
+
+const (
+    OperationCreate OperationType = "create"
+    OperationUpdate OperationType = "update"
+    OperationDelete OperationType = "delete"
+)
+
+// EventCategory classifies the audit event for routing, failure policy, and retention.
+type EventCategory string
+
+const (
+    CategoryData     EventCategory = "DATA"
+    CategoryAuth     EventCategory = "AUTH"
+    CategoryAccess   EventCategory = "ACCESS"
+    CategoryAdmin    EventCategory = "ADMIN"
+    CategoryWorkflow EventCategory = "WORKFLOW"
+    CategorySystem   EventCategory = "SYSTEM"
+    CategoryOutbound EventCategory = "OUTBOUND"
+    CategorySecurity EventCategory = "SECURITY"
+)
+
+// Severity classifies the risk level of the audit event.
+type Severity string
+
+const (
+    SeverityCritical Severity = "CRITICAL"
+    SeverityHigh     Severity = "HIGH"
+    SeverityMedium   Severity = "MEDIUM"
+    SeverityLow      Severity = "LOW"
+    SeverityInfo     Severity = "INFO"
+)
+
+// SystemActor identifies non-human execution contexts.
+type SystemActor string
+
+const (
+    SystemBootstrap   SystemActor = "system:bootstrap"
+    SystemMigration   SystemActor = "system:migration"
+    SystemOutboxRelay SystemActor = "system:outbox-relay"
+    SystemScheduler   SystemActor = "system:scheduler"
+)
 ```
 
 ---
 
-## 5. What Is Included in Before/After Data
+## 4. EntityAuditConfig Registry
 
-`BeforeData` and `AfterData` contain the full entity record as a JSON object, **excluding**:
-- Fields with `Sensitive: true` — MUST be excluded from audit records
-- `custom_fields` JSONB blob — included as-is (no per-key sensitivity filtering)
-- Computed/virtual fields — not persisted, not in audit
+`def.SystemDefinition` and `def.CustomDefinition` are frozen kernel types (ADR-016). Audit-specific configuration is declared separately in `awo/audit`:
 
-The audit writer calls `EntityRecord.ToAuditMap()` which applies the sensitivity exclusion. The exclusion is derived from field metadata at compile time and cannot be overridden per-record.
+```go
+// EntityAuditConfig declares audit behaviour for one entity.
+// Register from init() alongside def.Register().
+type EntityAuditConfig struct {
+    // EntityName is the qualified entity name, e.g. "finance_invoice".
+    // Must match the EntityDefinition.EntityName() exactly.
+    EntityName string
+
+    // Enabled controls whether audit records are written for this entity.
+    // Default: true. Setting false suppresses ALL audit for this entity.
+    //
+    // MUST NOT be set to false for:
+    //   - Any Finance module entity (KRA eTIMS, regulatory compliance)
+    //   - IAM entities: user, tenant, role (IAM audit requirement)
+    //   - Any entity with Sensitive: true fields
+    Enabled bool
+
+    // Category classifies all audit records for this entity.
+    // Default: CategoryData.
+    // IAM module sets CategoryAuth / CategoryAdmin.
+    // Platform admin operations set CategoryAdmin.
+    Category EventCategory
+
+    // AdditionalSensitiveFields lists field names to strip from snapshots
+    // in addition to fields already marked Sensitive: true in FieldDef.
+    // Use for runtime-discovered PII not known at compile time.
+    AdditionalSensitiveFields []string
+}
+
+// Register declares audit configuration for an entity.
+// Panics if called after bootstrap completes (init() only).
+// Panics if EntityName is already registered (duplicate registration).
+func Register(cfg EntityAuditConfig) { ... }
+
+// ConfigFor returns the audit configuration for entityName.
+// Returns default config (Enabled: true, Category: CategoryData) if
+// no explicit registration exists.
+func ConfigFor(entityName string) EntityAuditConfig { ... }
+```
+
+Entities without explicit registration use defaults: `Enabled: true`, `Category: CategoryData`.
 
 ---
 
-## 6. Changed Fields Computation
+## 5. Sensitive Field Handling
 
-For update operations, `ChangedFields` contains the names of fields whose value changed between `BeforeData` and `AfterData`. Comparison is deep equality via `reflect.DeepEqual` after JSON round-trip normalisation.
+The audit writer applies sensitivity stripping before populating `BeforeData` and `AfterData`. The stripping order is:
 
-Fields that are not present in the update patch but whose persisted value did not change are NOT included in `ChangedFields`.
+```
+1. Strip fields where FieldDef.Sensitive == true (compile-time; from CompiledSchema)
+2. Strip fields in EntityAuditConfig.AdditionalSensitiveFields (registration-time)
+3. Strip fields in audit_sensitive_fields DB config (runtime; RiskScorer cache)
+4. Compute ChangedFields diff from the stripped maps (not from raw data)
+```
 
----
+**Critical invariant:** Diff computation uses stripped data. If a field is sensitive, its change is not recorded in `ChangedFields`. The field name does not appear in `ChangedFields` at all.
 
-## 7. Service Account Operations
+**`custom_fields` JSONB:** The entire blob is included as-is. Per-key sensitivity filtering within `custom_fields` is not supported in v1 — if any key in `custom_fields` is sensitive, suppress the entire blob via `AdditionalSensitiveFields: []string{"custom_fields"}`.
 
-Operations triggered by service accounts (machine-to-machine API clients) populate `ServiceAcctID` and leave `ActorID` nil. The audit trail remains complete — the service account identity is the audit principal.
-
-Platform admin operations populate both `ActorID` (the human admin) and leave `ServiceAcctID` nil.
-
----
-
-## 8. Tamper Evidence
-
-The `audit_log` table has no `UPDATE` or `DELETE` grants for the `awo_app` database role. The application cannot overwrite or delete audit records. Deletion requires direct superuser access, which is logged by PostgreSQL's own audit extension.
-
-For legally mandated audit retention, configure PostgreSQL point-in-time recovery (PITR) with retention matching the compliance requirement (minimum 7 years for KRA eTIMS).
+**Computed/virtual fields:** Never in snapshots. Not persisted, not audited.
 
 ---
 
-## 9. Normative Requirements
+## 6. Skip Conditions
 
-- The audit record MUST be written within the same database transaction as the entity record.
-- Sensitive fields MUST be excluded from `before_data` and `after_data`.
-- `AuditEnabled: false` MUST NOT be set on financial, IAM, or sensitive entities.
-- `audit_log` MUST NOT have RLS enabled — it is a global table.
-- The `awo_app` role MUST NOT have `UPDATE` or `DELETE` privileges on `audit_log`.
-- `changed_fields` MUST be computed and populated for every update operation.
+The AUDIT RECORD stage is skipped (no write, no error) when:
+
+1. `EntityAuditConfig.Enabled == false` for the entity.
+2. No `AuditWriter` is injected (bootstrap injected `NoopAuditWriter`).
+3. The operation is a read (Get, Query, Count, Exists) — reads are not pipelined.
+
+When skipped, the pipeline proceeds to after_save without executing any audit write.
+
+---
+
+## 7. Actor Population Rules
+
+The `AuditRecord` actor fields follow these rules:
+
+| Execution Context | `Actor` | `SystemActor` |
+|---|---|---|
+| Human user request | `*def.Actor` (UserID set, ServiceAccountID nil) | empty |
+| Service account request | `*def.Actor` (ServiceAccountID set, UserID nil) | empty |
+| Platform admin request | `*def.Actor` (UserID set, roles include "role:platform-admin") | empty |
+| Bootstrap migration | nil | `SystemBootstrap` |
+| Outbox relay dispatch | nil | `SystemOutboxRelay` |
+| Scheduler job | nil | `SystemScheduler` |
+
+Exactly one of `Actor` or `SystemActor` is non-nil/non-empty per record.
+
+---
+
+## 8. Changed Fields Computation
+
+For Update operations:
+
+- `ChangedFields` contains field names whose value differs between `BeforeData` (pre-strip) and `AfterData` (pre-strip), after sensitivity stripping.
+- Comparison: deep equality after JSON round-trip normalization.
+- Fields not in the update patch but whose value did not change are NOT in `ChangedFields`.
+- Sensitive fields are excluded from `ChangedFields` (the field name does not appear).
+
+---
+
+## 9. Failure Policy
+
+Governed by ADR-017. Applied by the `AuditWriter` implementation, not the pipeline:
+
+| Category | On write failure |
+|----------|-----------------|
+| ADMIN | Return error → pipeline propagates → driver rolls back TX |
+| SECURITY | Return error → pipeline propagates → driver rolls back TX |
+| DATA | Log ERROR + increment `audit_write_failure_total{category="DATA"}` → return nil |
+| AUTH | Log ERROR + increment counter → return nil |
+| ACCESS | Log ERROR + increment counter → return nil |
+| WORKFLOW | Log ERROR + increment counter → return nil |
+| SYSTEM | Log ERROR + increment counter → return nil |
+| OUTBOUND | Log ERROR + increment counter → return nil |
+
+---
+
+## 10. Session ID Handling
+
+The `AuditRecord.SessionID` field stores an HMAC-SHA256 of the session token, not the raw token. This allows:
+- Correlating all requests from the same session without exposing the raw token.
+- Preventing rainbow-table attacks on session tokens if the audit log is compromised.
+
+The HMAC secret is the server's session signing secret, injected at bootstrap. It is never stored in the audit record.
+
+```
+SessionID = HMAC-SHA256(session_token, server_signing_secret)
+         encoded as hex string (64 characters)
+```
+
+---
+
+## 11. Normative Requirements
+
+- The AUDIT RECORD stage MUST execute within the driver-managed database transaction (ADR-013).
+- The `AuditWriter` MUST use the context-carried transaction connection for its INSERT (ADR-013).
+- Sensitive fields MUST be stripped before populating `BeforeData` and `AfterData` (§5).
+- `ChangedFields` MUST be computed from stripped data, not raw data (§5).
+- Exactly one of `Actor` or `SystemActor` MUST be set per record (§7).
+- `SessionID` MUST be HMAC-SHA256 of the session token; the raw token MUST NOT be stored (§10).
+- `EntityAuditConfig.Enabled: false` MUST NOT be set on finance, IAM, or sensitive entities (§4).
+- The `AuditWriter` failure policy MUST follow ADR-017 by category (§9).
+- The `AuditWriter` is injected at bootstrap; there is no global singleton (ADR-014).
+- `def.Actor` is the single actor type; no parallel audit actor type exists (ADR-015).
 
 ---
 
 ## References
 
-- `awo/audit/audit.go` — AuditRecord struct, writer interface
-- [`12-audit/AUDIT_QUERY_PATTERNS.md`](AUDIT_QUERY_PATTERNS.md) — How to query audit log
-- [`04-multitenancy/GLOBAL_TABLES.md`](../04-multitenancy/GLOBAL_TABLES.md) — audit_log as global table
-- [`01-entity/FIELD_TYPES_REFERENCE.md`](../01-entity/FIELD_TYPES_REFERENCE.md) — Sensitive field flag
-- ADR-005 in [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md)
+- [`12-audit/AUDIT_ARCH.md`](AUDIT_ARCH.md) — Full unified audit architecture
+- [`12-audit/AUDIT_STORAGE.md`](AUDIT_STORAGE.md) — Storage schema, partitioning, RLS, retention
+- [`12-audit/AUDIT_MIGRATION.md`](AUDIT_MIGRATION.md) — Migration from legacy dual system
+- [`02-pipeline/LIFECYCLE_SPEC.md`](../02-pipeline/LIFECYCLE_SPEC.md) — Pipeline with AUDIT RECORD stage
+- [`00-overview/DECISION_REGISTER.md`](../00-overview/DECISION_REGISTER.md) — ADR-005, ADR-013 through ADR-019
+- [`01-entity/FIELD_TYPES_REFERENCE.md`](../01-entity/FIELD_TYPES_REFERENCE.md) — `Sensitive` field flag
+- [`04-multitenancy/GLOBAL_TABLES.md`](../04-multitenancy/GLOBAL_TABLES.md) — `platform_audit_log` as global table

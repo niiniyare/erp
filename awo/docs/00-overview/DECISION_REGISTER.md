@@ -29,6 +29,13 @@ This document is the canonical record of all architectural decisions (ADRs) for 
 | ADR-010 | Hook recursion on same entity = runtime panic | Frozen |
 | ADR-011 | Compiler output: `CasbinPolicies` renamed to `CapabilityGrants` | Frozen |
 | ADR-012 | Organization hierarchy: deferred to v1.1 | Frozen |
+| ADR-013 | Transaction ownership: driver (`contrib/pgx`) owns and manages TX | Frozen |
+| ADR-014 | Audit integration: pipeline AUDIT RECORD stage via `AuditWriter`; no repository wrapper | Frozen |
+| ADR-015 | Unified actor model: `def.Actor` is the single actor type; no parallel audit actor | Frozen |
+| ADR-016 | Audit configuration: `EntityAuditConfig` registry in `awo/audit`; no `def` modification | Frozen |
+| ADR-017 | Audit failure policy: category-driven; ADMIN/SECURITY propagate; others suppress+log+meter | Frozen |
+| ADR-018 | Audit storage: `platform_audit_log`, monthly range partitions, no RLS, global table | Frozen |
+| ADR-019 | Dual audit elimination: unified `platform_audit_log` supersedes `iam_audit_log` + SQL triggers | Frozen |
 
 ---
 
@@ -255,6 +262,187 @@ The `PolicyEvaluator` implementation (ADR-001) loads `CapabilityGrants` and tran
 
 ---
 
+## ADR-013: Transaction Ownership
+
+**Decision:** The driver implementation (`contrib/pgx`) owns and manages all database transactions. The pipeline (`awo/runtime`) is stateless with respect to transactions — it does not open, commit, or roll back transactions directly.
+
+The contract is:
+
+```
+driver.Create(ctx, input):
+  1. Opens PostgreSQL transaction
+  2. Executes PERSIST (SQL INSERT)
+  3. Calls pipeline.RunAuditRecord(ctx, record)  ← inside open TX
+  4. Calls pipeline.RunAfterCreate(ctx, record)   ← inside open TX
+  5. Commits if all succeed; rolls back if any fail
+```
+
+The `context.Context` carries the active transaction connection. Any operation inside `RunAuditRecord` or `RunAfterCreate` that calls into the database through the context-carried connection participates in the same transaction automatically.
+
+**Model A (pipeline owns TX):** Rejected. Would require the pipeline to know about `pgx.Tx` or a generic `Tx` interface, importing persistence concerns into the domain layer — a layering violation.
+
+**Model B (driver owns TX):** Adopted. The driver is the only layer that may open transactions. All transactional work (PERSIST, AUDIT RECORD, after_save) is orchestrated by the driver after the pipeline's pre-persist stages complete.
+
+**Consequence for the repository wrapper pattern:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then writes an audit record afterward would write the audit record OUTSIDE the committed transaction. This is a correctness failure. The repository wrapper pattern MUST NOT be used for audit integration.
+
+**Consequence for `AuditWriter`:** The `AuditWriter` must be invoked by the driver inside the open transaction, not by any outer wrapper. The pipeline receives an `AuditWriter` via its constructor. The driver calls `pipeline.RunAuditRecord(ctx, record)` from within the TX. See ADR-014.
+
+---
+
+## ADR-014: Audit Integration Point
+
+**Decision:** The AUDIT RECORD pipeline stage (ADR-005) is the sole integration point for audit writing. The pipeline holds a reference to an `AuditWriter` interface. The driver calls `pipeline.RunAuditRecord(ctx, record)` from within its open transaction. The `AuditWriter` implementation executes an INSERT into `platform_audit_log` using the transaction-carrying context.
+
+```go
+// awo/audit — public contract
+type AuditWriter interface {
+    // Write appends one audit record. ctx must carry an active database
+    // transaction; the write participates in that transaction.
+    // If the entity's audit config suppresses audit, Write returns nil
+    // without writing.
+    Write(ctx context.Context, record AuditRecord) error
+}
+```
+
+The pipeline wires the `AuditWriter` at construction time. Module code never calls `AuditWriter` directly.
+
+**Rejected:** Repository wrapper (`AuditingRepository[T]`). With Model B confirmed (ADR-013), a post-call audit write is outside the committed TX. The wrapper approach is architecturally unsound at this stack layer.
+
+**Rejected:** Optional `AfterSave` hook for audit writing. ADR-005 mandates audit as a non-optional pipeline stage to prevent silent compliance gaps.
+
+**Consequence:** `AuditWriter` is injected into the pipeline at bootstrap. Any system that does not inject an `AuditWriter` must provide a `NoopAuditWriter`. There is no default global writer.
+
+---
+
+## ADR-015: Unified Actor Model
+
+**Decision:** `def.Actor` (defined in `awo/def`) is the single actor type used everywhere in the framework, including audit records. No parallel `audit.Actor` type exists. The `audit` package imports `def.Actor` — not the reverse.
+
+```go
+// def.Actor is the canonical actor (ADR-003)
+type Actor struct {
+    UserID           uuid.UUID  // uuid.Nil for service accounts
+    ServiceAccountID uuid.UUID  // uuid.Nil for human users
+    TenantID         uuid.UUID
+    Roles            []string
+}
+```
+
+Background operations (bootstrap, migrations, outbox relay, cron jobs) use typed `SystemActor` constants defined in `awo/audit`:
+
+```go
+// awo/audit — SystemActor values for non-human execution contexts
+// These are stored in AuditRecord.SystemActor; AuditRecord.Actor is nil.
+type SystemActor string
+
+const (
+    SystemBootstrap   SystemActor = "system:bootstrap"
+    SystemMigration   SystemActor = "system:migration"
+    SystemOutboxRelay SystemActor = "system:outbox-relay"
+    SystemScheduler   SystemActor = "system:scheduler"
+)
+```
+
+**Rejected:** A separate `audit.Actor` struct. Two actor models require two construction paths, two serialization formats, and perpetual translation code. The `def.Actor` already captures all required identity fields.
+
+**Consequence:** `audit.AuditRecord.Actor` is `*def.Actor` (nil for system operations). `audit.AuditRecord.SystemActor` is `SystemActor` (empty string for human/service-account operations). Exactly one of the two is set per record.
+
+---
+
+## ADR-016: Audit Entity Configuration
+
+**Decision:** The `def.SystemDefinition` and `def.CustomDefinition` structs are frozen kernel types (v1.0). Adding audit-specific fields to them would violate the freeze. Instead, audit configuration for an entity is declared in `awo/audit` via `EntityAuditConfig`:
+
+```go
+// awo/audit
+type EntityAuditConfig struct {
+    EntityName   string        // qualified name, e.g. "finance_invoice"
+    Enabled      bool          // default: true; false suppresses all audit for entity
+    Category     EventCategory // DATA | AUTH | ACCESS | ADMIN | WORKFLOW | SYSTEM | OUTBOUND | SECURITY
+    SensitiveFields []string   // field names to strip before snapshot (in addition to def.FieldDef.Sensitive)
+    // FailurePolicy is derived from Category; not configurable per entity.
+}
+
+// Register declares audit configuration for an entity.
+// Call from init() alongside def.Register().
+func Register(cfg EntityAuditConfig) { ... }
+```
+
+The `audit.RiskScorer` reads sensitivity configuration from both `def.FieldDef.Sensitive` (compile-time) and `audit_sensitive_fields` (runtime DB config). The `EntityAuditConfig` registry is the authoritative source for per-entity overrides.
+
+**Rejected:** Adding `AuditEnabled bool` and `AuditCategory` fields to `def.SystemDefinition`. Frozen kernel — no modifications permitted post-v1.0.
+
+**Rejected:** Reading audit config entirely from the database at query time. Startup warm-up cache is required (synchronous, before HTTP server starts) to avoid per-request DB reads on the audit path.
+
+**Consequence:** Module authors call `audit.Register(EntityAuditConfig{...})` from `init()`. The audit package reads this registry. Entities without an explicit registration use defaults (Enabled: true, Category: DATA).
+
+---
+
+## ADR-017: Audit Failure Policy
+
+**Decision:** Whether an audit write failure propagates (aborts the originating mutation) or is suppressed (logged, metered, but mutation proceeds) is determined by the event category of the audit record.
+
+| Category | Failure Policy | Rationale |
+|----------|---------------|-----------|
+| ADMIN | **Propagate** — mutation aborts | Admin actions without a trail are a security violation |
+| SECURITY | **Propagate** — mutation aborts | Security events must be recorded or denied |
+| DATA | Suppress + log + meter | High-volume; partial audit gap acceptable at ERP scale |
+| AUTH | Suppress + log + meter | Auth events written by IAM service; failure is non-critical |
+| ACCESS | Suppress + log + meter | Access denials are already tracked at PolicyEvaluator layer |
+| WORKFLOW | Suppress + log + meter | Workflow outbox provides independent durability |
+| SYSTEM | Suppress + log + meter | System events are operational, not compliance-critical |
+| OUTBOUND | Suppress + log + meter | Outbound events tracked by event_outbox independently |
+
+Suppress means: the `AuditWriter.Write` error is logged at ERROR level, a `audit_write_failure_total` Prometheus counter is incremented (labeled by category), and nil is returned to the caller.
+
+Propagate means: the `AuditWriter.Write` error is returned unmodified. The driver rolls back the transaction.
+
+**Rejected:** Propagate-all (write fails → mutation aborts for every entity). Renders high-volume DATA operations fragile against audit table I/O spikes.
+
+**Rejected:** Suppress-all. Allows silent compliance gaps on ADMIN and SECURITY operations, which is a regulatory violation.
+
+---
+
+## ADR-018: Audit Storage Architecture
+
+**Decision:** A single `platform_audit_log` table replaces the two existing audit implementations (`iam_audit_log` Go entity and `audit_log` SQL trigger table). The unified table is:
+
+- **Global** — no RLS, no per-tenant isolation at the table level. Tenant scoping is enforced by permission checks (IAM) and query filters (application layer).
+- **Monthly range-partitioned** on `created_at`. Bootstrap creates current month + 2 months ahead. A scheduled job creates future partitions and archives old ones.
+- **Append-only** — `awo_app` role has INSERT + SELECT only. UPDATE and DELETE are reserved for the `audit_retention_role` PostgreSQL role (GDPR anonymization only).
+- **Schema:** See `12-audit/AUDIT_STORAGE.md` for full DDL and partition management.
+
+Columns required beyond the existing `audit_log` schema (ADR-005):
+- `severity` TEXT — CRITICAL | HIGH | MEDIUM | LOW | INFO
+- `risk_score` SMALLINT — 0–100 composite score
+- `event_category` TEXT — one of 8 categories (ADR-017)
+- `compliance_flags` JSONB — GDPR/PCI-DSS/KRA-eTIMS flags from config
+- `session_id` TEXT — HMAC-SHA256 of session token (never raw token)
+- `context` JSONB — event-type-specific context (request, system, workflow)
+- `system_actor` TEXT — populated for system operations; NULL for human/SA
+
+**Rejected:** Keeping both `iam_audit_log` and `audit_log`. Two disconnected implementations produce inconsistent compliance reports, duplicate storage, and divergent schemas.
+
+**Rejected:** Full hash chain per record (tamper evidence v2). Deferred to v2 — SHA-256 integrity checkpoints per partition are sufficient for v1 tamper evidence.
+
+---
+
+## ADR-019: Dual Audit Elimination
+
+**Decision:** The legacy dual audit system is superseded by the unified `platform_audit_log` (ADR-018):
+
+| Legacy | Status | Migration |
+|--------|--------|-----------|
+| `iam_audit_log` Go entity (`awo/platform/audit/definition.go`) | **Retired** | Historical records migrated to `platform_audit_log` |
+| SQL trigger `audit_log` table (migrations 000448–000451) | **Retired** | SQL triggers removed; trigger management functions dropped |
+| `awo/platform/audit/` package | **Repurposed** | Becomes thin adapter exposing `platform_audit_log` read API |
+
+Migration is gated by the `feature.unified_audit.enabled` feature flag in `platform_audit_config`. When the flag is false, the legacy system remains active. When true, the unified system is active. Blue-green migration completes when all historical records are migrated and the flag is permanently set to true.
+
+**Consequence:** The `audit_log` SQL trigger infrastructure (functions `enable_audit_on_table`, `audit_trigger_function`, `get_audit_statistics`, etc.) is removed via a migration. The Go `audit.LogDefinition` entity registration is removed. The IAM module's `iam.audit_log.read` permission is replaced by `platform.audit_log.read`.
+
+---
+
 ## Public Contracts (Frozen)
 
 The following are public contracts that cannot change without a new ADR and breaking-change notice:
@@ -271,6 +459,10 @@ The following are public contracts that cannot change without a new ADR and brea
 | `widget.Node` struct + `NodeKind` constants | `awo/sdui/widget` | v1.0 |
 | `event_outbox` table schema | PostgreSQL | v1.0 |
 | `workflow_outbox` table schema | PostgreSQL | v1.0 |
+| `audit.AuditWriter` interface | `awo/audit` | v1.0 |
+| `audit.AuditRecord` struct | `awo/audit` | v1.0 |
+| `audit.EntityAuditConfig` registry API | `awo/audit` | v1.0 |
+| `platform_audit_log` table schema (base columns) | PostgreSQL | v1.0 |
 | Entity naming convention `{module}_{noun}` | Convention | Forever |
 | `awo.so/awo/*` package paths | Go module | Forever |
 
@@ -287,3 +479,5 @@ See `awo/docs/ARCH_FREEZE_REVIEW.md` for the full rationale, rejected alternativ
 - `awo/docs/ARCH_FREEZE_REVIEW.md` — Constitutional source document
 - [`00-overview/ARCH_OVERVIEW.md`](ARCH_OVERVIEW.md) — System architecture
 - [`00-overview/PACKAGE_DEPENDENCY_MAP.md`](PACKAGE_DEPENDENCY_MAP.md) — Package DAG
+- [`12-audit/AUDIT_ARCH.md`](../12-audit/AUDIT_ARCH.md) — Unified audit architecture (ADR-013 through ADR-019)
+- [`12-audit/AUDIT_SPEC.md`](../12-audit/AUDIT_SPEC.md) — Audit pipeline stage specification (ADR-005)
