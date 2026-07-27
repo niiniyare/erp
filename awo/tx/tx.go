@@ -20,6 +20,32 @@ type Conn interface {
 	InTx() bool
 }
 
+// Querier is an optional extension of Conn for packages that need to execute
+// SQL using the current transaction connection without importing the driver
+// implementation (e.g. awo/audit). Driver implementations should implement
+// Querier on their Conn type so that non-driver packages can participate in
+// the active transaction.
+//
+// The signature mirrors pgx.Tx.Exec to avoid an adapter layer, but the
+// interface itself has no pgx import — only context and standard types.
+type Querier interface {
+	// ExecSQL executes a SQL statement using the current connection (pool or
+	// active transaction). Returns the number of rows affected.
+	ExecSQL(ctx context.Context, sql string, args ...any) (int64, error)
+}
+
+// QuerierFromContext returns the Querier for the connection embedded in ctx,
+// or (nil, false) if no connection is present or the connection does not
+// implement Querier.
+func QuerierFromContext(ctx context.Context) (Querier, bool) {
+	c := ConnFromContext(ctx)
+	if c == nil {
+		return nil, false
+	}
+	q, ok := c.(Querier)
+	return q, ok
+}
+
 type contextKey struct{}
 
 // WithConn embeds a driver connection (possibly transacted) into ctx.

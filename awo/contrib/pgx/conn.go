@@ -50,6 +50,13 @@ func (c *pgConn) db() execer {
 	return c.pool
 }
 
+// ExecSQL implements tx.Querier, allowing non-driver packages (e.g. awo/audit)
+// to execute SQL within the active transaction without importing contrib/pgx.
+func (c *pgConn) ExecSQL(ctx context.Context, sql string, args ...any) (int64, error) {
+	tag, err := c.db().Exec(ctx, sql, args...)
+	return tag.RowsAffected(), err
+}
+
 // setTenantContext calls the stored procedure that sets the RLS session variable.
 // Must be called inside the transaction BEFORE any DML on tenant-scoped tables.
 func setTenantContext(ctx context.Context, e execer, tenantID string) error {

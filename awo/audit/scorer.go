@@ -1,0 +1,137 @@
+package audit
+
+import (
+	"context"
+	"log/slog"
+	"sync/atomic"
+	"unsafe"
+)
+
+// RiskScorer computes a 0–100 risk score for an AuditRecord based on the
+// operation type, actor, entity category, and runtime configuration loaded
+// from the database.
+//
+// The scorer is safe for concurrent use. The internal state is updated
+// atomically when Warm completes so in-flight Score calls always see a
+// consistent snapshot.
+type RiskScorer struct {
+	// state is an atomically-swapped pointer to scorerState.
+	// Uses unsafe.Pointer to allow lock-free reads.
+	state unsafe.Pointer // *scorerState
+}
+
+// scorerState holds the immutable snapshot used during scoring.
+type scorerState struct {
+	// sensitiveEntities is the set of entity names that carry a risk premium.
+	// Populated from audit_sensitive_fields at Warm time.
+	sensitiveEntities map[string]struct{}
+}
+
+var defaultScorerState = &scorerState{
+	sensitiveEntities: make(map[string]struct{}),
+}
+
+// NewRiskScorer returns a RiskScorer using default scoring rules.
+// Call Warm(ctx) once after the database is reachable to load runtime config.
+func NewRiskScorer() *RiskScorer {
+	rs := &RiskScorer{}
+	atomic.StorePointer(&rs.state, unsafe.Pointer(defaultScorerState))
+	return rs
+}
+
+// Warm loads runtime scoring configuration from the database. It is called
+// once during bootstrap after the database connection is available.
+//
+// If the audit_sensitive_fields table does not yet exist (pre-Phase-2
+// migration), Warm logs a warning and returns nil — the scorer falls back to
+// default rules. This allows Phase 1 code to function before Phase 2
+// migrations are applied.
+func (rs *RiskScorer) Warm(_ context.Context) error {
+	// Phase 1: no DB query yet — Phase 2 will add the actual query against
+	// audit_sensitive_fields. For now, store the default state.
+	//
+	// This stub exists so that callers (main.go) can call Warm without
+	// conditional compilation and Phase 2 can add the DB query here without
+	// changing any call sites.
+	slog.Info("audit: RiskScorer warmed with default rules (audit_sensitive_fields not yet migrated)")
+	return nil
+}
+
+// Score computes and returns the 0–100 risk score for the given record.
+//
+// Scoring rules (additive, capped at 100):
+//
+//	Base by operation:
+//	  delete  → 30
+//	  create  → 10
+//	  update  → 10
+//	  action  → 15
+//	  login   → 5
+//	  logout  → 0
+//	  system  → 0
+//
+//	Category premium:
+//	  ADMIN    → +30
+//	  SECURITY → +30
+//	  AUTH     → +10
+//	  ACCESS   → +20
+//	  other    → 0
+//
+//	Sensitive entity premium: +20
+//
+// The formula is intentionally simple for v1.0. A pluggable scoring engine
+// is deferred to post-v1.0.
+func (rs *RiskScorer) Score(record *AuditRecord) int {
+	state := (*scorerState)(atomic.LoadPointer(&rs.state))
+
+	score := operationBaseScore(record.Operation)
+	score += categoryPremium(record.EventCategory)
+
+	if _, sensitive := state.sensitiveEntities[record.EntityName]; sensitive {
+		score += 20
+	}
+
+	if score > 100 {
+		score = 100
+	}
+	if score < 0 {
+		score = 0
+	}
+	return score
+}
+
+func operationBaseScore(op OperationType) int {
+	switch op {
+	case OperationDelete:
+		return 30
+	case OperationCreate:
+		return 10
+	case OperationUpdate:
+		return 10
+	case OperationAction:
+		return 15
+	case OperationLogin:
+		return 5
+	case OperationLogout:
+		return 0
+	case OperationSystem:
+		return 0
+	default:
+		return 0
+	}
+}
+
+func categoryPremium(cat EventCategory) int {
+	switch cat {
+	case CategoryAdmin:
+		return 30
+	case CategorySecurity:
+		return 30
+	case CategoryAccess:
+		return 20
+	case CategoryAuth:
+		return 10
+	default:
+		return 0
+	}
+}
