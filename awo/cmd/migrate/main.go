@@ -37,6 +37,7 @@ import (
 	// Blank imports register all framework module migrations.
 	// Add new framework modules here as they are created.
 	_ "awo.so/awo/migration/bootstrap"
+	_ "awo.so/awo/platform/audit/migrations"
 	_ "awo.so/awo/platform/iam/migrations"
 	_ "awo.so/awo/platform/tenant/migrations"
 )
