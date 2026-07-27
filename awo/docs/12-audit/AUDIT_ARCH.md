@@ -35,37 +35,42 @@ The following are explicitly out of scope for v1:
 HTTP Request
      │
      ▼
-Middleware (TenantResolver → RequireAuth → RateLimit)
+Middleware (TenantResolver → RequireAuth → RateLimit → RequirePermission)
      │ ViewerContext in ctx
      ▼
-Handler → pipeline.RunBeforeCreate(ctx, record)
-              │
-              │ [outside TX]
-              ├── before_validate hooks
-              ├── VALIDATE
-              ├── AUTHORIZE (PolicyEvaluator.CanPerform)
-              └── before_save hooks
-              │
-              ▼
-         driver.Create(ctx, input)          ← driver opens TX here
-              │
-              │ [inside TX]
-              ├── PERSIST  (SQL INSERT)
-              │
-              ├── pipeline.RunAuditRecord(ctx, auditRecord)
-              │         │
-              │         └── audit.Writer.Write(ctx, record)
-              │                   │
-              │                   ├── Strip sensitive fields
-              │                   ├── Compute ChangedFields
-              │                   ├── RiskScorer.Score(record)
-              │                   ├── INSERT INTO platform_audit_log
-              │                   └── Apply failure policy (ADR-017)
-              │
-              ├── pipeline.RunAfterCreate(ctx, record)
-              │         └── after_save hooks (same TX)
-              │
-              └── [TX commits or rolls back]
+Handler (api/handler.EntityHandler)
+     │ extracts data + actor from ViewerContext
+     ▼
+EntityService.Create(ctx, data, actor)          ← service orchestrates lifecycle
+     │
+     │ [OUTSIDE TX]
+     ├── pipeline.RunBeforeCreate()
+     │     ├── ApplyDefaults + NamingSeries
+     │     ├── BeforeValidate hooks
+     │     ├── VALIDATE
+     │     ├── BeforeSave hooks
+     │     └── BeforeCreate hooks
+     │
+     │ repo.WithTx(ctx, func(txCtx) error {    ← service opens TX here
+     │     │
+     │     │ [INSIDE TX]
+     │     ├── repo.Create(txCtx, input)        PERSIST (SQL INSERT)
+     │     │
+     │     ├── pipeline.RunAuditRecord(txCtx, record, before, after)
+     │     │         │
+     │     │         └── AuditWriter.Write(ctx, auditRecord)
+     │     │                   ├── EntityAuditConfig check (Enabled?)
+     │     │                   ├── Sanitizer.Strip (sensitive fields)
+     │     │                   ├── RiskScorer.Score
+     │     │                   ├── INSERT INTO platform_audit_log (same TX)
+     │     │                   └── failure policy (ADR-017)
+     │     │
+     │     └── pipeline.RunAfterCreate(txCtx, record)
+     │               └── AfterSave + AfterCreate hooks (same TX)
+     │
+     │ })                                       TX commits or rolls back
+     │
+     └── startWorkflows(ctx, ...)               OUTSIDE TX
 ```
 
 ---
@@ -140,15 +145,35 @@ The pipeline constructs the `AuditRecord` from:
 
 The pipeline does NOT score risk, strip sensitive fields, or apply failure policy. These are the `AuditWriter` implementation's responsibilities.
 
-### 2.3 `contrib/pgx` (driver)
+### 2.3 `api/service.EntityService`
 
-**Purpose:** PostgreSQL persistence and transaction management.
+**Purpose:** Orchestrate the complete entity mutation lifecycle — pipeline pre-persist stages, transaction management, PERSIST, AUDIT RECORD, after_save hooks, workflow dispatch.
 
-**Audit responsibility:** Call `pipeline.RunAuditRecord(ctx, record)` from within the open transaction, between PERSIST and after_save.
+**Transaction ownership (ADR-013):** `EntityService` opens the transaction via `repo.WithTx()`. Inside the `WithTx` callback it executes: `repo.Create/Update/Delete` (PERSIST), then `pipeline.RunAuditRecord` (AUDIT RECORD), then `pipeline.RunAfterXxx` (after_save). The TX commits when the callback returns nil; rolls back on any error.
 
-**Transaction ownership (ADR-013):** The driver opens the transaction, executes PERSIST, calls the pipeline's RunAuditRecord and RunAfterXxx methods while the TX is open, then commits or rolls back. The TX is never passed to the pipeline — the pipeline uses the context-carried TX implicitly.
+**Audit call site (Create):**
+```go
+repo.WithTx(ctx, func(txCtx context.Context) error {
+    created, err = repo.Create(txCtx, input)
+    if err != nil { return err }
+    if err = pipeline.RunAuditRecord(txCtx, created, nil, created.Data); err != nil {
+        return err  // propagated or suppressed per ADR-017
+    }
+    return pipeline.RunAfterCreate(txCtx, created)
+})
+```
 
-**Requires implementation verification:** The exact mechanism by which `pipeline.RunAuditRecord` is called from within the driver's TX must be verified before implementation begins. The driver must not commit the TX before all pipeline callbacks complete.
+**Does NOT:**
+- Know about `AuditWriter` directly — delegates to `pipeline.RunAuditRecord`
+- Know about audit categories, risk scores, or failure policies
+
+### 2.4 `contrib/pgx` (driver)
+
+**Purpose:** PostgreSQL persistence. Provides `WithTx()` for transaction management and `Create/Update/Delete/Query` for DML.
+
+**Audit responsibility:** None. The driver has no knowledge of audit. It provides `WithTx(ctx, fn)` which the service uses to scope a transaction. The driver sets `set_tenant_context` inside `WithTx` before calling `fn`.
+
+**Transaction mechanics:** `repo.WithTx()` calls `pool.BeginTx()`, stores the TX in context via `tx.WithConn(ctx, pgConn)`, calls `fn(txCtx)`, then `Commit()` or `Rollback()`. Any code inside `fn` that extracts the connection from `txCtx` (including `audit.TransactionalWriter`) participates in the same transaction automatically.
 
 ### 2.4 `TransactionalWriter` (production AuditWriter)
 
@@ -210,56 +235,65 @@ The pipeline does NOT score risk, strip sensitive fields, or apply failure polic
 ### 3.1 Entity Mutation with Audit (DATA category)
 
 ```
-Handler        Pipeline          Driver           AuditWriter       DB
-  │               │                │                  │              │
-  │ RunBeforeCreate               │                  │              │
-  ├──────────────►│               │                  │              │
-  │               │ [hooks, validate, authorize]      │              │
-  │               │               │                  │              │
-  │               │ driver.Create │                  │              │
-  │               ├──────────────►│                  │              │
-  │               │               │ BEGIN TX          │              │
-  │               │               ├─────────────────────────────────►│
-  │               │               │ INSERT entity     │              │
-  │               │               ├─────────────────────────────────►│
-  │               │               │                  │              │
-  │               │               │ RunAuditRecord   │              │
-  │               │               ├──────────────────►│              │
-  │               │               │                  │ Strip fields │
-  │               │               │                  │ Score risk   │
-  │               │               │                  │ INSERT audit │
-  │               │               │                  ├─────────────►│
-  │               │               │                  │ nil          │
-  │               │               │◄─────────────────┤              │
-  │               │               │                  │              │
-  │               │               │ RunAfterCreate   │              │
-  │               │               ├──────────────────►              │
-  │               │               │ [after_save hooks, same TX]     │
-  │               │               │ COMMIT TX         │              │
-  │               │               ├─────────────────────────────────►│
-  │               │               │                  │              │
-  │ response      │               │                  │              │
-  │◄──────────────┤◄──────────────┤                  │              │
+Handler      EntityService       repo.WithTx     Pipeline        AuditWriter      DB
+  │               │                  │               │                │             │
+  │ Create()      │                  │               │                │             │
+  ├──────────────►│                  │               │                │             │
+  │               │ RunBeforeCreate  │               │                │             │
+  │               ├─────────────────────────────────►│                │             │
+  │               │ [hooks, validate]│               │                │             │
+  │               │◄─────────────────────────────────┤                │             │
+  │               │                  │               │                │             │
+  │               │ repo.WithTx()    │               │                │             │
+  │               ├─────────────────►│               │                │             │
+  │               │                  │ BEGIN TX       │                │             │
+  │               │                  ├───────────────────────────────────────────────►
+  │               │                  │ setTenantCtx   │                │             │
+  │               │                  ├───────────────────────────────────────────────►
+  │               │                  │               │                │             │
+  │               │                  │ repo.Create    │                │             │
+  │               │                  ├───────────────────────────────────────────────► INSERT
+  │               │                  │               │                │             │
+  │               │                  │ RunAuditRecord │                │             │
+  │               │                  ├──────────────►│                │             │
+  │               │                  │               │ Write()        │             │
+  │               │                  │               ├───────────────►│             │
+  │               │                  │               │                │ Strip+Score │
+  │               │                  │               │                ├─────────────► INSERT audit
+  │               │                  │               │                │ nil         │
+  │               │                  │               │◄───────────────┤             │
+  │               │                  │◄──────────────┤                │             │
+  │               │                  │               │                │             │
+  │               │                  │ RunAfterCreate │                │             │
+  │               │                  ├──────────────►│                │             │
+  │               │                  │ [after_save hooks, same TX]     │             │
+  │               │                  │◄──────────────┤                │             │
+  │               │                  │               │                │             │
+  │               │                  │ COMMIT TX      │                │             │
+  │               │                  ├───────────────────────────────────────────────►
+  │               │◄─────────────────┤               │                │             │
+  │◄──────────────┤                  │               │                │             │
+ HTTP 201
 ```
 
 ### 3.2 Entity Mutation — ADMIN category, audit write fails
 
 ```
-                  ...same as above until INSERT audit fails...
+  ...same as above until INSERT audit fails...
 
-  │               │               │ RunAuditRecord   │              │
-  │               │               ├──────────────────►│              │
-  │               │               │                  │ INSERT audit │
-  │               │               │                  ├─────────────►│
-  │               │               │                  │ error        │
-  │               │               │                  │◄─────────────┤
-  │               │               │                  │ (ADMIN policy: propagate)
-  │               │               │◄─ error ─────────┤              │
-  │               │               │ ROLLBACK TX       │              │
-  │               │               ├─────────────────────────────────►│
-  │               │               │                  │              │
-  │ HTTP 500      │               │                  │              │
-  │◄──────────────┤◄──────────────┤                  │              │
+  │               │                  │ RunAuditRecord │                │             │
+  │               │                  ├──────────────►│                │             │
+  │               │                  │               │ Write()        │             │
+  │               │                  │               ├───────────────►│             │
+  │               │                  │               │                ├─────────────► INSERT fails
+  │               │                  │               │                │ error       │
+  │               │                  │               │◄───────────────┤             │
+  │               │                  │               │ (ADMIN: propagate error)     │
+  │               │                  │◄─ error ──────┤                │             │
+  │               │                  │ ROLLBACK TX    │                │             │
+  │               │                  ├───────────────────────────────────────────────►
+  │               │◄─ error ─────────┤               │                │             │
+  │◄─ HTTP 500 ───┤                  │               │                │             │
 ```
 
 ### 3.3 Session Audit (AUTH category — IAM service, not pipeline)
@@ -313,32 +347,48 @@ awo/cmd/server/main.go
 
 ## 5. Bootstrap Integration
 
-The `AuditWriter` is constructed and injected into the pipeline during bootstrap:
+**Verified:** `bootstrap.Run()` returns `*Result{Pool, Redis, Schema}`. Bootstrap is pure infrastructure — it does not construct application services. Audit wiring happens in `cmd/server/main.go` after bootstrap, before `router.Register`.
+
+The `AuditWriter` is constructed in `main.go` and injected via `router.RegisterOptions`:
 
 ```go
-// awo/bootstrap/bootstrap.go (sketch — requires implementation verification)
+// cmd/server/main.go (new additions)
 
-func Run(ctx context.Context, cfg Config) (*Result, error) {
-    // ... pool, redis init ...
+result, err := bootstrap.Run(ctx, bootstrap.Config{...})
 
-    // 1. Warm RiskScorer cache (synchronous — blocks bootstrap until complete)
-    scorer, err := audit.NewRiskScorer(ctx, pool)
-    if err != nil {
-        return nil, fmt.Errorf("audit RiskScorer warm-up: %w", err)
-    }
-
-    // 2. Construct AuditWriter
-    auditWriter := audit.NewTransactionalWriter(pool, scorer, signingSecret)
-
-    // 3. Inject into pipeline
-    pipeline := runtime.NewPipeline(auditWriter, ...)
-
-    // 4. Continue with schema compilation, route registration, HTTP server
-    // ...
+// Warm RiskScorer cache (synchronous — before HTTP server starts)
+scorer, err := audit.NewRiskScorer(ctx, result.Pool)
+if err != nil {
+    slog.Error("audit RiskScorer warm-up failed", "err", err)
+    os.Exit(1)
 }
+
+signingSecret := mustEnv("AUDIT_SIGNING_SECRET")
+auditWriter := audit.NewTransactionalWriter(result.Pool, scorer, []byte(signingSecret))
+
+// ... IAM, tenant repo, relay setup ...
+
+router.Register(app, result.Schema, router.RegisterOptions{
+    Pool:        result.Pool,
+    Redis:       result.Redis,
+    IAM:         iamModule.Auth,
+    Tenants:     tenantRepo,
+    Authz:       evaluator,
+    Temporal:    nil,
+    AuditWriter: auditWriter,   // ← new field
+})
 ```
 
-**Requires implementation verification:** The current `bootstrap.Run()` returns `*Result{Pool, Redis, Schema}`. It does not yet accept an `AuditWriter` or signing secret. Verify the bootstrap constructor signature before implementation.
+Inside `router.Register`, the pipeline is constructed as:
+```go
+pipeline := runtime.NewPipeline(schema, opts.AuditWriter)
+// if opts.AuditWriter == nil: use audit.NoopAuditWriter{}
+```
+
+**Files requiring changes:**
+- `awo/api/router/router.go` — add `AuditWriter audit.AuditWriter` to `RegisterOptions`; pass to `NewPipeline`
+- `awo/runtime/pipeline.go` — `NewPipeline` takes `AuditWriter`; `Pipeline` struct holds it
+- `awo/cmd/server/main.go` — construct `RiskScorer` + `TransactionalWriter`; inject into `RegisterOptions`
 
 ---
 

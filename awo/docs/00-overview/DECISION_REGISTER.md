@@ -36,6 +36,7 @@ This document is the canonical record of all architectural decisions (ADRs) for 
 | ADR-017 | Audit failure policy: category-driven; ADMIN/SECURITY propagate; others suppress+log+meter | Frozen |
 | ADR-018 | Audit storage: `platform_audit_log`, monthly range partitions, no RLS, global table | Frozen |
 | ADR-019 | Dual audit elimination: unified `platform_audit_log` supersedes `iam_audit_log` + SQL triggers | Frozen |
+| ADR-020 | Audit partition maintenance: pg_cron extension; no application-layer scheduler | Frozen |
 
 ---
 
@@ -264,28 +265,29 @@ The `PolicyEvaluator` implementation (ADR-001) loads `CapabilityGrants` and tran
 
 ## ADR-013: Transaction Ownership
 
-**Decision:** The driver implementation (`contrib/pgx`) owns and manages all database transactions. The pipeline (`awo/runtime`) is stateless with respect to transactions — it does not open, commit, or roll back transactions directly.
+**Decision:** The service layer (`api/service.EntityService`) orchestrates all database transactions for entity mutations. Transactions are opened via `repo.WithTx()` — a method on `driver.EntityRepository[T]` implemented by `contrib/pgx`. The driver does NOT open transactions automatically for individual `Create`, `Update`, or `Delete` calls — those are auto-commit unless wrapped in `WithTx`.
 
-The contract is:
+The actual execution sequence in `EntityService.Create`:
 
 ```
-driver.Create(ctx, input):
-  1. Opens PostgreSQL transaction
-  2. Executes PERSIST (SQL INSERT)
-  3. Calls pipeline.RunAuditRecord(ctx, record)  ← inside open TX
-  4. Calls pipeline.RunAfterCreate(ctx, record)   ← inside open TX
-  5. Commits if all succeed; rolls back if any fail
+pipeline.RunBeforeCreate(pctx)               // OUTSIDE TX
+
+repo.WithTx(ctx, func(txCtx context.Context) error {
+    // TX begins here (inside driver.WithTx)
+    repo.Create(txCtx, input)               // PERSIST — uses TX from ctx
+    pipeline.RunAuditRecord(txCtx, ...)     // AUDIT RECORD — inside TX
+    pipeline.RunAfterCreate(txCtx, created) // after_save hooks — inside TX
+    return nil
+})                                           // TX commits; or rolls back on error
+
+startWorkflows(ctx, ...)                     // OUTSIDE TX
 ```
 
-The `context.Context` carries the active transaction connection. Any operation inside `RunAuditRecord` or `RunAfterCreate` that calls into the database through the context-carried connection participates in the same transaction automatically.
+The `context.Context` carries the active transaction connection (set by `repo.WithTx` via `tx.WithConn`). Any database operation inside the `WithTx` callback that extracts the connection from `ctx` automatically participates in the same transaction.
 
-**Model A (pipeline owns TX):** Rejected. Would require the pipeline to know about `pgx.Tx` or a generic `Tx` interface, importing persistence concerns into the domain layer — a layering violation.
+**Repository wrapper rejected:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then writes an audit record afterward writes the audit record OUTSIDE the transaction boundary managed by `repo.WithTx`. This is a correctness failure. Repository wrapper pattern MUST NOT be used for audit integration.
 
-**Model B (driver owns TX):** Adopted. The driver is the only layer that may open transactions. All transactional work (PERSIST, AUDIT RECORD, after_save) is orchestrated by the driver after the pipeline's pre-persist stages complete.
-
-**Consequence for the repository wrapper pattern:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then writes an audit record afterward would write the audit record OUTSIDE the committed transaction. This is a correctness failure. The repository wrapper pattern MUST NOT be used for audit integration.
-
-**Consequence for `AuditWriter`:** The `AuditWriter` must be invoked by the driver inside the open transaction, not by any outer wrapper. The pipeline receives an `AuditWriter` via its constructor. The driver calls `pipeline.RunAuditRecord(ctx, record)` from within the TX. See ADR-014.
+**Correct integration:** `pipeline.RunAuditRecord` is called by `EntityService` inside `repo.WithTx`, between `repo.Create/Update/Delete` and `pipeline.RunAfterXxx`. The `Pipeline` holds the `AuditWriter` and calls it from within the TX-carrying context. See ADR-014.
 
 ---
 
@@ -440,6 +442,29 @@ Columns required beyond the existing `audit_log` schema (ADR-005):
 Migration is gated by the `feature.unified_audit.enabled` feature flag in `platform_audit_config`. When the flag is false, the legacy system remains active. When true, the unified system is active. Blue-green migration completes when all historical records are migrated and the flag is permanently set to true.
 
 **Consequence:** The `audit_log` SQL trigger infrastructure (functions `enable_audit_on_table`, `audit_trigger_function`, `get_audit_statistics`, etc.) is removed via a migration. The Go `audit.LogDefinition` entity registration is removed. The IAM module's `iam.audit_log.read` permission is replaced by `platform.audit_log.read`.
+
+---
+
+## ADR-020: Audit Partition Maintenance
+
+**Decision:** Monthly `platform_audit_log` partitions are created by a `pg_cron` scheduled job, not by application code or Temporal workflows. The pg_cron job runs on the 25th of each month and calls a PostgreSQL stored function `platform_create_next_audit_partition()`.
+
+```sql
+-- Scheduled in migration 000452
+SELECT cron.schedule(
+    'create-audit-partitions',
+    '0 9 25 * *',
+    $$SELECT platform_create_next_audit_partition()$$
+);
+```
+
+The stored function uses `IF NOT EXISTS` semantics — running it multiple times is safe.
+
+If pg_cron is unavailable in the deployment environment, the partition maintenance function must be called manually (or via external cron) on the 25th of each month. This is documented as an operational requirement.
+
+**Rejected:** Application-layer partition creation at bootstrap (creates a 2-month lookahead only; does not handle ongoing monthly creation). **Rejected:** Temporal scheduled workflow (Temporal is optional/degraded-ok; partition maintenance must be reliable even when Temporal is unavailable).
+
+**Consequence:** Deployment environments must have the pg_cron extension installed and enabled. If not, `cron.schedule()` in the migration will fail — conditionally execute it with `DO $$ BEGIN ... EXCEPTION WHEN undefined_function THEN NULL; END $$`.
 
 ---
 

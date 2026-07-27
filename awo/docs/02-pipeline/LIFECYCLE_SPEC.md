@@ -232,34 +232,47 @@ See [`08-workflow/OUTBOX_SPEC.md`](../08-workflow/OUTBOX_SPEC.md).
 
 ## 3. Transaction Boundary and Ownership
 
-**Transaction ownership (ADR-013):** The driver implementation (`contrib/pgx`) owns and manages all database transactions. The pipeline is stateless with respect to transactions — it does not open, commit, or roll back transactions.
+**Transaction ownership (ADR-013):** The service layer (`api/service.EntityService`) orchestrates database transactions for entity mutations. Transactions are opened via `repo.WithTx()`. The driver (`contrib/pgx`) provides `WithTx()` but does NOT open transactions automatically for individual `Create`, `Update`, or `Delete` calls — those are auto-commit unless the service wraps them.
 
-The driver's internal execution sequence:
+The actual service execution sequence:
 
 ```
-driver.Create(ctx, input):
-  1. [TX begins]
-  2. Executes PERSIST (SQL INSERT/UPDATE/DELETE)
-  3. Calls pipeline.RunAuditRecord(ctx, record)     ← inside TX
-  4. Calls pipeline.RunAfterCreate(ctx, record)      ← inside TX
-  5. [TX commits] if all succeed
-  6. [TX rolls back] if any step 2–4 returns error
+EntityService.Create(ctx, data, actor):
+
+  pipeline.RunBeforeCreate(&CreateContext)          // OUTSIDE TX
+    ├── ApplyDefaults, NamingSeries
+    ├── BeforeValidate hooks
+    ├── VALIDATE
+    ├── BeforeSave hooks
+    └── BeforeCreate hooks
+
+  repo.WithTx(ctx, func(txCtx context.Context) error {
+    // [TX begins — driver opens pgx transaction, stores in ctx]
+    // setTenantContext(txCtx) called inside WithTx setup
+
+    repo.Create(txCtx, CreateInput)                // PERSIST — inside TX
+    pipeline.RunAuditRecord(txCtx, created, ...)   // AUDIT RECORD — inside TX
+    return pipeline.RunAfterCreate(txCtx, created) // after_save hooks — inside TX
+  })
+  // [TX commits if callback returns nil; rolls back on any error]
+
+  startWorkflows(ctx, OnCreate, created, actor)    // OUTSIDE TX
 ```
 
-The `context.Context` carries the active transaction connection. Any database operation inside `RunAuditRecord` or `RunAfterCreate` that uses the context-carried connection participates in the same transaction automatically.
+The `context.Context` carries the active transaction connection (set by `repo.WithTx` via `awo/tx.WithConn`). Any database operation inside the callback that extracts the connection from `ctx` automatically participates in the same transaction.
 
 The transaction boundary from the pipeline stage perspective:
 
 ```
-TX begins: inside driver.Create/Update/Delete, before PERSIST
-TX commits: after after_save completes without error
-TX rolls back: when PERSIST, AUDIT RECORD, or after_save returns an error
+TX begins:      inside repo.WithTx callback, before repo.Create
+TX commits:     when repo.WithTx callback returns nil
+TX rolls back:  when any operation inside the callback returns an error
 ```
 
-**Consequence for wrappers:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then performs additional writes would execute those writes OUTSIDE the committed transaction. The repository wrapper pattern MUST NOT be used for any operation that requires atomicity with the entity mutation (e.g., audit writing). See ADR-013 and ADR-014.
+**Consequence for wrappers:** A wrapper implementing `driver.EntityRepository[T]` that calls the inner driver's `Create()` and then performs additional writes executes those writes after `repo.Create()` returns — either inside or outside the `WithTx` callback depending on where the wrapper is called. Wrapper-based audit integration is unreliable. See ADR-013 and ADR-014.
 
 Hooks that run before `before_save` (inclusive) MUST NOT assume a TX is open.
-Hooks that run from PERSIST onwards (AUDIT RECORD, after_save) run inside the driver-managed TX.
+Hooks that run from PERSIST onwards (AUDIT RECORD, after_save) run inside the `repo.WithTx`-managed TX.
 
 ---
 
