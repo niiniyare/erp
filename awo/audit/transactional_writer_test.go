@@ -2,9 +2,12 @@ package audit
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
+
+	"awo.so/awo/def"
 )
 
 func TestMarshalNullable_Nil(t *testing.T) {
@@ -99,12 +102,37 @@ func TestNullableUUID(t *testing.T) {
 func TestTransactionalWriter_Write_InvalidRecord(t *testing.T) {
 	t.Parallel()
 
-	w := NewTransactionalWriter(nil) // nil pool: must not be reached
+	w := NewTransactionalWriter(nil) // nil fallback: must not be reached
 	rec := AuditRecord{}             // invalid: missing TenantID, EntityName, etc.
 
 	err := w.Write(context.TODO(), rec)
 	//nolint:staticcheck — intentionally nil ctx to prove we don't reach SQL
 	if err == nil {
 		t.Error("Write with invalid record: expected error from Validate()")
+	}
+}
+
+// TestTransactionalWriter_Write_NilFallback verifies that Write returns a
+// descriptive error when no TX is in context and no fallback querier is set.
+// This guards against silent no-ops from misconfigured deployments.
+func TestTransactionalWriter_Write_NilFallback(t *testing.T) {
+	t.Parallel()
+
+	w := NewTransactionalWriter(nil) // nil fallback — standalone writes must fail clearly
+	rec := AuditRecord{
+		TenantID:      uuid.New(),
+		EntityName:    "finance_invoice",
+		Operation:     OperationCreate,
+		EventCategory: CategoryData,
+		Actor:         &def.Actor{UserID: uuid.New()},
+	}
+
+	// context.Background() has no active transaction — fallback path is taken.
+	err := w.Write(context.Background(), rec)
+	if err == nil {
+		t.Error("Write with nil fallback and no TX: expected error, got nil")
+	}
+	if !strings.Contains(err.Error(), "no database connection available") {
+		t.Errorf("Write with nil fallback: expected descriptive error, got: %v", err)
 	}
 }

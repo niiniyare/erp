@@ -57,6 +57,19 @@ func (c *pgConn) ExecSQL(ctx context.Context, sql string, args ...any) (int64, e
 	return tag.RowsAffected(), err
 }
 
+// NewPoolQuerier returns a tx.Querier backed directly by pool (no active
+// transaction). Use this in framework bootstrap to inject a standalone executor
+// into packages (e.g. awo/audit.TransactionalWriter) that must write to
+// platform-level tables outside a request transaction.
+//
+// The returned Querier executes SQL via pool auto-commit semantics. When called
+// inside a request context that already carries an active transaction, prefer
+// tx.QuerierFromContext — it will return the transactional connection, which is
+// what the caller usually wants.
+func NewPoolQuerier(pool *pgxpool.Pool) tx.Querier {
+	return &pgConn{pool: pool}
+}
+
 // setTenantContext calls the stored procedure that sets the RLS session variable.
 // Must be called inside the transaction BEFORE any DML on tenant-scoped tables.
 func setTenantContext(ctx context.Context, e execer, tenantID string) error {

@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgxpool"
 
 	"awo.so/awo/tx"
 )
@@ -17,30 +16,43 @@ import (
 //
 // When called from within an EntityService repo.WithTx callback, the record
 // is written inside the active transaction — guaranteeing that no mutation
-// escapes the audit trail. If the Write call itself fails and the failure
-// policy is Propagate, the transaction rolls back together with the mutation.
+// escapes the audit trail. If Write fails and the failure policy is Propagate,
+// the transaction rolls back together with the mutation.
 //
 // When called outside a transaction (e.g. standalone auth events), the writer
-// falls back to the pool for a direct INSERT.
+// falls back to the injected fallback tx.Querier — a pool-backed connection
+// supplied at construction time via contrib/pgx.NewPoolQuerier.
 //
-// TransactionalWriter never imports contrib/pgx — it accesses the driver
-// connection exclusively via tx.QuerierFromContext to avoid circular imports.
+// TransactionalWriter never imports contrib/pgx or pgxpool. All database
+// access goes through tx.Querier — the framework interface for cross-package
+// SQL execution. This keeps the audit package free of driver-layer imports.
 type TransactionalWriter struct {
-	pool *pgxpool.Pool
+	// fallback is used when no active transaction is present in ctx.
+	// It is a pool-backed tx.Querier created by contrib/pgx.NewPoolQuerier.
+	// May be nil in test environments where all writes go through a
+	// recording writer or are validated without a real DB.
+	fallback tx.Querier
 }
 
-// NewTransactionalWriter returns a TransactionalWriter backed by pool.
-// pool is used for auth/security events that are written outside a transaction.
-func NewTransactionalWriter(pool *pgxpool.Pool) *TransactionalWriter {
-	return &TransactionalWriter{pool: pool}
+// NewTransactionalWriter returns a TransactionalWriter.
+//
+// fallback is a tx.Querier used for writes that occur outside an active
+// database transaction (e.g. auth events triggered by IAM handlers).
+// In production, pass contrib/pgx.NewPoolQuerier(pool) as the fallback.
+// In tests that exercise only the validation path, nil is acceptable.
+func NewTransactionalWriter(fallback tx.Querier) *TransactionalWriter {
+	return &TransactionalWriter{fallback: fallback}
 }
 
-// Write inserts record into platform_audit_log. It uses the active transaction
-// from ctx when available, falling back to the pool otherwise.
+// Write inserts record into platform_audit_log.
+//
+// Connection selection order:
+//  1. tx.QuerierFromContext(ctx) — active transaction (entity mutation path).
+//  2. w.fallback — pool-backed auto-commit (standalone auth/security events).
 //
 // Write validates the record before attempting the insert. Validation errors
-// are always returned to the caller regardless of the failure policy (the
-// policy governs DB errors, not programming errors).
+// are returned regardless of the failure policy — they indicate programming
+// errors, not DB errors.
 func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) error {
 	if err := record.Validate(); err != nil {
 		return err
@@ -70,7 +82,6 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 	if err != nil {
 		return errorf("audit: marshal ComplianceFlags: %w", err)
 	}
-
 	changedFieldsJSON, err := marshalNullable(record.ChangedFields)
 	if err != nil {
 		return errorf("audit: marshal ChangedFields: %w", err)
@@ -92,6 +103,10 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 		systemActorArg = string(record.SystemActor)
 	}
 
+	// Raw SQL is architecturally justified here: platform_audit_log is a
+	// global partitioned table that is not registered as an EntityDefinition
+	// and therefore not accessible via driver.EntityRepository. This mirrors
+	// the pattern used by awo/platform/iam/queries.go for IAM junction tables.
 	const insertSQL = `
 INSERT INTO platform_audit_log (
 	id, tenant_id, request_id,
@@ -121,12 +136,17 @@ INSERT INTO platform_audit_log (
 		contextJSON, record.CreatedAt,
 	}
 
-	// Prefer the active transaction from context; fall back to pool.
+	// Prefer the active transaction from context (entity mutation path).
 	if q, ok := tx.QuerierFromContext(ctx); ok {
 		_, err = q.ExecSQL(ctx, insertSQL, args...)
-	} else {
-		_, err = w.pool.Exec(ctx, insertSQL, args...)
+		return err
 	}
+
+	// Fall back to the pool-backed querier (standalone auth event path).
+	if w.fallback == nil {
+		return errorf("audit: no database connection available: no active transaction and no fallback querier configured")
+	}
+	_, err = w.fallback.ExecSQL(ctx, insertSQL, args...)
 	return err
 }
 
