@@ -50,6 +50,7 @@ import (
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/sdui/amis"
+	"awo.so/awo/sdui/renderer"
 	"awo.so/awo/sdui/widget"
 )
 
@@ -69,7 +70,7 @@ type Generator struct {
 	schema    *compiler.CompiledSchema
 	evaluator auth.PolicyEvaluator // may be nil (all actions permitted)
 	cache     cache.Cache
-	renderer  amis.Renderer
+	renderer  *amis.DefaultRenderer
 }
 
 // New returns a Generator backed by schema, evaluator, and c.
@@ -144,10 +145,12 @@ func (g *Generator) GetPage(ctx context.Context, entityName string, view def.Pag
 	}
 
 	// Render WidgetTree → amis JSON.
-	schema, err := g.renderer.Render(root)
+	rctx := renderer.RendererContext{}
+	out, err := g.renderer.Render(root, rctx)
 	if err != nil {
 		return nil, fmt.Errorf("sdui: render %s/%s: %w", entityName, view, err)
 	}
+	schema := out.AMISSchema
 
 	// Cache the rendered schema.
 	if g.cache != nil {
@@ -615,7 +618,7 @@ func setAllReadOnly(nodes []*widget.Node) {
 			// Leaf node: field widget. Force read-only; clear expression
 			// so DisabledOn doesn't override (detail is always read-only).
 			n.ReadOnly = true
-			n.DisabledOn = ""
+			n.DisabledOn = nil
 		}
 	}
 }
@@ -627,13 +630,25 @@ func fieldToNode(f def.FieldDef, es *compiler.EntitySchema, isEdit bool) *widget
 		Description: f.Description,
 		Required:    f.Required,
 		ReadOnly:    f.ReadOnly,
-		VisibleOn:   f.VisibleOn,
-		HiddenOn:    f.HiddenOn,
-		DisabledOn:  f.DisabledOn,
-		RequiredOn:  f.RequiredOn,
 	}
 	if f.Immutable && isEdit {
 		n.ReadOnly = true
+	}
+	// Expression fields — wrap raw JS strings in ExpressionRef.
+	// DisabledOn/RequiredOn take precedence over ReadOnly/Required booleans.
+	if f.VisibleOn != "" {
+		n.VisibleOn = &widget.ExpressionRef{Expr: f.VisibleOn}
+	}
+	if f.HiddenOn != "" {
+		n.HiddenOn = &widget.ExpressionRef{Expr: f.HiddenOn}
+	}
+	if f.DisabledOn != "" {
+		n.DisabledOn = &widget.ExpressionRef{Expr: f.DisabledOn}
+		n.ReadOnly = false // expression wins
+	}
+	if f.RequiredOn != "" {
+		n.RequiredOn = &widget.ExpressionRef{Expr: f.RequiredOn}
+		n.Required = false // expression wins
 	}
 
 	switch f.Type {

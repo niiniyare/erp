@@ -1,0 +1,857 @@
+// Package generator transforms entity metadata into a Widget IR tree.
+//
+// The generator is the second stage of the SDUI pipeline:
+//
+//	CompiledSchema + GeneratorContext → widget.Node tree
+//
+// The generator is entirely renderer-independent. It produces widget.Node
+// values with semantic fields (ExpressionRef, LayoutHint, ActionNode) and
+// never emits renderer-specific constructs (no AMIS types, no CSS classes,
+// no JavaScript strings). The renderer receives the Node tree and translates
+// it to target-specific output.
+//
+// # Architecture
+//
+// A single EntityGenerator handles all view modes (list, create, edit, detail,
+// dashboard) via specialised internal builders. There is no separate ListGenerator
+// or FormGenerator — the view mode is carried in GeneratorContext and selects
+// which pipeline stages run.
+//
+// # Pipeline stages
+//
+//  1. Pre-generation plugin transforms (ExtPreGeneration)
+//  2. Permission gating — fields without viewer permission are absent (not hidden)
+//  3. View mode selection — which fields appear in list vs form vs detail
+//  4. Node construction — build the widget tree from field definitions
+//  5. Post-generation plugin transforms (ExtPostGeneration)
+//  6. Return root node
+//
+// # Concurrency
+//
+// EntityGenerator is safe for concurrent use. GeneratorContext is a value type
+// and all state is local to each Generate() call.
+package generator
+
+import (
+	"fmt"
+
+	"awo.so/awo/sdui/plugins"
+	"awo.so/awo/sdui/sduictx"
+	"awo.so/awo/sdui/widget"
+)
+
+// FieldDef is the generator's view of a single entity field.
+// It carries the semantic metadata needed to construct a widget.Node.
+// This is a simplified projection of awo/def.FieldDef — the generator does
+// not import awo/def directly to preserve the dependency direction.
+type FieldDef struct {
+	// Name is the field binding name (e.g., "invoice_number", "status").
+	Name string
+
+	// Label is the human-readable display name.
+	Label string
+
+	// FieldType identifies the field's data type.
+	// Values correspond to def.FieldType constants (passed as strings to avoid import).
+	FieldType string
+
+	// Required marks this field as required in create/edit forms.
+	Required bool
+
+	// ReadOnly marks this field as read-only in all forms.
+	ReadOnly bool
+
+	// Hidden omits this field from all views.
+	Hidden bool
+
+	// InList includes this field as a column in list view.
+	InList bool
+
+	// InForm includes this field in create/edit forms.
+	InForm bool
+
+	// InDetail includes this field in detail view.
+	InDetail bool
+
+	// Description is the help text shown beneath form fields.
+	Description string
+
+	// Placeholder is the input placeholder text.
+	Placeholder string
+
+	// MaxLength caps text input length. Zero means no limit.
+	MaxLength int
+
+	// Options lists select field options (label, value pairs).
+	// Used when the select is static (not server-side).
+	Options []SelectOption
+
+	// DataSource configures remote data fetching (list, select, lookup).
+	DataSource *widget.DataSource
+
+	// LinkedEntity is the entity name this field links to (for FieldTypeLink/Lookup).
+	LinkedEntity string
+
+	// Permission is the permission identifier required to view this field.
+	// Empty means no permission required (field always visible to authenticated users).
+	Permission string
+
+	// ColSpan is the grid column span for this field in form layout (1–12).
+	ColSpan int
+
+	// Section groups this field into a named form section.
+	Section string
+
+	// Tab groups this field into a named tab (within tabs layout).
+	Tab string
+
+	// CurrencyField is the sibling field name for money fields.
+	CurrencyField string
+}
+
+// SelectOption is a single option for a static select field.
+type SelectOption struct {
+	Label string
+	Value string
+}
+
+// SectionDef describes a form section grouping.
+type SectionDef struct {
+	// ID is the stable section identifier.
+	ID string
+
+	// Title is the section display title. Empty = unlabeled group.
+	Title string
+
+	// Collapsible makes the section collapsible.
+	Collapsible bool
+
+	// Collapsed sets the initial collapsed state.
+	Collapsed bool
+
+	// Fields lists the field names in this section (in display order).
+	Fields []string
+
+	// Columns is the grid column count for this section (1–3 typical).
+	// Fields are distributed across columns in order.
+	Columns int
+
+	// Permission is the permission identifier required to view this section.
+	Permission string
+}
+
+// TabDef describes a tab grouping.
+type TabDef struct {
+	// ID is the stable tab identifier.
+	ID string
+
+	// Title is the tab display title.
+	Title string
+
+	// Sections lists the section IDs in this tab (in display order).
+	Sections []string
+
+	// Permission is the permission identifier required to view this tab.
+	Permission string
+}
+
+// EntitySchema is the generator's complete view of an entity.
+// It carries all metadata needed to produce widget trees for all view modes.
+// This is constructed from awo/def.CompiledSchema by the SDUI handler.
+type EntitySchema struct {
+	// Name is the entity name (e.g., "finance_invoice").
+	Name string
+
+	// Title is the human-readable entity title (e.g., "Invoice").
+	Title string
+
+	// PluralTitle is the plural form (e.g., "Invoices").
+	PluralTitle string
+
+	// Fields are all entity fields in declaration order.
+	Fields []FieldDef
+
+	// Sections defines form section groupings. May be nil (flat form layout).
+	Sections []SectionDef
+
+	// Tabs defines tab groupings. May be nil (no tabs).
+	Tabs []TabDef
+
+	// ListURL is the API endpoint for list view (paginated entity list).
+	ListURL string
+
+	// CreateURL is the API endpoint for creating a new entity.
+	CreateURL string
+
+	// EditURL is the API endpoint for updating an existing entity.
+	// May contain path parameters: "/api/v1/finance/invoices/{id}".
+	EditURL string
+
+	// DetailURL is the API endpoint for fetching a single entity.
+	DetailURL string
+
+	// Permissions carries the permission identifiers for entity-level access.
+	// Keys: "create", "read", "update", "delete". Values: permission ID strings.
+	Permissions map[string]string
+
+	// Actions are entity-level actions (submit, cancel, approve, etc.).
+	Actions []ActionDef
+}
+
+// ActionDef describes an entity-level action button.
+type ActionDef struct {
+	// ID is the stable action identifier.
+	ID string
+
+	// Label is the button display text.
+	Label string
+
+	// ActionType is the semantic type: "submit", "dialog", "link", "ajax", "workflow".
+	ActionType string
+
+	// Level controls visual prominence: "primary", "default", "warning", "danger".
+	Level string
+
+	// Permission is the permission identifier required to see this action.
+	// Empty means visible to all viewers with entity read access.
+	Permission string
+
+	// ConfirmText is the confirmation prompt shown before executing the action.
+	ConfirmText string
+
+	// ViewModes lists which view modes show this action.
+	// Nil means all view modes.
+	ViewModes []sduictx.ViewMode
+
+	// WorkflowID references a Temporal workflow for "workflow" type actions.
+	WorkflowID string
+
+	// Icon is the semantic icon name.
+	Icon string
+}
+
+// EntityGenerator transforms EntitySchema + GeneratorContext into a widget.Node tree.
+// Safe for concurrent use.
+type EntityGenerator struct {
+	pipeline *plugins.Pipeline // may be nil (uses global pipeline)
+}
+
+// New returns a production EntityGenerator using the global plugin pipeline.
+func New() *EntityGenerator {
+	return &EntityGenerator{pipeline: plugins.GlobalPipeline()}
+}
+
+// NewWithPipeline returns an EntityGenerator using the provided pipeline.
+// Use in tests to inject an isolated pipeline.
+func NewWithPipeline(p *plugins.Pipeline) *EntityGenerator {
+	return &EntityGenerator{pipeline: p}
+}
+
+// Generate produces a widget.Node tree for the given entity schema and context.
+// Returns an error if any pipeline stage fails fatally.
+func (g *EntityGenerator) Generate(schema EntitySchema, ctx sduictx.GeneratorContext) (*widget.Node, error) {
+	if err := ctx.Validate(); err != nil {
+		return nil, fmt.Errorf("generator.Generate: %w", err)
+	}
+
+	// Stage 1: Pre-generation plugin transforms.
+	// (Currently a no-op for tree transforms — pre-generation operates on schema,
+	// which would require schema serialization. Deferred to post-v1.0.)
+
+	// Stage 2–4: Build the widget tree based on view mode.
+	var root *widget.Node
+	var err error
+
+	switch ctx.ViewMode {
+	case sduictx.ViewModeList:
+		root, err = g.buildList(schema, ctx)
+	case sduictx.ViewModeCreate:
+		root, err = g.buildForm(schema, ctx, false)
+	case sduictx.ViewModeEdit:
+		root, err = g.buildForm(schema, ctx, false)
+	case sduictx.ViewModeDetail:
+		root, err = g.buildDetail(schema, ctx)
+	case sduictx.ViewModeDashboard:
+		root, err = g.buildDashboard(schema, ctx)
+	default:
+		return nil, fmt.Errorf("generator.Generate: unknown ViewMode %q", ctx.ViewMode)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	// Stage 5: Post-generation plugin transforms.
+	if g.pipeline != nil {
+		root, err = g.pipeline.RunTreeTransforms(plugins.ExtPostGeneration, root, ctx)
+		if err != nil {
+			return nil, fmt.Errorf("generator.Generate: post-generation plugin: %w", err)
+		}
+	}
+
+	return root, nil
+}
+
+// ── View mode builders ────────────────────────────────────────────────────────
+
+// buildList constructs a NodeList tree for paginated list view.
+func (g *EntityGenerator) buildList(schema EntitySchema, ctx sduictx.GeneratorContext) (*widget.Node, error) {
+	// Collect visible column fields (InList=true, permission gated).
+	var columns []*widget.Node
+	for _, f := range schema.Fields {
+		if !f.InList || f.Hidden {
+			continue
+		}
+		if !g.canViewField(f, ctx) {
+			continue // absent, not hidden
+		}
+		col := g.buildColumnNode(f, ctx)
+		col, err := g.runFieldOverrides(f.Name, col, ctx)
+		if err != nil {
+			return nil, err
+		}
+		columns = append(columns, col)
+	}
+
+	// Build list actions (Create button, row actions, etc.).
+	actions := g.buildListActions(schema, ctx)
+
+	root := &widget.Node{
+		Kind:  widget.NodePage,
+		Label: schema.PluralTitle,
+		Children: []*widget.Node{
+			{
+				Kind:     widget.NodeList,
+				Label:    schema.PluralTitle,
+				Children: columns,
+				Actions:  actions,
+				DataSource: &widget.DataSource{
+					URL:    schema.ListURL,
+					Method: "GET",
+				},
+			},
+		},
+	}
+	return root, nil
+}
+
+// buildForm constructs a NodeForm tree for create or edit view.
+// isEdit: true = edit mode (initApi populated); false = create mode.
+func (g *EntityGenerator) buildForm(schema EntitySchema, ctx sduictx.GeneratorContext, isEdit bool) (*widget.Node, error) {
+	readOnly := ctx.ReadOnly
+
+	var formBody []*widget.Node
+
+	if len(schema.Tabs) > 0 {
+		// Tabs layout: NodeTabs with NodeTabPane children.
+		tabs, err := g.buildFormTabs(schema, ctx, readOnly)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, tabs)
+	} else if len(schema.Sections) > 0 {
+		// Sections layout: NodeSection children.
+		sections, err := g.buildFormSections(schema, ctx, readOnly)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, sections...)
+	} else {
+		// Flat layout: all fields directly in the form body.
+		fields, err := g.buildFlatFields(schema, ctx, readOnly)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, fields...)
+	}
+
+	// Build form actions.
+	actions := g.buildFormActions(schema, ctx)
+
+	ds := &widget.DataSource{
+		URL:    schema.CreateURL,
+		Method: "POST",
+	}
+	if isEdit || ctx.ViewMode == sduictx.ViewModeEdit {
+		ds.URL = schema.EditURL
+		ds.Method = "PATCH"
+		if schema.DetailURL != "" {
+			ds.ReadURL = schema.DetailURL
+		}
+	}
+
+	form := &widget.Node{
+		Kind:       widget.NodeForm,
+		Label:      schema.Title,
+		Children:   formBody,
+		Actions:    actions,
+		DataSource: ds,
+	}
+
+	return &widget.Node{
+		Kind:     widget.NodePage,
+		Label:    schema.Title,
+		Children: []*widget.Node{form},
+	}, nil
+}
+
+// buildDetail constructs a read-only detail page.
+func (g *EntityGenerator) buildDetail(schema EntitySchema, ctx sduictx.GeneratorContext) (*widget.Node, error) {
+	// Detail page is a read-only form with a summary card at the top.
+	detailCtx := ctx.WithReadOnly()
+
+	var pageChildren []*widget.Node
+
+	// Summary card (entity header).
+	summaryCard := &widget.Node{
+		Kind:    widget.NodeSummaryCard,
+		Label:   schema.Title,
+		Actions: g.buildDetailActions(schema, ctx),
+	}
+	pageChildren = append(pageChildren, summaryCard)
+
+	// Detail form body (read-only fields in sections/tabs).
+	var formBody []*widget.Node
+	if len(schema.Tabs) > 0 {
+		tabs, err := g.buildFormTabs(schema, detailCtx, true)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, tabs)
+	} else if len(schema.Sections) > 0 {
+		sections, err := g.buildFormSections(schema, detailCtx, true)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, sections...)
+	} else {
+		fields, err := g.buildFlatFields(schema, detailCtx, true)
+		if err != nil {
+			return nil, err
+		}
+		formBody = append(formBody, fields...)
+	}
+
+	detailForm := &widget.Node{
+		Kind:     widget.NodeForm,
+		Children: formBody,
+		DataSource: &widget.DataSource{
+			URL:    schema.DetailURL,
+			Method: "GET",
+		},
+	}
+	pageChildren = append(pageChildren, detailForm)
+
+	return &widget.Node{
+		Kind:     widget.NodePage,
+		Label:    schema.Title,
+		Children: pageChildren,
+	}, nil
+}
+
+// buildDashboard constructs a dashboard page. Schema is used for permission gating only.
+func (g *EntityGenerator) buildDashboard(schema EntitySchema, ctx sduictx.GeneratorContext) (*widget.Node, error) {
+	// Dashboard panels are defined in the dashboard.Registry, not in EntitySchema.
+	// The generator emits a placeholder page; the SDUI handler populates panels
+	// from the dashboard registry after generation.
+	return &widget.Node{
+		Kind:  widget.NodePage,
+		Label: schema.Title,
+	}, nil
+}
+
+// ── Section and tab builders ──────────────────────────────────────────────────
+
+func (g *EntityGenerator) buildFormTabs(schema EntitySchema, ctx sduictx.GeneratorContext, readOnly bool) (*widget.Node, error) {
+	var tabPanes []*widget.Node
+	// Index fields by section for fast lookup.
+	fieldsBySectionID := indexFieldsBySection(schema)
+
+	for _, tab := range schema.Tabs {
+		if tab.Permission != "" && !ctx.Viewer.HasPermission(tab.Permission) {
+			continue // absent
+		}
+		var tabBody []*widget.Node
+		for _, sectionID := range tab.Sections {
+			section := findSection(schema.Sections, sectionID)
+			if section == nil {
+				continue
+			}
+			sec, err := g.buildSection(*section, fieldsBySectionID[sectionID], schema, ctx, readOnly)
+			if err != nil {
+				return nil, err
+			}
+			if sec != nil {
+				tabBody = append(tabBody, sec)
+			}
+		}
+		tabPanes = append(tabPanes, &widget.Node{
+			Kind:     widget.NodeTabPane,
+			ID:       tab.ID,
+			Label:    tab.Title,
+			Children: tabBody,
+		})
+	}
+	return &widget.Node{
+		Kind:     widget.NodeTabs,
+		Children: tabPanes,
+	}, nil
+}
+
+func (g *EntityGenerator) buildFormSections(schema EntitySchema, ctx sduictx.GeneratorContext, readOnly bool) ([]*widget.Node, error) {
+	fieldsBySectionID := indexFieldsBySection(schema)
+	var out []*widget.Node
+	for _, section := range schema.Sections {
+		sec, err := g.buildSection(section, fieldsBySectionID[section.ID], schema, ctx, readOnly)
+		if err != nil {
+			return nil, err
+		}
+		if sec != nil {
+			out = append(out, sec)
+		}
+	}
+	return out, nil
+}
+
+func (g *EntityGenerator) buildSection(section SectionDef, fields []FieldDef, schema EntitySchema, ctx sduictx.GeneratorContext, readOnly bool) (*widget.Node, error) {
+	if section.Permission != "" && !ctx.Viewer.HasPermission(section.Permission) {
+		return nil, nil // section absent
+	}
+	var children []*widget.Node
+	for _, f := range fields {
+		if f.Hidden || !f.InForm {
+			continue
+		}
+		if !g.canViewField(f, ctx) {
+			continue
+		}
+		node := g.buildFieldNode(f, ctx, readOnly)
+		node, err := g.runFieldOverrides(f.Name, node, ctx)
+		if err != nil {
+			return nil, err
+		}
+		children = append(children, node)
+	}
+	if len(children) == 0 {
+		return nil, nil
+	}
+	return &widget.Node{
+		Kind:        widget.NodeSection,
+		ID:          section.ID,
+		Label:       section.Title,
+		Collapsible: section.Collapsible,
+		Collapsed:   section.Collapsed,
+		Children:    children,
+	}, nil
+}
+
+func (g *EntityGenerator) buildFlatFields(schema EntitySchema, ctx sduictx.GeneratorContext, readOnly bool) ([]*widget.Node, error) {
+	var out []*widget.Node
+	for _, f := range schema.Fields {
+		if f.Hidden || !f.InForm {
+			continue
+		}
+		if !g.canViewField(f, ctx) {
+			continue
+		}
+		node := g.buildFieldNode(f, ctx, readOnly)
+		node, err := g.runFieldOverrides(f.Name, node, ctx)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, node)
+	}
+	return out, nil
+}
+
+// ── Node builders ─────────────────────────────────────────────────────────────
+
+// buildFieldNode creates a widget.Node for a single field.
+// The node Kind is chosen based on FieldType.
+func (g *EntityGenerator) buildFieldNode(f FieldDef, ctx sduictx.GeneratorContext, readOnly bool) *widget.Node {
+	kind := fieldTypeToNodeKind(f.FieldType, f)
+	node := &widget.Node{
+		Kind:          kind,
+		Name:          f.Name,
+		Label:         f.Label,
+		Description:   f.Description,
+		Placeholder:   f.Placeholder,
+		Required:      f.Required,
+		ReadOnly:      readOnly || f.ReadOnly,
+		MaxLength:     f.MaxLength,
+		DataSource:    f.DataSource,
+		CurrencyField: f.CurrencyField,
+	}
+	if f.ColSpan > 0 {
+		node.Layout = &widget.LayoutHint{ColSpan: f.ColSpan}
+	}
+	return node
+}
+
+// buildColumnNode creates a widget.Node suitable for use as a list column.
+// Column nodes are lightweight — name and label only, plus type for column rendering.
+func (g *EntityGenerator) buildColumnNode(f FieldDef, ctx sduictx.GeneratorContext) *widget.Node {
+	kind := fieldTypeToColumnNodeKind(f.FieldType, f)
+	return &widget.Node{
+		Kind:  kind,
+		Name:  f.Name,
+		Label: f.Label,
+	}
+}
+
+// ── Action builders ───────────────────────────────────────────────────────────
+
+func (g *EntityGenerator) buildListActions(schema EntitySchema, ctx sduictx.GeneratorContext) []*widget.ActionNode {
+	var out []*widget.ActionNode
+
+	// Create button — requires create permission.
+	if perm := schema.Permissions["create"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		out = append(out, &widget.ActionNode{
+			ID:         "create",
+			Label:      "New " + schema.Title,
+			ActionType: "link",
+			Level:      "primary",
+			Href:       "/" + schema.Name + "/new",
+			Icon:       "plus",
+		})
+	}
+
+	// Entity-level actions scoped to list view.
+	for _, a := range schema.Actions {
+		if !actionInViewMode(a, sduictx.ViewModeList) {
+			continue
+		}
+		if a.Permission != "" && !ctx.Viewer.HasPermission(a.Permission) {
+			continue
+		}
+		out = append(out, &widget.ActionNode{
+			ID:          a.ID,
+			Label:       a.Label,
+			ActionType:  a.ActionType,
+			Level:       a.Level,
+			ConfirmText: a.ConfirmText,
+			WorkflowID:  a.WorkflowID,
+			Icon:        a.Icon,
+		})
+	}
+	return out
+}
+
+func (g *EntityGenerator) buildFormActions(schema EntitySchema, ctx sduictx.GeneratorContext) []*widget.ActionNode {
+	var out []*widget.ActionNode
+	viewMode := ctx.ViewMode
+
+	// Submit button for create/edit.
+	if viewMode == sduictx.ViewModeCreate || viewMode == sduictx.ViewModeEdit {
+		if !ctx.ReadOnly {
+			out = append(out, &widget.ActionNode{
+				ID:         "submit",
+				Label:      "Save",
+				ActionType: "submit",
+				Level:      "primary",
+			})
+		}
+	}
+
+	// Entity-level actions scoped to form view.
+	for _, a := range schema.Actions {
+		if !actionInViewMode(a, viewMode) {
+			continue
+		}
+		if a.Permission != "" && !ctx.Viewer.HasPermission(a.Permission) {
+			continue
+		}
+		out = append(out, &widget.ActionNode{
+			ID:          a.ID,
+			Label:       a.Label,
+			ActionType:  a.ActionType,
+			Level:       a.Level,
+			ConfirmText: a.ConfirmText,
+			WorkflowID:  a.WorkflowID,
+			Icon:        a.Icon,
+		})
+	}
+	return out
+}
+
+func (g *EntityGenerator) buildDetailActions(schema EntitySchema, ctx sduictx.GeneratorContext) []*widget.ActionNode {
+	var out []*widget.ActionNode
+
+	// Edit button — requires update permission.
+	if perm := schema.Permissions["update"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		out = append(out, &widget.ActionNode{
+			ID:         "edit",
+			Label:      "Edit",
+			ActionType: "link",
+			Level:      "default",
+			Icon:       "edit",
+		})
+	}
+
+	// Delete button — requires delete permission.
+	if perm := schema.Permissions["delete"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		out = append(out, &widget.ActionNode{
+			ID:          "delete",
+			Label:       "Delete",
+			ActionType:  "ajax",
+			Level:       "danger",
+			ConfirmText: "Delete this " + schema.Title + "?",
+			Icon:        "trash",
+		})
+	}
+
+	// Workflow and custom actions for detail view.
+	for _, a := range schema.Actions {
+		if !actionInViewMode(a, sduictx.ViewModeDetail) {
+			continue
+		}
+		if a.Permission != "" && !ctx.Viewer.HasPermission(a.Permission) {
+			continue
+		}
+		out = append(out, &widget.ActionNode{
+			ID:          a.ID,
+			Label:       a.Label,
+			ActionType:  a.ActionType,
+			Level:       a.Level,
+			ConfirmText: a.ConfirmText,
+			WorkflowID:  a.WorkflowID,
+			Icon:        a.Icon,
+		})
+	}
+	return out
+}
+
+// ── Permission gating ─────────────────────────────────────────────────────────
+
+// canViewField reports whether the viewer has permission to see this field.
+// Platform admins bypass all permission checks.
+func (g *EntityGenerator) canViewField(f FieldDef, ctx sduictx.GeneratorContext) bool {
+	if ctx.Viewer.IsPlatformAdmin() {
+		return true
+	}
+	if f.Permission == "" {
+		return true
+	}
+	return ctx.Viewer.HasPermission(f.Permission)
+}
+
+// ── Plugin integration ────────────────────────────────────────────────────────
+
+func (g *EntityGenerator) runFieldOverrides(fieldName string, node *widget.Node, ctx sduictx.GeneratorContext) (*widget.Node, error) {
+	if g.pipeline == nil {
+		return node, nil
+	}
+	result, err := g.pipeline.RunFieldNodeOverrides(fieldName, node, ctx)
+	if err != nil {
+		return nil, fmt.Errorf("generator: field override for %q: %w", fieldName, err)
+	}
+	return result, nil
+}
+
+// ── Field type mapping ────────────────────────────────────────────────────────
+
+// fieldTypeToNodeKind maps a FieldType string to the appropriate NodeKind for form fields.
+func fieldTypeToNodeKind(fieldType string, f FieldDef) widget.NodeKind {
+	switch fieldType {
+	case "data", "text", "small_text", "string":
+		if f.MaxLength > 255 {
+			return widget.NodeTextArea
+		}
+		return widget.NodeText
+	case "long_text":
+		return widget.NodeTextArea
+	case "rich_text":
+		return widget.NodeRichText
+	case "int", "float", "decimal":
+		return widget.NodeNumber
+	case "currency":
+		return widget.NodeMoney
+	case "select":
+		return widget.NodeSelect
+	case "multi_select":
+		return widget.NodeMultiSelect
+	case "link":
+		if f.DataSource != nil {
+			return widget.NodeLookup
+		}
+		return widget.NodeSelect
+	case "tree_link":
+		return widget.NodeTreeSelect
+	case "date":
+		return widget.NodeDate
+	case "datetime", "time":
+		return widget.NodeDateTime
+	case "duration":
+		return widget.NodeDuration
+	case "bool", "boolean":
+		return widget.NodeSwitch
+	case "json":
+		return widget.NodeEditor
+	case "color":
+		return widget.NodeColor
+	case "signature":
+		return widget.NodeSignature
+	case "file", "image", "attach":
+		return widget.NodeFileUpload
+	case "money":
+		return widget.NodeMoney
+	default:
+		return widget.NodeText
+	}
+}
+
+// fieldTypeToColumnNodeKind maps a FieldType string to the NodeKind for list columns.
+func fieldTypeToColumnNodeKind(fieldType string, f FieldDef) widget.NodeKind {
+	switch fieldType {
+	case "int", "float", "decimal", "currency", "money":
+		return widget.NodeNumber
+	case "date":
+		return widget.NodeDate
+	case "datetime", "time":
+		return widget.NodeDateTime
+	case "bool", "boolean":
+		return widget.NodeSwitch
+	case "select", "multi_select", "link", "tree_link":
+		return widget.NodeSelect
+	case "file", "image", "attach":
+		return widget.NodeFileUpload
+	default:
+		return widget.NodeText
+	}
+}
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+func indexFieldsBySection(schema EntitySchema) map[string][]FieldDef {
+	idx := make(map[string][]FieldDef)
+	for _, section := range schema.Sections {
+		// Pre-populate to maintain order.
+		idx[section.ID] = nil
+	}
+	for _, f := range schema.Fields {
+		if f.Section != "" {
+			idx[f.Section] = append(idx[f.Section], f)
+		}
+	}
+	return idx
+}
+
+func findSection(sections []SectionDef, id string) *SectionDef {
+	for i := range sections {
+		if sections[i].ID == id {
+			return &sections[i]
+		}
+	}
+	return nil
+}
+
+func actionInViewMode(a ActionDef, mode sduictx.ViewMode) bool {
+	if len(a.ViewModes) == 0 {
+		return true // visible in all view modes
+	}
+	for _, m := range a.ViewModes {
+		if m == mode {
+			return true
+		}
+	}
+	return false
+}

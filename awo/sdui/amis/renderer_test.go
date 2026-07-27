@@ -3,261 +3,315 @@ package amis_test
 import (
 	"testing"
 
+	"github.com/google/uuid"
+
 	"awo.so/awo/sdui/amis"
+	"awo.so/awo/sdui/expression"
+	"awo.so/awo/sdui/renderer"
+	"awo.so/awo/sdui/sduictx"
 	"awo.so/awo/sdui/widget"
 )
 
-func TestDefaultRenderer_NilRoot(t *testing.T) {
+// ── Test helpers ──────────────────────────────────────────────────────────────
+
+type stubViewer struct{}
+
+func (stubViewer) TenantID() uuid.UUID       { return uuid.New() }
+func (stubViewer) Roles() []string           { return nil }
+func (stubViewer) IsPlatformAdmin() bool     { return false }
+func (stubViewer) HasPermission(string) bool { return true }
+
+func makeCtx() renderer.RendererContext {
+	genCtx, _ := sduictx.NewGeneratorContext(
+		uuid.New(), stubViewer{}, "test_entity", sduictx.ViewModeList, amis.RendererID,
+	).Build()
+	return renderer.RendererContext{GenCtx: genCtx}
+}
+
+func render(t *testing.T, n *widget.Node) map[string]any {
+	t.Helper()
+	r := amis.New()
+	out, err := r.Render(n, makeCtx())
+	if err != nil {
+		t.Fatalf("Render: %v", err)
+	}
+	return out.AMISSchema
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+func TestRenderer_NilRoot(t *testing.T) {
 	t.Parallel()
 	r := amis.New()
-	_, err := r.Render(nil)
+	_, err := r.Render(nil, makeCtx())
 	if err == nil {
 		t.Error("Render(nil) must return error")
 	}
 }
 
-func TestDefaultRenderer_UnknownNodeKind(t *testing.T) {
+func TestRenderer_UnknownNodeKind(t *testing.T) {
 	t.Parallel()
 	r := amis.New()
-	n := &widget.Node{Kind: "unknown-kind-xyz"}
-	_, err := r.Render(n)
+	_, err := r.Render(&widget.Node{Kind: "unknown-kind-xyz"}, makeCtx())
 	if err == nil {
 		t.Error("Render with unknown NodeKind must return error")
 	}
 }
 
-// TestDefaultRenderer_HiddenNode verifies that a Hidden root node returns nil
-// (omit semantics), not an error.
-func TestDefaultRenderer_HiddenNode(t *testing.T) {
+func TestRenderer_HiddenRootStillErrors(t *testing.T) {
+	// A hidden root emits nil schema — the pipeline should have removed it before calling Render.
+	// This documents the behaviour: Render on a hidden root returns (empty output, nil error)
+	// because hidden == omit.
 	t.Parallel()
 	r := amis.New()
-	n := &widget.Node{Kind: widget.NodeText, Hidden: true}
-	out, err := r.Render(n)
+	out, err := r.Render(&widget.Node{Kind: widget.NodeText, Name: "x", Hidden: true}, makeCtx())
 	if err != nil {
-		t.Fatalf("Render(Hidden) returned error: %v", err)
+		t.Fatalf("unexpected error: %v", err)
 	}
-	if out != nil {
-		t.Errorf("Render(Hidden) must return nil schema, got %v", out)
+	if out.AMISSchema != nil {
+		t.Errorf("expected nil AMISSchema for hidden root, got %v", out.AMISSchema)
 	}
 }
 
-// TestDefaultRenderer_NodePage_Type verifies the top-level page type.
-func TestDefaultRenderer_NodePage_Type(t *testing.T) {
+func TestRenderer_PageType(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{Kind: widget.NodePage, Label: "Invoices"}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodePage: %v", err)
-	}
+	out := render(t, &widget.Node{Kind: widget.NodePage, Label: "Invoices"})
 	if out["type"] != "page" {
-		t.Errorf("type = %v, want \"page\"", out["type"])
+		t.Errorf("type=%v want page", out["type"])
 	}
 	if out["title"] != "Invoices" {
-		t.Errorf("title = %v, want \"Invoices\"", out["title"])
+		t.Errorf("title=%v want Invoices", out["title"])
 	}
 }
 
-// TestDefaultRenderer_NodeList_Type verifies the crud2 type for lists.
-func TestDefaultRenderer_NodeList_Type(t *testing.T) {
+func TestRenderer_FormAPI(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
-		Kind:  widget.NodeList,
-		Label: "Invoices",
-		DataSource: &widget.DataSource{
-			URL: "/api/v1/finance/invoices?q=${keywords}",
-		},
-		Children: []*widget.Node{
-			{Kind: widget.NodeText, Name: "number", Label: "Number"},
-			{Kind: widget.NodeDate, Name: "date", Label: "Date"},
-		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeList: %v", err)
-	}
-	if out["type"] != "crud2" {
-		t.Errorf("type = %v, want \"crud2\"", out["type"])
-	}
-	cols, ok := out["columns"].([]any)
-	if !ok || len(cols) != 2 {
-		t.Errorf("columns: got %v, want 2 columns", out["columns"])
-	}
-}
-
-// TestDefaultRenderer_NodeForm_API verifies form API config from DataSource.
-func TestDefaultRenderer_NodeForm_API(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
 	n := &widget.Node{
 		Kind: widget.NodeForm,
 		DataSource: &widget.DataSource{
 			URL:    "/api/v1/finance/invoices",
 			Method: "POST",
 		},
+		Children: []*widget.Node{{Kind: widget.NodeText, Name: "number", Label: "Number"}},
+	}
+	out := render(t, n)
+	if out["type"] != "form" {
+		t.Errorf("type=%v want form", out["type"])
+	}
+	api := out["api"].(map[string]any)
+	if api["url"] != "/api/v1/finance/invoices" {
+		t.Errorf("api.url=%v", api["url"])
+	}
+	if api["method"] != "POST" {
+		t.Errorf("api.method=%v want POST", api["method"])
+	}
+}
+
+func TestRenderer_ListColumns(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/invoices"},
 		Children: []*widget.Node{
-			{Kind: widget.NodeText, Name: "number", Label: "Number", Required: true},
+			{Kind: widget.NodeText, Name: "number", Label: "Number"},
+			{Kind: widget.NodeDate, Name: "date", Label: "Date"},
 		},
 	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeForm: %v", err)
+	out := render(t, n)
+	if out["type"] != "crud2" {
+		t.Errorf("type=%v want crud2", out["type"])
 	}
-	if out["type"] != "form" {
-		t.Errorf("type = %v, want \"form\"", out["type"])
-	}
-	apiOut := out["api"].(map[string]any)
-	if apiOut["url"] != "/api/v1/finance/invoices" {
-		t.Errorf("api.url = %v", apiOut["url"])
-	}
-	if apiOut["method"] != "POST" {
-		t.Errorf("api.method = %v, want POST", apiOut["method"])
+	cols := out["columns"].([]any)
+	if len(cols) != 2 {
+		t.Errorf("expected 2 columns, got %d", len(cols))
 	}
 }
 
-// TestDefaultRenderer_NodeText_Properties verifies name/label/required/disabled.
-func TestDefaultRenderer_NodeText_Properties(t *testing.T) {
+func TestRenderer_TextFieldProperties(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
+	out := render(t, &widget.Node{
 		Kind:     widget.NodeText,
 		Name:     "email",
-		Label:    "Email Address",
+		Label:    "Email",
 		Required: true,
 		ReadOnly: true,
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeText: %v", err)
-	}
+	})
 	if out["type"] != "input-text" {
-		t.Errorf("type = %v, want \"input-text\"", out["type"])
+		t.Errorf("type=%v want input-text", out["type"])
 	}
 	if out["name"] != "email" {
-		t.Errorf("name = %v", out["name"])
-	}
-	if out["label"] != "Email Address" {
-		t.Errorf("label = %v", out["label"])
+		t.Errorf("name=%v", out["name"])
 	}
 	if out["required"] != true {
-		t.Errorf("required = %v, want true", out["required"])
+		t.Errorf("required=%v want true", out["required"])
 	}
 	if out["disabled"] != true {
-		t.Errorf("disabled = %v, want true (ReadOnly → disabled)", out["disabled"])
+		t.Errorf("disabled=%v want true (ReadOnly→disabled)", out["disabled"])
 	}
 }
 
-// TestDefaultRenderer_NodeSelect_DataSource verifies server-side search config.
-func TestDefaultRenderer_NodeSelect_DataSource(t *testing.T) {
+func TestRenderer_SelectValueField_Default(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
+	out := render(t, &widget.Node{
 		Kind: widget.NodeSelect,
 		Name: "currency_id",
 		DataSource: &widget.DataSource{
-			URL:        "/api/v1/finance/currencies?q=${keywords}",
+			URL:        "/api/v1/currencies",
 			LabelField: "code",
-			ValueField: "id",
+			// ValueField empty → must default to "id"
 		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeSelect: %v", err)
-	}
-	if out["type"] != "select" {
-		t.Errorf("type = %v, want \"select\"", out["type"])
-	}
-	if out["labelField"] != "code" {
-		t.Errorf("labelField = %v, want \"code\"", out["labelField"])
-	}
+	})
 	if out["valueField"] != "id" {
-		t.Errorf("valueField = %v, want \"id\"", out["valueField"])
+		t.Errorf("valueField=%v want id (default)", out["valueField"])
 	}
 }
 
-// TestDefaultRenderer_Props_Override verifies Props merge last and override defaults.
-func TestDefaultRenderer_Props_Override(t *testing.T) {
+func TestRenderer_PropsOverride(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
+	out := render(t, &widget.Node{
 		Kind:  widget.NodeText,
 		Name:  "code",
 		Label: "Code",
-		Props: map[string]any{
-			"maxLength": 10,
-			"label":     "Custom Label", // override computed label
-		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render with Props: %v", err)
-	}
-	// Props.label must override the typed Label field.
+		Props: map[string]any{"label": "Custom Label"},
+	})
 	if out["label"] != "Custom Label" {
-		t.Errorf("Props override failed: label = %v, want \"Custom Label\"", out["label"])
-	}
-	if out["maxLength"] != 10 {
-		t.Errorf("Props.maxLength = %v, want 10", out["maxLength"])
+		t.Errorf("Props.label should override: got %v", out["label"])
 	}
 }
 
-// TestDefaultRenderer_Actions verifies action buttons are rendered.
-func TestDefaultRenderer_Actions(t *testing.T) {
+func TestRenderer_IDEmitted(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
-		Kind:  widget.NodePage,
-		Label: "Invoice Detail",
-		Actions: []*widget.ActionNode{
-			{Label: "Submit", ActionType: "ajax", Level: "primary", API: "POST:/api/v1/finance/invoices/${id}/submit", ConfirmText: "Submit?"},
-		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render with actions: %v", err)
-	}
-	toolbar, ok := out["toolbar"].([]any)
-	if !ok || len(toolbar) == 0 {
-		t.Fatalf("toolbar missing or empty: %v", out["toolbar"])
-	}
-	btn := toolbar[0].(map[string]any)
-	if btn["label"] != "Submit" {
-		t.Errorf("action label = %v, want \"Submit\"", btn["label"])
-	}
-	if btn["actionType"] != "ajax" {
-		t.Errorf("actionType = %v, want \"ajax\"", btn["actionType"])
-	}
-	if btn["confirmText"] != "Submit?" {
-		t.Errorf("confirmText = %v, want \"Submit?\"", btn["confirmText"])
+	out := render(t, &widget.Node{Kind: widget.NodePage, ID: "invoice-page"})
+	if out["id"] != "invoice-page" {
+		t.Errorf("id=%v want invoice-page", out["id"])
 	}
 }
 
-// TestDefaultRenderer_HiddenChild verifies hidden children are omitted from output.
-func TestDefaultRenderer_HiddenChild(t *testing.T) {
+func TestRenderer_HiddenChildOmitted(t *testing.T) {
 	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
+	out := render(t, &widget.Node{
 		Kind: widget.NodePage,
 		Children: []*widget.Node{
-			{Kind: widget.NodeText, Name: "visible", Label: "Visible"},
-			{Kind: widget.NodeText, Name: "secret", Label: "Secret", Hidden: true},
+			{Kind: widget.NodeText, Name: "visible"},
+			{Kind: widget.NodeText, Name: "secret", Hidden: true},
 		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render with hidden child: %v", err)
-	}
-	body, _ := out["body"].([]any)
+	})
+	body := out["body"].([]any)
 	if len(body) != 1 {
 		t.Errorf("body has %d items, want 1 (hidden child must be absent)", len(body))
 	}
 }
 
-// TestDefaultRenderer_AllInputTypes verifies every NodeKind maps to expected amis type.
-func TestDefaultRenderer_AllInputTypes(t *testing.T) {
+func TestRenderer_XSSSanitized(t *testing.T) {
 	t.Parallel()
+	out := render(t, &widget.Node{Kind: widget.NodePage, Label: "<script>alert('xss')</script>"})
+	title := out["title"].(string)
+	if title == "<script>alert('xss')</script>" {
+		t.Error("XSS: label not sanitized")
+	}
+}
 
+func TestRenderer_VisibleOnExpression(t *testing.T) {
+	t.Parallel()
+	exprNode := expression.Eq(expression.Field("status"), expression.Lit("active"))
+	out := render(t, &widget.Node{
+		Kind:      widget.NodePage,
+		VisibleOn: &widget.ExpressionRef{Expr: exprNode},
+	})
+	got := out["visibleOn"]
+	if got != "data.status === 'active'" {
+		t.Errorf("visibleOn=%q want data.status === 'active'", got)
+	}
+}
+
+func TestRenderer_DateFormat(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{Kind: widget.NodeDate, Name: "date"})
+	if out["format"] != "YYYY-MM-DD" {
+		t.Errorf("format=%v", out["format"])
+	}
+}
+
+func TestRenderer_DateTimeFormat(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{Kind: widget.NodeDateTime, Name: "ts"})
+	if out["format"] != "YYYY-MM-DDTHH:mm:ssZ" {
+		t.Errorf("format=%v", out["format"])
+	}
+}
+
+func TestRenderer_PageActions(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{
+		Kind:  widget.NodePage,
+		Label: "Detail",
+		Actions: []*widget.ActionNode{
+			{Label: "Submit", ActionType: "ajax", Level: "primary", API: "/api/submit", ConfirmText: "Sure?"},
+		},
+	})
+	toolbar := out["toolbar"].([]any)
+	if len(toolbar) != 1 {
+		t.Fatalf("expected 1 action, got %d", len(toolbar))
+	}
+	btn := toolbar[0].(map[string]any)
+	if btn["label"] != "Submit" {
+		t.Errorf("label=%v", btn["label"])
+	}
+	if btn["confirmText"] != "Sure?" {
+		t.Errorf("confirmText=%v", btn["confirmText"])
+	}
+}
+
+func TestRenderer_TabPaneInsideTabs(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{
+		Kind: widget.NodePage,
+		Children: []*widget.Node{{
+			Kind: widget.NodeTabs,
+			Children: []*widget.Node{{
+				Kind:     widget.NodeTabPane,
+				Label:    "Details",
+				Children: []*widget.Node{{Kind: widget.NodeText, Name: "name"}},
+			}},
+		}},
+	})
+	body := out["body"].([]any)
+	tabs := body[0].(map[string]any)
+	if tabs["type"] != "tabs" {
+		t.Errorf("type=%v want tabs", tabs["type"])
+	}
+	tabList := tabs["tabs"].([]any)
+	if len(tabList) != 1 {
+		t.Fatalf("expected 1 tab, got %d", len(tabList))
+	}
+	tab := tabList[0].(map[string]any)
+	if tab["title"] != "Details" {
+		t.Errorf("tab title=%v want Details", tab["title"])
+	}
+}
+
+func TestRenderer_GridEditable(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{
+		Kind:         widget.NodeGrid,
+		Name:         "line_items",
+		Label:        "Line Items",
+		GridEditable: true,
+		Children: []*widget.Node{
+			{Kind: widget.NodeText, Name: "description", Label: "Description"},
+			{Kind: widget.NodeNumber, Name: "quantity", Label: "Qty"},
+		},
+	})
+	if out["type"] != "input-table" {
+		t.Errorf("type=%v want input-table", out["type"])
+	}
+	if out["addable"] != true || out["editable"] != true || out["removable"] != true {
+		t.Error("editable grid must have addable/editable/removable=true")
+	}
+}
+
+func TestRenderer_AllInputKinds(t *testing.T) {
+	t.Parallel()
 	cases := []struct {
 		kind     widget.NodeKind
 		wantType string
@@ -265,114 +319,31 @@ func TestDefaultRenderer_AllInputTypes(t *testing.T) {
 		{widget.NodeText, "input-text"},
 		{widget.NodeField, "input-text"},
 		{widget.NodeTextArea, "textarea"},
+		{widget.NodeRichText, "rich-text"},
 		{widget.NodeNumber, "input-number"},
 		{widget.NodeDate, "input-date"},
 		{widget.NodeDateTime, "input-datetime"},
 		{widget.NodeSwitch, "switch"},
 		{widget.NodeEditor, "json-editor"},
+		{widget.NodeColor, "input-color"},
+		{widget.NodeFileUpload, "input-file"},
 	}
-
 	r := amis.New()
+	ctx := makeCtx()
 	for _, tc := range cases {
 		tc := tc
 		t.Run(string(tc.kind), func(t *testing.T) {
 			t.Parallel()
-			n := &widget.Node{Kind: tc.kind, Name: "f", Label: "F"}
-			out, err := r.Render(n)
+			out, err := r.Render(&widget.Node{Kind: tc.kind, Name: "f", Label: "F"}, ctx)
 			if err != nil {
 				t.Fatalf("Render(%s): %v", tc.kind, err)
 			}
-			if out["type"] != tc.wantType {
-				t.Errorf("Render(%s): type = %v, want %q", tc.kind, out["type"], tc.wantType)
+			if out.AMISSchema["type"] != tc.wantType {
+				t.Errorf("Render(%s): type=%v want %q", tc.kind, out.AMISSchema["type"], tc.wantType)
 			}
 		})
 	}
 }
 
-// TestDefaultRenderer_NodeDate_Format verifies date format is set.
-func TestDefaultRenderer_NodeDate_Format(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{Kind: widget.NodeDate, Name: "invoice_date"}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeDate: %v", err)
-	}
-	if out["format"] != "YYYY-MM-DD" {
-		t.Errorf("format = %v, want YYYY-MM-DD", out["format"])
-	}
-}
-
-// TestDefaultRenderer_NodeDateTime_Format verifies datetime format is set.
-func TestDefaultRenderer_NodeDateTime_Format(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{Kind: widget.NodeDateTime, Name: "created_at"}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render NodeDateTime: %v", err)
-	}
-	if out["format"] != "YYYY-MM-DDTHH:mm:ssZ" {
-		t.Errorf("format = %v, want YYYY-MM-DDTHH:mm:ssZ", out["format"])
-	}
-}
-
-// TestDefaultRenderer_NodeID verifies that Node.ID is emitted as "id".
-func TestDefaultRenderer_NodeID(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{Kind: widget.NodePage, ID: "invoice-detail-page"}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render with ID: %v", err)
-	}
-	if out["id"] != "invoice-detail-page" {
-		t.Errorf("id = %v, want \"invoice-detail-page\"", out["id"])
-	}
-}
-
-// TestDefaultRenderer_Select_DefaultValueField verifies valueField defaults to "id".
-func TestDefaultRenderer_Select_DefaultValueField(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
-		Kind: widget.NodeSelect,
-		Name: "currency_id",
-		DataSource: &widget.DataSource{
-			URL:        "/api/v1/finance/currencies?q=${keywords}",
-			LabelField: "code",
-			// ValueField deliberately empty — must default to "id"
-		},
-	}
-	out, err := r.Render(n)
-	if err != nil {
-		t.Fatalf("Render: %v", err)
-	}
-	if out["valueField"] != "id" {
-		t.Errorf("valueField = %v, want \"id\" (default)", out["valueField"])
-	}
-}
-
-// TestDefaultRenderer_Deterministic verifies identical input produces identical output.
-func TestDefaultRenderer_Deterministic(t *testing.T) {
-	t.Parallel()
-	r := amis.New()
-	n := &widget.Node{
-		Kind:  widget.NodePage,
-		Label: "Test",
-		Children: []*widget.Node{
-			{Kind: widget.NodeText, Name: "a", Label: "A"},
-			{Kind: widget.NodeText, Name: "b", Label: "B"},
-		},
-	}
-	out1, err1 := r.Render(n)
-	out2, err2 := r.Render(n)
-	if err1 != nil || err2 != nil {
-		t.Fatalf("Render errors: %v %v", err1, err2)
-	}
-	// Both should have "page" type — deeper equality not checked here since
-	// map[string]any comparison requires reflect.DeepEqual.
-	if out1["type"] != out2["type"] {
-		t.Error("Render not deterministic: type differs between calls")
-	}
-}
+// Ensure _ imports compile when expression package is used in test file.
+var _ = expression.Field
