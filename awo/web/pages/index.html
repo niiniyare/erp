@@ -81,6 +81,53 @@
     .awo-content {
       padding: 24px;
     }
+
+    /* ── Navigation ────────────────────────────────────────────────────────── */
+    .nav-module {
+      padding: 8px 0 4px 0;
+      border-bottom: 1px solid var(--colors-neutral-line-8, #f0f0f0);
+    }
+
+    .nav-module:last-child {
+      border-bottom: none;
+    }
+
+    .nav-module-label {
+      padding: 6px 20px 4px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--colors-neutral-text-2, #8c8c8c);
+      user-select: none;
+    }
+
+    .nav-entry {
+      display: block;
+      padding: 7px 20px 7px 28px;
+      font-size: 14px;
+      color: inherit;
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: background 0.12s, border-color 0.12s;
+    }
+
+    .nav-entry:hover {
+      background: var(--colors-neutral-fill-9, #f5f5f5);
+    }
+
+    .nav-entry.active {
+      border-left-color: var(--colors-brand-primary, #1677ff);
+      color: var(--colors-brand-primary, #1677ff);
+      background: rgba(22, 119, 255, 0.06);
+      font-weight: 500;
+    }
+
+    .nav-loading {
+      padding: 16px 20px;
+      font-size: 13px;
+      color: var(--colors-neutral-text-2, #8c8c8c);
+    }
   </style>
 </head>
 <body>
@@ -117,24 +164,40 @@
   // ── Route parsing ──────────────────────────────────────────────────────────
   // URL format: /ui/{module}/{resource}[/{id}][/edit|create]
   function parseRoute() {
-    var parts = location.pathname.replace(/^\/ui\//, '').split('/');
+    var parts = location.pathname.replace(/^\/ui\/?/, '').split('/').filter(Boolean);
+    var last  = parts[parts.length - 1];
     return {
       module:   parts[0] || '',
       resource: parts[1] || '',
       id:       parts[2] && parts[2] !== 'create' && parts[2] !== 'edit' ? parts[2] : null,
-      view:     parts[parts.length - 1] === 'edit'   ? 'edit'
-              : parts[parts.length - 1] === 'create' ? 'create'
-              : parts[2]                              ? 'detail'
-              :                                        'list',
+      view:     last === 'edit'   ? 'edit'
+              : last === 'create' ? 'create'
+              : parts[2]          ? 'detail'
+              :                     'list',
     };
+  }
+
+  // ── SDUI API URL builder ───────────────────────────────────────────────────
+  // Maps a parsed route to the server SDUI endpoint.
+  // GET /api/v1/ui/{module}/{resource}            → list
+  // GET /api/v1/ui/{module}/{resource}/create     → create form
+  // GET /api/v1/ui/{module}/{resource}/{id}       → detail
+  // GET /api/v1/ui/{module}/{resource}/{id}/edit  → edit form
+  function sduiURL(route) {
+    var base = '/api/v1/ui/' + route.module + '/' + route.resource;
+    switch (route.view) {
+      case 'create': return base + '/create';
+      case 'detail': return base + '/' + route.id;
+      case 'edit':   return base + '/' + route.id + '/edit';
+      default:       return base;
+    }
   }
 
   // ── Amis schema loading ────────────────────────────────────────────────────
   function loadPage(route) {
     if (!route.module || !route.resource) return;
 
-    var entity = route.module + '_' + route.resource.replace(/-/g, '_').replace(/s$/, '');
-    var url = '/api/sdui/page/' + entity + '/' + route.view;
+    var url = sduiURL(route);
 
     fetch(url, { credentials: 'include' })
       .then(function (r) {
@@ -142,7 +205,9 @@
         return r.json();
       })
       .then(function (schema) {
+        // Server returns the AMIS schema directly (not wrapped).
         renderAmis(schema);
+        updateNavActive(route);
       })
       .catch(function (err) {
         renderAmis({
@@ -172,7 +237,81 @@
     });
   }
 
+  // ── Navigation loading ─────────────────────────────────────────────────────
+  // GET /api/v1/ui/nav → [{module, label, entries: [{module, label, entity, listUrl, icon}]}]
+  function loadNav() {
+    var navEl = document.getElementById('nav');
+    navEl.innerHTML = '<div class="nav-loading">Loading navigation...</div>';
+
+    fetch('/api/v1/ui/nav', { credentials: 'include' })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(function (modules) {
+        renderNav(navEl, modules);
+      })
+      .catch(function () {
+        navEl.innerHTML = '<div class="nav-loading">Navigation unavailable</div>';
+      });
+  }
+
+  function renderNav(navEl, modules) {
+    if (!modules || modules.length === 0) {
+      navEl.innerHTML = '<div class="nav-loading">No modules</div>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < modules.length; i++) {
+      var mod = modules[i];
+      html += '<div class="nav-module">';
+      html += '<div class="nav-module-label">' + escapeHtml(mod.label) + '</div>';
+      if (mod.entries) {
+        for (var j = 0; j < mod.entries.length; j++) {
+          var entry = mod.entries[j];
+          var icon = entry.icon ? '<span style="margin-right:6px;opacity:0.6;">' + escapeHtml(entry.icon) + '</span>' : '';
+          // listUrl is already the /ui/{module}/{resource} path
+          html += '<a class="nav-entry" href="' + escapeHtml(entry.listUrl) + '" data-url="' + escapeHtml(entry.listUrl) + '">'
+                + icon + escapeHtml(entry.label) + '</a>';
+        }
+      }
+      html += '</div>';
+    }
+    navEl.innerHTML = html;
+
+    // Intercept clicks for client-side navigation.
+    navEl.addEventListener('click', function (e) {
+      var a = e.target.closest('a.nav-entry');
+      if (!a) return;
+      e.preventDefault();
+      var href = a.getAttribute('href');
+      history.pushState(null, '', href);
+      loadPage(parseRoute());
+    });
+
+    updateNavActive(parseRoute());
+  }
+
+  function updateNavActive(route) {
+    var entries = document.querySelectorAll('a.nav-entry');
+    var current = location.pathname;
+    for (var i = 0; i < entries.length; i++) {
+      var href = entries[i].getAttribute('href');
+      entries[i].classList.toggle('active', href === current || (route.module && route.resource && href === '/ui/' + route.module + '/' + route.resource));
+    }
+  }
+
+  function escapeHtml(str) {
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
   // ── Bootstrap ──────────────────────────────────────────────────────────────
+  loadNav();
+
   var route = parseRoute();
   if (route.module) {
     loadPage(route);
@@ -180,7 +319,16 @@
     renderAmis({
       type: 'page',
       title: 'Awo ERP',
-      body: { type: 'tpl', tpl: 'Select a module from the sidebar.' }
+      body: [
+        {
+          type: 'tpl',
+          tpl: '<div style="padding:48px 0;text-align:center;color:#8c8c8c;">'
+             + '<div style="font-size:48px;margin-bottom:16px;">&#9677;</div>'
+             + '<div style="font-size:18px;font-weight:500;margin-bottom:8px;">Welcome to Awo ERP</div>'
+             + '<div style="font-size:14px;">Select a module from the sidebar to get started.</div>'
+             + '</div>'
+        }
+      ]
     });
   }
 

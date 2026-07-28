@@ -32,6 +32,7 @@ import (
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
 	"awo.so/awo/api/router"
+	showcasepkg "awo.so/awo/api/showcase"
 	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
@@ -58,6 +59,9 @@ import (
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"
+
+	// Demo module — entity registrations for the developer showcase.
+	_ "awo.so/modules/demo"
 )
 
 func main() {
@@ -231,6 +235,15 @@ func main() {
 	app.Get("/ui/*", func(c *fiber.Ctx) error {
 		return c.SendFile("./awo/web/pages/index.html")
 	})
+
+	// Showcase — developer experience portal.
+	app.Get("/showcase*", func(c *fiber.Ctx) error {
+		return c.SendFile("./awo/web/showcase/index.html")
+	})
+
+	// Showcase diagnostic API — unauthenticated; expose only in non-production.
+	showcaseHandler := showcasepkg.New(result.Schema, sduiEng)
+	showcaseHandler.Register(app)
 
 	// Start server.
 	port := getEnv("PORT", "8080")

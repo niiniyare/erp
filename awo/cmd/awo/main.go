@@ -40,6 +40,8 @@ func main() {
 
 	var err error
 	switch command {
+	case "serve":
+		err = runServe(args)
 	case "new":
 		err = runNew(args)
 	case "schema":
@@ -79,6 +81,10 @@ func printUsage() {
 
 Usage:
   awo <command> [flags]
+
+Server:
+  serve [--port PORT] [--db URL] [--redis URL] [--log-level info] [--open]
+                              Start the Awo HTTP server
 
 Scaffolding:
   new module <name>           Scaffold a new module (definition, hooks, service, migration)
