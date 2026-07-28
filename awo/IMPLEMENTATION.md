@@ -331,6 +331,70 @@
 
 ---
 
+---
+
+## Package: awo/sdui/adapt
+
+**Status:** Complete
+**Files:**
+- `adapt.go` — FromCompiled(), SchemaFingerprint(), ViewerAdapter, NewViewerAdapter(), BuildGrantIndex(), GrantIndex
+- `adapt_test.go` — 13 tests covering identity, URLs, permissions, field visibility, sensitivity, immutability, select options, actions, sections, tabs, multi-column interleave, fingerprint determinism, fingerprint uniqueness; 2 benchmarks
+
+**Key exports:** `FromCompiled()`, `SchemaFingerprint()`, `ViewerAdapter`, `NewViewerAdapter()`, `BuildGrantIndex()`, `GrantIndex`
+
+**Responsibility:**
+- Translates `*compiler.EntitySchema` → `generator.EntitySchema` (compiler → SDUI bridge)
+- `FromCompiled()` maps: qualified name, label, URLs, fields, layout (sections/tabs), actions, permissions
+- `SchemaFingerprint()` computes FNV-64a hash of field names+types, layout, actions for cache keys
+- `ViewerAdapter` bridges `auth.ViewerContext` → `sduictx.ViewerContext` via permission grant index
+- `BuildGrantIndex()` pre-builds O(1) map from `CapabilityGrant` slice for per-request `HasPermission` calls
+
+**Field visibility rules:**
+- `InList = !Hidden && !Sensitive && isListable(type)` — excludes long_text, json, link_list, dynamic_link, multi_select
+- `InForm = !Hidden && !Sensitive`
+- `InDetail = !Hidden` (sensitive fields visible to those with explicit permission — handled at API level)
+- `Immutable` fields → `ReadOnly = true`
+- `Sensitive` fields → `Hidden = true` in SDUI (hidden in grid/form; still in API for authorized viewers)
+
+**Layout translation:**
+- Tabbed layout: sections flattened per-tab with `tab.Name + "." + sec.Name` IDs
+- Multi-column sections: fields interleaved (a1,b1,a2,b2,...) for correct row packing by layout engine
+- Single-column sections: field order preserved
+
+**Dependency direction:** `adapt` → `compiler`, `auth`, `sdui/generator`, `sdui/sduictx`, `sdui/widget`, `def`
+No cycle: `compiler` does not import any `sdui/*` package.
+
+---
+
+## Package: awo/api/sdui
+
+**Status:** Complete
+**Files:**
+- `handler.go` — Handler, New(), Register(), list/create/detail/edit handlers; ETag + Cache-Control; locale + renderer negotiation
+
+**Key exports:** `Handler`, `New()`, `Register()`
+
+**Endpoints registered (via Register on a Fiber group):**
+- `GET /:module/:resource` → list view
+- `GET /:module/:resource/create` → create form
+- `GET /:module/:resource/:id/edit` → edit form
+- `GET /:module/:resource/:id` → detail view
+
+**HTTP integration:**
+- Renderer selection: `Accept-SDUI-Renderer` header (default: "amis")
+- Locale selection: `Accept-Language` header, first tag only (default: "en-US")
+- ETag: `"{schemaFP}-{rendererID}-{locale}"`; supports `If-None-Match` for 304 responses
+- Cache-Control: `private, max-age=300` (5 min)
+- Auth: expects `auth.ViewerFromContext` to be present (caller mounts RequireAuth middleware)
+- No business logic — all generation delegated to `engine.Engine`
+
+**Router integration:**
+- `RegisterOptions.SDUIEngine *engine.Engine` added to router
+- When set, `New(schema, SDUIEngine, Authz)` is created and registered on `/api/v1/ui` group
+- Coexists with legacy `SDUIGenerator` on `/api/sdui/` (no migration required)
+
+---
+
 ### Pre-implementation checklist status (from Part 20):
 - [x] ExpressionRef as portable DSL (not renderer strings)
 - [x] RenderedOutput as typed union
@@ -346,6 +410,9 @@
 - [x] End-to-end engine pipeline
 - [x] Golden regression tests
 - [x] Fuzz testing (expression, layout, engine)
+- [x] Compiler → SDUI bridge (adapt package)
+- [x] HTTP SDUI handler (api/sdui package)
+- [x] Router integration (SDUIEngine option)
 
 ### Known limitations:
 - `NodeDuration` renders as masked `input-text` in AMIS (no native widget); production requires a custom AMIS component.

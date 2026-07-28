@@ -23,6 +23,7 @@ import (
 	"awo.so/awo/api/authz"
 	"awo.so/awo/api/handler"
 	"awo.so/awo/api/middleware"
+	api_sdui "awo.so/awo/api/sdui"
 	"awo.so/awo/api/service"
 	"awo.so/awo/audit"
 	"awo.so/awo/auth"
@@ -34,6 +35,7 @@ import (
 	"awo.so/awo/driver"
 	"awo.so/awo/runtime"
 	"awo.so/awo/sdui"
+	sdui_engine "awo.so/awo/sdui/engine"
 )
 
 // RegisterOptions carries dependencies needed to build handlers.
@@ -60,6 +62,12 @@ type RegisterOptions struct {
 	// SDUIGenerator generates amis JSON page schemas from EntitySchema +
 	// ViewerContext. When nil, the /api/sdui/* endpoints are not registered.
 	SDUIGenerator *sdui.Generator
+
+	// SDUIEngine is the new modular SDUI engine. When set, registers the
+	// production SDUI endpoints at /api/v1/ui/{module}/{resource}/...
+	// May coexist with SDUIGenerator (old /api/sdui/ path) during transition.
+	// When nil, the /api/v1/ui/* endpoints are not registered.
+	SDUIEngine *sdui_engine.Engine
 }
 
 // Register mounts the full auto-generated API onto app under /api/v1/entities/.
@@ -140,6 +148,14 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 	// Auth middleware from /api/v1 does NOT apply here — mount a separate group.
 	if opts.SDUIGenerator != nil {
 		registerSDUI(app, opts)
+	}
+
+	// New SDUI engine endpoints: /api/v1/ui/{module}/{resource}/...
+	// Shares the /api/v1 middleware group (tenant + auth + ratelimit).
+	if opts.SDUIEngine != nil {
+		h := api_sdui.New(schema, opts.SDUIEngine, opts.Authz)
+		uiGroup := api.Group("/ui")
+		h.Register(uiGroup)
 	}
 }
 
