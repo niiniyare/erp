@@ -64,6 +64,12 @@ type EntityDefinition interface {
 	// Set Tabs or Sections to group fields into tabs, sections, and columns.
 	EntityLayout() LayoutDef
 
+	// EntityIcon returns the semantic icon name for this entity.
+	// Used in navigation menus, list headers, and breadcrumbs.
+	// Use generic semantic names: "document", "money", "user", "tag".
+	// Empty string means no icon (renderer chooses default).
+	EntityIcon() string
+
 	// IsSystem returns true for SQL-backed system entities (typed columns),
 	// false for JSONB-backed custom entities.
 	IsSystem() bool
@@ -136,6 +142,11 @@ type SystemDefinition struct {
 	// Zero value produces a flat field list. Set Tabs or Sections to group
 	// fields into tabs, collapsible sections, and multi-column rows.
 	Layout LayoutDef
+
+	// Icon is the semantic icon name for this entity used in SDUI navigation
+	// menus, list headers, and breadcrumbs. Use generic semantic names such as
+	// "document", "money", "user", "tag", "building". Empty means no icon.
+	Icon string
 }
 
 // Ensure SystemDefinition implements EntityDefinition at compile time.
@@ -167,6 +178,7 @@ func (d *SystemDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 }
 func (d *SystemDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
 func (d *SystemDefinition) EntityLayout() LayoutDef            { return d.Layout }
+func (d *SystemDefinition) EntityIcon() string                 { return d.Icon }
 func (d *SystemDefinition) IsSystem() bool                     { return true }
 
 // CustomDefinition declares a custom entity: JSONB-backed, tenant-specific
@@ -226,6 +238,10 @@ type CustomDefinition struct {
 	// Zero value produces a flat field list. Set Tabs or Sections to group
 	// fields into tabs, collapsible sections, and multi-column rows.
 	Layout LayoutDef
+
+	// Icon is the semantic icon name for this entity.
+	// Same semantics as SystemDefinition.Icon.
+	Icon string
 }
 
 // Ensure CustomDefinition implements EntityDefinition at compile time.
@@ -257,4 +273,5 @@ func (d *CustomDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 }
 func (d *CustomDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
 func (d *CustomDefinition) EntityLayout() LayoutDef            { return d.Layout }
+func (d *CustomDefinition) EntityIcon() string                 { return d.Icon }
 func (d *CustomDefinition) IsSystem() bool                     { return false }

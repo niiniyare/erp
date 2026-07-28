@@ -414,6 +414,41 @@ No cycle: `compiler` does not import any `sdui/*` package.
 - [x] HTTP SDUI handler (api/sdui package)
 - [x] Router integration (SDUIEngine option)
 
+### Phase S2 — Framework-Wide SDUI Integration
+
+**Status:** In progress
+
+**Completed:**
+- [x] `def.FieldDef`: Added `Placeholder`, `Icon`, `Width`, `Computed`, `ClearOn`, `VisibleOn`, `HiddenOn`, `DisabledOn`, `RequiredOn`
+- [x] `def.EntityDefinition`: Added `EntityIcon() string` to interface; `Icon string` to `SystemDefinition`/`CustomDefinition`
+- [x] `def.TabDef`: Added `Icon`, `Description`, `Permission`
+- [x] `def.SectionDef`: Added `Icon`, `Description`, `Permission`
+- [x] `compiler.EntitySchema`: Added `Icon string`; propagated from `EntityIcon()` in `buildEntitySchema`
+- [x] `generator.FieldDef`: Added `Icon`, `Width`, `Computed`, `ClearOn`, `VisibleOn`, `HiddenOn`, `DisabledOn`, `RequiredOn`
+- [x] `generator.SectionDef`: Added `Icon`, `Description`
+- [x] `generator.TabDef`: Added `Icon`, `Description`
+- [x] `generator.EntitySchema`: Added `Icon`
+- [x] `generator.buildFieldNode`: Wires Icon, Width (LayoutHint), expression strings → ExpressionRef; Computed → ReadOnly
+- [x] `adapt.convertField()`: Maps all new def.FieldDef fields to generator.FieldDef
+- [x] `adapt.convertSection()`: Maps Icon, Description, Permission from def.SectionDef
+- [x] `adapt.convertTabs()`: Maps Icon, Description, Permission from def.TabDef
+- [x] `adapt.FromCompiled()`: Maps Icon from compiler.EntitySchema to generator.EntitySchema
+- [x] `adapt.SchemaFingerprint()`: Includes entity Icon in hash
+- [x] `widget.Node`: Added `Icon string`; `widget.LayoutHint`: Added `Width string`
+- [x] `expression.RawExpression`: Escape hatch for raw AMIS expression strings
+- [x] `expression.AMISSerializer`: Handles `RawExpression` pass-through
+- [x] `amis.applyCommon()`: Emits `prefix` (fa-icon) and `size` (Width) for field nodes
+
+**In progress / Remaining:**
+- [x] Relation support (EdgeDef → generator.RelationDef → NodeRelatedList in detail; NodeGrid for Inline=true in forms)
+- [x] Dashboard wiring (dashboard.Registry → adapt.collectDashboardPanels → generator.DashboardPanel → buildDashboard NodeKPICard/NodeChartPanel/NodeTablePanel/NodeFilterBar)
+- [x] Workflow UI (HasWorkflow from WorkflowTriggers → NodeWorkflowPanel auto-emitted in detail view at {DetailURL}/workflow-state)
+- [x] Search/filter forms (isFilterable → NodeFilterBar auto-emitted in list view for select/link/date/bool/naming_series/data fields)
+- [x] Localization (`renderer.LocaleFormatsFor` / `renderer.ApplyLocale` — static table of 30+ locales; `amis.renderNumber`/`renderMoney` emit `decimalSeparator`/`thousandSeparator`; `amis.renderPage` emits `dir:"rtl"` for RTL locales)
+- [x] Theme integration (`amis.ThemeConfigFor` — maps "default"/"antd"/"ang"/"dark"/"compact" to AMIS theme+classPrefix+darkMode; `applyTheme` emits `theme`/`darkMode` keys on page schema; dark mode = cxd base + html.dark CSS override)
+- [x] Conformance suite (`awo/sdui/conformance/conformance_test.go` — covers: all 41 NodeKinds rendered without error, generator determinism, renderer determinism, locale RTL/separators, theme config correctness)
+- [x] Searchable field wiring (`adapt.convertField` → `generator.FieldDef.Searchable`; `buildFilterBar` gates on `f.Searchable` not type heuristic)
+
 ### Known limitations:
 - `NodeDuration` renders as masked `input-text` in AMIS (no native widget); production requires a custom AMIS component.
 - `NodeSignature` renders as `input-file` in AMIS (no native signature widget); production requires a custom AMIS component.

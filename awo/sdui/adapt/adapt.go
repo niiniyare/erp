@@ -41,6 +41,7 @@ import (
 	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
+	"awo.so/awo/sdui/dashboard"
 	"awo.so/awo/sdui/generator"
 	"awo.so/awo/sdui/sduictx"
 	"awo.so/awo/sdui/widget"
@@ -59,11 +60,13 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 		Name:        es.QualifiedName,
 		Title:       es.Label,
 		PluralTitle: es.LabelPlural,
+		Icon:        es.Icon,
 		ListURL:     es.RoutePrefix,
 		CreateURL:   es.RoutePrefix,
 		EditURL:     es.RoutePrefix + "/{id}",
 		DetailURL:   es.RoutePrefix + "/{id}",
 		Permissions: permissionsMap(es.Permissions),
+		HasWorkflow: len(es.WorkflowTriggers) > 0,
 	}
 
 	// Fields.
@@ -86,6 +89,16 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 		}
 	}
 
+	// Relations (edges).
+	for _, e := range es.Edges {
+		if !e.Hidden {
+			gs.Relations = append(gs.Relations, convertEdge(e, es))
+		}
+	}
+
+	// Dashboard panels from global registry — match by module.
+	gs.DashboardPanels = collectDashboardPanels(es.Module)
+
 	return gs
 }
 
@@ -97,15 +110,15 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 // The result is a 16-hex-character string, e.g. "a3f2e1d0c4b59817".
 func SchemaFingerprint(es *compiler.EntitySchema) string {
 	h := fnv.New64a()
-	fmt.Fprint(h, es.QualifiedName, "|")
+	fmt.Fprint(h, es.QualifiedName, "|", es.Icon, "|")
 	for _, f := range es.Fields {
 		fmt.Fprintf(h, "%s:%s,", f.Name, f.Type)
 	}
 	fmt.Fprint(h, "|layout:")
 	for _, tab := range es.Layout.Tabs {
-		fmt.Fprint(h, tab.Name, "[")
+		fmt.Fprint(h, tab.Name, "/", tab.Permission, "[")
 		for _, sec := range tab.Sections {
-			fmt.Fprint(h, sec.Name, "{")
+			fmt.Fprint(h, sec.Name, "/", sec.Permission, "{")
 			for _, col := range sec.Columns {
 				fmt.Fprint(h, strings.Join(col.Fields, ","), ";")
 			}
@@ -114,7 +127,7 @@ func SchemaFingerprint(es *compiler.EntitySchema) string {
 		fmt.Fprint(h, "]")
 	}
 	for _, sec := range es.Layout.Sections {
-		fmt.Fprint(h, sec.Name, "{")
+		fmt.Fprint(h, sec.Name, "/", sec.Permission, "{")
 		for _, col := range sec.Columns {
 			fmt.Fprint(h, strings.Join(col.Fields, ","), ";")
 		}
@@ -224,6 +237,16 @@ func convertField(f def.FieldDef, es *compiler.EntitySchema) generator.FieldDef 
 		InDetail:    !f.Hidden,
 		Description: f.Description,
 		MaxLength:   f.MaxLen,
+		Placeholder: f.Placeholder,
+		Icon:        f.Icon,
+		Width:       f.Width,
+		Computed:    f.Computed,
+		Searchable:  f.Searchable,
+		ClearOn:     f.ClearOn,
+		VisibleOn:   f.VisibleOn,
+		HiddenOn:    f.HiddenOn,
+		DisabledOn:  f.DisabledOn,
+		RequiredOn:  f.RequiredOn,
 	}
 
 	// Static select options.
@@ -298,9 +321,12 @@ func convertTabs(tabs []def.TabDef) ([]generator.SectionDef, []generator.TabDef)
 			sectionIDs = append(sectionIDs, id)
 		}
 		gtabs = append(gtabs, generator.TabDef{
-			ID:       tab.Name,
-			Title:    tab.Label,
-			Sections: sectionIDs,
+			ID:          tab.Name,
+			Title:       tab.Label,
+			Icon:        tab.Icon,
+			Description: tab.Description,
+			Permission:  tab.Permission,
+			Sections:    sectionIDs,
 		})
 	}
 	return sections, gtabs
@@ -328,6 +354,9 @@ func convertSection(sec def.SectionDef, id string) generator.SectionDef {
 	return generator.SectionDef{
 		ID:          id,
 		Title:       sec.Label,
+		Icon:        sec.Icon,
+		Description: sec.Description,
+		Permission:  sec.Permission,
 		Collapsible: sec.Collapsible,
 		Collapsed:   sec.Collapsed,
 		Fields:      fields,
@@ -366,6 +395,40 @@ func interleaveColumns(cols []def.ColumnDef) []string {
 	return out
 }
 
+// ── edge / relation conversion ────────────────────────────────────────────────
+
+// convertEdge translates a def.EdgeDef into a generator.RelationDef.
+// The DataURL is constructed from the target entity's RoutePrefix (resolved
+// via es.EdgeTargets) plus a foreign key filter parameter.
+func convertEdge(e def.EdgeDef, es *compiler.EntitySchema) generator.RelationDef {
+	fk := e.ForeignKey
+	if fk == "" {
+		// Default FK convention: {parent_local_name}_id
+		fk = es.LocalName + "_id"
+	}
+
+	// Resolve target entity RoutePrefix for the data URL.
+	dataURL := ""
+	if target, ok := es.EdgeTargets[e.Name]; ok {
+		dataURL = target.RoutePrefix + "?" + fk + "=${id}"
+	}
+
+	label := e.Label
+	if label == "" {
+		label = def.DeriveLabel(e.Name)
+	}
+
+	return generator.RelationDef{
+		Name:         e.Name,
+		Label:        label,
+		RelationType: string(e.Type),
+		TargetEntity: e.Target,
+		DataURL:      dataURL,
+		ForeignKey:   fk,
+		Hidden:       e.Hidden,
+	}
+}
+
 // ── action conversion ─────────────────────────────────────────────────────────
 
 func convertAction(a def.ActionDef) generator.ActionDef {
@@ -400,6 +463,35 @@ func actionLevel(name string) string {
 	default:
 		return "default"
 	}
+}
+
+// ── dashboard panel collection ────────────────────────────────────────────────
+
+// collectDashboardPanels returns generator.DashboardPanel values for all
+// dashboard.PanelDef entries from dashboards registered under the given module.
+// Only dashboards whose Module matches are included. Returns nil when no
+// dashboards are registered for the module.
+func collectDashboardPanels(module string) []generator.DashboardPanel {
+	var out []generator.DashboardPanel
+	for _, dash := range dashboard.All() {
+		if dash.Module != module {
+			continue
+		}
+		for _, p := range dash.Panels {
+			out = append(out, generator.DashboardPanel{
+				ID:          p.ID,
+				Title:       p.Title,
+				PanelType:   string(p.Kind),
+				DataURL:     p.DataSource,
+				ChartType:   string(p.ChartType),
+				KPIFormat:   string(p.KPIFormat),
+				ValueField:  p.ValueField,
+				ColSpan:     p.ColSpan,
+				Permissions: p.Permissions,
+			})
+		}
+	}
+	return out
 }
 
 // ── permission map ────────────────────────────────────────────────────────────

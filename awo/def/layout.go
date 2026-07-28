@@ -43,6 +43,20 @@ type TabDef struct {
 	// Label is the human-readable tab title shown in the AMIS tab bar.
 	Label string
 
+	// Icon is the semantic icon shown in the tab bar alongside the label.
+	// Use generic semantic names: "info", "list", "money", "settings".
+	// Empty means no icon.
+	Icon string
+
+	// Description is optional tooltip or help text for this tab.
+	// Shown by renderers that support tab tooltips. Empty means no tooltip.
+	Description string
+
+	// Permission is the permission identifier required to view this tab.
+	// When set, the tab is absent (not just hidden) for viewers without
+	// this permission. Empty means always visible.
+	Permission string
+
 	// Sections lists the sections rendered inside this tab's body.
 	// Sections are rendered top-to-bottom in declaration order.
 	Sections []SectionDef
@@ -58,6 +72,20 @@ type SectionDef struct {
 	// Label is the section header text. Empty means no visible header —
 	// fields appear without a surrounding fieldSet title.
 	Label string
+
+	// Icon is the semantic icon shown in the section header alongside the label.
+	// Empty means no icon.
+	Icon string
+
+	// Description is optional help text shown beneath the section header.
+	// Useful for complex sections that benefit from a brief explanation.
+	// Empty means no description.
+	Description string
+
+	// Permission is the permission identifier required to view this section.
+	// When set, the section is absent (not just hidden) for viewers without
+	// this permission. Empty means always visible.
+	Permission string
 
 	// Collapsible, when true, adds a collapse toggle to the section header.
 	// Users can expand or collapse the section. Requires Label to be set.

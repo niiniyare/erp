@@ -107,6 +107,39 @@ type FieldDef struct {
 
 	// CurrencyField is the sibling field name for money fields.
 	CurrencyField string
+
+	// Searchable marks this field as participating in list view search/filter.
+	// When true, the generator includes this field in the filter bar.
+	Searchable bool
+
+	// Icon is the semantic icon name shown alongside the field input.
+	// Renderers map this to their icon library.
+	Icon string
+
+	// Width is a semantic size hint for the input control.
+	// Valid values: "xs", "sm", "md", "lg", "xl", "full". Empty = renderer default.
+	Width string
+
+	// Computed marks this field as server-computed: rendered read-only and
+	// automatically refreshes when dependent fields change.
+	Computed bool
+
+	// ClearOn lists field names whose value change causes this field to reset.
+	// Used for cascading selects and dependent lookups.
+	ClearOn []string
+
+	// VisibleOn is a raw expression string controlling visibility.
+	// When non-empty, the renderer evaluates this as a condition.
+	VisibleOn string
+
+	// HiddenOn hides the field when the expression is truthy.
+	HiddenOn string
+
+	// DisabledOn disables the field when the expression is truthy.
+	DisabledOn string
+
+	// RequiredOn makes the field required when the expression is truthy.
+	RequiredOn string
 }
 
 // SelectOption is a single option for a static select field.
@@ -122,6 +155,12 @@ type SectionDef struct {
 
 	// Title is the section display title. Empty = unlabeled group.
 	Title string
+
+	// Icon is the semantic icon shown in the section header.
+	Icon string
+
+	// Description is optional help text shown beneath the section header.
+	Description string
 
 	// Collapsible makes the section collapsible.
 	Collapsible bool
@@ -147,6 +186,12 @@ type TabDef struct {
 
 	// Title is the tab display title.
 	Title string
+
+	// Icon is the semantic icon shown in the tab bar alongside the title.
+	Icon string
+
+	// Description is optional tooltip text for the tab.
+	Description string
 
 	// Sections lists the section IDs in this tab (in display order).
 	Sections []string
@@ -196,6 +241,97 @@ type EntitySchema struct {
 
 	// Actions are entity-level actions (submit, cancel, approve, etc.).
 	Actions []ActionDef
+
+	// Icon is the semantic icon name for this entity.
+	// Used in navigation menus and list headers.
+	Icon string
+
+	// Relations are the related entity edges for this entity.
+	// The generator emits NodeRelatedList or NodeGrid nodes for each non-hidden
+	// relation in detail and form views.
+	Relations []RelationDef
+
+	// DashboardPanels carries the panels to render in ViewModeDashboard.
+	// Populated by the adapt layer from dashboard.Registry entries that match
+	// this entity's module. Empty means the dashboard page is a placeholder.
+	DashboardPanels []DashboardPanel
+
+	// HasWorkflow is true when the entity has at least one WorkflowTrigger.
+	// The generator emits a NodeWorkflowPanel in detail view when true.
+	// The workflow state data source URL is expected to be at {DetailURL}/workflow-state.
+	HasWorkflow bool
+}
+
+// DashboardPanel carries metadata for one panel on a dashboard page.
+// Derived from dashboard.PanelDef by the adapt layer; the generator converts
+// each DashboardPanel into the appropriate NodeKind (NodeKPICard, NodeChartPanel,
+// NodeTablePanel, NodeFilterBar).
+type DashboardPanel struct {
+	// ID is the stable panel identifier.
+	ID string
+
+	// Title is the panel display title.
+	Title string
+
+	// PanelType is the semantic panel type: "kpi", "chart", "table", "filter".
+	PanelType string
+
+	// DataURL is the API endpoint for this panel's data.
+	DataURL string
+
+	// ChartType specifies the chart variant for chart panels.
+	// Values: "bar", "line", "pie", "area", "scatter".
+	ChartType string
+
+	// KPIFormat specifies the display format for KPI panels.
+	// Values: "number", "currency", "percent", "duration".
+	KPIFormat string
+
+	// ValueField is the data field name for KPI panels.
+	ValueField string
+
+	// ColSpan is the number of grid columns this panel occupies.
+	// Zero means the renderer chooses the default.
+	ColSpan int
+
+	// Permissions lists permission identifiers required to view this panel.
+	// Empty means visible to all dashboard viewers.
+	Permissions []string
+}
+
+// RelationDef describes a related entity edge for SDUI rendering.
+// Derived from def.EdgeDef at compile time by the adapt layer.
+// The generator uses RelationDef to emit NodeRelatedList and NodeGrid nodes
+// in detail and edit views.
+type RelationDef struct {
+	// Name is the stable edge identifier.
+	Name string
+
+	// Label is the human-readable section title for this relation.
+	Label string
+
+	// RelationType is the edge cardinality: "one_to_many", "many_to_many", "one_to_one".
+	RelationType string
+
+	// TargetEntity is the qualified name of the related entity.
+	// Example: "finance_invoice_line"
+	TargetEntity string
+
+	// DataURL is the API endpoint that returns related records.
+	// Format: /api/v1/{module}/{resource}?{foreign_key}=${id}
+	DataURL string
+
+	// ForeignKey is the column on the target entity that references the parent.
+	// Used to construct DataURL filter parameters.
+	ForeignKey string
+
+	// Inline indicates that this relation should render as an editable inline
+	// grid (NodeGrid) rather than a read-only related list (NodeRelatedList).
+	// Set for child tables like invoice line items.
+	Inline bool
+
+	// Hidden omits this relation from all SDUI views.
+	Hidden bool
 }
 
 // ActionDef describes an entity-level action button.
@@ -315,23 +451,53 @@ func (g *EntityGenerator) buildList(schema EntitySchema, ctx sduictx.GeneratorCo
 	// Build list actions (Create button, row actions, etc.).
 	actions := g.buildListActions(schema, ctx)
 
-	root := &widget.Node{
-		Kind:  widget.NodePage,
-		Label: schema.PluralTitle,
-		Children: []*widget.Node{
-			{
-				Kind:     widget.NodeList,
-				Label:    schema.PluralTitle,
-				Children: columns,
-				Actions:  actions,
-				DataSource: &widget.DataSource{
-					URL:    schema.ListURL,
-					Method: "GET",
-				},
-			},
-		},
+	var pageChildren []*widget.Node
+
+	// Filter bar — emitted when any InList field is searchable or is a select/link.
+	filterBar := g.buildFilterBar(schema, ctx)
+	if filterBar != nil {
+		pageChildren = append(pageChildren, filterBar)
 	}
-	return root, nil
+
+	pageChildren = append(pageChildren, &widget.Node{
+		Kind:     widget.NodeList,
+		Label:    schema.PluralTitle,
+		Children: columns,
+		Actions:  actions,
+		DataSource: &widget.DataSource{
+			URL:    schema.ListURL,
+			Method: "GET",
+		},
+	})
+
+	return &widget.Node{
+		Kind:     widget.NodePage,
+		Label:    schema.PluralTitle,
+		Children: pageChildren,
+	}, nil
+}
+
+// buildFilterBar constructs a NodeFilterBar with filter fields for the list view.
+// Returns nil when no fields have Searchable=true — no filter bar is emitted.
+func (g *EntityGenerator) buildFilterBar(schema EntitySchema, ctx sduictx.GeneratorContext) *widget.Node {
+	var filterFields []*widget.Node
+	for _, f := range schema.Fields {
+		if !f.InList || f.Hidden || !f.Searchable {
+			continue
+		}
+		if !g.canViewField(f, ctx) {
+			continue
+		}
+		node := g.buildFieldNode(f, ctx, false)
+		filterFields = append(filterFields, node)
+	}
+	if len(filterFields) == 0 {
+		return nil
+	}
+	return &widget.Node{
+		Kind:     widget.NodeFilterBar,
+		Children: filterFields,
+	}
 }
 
 // buildForm constructs a NodeForm tree for create or edit view.
@@ -362,6 +528,26 @@ func (g *EntityGenerator) buildForm(schema EntitySchema, ctx sduictx.GeneratorCo
 			return nil, err
 		}
 		formBody = append(formBody, fields...)
+	}
+
+	// Inline grids from edge definitions (Inline=true relations).
+	for _, rel := range schema.Relations {
+		if rel.Hidden || !rel.Inline {
+			continue
+		}
+		gridNode := &widget.Node{
+			Kind:         widget.NodeGrid,
+			Name:         rel.Name,
+			Label:        rel.Label,
+			GridEditable: !readOnly,
+		}
+		if rel.DataURL != "" {
+			gridNode.DataSource = &widget.DataSource{
+				URL:    rel.DataURL,
+				Method: "GET",
+			}
+		}
+		formBody = append(formBody, gridNode)
 	}
 
 	// Build form actions.
@@ -409,6 +595,18 @@ func (g *EntityGenerator) buildDetail(schema EntitySchema, ctx sduictx.Generator
 	}
 	pageChildren = append(pageChildren, summaryCard)
 
+	// Workflow state panel — auto-emitted when entity has workflow triggers.
+	if schema.HasWorkflow {
+		pageChildren = append(pageChildren, &widget.Node{
+			Kind:       widget.NodeWorkflowPanel,
+			WorkflowID: schema.Name,
+			DataSource: &widget.DataSource{
+				URL:    schema.DetailURL + "/workflow-state",
+				Method: "GET",
+			},
+		})
+	}
+
 	// Detail form body (read-only fields in sections/tabs).
 	var formBody []*widget.Node
 	if len(schema.Tabs) > 0 {
@@ -441,6 +639,25 @@ func (g *EntityGenerator) buildDetail(schema EntitySchema, ctx sduictx.Generator
 	}
 	pageChildren = append(pageChildren, detailForm)
 
+	// Related lists from edge definitions.
+	for _, rel := range schema.Relations {
+		if rel.Hidden {
+			continue
+		}
+		relNode := &widget.Node{
+			Kind:  widget.NodeRelatedList,
+			Name:  rel.Name,
+			Label: rel.Label,
+		}
+		if rel.DataURL != "" {
+			relNode.DataSource = &widget.DataSource{
+				URL:    rel.DataURL,
+				Method: "GET",
+			}
+		}
+		pageChildren = append(pageChildren, relNode)
+	}
+
 	return &widget.Node{
 		Kind:     widget.NodePage,
 		Label:    schema.Title,
@@ -448,14 +665,71 @@ func (g *EntityGenerator) buildDetail(schema EntitySchema, ctx sduictx.Generator
 	}, nil
 }
 
-// buildDashboard constructs a dashboard page. Schema is used for permission gating only.
+// buildDashboard constructs a dashboard page from schema.DashboardPanels.
+// Panels are populated by the adapt layer from dashboard.Registry. When
+// DashboardPanels is empty (no registered dashboard for this entity), the
+// page is returned as a placeholder with no body.
 func (g *EntityGenerator) buildDashboard(schema EntitySchema, ctx sduictx.GeneratorContext) (*widget.Node, error) {
-	// Dashboard panels are defined in the dashboard.Registry, not in EntitySchema.
-	// The generator emits a placeholder page; the SDUI handler populates panels
-	// from the dashboard registry after generation.
+	var panels []*widget.Node
+	for _, p := range schema.DashboardPanels {
+		// Permission gate: skip panels the viewer cannot see.
+		visible := true
+		for _, perm := range p.Permissions {
+			if !ctx.Viewer.HasPermission(perm) {
+				visible = false
+				break
+			}
+		}
+		if !visible {
+			continue
+		}
+
+		var panelNode *widget.Node
+		switch p.PanelType {
+		case "kpi":
+			panelNode = &widget.Node{
+				Kind:      widget.NodeKPICard,
+				ID:        p.ID,
+				Label:     p.Title,
+				Name:      p.ValueField,
+				KPIFormat: p.KPIFormat,
+			}
+		case "chart":
+			panelNode = &widget.Node{
+				Kind:      widget.NodeChartPanel,
+				ID:        p.ID,
+				Label:     p.Title,
+				ChartType: p.ChartType,
+			}
+		case "table":
+			panelNode = &widget.Node{
+				Kind:  widget.NodeTablePanel,
+				ID:    p.ID,
+				Label: p.Title,
+			}
+		case "filter":
+			panelNode = &widget.Node{
+				Kind:  widget.NodeFilterBar,
+				ID:    p.ID,
+				Label: p.Title,
+			}
+		default:
+			continue // unknown panel type — skip
+		}
+
+		if p.DataURL != "" {
+			panelNode.DataSource = &widget.DataSource{URL: p.DataURL, Method: "GET"}
+		}
+		if p.ColSpan > 0 {
+			panelNode.Layout = &widget.LayoutHint{ColSpan: p.ColSpan}
+		}
+		panels = append(panels, panelNode)
+	}
+
 	return &widget.Node{
-		Kind:  widget.NodePage,
-		Label: schema.Title,
+		Kind:     widget.NodePage,
+		Label:    schema.Title,
+		Children: panels,
 	}, nil
 }
 
@@ -576,14 +850,36 @@ func (g *EntityGenerator) buildFieldNode(f FieldDef, ctx sduictx.GeneratorContex
 		Description:   f.Description,
 		Placeholder:   f.Placeholder,
 		Required:      f.Required,
-		ReadOnly:      readOnly || f.ReadOnly,
+		ReadOnly:      readOnly || f.ReadOnly || f.Computed,
 		MaxLength:     f.MaxLength,
 		DataSource:    f.DataSource,
 		CurrencyField: f.CurrencyField,
+		Icon:          f.Icon,
+		ClearOn:       f.ClearOn,
 	}
-	if f.ColSpan > 0 {
-		node.Layout = &widget.LayoutHint{ColSpan: f.ColSpan}
+
+	// Layout hint: ColSpan and/or Width.
+	if f.ColSpan > 0 || f.Width != "" {
+		node.Layout = &widget.LayoutHint{ColSpan: f.ColSpan, Width: f.Width}
 	}
+
+	// Raw expression strings from def.FieldDef (AMIS JS).
+	// Stored in ExpressionRef.Expr as plain strings. Renderers type-switch:
+	//   - string → raw pass-through (AMIS renderer emits unchanged)
+	//   - expression.ExpressionNode → serialize via renderer's expression serializer
+	if f.VisibleOn != "" {
+		node.VisibleOn = &widget.ExpressionRef{Expr: f.VisibleOn}
+	}
+	if f.HiddenOn != "" {
+		node.HiddenOn = &widget.ExpressionRef{Expr: f.HiddenOn}
+	}
+	if f.DisabledOn != "" {
+		node.DisabledOn = &widget.ExpressionRef{Expr: f.DisabledOn}
+	}
+	if f.RequiredOn != "" {
+		node.RequiredOn = &widget.ExpressionRef{Expr: f.RequiredOn}
+	}
+
 	return node
 }
 

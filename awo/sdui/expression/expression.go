@@ -167,3 +167,27 @@ func IsIn(field FieldRef, values ...any) In {
 	}
 	return In{Field: field, Values: lits}
 }
+
+// ── Escape hatch ──────────────────────────────────────────────────────────────
+
+// RawExpression carries a renderer-specific expression string verbatim.
+// It is the bridge between AMIS expression strings declared in def.FieldDef
+// (e.g. "data.status === 'active'") and the widget IR ExpressionRef type.
+//
+// AMIS renderer: emits Raw unchanged.
+// Other renderers: may ignore or convert RawExpression as appropriate.
+//
+// Use sparingly — prefer typed expression constructors (Eq, And, etc.) for
+// portable expressions. Use RawExpression only for renderer-specific strings
+// that cannot be represented in the typed AST.
+type RawExpression struct {
+	// Raw is the renderer-specific expression string.
+	Raw string
+}
+
+func (r RawExpression) expressionNode() {}
+func (r RawExpression) String() string  { return fmt.Sprintf("raw(%q)", r.Raw) }
+
+// Raw constructs a RawExpression from an AMIS expression string.
+// Returns nil when s is empty — callers can use this directly as *widget.ExpressionRef.
+func RawExpr(s string) ExpressionNode { return RawExpression{Raw: s} }

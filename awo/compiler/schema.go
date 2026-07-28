@@ -82,6 +82,10 @@ type EntitySchema struct {
 	// Description is the optional entity description for docs and OpenAPI.
 	Description string
 
+	// Icon is the semantic icon name for SDUI navigation menus and list headers.
+	// Propagated from EntityDefinition.EntityIcon().
+	Icon string
+
 	// ── HTTP / API ───────────────────────────────────────────────────────────
 
 	// APIResource is the plural URL path segment for this entity.
@@ -179,6 +183,12 @@ type EntitySchema struct {
 	// LinkTargets maps FieldTypeLink field names to their target EntitySchema.
 	// Resolved at compile time; all link targets are guaranteed to exist.
 	LinkTargets map[string]*EntitySchema
+
+	// EdgeTargets maps EdgeDef names to their target EntitySchema.
+	// Resolved at compile time; populated after Phase 1 stub building.
+	// Nil entry means the target was not found (defensive; should not happen
+	// after validation).
+	EdgeTargets map[string]*EntitySchema
 
 	// FieldLookups maps FieldTypeLink / FieldTypeLinkList field names to their
 	// compiled lookup metadata. Consumed by the SDUI generator to emit amis
@@ -325,6 +335,14 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 				es.LinkTargets[f.Name] = target
 			}
 		}
+		// Phase 2b: resolve edge targets.
+		for _, e := range es.Edges {
+			target, ok := schema.ByName[e.Target]
+			if !ok {
+				continue
+			}
+			es.EdgeTargets[e.Name] = target
+		}
 	}
 
 	// Phase 2.5: build CompiledLookup for every Link / LinkList field.
@@ -370,6 +388,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		Label:               d.EntityLabel(),
 		LabelPlural:         d.EntityLabelPlural(),
 		Description:         d.EntityDescription(),
+		Icon:                d.EntityIcon(),
 		APIResource:         resource,
 		APISingular:         local,
 		RoutePrefix:         "/api/v1/" + module + "/" + resource,
@@ -398,6 +417,7 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		SearchableFields:    make(map[string]bool),
 		LinkTargets:         make(map[string]*EntitySchema),
 		FieldLookups:        make(map[string]*CompiledLookup),
+		EdgeTargets:         make(map[string]*EntitySchema),
 	}
 
 	// Table name: system entities use QualifiedName as table name;

@@ -80,6 +80,10 @@ func (s AMISSerializer) serialize(expr ExpressionNode) (string, error) {
 		}
 		return fmt.Sprintf("[%s].includes(%s)", strings.Join(parts, ","), field), nil
 
+	case RawExpression:
+		// Pass raw AMIS expression strings through unchanged.
+		return e.Raw, nil
+
 	default:
 		return "", fmt.Errorf("amis_serializer: unknown expression type %T", expr)
 	}

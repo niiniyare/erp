@@ -118,6 +118,37 @@ type FieldDef struct {
 	// Takes precedence over the Required boolean when non-empty.
 	// Example: "data.type === 'invoice'" (conditionally required)
 	RequiredOn string
+
+	// ── SDUI display hints ────────────────────────────────────────────────────
+
+	// Placeholder is the input placeholder text shown when the field is empty.
+	// Displayed inside the input control; not shown when the field has a value.
+	// Example: "Enter invoice number", "Search customers…"
+	Placeholder string
+
+	// Icon is the semantic icon name for this field.
+	// Renderers map icon names to their icon library (e.g. AMIS uses fa-* names,
+	// Flutter uses material icon names). Use generic semantic names such as
+	// "user", "calendar", "money", "tag", "lock", "search".
+	// Empty means no icon.
+	Icon string
+
+	// Width is a size hint for the field's input control.
+	// Valid values: "xs", "sm", "md", "lg", "xl", "full".
+	// Empty means the renderer's default width (typically "md").
+	// Ignored when the section declares explicit column spans.
+	Width string
+
+	// Computed marks this field as server-computed: its value is always
+	// derived from other fields or backend logic. Computed fields render as
+	// read-only in forms and automatically refresh when dependent fields change.
+	// The field is still included in list and detail views.
+	Computed bool
+
+	// ClearOn lists the field names whose value change causes this field to
+	// reset to its zero value. Used for cascading selects and dependent lookups.
+	// Example: a "product_variant" field clears when "product" changes.
+	ClearOn []string
 }
 
 // FieldValidator is a custom validation function for a single field value.

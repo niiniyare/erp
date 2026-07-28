@@ -182,6 +182,18 @@ type Node struct {
 
 	// GridMinRows is the minimum number of rows for a NodeGrid.
 	GridMinRows int
+
+	// Icon is the semantic icon name shown alongside the field label or input.
+	// Renderers map this to their icon library (e.g. AMIS: fa-* prefix, Flutter: Material icons).
+	// Use generic semantic names: "user", "calendar", "money", "tag", "lock", "search".
+	// Empty means no icon.
+	Icon string
+
+	// ClearOn lists the sibling field names whose value change should reset this
+	// field to its zero value. Used for cascading selects and dependent lookups.
+	// Example: a "variant" field clears when "product" changes.
+	// Renderers that support reactive field dependencies should implement this.
+	ClearOn []string
 }
 
 // NodeKind is the semantic widget type. Renderers map each NodeKind to a
@@ -375,6 +387,11 @@ type LayoutHint struct {
 	// LabelWidth is the label column width in pixels (for form grids).
 	// Zero means renderer default.
 	LabelWidth int
+
+	// Width is a semantic size hint for the input control width.
+	// Valid values: "xs", "sm", "md", "lg", "xl", "full".
+	// Empty means renderer default (typically "md").
+	Width string
 }
 
 // ValidationRule is a single client-side validation constraint on a field node.

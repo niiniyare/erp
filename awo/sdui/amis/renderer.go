@@ -114,9 +114,9 @@ func (r *DefaultRenderer) renderNode(n *widget.Node, ctx renderer.RendererContex
 	case widget.NodeRichText:
 		out, err = r.renderRichText(n)
 	case widget.NodeNumber:
-		out, err = r.renderNumber(n)
+		out, err = r.renderNumber(n, ctx)
 	case widget.NodeMoney:
-		out, err = r.renderMoney(n)
+		out, err = r.renderMoney(n, ctx)
 	case widget.NodeSelect:
 		out, err = r.renderSelect(n)
 	case widget.NodeMultiSelect:
@@ -337,6 +337,16 @@ func applyCommon(n *widget.Node, out map[string]any) {
 	if n.MaxValue != nil {
 		out["max"] = *n.MaxValue
 	}
+	if n.Icon != "" {
+		out["prefix"] = "<i class=\"fa fa-" + n.Icon + "\"></i>"
+	}
+	if n.Layout != nil && n.Layout.Width != "" {
+		out["size"] = n.Layout.Width
+	}
+	if len(n.ClearOn) > 0 {
+		out["clearValueNotMatch"] = true
+		out["clearOn"] = n.ClearOn
+	}
 	// Validation rules.
 	if len(n.Validation) > 0 {
 		validations := map[string]any{}
@@ -379,6 +389,10 @@ func (r *DefaultRenderer) renderPage(n *widget.Node, ctx renderer.RendererContex
 	} else if len(acts) > 0 {
 		out["toolbar"] = acts
 	}
+	if ctx.RTL {
+		out["dir"] = "rtl"
+	}
+	applyTheme(out, ctx.Theme)
 	return out, nil
 }
 
@@ -582,16 +596,28 @@ func (r *DefaultRenderer) renderRichText(n *widget.Node) (map[string]any, error)
 	return out, nil
 }
 
-func (r *DefaultRenderer) renderNumber(n *widget.Node) (map[string]any, error) {
+func (r *DefaultRenderer) renderNumber(n *widget.Node, ctx renderer.RendererContext) (map[string]any, error) {
 	out := map[string]any{"type": "input-number"}
 	applyCommon(n, out)
+	if ctx.DecimalSeparator != "" && ctx.DecimalSeparator != "." {
+		out["decimalSeparator"] = ctx.DecimalSeparator
+	}
+	if ctx.ThousandSeparator != "" {
+		out["thousandSeparator"] = ctx.ThousandSeparator
+	}
 	return out, nil
 }
 
-func (r *DefaultRenderer) renderMoney(n *widget.Node) (map[string]any, error) {
+func (r *DefaultRenderer) renderMoney(n *widget.Node, ctx renderer.RendererContext) (map[string]any, error) {
 	out := map[string]any{"type": "input-number"}
 	applyCommon(n, out)
 	out["precision"] = 2
+	if ctx.DecimalSeparator != "" && ctx.DecimalSeparator != "." {
+		out["decimalSeparator"] = ctx.DecimalSeparator
+	}
+	if ctx.ThousandSeparator != "" {
+		out["thousandSeparator"] = ctx.ThousandSeparator
+	}
 	if n.CurrencyField != "" {
 		// AMIS does not have a native money+currency combined widget.
 		// Emit as a group with the number input and a companion select.
