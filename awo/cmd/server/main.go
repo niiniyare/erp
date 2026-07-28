@@ -26,6 +26,7 @@ import (
 	"syscall"
 	"time"
 
+	goredis "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 
 	"awo.so/awo/api/middleware"
@@ -34,14 +35,19 @@ import (
 	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/bootstrap"
-	"awo.so/awo/cache"
 	contrib "awo.so/awo/contrib/pgx"
 	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/events/outbox"
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
 	"awo.so/awo/platform/iam"
-	"awo.so/awo/sdui"
+	sdui_amis "awo.so/awo/sdui/amis"
+	sdui_cache "awo.so/awo/sdui/cache"
+	sdui_engine "awo.so/awo/sdui/engine"
+	sdui_generator "awo.so/awo/sdui/generator"
+	sdui_layout "awo.so/awo/sdui/layout"
+	sdui_renderer "awo.so/awo/sdui/renderer"
+	sdui_validation "awo.so/awo/sdui/validation"
 
 	// Platform module init() calls — imports drive entity registration.
 	// platform/iam is already imported above for iam.New; the init()
@@ -188,13 +194,18 @@ func main() {
 		os.Exit(1)
 	}
 
-	// SDUI generator — produces amis JSON page schemas from EntitySchema.
+	// SDUI engine — produces rendered UI schemas from EntitySchema.
 	// Cache backed by Redis when available; nil disables caching (dev mode).
-	var sduiCache cache.Cache
-	if result.Redis != nil {
-		sduiCache = contribredis.New(result.Redis)
-	}
-	sduiGen := sdui.New(result.Schema, evaluator, sduiCache)
+	sduiEng := sdui_engine.New(sdui_engine.Options{
+		Generator: sdui_generator.New(),
+		Validator: sdui_validation.New(),
+		Layout:    sdui_layout.New(),
+		Renderers: map[string]sdui_renderer.Renderer{
+			sdui_amis.RendererID: sdui_amis.New(),
+		},
+		DefaultRendererID: sdui_amis.RendererID,
+		Cache:             sduiCacheFor(result.Redis),
+	})
 
 	// CRUD routes for all registered entities — full middleware pipeline applied inside.
 	router.Register(app, result.Schema, router.RegisterOptions{
@@ -206,7 +217,7 @@ func main() {
 		Temporal:           nil, // TODO: wire Temporal client when worker is configured
 		AuditWriter:        auditWriter,
 		AuditSigningSecret: getEnv("AUDIT_SIGNING_SECRET", ""),
-		SDUIGenerator:      sduiGen,
+		SDUIEngine:         sduiEng,
 	})
 
 	// Static file serving — amis SDK assets.
@@ -268,6 +279,32 @@ func getEnv(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// sduiCacheFor constructs an SDUI cache backed by Redis, or a no-op cache when rdb is nil.
+func sduiCacheFor(rdb *goredis.Client) *sdui_cache.Cache {
+	if rdb == nil {
+		return sdui_cache.New(nil)
+	}
+	return sdui_cache.New(&goRedisSDUIAdapter{rdb: rdb})
+}
+
+// goRedisSDUIAdapter adapts *goredis.Client to sdui_cache.RedisClient.
+// The sdui cache uses plain string Get/Set; go-redis uses Cmd result types.
+type goRedisSDUIAdapter struct {
+	rdb *goredis.Client
+}
+
+func (a *goRedisSDUIAdapter) Get(ctx context.Context, key string) (string, error) {
+	val, err := a.rdb.Get(ctx, key).Result()
+	if err == goredis.Nil {
+		return "", sdui_cache.ErrCacheMiss
+	}
+	return val, err
+}
+
+func (a *goRedisSDUIAdapter) Set(ctx context.Context, key, value string, ttl time.Duration) error {
+	return a.rdb.Set(ctx, key, value, ttl).Err()
 }
 
 func splitComma(s string) []string {

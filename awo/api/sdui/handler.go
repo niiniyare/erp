@@ -18,6 +18,7 @@
 //	GET /api/v1/ui/{module}/{entity}/create   → create form
 //	GET /api/v1/ui/{module}/{entity}/{id}     → detail view
 //	GET /api/v1/ui/{module}/{entity}/{id}/edit → edit form
+//	GET /api/v1/ui/nav                        → sidebar navigation schema
 //
 // The renderer is selected via the Accept-SDUI-Renderer header (default: amis).
 // Locale is selected via the Accept-Language header (default: en-US).
@@ -41,6 +42,22 @@ import (
 	"awo.so/awo/sdui/renderer"
 	"awo.so/awo/sdui/sduictx"
 )
+
+// NavEntry is a single navigation item linking to an entity list view.
+type NavEntry struct {
+	Module  string `json:"module"`
+	Label   string `json:"label"`
+	Entity  string `json:"entity"`
+	ListURL string `json:"listUrl"`
+	Icon    string `json:"icon,omitempty"`
+}
+
+// NavModule groups NavEntry values by module for sidebar rendering.
+type NavModule struct {
+	Module  string     `json:"module"`
+	Label   string     `json:"label"`
+	Entries []NavEntry `json:"entries"`
+}
 
 const (
 	// defaultRendererID is used when no renderer is specified in the request.
@@ -67,9 +84,9 @@ const (
 type Handler struct {
 	schema    *compiler.CompiledSchema
 	engine    *engine.Engine
-	evaluator auth.PolicyEvaluator   // may be nil
-	grants    adapt.GrantIndex        // pre-built permission index
-	schemaFPs map[string]string       // entityName → fingerprint (precomputed)
+	evaluator auth.PolicyEvaluator // may be nil
+	grants    adapt.GrantIndex     // pre-built permission index
+	schemaFPs map[string]string    // entityName → fingerprint (precomputed)
 }
 
 // New constructs a Handler.
@@ -101,6 +118,10 @@ func New(schema *compiler.CompiledSchema, eng *engine.Engine, evaluator auth.Pol
 //	ui.Use(middleware.RequireAuth(...))
 //	h.Register(ui)
 func (h *Handler) Register(g fiber.Router) {
+	// Navigation. Must be registered before /:module/:resource to avoid
+	// "nav" being matched as a :module parameter.
+	g.Get("/nav", h.nav)
+
 	// List view.
 	g.Get("/:module/:resource", h.list)
 
@@ -115,6 +136,43 @@ func (h *Handler) Register(g fiber.Router) {
 }
 
 // ── view handlers ─────────────────────────────────────────────────────────────
+
+// nav returns the sidebar navigation schema.
+// Groups entities by module; only entities with a declared Read permission
+// are included. Order matches CompiledSchema.Entities declaration order.
+//
+// GET /api/v1/ui/nav
+func (h *Handler) nav(c *fiber.Ctx) error {
+	seen := make(map[string]int) // module → index in result
+	var result []NavModule
+
+	for _, es := range h.schema.Entities {
+		if len(es.Permissions.Read) == 0 {
+			continue // no read permission declared — omit from nav
+		}
+		idx, ok := seen[es.Module]
+		if !ok {
+			idx = len(result)
+			seen[es.Module] = idx
+			moduleLabel := es.Module
+			if len(moduleLabel) > 0 {
+				moduleLabel = strings.ToUpper(moduleLabel[:1]) + moduleLabel[1:]
+			}
+			result = append(result, NavModule{
+				Module: es.Module,
+				Label:  moduleLabel,
+			})
+		}
+		result[idx].Entries = append(result[idx].Entries, NavEntry{
+			Module:  es.Module,
+			Label:   es.LabelPlural,
+			Entity:  es.QualifiedName,
+			ListURL: "/ui/" + es.Module + "/" + es.APIResource,
+			Icon:    es.Icon,
+		})
+	}
+	return c.JSON(result)
+}
 
 func (h *Handler) list(c *fiber.Ctx) error {
 	return h.handle(c, sduictx.ViewModeList, false)
@@ -176,13 +234,12 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	gSchema := adapt.FromCompiled(es)
 
 	// Delegate to engine.
+	rctx := renderer.ApplyLocale(renderer.RendererContext{GenCtx: ctx}, locale)
 	resp, err := h.engine.Handle(c.UserContext(), engine.Request{
-		Ctx:        ctx,
-		Schema:     gSchema,
-		RendererID: rendererID,
-		RendererCtx: renderer.RendererContext{
-			GenCtx: ctx,
-		},
+		Ctx:         ctx,
+		Schema:      gSchema,
+		RendererID:  rendererID,
+		RendererCtx: rctx,
 	})
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())

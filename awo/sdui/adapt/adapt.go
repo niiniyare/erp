@@ -183,8 +183,8 @@ func NewViewerAdapter(ctx context.Context, viewer auth.ViewerContext, evaluator 
 }
 
 func (a ViewerAdapter) TenantID() uuid.UUID   { return a.inner.TenantID() }
-func (a ViewerAdapter) Roles() []string        { return a.inner.Roles() }
-func (a ViewerAdapter) IsPlatformAdmin() bool  { return a.inner.IsPlatformAdmin() }
+func (a ViewerAdapter) Roles() []string       { return a.inner.Roles() }
+func (a ViewerAdapter) IsPlatformAdmin() bool { return a.inner.IsPlatformAdmin() }
 
 // HasPermission implements sduictx.ViewerContext.
 // Platform admins always have all permissions. For others, the grant index is

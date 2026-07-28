@@ -55,12 +55,12 @@ import (
 
 // Stage labels used in error metrics.
 const (
-	StageGenerate  = "generate"
-	StageValidate  = "validate"
-	StageLayout    = "layout"
-	StageRender    = "render"
-	StagePlugin    = "plugin"
-	StageCache     = "cache"
+	StageGenerate = "generate"
+	StageValidate = "validate"
+	StageLayout   = "layout"
+	StageRender   = "render"
+	StagePlugin   = "plugin"
+	StageCache    = "cache"
 )
 
 // CacheLevel labels distinguish L2 (widget tree) from L3 (rendered output).
@@ -97,14 +97,14 @@ func (c *Config) tracerName() string {
 type Metrics struct {
 	tracer trace.Tracer
 
-	genDuration        metric.Float64Histogram
-	renderDuration     metric.Float64Histogram
-	validateDuration   metric.Float64Histogram
-	layoutDuration     metric.Float64Histogram
-	pluginDuration     metric.Float64Histogram
-	cacheHits          metric.Int64Counter
-	cacheMisses        metric.Int64Counter
-	errorsTotal        metric.Int64Counter
+	genDuration      metric.Float64Histogram
+	renderDuration   metric.Float64Histogram
+	validateDuration metric.Float64Histogram
+	layoutDuration   metric.Float64Histogram
+	pluginDuration   metric.Float64Histogram
+	cacheHits        metric.Int64Counter
+	cacheMisses      metric.Int64Counter
+	errorsTotal      metric.Int64Counter
 }
 
 // New constructs a Metrics from the global OTel meter and tracer providers.
@@ -213,8 +213,8 @@ func (m *Metrics) StartSpanWithAttrs(ctx context.Context, name string, attrs ...
 // Timer is a helper returned by RecordStart.
 // Call Done() to record the elapsed duration.
 type Timer struct {
-	start     time.Time
-	recordFn  func(ms float64)
+	start    time.Time
+	recordFn func(ms float64)
 }
 
 // Done records the elapsed milliseconds since the timer was started.

@@ -312,7 +312,9 @@ func minimalEntitySchema(name string) generator.EntitySchema {
 // openViewer is a permissive ViewerContext for tests — grants all permissions.
 type openViewer struct{}
 
-func (v *openViewer) TenantID() uuid.UUID       { return uuid.MustParse("00000000-0000-0000-0000-000000000001") }
+func (v *openViewer) TenantID() uuid.UUID {
+	return uuid.MustParse("00000000-0000-0000-0000-000000000001")
+}
 func (v *openViewer) Roles() []string           { return []string{"admin"} }
 func (v *openViewer) IsPlatformAdmin() bool     { return true }
 func (v *openViewer) HasPermission(string) bool { return true }

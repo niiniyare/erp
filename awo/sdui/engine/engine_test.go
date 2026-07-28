@@ -22,10 +22,10 @@ import (
 
 type stubViewer struct{ admin bool }
 
-func (s *stubViewer) TenantID() uuid.UUID         { return uuid.New() }
-func (s *stubViewer) Roles() []string              { return nil }
-func (s *stubViewer) IsPlatformAdmin() bool        { return s.admin }
-func (s *stubViewer) HasPermission(string) bool    { return s.admin }
+func (s *stubViewer) TenantID() uuid.UUID       { return uuid.New() }
+func (s *stubViewer) Roles() []string           { return nil }
+func (s *stubViewer) IsPlatformAdmin() bool     { return s.admin }
+func (s *stubViewer) HasPermission(string) bool { return s.admin }
 
 func makeCtx(mode sduictx.ViewMode) sduictx.GeneratorContext {
 	ctx, _ := sduictx.NewGeneratorContext(
@@ -187,9 +187,9 @@ func TestEngine_Handle_PermissionFiltering(t *testing.T) {
 	).WithSchemaFingerprint("sf1").WithPermFingerprint("pf1").Build()
 
 	schema := generator.EntitySchema{
-		Name:    "test_entity",
-		Title:   "Entity",
-		ListURL: "/api/v1/test/entities",
+		Name:        "test_entity",
+		Title:       "Entity",
+		ListURL:     "/api/v1/test/entities",
 		Permissions: map[string]string{"read": "test.entity.read"},
 		Fields: []generator.FieldDef{
 			{Name: "name", Label: "Name", FieldType: "data", InList: true},
