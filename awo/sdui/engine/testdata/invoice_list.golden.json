@@ -1,0 +1,53 @@
+{
+  "body": [
+    {
+      "api": {
+        "method": "GET",
+        "url": "/api/v1/finance/invoices"
+      },
+      "columns": [
+        {
+          "label": "Invoice #",
+          "name": "number",
+          "type": "text"
+        },
+        {
+          "label": "Status",
+          "name": "status",
+          "type": "mapping"
+        },
+        {
+          "label": "Amount",
+          "name": "amount",
+          "type": "tpl"
+        },
+        {
+          "format": "YYYY-MM-DD",
+          "label": "Due Date",
+          "name": "due_date",
+          "type": "date"
+        },
+        {
+          "label": "Customer",
+          "name": "customer",
+          "type": "text"
+        }
+      ],
+      "title": "Invoices",
+      "toolbar": [
+        {
+          "actionType": "link",
+          "icon": "fa fa-plus",
+          "id": "create",
+          "label": "New Invoice",
+          "level": "primary",
+          "link": "/finance_invoice/new",
+          "type": "button"
+        }
+      ],
+      "type": "crud2"
+    }
+  ],
+  "title": "Invoices",
+  "type": "page"
+}

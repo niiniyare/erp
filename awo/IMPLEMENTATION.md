@@ -245,19 +245,91 @@
 
 ---
 
-### Not yet implemented:
-- `awo/sdui/layout` — LayoutEngine (column span computation, SectionLayout)
-- `awo/sdui/observability` — metrics, tracing, logging
+## Package: awo/sdui/layout
 
-### Dependency: go.mod
-- `golang.org/x/sync` (for singleflight in cache package)
-- `github.com/google/uuid` (already present)
+**Status:** Complete
+**Files:**
+- `layout.go` — Engine, ComputedLayout, SectionLayout, TabLayout, Row, RowItem, Span; row packing algorithm; dashboard panel layout
+- `layout_test.go` — 12 tests covering nil/non-page root, flat fields, full-width kinds, explicit spans, NewRow hint, 4-column sections, tab panes, dashboard rows, SummaryCard; 3 benchmarks (small form, large form, dashboard)
+- `fuzz_test.go` — 3 fuzz targets: ColSpan, section columns, nil children
 
-### Known limitations:
-- Generator not yet implemented — SDUI pipeline cannot yet run end-to-end.
-- `NodeDuration` renders as masked `input-text` in AMIS (no native widget); production requires a custom AMIS component.
-- `NodeSignature` renders as `input-file` in AMIS (no native signature widget); production requires a custom AMIS component.
-- `NodeMoney` currency selector requires a sibling `NodeSelect` emitted by the generator — not yet handled in generator.
+**Key exports:** `Engine`, `New()`, `Compute()`, `ComputedLayout`, `SectionLayout`, `TabLayout`, `Row`, `RowItem`, `Span`, `Full()`, `MobileGridCols`, `TabletGridCols`, `DesktopGridCols`, `DefaultSectionCols`
+
+**Grid model:**
+- Desktop: 12 columns; Tablet: 8 columns; Mobile: 4 columns (always full-width)
+- Section columns 1–4; stored in `widget.Node.Layout.ColSpan` on the section node itself
+- Default section span = DesktopGridCols / sectionCols
+- Full-width kinds: NodeTextArea, NodeRichText, NodeEditor, NodeSection, NodeGrid, NodeTable, NodeRelatedList, NodeWorkflowPanel, NodeAttachments, NodeActivity, NodeStaticText
+
+**Dashboard panel defaults:**
+- NodeKPICard: 3 desktop / 4 tablet
+- NodeChartPanel: 6 desktop / 8 tablet
+- NodeFilterBar/NodeTablePanel: 12 desktop / 8 tablet
+
+**Architectural notes:**
+- Engine holds no mutable state — safe for concurrent use
+- Explicit `ColSpan` on any node overrides all defaults
+- `NewRow: true` in LayoutHint forces a row break before that node
+- Nested NodeSection inside NodeTabPane: flattened to fields (single-level layout)
+
+---
+
+## Package: awo/sdui/observability
+
+**Status:** Complete
+**Files:**
+- `observability.go` — Metrics struct, New(), Noop(), StartSpan, Timer, TrackGeneration/Render/Validation/Layout/Plugins, RecordCacheHit/Miss/Error
+- `observability_test.go` — 5 tests covering Noop, timer measurement, global provider, default names; 1 benchmark
+
+**Key exports:** `Metrics`, `New()`, `Noop()`, `Config`, `Timer`, `Stage*` constants, `CacheLevel*` constants
+
+**Instruments registered:**
+- `sdui.generation_duration_ms` histogram
+- `sdui.render_duration_ms` histogram
+- `sdui.validation_duration_ms` histogram
+- `sdui.layout_duration_ms` histogram
+- `sdui.plugin_duration_ms` histogram
+- `sdui.cache_hits_total` counter
+- `sdui.cache_misses_total` counter
+- `sdui.errors_total` counter
+
+**Architectural notes:**
+- Integrates with global OTel meter/tracer providers — no parallel observability stack
+- All instruments are nil-safe: Noop() leaves them nil; all record methods guard with nil checks
+- Timer records elapsed milliseconds with microsecond resolution
+
+---
+
+## Package: awo/sdui/engine
+
+**Status:** Complete
+**Files:**
+- `engine.go` — Engine, Options, Request, Response, New(), Handle(), Renderers(); full 7-stage pipeline with L2/L3 caching
+- `engine_test.go` — 9 integration tests + 1 benchmark covering all view modes, unknown renderer, validation, permission filtering, layout presence, output JSON validity
+- `golden_test.go` — snapshot regression tests for invoice list/create/edit/detail; -update flag to regenerate
+- `fuzz_test.go` — 3 fuzz targets: field types, field names, schema names
+
+**Key exports:** `Engine`, `New()`, `Handle()`, `Renderers()`, `Request`, `Response`, `Options`
+
+**Pipeline stages:**
+1. Renderer resolution
+2. L3 cache lookup (rendered output) → early return on hit
+3. L2 cache lookup (widget tree) → skip generation on hit
+4. Generator.Generate (if L2 miss)
+5. L2 cache store
+6. Validator.Validate (hard gate — fatal issues abort)
+7. Layout.Compute
+8. Renderer.Render
+9. L3 cache store
+
+**Architectural notes:**
+- Engine is the only public entry point for SDUI generation; HTTP handlers call only Handle()
+- Cache is optional (nil disables all caching)
+- Observability is optional (nil → Noop)
+- Widget trees and rendered outputs are JSON-marshalled for cache storage
+- Corrupt cache entries are silently discarded and regenerated
+
+---
 
 ### Pre-implementation checklist status (from Part 20):
 - [x] ExpressionRef as portable DSL (not renderer strings)
@@ -268,5 +340,17 @@
 - [x] NodeTabPane separate from NodeSection
 - [x] Cache keys include all 9 dimensions
 - [x] Validation before render (hard gate)
-- [ ] Generator implementation (next priority)
-- [ ] Layout engine implementation
+- [x] Generator implementation (Phase S1)
+- [x] Layout engine implementation
+- [x] Observability integration
+- [x] End-to-end engine pipeline
+- [x] Golden regression tests
+- [x] Fuzz testing (expression, layout, engine)
+
+### Known limitations:
+- `NodeDuration` renders as masked `input-text` in AMIS (no native widget); production requires a custom AMIS component.
+- `NodeSignature` renders as `input-file` in AMIS (no native signature widget); production requires a custom AMIS component.
+- `NodeMoney` currency selector not auto-emitted by generator; renderer handles currency display.
+- Dashboard panel wiring from dashboard.Registry not yet implemented in generator (placeholder).
+- Pre-generation schema transform (ExtPreGeneration) is a no-op at v1.0.
+- Golden files must be generated by running: `go test ./awo/sdui/engine/... -run TestGolden -update`

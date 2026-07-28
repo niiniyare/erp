@@ -1,0 +1,71 @@
+{
+  "body": [
+    {
+      "actions": [
+        {
+          "actionType": "link",
+          "icon": "fa fa-edit",
+          "id": "edit",
+          "label": "Edit",
+          "level": "default",
+          "type": "button"
+        },
+        {
+          "actionType": "ajax",
+          "confirmText": "Delete this Invoice?",
+          "icon": "fa fa-trash",
+          "id": "delete",
+          "label": "Delete",
+          "level": "danger",
+          "type": "button"
+        }
+      ],
+      "body": null,
+      "title": "Invoice",
+      "type": "panel"
+    },
+    {
+      "api": {
+        "method": "GET",
+        "url": "/api/v1/finance/invoices/{id}"
+      },
+      "body": [
+        {
+          "disabled": true,
+          "label": "Status",
+          "name": "status",
+          "type": "select"
+        },
+        {
+          "disabled": true,
+          "label": "Amount",
+          "name": "amount",
+          "precision": 2,
+          "type": "input-number"
+        },
+        {
+          "disabled": true,
+          "format": "YYYY-MM-DD",
+          "label": "Due Date",
+          "name": "due_date",
+          "type": "input-date"
+        },
+        {
+          "disabled": true,
+          "label": "Customer",
+          "name": "customer",
+          "type": "input-text"
+        },
+        {
+          "disabled": true,
+          "label": "Notes",
+          "name": "notes",
+          "type": "textarea"
+        }
+      ],
+      "type": "form"
+    }
+  ],
+  "title": "Invoice",
+  "type": "page"
+}
