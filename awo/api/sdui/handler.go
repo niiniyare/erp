@@ -31,6 +31,7 @@ package sdui
 
 import (
 	"fmt"
+	"log/slog"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -195,12 +196,19 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	module := c.Params("module")
 	resource := c.Params("resource")
 
+	slog.Info("sdui: request", "method", c.Method(), "path", c.Path(),
+		"module", module, "resource", resource, "mode", mode)
+
 	// Resolve entity by module + resource path segment.
 	es := h.findEntity(module, resource)
 	if es == nil {
+		slog.Warn("sdui: entity not found", "module", module, "resource", resource,
+			"available_entities", h.entityList())
 		return fiber.NewError(fiber.StatusNotFound,
 			fmt.Sprintf("sdui: entity not found: %s/%s", module, resource))
 	}
+
+	slog.Info("sdui: entity resolved", "entity", es.QualifiedName, "fields", len(es.Fields))
 
 	viewer := auth.ViewerFromContext(c.UserContext())
 	rendererID := h.rendererID(c)
@@ -227,6 +235,7 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 
 	ctx, err := builder.Build()
 	if err != nil {
+		slog.Error("sdui: context build failed", "err", err)
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
@@ -235,6 +244,7 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 
 	// Delegate to engine.
 	rctx := renderer.ApplyLocale(renderer.RendererContext{GenCtx: ctx}, locale)
+	slog.Info("sdui: calling engine", "entity", es.QualifiedName, "renderer", rendererID, "schemaFP", schemaFP)
 	resp, err := h.engine.Handle(c.UserContext(), engine.Request{
 		Ctx:         ctx,
 		Schema:      gSchema,
@@ -242,8 +252,12 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 		RendererCtx: rctx,
 	})
 	if err != nil {
+		slog.Error("sdui: engine error", "entity", es.QualifiedName, "err", err)
 		return fiber.NewError(fiber.StatusInternalServerError, err.Error())
 	}
+
+	slog.Info("sdui: engine success", "entity", es.QualifiedName,
+		"cache_hit", resp.CacheHit, "schema_keys", len(resp.Output.AMISSchema))
 
 	// Set ETag from schema fingerprint + renderer + locale.
 	etag := fmt.Sprintf(`"%s-%s-%s"`, schemaFP, rendererID, locale)
@@ -269,6 +283,15 @@ func (h *Handler) findEntity(module, resource string) *compiler.EntitySchema {
 		}
 	}
 	return nil
+}
+
+// entityList returns a short summary of registered entities for diagnostic logging.
+func (h *Handler) entityList() []string {
+	list := make([]string, 0, len(h.schema.Entities))
+	for _, es := range h.schema.Entities {
+		list = append(list, es.Module+"/"+es.APIResource)
+	}
+	return list
 }
 
 // rendererID extracts the renderer ID from Accept-SDUI-Renderer header.

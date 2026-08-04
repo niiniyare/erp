@@ -256,6 +256,11 @@ type EntitySchema struct {
 	// this entity's module. Empty means the dashboard page is a placeholder.
 	DashboardPanels []DashboardPanel
 
+	// UIPrefix is the web UI path prefix for this entity.
+	// Format: "/ui/{module}/{resource}" — e.g. "/ui/finance/invoices".
+	// Used to construct create/edit/detail navigation hrefs in action buttons.
+	UIPrefix string
+
 	// HasWorkflow is true when the entity has at least one WorkflowTrigger.
 	// The generator emits a NodeWorkflowPanel in detail view when true.
 	// The workflow state data source URL is expected to be at {DetailURL}/workflow-state.
@@ -451,29 +456,26 @@ func (g *EntityGenerator) buildList(schema EntitySchema, ctx sduictx.GeneratorCo
 	// Build list actions (Create button, row actions, etc.).
 	actions := g.buildListActions(schema, ctx)
 
-	var pageChildren []*widget.Node
-
-	// Filter bar — emitted when any InList field is searchable or is a select/link.
+	// Filter bar — embedded in the list node so the renderer can wire it as
+	// the crud filter prop. Nil when no fields are searchable.
 	filterBar := g.buildFilterBar(schema, ctx)
-	if filterBar != nil {
-		pageChildren = append(pageChildren, filterBar)
-	}
 
-	pageChildren = append(pageChildren, &widget.Node{
-		Kind:     widget.NodeList,
-		Label:    schema.PluralTitle,
-		Children: columns,
-		Actions:  actions,
+	listNode := &widget.Node{
+		Kind:      widget.NodeList,
+		Label:     schema.PluralTitle,
+		Children:  columns,
+		Actions:   actions,
+		FilterBar: filterBar,
 		DataSource: &widget.DataSource{
 			URL:    schema.ListURL,
 			Method: "GET",
 		},
-	})
+	}
 
 	return &widget.Node{
 		Kind:     widget.NodePage,
 		Label:    schema.PluralTitle,
-		Children: pageChildren,
+		Children: []*widget.Node{listNode},
 	}, nil
 }
 
@@ -863,6 +865,14 @@ func (g *EntityGenerator) buildFieldNode(f FieldDef, ctx sduictx.GeneratorContex
 		node.Layout = &widget.LayoutHint{ColSpan: f.ColSpan, Width: f.Width}
 	}
 
+	// Static select options.
+	for _, opt := range f.Options {
+		node.Options = append(node.Options, widget.StaticOption{
+			Label: opt.Label,
+			Value: opt.Value,
+		})
+	}
+
 	// Raw expression strings from def.FieldDef (AMIS JS).
 	// Stored in ExpressionRef.Expr as plain strings. Renderers type-switch:
 	//   - string → raw pass-through (AMIS renderer emits unchanged)
@@ -901,12 +911,16 @@ func (g *EntityGenerator) buildListActions(schema EntitySchema, ctx sduictx.Gene
 
 	// Create button — requires create permission.
 	if perm := schema.Permissions["create"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		href := schema.UIPrefix + "/create"
+		if href == "/create" {
+			href = "/" + schema.Name + "/create" // fallback if UIPrefix not set
+		}
 		out = append(out, &widget.ActionNode{
 			ID:         "create",
 			Label:      "New " + schema.Title,
 			ActionType: "link",
 			Level:      "primary",
-			Href:       "/" + schema.Name + "/new",
+			Href:       href,
 			Icon:       "plus",
 		})
 	}
@@ -974,11 +988,16 @@ func (g *EntityGenerator) buildDetailActions(schema EntitySchema, ctx sduictx.Ge
 
 	// Edit button — requires update permission.
 	if perm := schema.Permissions["update"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		editHref := schema.UIPrefix + "/${id}/edit"
+		if schema.UIPrefix == "" {
+			editHref = "/" + schema.Name + "/${id}/edit"
+		}
 		out = append(out, &widget.ActionNode{
 			ID:         "edit",
 			Label:      "Edit",
 			ActionType: "link",
 			Level:      "default",
+			Href:       editHref,
 			Icon:       "edit",
 		})
 	}

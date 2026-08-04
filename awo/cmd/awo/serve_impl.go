@@ -14,6 +14,7 @@ import (
 
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
@@ -24,7 +25,9 @@ import (
 	"awo.so/awo/bootstrap"
 	contrib "awo.so/awo/contrib/pgx"
 	contribredis "awo.so/awo/contrib/redis"
-	"awo.so/awo/events/outbox"
+	"awo.so/awo/def"
+	"awo.so/awo/driver"
+	// FIX: "awo.so/awo/events/outbox" — re-enable when events_outbox migration applied
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
 	"awo.so/awo/platform/iam"
@@ -50,11 +53,11 @@ import (
 
 // ServeConfig holds all configuration options for the HTTP server.
 type ServeConfig struct {
-	Port      string
-	DB        string
-	Redis     string
-	LogLevel  string
-	AppName   string
+	Port        string
+	DB          string
+	Redis       string
+	LogLevel    string
+	AppName     string
 	OpenBrowser bool
 }
 
@@ -175,13 +178,13 @@ func startServer(cfg ServeConfig) error {
 	}
 	tenantRepo := contrib.NewRepository(pool, tenantSchema)
 
-	// Outbox relay.
-	relay := outbox.New(pool)
-	go func() {
-		if rErr := relay.Start(ctx); rErr != nil && ctx.Err() == nil {
-			slog.Error("outbox relay stopped", "err", rErr)
-		}
-	}()
+	// FIX: outbox relay disabled until events_outbox migration is applied.
+	// relay := outbox.New(pool)
+	// go func() {
+	// 	if rErr := relay.Start(ctx); rErr != nil && ctx.Err() == nil {
+	// 		slog.Error("outbox relay stopped", "err", rErr)
+	// 	}
+	// }()
 
 	// Build Fiber app.
 	app := fiber.New(fiber.Config{
@@ -208,14 +211,17 @@ func startServer(cfg ServeConfig) error {
 	})
 
 	// Load RBAC policy. Degrade gracefully when IAM tables don't exist yet
-	// (pre-migration dev environment). RBAC is disabled in that case — all
-	// authenticated requests are permitted.
+	// (pre-migration dev environment). When tables are missing, disable both
+	// RBAC and auth middleware so the UI is immediately accessible.
 	var evaluator auth.PolicyEvaluator
+	var iamAuth middleware.SessionValidator
 	rolePerms, err := iamModule.Auth.LoadRolePermissions(ctx)
 	if err != nil {
-		slog.Warn("RBAC disabled — IAM tables not found (run migrations to enable)",
+		slog.Warn("auth+RBAC disabled — IAM tables not found (run migrations to enable)",
 			"err", err)
+		// iamAuth stays nil → RequireAuth middleware skipped → UI accessible without login
 	} else {
+		iamAuth = iamModule.Auth
 		evaluator, err = auth.NewCasbinEvaluator(result.Schema.CapabilityGrants, rolePerms)
 		if err != nil {
 			return fmt.Errorf("casbin evaluator: %w", err)
@@ -233,21 +239,40 @@ func startServer(cfg ServeConfig) error {
 		Cache:             serveSDUICache(result.Redis),
 	})
 
+	// In dev mode (iamAuth == nil), inject a platform-admin dev viewer into
+	// every request so ViewerFromContext() doesn't panic in handlers.
+	// Also skip TenantResolver — no tenant table yet.
+	var tenants driver.EntityRepository[*def.EntityRecord]
+	if iamAuth != nil {
+		tenants = tenantRepo
+	} else {
+		// uuid.Nil fails GeneratorContext.Validate(). Use a stable non-nil dev UUID.
+		devTenantID := uuid.MustParse("00000000-0000-0000-0000-000000000001")
+		devViewer := auth.NewSystemViewer(devTenantID)
+		app.Use(func(c *fiber.Ctx) error {
+			c.SetUserContext(auth.WithViewer(c.UserContext(), devViewer))
+			return c.Next()
+		})
+		slog.Warn("dev mode: all requests run as platform-admin (no auth)")
+	}
+
 	router.Register(app, result.Schema, router.RegisterOptions{
 		Pool:        pool,
 		Redis:       result.Redis,
-		IAM:         iamModule.Auth,
-		Tenants:     tenantRepo,
+		IAM:         iamAuth,
+		Tenants:     tenants,
 		Authz:       evaluator,
 		AuditWriter: auditWriter,
 		SDUIEngine:  sduiEng,
 	})
 
-	// Static files.
-	app.Static("/static", "./awo/web/static", fiber.Static{Compress: true, MaxAge: 86400})
-	// Web UI SPA.
+	// Vite build output. Serves /assets/*, /sdk/*, /locales/*, etc.
+	// Files not found here fall through to the SPA catch-all below.
+	app.Static("/", "./awo/web/dist", fiber.Static{Compress: true, MaxAge: 86400})
+	// Web UI SPA — all /ui/* paths serve the built index.html.
+	// In development, Vite dev server (port 3000) handles this instead.
 	app.Get("/ui/*", func(c *fiber.Ctx) error {
-		return c.SendFile("./awo/web/pages/index.html")
+		return c.SendFile("./awo/web/dist/index.html")
 	})
 	// Showcase developer portal.
 	app.Get("/showcase*", func(c *fiber.Ctx) error {

@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Awo Framework — Developer Showcase</title>
 
-  <link rel="stylesheet" href="/static/sdk/sdk.css" />
-  <link rel="stylesheet" href="/static/sdk/iconfont.css" />
+  <link rel="stylesheet" href="https://unpkg.com/amis@3.6.6/sdk/sdk.css" />
+  <link rel="stylesheet" href="https://unpkg.com/amis@3.6.6/sdk/iconfont.css" />
 
   <style>
     /* ── CSS Custom Property Tokens ─────────────────────────────────────────── */
@@ -710,7 +710,42 @@
 
 </div>
 
-<script src="/static/sdk/sdk.js"></script>
+<script src="https://unpkg.com/amis@3.6.6/sdk/sdk.js"></script>
+<script>
+// Resolve amis.embed across AMIS v2/v3 SDK variants.
+(function () {
+  var amisType = typeof amis;
+  var reqType  = typeof amisRequire;
+  var embedFn  = null;
+  var unmountFn = function (el) {
+    if (typeof amisRequire === 'function') {
+      try { var m = amisRequire('amis/embed'); if (m && m.unmount) { m.unmount(el); return; } } catch(e){}
+    }
+    if (typeof amis !== 'undefined' && typeof amis.unmount === 'function') amis.unmount(el);
+  };
+
+  if (amisType !== 'undefined' && typeof amis.embed === 'function') {
+    embedFn = function (el, s, p, e) { return amis.embed(el, s, p, e); };
+  } else if (amisType === 'function') {
+    embedFn = function (el, s, p, e) { return amis(el, s, p, e); };
+  } else if (reqType === 'function') {
+    try {
+      var em = amisRequire('amis/embed');
+      if (em && typeof em.embed === 'function') embedFn = function (el, s, p, e) { return em.embed(el, s, p, e); };
+      else if (typeof em === 'function') embedFn = function (el, s, p, e) { return em(el, s, p, e); };
+    } catch(e) {}
+    if (!embedFn) {
+      try {
+        var am = amisRequire('amis');
+        if (am && typeof am.embed === 'function') embedFn = function (el, s, p, e) { return am.embed(el, s, p, e); };
+      } catch(e2) {}
+    }
+  }
+  window._amisEmbed   = embedFn;
+  window._amisUnmount = unmountFn;
+  console.log('[showcase] SDK: amis=' + amisType + ' amisRequire=' + reqType + ' embed=' + (embedFn ? 'ok' : 'MISSING'));
+})();
+</script>
 <script>
 (function () {
   'use strict';
@@ -861,8 +896,8 @@
       .then(function (schema) {
         content.innerHTML = '';
         var key = apiUrl;
-        if (state.amisApps[key]) { amis.unmount(content); }
-        state.amisApps[key] = amis.embed(content, schema, {}, { fetcher: amisFetcher });
+        if (state.amisApps[key]) { window._amisUnmount(content); }
+        state.amisApps[key] = window._amisEmbed && window._amisEmbed(content, schema, {}, { fetcher: amisFetcher });
       })
       .catch(function (err) {
         content.innerHTML = '<div style="padding:20px;"><div class="error-box">Failed to load: ' + esc(err.message) + '</div></div>';
@@ -877,7 +912,7 @@
     var gallerySchema = buildGallerySchema();
 
     container.innerHTML = '';
-    amis.embed(container, gallerySchema, {}, { fetcher: amisFetcher });
+    if (window._amisEmbed) window._amisEmbed(container, gallerySchema, {}, { fetcher: amisFetcher });
   }
 
   function buildGallerySchema() {

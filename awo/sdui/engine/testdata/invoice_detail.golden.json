@@ -8,6 +8,7 @@
           "id": "edit",
           "label": "Edit",
           "level": "default",
+          "link": "/finance_invoice/${id}/edit",
           "type": "button"
         },
         {

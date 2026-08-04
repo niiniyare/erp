@@ -65,6 +65,7 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 		CreateURL:   es.RoutePrefix,
 		EditURL:     es.RoutePrefix + "/{id}",
 		DetailURL:   es.RoutePrefix + "/{id}",
+		UIPrefix:    "/ui/" + es.Module + "/" + es.APIResource,
 		Permissions: permissionsMap(es.Permissions),
 		HasWorkflow: len(es.WorkflowTriggers) > 0,
 	}

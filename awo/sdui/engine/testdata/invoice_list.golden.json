@@ -14,7 +14,7 @@
         {
           "label": "Status",
           "name": "status",
-          "type": "mapping"
+          "type": "text"
         },
         {
           "label": "Amount",
@@ -31,20 +31,62 @@
           "label": "Customer",
           "name": "customer",
           "type": "text"
+        },
+        {
+          "buttons": [
+            {
+              "actionType": "link",
+              "icon": "fa fa-eye",
+              "label": "View",
+              "level": "link",
+              "link": "/finance_invoice/${id}",
+              "type": "button"
+            },
+            {
+              "actionType": "link",
+              "icon": "fa fa-edit",
+              "label": "Edit",
+              "level": "link",
+              "link": "/finance_invoice/${id}/edit",
+              "type": "button"
+            },
+            {
+              "actionType": "ajax",
+              "api": "DELETE:/api/v1/finance/invoices/${id}",
+              "confirmText": "Are you sure you want to delete this record?",
+              "icon": "fa fa-trash",
+              "label": "Delete",
+              "level": "danger",
+              "type": "button"
+            }
+          ],
+          "label": "Actions",
+          "type": "operation"
         }
       ],
-      "title": "Invoices",
-      "toolbar": [
+      "footerToolbar": [
+        "statistics",
+        "pagination"
+      ],
+      "headerToolbar": [
         {
           "actionType": "link",
           "icon": "fa fa-plus",
           "id": "create",
           "label": "New Invoice",
           "level": "primary",
-          "link": "/finance_invoice/new",
+          "link": "/finance_invoice/create",
           "type": "button"
-        }
+        },
+        "pagination"
       ],
+      "perPageAvailable": [
+        10,
+        20,
+        50
+      ],
+      "syncLocation": false,
+      "title": "Invoices",
       "type": "crud2"
     }
   ],

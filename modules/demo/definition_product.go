@@ -57,9 +57,9 @@ var ProductDefinition = def.SystemDefinition{
 			Label: "Description",
 		},
 		{
-			Name:  "image",
-			Type:  def.FieldTypeData,
-			Label: "Image URL",
+			Name:   "image",
+			Type:   def.FieldTypeData,
+			Label:  "Image URL",
 			MaxLen: 500,
 		},
 		{

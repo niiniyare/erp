@@ -194,6 +194,23 @@ type Node struct {
 	// Example: a "variant" field clears when "product" changes.
 	// Renderers that support reactive field dependencies should implement this.
 	ClearOn []string
+
+	// Options lists static select options for NodeSelect and NodeMultiSelect.
+	// When non-empty and DataSource is absent (or has no URL), the select
+	// renders with these options inline — no server fetch required.
+	// Mutually exclusive with DataSource: DataSource takes precedence when set.
+	Options []StaticOption
+
+	// FilterBar is an optional filter form node for NodeList nodes.
+	// When non-nil, the renderer wires this as the list's search/filter bar.
+	// Only meaningful for NodeList — ignored for all other NodeKind values.
+	FilterBar *Node
+}
+
+// StaticOption is a label/value pair for a static select or multi-select field.
+type StaticOption struct {
+	Label string `json:"label"`
+	Value string `json:"value"`
 }
 
 // NodeKind is the semantic widget type. Renderers map each NodeKind to a

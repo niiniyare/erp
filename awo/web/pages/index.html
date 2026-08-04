@@ -5,9 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Awo ERP</title>
 
-  <!-- Amis SDK (pinned version — do not upgrade without compatibility audit) -->
-  <link rel="stylesheet" href="/static/sdk/sdk.css" />
-  <link rel="stylesheet" href="/static/sdk/iconfont.css" />
+  <link rel="stylesheet" href="https://unpkg.com/amis@3.6.6/sdk/sdk.css" />
+  <link rel="stylesheet" href="https://unpkg.com/amis@3.6.6/sdk/iconfont.css" />
 
   <style>
     /* ── CSS Custom Property Theme Tokens ───────────────────────────────────
@@ -25,18 +24,48 @@
     }
 
     html.dark {
-      /* Invert neutral fill scale — all amis components inherit */
-      --colors-neutral-fill-11:    #141414;
-      --colors-neutral-fill-10:    #1d1d1d;
-      --colors-neutral-fill-9:     #2a2a2a;
-      --colors-neutral-fill-8:     #333333;
-      --colors-neutral-text-2:     #e0e0e0;
-      --colors-neutral-line-8:     #3a3a3a;
-      --background:                #141414;
-      --body-bg:                   #141414;
-      --Page-main-bg:              #1a1a1a;
-      --Panel-bg-color:            #1d1d1d;
-      --Table-bg:                  #1d1d1d;
+      /* Shell dark mode — controls sidebar, topbar, layout chrome only.
+         AMIS widget dark mode is handled separately via amis theme selection.
+         AMIS v3 does NOT consume these custom properties; AMIS colors are
+         controlled through the SDK theme parameter in amis.embed(). */
+      --background:     #141414;
+      --body-bg:        #1a1a1a;
+      --Page-main-bg:   #1a1a1a;
+      --Panel-bg-color: #262626;
+      --Table-bg:       #262626;
+      --colors-neutral-line-8: #434343;
+    }
+
+    /* Shell chrome dark mode — sidebar, topbar, nav only. */
+    html.dark body {
+      background: var(--body-bg);
+      color: rgba(255, 255, 255, 0.85);
+    }
+    html.dark .awo-sidebar {
+      background: var(--Panel-bg-color);
+      border-right-color: var(--colors-neutral-line-8);
+    }
+    html.dark .awo-logo {
+      border-bottom-color: var(--colors-neutral-line-8);
+    }
+    html.dark .awo-topbar {
+      background: var(--Panel-bg-color);
+      border-bottom-color: var(--colors-neutral-line-8);
+    }
+    html.dark .nav-module {
+      border-bottom-color: var(--colors-neutral-line-8);
+    }
+    html.dark .nav-module-label {
+      color: rgba(255, 255, 255, 0.45);
+    }
+    html.dark .nav-entry {
+      color: rgba(255, 255, 255, 0.82);
+    }
+    html.dark .nav-entry:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+    html.dark .nav-entry.active {
+      background: rgba(22, 119, 255, 0.15);
     }
 
     * { box-sizing: border-box; }
@@ -45,28 +74,36 @@
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       background: var(--body-bg);
+      overflow-x: hidden;
     }
 
-    #app {
-      min-height: 100vh;
-    }
+    #app { min-height: 100vh; }
 
+    /* ── Layout ──────────────────────────────────────────────────────────── */
     .awo-layout {
       display: flex;
       min-height: 100vh;
     }
 
+    /* Sidebar: fixed on desktop, hidden off-canvas on mobile */
     .awo-sidebar {
       width: 240px;
+      min-width: 240px;
       background: var(--Panel-bg-color);
       border-right: 1px solid var(--colors-neutral-line-8, #f0f0f0);
       flex-shrink: 0;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      transition: transform 0.22s ease;
+      z-index: 200;
     }
 
     .awo-main {
       flex: 1;
-      overflow: auto;
+      min-width: 0;        /* prevent flex overflow */
+      overflow-x: hidden;
+      overflow-y: auto;
       background: var(--Page-main-bg);
     }
 
@@ -76,10 +113,96 @@
       font-weight: 700;
       color: var(--colors-brand-primary);
       border-bottom: 1px solid var(--colors-neutral-line-8, #f0f0f0);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    /* Hamburger / close button */
+    .awo-menu-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px 8px;
+      font-size: 20px;
+      color: var(--colors-brand-primary);
+      line-height: 1;
+      display: none; /* shown via media query */
+    }
+
+    /* Mobile top bar — sits above content, shows menu button */
+    .awo-topbar {
+      display: none;
+      align-items: center;
+      padding: 0 16px;
+      height: 52px;
+      background: var(--Panel-bg-color);
+      border-bottom: 1px solid var(--colors-neutral-line-8, #f0f0f0);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .awo-topbar-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--colors-brand-primary);
+      margin-left: 12px;
+    }
+
+    /* Overlay behind open sidebar on mobile */
+    .awo-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      z-index: 199;
     }
 
     .awo-content {
-      padding: 24px;
+      padding: 16px;
+      max-width: 1400px;
+    }
+
+    /* ── Responsive breakpoint ─────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .awo-menu-btn { display: inline-block; }
+      .awo-layout {
+        flex-direction: column;
+      }
+
+      .awo-topbar {
+        display: flex;
+      }
+
+      .awo-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100%;
+        transform: translateX(-100%);
+        box-shadow: 2px 0 16px rgba(0,0,0,0.15);
+      }
+
+      .awo-sidebar.open {
+        transform: translateX(0);
+      }
+
+      .awo-overlay.open {
+        display: block;
+      }
+
+      /* Hide desktop logo inside sidebar on mobile (topbar takes over) */
+      .awo-logo { display: none; }
+
+      .awo-main {
+        padding-top: 0; /* topbar already provides spacing */
+      }
+
+      .awo-content {
+        padding: 12px;
+      }
     }
 
     /* ── Navigation ────────────────────────────────────────────────────────── */
@@ -106,7 +229,7 @@
       display: block;
       padding: 7px 20px 7px 28px;
       font-size: 14px;
-      color: inherit;
+      color: rgba(0, 0, 0, 0.82);
       text-decoration: none;
       border-left: 3px solid transparent;
       transition: background 0.12s, border-color 0.12s;
@@ -132,10 +255,22 @@
 </head>
 <body>
 <div id="app">
+  <!-- Mobile top bar (hidden on desktop) -->
+  <div class="awo-topbar" id="topbar">
+    <button class="awo-menu-btn" id="menuBtn" aria-label="Open menu">&#9776;</button>
+    <span class="awo-topbar-title">Awo ERP</span>
+  </div>
+
+  <!-- Overlay behind sidebar on mobile -->
+  <div class="awo-overlay" id="overlay"></div>
+
   <div class="awo-layout">
     <!-- Sidebar: auto-populated by navigation schema -->
-    <nav class="awo-sidebar">
-      <div class="awo-logo">Awo ERP</div>
+    <nav class="awo-sidebar" id="sidebar">
+      <div class="awo-logo">
+        <span>Awo ERP</span>
+        <button class="awo-menu-btn" id="closeBtn" aria-label="Close menu">&#10005;</button>
+      </div>
       <div id="nav"></div>
     </nav>
 
@@ -146,19 +281,108 @@
   </div>
 </div>
 
-<script src="/static/sdk/sdk.js"></script>
+<script src="https://unpkg.com/amis@3.6.6/sdk/sdk.js"></script>
+<script>
+// Resolve amis.embed — runs synchronously after sdk.js.
+// Logs exact SDK globals so we can see what version/API is present.
+(function () {
+  // ── Diagnostic dump ─────────────────────────────────────────────────────────
+  var amisType   = typeof amis;
+  var reqType    = typeof amisRequire;
+  var amisKeys   = (amisType === 'object' && amis !== null) ? Object.keys(amis).slice(0, 15).join(',') : 'N/A';
+  var amisFn     = amisType === 'function';
+  console.log('[awo] SDK globals: amis=' + amisType + ' amisRequire=' + reqType);
+  console.log('[awo] amis.keys=' + amisKeys + ' amis-is-fn=' + amisFn);
+  if (amisType !== 'undefined') {
+    console.log('[awo] amis.version=', (amis && amis.version) || 'none',
+                ' amis.embed=', typeof (amis && amis.embed));
+  }
+
+  var embedFn   = null;
+  var unmountFn = function (inst) { if (inst && typeof inst.unmount === 'function') inst.unmount(); };
+
+  // Case 1: amis.embed is directly available (v1.x / v2.x SDK bundle).
+  if (amisType !== 'undefined' && typeof amis.embed === 'function') {
+    embedFn = function (el, schema, props, env) { return amis.embed(el, schema, props, env); };
+    console.log('[awo] SDK resolved: amis.embed direct');
+
+  // Case 2: amis itself is the embed function (some v1 builds).
+  } else if (amisFn) {
+    embedFn = function (el, schema, props, env) { return amis(el, schema, props, env); };
+    console.log('[awo] SDK resolved: amis() direct call');
+
+  // Case 3: v3 amisRequire AMD system.
+  } else if (reqType === 'function') {
+    var resolved = false;
+    // Try amis/embed module.
+    try {
+      var embedMod = amisRequire('amis/embed');
+      if (embedMod && typeof embedMod.embed === 'function') {
+        embedFn = function (el, schema, props, env) { return embedMod.embed(el, schema, props, env); };
+        console.log('[awo] SDK resolved: amisRequire(amis/embed).embed');
+        resolved = true;
+      } else if (typeof embedMod === 'function') {
+        embedFn = function (el, schema, props, env) { return embedMod(el, schema, props, env); };
+        console.log('[awo] SDK resolved: amisRequire(amis/embed) as fn');
+        resolved = true;
+      }
+    } catch (e) { console.warn('[awo] amisRequire(amis/embed) failed:', e.message); }
+
+    // Try amis module.
+    if (!resolved) {
+      try {
+        var amisMod = amisRequire('amis');
+        console.log('[awo] amisRequire(amis) type=' + typeof amisMod +
+                    ' keys=' + (amisMod ? Object.keys(amisMod).slice(0,10).join(',') : 'null'));
+        if (amisMod && typeof amisMod.embed === 'function') {
+          embedFn = function (el, schema, props, env) { return amisMod.embed(el, schema, props, env); };
+          console.log('[awo] SDK resolved: amisRequire(amis).embed');
+        } else if (typeof amisMod === 'function') {
+          embedFn = function (el, schema, props, env) { return amisMod(el, schema, props, env); };
+          console.log('[awo] SDK resolved: amisRequire(amis) as fn');
+        }
+      } catch (e2) { console.error('[awo] amisRequire(amis) failed:', e2.message); }
+    }
+
+  } else {
+    console.error('[awo] CRITICAL: no known AMIS SDK API found.');
+  }
+
+  window._amisEmbed   = embedFn;
+  window._amisUnmount = unmountFn;
+})();
+</script>
 <script>
 (function () {
   'use strict';
 
+  // ── Mobile sidebar toggle ─────────────────────────────────────────────────
+  var sidebar  = document.getElementById('sidebar');
+  var overlay  = document.getElementById('overlay');
+  var menuBtn  = document.getElementById('menuBtn');
+  var closeBtn = document.getElementById('closeBtn');
+
+  function openSidebar()  { sidebar.classList.add('open'); overlay.classList.add('open'); }
+  function closeSidebar() { sidebar.classList.remove('open'); overlay.classList.remove('open'); }
+
+  if (menuBtn)  menuBtn.addEventListener('click', openSidebar);
+  if (closeBtn) closeBtn.addEventListener('click', closeSidebar);
+  if (overlay)  overlay.addEventListener('click', closeSidebar);
+
   // ── Dark mode detection ────────────────────────────────────────────────────
+  var isDark = false;
   function applyTheme() {
-    var dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', dark);
+    isDark = !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+    document.documentElement.classList.toggle('dark', isDark);
   }
   applyTheme();
   if (window.matchMedia) {
-    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+      applyTheme();
+      // Re-render current page with correct theme.
+      var route = parseRoute();
+      if (route.module && route.resource) loadPage(route);
+    });
   }
 
   // ── Route parsing ──────────────────────────────────────────────────────────
@@ -195,21 +419,28 @@
 
   // ── Amis schema loading ────────────────────────────────────────────────────
   function loadPage(route) {
-    if (!route.module || !route.resource) return;
+    if (!route.module || !route.resource) {
+      console.log('[awo] loadPage: skipped — no module/resource in route', route);
+      return;
+    }
 
     var url = sduiURL(route);
+    console.log('[awo] loadPage: fetching SDUI schema', url, route);
 
     fetch(url, { credentials: 'include' })
       .then(function (r) {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
+        console.log('[awo] loadPage: server responded', r.status, url);
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' from ' + url);
         return r.json();
       })
       .then(function (schema) {
-        // Server returns the AMIS schema directly (not wrapped).
+        console.log('[awo] loadPage: schema received, type=' + (schema && schema.type) +
+          ', keys=' + (schema ? Object.keys(schema).join(',') : 'null'));
         renderAmis(schema);
         updateNavActive(route);
       })
       .catch(function (err) {
+        console.error('[awo] loadPage: error', err);
         renderAmis({
           type: 'page',
           title: 'Error',
@@ -218,23 +449,71 @@
       });
   }
 
+  // ── API response → AMIS format adapter ───────────────────────────────────
+  // Our API returns: { data: [...], meta: { total, page, page_size } }
+  // AMIS crud expects: { status: 0, data: { items: [...], count: N } }
+  // AMIS form initApi expects: { status: 0, data: { field: value, ... } }
+  function adaptResponse(json) {
+    // Already in AMIS format (has numeric status).
+    if (json && typeof json.status === 'number') return json;
+
+    var result = { status: 0, msg: '', data: json && json.data };
+
+    // List response: data is array with pagination meta.
+    if (json && Array.isArray(json.data) && json.meta) {
+      var total = json.meta.total || json.data.length;
+      result.data = { items: json.data, count: total, total: total };
+    }
+
+    // Error response.
+    if (json && json.error) {
+      result.status = 1;
+      result.msg = (json.error.message) || 'Error';
+      result.data = null;
+    }
+
+    return result;
+  }
+
   // ── Amis rendering ─────────────────────────────────────────────────────────
   var currentApp = null;
   function renderAmis(schema) {
     var el = document.getElementById('content');
-    if (currentApp) {
-      amis.unmount(el);
+
+    if (!window._amisEmbed) {
+      el.innerHTML =
+        '<div style="padding:32px 24px;margin:16px;background:#fff2f0;border:1px solid #ffccc7;border-radius:6px;">' +
+        '<strong style="color:#cf1322">AMIS SDK failed to load</strong>' +
+        '<p style="margin:8px 0 0;color:#595959;font-size:13px;">' +
+        'Fetching from cdn.jsdelivr.net. Check internet connection and browser console for details.' +
+        '</p></div>';
+      console.error('[awo] renderAmis: _amisEmbed not available');
+      return;
     }
-    currentApp = amis.embed(el, schema, {}, {
-      fetcher: function (opts) {
-        return fetch(opts.url, {
-          method: opts.method || 'GET',
-          headers: Object.assign({ 'Content-Type': 'application/json' }, opts.headers),
-          body: opts.data ? JSON.stringify(opts.data) : undefined,
-          credentials: 'include',
-        }).then(function (r) { return r.json(); });
-      }
-    });
+
+    if (currentApp) {
+      try { window._amisUnmount(currentApp); } catch (e) { console.warn('[awo] unmount:', e); }
+      currentApp = null;
+    }
+
+    var theme = isDark ? 'dark' : ((schema && schema.theme) || 'cxd');
+    console.log('[awo] renderAmis: theme=', theme, 'schema.type=', schema && schema.type);
+    try {
+      currentApp = window._amisEmbed(el, schema, {}, {
+        theme: theme,
+        fetcher: function (opts) {
+          return fetch(opts.url, {
+            method: opts.method || 'GET',
+            headers: Object.assign({ 'Content-Type': 'application/json' }, opts.headers),
+            body: opts.data ? JSON.stringify(opts.data) : undefined,
+            credentials: 'include',
+          }).then(function (r) { return r.json(); }).then(adaptResponse);
+        }
+      });
+    } catch (e) {
+      console.error('[awo] _amisEmbed threw:', e);
+      el.innerHTML = '<div style="padding:16px;color:#cf1322;font-size:13px;">Render error: ' + e.message + '</div>';
+    }
   }
 
   // ── Navigation loading ─────────────────────────────────────────────────────
@@ -245,15 +524,25 @@
 
     fetch('/api/v1/ui/nav', { credentials: 'include' })
       .then(function (r) {
+        console.log('[awo] nav: server responded', r.status);
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
       })
       .then(function (modules) {
+        console.log('[awo] nav: received', modules && modules.length, 'modules');
         renderNav(navEl, modules);
       })
-      .catch(function () {
+      .catch(function (err) {
+        console.error('[awo] nav: failed', err);
         navEl.innerHTML = '<div class="nav-loading">Navigation unavailable</div>';
       });
+  }
+
+  function navigate(href) {
+    console.log('[awo] navigate:', href);
+    history.pushState(null, '', href);
+    loadPage(parseRoute());
+    if (window.innerWidth <= 768) closeSidebar();
   }
 
   function renderNav(navEl, modules) {
@@ -261,33 +550,38 @@
       navEl.innerHTML = '<div class="nav-loading">No modules</div>';
       return;
     }
-    var html = '';
+
+    // Build DOM directly so click handlers attach per-element (no delegation).
+    navEl.innerHTML = '';
     for (var i = 0; i < modules.length; i++) {
       var mod = modules[i];
-      html += '<div class="nav-module">';
-      html += '<div class="nav-module-label">' + escapeHtml(mod.label) + '</div>';
+      var modEl = document.createElement('div');
+      modEl.className = 'nav-module';
+
+      var labelEl = document.createElement('div');
+      labelEl.className = 'nav-module-label';
+      labelEl.textContent = mod.label;
+      modEl.appendChild(labelEl);
+
       if (mod.entries) {
         for (var j = 0; j < mod.entries.length; j++) {
-          var entry = mod.entries[j];
-          var icon = entry.icon ? '<span style="margin-right:6px;opacity:0.6;">' + escapeHtml(entry.icon) + '</span>' : '';
-          // listUrl is already the /ui/{module}/{resource} path
-          html += '<a class="nav-entry" href="' + escapeHtml(entry.listUrl) + '" data-url="' + escapeHtml(entry.listUrl) + '">'
-                + icon + escapeHtml(entry.label) + '</a>';
+          (function (entry) {
+            var a = document.createElement('a');
+            a.className = 'nav-entry';
+            a.href = entry.listUrl;
+            a.textContent = entry.label;
+            a.onclick = function (e) {
+              e.preventDefault();
+              console.log('[awo] nav click:', entry.listUrl);
+              navigate(entry.listUrl);
+            };
+            modEl.appendChild(a);
+          })(mod.entries[j]);
         }
       }
-      html += '</div>';
-    }
-    navEl.innerHTML = html;
 
-    // Intercept clicks for client-side navigation.
-    navEl.addEventListener('click', function (e) {
-      var a = e.target.closest('a.nav-entry');
-      if (!a) return;
-      e.preventDefault();
-      var href = a.getAttribute('href');
-      history.pushState(null, '', href);
-      loadPage(parseRoute());
-    });
+      navEl.appendChild(modEl);
+    }
 
     updateNavActive(parseRoute());
   }

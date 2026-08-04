@@ -427,9 +427,61 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 	if err != nil {
 		return nil, err
 	}
+
+	// Row operations column — view, edit, delete.
+	// UIPrefix is derived from the create action's href (UIPrefix + "/create").
+	var uiPrefix string
+	var listAPIBase string
+	if n.DataSource != nil {
+		listAPIBase = n.DataSource.URL
+	}
+	for _, a := range n.Actions {
+		if a != nil && a.ActionType == "link" && strings.HasSuffix(a.Href, "/create") {
+			uiPrefix = strings.TrimSuffix(a.Href, "/create")
+			break
+		}
+	}
+	if uiPrefix != "" {
+		columns = append(columns, map[string]any{
+			"type":  "operation",
+			"label": "Actions",
+			"buttons": []any{
+				map[string]any{
+					"type":       "button",
+					"label":      "View",
+					"actionType": "link",
+					"link":       uiPrefix + "/${id}",
+					"icon":       "fa fa-eye",
+					"level":      "link",
+				},
+				map[string]any{
+					"type":       "button",
+					"label":      "Edit",
+					"actionType": "link",
+					"link":       uiPrefix + "/${id}/edit",
+					"icon":       "fa fa-edit",
+					"level":      "link",
+				},
+				map[string]any{
+					"type":        "button",
+					"label":       "Delete",
+					"actionType":  "ajax",
+					"api":         "DELETE:" + listAPIBase + "/${id}",
+					"icon":        "fa fa-trash",
+					"level":       "danger",
+					"confirmText": "Are you sure you want to delete this record?",
+				},
+			},
+		})
+	}
+
 	out := map[string]any{
-		"type":    "crud2",
-		"columns": columns,
+		"type":             "crud2",
+		"columns":          columns,
+		"syncLocation":     false,
+		"perPageAvailable": []int{10, 20, 50},
+		"headerToolbar":    []any{"pagination"},
+		"footerToolbar":    []any{"statistics", "pagination"},
 	}
 	if n.DataSource != nil && n.DataSource.URL != "" {
 		out["api"] = buildAPI(n.DataSource)
@@ -440,7 +492,18 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 	if acts, err := r.renderActions(n.Actions); err != nil {
 		return nil, err
 	} else if len(acts) > 0 {
-		out["toolbar"] = acts
+		// Place create/action buttons before pagination in the toolbar.
+		out["headerToolbar"] = append(acts, "pagination")
+	}
+	// Wire filter bar as the crud2 search form.
+	if n.FilterBar != nil {
+		filter, err := r.renderFilterBar(n.FilterBar, ctx)
+		if err != nil {
+			return nil, err
+		}
+		if filter != nil {
+			out["filter"] = filter
+		}
 	}
 	return out, nil
 }
@@ -636,6 +699,12 @@ func (r *DefaultRenderer) renderSelect(n *widget.Node) (map[string]any, error) {
 		src := buildSourceMap(n.DataSource)
 		out["source"] = src
 		applyLabelValueFields(n.DataSource, out)
+	} else if len(n.Options) > 0 {
+		opts := make([]map[string]any, len(n.Options))
+		for i, o := range n.Options {
+			opts[i] = map[string]any{"label": sanitizeText(o.Label), "value": o.Value}
+		}
+		out["options"] = opts
 	}
 	return out, nil
 }
@@ -649,6 +718,12 @@ func (r *DefaultRenderer) renderMultiSelect(n *widget.Node) (map[string]any, err
 	if n.DataSource != nil && n.DataSource.URL != "" {
 		out["source"] = buildSourceMap(n.DataSource)
 		applyLabelValueFields(n.DataSource, out)
+	} else if len(n.Options) > 0 {
+		opts := make([]map[string]any, len(n.Options))
+		for i, o := range n.Options {
+			opts[i] = map[string]any{"label": sanitizeText(o.Label), "value": o.Value}
+		}
+		out["options"] = opts
 	}
 	return out, nil
 }
@@ -860,9 +935,9 @@ func (r *DefaultRenderer) renderRelatedList(n *widget.Node, ctx renderer.Rendere
 		return nil, err
 	}
 	out := map[string]any{
-		"type":          "crud2",
+		"type":          "crud",
 		"columns":       cols,
-		"footerToolbar": []string{"statistics", "pagination"},
+		"footerToolbar": []any{"statistics", "pagination"},
 	}
 	if n.DataSource != nil && n.DataSource.URL != "" {
 		out["api"] = buildAPI(n.DataSource)
@@ -982,7 +1057,7 @@ func nodeKindToColumnType(kind widget.NodeKind) string {
 	case widget.NodeSwitch:
 		return "status"
 	case widget.NodeSelect, widget.NodeMultiSelect:
-		return "mapping"
+		return "text"
 	case widget.NodeBadge:
 		return "mapping"
 	case widget.NodeFileUpload, widget.NodeAttachments:

@@ -60,9 +60,9 @@ var EmployeeDefinition = def.SystemDefinition{
 			Icon:  "money",
 		},
 		{
-			Name:  "consent_signature",
-			Type:  def.FieldTypeData,
-			Label: "Consent Signature (base64)",
+			Name:   "consent_signature",
+			Type:   def.FieldTypeData,
+			Label:  "Consent Signature (base64)",
 			MaxLen: 10000,
 		},
 		{
