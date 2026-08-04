@@ -79,6 +79,20 @@ import './style.css';
     } catch (e) {
       dbg('amisRequire("amis/embed") threw: ' + e.message, false);
     }
+
+    // Ensure English is the active locale.
+    // locale-en.js (loaded via <script> before this module) registers the full
+    // en-US bundle and calls setDefaultLocale. This is a safety net in case
+    // that file was not served (missing public/locales/en.js in production).
+    try {
+      var amisCore = amisRequire('amis-core');
+      if (amisCore && amisCore.setDefaultLocale) {
+        amisCore.setDefaultLocale('en-US');
+        dbg('locale: en-US set', true);
+      }
+    } catch (localeErr) {
+      dbg('locale set failed: ' + localeErr.message, false);
+    }
   }
 
   var currentInstance = null;
@@ -412,6 +426,11 @@ import './style.css';
         return;
       }
 
+      // Inject locale into the schema root so AMIS picks it up even when the
+      // global default locale wasn't set (e.g. locale file 404'd in production).
+      if (schema && typeof schema === 'object' && !schema.locale) {
+        schema.locale = 'en-US';
+      }
       currentInstance = amis.embed(contentEl, schema, { locale: 'en-US' }, amisEnv);
       dbg('amis.embed fired, instance=' + typeof currentInstance, !!currentInstance);
     } catch (err) {

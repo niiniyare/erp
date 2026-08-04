@@ -445,6 +445,7 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 		columns = append(columns, map[string]any{
 			"type":  "operation",
 			"label": "Actions",
+			"width": 160,
 			"buttons": []any{
 				map[string]any{
 					"type":       "button",
@@ -453,6 +454,7 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 					"link":       uiPrefix + "/${id}",
 					"icon":       "fa fa-eye",
 					"level":      "link",
+					"size":       "sm",
 				},
 				map[string]any{
 					"type":       "button",
@@ -461,6 +463,7 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 					"link":       uiPrefix + "/${id}/edit",
 					"icon":       "fa fa-edit",
 					"level":      "link",
+					"size":       "sm",
 				},
 				map[string]any{
 					"type":        "button",
@@ -468,32 +471,44 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 					"actionType":  "ajax",
 					"api":         "DELETE:" + listAPIBase + "/${id}",
 					"icon":        "fa fa-trash",
-					"level":       "danger",
+					"level":       "link",
+					"className":   "text-danger",
+					"size":        "sm",
 					"confirmText": "Are you sure you want to delete this record?",
 				},
 			},
 		})
 	}
 
+	// Render toolbar action buttons (create, custom list actions).
+	acts, err := r.renderActions(n.Actions)
+	if err != nil {
+		return nil, err
+	}
+
+	// Header toolbar: action buttons → reload → pagination.
+	// reload is always present so users can refresh without a page reload.
+	headerToolbar := make([]any, 0, len(acts)+2)
+	headerToolbar = append(headerToolbar, acts...)
+	headerToolbar = append(headerToolbar, "reload")
+	headerToolbar = append(headerToolbar, "pagination")
+
 	out := map[string]any{
 		"type":             "crud2",
 		"columns":          columns,
 		"syncLocation":     false,
-		"perPageAvailable": []int{10, 20, 50},
-		"headerToolbar":    []any{"pagination"},
+		"perPage":          20,
+		"perPageAvailable": []int{10, 20, 50, 100},
+		"headerToolbar":    headerToolbar,
 		"footerToolbar":    []any{"statistics", "pagination"},
+		// English placeholder bypasses locale dependency for the empty-state text.
+		"placeholder": "No records found.",
 	}
 	if n.DataSource != nil && n.DataSource.URL != "" {
 		out["api"] = buildAPI(n.DataSource)
 	}
 	if n.Label != "" {
 		out["title"] = sanitizeText(n.Label)
-	}
-	if acts, err := r.renderActions(n.Actions); err != nil {
-		return nil, err
-	} else if len(acts) > 0 {
-		// Place create/action buttons before pagination in the toolbar.
-		out["headerToolbar"] = append(acts, "pagination")
 	}
 	// Wire filter bar as the crud2 search form.
 	if n.FilterBar != nil {
@@ -1008,10 +1023,14 @@ func (r *DefaultRenderer) renderFilterBar(n *widget.Node, ctx renderer.RendererC
 	if err != nil {
 		return nil, err
 	}
+	// submitText/resetText are explicit English strings so the filter bar labels
+	// are correct regardless of whether the locale bundle loaded successfully.
 	return map[string]any{
-		"type": "form",
-		"mode": "horizontal",
-		"body": body,
+		"type":        "form",
+		"mode":        "horizontal",
+		"body":        body,
+		"submitText":  "Search",
+		"resetText":   "Reset",
 	}, nil
 }
 
@@ -1029,6 +1048,9 @@ func (r *DefaultRenderer) renderListColumns(nodes []*widget.Node, ctx renderer.R
 			"label": sanitizeText(child.Label),
 			"type":  colType,
 		}
+		if isSortableKind(child.Kind) {
+			col["sortable"] = true
+		}
 		if child.Kind == widget.NodeDate {
 			col["format"] = "YYYY-MM-DD"
 		}
@@ -1044,6 +1066,18 @@ func (r *DefaultRenderer) renderListColumns(nodes []*widget.Node, ctx renderer.R
 		cols = append(cols, col)
 	}
 	return cols, nil
+}
+
+// isSortableKind reports whether a NodeKind supports server-side column sorting
+// in list view. Types with variable-length content (textarea, rich-text, file)
+// are excluded as they are rarely sortable at the DB level.
+func isSortableKind(kind widget.NodeKind) bool {
+	switch kind {
+	case widget.NodeText, widget.NodeField, widget.NodeNumber, widget.NodeMoney,
+		widget.NodeDate, widget.NodeDateTime, widget.NodeSelect, widget.NodeSwitch:
+		return true
+	}
+	return false
 }
 
 func nodeKindToColumnType(kind widget.NodeKind) string {

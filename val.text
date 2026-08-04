@@ -1,0 +1,73 @@
+=== Symbol Results ===
+
+Vulnerability #1: GO-2026-6061
+    Vulnerabilities in the xDS RBAC authorization engine and the HTTP/2
+    transport server implementation in google.golang.org/grpc
+  More info: https://pkg.go.dev/vuln/GO-2026-6061
+  Module: google.golang.org/grpc
+    Found in: google.golang.org/grpc@v1.81.1
+    Fixed in: google.golang.org/grpc@v1.82.1
+    Example traces found:
+      #1: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.Close
+      #2: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.Header
+      #3: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.Read
+      #4: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.RecvCompress
+      #5: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.TrailersOnly
+      #6: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.ClientStream.Write
+      #7: awo/audit/transactional_writer.go:112:15: audit.TransactionalWriter.Write calls sync.Once.Do, which eventually calls transport.NewHTTP2Client
+      #8: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.Stream.ReadMessageHeader
+      #9: awo/workflow/worker.go:83:16: workflow.Worker.Stop calls internal.WorkflowClient.Close, which eventually calls transport.http2Client.Close
+      #10: awo/workflow/worker.go:83:16: workflow.Worker.Stop calls internal.WorkflowClient.Close, which eventually calls transport.http2Client.GracefulClose
+      #11: awo/workflow/worker.go:81:11: workflow.Worker.Stop calls internal.AggregatedWorker.Stop, which eventually calls transport.http2Client.NewStream
+
+Vulnerability #2: GO-2026-5970
+    Infinite loop on invalid input in golang.org/x/text
+  More info: https://pkg.go.dev/vuln/GO-2026-5970
+  Module: golang.org/x/text
+    Found in: golang.org/x/text@v0.37.0
+    Fixed in: golang.org/x/text@v0.39.0
+    Example traces found:
+      #1: awo/events/outbox/relay.go:213:29: outbox.OutboxWriter.Publish calls pgxpool.Pool.Acquire, which eventually calls norm.Form.Properties
+      #2: awo/events/outbox/relay.go:213:29: outbox.OutboxWriter.Publish calls pgxpool.Pool.Acquire, which eventually calls norm.Form.Span
+      #3: awo/events/outbox/relay.go:213:29: outbox.OutboxWriter.Publish calls pgxpool.Pool.Acquire, which eventually calls norm.Form.Transform
+
+Vulnerability #3: GO-2026-5856
+    Invoking Encrypted Client Hello privacy leak in crypto/tls
+  More info: https://pkg.go.dev/vuln/GO-2026-5856
+  Standard library
+    Found in: crypto/tls@go1.26.3
+    Fixed in: crypto/tls@go1.26.5
+    Example traces found:
+      #1: awo/migration/engine.go:56:18: migration.Runner.Force calls migrate.Migrate.Force, which eventually calls tls.Conn.Handshake
+      #2: awo/observability/tracing/tracing.go:117:23: tracing.NewProvider calls trace.WithBatcher, which eventually calls tls.Conn.HandshakeContext
+      #3: awo/crypto/crypto.go:67:26: crypto.Encrypt calls io.ReadFull, which eventually calls tls.Conn.Read
+      #4: awo/naming/pattern.go:175:15: naming.Render calls fmt.Fprintf, which calls tls.Conn.Write
+      #5: awo/bootstrap/bootstrap.go:166:26: bootstrap.initRedis calls redis.NewClient, which eventually calls tls.DialWithDialer
+      #6: awo/observability/tracing/tracing.go:117:23: tracing.NewProvider calls trace.WithBatcher, which eventually calls tls.Dialer.DialContext
+
+Vulnerability #4: GO-2026-5039
+    Arbitrary inputs are included in errors without any escaping in
+    net/textproto
+  More info: https://pkg.go.dev/vuln/GO-2026-5039
+  Standard library
+    Found in: net/textproto@go1.26.3
+    Fixed in: net/textproto@go1.26.4
+    Example traces found:
+      #1: awo/crypto/crypto.go:67:26: crypto.Encrypt calls io.ReadFull, which eventually calls textproto.Reader.ReadMIMEHeader
+
+Vulnerability #5: GO-2026-5037
+    Inefficient candidate hostname parsing in crypto/x509
+  More info: https://pkg.go.dev/vuln/GO-2026-5037
+  Standard library
+    Found in: crypto/x509@go1.26.3
+    Fixed in: crypto/x509@go1.26.4
+    Example traces found:
+      #1: awo/crypto/crypto.go:67:26: crypto.Encrypt calls io.ReadFull, which eventually calls x509.Certificate.Verify
+      #2: awo/crypto/crypto.go:67:26: crypto.Encrypt calls io.ReadFull, which eventually calls x509.Certificate.VerifyHostname
+      #3: awo/audit/failure.go:60:21: audit.Apply calls x509.HostnameError.Error
+
+Your code is affected by 5 vulnerabilities from 2 modules and the Go standard library.
+This scan also found 6 vulnerabilities in packages you import and 21
+vulnerabilities in modules you require, but your code doesn't appear to call
+these vulnerabilities.
+Use '-show verbose' for more details.

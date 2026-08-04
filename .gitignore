@@ -2,3 +2,4 @@
 .gemini/
 gha-creds-*.json
 web/node_modules
+awo/web/node_modules
