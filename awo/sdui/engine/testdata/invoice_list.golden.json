@@ -52,6 +52,24 @@
         {
           "buttons": [
             {
+              "actionType": "link",
+              "icon": "fa fa-eye",
+              "label": "View",
+              "level": "link",
+              "link": "/ui/finance/invoices/${id}",
+              "size": "sm",
+              "type": "button"
+            },
+            {
+              "actionType": "link",
+              "icon": "fa fa-edit",
+              "label": "Edit",
+              "level": "link",
+              "link": "/ui/finance/invoices/${id}/edit",
+              "size": "sm",
+              "type": "button"
+            },
+            {
               "actionType": "ajax",
               "api": "DELETE:/api/v1/finance/invoices/${id}",
               "className": "text-danger",
@@ -65,7 +83,7 @@
           ],
           "label": "Actions",
           "type": "operation",
-          "width": 100
+          "width": 195
         }
       ],
       "footerToolbar": [
@@ -79,7 +97,7 @@
           "id": "create",
           "label": "New Invoice",
           "level": "primary",
-          "link": "/finance_invoice/create",
+          "link": "/ui/finance/invoices/create",
           "type": "button"
         },
         "reload"

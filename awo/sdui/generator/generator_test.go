@@ -1,6 +1,7 @@
 package generator_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -49,8 +50,8 @@ func makeSchema() generator.EntitySchema {
 		PluralTitle: "Invoices",
 		ListURL:     "/api/v1/finance/invoices",
 		CreateURL:   "/api/v1/finance/invoices",
-		EditURL:     "/api/v1/finance/invoices/{id}",
-		DetailURL:   "/api/v1/finance/invoices/{id}",
+		EditURL:     "/api/v1/finance/invoices/${id}",
+		DetailURL:   "/api/v1/finance/invoices/${id}",
 		Permissions: map[string]string{
 			"create": "finance.invoice.create",
 			"read":   "finance.invoice.read",
@@ -340,6 +341,10 @@ func TestGenerator_DetailActions_DeleteHasAPI(t *testing.T) {
 		if action.ID == "delete" {
 			if action.API == "" {
 				t.Error("delete action in detail view must have non-empty API URL")
+			}
+			// API must use ${id} so AMIS resolves the record ID from data context.
+			if !strings.Contains(action.API, "${id}") {
+				t.Errorf("delete action API %q must contain ${id} for AMIS template resolution", action.API)
 			}
 			return
 		}

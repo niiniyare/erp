@@ -58,6 +58,8 @@ func goldenCtx(entityName string, mode sduictx.ViewMode) sduictx.GeneratorContex
 }
 
 // invoiceSchema returns a representative invoice entity schema for golden tests.
+// URLs use ${id} (AMIS template variable) as adapt.FromCompiled produces in production.
+// UIPrefix is set so the golden files capture realistic navigation links.
 func invoiceSchema() generator.EntitySchema {
 	return generator.EntitySchema{
 		Name:        "finance_invoice",
@@ -65,8 +67,9 @@ func invoiceSchema() generator.EntitySchema {
 		PluralTitle: "Invoices",
 		ListURL:     "/api/v1/finance/invoices",
 		CreateURL:   "/api/v1/finance/invoices",
-		EditURL:     "/api/v1/finance/invoices/{id}",
-		DetailURL:   "/api/v1/finance/invoices/{id}",
+		EditURL:     "/api/v1/finance/invoices/${id}",
+		DetailURL:   "/api/v1/finance/invoices/${id}",
+		UIPrefix:    "/ui/finance/invoices",
 		Permissions: map[string]string{
 			"create": "finance.invoice.create",
 			"read":   "finance.invoice.read",

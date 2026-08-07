@@ -8,12 +8,12 @@
           "id": "edit",
           "label": "Edit",
           "level": "default",
-          "link": "/finance_invoice/${id}/edit",
+          "link": "/ui/finance/invoices/${id}/edit",
           "type": "button"
         },
         {
           "actionType": "ajax",
-          "api": "DELETE:/api/v1/finance/invoices/{id}",
+          "api": "DELETE:/api/v1/finance/invoices/${id}",
           "confirmText": "Delete this Invoice?",
           "icon": "fa fa-trash",
           "id": "delete",
@@ -61,7 +61,7 @@
           "type": "textarea"
         }
       ],
-      "initApi": "GET:/api/v1/finance/invoices/{id}",
+      "initApi": "GET:/api/v1/finance/invoices/${id}",
       "type": "form"
     }
   ],

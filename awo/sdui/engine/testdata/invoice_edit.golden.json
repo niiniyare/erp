@@ -12,7 +12,7 @@
       ],
       "api": {
         "method": "PATCH",
-        "url": "/api/v1/finance/invoices/{id}"
+        "url": "/api/v1/finance/invoices/${id}"
       },
       "body": [
         {
@@ -43,7 +43,7 @@
           "type": "textarea"
         }
       ],
-      "initApi": "GET:/api/v1/finance/invoices/{id}",
+      "initApi": "GET:/api/v1/finance/invoices/${id}",
       "title": "Invoice",
       "type": "form"
     }
