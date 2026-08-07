@@ -491,6 +491,30 @@ func (g *EntityGenerator) buildFilterBar(schema EntitySchema, ctx sduictx.Genera
 			continue
 		}
 		node := g.buildFieldNode(f, ctx, false)
+		// Override Name to match backend filter format: filter[field][op]=value.
+		// The backend filterparse package reads ?filter[field][operator]=value.
+		//
+		// Date/DateTime: use AMIS input-date-range which posts startName and endName
+		// independently, giving the backend gte + lte bounds from a single picker.
+		// Non-date types: eq for exact-match types, contains for free-text.
+		switch node.Kind {
+		case widget.NodeText, widget.NodeTextArea:
+			node.Name = "filter[" + f.Name + "][contains]"
+		case widget.NodeDate, widget.NodeDateTime:
+			// Date range: AMIS input-date-range posts two params independently.
+			// node.Name is a placeholder (input-date-range ignores the name prop).
+			node.Name = f.Name + "_range"
+			if node.Props == nil {
+				node.Props = make(map[string]any)
+			}
+			node.Props["type"] = "input-date-range"
+			node.Props["startName"] = "filter[" + f.Name + "][gte]"
+			node.Props["endName"] = "filter[" + f.Name + "][lte]"
+			node.Props["format"] = "YYYY-MM-DD"
+			node.Props["inputFormat"] = "YYYY-MM-DD"
+		default:
+			node.Name = "filter[" + f.Name + "][eq]"
+		}
 		filterFields = append(filterFields, node)
 	}
 	if len(filterFields) == 0 {
@@ -631,12 +655,15 @@ func (g *EntityGenerator) buildDetail(schema EntitySchema, ctx sduictx.Generator
 		formBody = append(formBody, fields...)
 	}
 
+	// Detail form: read-only, no submit action. Use ReadURL (→ initApi) so
+	// AMIS loads the record on mount. Using URL (→ api) would only fire on
+	// form submission, leaving all fields empty on initial render.
 	detailForm := &widget.Node{
 		Kind:     widget.NodeForm,
 		Children: formBody,
 		DataSource: &widget.DataSource{
-			URL:    schema.DetailURL,
-			Method: "GET",
+			ReadURL: schema.DetailURL,
+			// Method intentionally omitted — initApi is always GET.
 		},
 	}
 	pageChildren = append(pageChildren, detailForm)
@@ -909,6 +936,8 @@ func (g *EntityGenerator) buildColumnNode(f FieldDef, ctx sduictx.GeneratorConte
 func (g *EntityGenerator) buildListActions(schema EntitySchema, ctx sduictx.GeneratorContext) []*widget.ActionNode {
 	var out []*widget.ActionNode
 
+	// ── Toolbar actions (Scope: "toolbar") ────────────────────────────────────
+
 	// Create button — requires create permission.
 	if perm := schema.Permissions["create"]; perm == "" || ctx.Viewer.HasPermission(perm) {
 		href := schema.UIPrefix + "/create"
@@ -922,10 +951,11 @@ func (g *EntityGenerator) buildListActions(schema EntitySchema, ctx sduictx.Gene
 			Level:      "primary",
 			Href:       href,
 			Icon:       "plus",
+			Scope:      "toolbar",
 		})
 	}
 
-	// Entity-level actions scoped to list view.
+	// Entity-level list toolbar actions.
 	for _, a := range schema.Actions {
 		if !actionInViewMode(a, sduictx.ViewModeList) {
 			continue
@@ -941,9 +971,84 @@ func (g *EntityGenerator) buildListActions(schema EntitySchema, ctx sduictx.Gene
 			ConfirmText: a.ConfirmText,
 			WorkflowID:  a.WorkflowID,
 			Icon:        a.Icon,
+			API:         listActionAPI(schema, a),
+			Scope:       "toolbar",
 		})
 	}
+
+	// ── Row actions (Scope: "row") ─────────────────────────────────────────────
+	// These appear in the per-row operation column. Permission-gated so the UI
+	// matches the backend enforcement. The backend still enforces permissions
+	// independently — this is defence-in-depth, not the sole gate.
+
+	// View — always shown when viewer has read access (list already requires read).
+	if schema.UIPrefix != "" {
+		out = append(out, &widget.ActionNode{
+			ID:         "view",
+			Label:      "View",
+			ActionType: "link",
+			Level:      "link",
+			Href:       schema.UIPrefix + "/${id}",
+			Icon:       "eye",
+			Scope:      "row",
+		})
+	}
+
+	// Edit — requires update permission.
+	if perm := schema.Permissions["update"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		if schema.UIPrefix != "" {
+			out = append(out, &widget.ActionNode{
+				ID:         "edit",
+				Label:      "Edit",
+				ActionType: "link",
+				Level:      "link",
+				Href:       schema.UIPrefix + "/${id}/edit",
+				Icon:       "edit",
+				Scope:      "row",
+			})
+		}
+	}
+
+	// Delete — requires delete permission.
+	if perm := schema.Permissions["delete"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		out = append(out, &widget.ActionNode{
+			ID:          "delete",
+			Label:       "Delete",
+			ActionType:  "ajax",
+			Level:       "link",
+			API:         "DELETE:" + schema.ListURL + "/${id}",
+			ConfirmText: "Delete this " + schema.Title + "?",
+			Icon:        "trash",
+			Scope:       "row",
+		})
+	}
+
+	// ── Bulk actions (Scope: "bulk") ───────────────────────────────────────────
+
+	// Bulk delete — requires delete permission.
+	if perm := schema.Permissions["delete"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		out = append(out, &widget.ActionNode{
+			ID:          "bulk-delete",
+			Label:       "Delete selected",
+			ActionType:  "ajax",
+			Level:       "danger",
+			API:         "DELETE:" + schema.ListURL,
+			ConfirmText: "Delete all selected records? This cannot be undone.",
+			Icon:        "trash",
+			Scope:       "bulk",
+		})
+	}
+
 	return out
+}
+
+// listActionAPI constructs the AMIS api string for a toolbar action in list view.
+// Custom list actions POST to /{listURL}/actions/{actionID}.
+func listActionAPI(schema EntitySchema, a ActionDef) string {
+	if a.ActionType != "ajax" {
+		return ""
+	}
+	return "POST:" + schema.ListURL + "/actions/" + a.ID
 }
 
 func (g *EntityGenerator) buildFormActions(schema EntitySchema, ctx sduictx.GeneratorContext) []*widget.ActionNode {
@@ -1003,12 +1108,18 @@ func (g *EntityGenerator) buildDetailActions(schema EntitySchema, ctx sduictx.Ge
 	}
 
 	// Delete button — requires delete permission.
+	// API: DELETE /api/v1/{module}/{resource}/${id}  (EditURL == ListURL + "/${id}")
 	if perm := schema.Permissions["delete"]; perm == "" || ctx.Viewer.HasPermission(perm) {
+		deleteAPI := "DELETE:" + schema.EditURL
+		if schema.EditURL == "" {
+			deleteAPI = "DELETE:" + schema.ListURL + "/${id}"
+		}
 		out = append(out, &widget.ActionNode{
 			ID:          "delete",
 			Label:       "Delete",
 			ActionType:  "ajax",
 			Level:       "danger",
+			API:         deleteAPI,
 			ConfirmText: "Delete this " + schema.Title + "?",
 			Icon:        "trash",
 		})
@@ -1022,6 +1133,11 @@ func (g *EntityGenerator) buildDetailActions(schema EntitySchema, ctx sduictx.Ge
 		if a.Permission != "" && !ctx.Viewer.HasPermission(a.Permission) {
 			continue
 		}
+		// Ajax actions fire POST /api/v1/{module}/{resource}/{id}/actions/{actionID}.
+		api := ""
+		if a.ActionType == "ajax" {
+			api = "POST:" + schema.ListURL + "/${id}/actions/" + a.ID
+		}
 		out = append(out, &widget.ActionNode{
 			ID:          a.ID,
 			Label:       a.Label,
@@ -1030,6 +1146,7 @@ func (g *EntityGenerator) buildDetailActions(schema EntitySchema, ctx sduictx.Ge
 			ConfirmText: a.ConfirmText,
 			WorkflowID:  a.WorkflowID,
 			Icon:        a.Icon,
+			API:         api,
 		})
 	}
 	return out

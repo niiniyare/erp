@@ -242,6 +242,176 @@ func TestGenerator_DetailActions_NoDeleteWithoutPerm(t *testing.T) {
 	}
 }
 
+// ── Session 6 regression tests ────────────────────────────────────────────────
+
+// TestGenerator_ListActions_RowScopedActions guards that buildListActions
+// produces Scope="row" entries for View/Edit/Delete when permissions are granted.
+func TestGenerator_ListActions_RowScopedActions(t *testing.T) {
+	g := generator.New()
+	viewer := &stubViewer{perms: map[string]bool{
+		"finance.invoice.create": true,
+		"finance.invoice.update": true,
+		"finance.invoice.delete": true,
+	}}
+	schema := makeSchemaWithUIPrefix()
+	ctx := makeCtx(sduictx.ViewModeList, viewer)
+	root, err := g.Generate(schema, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listNode := root.Children[0]
+
+	scopeCounts := map[string]int{}
+	for _, a := range listNode.Actions {
+		scopeCounts[a.Scope]++
+	}
+	if scopeCounts["row"] < 3 {
+		t.Errorf("expected at least 3 row-scoped actions (view/edit/delete), got %d", scopeCounts["row"])
+	}
+	if scopeCounts["bulk"] < 1 {
+		t.Errorf("expected at least 1 bulk-scoped action (bulk delete), got %d", scopeCounts["bulk"])
+	}
+	if scopeCounts["toolbar"] < 1 {
+		t.Errorf("expected at least 1 toolbar-scoped action (create), got %d", scopeCounts["toolbar"])
+	}
+}
+
+// TestGenerator_ListActions_NoRowDeleteWithoutPerm guards that the Delete row
+// action is absent when the viewer lacks delete permission.
+func TestGenerator_ListActions_NoRowDeleteWithoutPerm(t *testing.T) {
+	g := generator.New()
+	// Viewer has read and update but NOT delete permission.
+	viewer := &stubViewer{perms: map[string]bool{
+		"finance.invoice.create": true,
+		"finance.invoice.update": true,
+	}}
+	schema := makeSchemaWithUIPrefix()
+	ctx := makeCtx(sduictx.ViewModeList, viewer)
+	root, err := g.Generate(schema, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listNode := root.Children[0]
+	for _, a := range listNode.Actions {
+		if a.ID == "delete" || a.ID == "bulk-delete" {
+			t.Errorf("action %q should be absent for viewer without delete permission", a.ID)
+		}
+	}
+}
+
+// TestGenerator_ListActions_NoRowEditWithoutPerm guards that the Edit row action
+// is absent when the viewer lacks update permission.
+func TestGenerator_ListActions_NoRowEditWithoutPerm(t *testing.T) {
+	g := generator.New()
+	// Viewer has read and delete but NOT update permission.
+	viewer := &stubViewer{perms: map[string]bool{
+		"finance.invoice.create": true,
+		"finance.invoice.delete": true,
+	}}
+	schema := makeSchemaWithUIPrefix()
+	ctx := makeCtx(sduictx.ViewModeList, viewer)
+	root, err := g.Generate(schema, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listNode := root.Children[0]
+	for _, a := range listNode.Actions {
+		if a.ID == "edit" && a.Scope == "row" {
+			t.Error("row edit action should be absent for viewer without update permission")
+		}
+	}
+}
+
+// TestGenerator_DetailActions_DeleteHasAPI guards that the delete action in
+// detail view has a non-empty API URL. This prevents the AMIS ajax action
+// from firing with no endpoint (silent no-op / console error).
+func TestGenerator_DetailActions_DeleteHasAPI(t *testing.T) {
+	g := generator.New()
+	viewer := &stubViewer{perms: map[string]bool{
+		"finance.invoice.delete": true,
+	}}
+	ctx := makeCtx(sduictx.ViewModeDetail, viewer)
+	root, err := g.Generate(makeSchema(), ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	summaryCard := root.Children[0]
+	for _, action := range summaryCard.Actions {
+		if action.ID == "delete" {
+			if action.API == "" {
+				t.Error("delete action in detail view must have non-empty API URL")
+			}
+			return
+		}
+	}
+	// If we get here, delete action was not found — that's only OK if delete permission is absent.
+	// Since we gave delete permission, it should be present.
+	t.Error("expected delete action in detail view for viewer with delete permission")
+}
+
+// TestGenerator_FilterBar_FieldNames guards that filter bar field names follow
+// the filter[field][op]=value convention expected by filterparse.FromQuery.
+func TestGenerator_FilterBar_FieldNames(t *testing.T) {
+	g := generator.New()
+	ctx := makeCtx(sduictx.ViewModeList, allPermsViewer())
+	schema := generator.EntitySchema{
+		Name:        "test",
+		Title:       "Test",
+		ListURL:     "/api/v1/test",
+		Permissions: map[string]string{},
+		Fields: []generator.FieldDef{
+			{Name: "name", Label: "Name", FieldType: "data", InList: true, InForm: true, Searchable: true},
+			{Name: "status", Label: "Status", FieldType: "select", InList: true, InForm: true, Searchable: true},
+			{Name: "issued_at", Label: "Issue Date", FieldType: "date", InList: true, InForm: true, Searchable: true},
+		},
+	}
+	root, err := g.Generate(schema, ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	listNode := root.Children[0]
+	if listNode.FilterBar == nil {
+		t.Fatal("expected filter bar to be present for searchable fields")
+	}
+	fieldNames := map[string]bool{}
+	for _, child := range listNode.FilterBar.Children {
+		fieldNames[child.Name] = true
+	}
+	// Text field → contains operator.
+	if !fieldNames["filter[name][contains]"] {
+		t.Errorf("text field filter name should be 'filter[name][contains]', got names: %v", fieldNames)
+	}
+	// Select field → eq operator.
+	if !fieldNames["filter[status][eq]"] {
+		t.Errorf("select field filter name should be 'filter[status][eq]', got names: %v", fieldNames)
+	}
+	// Date field → date range via Props (node.Name is a placeholder).
+	// Check that the date node has Props with startName/endName set.
+	for _, child := range listNode.FilterBar.Children {
+		if child.Name == "issued_at_range" {
+			// This is the date-range node — verify Props.
+			if child.Props == nil {
+				t.Error("date filter node must have Props set for input-date-range")
+				continue
+			}
+			if child.Props["startName"] != "filter[issued_at][gte]" {
+				t.Errorf("date filter startName=%v want filter[issued_at][gte]", child.Props["startName"])
+			}
+			if child.Props["endName"] != "filter[issued_at][lte]" {
+				t.Errorf("date filter endName=%v want filter[issued_at][lte]", child.Props["endName"])
+			}
+		}
+	}
+}
+
+// makeSchemaWithUIPrefix returns a test schema with UIPrefix set, required for
+// row-action href generation in buildListActions.
+func makeSchemaWithUIPrefix() generator.EntitySchema {
+	s := makeSchema()
+	s.UIPrefix = "/ui/finance/invoices"
+	return s
+}
+
 func TestGenerator_FieldTypeMapping(t *testing.T) {
 	g := generator.New()
 	ctx := makeCtx(sduictx.ViewModeCreate, allPermsViewer())

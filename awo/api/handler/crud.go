@@ -43,10 +43,16 @@ func (h *EntityHandler) List(c *fiber.Ctx) error {
 		}))
 	}
 
+	// AMIS sends orderBy=field&orderDir=asc|desc when the user clicks a column header.
+	queryOpts := []driver.QueryOption{driver.WithPage(page, pageSize)}
+	if orderBy := c.Query("orderBy"); orderBy != "" {
+		queryOpts = append(queryOpts, driver.WithSort(orderBy, c.Query("orderDir") != "desc"))
+	}
+
 	records, info, err := h.svc.Query(
 		c.UserContext(),
 		f,
-		driver.WithPage(page, pageSize),
+		queryOpts...,
 	)
 	if err != nil {
 		return h.handleError(c, err)

@@ -87,8 +87,8 @@ func TestFromCompiled_URLs(t *testing.T) {
 	if !strings.Contains(gs.ListURL, "/test/") {
 		t.Errorf("ListURL %q should contain /test/", gs.ListURL)
 	}
-	if !strings.HasSuffix(gs.EditURL, "/{id}") {
-		t.Errorf("EditURL %q should end with /{id}", gs.EditURL)
+	if !strings.HasSuffix(gs.EditURL, "/${id}") {
+		t.Errorf("EditURL %q should end with /${id}", gs.EditURL)
 	}
 }
 

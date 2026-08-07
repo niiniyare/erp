@@ -13,6 +13,7 @@
         },
         {
           "actionType": "ajax",
+          "api": "DELETE:/api/v1/finance/invoices/{id}",
           "confirmText": "Delete this Invoice?",
           "icon": "fa fa-trash",
           "id": "delete",
@@ -26,10 +27,6 @@
       "type": "panel"
     },
     {
-      "api": {
-        "method": "GET",
-        "url": "/api/v1/finance/invoices/{id}"
-      },
       "body": [
         {
           "disabled": true,
@@ -64,6 +61,7 @@
           "type": "textarea"
         }
       ],
+      "initApi": "GET:/api/v1/finance/invoices/{id}",
       "type": "form"
     }
   ],

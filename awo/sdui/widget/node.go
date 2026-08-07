@@ -502,4 +502,11 @@ type ActionNode struct {
 	// Icon is the semantic icon name. Renderers map icon names to their icon set.
 	// Example: "edit", "delete", "check", "x". Empty means no icon.
 	Icon string
+
+	// Scope controls where this action appears in the rendered UI.
+	// "toolbar" — appears in the list header toolbar (default when empty).
+	// "row"     — appears as a per-row operation button in list views.
+	// "bulk"    — appears in the bulk-action bar (applies to selected rows).
+	// The renderer is responsible for routing actions to their correct slot.
+	Scope string
 }

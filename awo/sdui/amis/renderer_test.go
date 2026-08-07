@@ -118,8 +118,9 @@ func TestRenderer_ListColumns(t *testing.T) {
 		},
 	}
 	out := render(t, n)
-	if out["type"] != "crud2" {
-		t.Errorf("type=%v want crud2", out["type"])
+	// Must be "crud" not "crud2": crud honours toolbar string shortcuts.
+	if out["type"] != "crud" {
+		t.Errorf("type=%v want crud", out["type"])
 	}
 	cols := out["columns"].([]any)
 	if len(cols) != 2 {
@@ -342,6 +343,222 @@ func TestRenderer_AllInputKinds(t *testing.T) {
 				t.Errorf("Render(%s): type=%v want %q", tc.kind, out.AMISSchema["type"], tc.wantType)
 			}
 		})
+	}
+}
+
+// ── Session 5 regression tests ────────────────────────────────────────────────
+
+// TestRenderer_NumberColumn_IsNumber guards against regression where NodeNumber
+// and NodeMoney list columns were emitted as type "tpl" (renders blank in AMIS).
+// Fix: nodeKindToColumnType must return "number" for these kinds.
+func TestRenderer_NumberColumn_IsNumber(t *testing.T) {
+	t.Parallel()
+	for _, kind := range []widget.NodeKind{widget.NodeNumber, widget.NodeMoney} {
+		kind := kind
+		t.Run(string(kind), func(t *testing.T) {
+			t.Parallel()
+			n := &widget.Node{
+				Kind:       widget.NodeList,
+				DataSource: &widget.DataSource{URL: "/api/v1/items"},
+				Children: []*widget.Node{
+					{Kind: kind, Name: "amount", Label: "Amount"},
+				},
+			}
+			out := render(t, n)
+			cols := out["columns"].([]any)
+			// First column is the amount; no row-action column (no scoped actions).
+			if len(cols) < 1 {
+				t.Fatal("expected at least 1 column")
+			}
+			col := cols[0].(map[string]any)
+			if col["type"] != "number" {
+				t.Errorf("column type=%v want number (kind=%s)", col["type"], kind)
+			}
+		})
+	}
+}
+
+// TestRenderer_ListItemsKey guards that itemsKey is always "items" so that
+// adaptResponse()'s { items: [...] } shape matches crud's expectations.
+func TestRenderer_ListItemsKey(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/items"},
+	}
+	out := render(t, n)
+	if out["itemsKey"] != "items" {
+		t.Errorf("itemsKey=%v want items", out["itemsKey"])
+	}
+}
+
+// TestRenderer_DetailForm_InitApi guards that detail forms use initApi (not api)
+// so AMIS loads the record on mount rather than waiting for a submit event.
+func TestRenderer_DetailForm_InitApi(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind: widget.NodeForm,
+		Children: []*widget.Node{
+			{Kind: widget.NodeText, Name: "name", Label: "Name"},
+		},
+		DataSource: &widget.DataSource{
+			ReadURL: "/api/v1/items/${id}",
+		},
+	}
+	out := render(t, n)
+	if _, ok := out["initApi"]; !ok {
+		t.Error("form with ReadURL must emit initApi (AMIS loads on mount)")
+	}
+	if _, ok := out["api"]; ok {
+		t.Error("form with ReadURL only must NOT emit api (would fire on submit, not mount)")
+	}
+}
+
+// ── Session 6 regression tests ────────────────────────────────────────────────
+
+// TestRenderer_ListRowActions_FromScope guards that row operations come from
+// Scope="row" ActionNodes rather than being hardcoded by the renderer.
+// This ensures permission-gating is respected: the generator omits actions
+// the viewer doesn't have, and the renderer renders only what it receives.
+func TestRenderer_ListRowActions_FromScope(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/items"},
+		Actions: []*widget.ActionNode{
+			{ID: "create", Label: "New", ActionType: "link", Href: "/ui/demo/items/create", Scope: "toolbar"},
+			{ID: "view", Label: "View", ActionType: "link", Href: "/ui/demo/items/${id}", Scope: "row"},
+			{ID: "edit", Label: "Edit", ActionType: "link", Href: "/ui/demo/items/${id}/edit", Scope: "row"},
+			{ID: "delete", Label: "Delete", ActionType: "ajax", API: "DELETE:/api/v1/items/${id}", Scope: "row"},
+		},
+	}
+	out := render(t, n)
+	cols := out["columns"].([]any)
+	// With 3 row-scoped actions, an operation column must be appended.
+	var opCol map[string]any
+	for _, c := range cols {
+		cm := c.(map[string]any)
+		if cm["type"] == "operation" {
+			opCol = cm
+			break
+		}
+	}
+	if opCol == nil {
+		t.Fatal("expected an operation column for row-scoped actions")
+	}
+	btns := opCol["buttons"].([]any)
+	if len(btns) != 3 {
+		t.Errorf("expected 3 row buttons (view/edit/delete), got %d", len(btns))
+	}
+}
+
+// TestRenderer_ListNoRowActions_NoOpColumn guards that when no row-scoped actions
+// exist (e.g. viewer has no permissions), no operation column is emitted.
+func TestRenderer_ListNoRowActions_NoOpColumn(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/items"},
+		Actions: []*widget.ActionNode{
+			// Only toolbar action — no row-scoped actions.
+			{ID: "create", Label: "New", ActionType: "link", Href: "/ui/demo/items/create", Scope: "toolbar"},
+		},
+		Children: []*widget.Node{
+			{Kind: widget.NodeText, Name: "name", Label: "Name"},
+		},
+	}
+	out := render(t, n)
+	cols := out["columns"].([]any)
+	for _, c := range cols {
+		cm := c.(map[string]any)
+		if cm["type"] == "operation" {
+			t.Error("no operation column expected when no row-scoped actions present")
+		}
+	}
+}
+
+// TestRenderer_ListBulkActions_EmptySlice guards that bulkActions is always a
+// non-nil empty slice when no bulk actions are defined — not JSON null.
+// AMIS treats null differently from [] for the bulkActions property.
+func TestRenderer_ListBulkActions_EmptySlice(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/items"},
+		// No bulk-scoped actions.
+	}
+	out := render(t, n)
+	bulk, ok := out["bulkActions"]
+	if !ok {
+		t.Fatal("bulkActions key must always be present in crud schema")
+	}
+	if bulk == nil {
+		t.Error("bulkActions must be []any{} not nil (null vs [] differ in AMIS)")
+	}
+	bulkSlice, ok := bulk.([]any)
+	if !ok {
+		t.Errorf("bulkActions must be []any, got %T", bulk)
+	}
+	if len(bulkSlice) != 0 {
+		t.Errorf("expected empty bulkActions, got %d entries", len(bulkSlice))
+	}
+}
+
+// TestRenderer_ListBulkActions_Rendered guards that bulk-scoped actions become
+// entries in the bulkActions array (enabling row checkboxes).
+func TestRenderer_ListBulkActions_Rendered(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind:       widget.NodeList,
+		DataSource: &widget.DataSource{URL: "/api/v1/items"},
+		Actions: []*widget.ActionNode{
+			{
+				ID:          "bulk-delete",
+				Label:       "Delete selected",
+				ActionType:  "ajax",
+				Level:       "danger",
+				API:         "DELETE:/api/v1/items",
+				ConfirmText: "Delete selected?",
+				Scope:       "bulk",
+			},
+		},
+	}
+	out := render(t, n)
+	bulkSlice, ok := out["bulkActions"].([]any)
+	if !ok || len(bulkSlice) == 0 {
+		t.Fatal("expected one entry in bulkActions for bulk-scoped action")
+	}
+	btn := bulkSlice[0].(map[string]any)
+	if btn["label"] != "Delete selected" {
+		t.Errorf("bulk action label=%v want 'Delete selected'", btn["label"])
+	}
+}
+
+// TestRenderer_DeleteAction_HasAPI guards that delete ActionNodes with API set
+// have their api property rendered. This guards against the Session 6 bug where
+// buildDetailActions emitted delete buttons with no API URL (ajax with no url = no-op).
+func TestRenderer_DeleteAction_HasAPI(t *testing.T) {
+	t.Parallel()
+	n := &widget.Node{
+		Kind: widget.NodeSummaryCard,
+		Actions: []*widget.ActionNode{
+			{
+				ID:         "delete",
+				Label:      "Delete",
+				ActionType: "ajax",
+				Level:      "danger",
+				API:        "DELETE:/api/v1/items/${id}",
+			},
+		},
+	}
+	out := render(t, n)
+	acts, ok := out["actions"].([]any)
+	if !ok || len(acts) == 0 {
+		t.Fatal("expected at least one action on SummaryCard")
+	}
+	btn := acts[0].(map[string]any)
+	if btn["api"] != "DELETE:/api/v1/items/${id}" {
+		t.Errorf("delete action api=%v want DELETE:/api/v1/items/${id}", btn["api"])
 	}
 }
 

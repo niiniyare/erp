@@ -36,7 +36,7 @@ const (
 
 	// RendererVersion is the version token included in cache keys.
 	// Increment when the renderer output format changes.
-	RendererVersion = "1.0.0"
+	RendererVersion = "1.1.0"
 )
 
 // DefaultRenderer is the production AMIS renderer.
@@ -428,80 +428,85 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 		return nil, err
 	}
 
-	// Row operations column — view, edit, delete.
-	// UIPrefix is derived from the create action's href (UIPrefix + "/create").
-	var uiPrefix string
-	var listAPIBase string
-	if n.DataSource != nil {
-		listAPIBase = n.DataSource.URL
-	}
+	// Partition actions by Scope.
+	// The generator is authoritative: it gates row/bulk ops on viewer permissions.
+	// The renderer only routes actions to their correct AMIS slot.
+	var toolbarActions, rowActions, bulkActions []*widget.ActionNode
 	for _, a := range n.Actions {
-		if a != nil && a.ActionType == "link" && strings.HasSuffix(a.Href, "/create") {
-			uiPrefix = strings.TrimSuffix(a.Href, "/create")
-			break
+		if a == nil {
+			continue
+		}
+		switch a.Scope {
+		case "row":
+			rowActions = append(rowActions, a)
+		case "bulk":
+			bulkActions = append(bulkActions, a)
+		default: // "toolbar" or empty — toolbar is the default slot
+			toolbarActions = append(toolbarActions, a)
 		}
 	}
-	if uiPrefix != "" {
+
+	// Row operations column — rendered only when the generator provides row actions.
+	// This makes delete/edit buttons permission-aware: they appear only when the
+	// generator decided the viewer has the required permission.
+	if len(rowActions) > 0 {
+		rowBtns, err := r.renderRowActions(rowActions)
+		if err != nil {
+			return nil, err
+		}
 		columns = append(columns, map[string]any{
-			"type":  "operation",
-			"label": "Actions",
-			"width": 160,
-			"buttons": []any{
-				map[string]any{
-					"type":       "button",
-					"label":      "View",
-					"actionType": "link",
-					"link":       uiPrefix + "/${id}",
-					"icon":       "fa fa-eye",
-					"level":      "link",
-					"size":       "sm",
-				},
-				map[string]any{
-					"type":       "button",
-					"label":      "Edit",
-					"actionType": "link",
-					"link":       uiPrefix + "/${id}/edit",
-					"icon":       "fa fa-edit",
-					"level":      "link",
-					"size":       "sm",
-				},
-				map[string]any{
-					"type":        "button",
-					"label":       "Delete",
-					"actionType":  "ajax",
-					"api":         "DELETE:" + listAPIBase + "/${id}",
-					"icon":        "fa fa-trash",
-					"level":       "link",
-					"className":   "text-danger",
-					"size":        "sm",
-					"confirmText": "Are you sure you want to delete this record?",
-				},
-			},
+			"type":    "operation",
+			"label":   "Actions",
+			"width":   rowOperationWidth(rowActions),
+			"buttons": rowBtns,
 		})
 	}
 
-	// Render toolbar action buttons (create, custom list actions).
-	acts, err := r.renderActions(n.Actions)
+	// Render toolbar action buttons (create, custom list-scope actions).
+	acts, err := r.renderActions(toolbarActions)
 	if err != nil {
 		return nil, err
 	}
 
-	// Header toolbar: action buttons → reload → pagination.
-	// reload is always present so users can refresh without a page reload.
-	headerToolbar := make([]any, 0, len(acts)+2)
+	// Header toolbar: action buttons first, then reload.
+	// Pagination lives in footerToolbar (standard crud pattern).
+	// String shortcuts "reload" / "statistics" / "pagination" are supported by
+	// the crud component. crud2 does NOT honour these shortcuts — it renders
+	// them as literal text, which is why we use crud here.
+	headerToolbar := make([]any, 0, len(acts)+1)
 	headerToolbar = append(headerToolbar, acts...)
 	headerToolbar = append(headerToolbar, "reload")
-	headerToolbar = append(headerToolbar, "pagination")
+
+	// Bulk actions — rendered only when generator provided bulk ops.
+	// renderedBulk must be a non-nil slice: "bulkActions": null serialises
+	// differently from "bulkActions": [] and AMIS may show a placeholder for null.
+	renderedBulk := []any{}
+	if len(bulkActions) > 0 {
+		renderedBulk, err = r.renderActions(bulkActions)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	out := map[string]any{
-		"type":             "crud2",
+		// Use "crud" not "crud2": crud honours string toolbar shortcuts
+		// ("reload", "statistics", "pagination"). crud2 ignores them and renders
+		// the string value literally — producing "reloadpagination" in the UI.
+		"type":             "crud",
 		"columns":          columns,
 		"syncLocation":     false,
 		"perPage":          20,
 		"perPageAvailable": []int{10, 20, 50, 100},
 		"headerToolbar":    headerToolbar,
 		"footerToolbar":    []any{"statistics", "pagination"},
-		// English placeholder bypasses locale dependency for the empty-state text.
+		// bulkActions must always be present. Empty slice suppresses the AMIS
+		// bulk-action placeholder text. Non-empty enables row checkboxes.
+		"bulkActions": renderedBulk,
+		// itemsKey must match what adaptResponse() produces in the frontend fetcher.
+		// AMIS crud defaults to "rows"; our backend wraps list data as { items: [...] }.
+		// Setting this explicitly prevents breakage on AMIS version drift.
+		"itemsKey": "items",
+		// English empty-state text wired directly; does not depend on locale bundle.
 		"placeholder": "No records found.",
 	}
 	if n.DataSource != nil && n.DataSource.URL != "" {
@@ -510,7 +515,7 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 	if n.Label != "" {
 		out["title"] = sanitizeText(n.Label)
 	}
-	// Wire filter bar as the crud2 search form.
+	// Wire filter bar as the crud search form.
 	if n.FilterBar != nil {
 		filter, err := r.renderFilterBar(n.FilterBar, ctx)
 		if err != nil {
@@ -521,6 +526,55 @@ func (r *DefaultRenderer) renderList(n *widget.Node, ctx renderer.RendererContex
 		}
 	}
 	return out, nil
+}
+
+// renderRowActions converts row-scoped ActionNode values to AMIS button maps
+// sized for the per-row operation column.
+func (r *DefaultRenderer) renderRowActions(actions []*widget.ActionNode) ([]any, error) {
+	out := make([]any, 0, len(actions))
+	for _, a := range actions {
+		if a == nil {
+			continue
+		}
+		btn := map[string]any{
+			"type":  "button",
+			"label": sanitizeText(a.Label),
+			"level": a.Level,
+			"size":  "sm",
+		}
+		if a.ActionType != "" {
+			btn["actionType"] = a.ActionType
+		}
+		if a.Href != "" {
+			btn["link"] = a.Href
+			btn["actionType"] = "link"
+		}
+		if a.API != "" {
+			btn["api"] = a.API
+		}
+		if a.ConfirmText != "" {
+			btn["confirmText"] = sanitizeText(a.ConfirmText)
+		}
+		if a.Icon != "" {
+			btn["icon"] = "fa fa-" + a.Icon
+		}
+		// Danger-level row actions get a CSS class for colour contrast.
+		if a.Level == "danger" || a.ID == "delete" {
+			btn["className"] = "text-danger"
+		}
+		out = append(out, btn)
+	}
+	return out, nil
+}
+
+// rowOperationWidth returns a column width that fits the given row actions.
+// Approximate widths: 60px per action, minimum 100px.
+func rowOperationWidth(actions []*widget.ActionNode) int {
+	w := len(actions) * 65
+	if w < 100 {
+		w = 100
+	}
+	return w
 }
 
 func (r *DefaultRenderer) renderSection(n *widget.Node, ctx renderer.RendererContext) (map[string]any, error) {
@@ -1025,12 +1079,15 @@ func (r *DefaultRenderer) renderFilterBar(n *widget.Node, ctx renderer.RendererC
 	}
 	// submitText/resetText are explicit English strings so the filter bar labels
 	// are correct regardless of whether the locale bundle loaded successfully.
+	// wrapWithPanel:false prevents AMIS from wrapping the filter in a card/panel
+	// when it is embedded as crud.filter — crud provides its own container.
 	return map[string]any{
-		"type":        "form",
-		"mode":        "horizontal",
-		"body":        body,
-		"submitText":  "Search",
-		"resetText":   "Reset",
+		"type":           "form",
+		"mode":           "horizontal",
+		"body":           body,
+		"submitText":     "Search",
+		"resetText":      "Reset",
+		"wrapWithPanel":  false,
 	}, nil
 }
 
@@ -1083,7 +1140,10 @@ func isSortableKind(kind widget.NodeKind) bool {
 func nodeKindToColumnType(kind widget.NodeKind) string {
 	switch kind {
 	case widget.NodeNumber, widget.NodeMoney:
-		return "tpl"
+		// Use "number" not "tpl": a tpl column without a tpl template string
+		// renders nothing in AMIS. The "number" column type formats the raw
+		// numeric value with locale-aware separators.
+		return "number"
 	case widget.NodeDate:
 		return "date"
 	case widget.NodeDateTime:

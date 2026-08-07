@@ -63,8 +63,8 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 		Icon:        es.Icon,
 		ListURL:     es.RoutePrefix,
 		CreateURL:   es.RoutePrefix,
-		EditURL:     es.RoutePrefix + "/{id}",
-		DetailURL:   es.RoutePrefix + "/{id}",
+		EditURL:     es.RoutePrefix + "/${id}",
+		DetailURL:   es.RoutePrefix + "/${id}",
 		UIPrefix:    "/ui/" + es.Module + "/" + es.APIResource,
 		Permissions: permissionsMap(es.Permissions),
 		HasWorkflow: len(es.WorkflowTriggers) > 0,
@@ -242,7 +242,7 @@ func convertField(f def.FieldDef, es *compiler.EntitySchema) generator.FieldDef 
 		Icon:        f.Icon,
 		Width:       f.Width,
 		Computed:    f.Computed,
-		Searchable:  f.Searchable,
+		Searchable:  f.Searchable || isDefaultSearchable(f.Type),
 		ClearOn:     f.ClearOn,
 		VisibleOn:   f.VisibleOn,
 		HiddenOn:    f.HiddenOn,
@@ -283,6 +283,22 @@ func isListable(t def.FieldType) bool {
 		return false
 	}
 	return true
+}
+
+// isDefaultSearchable returns true for field types that are inherently
+// filterable in an ERP list view via equality predicates (select, date, bool,
+// naming_series). These types don't need a GIN index for filtering, so the
+// filter bar shows them by default even when def.FieldDef.Searchable is false.
+// Free-text types (data, small_text) are excluded because they require GIN
+// indexes and must be explicitly marked Searchable on the field definition.
+func isDefaultSearchable(t def.FieldType) bool {
+	switch t {
+	case def.FieldTypeSelect, def.FieldTypeMultiSelect,
+		def.FieldTypeDate, def.FieldTypeDateTime,
+		def.FieldTypeBool, def.FieldTypeNamingSeries:
+		return true
+	}
+	return false
 }
 
 // labelFor returns a human-readable label: def.FieldDef.Label if set,
