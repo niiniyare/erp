@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
+
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/registry"
@@ -438,5 +440,74 @@ func BenchmarkSchemaFingerprint(b *testing.B) {
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_ = adapt.SchemaFingerprint(es)
+	}
+}
+
+// ── RolesFingerprint tests ─────────────────────────────────────────────────────
+
+// stubViewer is a minimal auth.ViewerContext for RolesFingerprint tests.
+type stubViewer struct {
+	admin bool
+	roles []string
+}
+
+func (s stubViewer) TenantID() uuid.UUID        { return uuid.Nil }
+func (s stubViewer) UserID() uuid.UUID           { return uuid.Nil }
+func (s stubViewer) ServiceAccountID() uuid.UUID { return uuid.Nil }
+func (s stubViewer) Roles() []string             { return s.roles }
+func (s stubViewer) HasRole(r string) bool {
+	for _, role := range s.roles {
+		if role == r {
+			return true
+		}
+	}
+	return false
+}
+func (s stubViewer) IsPlatformAdmin() bool { return s.admin }
+func (s stubViewer) Actor() *def.Actor     { return &def.Actor{Roles: s.roles} }
+
+func TestRolesFingerprint_Admin(t *testing.T) {
+	fp := adapt.RolesFingerprint(stubViewer{admin: true})
+	if fp != "__admin__" {
+		t.Fatalf("want __admin__, got %q", fp)
+	}
+}
+
+func TestRolesFingerprint_NoRoles(t *testing.T) {
+	fp := adapt.RolesFingerprint(stubViewer{roles: nil})
+	if fp != "__noroles__" {
+		t.Fatalf("want __noroles__, got %q", fp)
+	}
+	fp2 := adapt.RolesFingerprint(stubViewer{roles: []string{}})
+	if fp2 != "__noroles__" {
+		t.Fatalf("want __noroles__ for empty slice, got %q", fp2)
+	}
+}
+
+func TestRolesFingerprint_Deterministic(t *testing.T) {
+	v := stubViewer{roles: []string{"role:finance.ap", "role:tenant.admin"}}
+	fp1 := adapt.RolesFingerprint(v)
+	fp2 := adapt.RolesFingerprint(v)
+	if fp1 != fp2 {
+		t.Fatalf("fingerprint not deterministic: %q vs %q", fp1, fp2)
+	}
+	if len(fp1) != 16 {
+		t.Fatalf("expected 16-char hex, got %d chars: %q", len(fp1), fp1)
+	}
+}
+
+func TestRolesFingerprint_OrderIndependent(t *testing.T) {
+	fp1 := adapt.RolesFingerprint(stubViewer{roles: []string{"role:a", "role:b", "role:c"}})
+	fp2 := adapt.RolesFingerprint(stubViewer{roles: []string{"role:c", "role:a", "role:b"}})
+	if fp1 != fp2 {
+		t.Fatalf("fingerprint must be order-independent: %q vs %q", fp1, fp2)
+	}
+}
+
+func TestRolesFingerprint_DifferentRoles(t *testing.T) {
+	fp1 := adapt.RolesFingerprint(stubViewer{roles: []string{"role:finance.ap"}})
+	fp2 := adapt.RolesFingerprint(stubViewer{roles: []string{"role:finance.ar"}})
+	if fp1 == fp2 {
+		t.Fatal("different roles must produce different fingerprints")
 	}
 }

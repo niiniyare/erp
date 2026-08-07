@@ -219,6 +219,11 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	sduiViewer := adapt.NewViewerAdapter(c.UserContext(), viewer, h.evaluator, h.grants)
 
 	// Build GeneratorContext.
+	// PermFingerprint partitions the cache by viewer permission set so that
+	// schemas generated for high-privilege viewers are not served to restricted
+	// viewers from cache. The backend enforces permissions independently;
+	// the fingerprint prevents stale action buttons in the UI.
+	permFP := adapt.RolesFingerprint(viewer)
 	builder := sduictx.NewGeneratorContext(
 		viewer.TenantID(),
 		sduiViewer,
@@ -227,7 +232,8 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 		rendererID,
 	).
 		WithLocale(locale).
-		WithSchemaFingerprint(schemaFP)
+		WithSchemaFingerprint(schemaFP).
+		WithPermFingerprint(permFP)
 
 	if readOnly {
 		builder = builder.WithReadOnly()

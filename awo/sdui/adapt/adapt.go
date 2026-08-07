@@ -511,6 +511,46 @@ func collectDashboardPanels(module string) []generator.DashboardPanel {
 	return out
 }
 
+// ── permission fingerprint ────────────────────────────────────────────────────
+
+// RolesFingerprint computes a stable cache-key dimension from a viewer's roles.
+//
+// The fingerprint is included in the SDUI cache key so that widget trees
+// generated for different permission sets are stored separately. Without this,
+// a cached schema produced for a platform-admin viewer (which includes all
+// action buttons) could be returned to a restricted viewer.
+//
+// Platform admins use a dedicated fingerprint ("__admin__") — they always
+// have all permissions regardless of their role list, so their cache entries
+// are distinct from any role combination.
+//
+// The fingerprint is NOT a security gate. The generator already gates actions
+// on viewer.HasPermission at generation time. The fingerprint only ensures
+// that permission-differentiated trees are cached under distinct keys.
+func RolesFingerprint(viewer auth.ViewerContext) string {
+	if viewer.IsPlatformAdmin() {
+		return "__admin__"
+	}
+	roles := viewer.Roles()
+	if len(roles) == 0 {
+		return "__noroles__"
+	}
+	// Sort a copy — Roles() slice order is not guaranteed stable.
+	sorted := make([]string, len(roles))
+	copy(sorted, roles)
+	// Inline sort: roles slice is small (typically < 10 elements).
+	for i := 1; i < len(sorted); i++ {
+		for j := i; j > 0 && sorted[j] < sorted[j-1]; j-- {
+			sorted[j], sorted[j-1] = sorted[j-1], sorted[j]
+		}
+	}
+	h := fnv.New64a()
+	for _, r := range sorted {
+		fmt.Fprint(h, r, "|")
+	}
+	return fmt.Sprintf("%016x", h.Sum64())
+}
+
 // ── permission map ────────────────────────────────────────────────────────────
 
 func permissionsMap(p def.PermissionSet) map[string]string {
