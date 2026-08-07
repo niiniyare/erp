@@ -1078,3 +1078,112 @@ go test ./awo/sdui/...
 - `NodeDuration`/`NodeSignature` fall back to text/file
 - Inline edge grids require `def.EdgeDef.Inline`
 - Showcase uses static schemas, not live SDUI engine
+
+---
+
+## Session 8 — Full Verification Pass: Frontend Shell, Localization, Nav, Dead Code
+
+**Status:** Complete
+
+### Objective
+
+Comprehensive read-code verification of the full stack: `index.html` routing/auth/theme/nav/fetcher, localization approach, dead code inventory, and AMIS API behavior. No code changes — verification only.
+
+### index.html — Full Read (lines 1–943)
+
+Completed reading all three script blocks and all HTML. Findings per section:
+
+#### Block 1 — AMIS Bootstrap
+
+- AMD resolver: tries `amisRequire` → `window.amis.require` → `require` → noop fallback. ✓
+- `extendDefaultLocale('en-US', {...})` — patches 17 Chinese AMIS internal strings (Confirm, Cancel, Delete, etc.) that are not covered by the built-in AMIS `en-US` locale file in v3.6.6.
+- `window.amisEnv = { theme: 'cxd', locale: 'en-US' }` skeleton — extended in Block 3. ✓
+
+**Localization assessment:** `extendDefaultLocale` IS the correct AMIS locale API. These 17 strings are AMIS's own internal UI strings (button labels, pagination text) that bleed through as Chinese in v3.6.6's incomplete built-in en-US locale. The correct long-term solution is a full `en-US` locale JSON file served from `/public/locales/en.js` and loaded via `addLocale`. The current approach is a pragmatic workaround using the right API. Application-level labels (field names, page titles, button labels on generated forms) are all English — they come from `generator.EntitySchema.Title`, `FieldDef.Label`, `ActionNode.Label` set in Go code. No Chinese application strings exist in the pipeline.
+
+#### Block 3 — App IIFE
+
+**Theme (lines 518–555):** ✓
+- `themes = ['system', 'light', 'dark']`, index persisted in `localStorage('awo-theme')`
+- `effectiveDark()` — resolves 'system' via `window.matchMedia('(prefers-color-scheme: dark)')`
+- `applyTheme(rerender)`:
+  - `document.documentElement.setAttribute('data-theme', t)` — CSS data-theme
+  - `document.documentElement.classList.toggle('dark', dark)` — `html.dark` for AMIS tokens
+  - If `rerender=true` and route active → `loadPage(currentRoute)` (re-fetches SDUI schema)
+- `matchMedia.addEventListener('change', ...)` — re-applies when OS preference changes (system mode)
+- No dark CSS passed to AMIS embed (`theme: 'cxd'` always); dark mode is CSS-only. ✓
+
+**Routing (lines 579–610):** ✓
+- `parseRoute()` extracts `{module, resource, id, view}` from `/ui/{module}/{resource}/[id[/edit|create]]`
+- `sduiURL(route)` builds correct SDUI endpoint URL for all 4 view modes
+- `navigate()` → `parseRoute()` → `updateNavActive()` → `loadPage()` or welcome screen
+
+**Fetcher (lines 673–741):** ✓
+- Pagination normalisation: `$perPage`/`perPage` → `page_size`; `$page` → `page` ✓
+- `X-Awo-Tenant` header from `localStorage('awo-tenant')` ✓
+- 401: redirect to `/auth/login?next=<encoded_path>` + `return new Promise(function(){})` ✓
+- 403: `return { status: 403, msg: '...' }` (AMIS inline error) ✓
+- 204: `return { status: 0, msg: '' }` ✓
+- Network error: `return { status: 1, msg: 'Network error: ...' }` ✓
+
+**renderAmis (lines 747–774):** ✓
+- Unmounts previous instance before mounting new one (prevents memory leak)
+- `embedProps.data = { id: currentRoute.id }` passed when route has id → AMIS resolves `${id}` ✓
+- `locale: 'en-US'` in embedProps ✓
+
+**loadPage (lines 777–810):** ✓
+- Sends `Accept-Language: en-US` and optionally `Accept-SDUI-Theme: dark`
+- 401: redirect to `/auth/login?next=...` ✓
+- 403: static "Access denied" div ✓
+- Schema unwrap: `(body.status === 0 && body.data) ? body.data : body` handles both envelope and bare schema ✓
+
+**Nav (lines 847–918):** ✓
+- `GET /api/v1/ui/nav` — no hardcoded menus anywhere
+- `renderNav()` supports bare array (current backend output) and `{modules:[...]}` (future)
+- `navIndex` built from rendered nav: `listUrl → { moduleLabel, entryLabel }` for breadcrumb
+- Fallback: "No modules registered" placeholder when array is empty
+- `entry.icon`: FA icon name without `fa-` prefix; default `fa-table-list` ✓
+
+**Auth stubs (lines 921–932):** ✓
+- `doLogout()` POSTs to `/auth/logout` then logs a message — no actual session invalidation on client
+- Login overlay HTML is commented in, ready to enable
+- No automatic login check on load — assumes session cookie if present
+
+### api/sdui/handler.go — Verified
+
+Full read of HTTP handler (lines 1–296):
+
+- `Register(g)`: nav before `/:module/:resource` to prevent "nav" matching as `:module`. ✓
+- `handle()`: resolves entity by module+resource, builds `GeneratorContext`, calls `adapt.FromCompiled()`, delegates to `engine.Handle()`, sets ETag + Cache-Control. ✓
+- ETag = `"{schemaFP}-{rendererID}-{locale}"` — no record ID (cache key never poisoned). ✓
+- `detail()` calls `handle(c, ViewModeDetail, true)` → `builder.WithReadOnly()` → detail form fields have `disabled:true`. ✓
+- `nav()`: iterates `schema.Entities`, groups by module, only includes entities with `len(es.Permissions.Read) > 0`. ✓
+
+### Dead / Legacy Code
+
+| File | Status | Action |
+|---|---|---|
+| `awo/sdui/nav.go` | Empty stub (legacy) | Leave — package identity preserved |
+| `awo/api/handler/sdui.go` | Empty stub (legacy) | Leave — old SDUINav superseded |
+| `index.html` Block 2 `SchemaLoader` | Used by showcase only | Leave — valid for showcase use |
+
+No duplicated logic found. The old `/api/sdui/*` routes were removed in the Documentation Pass. No hash routing (`#/`) exists. No Chinese strings in application pipeline.
+
+### Architecture Invariants — Re-confirmed
+
+1. **Single source of truth**: `EntityDefinition` → all UI. No static entity schemas in production path. ✓
+2. **Renderer-agnostic IR**: Generator produces `widget.Node` tree; only `amis` package produces AMIS JSON. ✓
+3. **L3 cache key excludes record ID**: `schemaFP + rendererID + locale`. ID resolved client-side. ✓
+4. **Generator is permission gatekeeper**: Actions absent (not hidden) when permissions fail. ✓
+5. **No `awo/web` changes per entity**: Adding `EntityDefinition` auto-produces nav + 4 view modes. ✓
+
+### Remaining Limitations (carried forward)
+
+- Finance module not registered (Phase 1 work)
+- Number/money range filters use eq-only; no range widget
+- `NodeDuration`/`NodeSignature` fall back to text/file; custom AMIS components needed
+- Inline edge grids require `def.EdgeDef.Inline bool`
+- Showcase serves static schemas, not live SDUI engine
+- `doLogout()` is a no-op stub; real session invalidation needs auth implementation
+- Localization: 17 Chinese strings patched via `extendDefaultLocale`; long-term fix is a full `en-US` locale JSON file via `addLocale`
+- `def.PageBuilders` on `compiler.EntitySchema` not consumed by new engine (post-v1.0)
