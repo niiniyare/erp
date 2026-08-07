@@ -3,7 +3,9 @@ package engine_test
 import (
 	"context"
 	"encoding/json"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 
@@ -247,6 +249,220 @@ func TestEngine_Renderers(t *testing.T) {
 	if _, ok := renderers["amis"]; !ok {
 		t.Error("amis renderer must be registered")
 	}
+}
+
+// ── Security and determinism tests ────────────────────────────────────────────
+
+// permActionCount returns the number of actions in the AMIS schema for the
+// list view. Used to compare admin vs restricted schemas.
+func actionsInList(t *testing.T, schema map[string]any) int {
+	t.Helper()
+	body, ok := schema["body"].([]any)
+	if !ok || len(body) == 0 {
+		return 0
+	}
+	listNode, ok := body[0].(map[string]any)
+	if !ok {
+		return 0
+	}
+	cols, _ := listNode["columns"].([]any)
+	// Last column is operations; count its buttons.
+	for _, col := range cols {
+		m, ok := col.(map[string]any)
+		if !ok {
+			continue
+		}
+		if m["type"] == "operation" {
+			buttons, _ := m["buttons"].([]any)
+			return len(buttons)
+		}
+	}
+	return 0
+}
+
+func TestEngine_PermFPIsolation_DifferentSchemas(t *testing.T) {
+	// Admin viewer sees Edit + Delete row buttons.
+	// Restricted viewer (no permissions) sees none.
+	// Their schemas must be different, and must be cached under different keys.
+
+	schema := generator.EntitySchema{
+		Name:        "test_entity",
+		Title:       "Entity",
+		PluralTitle: "Entities",
+		ListURL:     "/api/v1/test/entities",
+		UIPrefix:    "/ui/test/entities",
+		CreateURL:   "/api/v1/test/entities",
+		EditURL:     "/api/v1/test/entities/${id}",
+		DetailURL:   "/api/v1/test/entities/${id}",
+		Permissions: map[string]string{
+			"create": "test.entity.create",
+			"read":   "test.entity.read",
+			"update": "test.entity.update",
+			"delete": "test.entity.delete",
+		},
+		Fields: []generator.FieldDef{
+			{Name: "name", Label: "Name", FieldType: "data", InList: true},
+		},
+	}
+
+	tenantID := uuid.New()
+
+	adminViewer := &stubViewer{admin: true}
+	adminCtx, _ := sduictx.NewGeneratorContext(
+		tenantID, adminViewer, "test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfp1").WithPermFingerprint("__admin__").Build()
+
+	restrictedViewer := &stubViewer{admin: false}
+	restrictedCtx, _ := sduictx.NewGeneratorContext(
+		tenantID, restrictedViewer, "test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfp1").WithPermFingerprint("__noroles__").Build()
+
+	eng := makeEngine(nil)
+
+	adminResp, err := eng.Handle(context.Background(), engine.Request{Ctx: adminCtx, Schema: schema})
+	if err != nil {
+		t.Fatalf("admin Handle: %v", err)
+	}
+	restrictedResp, err := eng.Handle(context.Background(), engine.Request{Ctx: restrictedCtx, Schema: schema})
+	if err != nil {
+		t.Fatalf("restricted Handle: %v", err)
+	}
+
+	adminActions := actionsInList(t, adminResp.Output.AMISSchema)
+	restrictedActions := actionsInList(t, restrictedResp.Output.AMISSchema)
+
+	// Admin must have more row actions than a viewer with no permissions.
+	if adminActions <= restrictedActions {
+		t.Errorf("admin schema actions (%d) must exceed restricted actions (%d)",
+			adminActions, restrictedActions)
+	}
+}
+
+func TestEngine_PermFPIsolation_CacheNotShared(t *testing.T) {
+	// Prove: with a live cache, admin schema stored under "__admin__" permFP
+	// is not returned for a "__noroles__" permFP lookup.
+	c := cache.New(newInlineRedis())
+	eng := makeEngine(c)
+
+	schema := generator.EntitySchema{
+		Name:        "cache_test_entity",
+		Title:       "Entity",
+		PluralTitle: "Entities",
+		ListURL:     "/api/v1/test/entities",
+		Fields:      []generator.FieldDef{{Name: "name", Label: "Name", FieldType: "data", InList: true}},
+		Permissions: map[string]string{"delete": "test.entity.delete"},
+	}
+	tenantID := uuid.New()
+
+	// Admin populates cache.
+	adminCtx, _ := sduictx.NewGeneratorContext(
+		tenantID, &stubViewer{admin: true}, "cache_test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfX").WithPermFingerprint("__admin__").Build()
+	if _, err := eng.Handle(context.Background(), engine.Request{Ctx: adminCtx, Schema: schema}); err != nil {
+		t.Fatalf("admin Handle: %v", err)
+	}
+
+	// Restricted viewer — MUST NOT get admin's cached output.
+	restrictedCtx, _ := sduictx.NewGeneratorContext(
+		tenantID, &stubViewer{admin: false}, "cache_test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfX").WithPermFingerprint("__noroles__").Build()
+	restrictedResp, err := eng.Handle(context.Background(), engine.Request{Ctx: restrictedCtx, Schema: schema})
+	if err != nil {
+		t.Fatalf("restricted Handle: %v", err)
+	}
+
+	// L3 keys differ by PermFP — restricted viewer must miss the cache and
+	// generate its own schema. A cache hit here would mean the fix broke.
+	if restrictedResp.CacheHit {
+		t.Error("restricted viewer must not receive a cache hit from admin's cached schema")
+	}
+}
+
+func TestEngine_TenantIsolation_CacheNotShared(t *testing.T) {
+	// Prove: a schema cached for tenant A is not returned for tenant B.
+	c := cache.New(newInlineRedis())
+	eng := makeEngine(c)
+
+	schema := generator.EntitySchema{
+		Name:    "tenant_test_entity",
+		Title:   "Entity",
+		ListURL: "/api/v1/test/entities",
+		Fields:  []generator.FieldDef{{Name: "name", Label: "Name", FieldType: "data", InList: true}},
+	}
+
+	tenantA := uuid.New()
+	tenantB := uuid.New()
+
+	ctxA, _ := sduictx.NewGeneratorContext(
+		tenantA, &stubViewer{admin: true}, "tenant_test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfT").WithPermFingerprint("__admin__").Build()
+
+	ctxB, _ := sduictx.NewGeneratorContext(
+		tenantB, &stubViewer{admin: true}, "tenant_test_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfT").WithPermFingerprint("__admin__").Build()
+
+	// Populate cache for tenant A.
+	if _, err := eng.Handle(context.Background(), engine.Request{Ctx: ctxA, Schema: schema}); err != nil {
+		t.Fatalf("tenant A Handle: %v", err)
+	}
+
+	// Tenant B must not get a cache hit from tenant A's entry.
+	respB, err := eng.Handle(context.Background(), engine.Request{Ctx: ctxB, Schema: schema})
+	if err != nil {
+		t.Fatalf("tenant B Handle: %v", err)
+	}
+	if respB.CacheHit {
+		t.Error("tenant B must not receive tenant A's cached schema")
+	}
+}
+
+func TestEngine_Determinism(t *testing.T) {
+	// Identical inputs must produce identical AMIS JSON output.
+	eng := makeEngine(nil)
+	req := engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeList),
+		Schema: makeSchema(),
+	}
+
+	resp1, err := eng.Handle(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp2, err := eng.Handle(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	b1, _ := json.Marshal(resp1.Output.AMISSchema)
+	b2, _ := json.Marshal(resp2.Output.AMISSchema)
+	if string(b1) != string(b2) {
+		t.Errorf("engine output is not deterministic:\nrun1: %s\nrun2: %s", b1, b2)
+	}
+}
+
+// inlineRedis is a goroutine-safe map-backed Redis stub for cache isolation tests.
+type inlineRedis struct {
+	mu   sync.Mutex
+	data map[string]string
+}
+
+func newInlineRedis() *inlineRedis {
+	return &inlineRedis{data: make(map[string]string)}
+}
+func (r *inlineRedis) Get(_ context.Context, key string) (string, error) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	v, ok := r.data[key]
+	if !ok {
+		return "", cache.ErrCacheMiss
+	}
+	return v, nil
+}
+func (r *inlineRedis) Set(_ context.Context, key, value string, _ time.Duration) error {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.data[key] = value
+	return nil
 }
 
 // ── benchmark ─────────────────────────────────────────────────────────────────

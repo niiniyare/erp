@@ -111,9 +111,13 @@ func FromCompiled(es *compiler.EntitySchema) generator.EntitySchema {
 // The result is a 16-hex-character string, e.g. "a3f2e1d0c4b59817".
 func SchemaFingerprint(es *compiler.EntitySchema) string {
 	h := fnv.New64a()
-	fmt.Fprint(h, es.QualifiedName, "|", es.Icon, "|")
+	// Label and LabelPlural are included because they appear as page titles.
+	fmt.Fprint(h, es.QualifiedName, "|", es.Icon, "|", es.Label, "|", es.LabelPlural, "|")
 	for _, f := range es.Fields {
-		fmt.Fprintf(h, "%s:%s,", f.Name, f.Type)
+		// Label is included because a label change alters the generated widget
+		// tree. Field permission identifiers are NOT included here — permission
+		// gating is handled by the PermFingerprint cache dimension.
+		fmt.Fprintf(h, "%s:%s:%s,", f.Name, f.Type, f.Label)
 	}
 	fmt.Fprint(h, "|layout:")
 	for _, tab := range es.Layout.Tabs {
@@ -136,7 +140,8 @@ func SchemaFingerprint(es *compiler.EntitySchema) string {
 	}
 	fmt.Fprint(h, "|actions:")
 	for _, a := range es.Actions {
-		fmt.Fprint(h, a.Name, ",")
+		// Label included: a label change alters the action button text in the UI.
+		fmt.Fprint(h, a.Name, ":", a.Label, ",")
 	}
 	return fmt.Sprintf("%016x", h.Sum64())
 }

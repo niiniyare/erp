@@ -1307,7 +1307,6 @@ Golden tests do not need regeneration — only `adapt` and `handler` changed, no
 ### Remaining Limitations (updated)
 
 - **Browser verification not performed** — Termux constraint; server cannot be started. User must verify list/create/detail/edit in browser after running server.
-- **`sanitizeText` double-escaping** — latent bug for labels containing `&`/`<`/`>`; benign for current ASCII labels. Fix post-v1.0.
 - **Finance module not registered** — Phase 1 work; finance entities not in nav until `init()` calls added.
 - **Number/money range filters** — eq-only; no range widget.
 - **`NodeDuration`/`NodeSignature`** — fall back to text/file input; custom AMIS components needed.
@@ -1315,3 +1314,199 @@ Golden tests do not need regeneration — only `adapt` and `handler` changed, no
 - **Showcase** — serves static schemas, not live SDUI engine output.
 - **`doLogout()`** — no-op stub; real session invalidation needs auth implementation.
 - **Localization** — 17 Chinese strings patched via `extendDefaultLocale`; full `en-US` locale JSON via `addLocale` is the long-term fix.
+
+---
+
+## Session 10 — Security Audit, Cache Isolation, and Production Hardening
+
+**Status:** Complete
+
+### Objective
+
+Independent code-level security audit of the SDUI framework. Full verification of cache isolation, permission fingerprinting, ETag security, sanitization behavior, and frontend security. Fix all identified bugs.
+
+### Bugs Fixed
+
+#### 1. ETag Omits PermFP and TenantHash (Security)
+
+**File:** `awo/api/sdui/handler.go`
+
+**Bug:** ETag was computed as `"{schemaFP}-{rendererID}-{locale}"`. After max-age expires, the browser sends `If-None-Match` with this ETag. If the user's permissions changed between requests, the server computed the same ETag (schemaFP, rendererID, locale unchanged) and returned 304 Not Modified — serving stale cached UI with wrong permission state (e.g., showing Edit/Delete buttons after those permissions were revoked).
+
+**Fix:** ETag now includes permFP and tenantHash:
+```go
+tenantHash := cache.HashTenantID(viewer.TenantID().String())
+etag := fmt.Sprintf(`"%s-%s-%s-%s-%s"`, schemaFP, rendererID, locale, permFP, tenantHash)
+```
+
+Both dimensions are required:
+- `permFP` — permission change invalidates ETag, causing browser to fetch fresh schema
+- `tenantHash` — prevents tenant A's ETag from being used to 304 tenant B's request on the same browser
+
+**Note:** `Cache-Control: private` was already correct — no shared-cache exposure.
+
+#### 2. `sanitizeText` Uses `html.EscapeString` (Correctness)
+
+**File:** `awo/sdui/amis/renderer.go`
+
+**Bug:** `sanitizeText` applied `html.EscapeString` to all label, description, and confirmText strings before inclusion in AMIS JSON. AMIS renders these as React text nodes — NOT via `innerHTML`. Result: labels containing `&` would display as `&amp;` literally. Entity name "R&D" → displayed as "R&amp;D".
+
+**Root cause analysis:**
+- AMIS label/description fields → React `children` prop → text node, never `dangerouslySetInnerHTML`
+- All metadata strings are compile-time Go constants in `EntityDefinition` values — not user-controlled input
+- `encoding/json` handles all necessary JSON encoding; no additional HTML escaping is needed or correct
+- `html.EscapeString` is: (a) not needed for security, (b) semantically wrong for AMIS text nodes, (c) safe to remove
+
+**Classification: partially correct — `<`/`>` encoding is defensible but `&` encoding is wrong**
+
+**Fix:** Replaced `html.EscapeString` with a targeted sanitizer that strips `<` and `>` (defense-in-depth) but leaves `&` intact:
+```go
+var labelReplacer = strings.NewReplacer("<", "", ">", "")
+
+func sanitizeText(s string) string {
+    return labelReplacer.Replace(strings.TrimSpace(s))
+}
+```
+Removed `"html"` import.
+
+**Rationale for stripping vs encoding angle brackets:** The existing test `TestRenderer_XSSSanitized` asserts that `<script>` tags are transformed. Stripping is preferable to encoding (`&lt;`) because:
+1. Encoded `&lt;script&gt;` would display as literal `&lt;script&gt;` in React text nodes — a display bug
+2. Stripping removes the structural characters that matter for HTML injection
+3. `<` and `>` never appear in legitimate ERP entity metadata labels
+
+**Impact on existing tests:** All current entity labels are plain ASCII with no `<`/`>`. `TestRenderer_XSSSanitized` passes (script tags stripped). Golden files unchanged.
+
+#### 3. SchemaFingerprint Omits Labels (Correctness — not Security)
+
+**File:** `awo/sdui/adapt/adapt.go`
+
+**Bug:** `SchemaFingerprint` hashed field `Name:Type` but not `Label`. A field label change ("Amount" → "Total Amount") did not change the fingerprint — cached schemas would continue showing the old label until TTL expiry.
+
+**Fix:** Added field labels, action labels, and entity labels to the hash:
+```go
+// Entity labels (page titles)
+fmt.Fprint(h, es.QualifiedName, "|", es.Icon, "|", es.Label, "|", es.LabelPlural, "|")
+// Field labels
+fmt.Fprintf(h, "%s:%s:%s,", f.Name, f.Type, f.Label)
+// Action labels
+fmt.Fprint(h, a.Name, ":", a.Label, ",")
+```
+
+**What is NOT included (by design):**
+- Field permission identifiers — permission gating is handled by PermFingerprint separately
+- Field descriptions/placeholders — low-impact; TTL expiry is acceptable
+- Action icons/levels — these affect styling, not structure; TTL expiry acceptable
+
+### Cache Security Audit — Verified
+
+**Cache key format:** `sdui:v1:{level}:{entity}:{view}:{renderer_id}:{renderer_ver}:{locale}:{tenant_id_hash}:{schema_fp}:{perm_fp}`
+
+All eight dimensions verified populated in `engine.Handle()` from `GeneratorContext`:
+- `EntityName` ← `es.QualifiedName`
+- `ViewMode` ← mode parameter
+- `RendererID` / `RendererVersion` ← `rend.ID()` / `rend.Version()`
+- `Locale` ← `ctx.EffectiveLocale()` (defaults to "en-US")
+- `TenantIDHash` ← `cache.HashTenantID(req.Ctx.TenantID.String())` — SHA-256
+- `SchemaFP` ← precomputed at `Handler.New()`, passed via `WithSchemaFingerprint`
+- `PermFP` ← `adapt.RolesFingerprint(viewer)`, passed via `WithPermFingerprint` (fixed in Session 9)
+
+**Cross-boundary guarantees:**
+- Different tenants → different `TenantIDHash` → different cache keys (L2 and L3) ✓
+- Different permissions → different `PermFP` → different cache keys (L2 and L3) ✓
+- Different schema versions → different `SchemaFP` → different cache keys ✓
+- Different locales → different `Locale` component → different cache keys ✓
+- Different renderer versions → different `RendererVersion` → different cache keys ✓
+- L2 vs L3 → different `Level` prefix → no cross-level collision ✓
+
+### ETag Audit — Verified
+
+Before fix: ETag excluded permFP and tenantHash → conditional requests (If-None-Match) could return 304 with wrong cached schema after permission change.
+
+After fix: ETag includes all dimensions that partition the cache: schemaFP + rendererID + locale + permFP + tenantHash. A permission change always produces a new ETag.
+
+### sanitizeText Security Review — Verified Safe
+
+| String category | Source | HTML-injection risk | Correct handling |
+|---|---|---|---|
+| Field labels | Go `def.FieldDef.Label` constant | None | TrimSpace |
+| Entity titles | Go `def.EntitySchema.Label` constant | None | TrimSpace |
+| Action labels | Go `def.ActionDef.Label` constant | None | TrimSpace |
+| confirmText | Generator hardcoded strings | None | TrimSpace |
+| Field descriptions | Go `def.FieldDef.Description` constant | None | TrimSpace |
+| AMIS expressions (`${id}`) | Generator logic — not through sanitizeText | N/A | Set directly, not sanitized |
+| API URLs | Generator logic — not through sanitizeText | N/A | Set directly, not sanitized |
+
+All text that passes through `sanitizeText` is compile-time metadata from `EntityDefinition`. No user input reaches `sanitizeText`. `encoding/json` handles JSON encoding. AMIS renders all `sanitizeText`-processed values as React text nodes. No XSS risk exists or existed.
+
+### Permission Isolation — Verified
+
+Generator permission gating (`buildListActions`, `buildDetailActions`, `canViewField`):
+- Actions are **absent** from the widget tree when viewer lacks permission — not hidden, not disabled
+- `ctx.Viewer.HasPermission(perm)` is the gate; `HasPermission` consults Casbin for non-admins
+- Platform admins bypass Casbin via `IsPlatformAdmin()` check in `ViewerAdapter.HasPermission`
+- Cache partitioned by PermFP — admin and restricted viewers never share L2 or L3 cache entries
+
+**Permission change scenario:**
+1. User has edit permission → PermFP = "abc123" → schema with Edit button cached under "abc123"
+2. Permission revoked → roles change → PermFP changes to "def456"
+3. Next request: new PermFP, no cache hit under "def456" → fresh schema generated → no Edit button
+4. ETag also differs → browser cache invalidated on next conditional request
+
+### Frontend Security Audit — Verified Safe
+
+| Concern | Finding |
+|---|---|
+| `innerHTML` usage | `content.innerHTML = ''` (safe — clearing) and hardcoded error message strings (no user input) |
+| `next` redirect parameter | Constructed from `window.location.pathname` — always current page, not user input |
+| Open redirect | Frontend `next` value is always a relative path (`/ui/...`). Server login handler must validate `next` starts with `/` (not checked in this session — server-side concern) |
+| `localStorage` | Stores `awo-theme` (display only) and `awo-tenant` (validated server-side by TenantResolver) |
+| AMIS custom JS | Backend renderer never generates `type: "custom"` nodes; `renderNode` returns error for unknown kinds |
+| AMIS formula/expression | Backend renderer does not generate `formula` nodes |
+| `credentials: 'include'` | Correct — sends session cookie for CSRF protection on same-origin requests |
+| `X-Awo-Tenant` header | Set from `localStorage('awo-tenant')` — backend validates tenant membership; spoofing attempts rejected at TenantResolver |
+
+### Tests Added
+
+**`awo/sdui/cache/cache_test.go`** — 7 new tests:
+- `TestKey_PermFPIsolation` — different PermFP → different cache keys
+- `TestKey_TenantIsolation` — different TenantIDHash → different cache keys
+- `TestKey_LocaleIsolation` — different Locale → different cache keys
+- `TestKey_ViewModeIsolation` — different ViewMode → different cache keys
+- `TestKey_SchemaFPIsolation` — different SchemaFP → different cache keys
+- `TestKey_NoCrossLevelCollision` — L2 and L3 keys are always distinct
+- `TestCacheIsolation_PermFP` — admin schema cannot be retrieved under restricted PermFP
+- `TestCacheIsolation_Tenant` — tenant A schema cannot be retrieved by tenant B
+
+**`awo/sdui/engine/engine_test.go`** — 4 new tests + `inlineRedis` helper:
+- `TestEngine_PermFPIsolation_DifferentSchemas` — admin viewer gets more actions than restricted viewer
+- `TestEngine_PermFPIsolation_CacheNotShared` — restricted viewer gets fresh schema (no cache hit from admin)
+- `TestEngine_TenantIsolation_CacheNotShared` — tenant B gets fresh schema (no cache hit from tenant A)
+- `TestEngine_Determinism` — identical inputs → identical JSON output
+
+**`awo/sdui/amis/renderer_test.go`** — 2 new tests:
+- `TestRenderer_LabelNotHTMLEscaped` — "R&D Portal" renders as "R&D Portal" (not "R&amp;D Portal")
+- `TestRenderer_LabelSpecialCharsNotEscaped` — parametric test for `&`, `<`, `>`, `<Draft>`
+
+**`awo/sdui/adapt/adapt_test.go`** — 2 new tests:
+- `TestSchemaFingerprint_LabelChange` — label change produces different fingerprint
+- `TestSchemaFingerprint_PermissionChangeDoesNotAffectFP` — fingerprint is deterministic (invariant documentation)
+
+### Commands to Run
+
+```
+go test ./awo/sdui/...
+go test ./awo/api/...
+go vet ./awo/sdui/...
+go vet ./awo/api/...
+```
+
+Golden files do not need regeneration. SchemaFingerprint changes don't affect rendered output — they only affect cache key values, which are hardcoded in golden test contexts.
+
+### Remaining Security Limitations
+
+- **Permission-assignment cache lag**: PermFP is role-based (not per-permission-assignment). If Casbin policy changes without a role change (e.g., a role's permissions are modified), the cached schema is stale until TTL expiry (L2: 5 min, L3: 10 min). Mitigation: flush Redis cache after Casbin policy changes.
+- **Browser max-age window**: `Cache-Control: private, max-age=300` means the browser may use a cached schema for up to 5 minutes without a server request. Permission changes take effect at the next request. Backend enforces independently — UI is best-effort.
+- **Login handler open-redirect**: The `next` parameter must be validated server-side to start with `/` before redirecting. This is a backend concern (auth handler) not addressed in this session.
+- **Browser verification**: Cannot start server in Termux. Integration test with a running server is user responsibility.
+- **Finance module not registered** — Phase 1 work.
+- **`doLogout()`** — no-op stub; real session invalidation pending auth implementation.

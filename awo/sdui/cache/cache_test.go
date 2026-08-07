@@ -194,3 +194,150 @@ func TestHashTenantID_Deterministic(t *testing.T) {
 		t.Errorf("unexpected hash length: %q", h1)
 	}
 }
+
+// ── Security isolation tests ───────────────────────────────────────────────────
+
+// baseParams returns a fully-populated KeyParams for mutation in tests.
+func baseParams(level string) cache.KeyParams {
+	return cache.KeyParams{
+		Level:           level,
+		EntityName:      "finance_invoice",
+		ViewMode:        "list",
+		RendererID:      "amis",
+		RendererVersion: "1.1.0",
+		Locale:          "en-US",
+		TenantIDHash:    cache.HashTenantID("tenant-a-uuid"),
+		SchemaFP:        "abcdef1234567890",
+		PermFP:          "0123456789abcdef",
+	}
+}
+
+func TestKey_PermFPIsolation(t *testing.T) {
+	// Two viewers with different permission fingerprints must get different cache keys.
+	// This is the invariant that prevents admin-generated schemas from being
+	// served to restricted viewers.
+	admin := baseParams("l3")
+	restricted := baseParams("l3")
+	restricted.PermFP = "ffffffffffffffff"
+
+	if cache.Key(admin) == cache.Key(restricted) {
+		t.Error("different PermFP must produce different cache keys")
+	}
+}
+
+func TestKey_TenantIsolation(t *testing.T) {
+	// Two tenants with different tenant hashes must get different cache keys,
+	// even when all other dimensions are identical.
+	tenantA := baseParams("l3")
+	tenantB := baseParams("l3")
+	tenantB.TenantIDHash = cache.HashTenantID("tenant-b-uuid")
+
+	if cache.Key(tenantA) == cache.Key(tenantB) {
+		t.Error("different TenantIDHash must produce different cache keys")
+	}
+}
+
+func TestKey_LocaleIsolation(t *testing.T) {
+	enUS := baseParams("l2")
+	arSA := baseParams("l2")
+	arSA.Locale = "ar-SA"
+
+	if cache.Key(enUS) == cache.Key(arSA) {
+		t.Error("different Locale must produce different cache keys")
+	}
+}
+
+func TestKey_ViewModeIsolation(t *testing.T) {
+	list := baseParams("l2")
+	detail := baseParams("l2")
+	detail.ViewMode = "detail"
+
+	if cache.Key(list) == cache.Key(detail) {
+		t.Error("different ViewMode must produce different cache keys")
+	}
+}
+
+func TestKey_SchemaFPIsolation(t *testing.T) {
+	// A schema change (new fields, labels, actions) must produce a new key.
+	before := baseParams("l3")
+	after := baseParams("l3")
+	after.SchemaFP = "0000000000000000"
+
+	if cache.Key(before) == cache.Key(after) {
+		t.Error("different SchemaFP must produce different cache keys")
+	}
+}
+
+func TestKey_NoCrossLevelCollision(t *testing.T) {
+	// L2 and L3 keys for the same schema must be distinct to prevent
+	// a widget tree from being read back as a rendered output.
+	l2 := baseParams("l2")
+	l3 := baseParams("l3")
+
+	if cache.Key(l2) == cache.Key(l3) {
+		t.Error("L2 and L3 keys for same params must be distinct")
+	}
+}
+
+func TestCacheIsolation_PermFP(t *testing.T) {
+	// Prove: a value stored under one PermFP cannot be retrieved under a different PermFP.
+	redis := newMemRedis()
+	c := cache.New(redis)
+	ctx := context.Background()
+
+	adminParams := baseParams("l3")
+	adminParams.PermFP = "__admin__"
+	adminKey := cache.Key(adminParams)
+
+	restrictedParams := baseParams("l3")
+	restrictedParams.PermFP = "__noroles__"
+	restrictedKey := cache.Key(restrictedParams)
+
+	// Store admin schema.
+	adminSchema := []byte(`{"admin":true,"actions":["edit","delete"]}`)
+	if err := c.SetRenderedOutput(ctx, adminKey, adminSchema); err != nil {
+		t.Fatal(err)
+	}
+
+	// Restricted viewer must get a cache miss — not the admin schema.
+	got, err := c.GetRenderedOutput(ctx, restrictedKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != nil {
+		t.Errorf("restricted viewer must not receive admin cached schema; got %s", got)
+	}
+}
+
+func TestCacheIsolation_Tenant(t *testing.T) {
+	// Prove: schema stored for tenant A cannot be retrieved by tenant B.
+	redis := newMemRedis()
+	c := cache.New(redis)
+	ctx := context.Background()
+
+	tenantAParams := baseParams("l3")
+	tenantAParams.TenantIDHash = cache.HashTenantID("tenant-a")
+	tenantAKey := cache.Key(tenantAParams)
+
+	tenantBParams := baseParams("l3")
+	tenantBParams.TenantIDHash = cache.HashTenantID("tenant-b")
+	tenantBKey := cache.Key(tenantBParams)
+
+	if tenantAKey == tenantBKey {
+		t.Fatal("tenant A and B must have different cache keys")
+	}
+
+	// Store tenant A's schema.
+	if err := c.SetRenderedOutput(ctx, tenantAKey, []byte(`{"tenant":"A"}`)); err != nil {
+		t.Fatal(err)
+	}
+
+	// Tenant B must get a miss.
+	got, err := c.GetRenderedOutput(ctx, tenantBKey)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got != nil {
+		t.Errorf("tenant B must not receive tenant A's cached schema; got %s", got)
+	}
+}

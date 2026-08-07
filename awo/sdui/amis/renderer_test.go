@@ -1,6 +1,7 @@
 package amis_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -559,6 +560,51 @@ func TestRenderer_DeleteAction_HasAPI(t *testing.T) {
 	btn := acts[0].(map[string]any)
 	if btn["api"] != "DELETE:/api/v1/items/${id}" {
 		t.Errorf("delete action api=%v want DELETE:/api/v1/items/${id}", btn["api"])
+	}
+}
+
+// ── Session 10 security regression tests ──────────────────────────────────────
+
+// TestRenderer_LabelNotHTMLEscaped guards that sanitizeText does NOT apply
+// html.EscapeString to labels. AMIS renders labels as React text nodes (not
+// innerHTML), so "&" must appear as "&" in the output — not "&amp;".
+//
+// This was a latent bug: html.EscapeString("R&D") = "R&amp;D", which AMIS
+// would display literally as "R&amp;D" in the UI.
+func TestRenderer_LabelNotHTMLEscaped(t *testing.T) {
+	t.Parallel()
+	out := render(t, &widget.Node{Kind: widget.NodePage, Label: "R&D Portal"})
+	title, _ := out["title"].(string)
+	if title != "R&D Portal" {
+		t.Errorf("label must not be HTML-escaped: got %q, want %q", title, "R&D Portal")
+	}
+}
+
+func TestRenderer_LabelAmpersandNotEncoded(t *testing.T) {
+	t.Parallel()
+	// The ampersand must NOT be HTML-encoded. AMIS renders labels as React text
+	// nodes — encoding & to &amp; would display "&amp;" literally in the UI.
+	for _, label := range []string{"A & B", "R&D", "Cash & Carry"} {
+		label := label
+		t.Run(label, func(t *testing.T) {
+			t.Parallel()
+			out := render(t, &widget.Node{Kind: widget.NodePage, Label: label})
+			title, _ := out["title"].(string)
+			if title != label {
+				t.Errorf("label %q: got %q (ampersand must not be encoded)", label, title)
+			}
+		})
+	}
+}
+
+func TestRenderer_LabelAngleBracketsStripped(t *testing.T) {
+	t.Parallel()
+	// Angle brackets are stripped as defense-in-depth. They never appear in
+	// legitimate entity metadata and could be dangerous if AMIS ever uses innerHTML.
+	out := render(t, &widget.Node{Kind: widget.NodePage, Label: "<Draft>"})
+	title, _ := out["title"].(string)
+	if strings.Contains(title, "<") || strings.Contains(title, ">") {
+		t.Errorf("angle brackets must be stripped from labels: got %q", title)
 	}
 }
 

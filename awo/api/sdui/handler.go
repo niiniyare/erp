@@ -39,6 +39,7 @@ import (
 	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
 	"awo.so/awo/sdui/adapt"
+	"awo.so/awo/sdui/cache"
 	"awo.so/awo/sdui/engine"
 	"awo.so/awo/sdui/renderer"
 	"awo.so/awo/sdui/sduictx"
@@ -265,8 +266,19 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	slog.Info("sdui: engine success", "entity", es.QualifiedName,
 		"cache_hit", resp.CacheHit, "schema_keys", len(resp.Output.AMISSchema))
 
-	// Set ETag from schema fingerprint + renderer + locale.
-	etag := fmt.Sprintf(`"%s-%s-%s"`, schemaFP, rendererID, locale)
+	// Set ETag from schema fingerprint + renderer + locale + permission fingerprint
+	// + tenant hash. All five dimensions must participate so that:
+	//
+	//   - A permission change (new permFP) produces a new ETag, causing the
+	//     browser to discard its cached schema after max-age expires and send a
+	//     full request instead of receiving an incorrect 304.
+	//   - A tenant switch (new tenantHash) produces a new ETag, preventing
+	//     tenant A's browser-cached schema from being reused by tenant B.
+	//
+	// Cache-Control is "private" — only the requesting browser may cache this
+	// response. No shared proxy/CDN caches this resource.
+	tenantHash := cache.HashTenantID(viewer.TenantID().String())
+	etag := fmt.Sprintf(`"%s-%s-%s-%s-%s"`, schemaFP, rendererID, locale, permFP, tenantHash)
 	c.Set(headerETag, etag)
 	c.Set(headerCacheControl, sduiPublicMaxAge)
 

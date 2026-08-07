@@ -22,7 +22,6 @@ package amis
 
 import (
 	"fmt"
-	"html"
 	"strings"
 
 	"awo.so/awo/sdui/expression"
@@ -364,10 +363,33 @@ func applyCommon(n *widget.Node, out map[string]any) {
 	}
 }
 
-// sanitizeText escapes HTML special characters to prevent XSS in label and
-// description strings that are included in the AMIS schema JSON.
+// labelReplacer strips angle-bracket characters from label strings.
+// See sanitizeText for rationale.
+var labelReplacer = strings.NewReplacer("<", "", ">", "")
+
+// sanitizeText normalises label, description, and confirmText strings before
+// inclusion in the AMIS schema JSON.
+//
+// # Design
+//
+// AMIS renders label/description/confirmText as React text nodes — NOT via
+// innerHTML — so HTML encoding is NOT correct here:
+//   - html.EscapeString("R&D") = "R&amp;D", which React displays as "R&amp;D"
+//     literally (the text node is not interpreted as HTML).
+//   - encoding/json handles all JSON string encoding; no additional encoding needed.
+//
+// # Sanitization
+//
+// Angle brackets (<, >) are stripped as a defense-in-depth measure. Entity
+// metadata labels are Go compile-time constants and will never legitimately
+// contain angle brackets. Stripping prevents HTML injection if any AMIS
+// component ever renders a label via innerHTML (e.g., a custom renderer,
+// tooltip, or future AMIS version change).
+//
+// The ampersand (&) is intentionally NOT encoded. Encoding it would produce
+// "&amp;" visible literally in React text nodes.
 func sanitizeText(s string) string {
-	return html.EscapeString(s)
+	return labelReplacer.Replace(strings.TrimSpace(s))
 }
 
 // ── Structural renderers ──────────────────────────────────────────────────────
