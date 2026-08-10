@@ -71,6 +71,14 @@ type EntitySchema struct {
 	// IsSystem is true for SQL-backed system entities; false for JSONB custom entities.
 	IsSystem bool
 
+	// Scope is the data isolation boundary for this entity.
+	// Propagated from EntityDefinition.EntityScope() at compile time.
+	Scope def.Scope
+
+	// AllowAudit indicates whether the framework writes audit records for
+	// mutations to this entity. Propagated from EntityDefinition.AllowAudit().
+	AllowAudit bool
+
 	// ── Display ──────────────────────────────────────────────────────────────
 
 	// Label is the human-readable singular display name (e.g. "Invoice").
@@ -385,6 +393,8 @@ func buildEntitySchema(d def.EntityDefinition) *EntitySchema {
 		LocalName:           local,
 		Module:              module,
 		IsSystem:            d.IsSystem(),
+		Scope:               d.EntityScope(),
+		AllowAudit:          d.AllowAudit(),
 		Label:               d.EntityLabel(),
 		LabelPlural:         d.EntityLabelPlural(),
 		Description:         d.EntityDescription(),

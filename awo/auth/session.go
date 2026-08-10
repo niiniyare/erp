@@ -58,6 +58,15 @@ type Session struct {
 	// RequestID is set by the middleware on each request for log correlation.
 	// This field MUST NOT be stored in Redis — it is ephemeral per request.
 	RequestID string `json:"-"`
+
+	// Metadata holds extensible per-session data stored as JSONB in iam_sessions
+	// and as JSON in Redis. Callers may read and write arbitrary keys.
+	//
+	// The framework reserves all keys prefixed with "awo:".
+	// Module authors may use their module name as a key prefix (e.g. "finance:").
+	//
+	// NEVER store secrets, passwords, or tokens in Metadata.
+	Metadata map[string]any `json:"metadata,omitempty"`
 }
 
 // IsExpired returns true when the session has passed its expiry time.

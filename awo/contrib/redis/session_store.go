@@ -81,14 +81,22 @@ func (s *RedisSessionStore) Store(ctx context.Context, session *auth.Session) er
 
 	// Best-effort: add to user session index so bulk revocation can find this token.
 	// Score = expiry unix timestamp; enables ZREMRANGEBYSCORE pruning of stale entries.
-	indexKey := userIndexKey(session.TenantID, session.UserID)
-	z := &goredis.Z{Score: float64(session.ExpiresAt.Unix()), Member: session.Token}
-	if err := s.rdb.ZAdd(ctx, indexKey, z).Err(); err != nil {
-		slog.Warn("session store: ZADD user index failed — bulk revocation impaired",
-			"user_id", session.UserID,
-			"tenant_id", session.TenantID,
-			"error", err,
-		)
+	//
+	// Service accounts (ServiceAccountID != uuid.Nil) have UserID == uuid.Nil.
+	// Indexing service account sessions under uuid.Nil would cause all service
+	// accounts to share one index key, making bulk revocation by user meaningless
+	// and creating a large noisy index. Service account tokens are revoked via
+	// is_revoked on iam_api_tokens, not via this user session index.
+	if session.ServiceAccountID == (uuid.UUID{}) {
+		indexKey := userIndexKey(session.TenantID, session.UserID)
+		z := &goredis.Z{Score: float64(session.ExpiresAt.Unix()), Member: session.Token}
+		if err := s.rdb.ZAdd(ctx, indexKey, z).Err(); err != nil {
+			slog.Warn("session store: ZADD user index failed — bulk revocation impaired",
+				"user_id", session.UserID,
+				"tenant_id", session.TenantID,
+				"error", err,
+			)
+		}
 	}
 
 	return nil
@@ -124,13 +132,16 @@ func (s *RedisSessionStore) Delete(ctx context.Context, session *auth.Session) e
 	}
 
 	// Best-effort: remove from user session index.
-	indexKey := userIndexKey(session.TenantID, session.UserID)
-	if err := s.rdb.ZRem(ctx, indexKey, session.Token).Err(); err != nil {
-		slog.Warn("session store: ZREM user index failed — stale index entry remains",
-			"user_id", session.UserID,
-			"tenant_id", session.TenantID,
-			"error", err,
-		)
+	// Skip for service account sessions — they are not indexed (see Store).
+	if session.ServiceAccountID == (uuid.UUID{}) {
+		indexKey := userIndexKey(session.TenantID, session.UserID)
+		if err := s.rdb.ZRem(ctx, indexKey, session.Token).Err(); err != nil {
+			slog.Warn("session store: ZREM user index failed — stale index entry remains",
+				"user_id", session.UserID,
+				"tenant_id", session.TenantID,
+				"error", err,
+			)
+		}
 	}
 
 	return nil

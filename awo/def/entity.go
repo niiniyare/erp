@@ -70,6 +70,18 @@ type EntityDefinition interface {
 	// Empty string means no icon (renderer chooses default).
 	EntityIcon() string
 
+	// EntityScope returns the data isolation boundary for this entity.
+	// Controls which rows a viewer can access and what context the framework
+	// injects into repository queries. See [Scope] constants.
+	// Default (zero value): [ScopeTenant].
+	EntityScope() Scope
+
+	// AllowAudit returns whether the framework writes audit records for
+	// mutations to this entity. Defaults to true (opt-out model).
+	// Set [SystemDefinition.DisableAudit] = true to opt out for
+	// high-frequency internal bookkeeping entities.
+	AllowAudit() bool
+
 	// IsSystem returns true for SQL-backed system entities (typed columns),
 	// false for JSONB-backed custom entities.
 	IsSystem() bool
@@ -147,6 +159,17 @@ type SystemDefinition struct {
 	// menus, list headers, and breadcrumbs. Use generic semantic names such as
 	// "document", "money", "user", "tag", "building". Empty means no icon.
 	Icon string
+
+	// Scope declares the data isolation boundary for this entity.
+	// Default (zero value): [ScopeTenant].
+	// See [Scope] constants for available values.
+	Scope Scope
+
+	// DisableAudit opts this entity out of framework audit logging.
+	// Default (zero value): false — audit is enabled by default.
+	// Set true only for high-frequency internal bookkeeping entities where
+	// audit volume would be prohibitive (e.g. iam_session_event counters).
+	DisableAudit bool
 }
 
 // Ensure SystemDefinition implements EntityDefinition at compile time.
@@ -179,7 +202,14 @@ func (d *SystemDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 func (d *SystemDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
 func (d *SystemDefinition) EntityLayout() LayoutDef            { return d.Layout }
 func (d *SystemDefinition) EntityIcon() string                 { return d.Icon }
-func (d *SystemDefinition) IsSystem() bool                     { return true }
+func (d *SystemDefinition) EntityScope() Scope {
+	if d.Scope == "" {
+		return ScopeTenant
+	}
+	return d.Scope
+}
+func (d *SystemDefinition) AllowAudit() bool { return !d.DisableAudit }
+func (d *SystemDefinition) IsSystem() bool   { return true }
 
 // CustomDefinition declares a custom entity: JSONB-backed, tenant-specific
 // schema, extensible at runtime via the Metadata module.
@@ -242,6 +272,14 @@ type CustomDefinition struct {
 	// Icon is the semantic icon name for this entity.
 	// Same semantics as SystemDefinition.Icon.
 	Icon string
+
+	// Scope declares the data isolation boundary for this entity.
+	// Default (zero value): [ScopeTenant].
+	Scope Scope
+
+	// DisableAudit opts this entity out of framework audit logging.
+	// Default (zero value): false — audit is enabled by default.
+	DisableAudit bool
 }
 
 // Ensure CustomDefinition implements EntityDefinition at compile time.
@@ -274,4 +312,11 @@ func (d *CustomDefinition) EntityWorkflowTriggers() []WorkflowTrigger {
 func (d *CustomDefinition) EntityPageBuilders() PageBuilderSet { return d.PageBuilders }
 func (d *CustomDefinition) EntityLayout() LayoutDef            { return d.Layout }
 func (d *CustomDefinition) EntityIcon() string                 { return d.Icon }
-func (d *CustomDefinition) IsSystem() bool                     { return false }
+func (d *CustomDefinition) EntityScope() Scope {
+	if d.Scope == "" {
+		return ScopeTenant
+	}
+	return d.Scope
+}
+func (d *CustomDefinition) AllowAudit() bool { return !d.DisableAudit }
+func (d *CustomDefinition) IsSystem() bool   { return false }

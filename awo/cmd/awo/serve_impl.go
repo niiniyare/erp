@@ -170,7 +170,19 @@ func startServer(cfg ServeConfig) error {
 	// IAM.
 	sessions := contribredis.NewSessionStore(result.Redis)
 	tokenCache := contribredis.New(result.Redis)
-	iamModule := iam.New(pool, sessions, tokenCache).WithAuditWriter(auditWriter)
+
+	iamSessionSchema, iamSessionOk := result.Schema.ByName["iam_session"]
+	iamUserSchema, iamUserOk := result.Schema.ByName["iam_user"]
+	iamUserRoleSchema, iamUserRoleOk := result.Schema.ByName["iam_user_role"]
+	if !iamSessionOk || !iamUserOk || !iamUserRoleOk {
+		return fmt.Errorf("required IAM entity schemas not found — platform/iam not registered")
+	}
+	iamRepos := iam.IAMRepositories{
+		Sessions:  contrib.NewRepository(pool, iamSessionSchema),
+		Users:     contrib.NewRepository(pool, iamUserSchema),
+		UserRoles: contrib.NewRepository(pool, iamUserRoleSchema),
+	}
+	iamModule := iam.New(pool, sessions, tokenCache, iamRepos).WithAuditWriter(auditWriter)
 
 	tenantSchema, ok := result.Schema.ByName["platform_tenant"]
 	if !ok {

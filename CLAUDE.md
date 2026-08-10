@@ -38,8 +38,8 @@ Technical reference for Claude (and Claude Code) working on this repository. Ass
 |---|---|
 | HTTP | Fiber v2 |
 | Database | PostgreSQL + Row-Level Security (RLS) |
-| Query gen | SQLC |
-| DI | Google Wire |
+| Query gen | `filter.Filter` + dynamic SQL builder (SQLC was never used; removed from scope) |
+| DI | Manual Options pattern — `awo.New(cfg, opts...)` (Wire removed from scope; `goforj/wire` dropped from go.mod in Phase 1) |
 | Authorization | Casbin v2 / CEL expressions |
 | Async workflows | Temporal SDK |
 | Cache | Redis (go-redis/v8) |
@@ -207,8 +207,8 @@ CEL-based expression evaluation for complex predicates. Type-safety gaps exist (
 ```go
 type Session struct {
     Token            string
-    UserID           *uuid.UUID
-    ServiceAccountID *uuid.UUID
+    UserID           uuid.UUID          // uuid.Nil for service account sessions
+    ServiceAccountID uuid.UUID          // uuid.Nil for human user sessions
     TenantID         uuid.UUID
     Roles            []string
     ExpiresAt        time.Time
@@ -216,6 +216,7 @@ type Session struct {
     DeviceID         string
     IPAddress        string
     RequestID        string
+    Metadata         map[string]any     // JSONB — extensible per-session data (Phase 1+)
 }
 ```
 
@@ -284,19 +285,27 @@ Applied at the `/api/v1` group in order:
 2. `RequireAuth` — validates session token, builds `ViewerContext`, injects via `auth.WithViewer(ctx, viewer)`
 3. `RateLimit` — per-tenant/user, Redis-backed
 
-### Dependency Injection (Wire)
+### Dependency Injection (Options Pattern)
 
-All services use Google Wire. No global state.
+All services use an explicit Options/functional-options pattern. No global state. No Wire codegen.
 
 ```go
-// Provider declaration
-func NewMyService(repo driver.EntityRepository[MyEntity], ...) *MyService { ... }
+// Framework entry point
+app, err := awo.New(awo.Config{...},
+    awo.WithDatabase(pool),
+    awo.WithRedis(rdb),
+    awo.WithModule(iam.Module()),
+)
 
-// Wire provider set
-var MyServiceSet = wire.NewSet(NewMyService)
+// Module registration
+type Module interface {
+    Name() string
+    Register()              // called before registry.Seal()
+    Configure(*Framework) error
+}
 ```
 
-Wire generates `wire_gen.go` at build time. Never edit generated files.
+`go.mod` no longer includes Wire as a dependency. Manual provider construction in bootstrap is replaced by the `Module` interface pattern.
 
 ### Bootstrap Sequence
 
@@ -364,7 +373,7 @@ Request
 
 ### Platform Admin Bypass
 
-`IsPlatformAdmin()` is derived from `Roles` at runtime. Not a stored boolean field (ADR-003). Platform admins skip Casbin entirely — all rows across all tenants are visible.
+`IsPlatformAdmin()` is derived from `Roles` at runtime. Not a stored boolean field (ADR-003). Platform admins skip Casbin RBAC checks — but they do NOT automatically bypass PostgreSQL RLS. Cross-tenant operations require explicit `SystemContext` and must be audited (ADR-023).
 
 ### PolicyFunc (Row-Level Authorization)
 
@@ -452,7 +461,7 @@ See `ENTITY_DEFINITION_SPEC.md` for the full field type table and constraint ref
 | `finance_fiscal_year` | Fiscal year with lifecycle locking |
 | `finance_accounting_period` | Monthly/quarterly period — must be open for journal entries |
 
-Double-entry integrity enforced by PostgreSQL triggers. SQLC safe queries only.
+Double-entry integrity enforced by PostgreSQL triggers. Dynamic parameterized SQL via `filter.Filter` abstraction (not SQLC).
 
 ---
 
@@ -527,66 +536,92 @@ SDUI blocks are defined in `awo/sdui` package and composed at the framework leve
 
 ---
 
-## 11. Known Architectural Contradictions
+## 11. Known Architectural Issues
 
-These are unresolved at the time of kernel freeze. Each has a documented decision for v1.0; full resolution is post-freeze work.
+Tracked items with documented decisions. See `awo/tasks.md` for implementation phases.
 
 ### 1. Hook Dependency Injection — Early Lifecycle, Multi-Module Coordination
 
-**Problem:** Hooks fire before Wire-injected dependencies are fully available in multi-module scenarios. Module A's `BeforeCreate` hook may need Module B's service, but Wire builds a single graph — cross-module hook dependencies create circular DI risk.
+**Problem:** Hooks fire before dependencies are fully available in multi-module scenarios. Cross-module hook dependencies create circular DI risk.
 
-**v1.0 decision:** Hooks receive only the minimal `HookContext` (actor, tenant, record). Cross-module coordination must go through Temporal workflows (async) or events (outbox). Direct service injection into hooks is prohibited at v1.0.
+**Decision:** Hooks receive only the minimal `HookContext` (actor, tenant, record). Cross-module coordination goes through Temporal workflows (async) or events (outbox). Direct service injection into hooks is prohibited.
 
 ### 2. Plugin Entity Registration — Avoiding Central Coupling
 
-**Problem:** `def.Register()` uses a global registry populated by `init()`. Pure plugin model (load `.so` at runtime) conflicts with Go's `init()` compile-time guarantee. Dynamic loading without a compile-time registry risks registration races.
+**Problem:** `def.Register()` uses a global registry populated by `init()`. Pure plugin model (`.so` at runtime) conflicts with Go's `init()` compile-time guarantee.
 
-**v1.0 decision:** All modules are compiled into the binary. Runtime plugin loading (`.so`) deferred to post-v1.0. `init()` registration is the only supported pattern.
+**Decision:** All modules compiled into the binary. Runtime plugin loading deferred to post-v1.0. `init()` registration is the only supported pattern.
 
 ### 3. Row-Visibility Enforcement Layer Arbitration
 
-**Problem:** Two layers enforce row visibility — `PolicyFunc` (application layer) and PostgreSQL RLS. These can produce inconsistent counts (e.g., `Count()` at app layer vs. DB layer), unexpected empty results when only one layer is correctly configured, and double-filtering overhead.
+**Problem:** Two layers enforce row visibility — `PolicyFunc` (app layer) and PostgreSQL RLS. Can produce inconsistent counts.
 
-**v1.0 decision:** RLS is authoritative for correctness. `PolicyFunc` is an optional performance optimization (pre-filter before DB round-trip). If `PolicyFunc` is absent, RLS alone is sufficient. Never rely on `PolicyFunc` as a security boundary.
+**Decision:** RLS is authoritative for correctness. `PolicyFunc` is an optional performance optimization (pre-filter before DB round-trip). Never rely on `PolicyFunc` as a security boundary.
 
 ### 4. Type-Safety Gaps in Filter / Expression Evaluation
 
-**Problem:** `filter` package accepts `any` values for predicate operands. CEL evaluation is dynamic. No compile-time guarantee that a filter like `filter.Eq("amount", "string")` against a `numeric(20,4)` column is type-safe. Runtime panics possible.
+**Problem:** `filter` package accepts `any` values. No compile-time guarantee of type safety.
 
-**v1.0 decision:** Document the gap. Add runtime type assertion in `contrib/pgx` filter translator with descriptive error messages. Compile-time typed filter DSL deferred to post-v1.0.
+**Decision (Phase 4):** Runtime type assertion in `contrib/pgx` filter translator with descriptive errors. Returns typed error (not panic). Compile-time typed DSL deferred.
 
-### 5. Dual-Plane IAM — JWT Key Separation at Runtime
+### 5. Dual-Plane IAM — JWT Key Rotation
 
-**Problem:** Platform Plane and Tenant Plane use separate JWT signing keys. Key rotation must be coordinated. During rotation, in-flight sessions signed with old keys must still validate. Redis session cache does not store the signing key version, making zero-downtime rotation complex.
+**Problem:** Platform Plane and Tenant Plane may eventually need separate JWT signing keys with zero-downtime rotation.
 
-**v1.0 decision:** Single key pair at v1.0. Dual-key rotation support deferred. Document as known limitation. Session table stores `issued_at` for future key-version correlation.
+**Decision:** Single key pair at v1.0. Session table stores `issued_at` for future key-version correlation.
 
-### 6. Metadata Compiler — Missing Dependency Graph and Conflict Detection
+### 6. Compiler Dependency Graph — Missing (Pre-v1.0 Blocker)
 
-**Problem:** `awo/compiler` validates individual EntityDefinitions but does not build a cross-entity dependency graph. Circular FK references, orphaned `FieldTypeLink` targets, and conflicting migration sequences are not caught at compile time — they fail at migration run time or at first query.
+**Problem:** `awo/compiler` validates individual EntityDefinitions but has no cross-entity dependency graph. Circular FKs and orphaned LinkTargets caught only at migration runtime.
 
-**v1.0 decision:** Add a compiler report pass before freeze: compilation summary, dependency graph, conflict checks, migration fingerprint. This is a pre-freeze addition requirement. Implement before declaring v1.0 kernel frozen.
+**Decision (Phase 2):** Implement dependency graph in `awo/compiler/graph.go`. This is a pre-freeze blocking requirement.
+
+### 7. Service-Account Session Index Bug
+
+**Problem:** `RedisSessionStore.Store()` always writes to `user_sessions:{tenantID}:{userID}`. Service accounts have `UserID == uuid.Nil`, causing all service accounts to share one Redis index entry.
+
+**Decision (Phase 1 — BUG-001):** Skip user index write when `session.ServiceAccountID != uuid.Nil`.
+
+### 8. ActionRuntime Has No Concrete Implementation
+
+**Problem:** `def.ActionRuntime` interface promises Repo, Tx, Publish, StartWorkflow, etc. but `ActionDef.HandlerFunc` receives a narrower context today.
+
+**Decision (Phase 3 — BUG-004):** Implement `runtime.ActionContext` as the concrete `ActionRuntime`.
+
+### 9. Temporal Client Is Nil at Runtime
+
+**Problem:** All `WorkflowTrigger` declarations are decorative. Temporal client = nil in `main.go`.
+
+**Decision (Phase 10 — BUG-005):** Introduce `workflow.Executor` interface. Temporal adapter implements it. Wire in `main.go`.
+
+### 10. API Middleware Coupled to IAM Concrete Type
+
+**Problem:** `api/middleware/auth.go` accepts `*iam.AuthService` directly. Cannot be separated without interface injection.
+
+**Decision (Phase 1 — BUG-010):** Introduce `auth.SessionValidator` interface. Middleware accepts interface.
 
 ---
 
 ## 12. Roadmap
 
+See `awo/tasks.md` for the authoritative phase-by-phase implementation plan.
+
 ```
-Current:   Resolve kernel contradictions → finalize architecture
-           Add metadata compiler report (§11 item 6)
+Phase 0:   Documentation + task tracking (CURRENT)
+Phase 1:   Framework Core (DI pattern, session fixes, EntityScope, SessionValidator interface)
+Phase 2:   Compiler Dependency Graph (pre-v1.0 blocker)
+Phase 3:   Runtime Pipeline Hardening (AllowAudit, ActionRuntime concrete impl)
+Phase 4:   Filter + Query Builder (fluent builder, hardened SQL translator)
+Phase 5:   Migration Generation (awo generate migrations)
+Phase 6:   CLI (awo serve/schema/entity/generate/migrate/docs)
+Phase 7:   Contrib Infrastructure (BulkCreate batch, session PG recovery)
+Phase 8:   Framework Platform Entities (organization, feature flags, settings, notifications)
+Phase 9:   API / OpenAPI / SDUI / Docgen (metadata API, PageBuilderSet verify)
+Phase 10:  Reports / Import / Export / Scheduling / Temporal wired
+Phase 11:  ERP Entity Initialization (Finance module — Phase 1 readiness test)
+Phase 12:  Extraction / Public API / Final Hardening
            ↓
-Freeze:    v1.0 kernel — all packages in §3 locked
-           ↓
-Phase 1:   Finance module as readiness test
-           Build using ONLY existing framework primitives
-           Any missing primitive → add to framework first, then use
-           ↓
-Phase 2:   Inventory module
-Phase 3:   CRM module
-Phase 4:   Procurement + Sales modules
-Phase 5:   HR + Assets + Manufacturing modules
-           ↓
-Future:    Extract awo/ into separate repo (awo.so/awo/...)
+Future:    Extract awo/ into separate module (awo.so/awo/...)
            AwoERP depends on awo as external module
            Open-source kernel; ERP is the reference implementation
 ```
@@ -598,9 +633,9 @@ Future:    Extract awo/ into separate repo (awo.so/awo/...)
 ### General
 
 - All kernel packages require godoc-quality comments on exported types and functions
-- Use Wire for DI; no global state (exception: `def.Register` global registry — by design)
-- No raw SQL outside `contrib/pgx` and `contrib/redis`; use SQLC for all generated queries
-- Temporal for async workflows; synchronous paths for user-facing queries only
+- DI via Options pattern (`awo.New(cfg, opts...)`); no Wire codegen; no global state except the sealed entity registry (by design)
+- No raw SQL outside `contrib/pgx` and `contrib/redis`; use `filter.Filter` abstraction for all queries; SQLC is not used and must not be added
+- Temporal for async workflows via `workflow.Executor` interface (not direct Temporal SDK in entity code); synchronous paths for user-facing queries only
 - `errors.As` for error unwrapping — never type switch on errors
 
 ### Security
@@ -608,7 +643,8 @@ Future:    Extract awo/ into separate repo (awo.so/awo/...)
 - RLS-first: every entity query passes through PostgreSQL policies
 - Never set `SET LOCAL tenant_id` from user-supplied input without validation
 - `Sensitive: true` fields must be excluded from logs and standard API responses
-- Platform admin bypass is in `authz` middleware only — never replicate this check in business logic
+- Platform admin bypass (Casbin skip) is in `authz` middleware only — never replicate in business logic. Platform admins still subject to RLS; cross-tenant access requires explicit `SystemContext` (ADR-023).
+- Audit all platform admin bypasses via `AuditWriter`
 
 ### Testing
 
@@ -649,10 +685,10 @@ Use this when building a new module (Finance is the Phase 1 reference):
 
 ### Persistence
 
-- [ ] Write SQLC schema (`.sql` files for entity tables)
-- [ ] Add RLS policy: `USING (tenant_id = current_tenant_id())`
-- [ ] Run SQLC codegen; review generated Go types
-- [ ] Write migration file in correct sequence under `db/migration/`
+- [ ] Run `awo generate migrations` to derive SQL from EntityDefinition
+- [ ] Review generated migration for correctness (RLS policy, indexes, triggers)
+- [ ] Apply migration: `awo migrate apply`
+- [ ] Verify RLS policy activates correctly with set_tenant_context
 
 ### API
 
