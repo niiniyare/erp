@@ -146,11 +146,11 @@ Phase 12 (Extraction / Public API / Hardening)
 - [x] Registry: Register → Lookup → All
 - [x] Registry: Seal prevents further registration
 - [x] Registry: duplicate registration → panic
-- [ ] Filter: all 14 leaf predicates
-- [ ] Filter: And/Or/Not combinators
-- [ ] Filter: nil handling in And/Or
-- [ ] Filter: String() representation
-- [ ] Filter: CustomField predicates
+- [x] Filter: all 14 leaf predicates
+- [x] Filter: And/Or/Not combinators
+- [x] Filter: nil handling in And/Or
+- [x] Filter: String() representation
+- [x] Filter: CustomField predicates
 - [ ] Transactions: WithConn, InTransaction semantics
 - [x] Pipeline: BeforeValidate fires before field validation
 - [x] Pipeline: Required field missing → ValidationError
@@ -1338,7 +1338,7 @@ Track discovered bugs and deviations here.
 | Phase 2 — Compiler Dependency Graph | COMPLETE | — |
 | Phase 3 — Runtime Pipeline Hardening | COMPLETE | — |
 | Coverage — compiler + runtime ≥90% | COMPLETE | — |
-| Phase 4 — Filter + Query Builder | NOT STARTED | — |
+| Phase 4 — Filter + Query Builder | COMPLETE | — |
 | Phase 5 — Migration Generation | NOT STARTED | Phase 4 |
 | Phase 6 — CLI | NOT STARTED | Phase 5 |
 | Phase 7 — Contrib Infrastructure | NOT STARTED | — |

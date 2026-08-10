@@ -1,7 +1,10 @@
 package sqlbuild_test
 
 import (
+	"strings"
 	"testing"
+
+	"github.com/shopspring/decimal"
 
 	"awo.so/awo/contrib/pgx/sqlbuild"
 	"awo.so/awo/filter"
@@ -94,5 +97,309 @@ func TestBuild_Not(t *testing.T) {
 	expected := `NOT ("status" = $1)`
 	if r.Clause != expected {
 		t.Errorf("got %q, want %q", r.Clause, expected)
+	}
+}
+
+func TestBuild_Neq(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Neq("status", "deleted"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "!=") {
+		t.Errorf("expected !=, got %q", r.Clause)
+	}
+}
+
+func TestBuild_Gt(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Gt("amount", int64(100)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, ">") {
+		t.Errorf("expected >, got %q", r.Clause)
+	}
+}
+
+func TestBuild_Gte(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Gte("amount", int64(0)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, ">=") {
+		t.Errorf("expected >=, got %q", r.Clause)
+	}
+}
+
+func TestBuild_Lt(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Lt("amount", decimal.NewFromInt(500)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "<") {
+		t.Errorf("expected <, got %q", r.Clause)
+	}
+}
+
+func TestBuild_Lte(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Lte("amount", decimal.NewFromInt(500)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "<=") {
+		t.Errorf("expected <=, got %q", r.Clause)
+	}
+}
+
+func TestBuild_NotIn(t *testing.T) {
+	r, err := sqlbuild.Build(filter.NotIn("status", "deleted", "archived"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "ALL") {
+		t.Errorf("expected ALL in NOT IN clause, got %q", r.Clause)
+	}
+	if len(r.Args) != 2 {
+		t.Errorf("expected 2 args, got %d", len(r.Args))
+	}
+}
+
+func TestBuild_IsNull(t *testing.T) {
+	r, err := sqlbuild.Build(filter.IsNull("deleted_at"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "IS NULL") {
+		t.Errorf("expected IS NULL, got %q", r.Clause)
+	}
+	if len(r.Args) != 0 {
+		t.Errorf("IS NULL should have no args, got %v", r.Args)
+	}
+}
+
+func TestBuild_IsNotNull(t *testing.T) {
+	r, err := sqlbuild.Build(filter.IsNotNull("deleted_at"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "IS NOT NULL") {
+		t.Errorf("expected IS NOT NULL, got %q", r.Clause)
+	}
+}
+
+func TestBuild_Contains(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Contains("name", "acme"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "ILIKE") {
+		t.Errorf("expected ILIKE, got %q", r.Clause)
+	}
+	val, _ := r.Args[0].(string)
+	if !strings.HasPrefix(val, "%") || !strings.HasSuffix(val, "%") {
+		t.Errorf("Contains arg should be %%value%%, got %q", val)
+	}
+}
+
+func TestBuild_Contains_LikeEscape(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Contains("name", "100%off"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val, _ := r.Args[0].(string)
+	// raw % must be escaped
+	if strings.Contains(val, "100%off") {
+		t.Errorf("%% must be escaped in LIKE pattern, got %q", val)
+	}
+}
+
+func TestBuild_StartsWith(t *testing.T) {
+	r, err := sqlbuild.Build(filter.StartsWith("code", "INV-"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val, _ := r.Args[0].(string)
+	if !strings.HasSuffix(val, "%") || strings.HasPrefix(val, "%") {
+		t.Errorf("StartsWith arg should be value%%, got %q", val)
+	}
+}
+
+func TestBuild_EndsWith(t *testing.T) {
+	r, err := sqlbuild.Build(filter.EndsWith("email", "@acme.com"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	val, _ := r.Args[0].(string)
+	if !strings.HasPrefix(val, "%") || strings.HasSuffix(val, "%") {
+		t.Errorf("EndsWith arg should be %%value, got %q", val)
+	}
+}
+
+func TestBuild_Or(t *testing.T) {
+	r, err := sqlbuild.Build(
+		filter.Or(filter.Eq("type", "A"), filter.Eq("type", "B")),
+		0,
+	)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "OR") {
+		t.Errorf("expected OR, got %q", r.Clause)
+	}
+}
+
+func TestBuild_CustomGt(t *testing.T) {
+	r, err := sqlbuild.Build(filter.CustomGt("score", decimal.NewFromInt(80)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "::numeric") {
+		t.Errorf("expected numeric cast, got %q", r.Clause)
+	}
+}
+
+func TestBuild_CustomLt(t *testing.T) {
+	r, err := sqlbuild.Build(filter.CustomLt("score", decimal.NewFromInt(50)), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "<") {
+		t.Errorf("expected < in custom LT clause, got %q", r.Clause)
+	}
+}
+
+func TestBuild_UnsupportedKind_ReturnsError(t *testing.T) {
+	f := &filter.Filter{Kind: filter.Kind("unknown_kind"), Field: "x", Value: "y"}
+	_, err := sqlbuild.Build(f, 0)
+	if err == nil {
+		t.Fatal("expected error for unsupported filter kind; got nil")
+	}
+	if !strings.Contains(err.Error(), "unsupported") {
+		t.Errorf("error should mention 'unsupported', got: %v", err)
+	}
+}
+
+func TestBuild_InjectionSafe_FieldName(t *testing.T) {
+	// quoteIdent double-quotes field names; any embedded double-quotes are
+	// doubled, so the whole field — including SQL metacharacters — is treated
+	// as a single identifier by PostgreSQL. Verify the clause is wrapped in
+	// double-quotes and that "DROP TABLE" is not present as a bare token.
+	f := filter.Eq(`"; DROP TABLE users; --`, "x")
+	r, err := sqlbuild.Build(f, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Clause must start with a double-quoted identifier.
+	if !strings.HasPrefix(r.Clause, `"`) {
+		t.Errorf("expected double-quoted identifier, got %q", r.Clause)
+	}
+	// The injected semicolon must not produce a bare DROP TABLE statement —
+	// i.e. it must not appear outside a quoted context. Since quoteIdent
+	// wraps the whole field in "…", the semicolon is inside the identifier
+	// and the value is parameterised, so no bare DROP TOKEN can escape.
+	// A naive check: the clause must end with a positional param ($N), not
+	// with SQL keywords.
+	if !strings.HasSuffix(strings.TrimSpace(r.Clause), "$1") {
+		t.Errorf("clause should end with positional param, got %q", r.Clause)
+	}
+}
+
+func TestBuild_InjectionSafe_Value(t *testing.T) {
+	// Values go into positional args, never interpolated into SQL.
+	f := filter.Eq("status", "'; DROP TABLE users; --")
+	r, err := sqlbuild.Build(f, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(r.Clause, "DROP TABLE") {
+		t.Error("SQL injection via value succeeded — parameterization is broken")
+	}
+	if len(r.Args) != 1 {
+		t.Errorf("value should be in args, not clause; got %d args", len(r.Args))
+	}
+}
+
+// --- Allowlist tests ---
+
+func TestBuildWithAllowlist_AllowedField(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_widget", []string{"status", "name"})
+	r, err := sqlbuild.BuildWithAllowlist(filter.Eq("status", "active"), 0, al)
+	if err != nil {
+		t.Fatalf("allowed field should not return error: %v", err)
+	}
+	if r.Clause == "" {
+		t.Error("expected non-empty clause")
+	}
+}
+
+func TestBuildWithAllowlist_DeniedField(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_widget", []string{"status"})
+	_, err := sqlbuild.BuildWithAllowlist(filter.Eq("secret_column", "x"), 0, al)
+	if err == nil {
+		t.Fatal("expected FieldNotAllowedError for unlisted field; got nil")
+	}
+	if _, ok := err.(*sqlbuild.FieldNotAllowedError); !ok {
+		t.Errorf("expected *FieldNotAllowedError, got %T: %v", err, err)
+	}
+}
+
+func TestBuildWithAllowlist_CustomField_Exempt(t *testing.T) {
+	// Custom predicates use JSONB keys — exempt from allowlist.
+	al := sqlbuild.NewManualAllowlist("test_widget", []string{"status"})
+	_, err := sqlbuild.BuildWithAllowlist(filter.CustomEq("any_jsonb_key", "v"), 0, al)
+	if err != nil {
+		t.Fatalf("custom field predicates exempt from allowlist: %v", err)
+	}
+}
+
+func TestBuildWithAllowlist_NestedDeniedField(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_widget", []string{"status"})
+	f := filter.And(
+		filter.Eq("status", "active"),
+		filter.Eq("forbidden_col", "x"),
+	)
+	_, err := sqlbuild.BuildWithAllowlist(f, 0, al)
+	if err == nil {
+		t.Fatal("expected error for nested denied field; got nil")
+	}
+}
+
+func TestBuildWithAllowlist_StandardColumnsAlwaysAllowed(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_widget", nil)
+	for _, col := range []string{"id", "tenant_id", "created_at", "updated_at", "deleted_at"} {
+		_, err := sqlbuild.BuildWithAllowlist(filter.IsNotNull(col), 0, al)
+		if err != nil {
+			t.Errorf("standard column %q should always be allowed: %v", col, err)
+		}
+	}
+}
+
+func TestBuildWithAllowlist_Nil(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_widget", nil)
+	r, err := sqlbuild.BuildWithAllowlist(nil, 0, al)
+	if err != nil {
+		t.Fatalf("nil filter should return empty result: %v", err)
+	}
+	if r.Clause != "" {
+		t.Errorf("expected empty clause, got %q", r.Clause)
+	}
+}
+
+func TestFieldNotAllowedError_Message(t *testing.T) {
+	err := &sqlbuild.FieldNotAllowedError{Field: "hack", EntityName: "mod_item"}
+	if !strings.Contains(err.Error(), "hack") || !strings.Contains(err.Error(), "mod_item") {
+		t.Errorf("error message missing field or entity: %q", err.Error())
+	}
+}
+
+func TestAllowlist_Allow(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("e", []string{"name"})
+	if !al.Allow("name") {
+		t.Error("declared field should be allowed")
+	}
+	if al.Allow("not_declared") {
+		t.Error("undeclared field should not be allowed")
+	}
+	if !al.Allow("id") {
+		t.Error("id should always be allowed")
 	}
 }
