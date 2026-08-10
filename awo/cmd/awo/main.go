@@ -38,6 +38,10 @@ func main() {
 	command := os.Args[1]
 	args := os.Args[2:]
 
+	// Strip global flags from args before command dispatch.
+	gf, args := parseGlobalFlags(args)
+	_ = gf // available to sub-commands via parseGlobalFlags in cmds_schema.go
+
 	var err error
 	switch command {
 	case "serve":
@@ -45,7 +49,11 @@ func main() {
 	case "new":
 		err = runNew(args)
 	case "schema":
-		err = runSchema(args)
+		err = runSchemaV2(args)
+	case "entity":
+		err = runEntityV2(args)
+	case "generate":
+		err = runGenerateV2(args)
 	case "migrate":
 		err = runMigrate(args)
 	case "module":

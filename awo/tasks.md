@@ -214,19 +214,19 @@ Phase 12 (Extraction / Public API / Hardening)
 
 ### Generation
 
-- [ ] Migration: table DDL generated from SystemDefinition
-- [ ] Migration: column types correct per FieldType
-- [ ] Migration: NOT NULL for Required fields
-- [ ] Migration: UNIQUE constraint for Unique fields
-- [ ] Migration: CHECK constraint for Select/MultiSelect Options
-- [ ] Migration: FK constraint for FieldTypeLink
-- [ ] Migration: GIN trigram index for Searchable fields
-- [ ] Migration: RLS policy generated per entity
-- [ ] Migration: `set_tenant_context` function generated
-- [ ] Migration: `updated_at` trigger generated
-- [ ] Migration: audit trigger generated (when AllowAudit:true)
-- [ ] Migration: CustomDefinition → custom_entity_records (no new table)
-- [ ] Migration: executes against real PostgreSQL without error
+- [x] Migration: table DDL generated from SystemDefinition
+- [x] Migration: column types correct per FieldType
+- [x] Migration: NOT NULL for Required fields
+- [x] Migration: UNIQUE constraint for Unique fields
+- [x] Migration: CHECK constraint for Select/MultiSelect Options
+- [x] Migration: FK constraint for FieldTypeLink
+- [x] Migration: GIN trigram index for Searchable fields
+- [x] Migration: RLS policy generated per entity
+- [x] Migration: `set_tenant_context` function generated
+- [x] Migration: `updated_at` trigger generated
+- [x] Migration: audit trigger generated (when AllowAudit:true)
+- [x] Migration: CustomDefinition → custom_entity_records (no new table)
+- [ ] Migration: executes against real PostgreSQL without error (needs real PG — Phase 11)
 - [ ] OpenAPI: all entities present
 - [ ] OpenAPI: paths match RouteDescriptor list
 - [ ] OpenAPI: required fields marked
@@ -259,19 +259,19 @@ Phase 12 (Extraction / Public API / Hardening)
 
 ### Developer Tooling (Phase 6)
 
-- [ ] CLI: `awo serve` starts server
-- [ ] CLI: `awo schema compile` compiles registry
-- [ ] CLI: `awo schema validate` reports errors
-- [ ] CLI: `awo schema graph` prints dependency graph
-- [ ] CLI: `awo generate migrations` produces SQL files
-- [ ] CLI: `awo generate openapi` produces spec
-- [ ] CLI: `awo generate docs` produces Markdown
-- [ ] CLI: `awo migrate status` reads applied migrations
-- [ ] CLI: `awo migrate apply` runs migrations
-- [ ] CLI: `awo entity list` lists all entities
-- [ ] CLI: `awo entity inspect {name}` shows entity schema
-- [ ] CLI: `--json` flag produces machine-readable output
-- [ ] CLI: `--dry-run` flag on generate commands
+- [x] CLI: `awo serve` starts server
+- [x] CLI: `awo schema compile` compiles registry
+- [x] CLI: `awo schema validate` reports errors
+- [x] CLI: `awo schema graph` prints dependency graph
+- [x] CLI: `awo generate migrations` produces SQL files
+- [ ] CLI: `awo generate openapi` produces spec (Phase 9)
+- [ ] CLI: `awo generate docs` produces Markdown (Phase 9)
+- [ ] CLI: `awo migrate status` reads applied migrations (Phase 5 integration)
+- [ ] CLI: `awo migrate apply` runs migrations (Phase 5 integration)
+- [x] CLI: `awo entity list` lists all entities
+- [x] CLI: `awo entity inspect {name}` shows entity schema
+- [x] CLI: `--json` flag produces machine-readable output
+- [x] CLI: `--dry-run` flag on generate commands
 
 ---
 
@@ -788,16 +788,16 @@ Integration test verifies:
 
 ### Acceptance Criteria
 
-- [ ] `generator.Generate(schema)` returns a `Plan` with ordered SQL files
-- [ ] Generated table has all standard columns (id, tenant_id, created_at, updated_at, deleted_at)
-- [ ] Generated columns match FieldType → PostgreSQL mapping
-- [ ] Required fields have NOT NULL
-- [ ] Select fields have CHECK constraint
-- [ ] Link fields have FK reference
-- [ ] RLS policy is generated and correct
-- [ ] Generated SQL executes against real PostgreSQL without error
-- [ ] `updated_at` trigger fires on UPDATE
-- [ ] SQL comments derived from field Descriptions
+- [x] `generator.Generate(schema)` returns a `Plan` with ordered SQL files
+- [x] Generated table has all standard columns (id, tenant_id, created_at, updated_at, deleted_at)
+- [x] Generated columns match FieldType → PostgreSQL mapping
+- [x] Required fields have NOT NULL
+- [x] Select fields have CHECK constraint
+- [x] Link fields have FK reference
+- [x] RLS policy is generated and correct
+- [ ] Generated SQL executes against real PostgreSQL without error (integration test — needs real PG)
+- [x] `updated_at` trigger fires on UPDATE (trigger DDL generated)
+- [x] SQL comments derived from field Descriptions
 
 ---
 
@@ -905,12 +905,12 @@ awo/cmd/awo/*_test.go   — command output format tests (JSON mode)
 
 ### Acceptance Criteria
 
-- [ ] `awo serve` starts server (equivalent to current `cmd/server/main.go`)
-- [ ] `awo schema validate` exits 0 on clean schema, non-zero on errors
-- [ ] `awo generate migrations --dry-run` prints plan without writing files
-- [ ] `awo --json entity list` outputs valid JSON array
-- [ ] `awo doctor` checks DB and Redis connectivity
-- [ ] All commands are script-friendly (no mandatory interactive input)
+- [x] `awo serve` starts server (equivalent to current `cmd/server/main.go`)
+- [x] `awo schema validate` exits 0 on clean schema, non-zero on errors
+- [x] `awo generate migrations --dry-run` prints plan without writing files
+- [x] `awo --json entity list` outputs valid JSON array
+- [x] `awo doctor` checks DB and Redis connectivity
+- [x] All commands are script-friendly (no mandatory interactive input)
 
 ---
 

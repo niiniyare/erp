@@ -1,0 +1,399 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strings"
+
+	"awo.so/awo/audit"
+	"awo.so/awo/compiler"
+	"awo.so/awo/def"
+	"awo.so/awo/generator"
+	"awo.so/awo/registry"
+
+	// Platform entity init() registration side effects.
+	_ "awo.so/awo/platform/audit"
+	_ "awo.so/awo/platform/flags"
+	_ "awo.so/awo/platform/iam"
+	_ "awo.so/awo/platform/metadata"
+	_ "awo.so/awo/platform/registry"
+	_ "awo.so/awo/platform/settings"
+	_ "awo.so/awo/platform/tenant"
+)
+
+// globalFlags are parsed from os.Args before the sub-command is dispatched.
+type globalFlags struct {
+	JSON   bool
+	DryRun bool
+	Quiet  bool
+}
+
+// parseGlobalFlags scans args for --json, --dry-run, --quiet.
+// It returns the remaining args (with the flags stripped).
+func parseGlobalFlags(args []string) (globalFlags, []string) {
+	var gf globalFlags
+	var rest []string
+	for _, a := range args {
+		switch a {
+		case "--json":
+			gf.JSON = true
+		case "--dry-run":
+			gf.DryRun = true
+		case "--quiet", "-q":
+			gf.Quiet = true
+		default:
+			rest = append(rest, a)
+		}
+	}
+	return gf, rest
+}
+
+// compileRegisteredSchema builds and compiles the global entity registry.
+// All platform entity init() calls have already run via package imports above.
+func compileRegisteredSchema() (*compiler.CompiledSchema, error) {
+	reg := registry.Build()
+	audit.Seal()
+	return compiler.Compile(reg)
+}
+
+// printJSONValue encodes v as indented JSON to stdout.
+func printJSONValue(v any) error {
+	enc := json.NewEncoder(os.Stdout)
+	enc.SetIndent("", "  ")
+	return enc.Encode(v)
+}
+
+// ── schema subcommands ────────────────────────────────────────────────────────
+
+// runSchemaV2 dispatches schema subcommands with global flag support.
+// Replaces the stub runSchema in main.go when called from the updated switch.
+func runSchemaV2(args []string) error {
+	gf, rest := parseGlobalFlags(args)
+	sub := ""
+	if len(rest) > 0 {
+		sub = rest[0]
+	}
+	switch sub {
+	case "compile":
+		return schemaCompile(gf)
+	case "validate":
+		return schemaValidate(gf)
+	case "graph":
+		return schemaGraph(gf)
+	default:
+		return fmt.Errorf("unknown schema sub-command %q (use: compile, validate, graph, inspect, fingerprint)", sub)
+	}
+}
+
+func schemaCompile(gf globalFlags) error {
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	if gf.JSON {
+		return printJSONValue(map[string]any{
+			"entities": len(schema.Entities),
+			"routes":   len(schema.Routes),
+			"grants":   len(schema.CapabilityGrants),
+			"warnings": len(schema.Diagnostics),
+		})
+	}
+	if !gf.Quiet {
+		fmt.Printf("compiled %d entities, %d routes, %d capability grants\n",
+			len(schema.Entities), len(schema.Routes), len(schema.CapabilityGrants))
+		for _, d := range schema.Diagnostics {
+			fmt.Printf("  [%s] %s\n", d.Severity, d.Message)
+		}
+	}
+	return nil
+}
+
+func schemaValidate(gf globalFlags) error {
+	_, err := compileRegisteredSchema()
+	if err != nil {
+		if gf.JSON {
+			_ = printJSONValue(map[string]any{"valid": false, "error": err.Error()})
+		} else {
+			fmt.Fprintln(os.Stderr, "schema invalid:", err)
+		}
+		os.Exit(1)
+	}
+	if gf.JSON {
+		return printJSONValue(map[string]any{"valid": true})
+	}
+	if !gf.Quiet {
+		fmt.Println("schema valid")
+	}
+	return nil
+}
+
+func schemaGraph(gf globalFlags) error {
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	if schema.Graph == nil {
+		return fmt.Errorf("dependency graph not available")
+	}
+	order := schema.Graph.TopologicalOrder
+	// Reconstruct edge list using the public Deps() method.
+	type graphEdge struct {
+		From string `json:"from"`
+		To   string `json:"to"`
+	}
+	var edges []graphEdge
+	for _, name := range order {
+		for _, dep := range schema.Graph.Deps(name) {
+			edges = append(edges, graphEdge{From: name, To: dep})
+		}
+	}
+	if gf.JSON {
+		return printJSONValue(map[string]any{
+			"topological_order": order,
+			"edges":             edges,
+		})
+	}
+	if !gf.Quiet {
+		fmt.Println("Topological order (safe migration order):")
+		for i, name := range order {
+			fmt.Printf("  %d. %s\n", i+1, name)
+		}
+		if len(edges) > 0 {
+			fmt.Printf("\nDependencies (%d edges):\n", len(edges))
+			for _, e := range edges {
+				fmt.Printf("  %s → %s\n", e.From, e.To)
+			}
+		}
+	}
+	return nil
+}
+
+// ── entity subcommands ────────────────────────────────────────────────────────
+
+// runEntityV2 dispatches entity subcommands.
+func runEntityV2(args []string) error {
+	gf, rest := parseGlobalFlags(args)
+	sub := ""
+	if len(rest) > 0 {
+		sub = rest[0]
+	}
+	switch sub {
+	case "list":
+		return entityList(gf)
+	case "inspect":
+		name := ""
+		if len(rest) > 1 {
+			name = rest[1]
+		}
+		return entityInspect(gf, name)
+	default:
+		return fmt.Errorf("unknown entity sub-command %q (use: list, inspect <name>)", sub)
+	}
+}
+
+func entityList(gf globalFlags) error {
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	if gf.JSON {
+		items := make([]map[string]any, 0, len(schema.Entities))
+		for _, es := range schema.Entities {
+			items = append(items, map[string]any{
+				"name":        es.QualifiedName,
+				"module":      es.Module,
+				"label":       es.Label,
+				"is_system":   es.IsSystem,
+				"field_count": len(es.Fields),
+				"table":       es.TableName,
+			})
+		}
+		return printJSONValue(items)
+	}
+	if !gf.Quiet {
+		fmt.Printf("%-40s %-12s %-6s %s\n", "NAME", "MODULE", "TYPE", "LABEL")
+		fmt.Println(strings.Repeat("-", 80))
+		for _, es := range schema.Entities {
+			kind := "custom"
+			if es.IsSystem {
+				kind = "system"
+			}
+			fmt.Printf("%-40s %-12s %-6s %s\n", es.QualifiedName, es.Module, kind, es.Label)
+		}
+	}
+	return nil
+}
+
+func entityInspect(gf globalFlags, name string) error {
+	if name == "" {
+		return fmt.Errorf("usage: awo entity inspect <entity-name>")
+	}
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	es, ok := schema.ByName[name]
+	if !ok {
+		return fmt.Errorf("entity %q not found", name)
+	}
+	if gf.JSON {
+		fields := make([]map[string]any, 0, len(es.Fields))
+		for _, f := range es.Fields {
+			fields = append(fields, map[string]any{
+				"name":       f.Name,
+				"type":       string(f.Type),
+				"required":   f.Required,
+				"unique":     f.Unique,
+				"immutable":  f.Immutable,
+				"sensitive":  f.Sensitive,
+				"searchable": f.Searchable,
+			})
+		}
+		return printJSONValue(map[string]any{
+			"name":         es.QualifiedName,
+			"module":       es.Module,
+			"label":        es.Label,
+			"is_system":    es.IsSystem,
+			"table":        es.TableName,
+			"allow_audit":  es.AllowAudit,
+			"scope":        string(es.Scope),
+			"fields":       fields,
+			"route_prefix": es.RoutePrefix,
+		})
+	}
+	if !gf.Quiet {
+		fmt.Printf("Entity:      %s\n", es.QualifiedName)
+		fmt.Printf("Module:      %s\n", es.Module)
+		fmt.Printf("Label:       %s\n", es.Label)
+		fmt.Printf("Table:       %s\n", es.TableName)
+		fmt.Printf("Type:        %s\n", map[bool]string{true: "system", false: "custom"}[es.IsSystem])
+		fmt.Printf("Scope:       %s\n", es.Scope)
+		fmt.Printf("AllowAudit:  %v\n", es.AllowAudit)
+		fmt.Printf("Routes:      %s\n", es.RoutePrefix)
+		fmt.Printf("\nFields (%d):\n", len(es.Fields))
+		fmt.Printf("  %-30s %-14s %s\n", "NAME", "TYPE", "FLAGS")
+		fmt.Println("  " + strings.Repeat("-", 60))
+		for _, f := range es.Fields {
+			fmt.Printf("  %-30s %-14s %s\n", f.Name, string(f.Type), fmtFieldFlags(f))
+		}
+		if len(es.Actions) > 0 {
+			fmt.Printf("\nActions (%d):\n", len(es.Actions))
+			for _, a := range es.Actions {
+				fmt.Printf("  %s %s/%s\n", a.Method, es.RoutePrefix, a.Name)
+			}
+		}
+	}
+	return nil
+}
+
+// fmtFieldFlags returns a compact flag string for a field.
+func fmtFieldFlags(f def.FieldDef) string {
+	var flags []string
+	if f.Required {
+		flags = append(flags, "required")
+	}
+	if f.Unique {
+		flags = append(flags, "unique")
+	}
+	if f.Immutable {
+		flags = append(flags, "immutable")
+	}
+	if f.Sensitive {
+		flags = append(flags, "sensitive")
+	}
+	if f.Searchable {
+		flags = append(flags, "searchable")
+	}
+	return strings.Join(flags, " ")
+}
+
+// ── generate subcommands ──────────────────────────────────────────────────────
+
+// runGenerateV2 dispatches generate subcommands.
+func runGenerateV2(args []string) error {
+	gf, rest := parseGlobalFlags(args)
+	sub := ""
+	if len(rest) > 0 {
+		sub = rest[0]
+	}
+	switch sub {
+	case "migrations":
+		return generateMigrations(gf, rest[1:])
+	default:
+		return fmt.Errorf("unknown generate sub-command %q (use: migrations)", sub)
+	}
+}
+
+func generateMigrations(gf globalFlags, args []string) error {
+	// Parse --output and --start-seq flags.
+	outDir := "./db/migrations"
+	startSeq := 1
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--output":
+			if i+1 < len(args) {
+				outDir = args[i+1]
+				i++
+			}
+		case "--start-seq":
+			if i+1 < len(args) {
+				fmt.Sscanf(args[i+1], "%d", &startSeq)
+				i++
+			}
+		}
+	}
+
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+
+	plan, err := generator.Generate(schema, generator.Options{
+		MigrationDir: outDir,
+		StartSeq:     startSeq,
+	})
+	if err != nil {
+		return fmt.Errorf("generate migrations: %w", err)
+	}
+
+	if gf.JSON {
+		items := make([]map[string]any, 0, len(plan.Files))
+		for _, f := range plan.Files {
+			items = append(items, map[string]any{
+				"file": f.Name + ".sql",
+				"path": outDir + "/" + f.Name + ".sql",
+			})
+		}
+		return printJSONValue(map[string]any{
+			"dry_run": gf.DryRun,
+			"output":  outDir,
+			"files":   items,
+		})
+	}
+
+	if gf.DryRun {
+		fmt.Printf("dry-run: would write %d migration file(s) to %s\n", len(plan.Files), outDir)
+		for _, f := range plan.Files {
+			fmt.Printf("  %s.sql\n", f.Name)
+		}
+		return nil
+	}
+
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return fmt.Errorf("create output dir %q: %w", outDir, err)
+	}
+	for _, f := range plan.Files {
+		path := outDir + "/" + f.Name + ".sql"
+		if err := os.WriteFile(path, []byte(f.SQL), 0o644); err != nil {
+			return fmt.Errorf("write %q: %w", path, err)
+		}
+		if !gf.Quiet {
+			fmt.Printf("  wrote %s\n", path)
+		}
+	}
+	if !gf.Quiet {
+		fmt.Printf("generated %d migration file(s) in %s\n", len(plan.Files), outDir)
+	}
+	return nil
+}
