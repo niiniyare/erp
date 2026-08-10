@@ -204,3 +204,79 @@ func TestFormatCycle(t *testing.T) {
 		t.Errorf("formatCycle: got %q, want %q", got, want)
 	}
 }
+
+func TestFormatCycle_Empty(t *testing.T) {
+	got := formatCycle(nil)
+	if got != "(empty)" {
+		t.Errorf("formatCycle(nil): got %q, want \"(empty)\"", got)
+	}
+}
+
+func TestReport_Basic(t *testing.T) {
+	g := buildTestGraph(map[string][]string{
+		"finance_invoice":  {"finance_currency"},
+		"finance_payment":  {"finance_currency"},
+		"finance_currency": {},
+	})
+	// Populate TopologicalOrder manually for report test.
+	order, err := g.topologicalSort()
+	if err != nil {
+		t.Fatalf("topologicalSort: %v", err)
+	}
+	g.TopologicalOrder = order
+
+	r := g.Report()
+
+	if r.NodeCount != 3 {
+		t.Errorf("expected 3 nodes, got %d", r.NodeCount)
+	}
+	if r.EdgeCount != 2 {
+		t.Errorf("expected 2 edges, got %d", r.EdgeCount)
+	}
+	if len(r.TopologicalOrder) != 3 {
+		t.Errorf("expected 3 in topo order, got %d", len(r.TopologicalOrder))
+	}
+	// Verify sorted edges.
+	for i := 1; i < len(r.Edges); i++ {
+		prev := r.Edges[i-1]
+		curr := r.Edges[i]
+		if prev.Source > curr.Source || (prev.Source == curr.Source && prev.Target > curr.Target) {
+			t.Errorf("edges not sorted: %v before %v", prev, curr)
+		}
+	}
+}
+
+func TestReport_SelfRefs(t *testing.T) {
+	g := &DependencyGraph{
+		nodes: map[string]bool{
+			"platform_organization": true,
+		},
+		edges: map[string]map[string]bool{
+			"platform_organization": {},
+		},
+		SelfRefs: map[string]bool{
+			"platform_organization": true,
+		},
+		TopologicalOrder: []string{"platform_organization"},
+	}
+	r := g.Report()
+	if len(r.SelfRefs) != 1 || r.SelfRefs[0] != "platform_organization" {
+		t.Errorf("expected SelfRefs=[platform_organization], got %v", r.SelfRefs)
+	}
+}
+
+func TestReport_NoEdges(t *testing.T) {
+	g := &DependencyGraph{
+		nodes:            map[string]bool{"A": true},
+		edges:            map[string]map[string]bool{"A": {}},
+		SelfRefs:         map[string]bool{},
+		TopologicalOrder: []string{"A"},
+	}
+	r := g.Report()
+	if r.EdgeCount != 0 {
+		t.Errorf("expected 0 edges, got %d", r.EdgeCount)
+	}
+	if r.NodeCount != 1 {
+		t.Errorf("expected 1 node, got %d", r.NodeCount)
+	}
+}
