@@ -59,9 +59,6 @@ import (
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"
-
-	// Demo module — entity registrations for the developer showcase.
-	_ "awo.so/modules/demo"
 )
 
 func main() {
@@ -119,7 +116,8 @@ func main() {
 	// loader returns false — legacy audit system remains active (ADR-019 Phase 2).
 	auditFlagLoader := audit.FlagLoader(func(ctx context.Context) bool {
 		var value string
-		err := pool.QueryRow(ctx,
+		err := pool.QueryRow(
+			ctx,
 			"SELECT value FROM platform_audit_config WHERE key = 'feature.unified_audit.enabled'",
 		).Scan(&value)
 		if err != nil {

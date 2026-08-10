@@ -12,7 +12,6 @@ import (
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
-	"awo.so/awo/examples/demo"
 	"awo.so/awo/filter"
 	"awo.so/awo/platform/iam"
 	"awo.so/awo/platform/organization"
@@ -22,20 +21,19 @@ import (
 	"awo.so/awo/testing/harness"
 )
 
-func demoDefs() []def.EntityDefinition {
+func platformDefs() []def.EntityDefinition {
 	return []def.EntityDefinition{
 		&tenant.Definition,
 		&iam.UserDefinition,
 		&organization.Definition,
 		&organization.OrgTypeDefinition,
 		&organization.OrgAssignmentDefinition,
-		&demo.CustomerDefinition,
 	}
 }
 
 // BenchmarkRegistryBuild measures the cost of BuildFrom + validation.
 func BenchmarkRegistryBuild(b *testing.B) {
-	defs := demoDefs()
+	defs := platformDefs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		reg, err := registry.BuildFrom(defs)
@@ -47,7 +45,7 @@ func BenchmarkRegistryBuild(b *testing.B) {
 
 // BenchmarkCompilerCompile measures the cost of schema compilation.
 func BenchmarkCompilerCompile(b *testing.B) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		b.Fatalf("registry: %v", err)
 	}
@@ -62,7 +60,7 @@ func BenchmarkCompilerCompile(b *testing.B) {
 
 // BenchmarkCompilerFingerprint measures Fingerprint computation.
 func BenchmarkCompilerFingerprint(b *testing.B) {
-	reg, _ := registry.BuildFrom(demoDefs())
+	reg, _ := registry.BuildFrom(platformDefs())
 	schema, _ := compiler.Compile(reg)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
@@ -71,23 +69,22 @@ func BenchmarkCompilerFingerprint(b *testing.B) {
 }
 
 // BenchmarkFakeStoreCreate measures fakestore.Create throughput.
+// fakestore is schema-free so any field map is accepted.
 func BenchmarkFakeStoreCreate(b *testing.B) {
-	h := harness.New(b, demoDefs()...)
+	h := harness.New(b, platformDefs()...)
 	ctx := h.Context()
 	store := h.Store
 	tenantID := h.TenantID
-	orgID := uuid.New()
 	actor := &def.Actor{UserID: h.ActorID, TenantID: tenantID, Roles: h.ActorRoles}
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
 		_, err := store.Create(ctx, driver.CreateInput{
 			Data: map[string]any{
-				"tenant_id":     tenantID,
-				"org_id":        orgID,
-				"customer_code": uuid.New().String()[:8],
-				"name":          "Bench Customer",
-				"active":        true,
+				"tenant_id": tenantID,
+				"name":      "Bench Tenant",
+				"slug":      uuid.New().String()[:8],
+				"status":    "PENDING",
 			},
 			Actor: actor,
 		})
@@ -99,11 +96,10 @@ func BenchmarkFakeStoreCreate(b *testing.B) {
 
 // BenchmarkFakeStoreQuery measures fakestore.Query with filter against 1000 records.
 func BenchmarkFakeStoreQuery(b *testing.B) {
-	h := harness.New(b, demoDefs()...)
+	h := harness.New(b, platformDefs()...)
 	ctx := h.Context()
 	store := h.Store
 	tenantID := h.TenantID
-	orgID := uuid.New()
 	actor := &def.Actor{UserID: h.ActorID, TenantID: tenantID, Roles: h.ActorRoles}
 
 	// Seed 1000 records.
@@ -112,11 +108,11 @@ func BenchmarkFakeStoreQuery(b *testing.B) {
 		active := i%3 != 0
 		inputs[i] = driver.CreateInput{
 			Data: map[string]any{
-				"tenant_id":     tenantID,
-				"org_id":        orgID,
-				"customer_code": uuid.New().String()[:8],
-				"name":          "Customer",
-				"active":        active,
+				"tenant_id": tenantID,
+				"name":      "Tenant",
+				"slug":      uuid.New().String()[:8],
+				"status":    "PENDING",
+				"active":    active,
 			},
 			Actor: actor,
 		}
@@ -138,15 +134,14 @@ func BenchmarkFakeStoreQuery(b *testing.B) {
 
 // BenchmarkFakeStoreGet measures single-record Get by ID.
 func BenchmarkFakeStoreGet(b *testing.B) {
-	h := harness.New(b, demoDefs()...)
+	h := harness.New(b, platformDefs()...)
 	ctx := h.Context()
 	store := h.Store
 	tenantID := h.TenantID
-	orgID := uuid.New()
 	actor := &def.Actor{UserID: h.ActorID, TenantID: tenantID, Roles: h.ActorRoles}
 
 	rec, err := store.Create(ctx, driver.CreateInput{
-		Data:  map[string]any{"tenant_id": tenantID, "org_id": orgID, "customer_code": "BENCH", "name": "Bench", "active": true},
+		Data:  map[string]any{"tenant_id": tenantID, "name": "Bench", "slug": "bench", "status": "PENDING"},
 		Actor: actor,
 	})
 	if err != nil {
@@ -167,14 +162,13 @@ func BenchmarkFilterEval(b *testing.B) {
 	store := fakestore.New()
 	ctx := context.Background()
 	tenantID := uuid.New()
-	orgID := uuid.New()
 	actor := &def.Actor{UserID: uuid.New(), TenantID: tenantID}
 
 	// Seed 500 records.
 	inputs := make([]driver.CreateInput, 500)
 	for i := range inputs {
 		inputs[i] = driver.CreateInput{
-			Data:  map[string]any{"tenant_id": tenantID, "org_id": orgID, "customer_code": uuid.New().String()[:8], "name": "X", "active": i%2 == 0},
+			Data:  map[string]any{"tenant_id": tenantID, "name": "Tenant", "slug": uuid.New().String()[:8], "active": i%2 == 0},
 			Actor: actor,
 		}
 	}
@@ -182,7 +176,7 @@ func BenchmarkFilterEval(b *testing.B) {
 
 	f := filter.And(
 		filter.Eq("active", true),
-		filter.Contains("name", "X"),
+		filter.Contains("name", "Tenant"),
 	)
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {

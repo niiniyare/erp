@@ -27,6 +27,7 @@ import (
 	contribredis "awo.so/awo/contrib/redis"
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
+
 	// FIX: "awo.so/awo/events/outbox" — re-enable when events_outbox migration applied
 	"awo.so/awo/observability/health"
 	"awo.so/awo/observability/metrics"
@@ -46,9 +47,6 @@ import (
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"
-
-	// Demo module — entity registrations for the developer showcase.
-	_ "awo.so/modules/demo"
 )
 
 // ServeConfig holds all configuration options for the HTTP server.
@@ -156,7 +154,8 @@ func startServer(cfg ServeConfig) error {
 	}
 	auditFlagLoader := audit.FlagLoader(func(flagCtx context.Context) bool {
 		var value string
-		fErr := pool.QueryRow(flagCtx,
+		fErr := pool.QueryRow(
+			flagCtx,
 			"SELECT value FROM platform_audit_config WHERE key = 'feature.unified_audit.enabled'",
 		).Scan(&value)
 		if fErr != nil {

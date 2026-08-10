@@ -169,14 +169,15 @@ func (p *Pipeline) RunAfterCreate(ctx context.Context, record *def.EntityRecord)
 	}
 	hooks := es.Hooks
 
-	for _, h := range hooks.AfterSave {
-		if err := h.AfterSave(ctx, record); err != nil {
-			return fmt.Errorf("after_save: %w", err)
-		}
-	}
+	// Entity-specific hook fires before the cross-cutting AfterSave.
 	for _, h := range hooks.AfterCreate {
 		if err := h.AfterCreate(ctx, record); err != nil {
 			return fmt.Errorf("after_create: %w", err)
+		}
+	}
+	for _, h := range hooks.AfterSave {
+		if err := h.AfterSave(ctx, record); err != nil {
+			return fmt.Errorf("after_save: %w", err)
 		}
 	}
 	return nil
@@ -251,14 +252,15 @@ func (p *Pipeline) RunAfterUpdate(ctx context.Context, record, prev *def.EntityR
 	}
 	hooks := es.Hooks
 
-	for _, h := range hooks.AfterSave {
-		if err := h.AfterSave(ctx, record); err != nil {
-			return fmt.Errorf("after_save: %w", err)
-		}
-	}
+	// Entity-specific hook fires before the cross-cutting AfterSave.
 	for _, h := range hooks.AfterUpdate {
 		if err := h.AfterUpdate(ctx, record, prev); err != nil {
 			return fmt.Errorf("after_update: %w", err)
+		}
+	}
+	for _, h := range hooks.AfterSave {
+		if err := h.AfterSave(ctx, record); err != nil {
+			return fmt.Errorf("after_save: %w", err)
 		}
 	}
 	return nil
@@ -309,6 +311,13 @@ func (p *Pipeline) RunAfterDelete(ctx context.Context, record *def.EntityRecord)
 // propagate the error (causing the transaction to roll back); all other
 // categories suppress the error (mutation succeeds, failure is logged).
 func (p *Pipeline) RunAuditRecord(ctx context.Context, record *def.EntityRecord, before, after map[string]any) error {
+	// Check EntitySchema.AllowAudit first (ADR-023). This is the compile-time
+	// opt-out set via DisableAudit: true on the definition struct. It takes
+	// precedence over the audit.EntityAuditConfig registry.
+	if es, err := p.lookupSchema(record.EntityName); err == nil && !es.AllowAudit {
+		return nil
+	}
+
 	cfg := audit.ConfigFor(record.EntityName)
 	if !cfg.Enabled {
 		return nil

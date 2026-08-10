@@ -1,162 +1,269 @@
-package runtime_test
+package runtime
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"awo.so/awo/audit"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/registry"
-	"awo.so/awo/runtime"
 )
 
-// buildTestSchema compiles a minimal CompiledSchema from a single EntityDefinition.
-func buildTestSchema(t *testing.T, d def.EntityDefinition) *compiler.CompiledSchema {
-	t.Helper()
-	reg, err := registry.BuildFrom([]def.EntityDefinition{d})
+// --- Helpers ---
+
+func mustCompile(defs ...def.EntityDefinition) *compiler.CompiledSchema {
+	reg, err := registry.BuildFrom(defs)
 	if err != nil {
-		t.Fatalf("registry.BuildFrom: %v", err)
+		panic(fmt.Sprintf("mustCompile: BuildFrom: %v", err))
 	}
 	schema, err := compiler.Compile(reg)
 	if err != nil {
-		t.Fatalf("compiler.Compile: %v", err)
+		panic(fmt.Sprintf("mustCompile: Compile: %v", err))
 	}
 	return schema
 }
 
-func TestPipeline_RunBeforeCreate_AppliesDefaults(t *testing.T) {
-	d := &def.SystemDefinition{
-		Name:   "test_order",
-		Module: "test",
-		Label:  "Order",
-		Fields: []def.FieldDef{
-			{
-				Name:    "status",
-				Type:    def.FieldTypeSelect,
-				Options: []string{"pending", "completed"},
-				Default: func() any { return "pending" },
-			},
-		},
+func buildPipelineSchema(fields []def.FieldDef, hooks def.HookSet) *compiler.CompiledSchema {
+	return mustCompile(&def.SystemDefinition{
+		Name: "widget", Module: "test", Fields: fields, Hooks: hooks,
+	})
+}
+
+// --- Hook tracking ---
+
+type trackingHook struct {
+	label string
+	log   *[]string
+}
+
+func (h *trackingHook) BeforeValidate(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) BeforeCreate(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) AfterCreate(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) BeforeUpdate(_ context.Context, _, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) AfterUpdate(_ context.Context, _, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) BeforeDelete(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) AfterDelete(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) BeforeSave(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+func (h *trackingHook) AfterSave(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, h.label); return nil
+}
+
+func th(label string, log *[]string) *trackingHook { return &trackingHook{label: label, log: log} }
+
+type failHook struct{ log *[]string }
+
+func (h *failHook) BeforeValidate(_ context.Context, _ *def.EntityRecord) error {
+	*h.log = append(*h.log, "fail")
+	return &ValidationError{Fields: map[string]string{"_": "injected"}}
+}
+
+type auditCapture struct{ called bool }
+
+func (a *auditCapture) Write(_ context.Context, _ audit.AuditRecord) error {
+	a.called = true; return nil
+}
+
+func assertOrder(t *testing.T, got, want []string) {
+	t.Helper()
+	if len(got) != len(want) {
+		t.Fatalf("hook count: got %d %v, want %d %v", len(got), got, len(want), want)
 	}
-
-	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
-
-	pctx := &runtime.CreateContext{
-		Ctx:        context.Background(),
-		EntityName: "test_order",
-		Data:       map[string]any{}, // no status provided
-		Actor:      nil,
+	for i := range want {
+		if got[i] != want[i] {
+			t.Errorf("hook[%d]: got %q, want %q (full: %v)", i, got[i], want[i], got)
+		}
 	}
+}
 
-	record, err := pipeline.RunBeforeCreate(pctx)
+// --- Tests ---
+
+func TestPipeline_CreateHookOrder(t *testing.T) {
+	var log []string
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{th("before_validate", &log)},
+		BeforeSave:     []def.BeforeSaveHook{th("before_save", &log)},
+		BeforeCreate:   []def.BeforeCreateHook{th("before_create", &log)},
+		AfterCreate:    []def.AfterCreateHook{th("after_create", &log)},
+		AfterSave:      []def.AfterSaveHook{th("after_save", &log)},
+	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	ctx := context.Background()
+	record, err := p.RunBeforeCreate(&CreateContext{
+		Ctx: ctx, EntityName: "test_widget",
+		Data: map[string]any{"name": "x"}, Actor: &def.Actor{},
+	})
 	if err != nil {
-		t.Fatalf("RunBeforeCreate failed: %v", err)
+		t.Fatalf("RunBeforeCreate: %v", err)
 	}
-	if record.GetString("status") != "pending" {
-		t.Errorf("default not applied: got %q, want %q", record.GetString("status"), "pending")
+	if err := p.RunAfterCreate(ctx, record); err != nil {
+		t.Fatalf("RunAfterCreate: %v", err)
 	}
+	assertOrder(t, log, []string{
+		"before_validate", "before_save", "before_create", "after_create", "after_save",
+	})
 }
 
-func TestPipeline_RunBeforeCreate_RequiredFieldMissing(t *testing.T) {
-	d := &def.SystemDefinition{
-		Name:   "test_item",
-		Module: "test",
-		Label:  "Item",
-		Fields: []def.FieldDef{
-			{Name: "name", Type: def.FieldTypeData, Required: true},
-		},
+func TestPipeline_UpdateHookOrder(t *testing.T) {
+	var log []string
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{th("before_validate", &log)},
+		BeforeSave:     []def.BeforeSaveHook{th("before_save", &log)},
+		BeforeUpdate:   []def.BeforeUpdateHook{th("before_update", &log)},
+		AfterUpdate:    []def.AfterUpdateHook{th("after_update", &log)},
+		AfterSave:      []def.AfterSaveHook{th("after_save", &log)},
 	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
 
-	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
-
-	pctx := &runtime.CreateContext{
-		Ctx:        context.Background(),
-		EntityName: "test_item",
-		Data:       map[string]any{}, // name missing
-		Actor:      nil,
+	ctx := context.Background()
+	current := &def.EntityRecord{EntityName: "test_widget", Data: map[string]any{"name": "old"}}
+	proposed, err := p.RunBeforeUpdate(&UpdateContext{
+		Ctx: ctx, EntityName: "test_widget",
+		Data: map[string]any{"name": "new"}, Actor: &def.Actor{},
+	}, current)
+	if err != nil {
+		t.Fatalf("RunBeforeUpdate: %v", err)
 	}
+	if err := p.RunAfterUpdate(ctx, proposed, current); err != nil {
+		t.Fatalf("RunAfterUpdate: %v", err)
+	}
+	assertOrder(t, log, []string{
+		"before_validate", "before_save", "before_update", "after_update", "after_save",
+	})
+}
 
-	_, err := pipeline.RunBeforeCreate(pctx)
+func TestPipeline_DeleteHookOrder(t *testing.T) {
+	var log []string
+	hooks := def.HookSet{
+		BeforeDelete: []def.BeforeDeleteHook{th("before_delete", &log)},
+		AfterDelete:  []def.AfterDeleteHook{th("after_delete", &log)},
+	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	ctx := context.Background()
+	record := &def.EntityRecord{EntityName: "test_widget"}
+	if err := p.RunBeforeDelete(ctx, record); err != nil {
+		t.Fatalf("RunBeforeDelete: %v", err)
+	}
+	if err := p.RunAfterDelete(ctx, record); err != nil {
+		t.Fatalf("RunAfterDelete: %v", err)
+	}
+	assertOrder(t, log, []string{"before_delete", "after_delete"})
+}
+
+func TestPipeline_ImmutableField_Rejected(t *testing.T) {
+	fields := []def.FieldDef{
+		{Name: "name", Type: def.FieldTypeData},
+		{Name: "code", Type: def.FieldTypeData, Immutable: true},
+	}
+	schema := buildPipelineSchema(fields, def.HookSet{})
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	current := &def.EntityRecord{EntityName: "test_widget", Data: map[string]any{"name": "foo", "code": "W-001"}}
+	_, err := p.RunBeforeUpdate(&UpdateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{"code": "W-002"}, Actor: &def.Actor{},
+	}, current)
 	if err == nil {
-		t.Fatal("expected validation error for missing required field, got nil")
+		t.Fatal("expected error when updating immutable field; got nil")
 	}
-	if !runtime.IsValidation(err) {
-		t.Errorf("expected ValidationError, got %T: %v", err, err)
+	if !IsValidation(err) {
+		t.Errorf("expected ValidationError; got %T: %v", err, err)
 	}
 }
 
-func TestPipeline_RunBeforeUpdate_ImmutableField(t *testing.T) {
-	d := &def.SystemDefinition{
-		Name:   "test_contract",
-		Module: "test",
-		Label:  "Contract",
-		Fields: []def.FieldDef{
-			{Name: "reference", Type: def.FieldTypeData, Immutable: true},
-			{Name: "value", Type: def.FieldTypeCurrency},
-		},
-	}
+func TestPipeline_RequiredField_Missing(t *testing.T) {
+	fields := []def.FieldDef{{Name: "name", Type: def.FieldTypeData, Required: true}}
+	schema := buildPipelineSchema(fields, def.HookSet{})
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
 
-	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
-
-	current := &def.EntityRecord{
-		EntityName: "test_contract",
-		Data:       map[string]any{"reference": "CTR-001", "value": nil},
-	}
-
-	pctx := &runtime.UpdateContext{
-		Ctx:        context.Background(),
-		EntityName: "test_contract",
-		Data:       map[string]any{"reference": "CTR-002"}, // attempt to change immutable
-		Actor:      nil,
-	}
-
-	_, err := pipeline.RunBeforeUpdate(pctx, current)
+	_, err := p.RunBeforeCreate(&CreateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{}, Actor: &def.Actor{},
+	})
 	if err == nil {
-		t.Fatal("expected error for immutable field update, got nil")
+		t.Fatal("expected ValidationError for missing required field; got nil")
 	}
-	if !runtime.IsValidation(err) {
-		t.Errorf("expected ValidationError, got %T: %v", err, err)
+	if !IsValidation(err) {
+		t.Errorf("expected ValidationError; got %T: %v", err, err)
 	}
 }
 
-func TestPipeline_RunBeforeCreate_HookAborts(t *testing.T) {
-	hook := &rejectAllHook{}
-	d := &def.SystemDefinition{
-		Name:   "test_blocked",
-		Module: "test",
-		Label:  "Blocked",
-		Hooks: def.HookSet{
-			BeforeCreate: []def.BeforeCreateHook{hook},
-		},
+func TestPipeline_HookError_ShortCircuits(t *testing.T) {
+	var log []string
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{&failHook{log: &log}},
+		BeforeCreate:   []def.BeforeCreateHook{th("should_not_fire", &log)},
 	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
 
-	schema := buildTestSchema(t, d)
-	pipeline := runtime.NewPipeline(schema, audit.NoopAuditWriter{})
-
-	pctx := &runtime.CreateContext{
-		Ctx:        context.Background(),
-		EntityName: "test_blocked",
-		Data:       map[string]any{},
-		Actor:      nil,
-	}
-
-	_, err := pipeline.RunBeforeCreate(pctx)
+	_, err := p.RunBeforeCreate(&CreateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{"name": "x"}, Actor: &def.Actor{},
+	})
 	if err == nil {
-		t.Fatal("expected hook to abort create, got nil error")
+		t.Fatal("expected error from failing hook; got nil")
+	}
+	for _, entry := range log {
+		if entry == "should_not_fire" {
+			t.Error("hook after failing hook must not be invoked")
+		}
 	}
 }
 
-// rejectAllHook is a test BeforeCreateHook that always rejects.
-type rejectAllHook struct{}
+func TestPipeline_AllowAudit_False_SkipsWrite(t *testing.T) {
+	cap := &auditCapture{}
+	schema := mustCompile(&def.SystemDefinition{
+		Name: "widget", Module: "test",
+		Fields:       []def.FieldDef{{Name: "name", Type: def.FieldTypeData}},
+		DisableAudit: true,
+	})
+	p := NewPipeline(schema, cap)
 
-func (h *rejectAllHook) BeforeCreate(_ context.Context, _ *def.EntityRecord) error {
-	return &runtime.BusinessError{
-		Code:    "test.always_rejected",
-		Message: "always rejected",
-		Status:  400,
+	record := &def.EntityRecord{EntityName: "test_widget", Data: map[string]any{"name": "x"}}
+	if err := p.RunAuditRecord(context.Background(), record, nil, record.Data); err != nil {
+		t.Fatalf("RunAuditRecord: %v", err)
+	}
+	if cap.called {
+		t.Error("AuditWriter.Write must NOT be called when DisableAudit=true")
+	}
+}
+
+func TestPipeline_AllowAudit_True_WritesAudit(t *testing.T) {
+	cap := &auditCapture{}
+	schema := mustCompile(&def.SystemDefinition{
+		Name: "widget", Module: "test",
+		Fields: []def.FieldDef{{Name: "name", Type: def.FieldTypeData}},
+	})
+	p := NewPipeline(schema, cap)
+
+	record := &def.EntityRecord{EntityName: "test_widget", Data: map[string]any{"name": "x"}}
+	if err := p.RunAuditRecord(context.Background(), record, nil, record.Data); err != nil {
+		t.Fatalf("RunAuditRecord: %v", err)
+	}
+	if !cap.called {
+		t.Error("AuditWriter.Write MUST be called when AllowAudit=true")
 	}
 }

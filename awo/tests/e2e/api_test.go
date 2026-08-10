@@ -13,7 +13,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -26,7 +25,6 @@ import (
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
 	"awo.so/awo/driver"
-	"awo.so/awo/examples/demo"
 	"awo.so/awo/introspect"
 	"awo.so/awo/platform/iam"
 	"awo.so/awo/platform/organization"
@@ -56,7 +54,6 @@ func newAPIServer(t *testing.T) *apiServer {
 		&organization.Definition,
 		&organization.OrgTypeDefinition,
 		&organization.OrgAssignmentDefinition,
-		&demo.CustomerDefinition,
 	}
 
 	reg, err := registry.BuildFrom(defs)
@@ -166,21 +163,21 @@ func TestIntrospectEndpoint(t *testing.T) {
 		t.Error("route_count is 0")
 	}
 
-	// Verify demo_customer present.
+	// Verify platform_tenant present.
 	var found bool
 	for _, e := range info.Entities {
-		if e.Name == "demo_customer" {
+		if e.Name == "platform_tenant" {
 			found = true
 			if e.FieldCount == 0 {
-				t.Error("demo_customer has 0 fields")
+				t.Error("platform_tenant has 0 fields")
 			}
 			if len(e.Routes) == 0 {
-				t.Error("demo_customer has no routes")
+				t.Error("platform_tenant has no routes")
 			}
 		}
 	}
 	if !found {
-		t.Error("demo_customer not in introspect output")
+		t.Error("platform_tenant not in introspect output")
 	}
 	t.Logf("introspect: %d entities, %d routes, fingerprint=%s",
 		info.EntityCount, info.RouteCount, info.Fingerprint)
@@ -207,39 +204,19 @@ func TestRouteRegistration(t *testing.T) {
 	}
 }
 
-// demoCustomerRoutePrefix returns the compiled route prefix for demo_customer.
-// New format: /api/v1/{module}/{plural} → /api/v1/demo/customers
-func demoCustomerRoutePrefix(s *apiServer) string {
-	es, ok := s.schema.ByName["demo_customer"]
+// tenantRoutePrefix returns the compiled route prefix for platform_tenant.
+func tenantRoutePrefix(s *apiServer) string {
+	es, ok := s.schema.ByName["platform_tenant"]
 	if !ok {
-		return "/api/v1/demo/customers"
+		return "/api/v1/platform/tenants"
 	}
 	return es.RoutePrefix
 }
 
-// TestEntityListRoute verifies GET /api/v1/demo/customers returns list envelope.
+// TestEntityListRoute verifies GET /api/v1/platform/tenants returns list envelope.
 func TestEntityListRoute(t *testing.T) {
 	s := newAPIServer(t)
-	base := demoCustomerRoutePrefix(s)
-
-	// Seed records into fakestore.
-	ctx := context.Background()
-	actor := &def.Actor{UserID: s.actorID, TenantID: s.tenantID, Roles: []string{"role:tenant.admin"}}
-	for i := 0; i < 3; i++ {
-		_, err := s.store.Create(ctx, driver.CreateInput{
-			Data: map[string]any{
-				"tenant_id":     s.tenantID,
-				"org_id":        uuid.New(),
-				"customer_code": fmt.Sprintf("E2E-%03d", i),
-				"name":          fmt.Sprintf("E2E Customer %d", i),
-				"active":        true,
-			},
-			Actor: actor,
-		})
-		if err != nil {
-			t.Fatalf("seed: %v", err)
-		}
-	}
+	base := tenantRoutePrefix(s)
 
 	resp := s.do(t, "GET", base, nil)
 	if resp.StatusCode != http.StatusOK {
@@ -248,17 +225,15 @@ func TestEntityListRoute(t *testing.T) {
 	resp.Body.Close()
 }
 
-// TestEntityCreateRoute verifies POST /api/v1/demo/customers → 201.
+// TestEntityCreateRoute verifies POST /api/v1/platform/tenants → 201.
 func TestEntityCreateRoute(t *testing.T) {
 	s := newAPIServer(t)
-	base := demoCustomerRoutePrefix(s)
+	base := tenantRoutePrefix(s)
 
 	payload := map[string]any{
-		"tenant_id":     s.tenantID.String(),
-		"org_id":        uuid.New().String(),
-		"customer_code": "E2E-CREATE",
-		"name":          "E2E Create Test",
-		"active":        true,
+		"name":   "Test Tenant",
+		"slug":   "test-tenant",
+		"status": "PENDING",
 	}
 
 	resp := s.do(t, "POST", base, payload)
@@ -268,10 +243,10 @@ func TestEntityCreateRoute(t *testing.T) {
 	resp.Body.Close()
 }
 
-// TestEntityGetRoute verifies GET /api/v1/demo/customers/:id → 200 or 404.
+// TestEntityGetRoute verifies GET /api/v1/platform/tenants/:id → 200 or 404.
 func TestEntityGetRoute(t *testing.T) {
 	s := newAPIServer(t)
-	base := demoCustomerRoutePrefix(s)
+	base := tenantRoutePrefix(s)
 
 	unknownID := uuid.New().String()
 	resp := s.do(t, "GET", base+"/"+unknownID, nil)
@@ -282,10 +257,10 @@ func TestEntityGetRoute(t *testing.T) {
 	resp.Body.Close()
 }
 
-// TestEntityUpdateRoute verifies PATCH /api/v1/demo/customers/:id → non-404.
+// TestEntityUpdateRoute verifies PATCH /api/v1/platform/tenants/:id → non-404.
 func TestEntityUpdateRoute(t *testing.T) {
 	s := newAPIServer(t)
-	base := demoCustomerRoutePrefix(s)
+	base := tenantRoutePrefix(s)
 
 	id := uuid.New().String()
 	resp := s.do(t, "PATCH", base+"/"+id, map[string]any{"name": "Updated"})
@@ -295,10 +270,10 @@ func TestEntityUpdateRoute(t *testing.T) {
 	resp.Body.Close()
 }
 
-// TestEntityDeleteRoute verifies DELETE /api/v1/demo/customers/:id → non-404.
+// TestEntityDeleteRoute verifies DELETE /api/v1/platform/tenants/:id → non-404.
 func TestEntityDeleteRoute(t *testing.T) {
 	s := newAPIServer(t)
-	base := demoCustomerRoutePrefix(s)
+	base := tenantRoutePrefix(s)
 
 	id := uuid.New().String()
 	resp := s.do(t, "DELETE", base+"/"+id, nil)

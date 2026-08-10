@@ -12,36 +12,33 @@ import (
 
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
-	"awo.so/awo/examples/demo"
 	"awo.so/awo/platform/iam"
 	"awo.so/awo/platform/organization"
 	"awo.so/awo/platform/tenant"
 	"awo.so/awo/registry"
 )
 
-// demoDefs returns the minimal set of EntityDefinitions needed for the demo
-// module. Uses BuildFrom (not Build) so the global registry is not touched
+// platformDefs returns the minimal set of EntityDefinitions for the platform
+// modules. Uses BuildFrom (not Build) so the global registry is not touched
 // and mandatory-entity checks are skipped.
-func demoDefs() []def.EntityDefinition {
+func platformDefs() []def.EntityDefinition {
 	return []def.EntityDefinition{
 		&tenant.Definition,
 		&iam.UserDefinition,
 		&organization.Definition,
 		&organization.OrgTypeDefinition,
 		&organization.OrgAssignmentDefinition,
-		&demo.CustomerDefinition,
 	}
 }
 
-// TestRegistryBuild verifies that all demo + platform definitions pass
-// registry validation.
+// TestRegistryBuild verifies that all platform definitions pass registry validation.
 func TestRegistryBuild(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("registry.BuildFrom: %v", err)
 	}
-	if reg.Count() != 6 {
-		t.Errorf("expected 6 entities, got %d", reg.Count())
+	if reg.Count() != 5 {
+		t.Errorf("expected 5 entities, got %d", reg.Count())
 	}
 	names := []string{
 		"platform_tenant",
@@ -49,7 +46,6 @@ func TestRegistryBuild(t *testing.T) {
 		"platform_organization",
 		"platform_org_type",
 		"platform_org_assignment",
-		"demo_customer",
 	}
 	for _, n := range names {
 		if reg.Lookup(n) == nil {
@@ -60,18 +56,21 @@ func TestRegistryBuild(t *testing.T) {
 
 // TestRegistryModuleLookup verifies ByModule filtering.
 func TestRegistryModuleLookup(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	demoDefs := reg.ByModule("demo")
-	if len(demoDefs) != 1 {
-		t.Errorf("expected 1 demo entity, got %d", len(demoDefs))
+	platformEntities := reg.ByModule("platform")
+	if len(platformEntities) != 4 {
+		t.Errorf("expected 4 platform entities, got %d", len(platformEntities))
 	}
-	// EntityName() returns the module-local name ("customer", not "demo_customer").
-	// Use def.QualifiedName() to get the full identifier.
-	if demoDefs[0].EntityName() != "customer" {
-		t.Errorf("unexpected local entity name: %s (expected \"customer\")", demoDefs[0].EntityName())
+	iamEntities := reg.ByModule("iam")
+	if len(iamEntities) != 1 {
+		t.Errorf("expected 1 iam entity, got %d", len(iamEntities))
+	}
+	// EntityName() returns the module-local name ("user", not "iam_user").
+	if iamEntities[0].EntityName() != "user" {
+		t.Errorf("unexpected local entity name: %s (expected \"user\")", iamEntities[0].EntityName())
 	}
 }
 
@@ -95,33 +94,26 @@ func TestRegistryDuplicateDetection(t *testing.T) {
 	}
 }
 
-// TestRegistrySeal verifies that after Build() the global registry is sealed
-// and rejects further registrations. We use BuildFrom here (no seal) and
-// separately test that the def package seal works.
+// TestRegistryBuildFrom_NoMandatoryCheck verifies that BuildFrom accepts a
+// subset of entities without triggering mandatory-entity checks (which only
+// Build() enforces).
 func TestRegistryBuildFrom_NoMandatoryCheck(t *testing.T) {
-	// demo_customer alone — would fail Build() (no iam_user etc.) but
+	// platform_tenant alone — would fail Build() (no iam_user etc.) but
 	// BuildFrom should accept it since mandatory-entity check is skipped.
-	// However, link target platform_tenant and platform_organization must
-	// still be present.
 	reg, err := registry.BuildFrom([]def.EntityDefinition{
-		&demo.CustomerDefinition,
 		&tenant.Definition,
-		&iam.UserDefinition,
-		&organization.Definition,
-		&organization.OrgTypeDefinition,
-		&organization.OrgAssignmentDefinition,
 	})
 	if err != nil {
-		t.Fatalf("BuildFrom with demo only: %v", err)
+		t.Fatalf("BuildFrom with single entity: %v", err)
 	}
-	if reg.Lookup("demo_customer") == nil {
-		t.Error("demo_customer not found")
+	if reg.Lookup("platform_tenant") == nil {
+		t.Error("platform_tenant not found")
 	}
 }
 
 // TestCompilerCompile verifies that Compile produces a valid CompiledSchema.
 func TestCompilerCompile(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("registry: %v", err)
 	}
@@ -132,37 +124,29 @@ func TestCompilerCompile(t *testing.T) {
 	if schema == nil {
 		t.Fatal("schema is nil")
 	}
-	if len(schema.Entities) != 6 {
-		t.Errorf("expected 6 compiled entities, got %d", len(schema.Entities))
+	if len(schema.Entities) != 5 {
+		t.Errorf("expected 5 compiled entities, got %d", len(schema.Entities))
 	}
 
-	es := schema.ByName["demo_customer"]
+	es := schema.ByName["platform_tenant"]
 	if es == nil {
-		t.Fatal("demo_customer not in compiled schema")
+		t.Fatal("platform_tenant not in compiled schema")
 	}
 	// Verify fields compiled correctly.
 	if _, ok := es.FieldsByName["name"]; !ok {
-		t.Error("field 'name' missing from compiled customer schema")
+		t.Error("field 'name' missing from compiled tenant schema")
 	}
 	if !es.RequiredFields["name"] {
 		t.Error("field 'name' should be Required")
 	}
-	if !es.ImmutableFields["customer_code"] {
-		t.Error("field 'customer_code' should be Immutable")
-	}
-	// Default for 'active' should be present.
-	if es.DefaultValues["active"] == nil {
-		t.Error("field 'active' missing default value function")
-	}
-	v := es.DefaultValues["active"]()
-	if v != true {
-		t.Errorf("active default: expected true, got %v", v)
+	if !es.ImmutableFields["slug"] {
+		t.Error("field 'slug' should be Immutable")
 	}
 }
 
 // TestCompilerDiagnostics verifies that Validate can run standalone.
 func TestCompilerDiagnostics(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("registry: %v", err)
 	}
@@ -178,7 +162,7 @@ func TestCompilerDiagnostics(t *testing.T) {
 
 // TestCompilerFingerprint verifies deterministic SHA-256 output.
 func TestCompilerFingerprint(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("registry: %v", err)
 	}
@@ -202,9 +186,9 @@ func TestCompilerFingerprint(t *testing.T) {
 	t.Logf("schema fingerprint: %s", fp1)
 }
 
-// TestCompilerRoutes verifies that CRUD routes are generated for demo_customer.
+// TestCompilerRoutes verifies that CRUD routes are generated for platform_tenant.
 func TestCompilerRoutes(t *testing.T) {
-	reg, err := registry.BuildFrom(demoDefs())
+	reg, err := registry.BuildFrom(platformDefs())
 	if err != nil {
 		t.Fatalf("registry: %v", err)
 	}
@@ -213,17 +197,17 @@ func TestCompilerRoutes(t *testing.T) {
 		t.Fatalf("compile: %v", err)
 	}
 
-	var customerRoutes []compiler.RouteDescriptor
+	var tenantRoutes []compiler.RouteDescriptor
 	for _, r := range schema.Routes {
-		if r.EntityQualifiedName == "demo_customer" {
-			customerRoutes = append(customerRoutes, r)
+		if r.EntityQualifiedName == "platform_tenant" {
+			tenantRoutes = append(tenantRoutes, r)
 		}
 	}
-	if len(customerRoutes) == 0 {
-		t.Error("no routes generated for demo_customer")
+	if len(tenantRoutes) == 0 {
+		t.Error("no routes generated for platform_tenant")
 	}
-	t.Logf("demo_customer routes: %d", len(customerRoutes))
-	for _, r := range customerRoutes {
+	t.Logf("platform_tenant routes: %d", len(tenantRoutes))
+	for _, r := range tenantRoutes {
 		t.Logf("  %s %s", r.Method, r.Path)
 	}
 }
