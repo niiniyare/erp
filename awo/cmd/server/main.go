@@ -53,9 +53,13 @@ import (
 	// Platform module init() calls — imports drive entity registration.
 	// platform/iam is already imported above for iam.New; the init()
 	// side effect (entity registration) is included via that import.
+	_ "awo.so/awo/platform/attachment"
 	_ "awo.so/awo/platform/audit"
 	_ "awo.so/awo/platform/flags"
+	_ "awo.so/awo/platform/mail"
 	_ "awo.so/awo/platform/metadata"
+	_ "awo.so/awo/platform/notification"
+	_ "awo.so/awo/platform/organization"
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"

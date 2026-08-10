@@ -13,10 +13,14 @@ import (
 	"awo.so/awo/registry"
 
 	// Platform entity init() registration side effects.
+	_ "awo.so/awo/platform/attachment"
 	_ "awo.so/awo/platform/audit"
 	_ "awo.so/awo/platform/flags"
 	_ "awo.so/awo/platform/iam"
+	_ "awo.so/awo/platform/mail"
 	_ "awo.so/awo/platform/metadata"
+	_ "awo.so/awo/platform/notification"
+	_ "awo.so/awo/platform/organization"
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"

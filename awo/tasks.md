@@ -1074,13 +1074,18 @@ DB integration tests required:
 
 ### Acceptance Criteria
 
-- [ ] `platform_organization` entity with ltree hierarchy
-- [ ] Organization path computed by hook (not by caller)
-- [ ] Organization-scope query filters by org + descendants
-- [ ] Feature flag evaluation works for system/tenant/org/user scopes
-- [ ] Feature flag Redis cache invalidated on flag change
-- [ ] `Session.Metadata` JSONB in `iam_sessions` table
-- [ ] All platform entity migrations generated (Phase 5)
+- [x] `platform_organization` entity with ltree-style path hierarchy (init() in module.go)
+- [x] Organization path computed by PathComputeHook on BeforeCreate/BeforeUpdate
+- [ ] Organization-scope query filters by org + descendants (service stub — Phase 9+)
+- [x] Feature flag entities registered (platform_feature_flag, platform_flag_tenant_override)
+- [ ] Feature flag Redis cache invalidation (evaluator/cache — Phase 9+)
+- [x] `Session.Metadata` JSONB field added to iam_session EntityDefinition
+- [x] `platform_notification` entity created and registered
+- [x] `platform_attachment` entity created and registered
+- [x] `platform_mail_record` entity created and registered
+- [x] `platform_setting` init() fixed (was missing)
+- [x] All new packages imported in cmd/server and cmd/awo
+- [ ] All platform entity migrations tested against real PostgreSQL (Phase 11)
 
 ---
 

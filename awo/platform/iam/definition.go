@@ -327,6 +327,16 @@ var SessionDefinition = def.SystemDefinition{
 			Immutable: true,
 			MaxLen:    45, // IPv6 max length
 		},
+		{
+			// metadata stores extensible per-session data (device info, OAuth claims,
+			// MFA method used, etc.). Framework reserves keys prefixed "awo:".
+			// Never store secrets here — this column is readable by tenant.admin.
+			Name:        "metadata",
+			Type:        def.FieldTypeJSON,
+			Label:       "Session Metadata",
+			Description: "Extensible per-session JSONB payload. Framework keys use the 'awo:' prefix.",
+			Hidden:      true, // excluded from list views; present in inspect/detail
+		},
 	},
 	Permissions: def.PermissionSet{
 		Read:   []string{"iam.session.read"},
