@@ -142,3 +142,29 @@ const sqlLoadRolePermissions = `
 	FROM iam_role_permissions
 	ORDER BY role_name, permission_identifier
 `
+
+// ── Session recovery ────────────────────────────────────────────────────────────
+
+// sqlLoadSessionByHash retrieves session metadata from iam_sessions for a
+// given token_hash. Used to recover a valid session after Redis eviction or
+// restart. Only returns sessions that are not revoked and have not expired.
+//
+// The query executes inside a transaction with set_tenant_context so that RLS
+// on iam_sessions scopes the lookup to the correct tenant.
+//
+// Fields returned: user_id, service_account_id, issued_at, expires_at,
+// device_id, ip_address, tenant_id.
+const sqlLoadSessionByHash = `
+	SELECT
+		user_id,
+		service_account_id,
+		issued_at,
+		expires_at,
+		device_id,
+		ip_address,
+		tenant_id
+	FROM iam_sessions
+	WHERE token_hash = $1
+	  AND revoked_at IS NULL
+	  AND expires_at > NOW()
+`

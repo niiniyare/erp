@@ -14,6 +14,7 @@ import (
 	"awo.so/awo/driver"
 	"awo.so/awo/filter"
 	"awo.so/awo/runtime"
+	"awo.so/awo/runtime/tenant"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -436,19 +437,27 @@ func (s *AuthService) ValidateToken(ctx context.Context, token string) (*auth.Se
 	session, err := s.Sessions.Load(ctx, token)
 	if err != nil {
 		if errors.Is(err, auth.ErrSessionNotFound) {
-			// Key absent — never issued, TTL-expired, or explicitly revoked.
-			return nil, &runtime.BusinessError{
-				Code:    "iam.session.not_found",
-				Message: "Session not found or expired.",
-				Status:  401,
+			// Redis miss: key absent, TTL-expired, or revoked.
+			// Attempt PostgreSQL recovery — handles Redis eviction/restart without
+			// forcing users to re-authenticate.
+			recovered, recErr := s.recoverSessionFromDB(ctx, token)
+			if recErr != nil {
+				// Not in DB either — session genuinely gone.
+				return nil, &runtime.BusinessError{
+					Code:    "iam.session.not_found",
+					Message: "Session not found or expired.",
+					Status:  401,
+				}
 			}
-		}
-		// Infrastructure failure — store unavailable. Return 503 so the client
-		// knows to retry rather than re-authenticate unnecessarily.
-		return nil, &runtime.BusinessError{
-			Code:    "iam.service_unavailable",
-			Message: "Authentication service temporarily unavailable.",
-			Status:  503,
+			session = recovered
+		} else {
+			// Infrastructure failure — store unavailable. Return 503 so the client
+			// knows to retry rather than re-authenticate unnecessarily.
+			return nil, &runtime.BusinessError{
+				Code:    "iam.service_unavailable",
+				Message: "Authentication service temporarily unavailable.",
+				Status:  503,
+			}
 		}
 	}
 
@@ -682,6 +691,98 @@ func (s *AuthService) writeAuthAudit(ctx context.Context, tenantID uuid.UUID, ac
 		Context:       extra,
 	}
 	_ = s.AuditWriter.Write(ctx, rec)
+}
+
+// ── Session recovery ──────────────────────────────────────────────────────────
+
+// recoverSessionFromDB queries iam_sessions by token_hash to reconstruct a
+// session that has been evicted from Redis. This handles Redis restarts or
+// eviction without forcing users to re-authenticate.
+//
+// Recovery steps:
+//  1. Extract TenantContext from ctx (injected by TenantResolver before
+//     RequireAuth runs). Returns error immediately if absent.
+//  2. Open a transaction and call set_tenant_context so RLS scopes the lookup
+//     to the correct tenant.
+//  3. Query iam_sessions for a non-revoked, non-expired session.
+//  4. Reload roles for human users via loadUserRoles.
+//  5. Best-effort: restore the session to Redis for subsequent requests.
+//
+// recoverSessionFromDB returns a non-nil error when the session is not present
+// in the database. ValidateToken maps this to a 401.
+func (s *AuthService) recoverSessionFromDB(ctx context.Context, token string) (*auth.Session, error) {
+	tc, ok := tenant.TryFromContext(ctx)
+	if !ok {
+		return nil, fmt.Errorf("iam: session recovery: no tenant context")
+	}
+
+	hash := tokenHash(token)
+
+	tx, err := s.DB.Begin(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("iam: session recovery: begin tx: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck
+
+	if _, err := tx.Exec(ctx, sqlSetTenantContext, tc.TenantID); err != nil {
+		return nil, fmt.Errorf("iam: session recovery: set tenant context: %w", err)
+	}
+
+	var (
+		userID           uuid.UUID
+		serviceAccountID uuid.UUID
+		issuedAt         time.Time
+		expiresAt        time.Time
+		deviceID         string
+		ipAddress        string
+		tenantID         uuid.UUID
+	)
+	err = tx.QueryRow(ctx, sqlLoadSessionByHash, hash).Scan(
+		&userID, &serviceAccountID, &issuedAt, &expiresAt, &deviceID, &ipAddress, &tenantID,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("iam: session recovery: not found in db: %w", err)
+	}
+
+	if err := tx.Commit(ctx); err != nil {
+		return nil, fmt.Errorf("iam: session recovery: commit: %w", err)
+	}
+
+	// Reload roles for human user sessions.
+	var roles []string
+	if userID != uuid.Nil {
+		roles, err = s.loadUserRoles(ctx, tenantID, userID)
+		if err != nil {
+			// Role reload failure is non-fatal: issue session with empty roles.
+			// The user will be re-authenticated on next Casbin check failure.
+			slog.WarnContext(ctx, "iam: session recovery: role reload failed; using empty roles",
+				"user_id", userID, "tenant_id", tenantID, "err", err)
+			roles = nil
+		}
+	} else {
+		roles = []string{serviceAccountDefaultRole}
+	}
+
+	session := &auth.Session{
+		Token:            token,
+		UserID:           userID,
+		ServiceAccountID: serviceAccountID,
+		TenantID:         tenantID,
+		Roles:            roles,
+		ExpiresAt:        expiresAt,
+		IssuedAt:         issuedAt,
+		DeviceID:         deviceID,
+		IPAddress:        ipAddress,
+	}
+
+	// Best-effort: restore session to Redis for subsequent requests.
+	// Failure here is non-fatal — the recovered session is returned regardless.
+	if storeErr := s.Sessions.Store(ctx, session); storeErr != nil {
+		slog.WarnContext(ctx, "iam: session recovery: redis restore failed (best-effort)",
+			"user_id", userID, "tenant_id", tenantID, "err", storeErr)
+	}
+
+	return session, nil
 }
 
 // ── Internal helpers ───────────────────────────────────────────────────────────

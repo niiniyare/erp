@@ -371,20 +371,159 @@ func (r *Repository) Delete(ctx context.Context, id uuid.UUID) error {
 	return nil
 }
 
-// BulkCreate inserts multiple records atomically.
+// BulkCreate inserts multiple records atomically using a single pgx.Batch round
+// trip followed by one SELECT to fetch all inserted rows.
+//
+// All records are inserted in the same transaction. If any insert fails the
+// entire batch is rolled back. Hooks do not run — BulkCreate is a direct
+// repository operation for bulk-load and import scenarios.
+//
+// The empty-slice case returns (nil, nil) without touching the database.
 func (r *Repository) BulkCreate(ctx context.Context, inputs []driver.CreateInput) ([]*def.EntityRecord, error) {
-	results := make([]*def.EntityRecord, 0, len(inputs))
+	if len(inputs) == 0 {
+		return nil, nil
+	}
+	tc := tenant.FromContext(ctx)
+	var results []*def.EntityRecord
 	err := r.WithTx(ctx, func(txCtx context.Context) error {
-		for _, input := range inputs {
-			rec, err := r.Create(txCtx, input)
-			if err != nil {
-				return err
-			}
-			results = append(results, rec)
+		conn := connFromContext(txCtx, r.pool)
+		db := conn.db()
+		now := time.Now().UTC()
+		var err error
+		if r.schema.IsSystem {
+			results, err = r.bulkCreateSystem(txCtx, db, tc.TenantID, inputs, now)
+		} else {
+			results, err = r.bulkCreateCustom(txCtx, db, tc.TenantID, inputs, now)
 		}
-		return nil
+		return err
 	})
 	return results, err
+}
+
+// bulkCreateSystem sends all system-entity INSERTs in one pgx.Batch, then
+// fetches inserted rows with a single WHERE id = ANY($1) query.
+func (r *Repository) bulkCreateSystem(ctx context.Context, db execer, tenantID uuid.UUID, inputs []driver.CreateInput, now time.Time) ([]*def.EntityRecord, error) {
+	fieldNames := r.sortedFieldNames()
+
+	// Determine whether any input carries custom_fields.
+	hasCustomFields := false
+	for _, inp := range inputs {
+		if len(inp.CustomFields) > 0 {
+			hasCustomFields = true
+			break
+		}
+	}
+
+	// Column list is constant across all rows.
+	cols := make([]string, 0, 4+len(fieldNames)+1)
+	cols = append(cols, `"id"`, `"tenant_id"`, `"created_at"`, `"updated_at"`)
+	for _, name := range fieldNames {
+		cols = append(cols, fmt.Sprintf(`"%s"`, name))
+	}
+	if hasCustomFields {
+		cols = append(cols, `"custom_fields"`)
+	}
+	colList := strings.Join(cols, ", ")
+
+	batch := &pgxlib.Batch{}
+	ids := make([]uuid.UUID, len(inputs))
+
+	for i, input := range inputs {
+		id := uuid.New()
+		ids[i] = id
+
+		args := make([]any, 0, 4+len(fieldNames)+1)
+		args = append(args, id, tenantID, now, now)
+		for _, name := range fieldNames {
+			args = append(args, input.Data[name])
+		}
+		if hasCustomFields {
+			cfJSON, err := json.Marshal(input.CustomFields)
+			if err != nil {
+				return nil, fmt.Errorf("%s.BulkCreate[%d]: marshal custom_fields: %w", r.schema.TableName, i, err)
+			}
+			args = append(args, cfJSON)
+		}
+
+		placeholders := make([]string, len(args))
+		for j := range args {
+			placeholders[j] = fmt.Sprintf("$%d", j+1)
+		}
+		sql := fmt.Sprintf(`INSERT INTO "%s" (%s) VALUES (%s)`,
+			r.schema.TableName, colList, strings.Join(placeholders, ", "))
+		batch.Queue(sql, args...)
+	}
+
+	if err := r.sendBatch(ctx, db, batch, len(inputs), r.schema.TableName+".BulkCreate"); err != nil {
+		return nil, err
+	}
+	return r.getByIDs(ctx, db, ids)
+}
+
+// bulkCreateCustom sends all custom-entity INSERTs in one pgx.Batch.
+func (r *Repository) bulkCreateCustom(ctx context.Context, db execer, tenantID uuid.UUID, inputs []driver.CreateInput, now time.Time) ([]*def.EntityRecord, error) {
+	insertSQL := fmt.Sprintf(
+		`INSERT INTO "%s" (id, tenant_id, data, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`,
+		r.schema.TableName,
+	)
+
+	batch := &pgxlib.Batch{}
+	ids := make([]uuid.UUID, len(inputs))
+
+	for i, input := range inputs {
+		id := uuid.New()
+		ids[i] = id
+		dataJSON, err := json.Marshal(input.Data)
+		if err != nil {
+			return nil, fmt.Errorf("%s.BulkCreate[%d]: marshal data: %w", r.schema.TableName, i, err)
+		}
+		batch.Queue(insertSQL, id, tenantID, dataJSON, now, now)
+	}
+
+	if err := r.sendBatch(ctx, db, batch, len(inputs), r.schema.TableName+".BulkCreate"); err != nil {
+		return nil, err
+	}
+	return r.getByIDs(ctx, db, ids)
+}
+
+// sendBatch sends b and drains n Exec results. Any error stops draining and
+// closes the BatchResults before returning.
+func (r *Repository) sendBatch(ctx context.Context, db execer, b *pgxlib.Batch, n int, op string) error {
+	br := db.SendBatch(ctx, b)
+	for i := range n {
+		if _, err := br.Exec(); err != nil {
+			_ = br.Close()
+			return dberr.Parse(err, fmt.Sprintf("%s[%d]", op, i))
+		}
+	}
+	return br.Close()
+}
+
+// getByIDs fetches all records whose id is in the ids slice.
+// Order matches insertion order (ORDER BY created_at, id for stability).
+func (r *Repository) getByIDs(ctx context.Context, db execer, ids []uuid.UUID) ([]*def.EntityRecord, error) {
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	cols, scan := r.columnsAndScanner()
+	sql := fmt.Sprintf(
+		`SELECT %s FROM "%s" WHERE "id" = ANY($1) ORDER BY "created_at", "id"`,
+		cols, r.schema.TableName,
+	)
+	rows, err := db.Query(ctx, sql, ids)
+	if err != nil {
+		return nil, dberr.Parse(err, r.schema.TableName+".BulkCreate.fetch")
+	}
+	defer rows.Close()
+	results := make([]*def.EntityRecord, 0, len(ids))
+	for rows.Next() {
+		rec, err := scan(rows)
+		if err != nil {
+			return nil, dberr.Parse(err, r.schema.TableName+".BulkCreate.scan")
+		}
+		results = append(results, rec)
+	}
+	return results, rows.Err()
 }
 
 // BulkUpdate patches all records matching f. Hooks do not run.

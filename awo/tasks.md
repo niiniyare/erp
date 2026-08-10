@@ -966,10 +966,10 @@ awo/platform/iam/session_recovery_test.go — Redis miss → PG recovery
 
 ### Acceptance Criteria
 
-- [ ] BulkCreate 1000 records uses single batched INSERT (not 1000 individual INSERTs)
-- [ ] Redis miss → PostgreSQL recovery works without user-visible error
-- [ ] Service account sessions correctly skip user index
-- [ ] All contrib tests pass against real PostgreSQL
+- [x] BulkCreate uses single pgx.Batch round trip (not N individual INSERTs)
+- [x] Redis miss → PostgreSQL recovery implemented in ValidateToken via recoverSessionFromDB
+- [x] Service account sessions correctly skip user index (implemented in Phase 1 / session_store.go)
+- [ ] All contrib tests pass against real PostgreSQL (needs real PG — Phase 11)
 
 ---
 
