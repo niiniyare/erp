@@ -89,21 +89,30 @@ type Module struct {
 // Calling New after the first HTTP request is a data race.
 //
 // deps:
-//   - db:         PostgreSQL connection pool. Used for user lookup, role loading,
-//     and audit trail writes.
+//   - db:         PostgreSQL connection pool. Retained for the credential lookup
+//     (sqlLookupCredentials) and API-token JOIN query that cannot be expressed
+//     through EntityRepository (N+6D candidates).
 //   - sessions:   Session store. Used for session persistence, retrieval, and
 //     revocation. Production: [contrib/redis.RedisSessionStore].
 //   - tokenCache: Cache for API token validation results. Avoids a database
 //     round-trip on every service account request. Production:
 //     [contrib/redis.Client] (implements [cache.Cache]).
-func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache) *Module {
+//   - repos:      EntityRepository instances for tenant-scoped IAM entities.
+//     See [IAMRepositories]. Build with [contrib/pgx.NewRepository] using
+//     the compiled schema from [bootstrap.Result].
+func New(db *pgxpool.Pool, sessions auth.SessionStore, tokenCache cache.Cache, repos IAMRepositories) *Module {
 	// Wire the UserRoleChangeHook singleton with the session store.
 	// The singleton is referenced by UserRoleDefinition.Hooks at init() time;
 	// its Sessions field must be set before the first request is handled.
 	userRoleChangeHook.Sessions = sessions
 
 	return &Module{
-		Auth:         &AuthService{DB: db, Sessions: sessions, Cache: tokenCache},
+		Auth: &AuthService{
+			DB:       db,
+			Sessions: sessions,
+			Cache:    tokenCache,
+			Repos:    repos,
+		},
 		loginLimiter: passthroughHandler,
 	}
 }

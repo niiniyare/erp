@@ -137,7 +137,32 @@ func main() {
 	// then inject them into iam.New as abstract interfaces.
 	sessions := contribredis.NewSessionStore(result.Redis)
 	tokenCache := contribredis.New(result.Redis)
-	iamModule := iam.New(result.Pool, sessions, tokenCache).WithAuditWriter(auditWriter)
+
+	// IAM EntityRepository instances — used for session persistence, last_login_at
+	// updates, and user-role loading. Each repo is scoped to its entity schema.
+	// Operations on tenant-scoped tables must run inside repo.WithTx so the
+	// pgx contrib layer calls set_tenant_context before executing DML.
+	iamSessionSchema, ok := result.Schema.ByName["iam_session"]
+	if !ok {
+		slog.Error("iam_session entity not found in schema — platform/iam not registered")
+		os.Exit(1)
+	}
+	iamUserSchema, ok := result.Schema.ByName["iam_user"]
+	if !ok {
+		slog.Error("iam_user entity not found in schema — platform/iam not registered")
+		os.Exit(1)
+	}
+	iamUserRoleSchema, ok := result.Schema.ByName["iam_user_role"]
+	if !ok {
+		slog.Error("iam_user_role entity not found in schema — platform/iam not registered")
+		os.Exit(1)
+	}
+	iamRepos := iam.IAMRepositories{
+		Sessions:  contrib.NewRepository(result.Pool, iamSessionSchema),
+		Users:     contrib.NewRepository(result.Pool, iamUserSchema),
+		UserRoles: contrib.NewRepository(result.Pool, iamUserRoleSchema),
+	}
+	iamModule := iam.New(result.Pool, sessions, tokenCache, iamRepos).WithAuditWriter(auditWriter)
 
 	// Tenant entity repository for TenantResolver middleware.
 	tenantSchema, ok := result.Schema.ByName["platform_tenant"]

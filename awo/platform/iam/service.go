@@ -4,12 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"awo.so/awo/audit"
 	"awo.so/awo/auth"
 	"awo.so/awo/cache"
 	"awo.so/awo/def"
+	"awo.so/awo/driver"
+	"awo.so/awo/filter"
 	"awo.so/awo/runtime"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -32,13 +35,31 @@ const (
 	serviceAccountDefaultRole = "role:api-client"
 )
 
+// IAMRepositories groups the EntityRepository instances used by AuthService.
+// Grouping avoids constructor explosion when adding repository operations.
+//
+// All three repositories target tenant-scoped tables. Repository operations
+// that write or update data must be called inside [driver.EntityRepository.WithTx]
+// so that the pgx contrib driver can call set_tenant_context before executing
+// any DML — activating PostgreSQL Row Level Security for the transaction.
+//
+//   - Sessions: iam_session (SQL audit trail; authoritative store is Redis)
+//   - Users:    iam_user   (last_login_at updates on successful login)
+//   - UserRoles: iam_user_role (role loading at login)
+type IAMRepositories struct {
+	Sessions  driver.EntityRepository[*def.EntityRecord]
+	Users     driver.EntityRepository[*def.EntityRecord]
+	UserRoles driver.EntityRepository[*def.EntityRecord]
+}
+
 // AuthService provides the authentication and session management operations
 // that the API middleware and IAM handlers depend on.
 //
 // It is the sole writer to:
 //   - Session store (human sessions, via [Sessions])
 //   - API token cache (service account token cache, via [Cache])
-//   - iam_sessions table (SQL audit trail for human sessions)
+//   - iam_sessions table (SQL audit trail for human sessions, via [Repos.Sessions])
+//   - iam_users.last_login_at (via [Repos.Users])
 //   - platform_audit_log (unified audit trail, via [AuditWriter])
 //
 // AuthService is constructed once at startup by [New] and shared across all
@@ -47,6 +68,7 @@ type AuthService struct {
 	DB          *pgxpool.Pool
 	Sessions    auth.SessionStore
 	Cache       cache.Cache
+	Repos       IAMRepositories
 	AuditWriter audit.AuditWriter // nil = audit disabled (dev/test)
 }
 
@@ -70,30 +92,37 @@ type LoginResult struct {
 
 // Login authenticates a human user and issues a new session.
 //
-// The entire credential verification sequence runs inside a single database
-// transaction so that the tenant RLS context (set by set_tenant_context) is
-// guaranteed to be active for all subsequent queries on the same connection.
-// Without a transaction, pgxpool may dispatch each DB call to a different
-// connection where the tenant context has not been set, making RLS invisible.
+// The credential verification sequence runs inside a single database transaction
+// so that the tenant RLS context (set by set_tenant_context) is guaranteed to
+// be active for the credential lookup on the same connection. Without a
+// transaction, pgxpool may dispatch each DB call to a different connection where
+// the tenant context has not been set, making RLS invisible.
+//
+// Role loading runs outside the credential transaction, in its own
+// EntityRepository.WithTx call. This separates the sensitive credential path
+// from the role-loading path and allows each to fail independently. The session
+// model (ADR-004) bakes roles into sessions; stale roles are acceptable until
+// the next session refresh.
 //
 // Flow:
 //  1. Open a read transaction and establish tenant RLS context.
 //  2. Load the iam_user record by email (RLS scopes to tenant).
 //  3. Verify the bcrypt password hash (constant-time comparison).
-//  4. Load the user's active roles.
-//  5. Commit the read transaction.
+//  4. Commit the credential transaction.
+//  5. Load the user's active roles via EntityRepository.
 //  6. Generate a cryptographically random 256-bit session token.
 //  7. Store the session in Redis with TTL (critical path — failure aborts login).
-//  8. Write SQL audit records in a separate best-effort transaction.
+//  8. Write SQL audit records and update last_login_at (best-effort).
 //
 // On credential failure, Login returns a generic error to prevent user
-// enumeration. The specific failure reason is written to iam_login_audits.
+// enumeration. The specific failure reason is written to platform_audit_log.
 //
 // Redis failure on step 7 causes Login to fail — sessions cannot be issued when
 // the session store is unavailable. This is correct security behaviour.
 func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResult, error) {
 	// Phase 1: Verify credentials in a transaction.
-	// The transaction keeps the tenant RLS context active across all DB calls.
+	// The transaction keeps the tenant RLS context active for all DB calls
+	// inside it (set_tenant_context is called once at the start).
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("iam: login: begin tx: %w", err)
@@ -148,19 +177,26 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResult
 		}
 	}
 
-	// Load roles within the same transaction (RLS context is active).
-	roles, err := s.loadUserRoles(ctx, tx, input.TenantID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("iam: login: load roles: %w", err)
-	}
-
-	// Commit the read transaction — credentials are verified and roles are loaded.
-	// Subsequent operations (Redis, audit writes) use separate connections.
+	// Commit the credential transaction. Credentials are verified.
+	// Role loading runs in its own EntityRepository.WithTx below — this keeps
+	// the sensitive credential path short and avoids holding the tx open during
+	// the additional role query.
 	if err := tx.Commit(ctx); err != nil {
 		return nil, fmt.Errorf("iam: login: commit: %w", err)
 	}
 
-	// Phase 2: Generate and store the session.
+	// Phase 2: Load user roles via EntityRepository.
+	// WithTx establishes tenant RLS context from TenantContext already in ctx
+	// (injected by TenantResolver middleware before Login was called).
+	// Session model ADR-004: roles are baked into sessions; role changes only
+	// take effect after the user re-authenticates. Stale roles in the window
+	// between credential commit and role load are acceptable.
+	roles, err := s.loadUserRoles(ctx, input.TenantID, userID)
+	if err != nil {
+		return nil, fmt.Errorf("iam: login: load roles: %w", err)
+	}
+
+	// Phase 3: Generate and store the session.
 	// Token is 256 bits of cryptographically random entropy, base64url-encoded.
 	token, err := auth.GenerateToken()
 	if err != nil {
@@ -187,39 +223,55 @@ func (s *AuthService) Login(ctx context.Context, input LoginInput) (*LoginResult
 		return nil, fmt.Errorf("iam: login: store session: %w", err)
 	}
 
-	// Phase 3: Best-effort audit writes in a separate mini-transaction.
-	// These are non-fatal — the session is already live in Redis.
-	// A separate transaction is required because the original read tx is committed.
+	// Phase 4: Best-effort audit writes — session record + last_login_at.
+	// These are non-fatal; the session is already live in Redis.
 	s.auditLogin(ctx, session, input)
 
 	return &LoginResult{Token: token, Session: session}, nil
 }
 
-// auditLogin writes the session SQL record, login audit event, and updates
-// last_login_at in a single best-effort transaction. Failures are silently
-// ignored — the session is already live in Redis and the user is authenticated.
+// auditLogin persists the session SQL record and updates last_login_at in a
+// single best-effort EntityRepository transaction. Failures are logged and
+// silently ignored — the session is already live in Redis and the user is
+// authenticated.
 //
-// A new mini-transaction is opened here because the verification transaction
-// has already been committed. Tenant RLS context must be re-established.
+// Both operations share one WithTx call so they commit atomically. WithTx
+// establishes tenant RLS context automatically from TenantContext in ctx.
 func (s *AuthService) auditLogin(ctx context.Context, session *auth.Session, input LoginInput) {
-	tx, err := s.DB.Begin(ctx)
-	if err != nil {
-		// TODO: emit metric for audit tx open failure
-		return
+	if err := s.Repos.Sessions.WithTx(ctx, func(txCtx context.Context) error {
+		if _, err := s.Repos.Sessions.Create(txCtx, driver.CreateInput{
+			Data: map[string]any{
+				"token_hash":         tokenHash(session.Token),
+				"user_id":            nullUUID(session.UserID),
+				"service_account_id": nullUUID(session.ServiceAccountID),
+				"issued_at":          session.IssuedAt,
+				"expires_at":         session.ExpiresAt,
+				"device_id":          session.DeviceID,
+				"ip_address":         session.IPAddress,
+			},
+		}); err != nil {
+			return fmt.Errorf("create session record: %w", err)
+		}
+		// last_login_at is only meaningful for human user sessions.
+		// UserID is always set in Login; this guard is defensive.
+		if session.UserID != uuid.Nil {
+			if _, err := s.Repos.Users.Update(txCtx, session.UserID, driver.UpdateInput{
+				Data: map[string]any{"last_login_at": session.IssuedAt},
+			}); err != nil {
+				return fmt.Errorf("update last_login_at: %w", err)
+			}
+		}
+		return nil
+	}); err != nil {
+		slog.WarnContext(ctx, "iam: audit login: persistence failed (best-effort)",
+			"user_id", session.UserID,
+			"tenant_id", session.TenantID,
+			"err", err,
+		)
 	}
-	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, sqlSetTenantContext, session.TenantID); err != nil {
-		return
-	}
-
-	_ = s.insertSessionRecord(ctx, tx, session)
-	_, _ = tx.Exec(ctx, sqlUpdateLastLoginAt, session.IssuedAt, session.UserID)
-
-	_ = tx.Commit(ctx)
-
-	// Write the unified audit record after the TX commits — platform_audit_log
-	// has no RLS so no tenant context is required; the fallback querier is used.
+	// Write the unified audit record after persistence.
+	// platform_audit_log has no RLS; no tenant context required.
 	s.writeAuthAudit(ctx, session.TenantID,
 		&def.Actor{UserID: session.UserID, TenantID: session.TenantID},
 		audit.OperationLogin,
@@ -235,8 +287,8 @@ func (s *AuthService) auditLogin(ctx context.Context, session *auth.Session, inp
 // Flow:
 //  1. DEL session:{token} from Redis (authoritative revocation).
 //  2. ZREM token from the user_sessions sorted set index.
-//  3. UPDATE iam_sessions SET revoked_at in a tenant-scoped transaction.
-//  4. INSERT iam_login_audits logout event.
+//  3. BulkUpdate iam_sessions SET revoked_at (best-effort, via EntityRepository).
+//  4. Write logout event to platform_audit_log.
 func (s *AuthService) Logout(ctx context.Context, session *auth.Session) error {
 	// SessionStore.Delete is the authoritative revocation. The primary session
 	// key removal is critical (error returned on failure); the user index entry
@@ -246,32 +298,38 @@ func (s *AuthService) Logout(ctx context.Context, session *auth.Session) error {
 	}
 
 	// Best-effort: mark the SQL audit record revoked and write a logout event.
-	// Uses a separate transaction to establish tenant RLS context.
 	s.auditLogout(ctx, session)
 	return nil
 }
 
 // auditLogout marks the session revoked in iam_sessions and writes the logout
-// event to iam_login_audits. Best-effort — failure does not affect the Redis
-// revocation that has already occurred.
+// event to platform_audit_log. Best-effort — Redis revocation has already occurred.
+//
+// BulkUpdate runs inside WithTx so that set_tenant_context is called before
+// the UPDATE, activating PostgreSQL RLS for the iam_sessions table.
 func (s *AuthService) auditLogout(ctx context.Context, session *auth.Session) {
 	hash := tokenHash(session.Token)
 
-	tx, err := s.DB.Begin(ctx)
-	if err != nil {
-		return
+	if err := s.Repos.Sessions.WithTx(ctx, func(txCtx context.Context) error {
+		_, err := s.Repos.Sessions.BulkUpdate(
+			txCtx,
+			filter.And(
+				filter.Eq("token_hash", hash),
+				filter.IsNull("revoked_at"),
+			),
+			driver.Patch{Set: map[string]any{
+				"revoked_at": time.Now().UTC(),
+			}},
+		)
+		return err
+	}); err != nil {
+		slog.WarnContext(ctx, "iam: audit logout: session revocation failed (best-effort)",
+			"tenant_id", session.TenantID,
+			"err", err,
+		)
 	}
-	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, sqlSetTenantContext, session.TenantID); err != nil {
-		return
-	}
-
-	_, _ = tx.Exec(ctx, sqlRevokeSessionByHash, hash, session.TenantID)
-
-	_ = tx.Commit(ctx)
-
-	// Write the unified audit record after TX commits.
+	// Write the unified audit record after the BulkUpdate.
 	s.writeAuthAudit(ctx, session.TenantID,
 		&def.Actor{UserID: session.UserID, TenantID: session.TenantID},
 		audit.OperationLogout,
@@ -288,7 +346,7 @@ func (s *AuthService) auditLogout(ctx context.Context, session *auth.Session) {
 //
 // Session tokens are retrieved from the user_sessions:{tenantID}:{userID} sorted
 // set. All session keys are deleted from Redis atomically. The SQL audit table is
-// updated and an audit event written in a best-effort transaction.
+// updated and an audit event written in a best-effort BulkUpdate.
 //
 // Note: if storeSession failed to add a token to the sorted set (it is
 // best-effort), RevokeUserSessions will not find that token and cannot revoke it.
@@ -317,30 +375,46 @@ func (s *AuthService) RevokeUserSessions(ctx context.Context, tenantID, userID u
 	return nil
 }
 
-// auditRevoke marks sessions revoked in iam_sessions and writes a
-// session_revoked audit event. Best-effort — Redis revocation has already
-// occurred.
+// auditRevoke marks sessions revoked in iam_sessions via BulkUpdate and writes
+// a session_revoked audit event. Best-effort — Redis revocation has already occurred.
+//
+// BulkUpdate runs inside WithTx for RLS. filter.InStrings generates
+// "token_hash = ANY(ARRAY[$1,$2,...])" which is set-based (single UPDATE).
+// No per-record processing or hook execution occurs.
 func (s *AuthService) auditRevoke(ctx context.Context, tenantID, userID uuid.UUID, hashes []string) {
-	tx, err := s.DB.Begin(ctx)
-	if err != nil {
-		return
+	var affected int64
+	if err := s.Repos.Sessions.WithTx(ctx, func(txCtx context.Context) error {
+		n, err := s.Repos.Sessions.BulkUpdate(
+			txCtx,
+			filter.And(
+				filter.InStrings("token_hash", hashes),
+				filter.IsNull("revoked_at"),
+			),
+			driver.Patch{Set: map[string]any{
+				"revoked_at": time.Now().UTC(),
+			}},
+		)
+		affected = n
+		return err
+	}); err != nil {
+		slog.WarnContext(ctx, "iam: audit revoke: session BulkUpdate failed (best-effort)",
+			"tenant_id", tenantID,
+			"user_id", userID,
+			"hashes", len(hashes),
+			"err", err,
+		)
 	}
-	defer tx.Rollback(ctx)
 
-	if _, err := tx.Exec(ctx, sqlSetTenantContext, tenantID); err != nil {
-		return
-	}
-
-	_, _ = tx.Exec(ctx, sqlRevokeSessionsByHashes, hashes, tenantID)
-
-	_ = tx.Commit(ctx)
-
-	// Write the unified audit record after TX commits.
+	// Write the unified audit record.
 	s.writeAuthAudit(ctx, tenantID,
 		&def.Actor{UserID: userID, TenantID: tenantID},
 		audit.OperationSystem,
 		"",
-		map[string]any{"reason": "admin_revoke_all", "session_count": len(hashes)},
+		map[string]any{
+			"reason":        "admin_revoke_all",
+			"session_count": len(hashes),
+			"revoked":       affected,
+		},
 	)
 }
 
@@ -465,6 +539,10 @@ func (s *AuthService) ValidateAPIToken(ctx context.Context, rawToken string, ten
 // lookupAPIToken queries iam_api_tokens and iam_service_accounts for the given
 // token hash within the tenant. Returns a synthetic auth.Session on success.
 // Runs inside a transaction to ensure the tenant RLS context is active.
+//
+// This join query is intentionally raw SQL (not EntityRepository) because it
+// spans two entity types. EntityRepository is scoped to a single entity;
+// cross-entity joins are reserved for N+6D DatabaseQuerier.
 func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID uuid.UUID) (*auth.Session, error) {
 	tx, err := s.DB.Begin(ctx)
 	if err != nil {
@@ -557,6 +635,11 @@ func (s *AuthService) lookupAPIToken(ctx context.Context, hash string, tenantID 
 //
 // iam_role_permissions is a global table (no tenant_id, no RLS). This method
 // queries it without setting tenant context.
+//
+// This query remains raw SQL (not EntityRepository) because iam_role_permissions
+// is a global bootstrap table with no tenant scope and is not registered as an
+// EntityDefinition. Migrating it would require registering a non-tenant entity,
+// which is a separate framework capability reserved for N+6D.
 func (s *AuthService) LoadRolePermissions(ctx context.Context) ([]auth.RolePermission, error) {
 	rows, err := s.DB.Query(ctx, sqlLoadRolePermissions)
 	if err != nil {
@@ -603,25 +686,45 @@ func (s *AuthService) writeAuthAudit(ctx context.Context, tenantID uuid.UUID, ac
 
 // ── Internal helpers ───────────────────────────────────────────────────────────
 
-// loadUserRoles queries the iam_user_roles table for all role names assigned to
-// the user within the tenant. Must be called within a transaction that has
-// already established the tenant RLS context via set_tenant_context.
-func (s *AuthService) loadUserRoles(ctx context.Context, tx pgx.Tx, tenantID, userID uuid.UUID) ([]string, error) {
-	rows, err := tx.Query(ctx, sqlLoadUserRoles, tenantID, userID)
-	if err != nil {
-		return nil, fmt.Errorf("iam: load user roles: query: %w", err)
-	}
-	defer rows.Close()
-
+// loadUserRoles queries iam_user_roles for all role names assigned to the user
+// within the tenant. Uses EntityRepository.WithTx to establish tenant RLS context
+// automatically from TenantContext already in ctx (set by TenantResolver middleware).
+//
+// Called after the credential transaction commits (not inside it). See Login for
+// the rationale on keeping role loading separate from credential verification.
+func (s *AuthService) loadUserRoles(ctx context.Context, tenantID, userID uuid.UUID) ([]string, error) {
 	var roles []string
-	for rows.Next() {
-		var r string
-		if err := rows.Scan(&r); err != nil {
-			return nil, fmt.Errorf("iam: load user roles: scan: %w", err)
+	err := s.Repos.UserRoles.WithTx(ctx, func(txCtx context.Context) error {
+		records, _, err := s.Repos.UserRoles.Query(
+			txCtx,
+			filter.And(
+				filter.Eq("tenant_id", tenantID),
+				filter.Eq("user_id", userID),
+			),
+			driver.WithSkipCount(),
+		)
+		if err != nil {
+			return fmt.Errorf("query: %w", err)
 		}
-		roles = append(roles, r)
+		roles = make([]string, 0, len(records))
+		for _, rec := range records {
+			if name := roleNameFromRecord(rec); name != "" {
+				roles = append(roles, name)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("iam: load user roles: %w", err)
 	}
-	return roles, rows.Err()
+	return roles, nil
+}
+
+// roleNameFromRecord extracts the role_name string from an iam_user_role
+// EntityRecord. Centralises field extraction to avoid scattering raw field
+// name strings throughout the role-loading logic.
+func roleNameFromRecord(r *def.EntityRecord) string {
+	return r.GetString("role_name")
 }
 
 // storeSession persists the session via [SessionStore.Store].
@@ -629,25 +732,6 @@ func (s *AuthService) loadUserRoles(ctx context.Context, tx pgx.Tx, tenantID, us
 func (s *AuthService) storeSession(ctx context.Context, session *auth.Session) error {
 	if err := s.Sessions.Store(ctx, session); err != nil {
 		return fmt.Errorf("iam: store session: %w", err)
-	}
-	return nil
-}
-
-// insertSessionRecord writes a session audit record to iam_sessions.
-// Must be called within a transaction that has established tenant RLS context.
-func (s *AuthService) insertSessionRecord(ctx context.Context, tx pgx.Tx, session *auth.Session) error {
-	_, err := tx.Exec(ctx, sqlInsertSessionRecord,
-		session.TenantID,
-		tokenHash(session.Token),
-		nullUUID(session.UserID),
-		nullUUID(session.ServiceAccountID),
-		session.IssuedAt,
-		session.ExpiresAt,
-		session.DeviceID,
-		session.IPAddress,
-	)
-	if err != nil {
-		return fmt.Errorf("iam: insert session record: %w", err)
 	}
 	return nil
 }
