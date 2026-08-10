@@ -43,6 +43,14 @@ type CompiledSchema struct {
 	// dependency.
 	CapabilityGrants []auth.CapabilityGrant
 
+	// Graph is the cross-entity dependency graph derived from FieldTypeLink and
+	// EdgeDef declarations. Built during compilation after link resolution.
+	// Nil if graph construction was skipped due to prior validation errors.
+	//
+	// Use Graph to: check for circular FKs (already done at compile time),
+	// determine migration order (Graph.TopologicalOrder), and find dependents.
+	Graph *DependencyGraph
+
 	// Diagnostics contains warnings and informational messages from the
 	// compilation phase. Error-severity diagnostics cause Compile to return
 	// an error; warnings are preserved here for tooling.
@@ -365,6 +373,18 @@ func (c *compiler) compile() (*CompiledSchema, error) {
 			}
 			es.FieldLookups[f.Name] = buildLookup(target, f.Type == def.FieldTypeLinkList)
 		}
+	}
+
+	// Phase 2.7: build dependency graph and check for circular FKs / orphaned links.
+	qualifiedNames := make(map[string]bool, len(schema.Entities))
+	for _, es := range schema.Entities {
+		qualifiedNames[es.QualifiedName] = true
+	}
+	graph, graphDS := buildDependencyGraph(schema.Entities, qualifiedNames)
+	schema.Graph = graph
+	schema.Diagnostics = append(schema.Diagnostics, graphDS...)
+	if graphDS.HasErrors() {
+		return nil, schema.Diagnostics.AsError()
 	}
 
 	// Phase 3: emit routes.

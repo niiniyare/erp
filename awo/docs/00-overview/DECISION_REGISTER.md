@@ -2,7 +2,7 @@
 
 **Classification:** Constitutional — Tier 0
 **Owner:** `00-overview/DECISION_REGISTER.md`
-**Status:** Frozen at v1.0
+**Status:** Active — see `awo/tasks.md` for implementation phases
 **Source:** `awo/docs/ARCH_FREEZE_REVIEW.md` (full rationale and rejected alternatives)
 
 ---
@@ -37,6 +37,10 @@ This document is the canonical record of all architectural decisions (ADRs) for 
 | ADR-018 | Audit storage: `platform_audit_log`, monthly range partitions, no RLS, global table | Frozen |
 | ADR-019 | Dual audit elimination: unified `platform_audit_log` supersedes `iam_audit_log` + SQL triggers | Frozen |
 | ADR-020 | Audit partition maintenance: pg_cron extension; no application-layer scheduler | Frozen |
+| ADR-021 | Session.Metadata: extensible map for framework-reserved context keys | Active |
+| ADR-022 | EntityScope: 5-level data isolation enum on EntityDefinition | Active |
+| ADR-023 | AllowAudit: opt-out bool on EntityDefinition supersedes ADR-016 audit.Register pattern for disable | Active |
+| ADR-024 | SessionValidator interface: decouples auth middleware from IAM concrete type | Active |
 
 ---
 
@@ -106,7 +110,7 @@ func (a *Actor) IsServiceAccount() bool { return a.ServiceAccountID != uuid.Nil 
 
 ## ADR-004: Session Model
 
-**Decision:** Frozen `auth.Session` struct:
+**Decision:** `auth.Session` struct (amended by ADR-021):
 
 ```go
 type Session struct {
@@ -120,6 +124,7 @@ type Session struct {
     DeviceID         string
     IPAddress        string
     RequestID        string
+    Metadata         map[string]any  // ADR-021: framework-reserved; keys prefixed "awo:"
 }
 ```
 
@@ -127,7 +132,7 @@ Methods: `IsExpired(now time.Time) bool`, `ToActor() *def.Actor`, `ToViewer() au
 
 Storage: Redis `session:{token}` (JSON), TTL = ExpiresAt − now.
 
-**Consequence:** Session struct is framework-private. Module code never constructs Sessions.
+**Consequence:** Session struct is framework-private. Module code never constructs Sessions. See ADR-021 for Metadata usage constraints.
 
 ---
 
@@ -255,11 +260,11 @@ The `PolicyEvaluator` implementation (ADR-001) loads `CapabilityGrants` and tran
 
 ## ADR-012: Organization Hierarchy
 
-**Decision:** Multi-branch, multi-org, and divisional hierarchies within a single tenant are deferred to v1.1. The v1.0 model is single-org per tenant.
+**Original decision:** Deferred to v1.1.
 
-**Rationale:** Getting the foundational multi-tenancy model right (one process, many tenants, RLS) is the priority. Adding sub-org hierarchy before the base is stable risks premature design.
+**Amended (Phase 8):** Organization hierarchy is now a framework-native platform entity implemented via `platform_organization` with `ltree`-backed path column. `ScopeOrganization` and `ScopeOrganizationTree` scopes (ADR-022) depend on it. The `tenant_id` FK remains the primary isolation unit; organization hierarchy adds a second filtering dimension within a tenant.
 
-**Not deferred:** The `tenant_id` FK on every table remains the isolation unit. Sub-org filtering (if needed in v1.0) is handled by custom `PolicyFunc` predicates, not schema changes.
+**Implementation:** `platform/registry` module registers `platform_organization`. `ScopeOrganizationTree` queries use ltree `<@` ancestor operator. See `awo/tasks.md` Phase 8.
 
 ---
 
@@ -372,6 +377,8 @@ func Register(cfg EntityAuditConfig) { ... }
 
 The `audit.RiskScorer` reads sensitivity configuration from both `def.FieldDef.Sensitive` (compile-time) and `audit_sensitive_fields` (runtime DB config). The `EntityAuditConfig` registry is the authoritative source for per-entity overrides.
 
+**Amended by ADR-023:** `def.SystemDefinition.DisableAudit bool` (opt-out) is added to the struct to allow high-volume entities to skip audit without a separate registry call. The `audit.Register()` pattern remains for per-entity category/sensitivity configuration. `DisableAudit: true` is equivalent to `EntityAuditConfig{Enabled: false}` and takes precedence.
+
 **Rejected:** Adding `AuditEnabled bool` and `AuditCategory` fields to `def.SystemDefinition`. Frozen kernel — no modifications permitted post-v1.0.
 
 **Rejected:** Reading audit config entirely from the database at query time. Startup warm-up cache is required (synchronous, before HTTP server starts) to avoid per-request DB reads on the audit path.
@@ -468,18 +475,83 @@ If pg_cron is unavailable in the deployment environment, the partition maintenan
 
 ---
 
+## ADR-021: Session.Metadata Extension Field
+
+**Decision:** `auth.Session` gains a `Metadata map[string]any` field (JSON: `"metadata,omitempty"`). This field is reserved for framework-internal use. All keys MUST be prefixed with `"awo:"`. Module code MUST NOT write to Metadata; it is populated by framework middleware (e.g., `"awo:request_id"`, `"awo:device_fingerprint"`).
+
+**Rationale:** Avoids future breaking changes to the frozen Session struct for framework-internal context propagation needs (audit enrichment, feature flag context, etc.).
+
+**Constraint:** Metadata values MUST be JSON-serializable. Metadata is included in Redis storage (TTL-bounded). No sensitive data in Metadata — use `awo:` prefix as a namespace fence.
+
+---
+
+## ADR-022: EntityScope — Data Isolation Boundaries
+
+**Decision:** `EntityDefinition` gains two new methods:
+
+```go
+EntityScope() Scope    // returns isolation level; default ScopeTenant
+AllowAudit() bool      // returns false only for DisableAudit: true entities
+```
+
+`def.Scope` type with 5 constants:
+
+```go
+const (
+    ScopeSystem           Scope = "system"           // global; no tenant_id, no RLS
+    ScopeTenant           Scope = "tenant"           // default; RLS on tenant_id
+    ScopeOrganization     Scope = "organization"     // RLS on tenant_id + org filter
+    ScopeOrganizationTree Scope = "organization_tree"// RLS on tenant_id + ltree ancestor
+    ScopeUser             Scope = "user"             // private to creating user
+)
+```
+
+`EntitySchema` in `awo/compiler` carries `Scope def.Scope` and `AllowAudit bool` propagated at compile time.
+
+**Consequence:** The `EntityDefinition` interface grows from 14 to 16 methods. The public contracts table is updated. Existing implementations that embed `SystemDefinition` or `CustomDefinition` get these methods for free (default: `ScopeTenant`, `AllowAudit: true`).
+
+---
+
+## ADR-023: DisableAudit on def Structs
+
+**Decision:** `SystemDefinition.DisableAudit bool` and `CustomDefinition.DisableAudit bool` fields are added to the frozen structs as the canonical opt-out mechanism. ADR-016's `audit.Register(EntityAuditConfig{Enabled: false})` pattern remains valid but `DisableAudit: true` is preferred for entities that are high-frequency by design.
+
+**Rationale:** Requiring a separate `audit.Register()` call for structural opt-outs (not runtime config) creates split config: the entity definition says nothing about audit, but a separate init() call controls it. The bool field co-locates the intent.
+
+**Consequence:** `AllowAudit() bool` on `EntityDefinition` delegates to `!DisableAudit`. The audit pipeline reads `EntitySchema.AllowAudit` (compiled from the definition) rather than querying the `audit.EntityAuditConfig` registry for the enabled flag. The registry continues to handle Category and SensitiveFields.
+
+---
+
+## ADR-024: SessionValidator Interface
+
+**Decision:** `auth.SessionValidator` interface is introduced in `awo/auth`:
+
+```go
+type SessionValidator interface {
+    ValidateToken(ctx context.Context, token string) (*Session, error)
+    ValidateAPIToken(ctx context.Context, rawToken string) (*Session, error)
+}
+```
+
+The `api/middleware` auth middleware depends on `auth.SessionValidator`, not `*iam.Module`. The `iam.Module` implements `SessionValidator`. This breaks the circular dependency: `api/middleware` → `awo/auth` (no import of `platform/iam`).
+
+**Consequence:** Bootstrap wires `iamModule` as `SessionValidator` when IAM is available. In dev mode (auth disabled), a `NoopSessionValidator` or nil check skips validation entirely. The middleware layer is now testable without IAM.
+
+---
+
 ## Public Contracts (Frozen)
 
 The following are public contracts that cannot change without a new ADR and breaking-change notice:
 
 | Contract | Location | Frozen Since |
 |---------|----------|-------------|
-| `EntityDefinition` interface (14 methods) | `awo/def` | v1.0 |
+| `EntityDefinition` interface (16 methods) | `awo/def` | v1.0 (amended ADR-022) |
 | `def.EntityRecord` data accessors | `awo/def` | v1.0 |
 | `filter.*` function signatures | `awo/filter` | v1.0 |
 | `def.ActionRuntime` interface (11 methods) | `awo/def` | v1.0 |
 | `def.Actor` struct (post-ADR-003) | `awo/def` | v1.0 |
-| `auth.Session` struct | `awo/auth` | v1.0 |
+| `auth.Session` struct | `awo/auth` | v1.0 (amended ADR-021) |
+| `auth.SessionValidator` interface | `awo/auth` | v1.0 (ADR-024) |
 | `auth.ViewerContext` interface | `awo/auth` | v1.0 |
 | `widget.Node` struct + `NodeKind` constants | `awo/sdui/widget` | v1.0 |
 | `event_outbox` table schema | PostgreSQL | v1.0 |

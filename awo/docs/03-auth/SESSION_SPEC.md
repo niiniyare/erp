@@ -2,7 +2,7 @@
 
 **Classification:** Specification — Tier 0
 **Owner:** `03-auth/SESSION_SPEC.md`
-**Status:** Frozen at v1.0 (ADR-004)
+**Status:** Active — Metadata field added (ADR-021)
 **Package:** `awo.so/awo/auth`
 
 ---
@@ -32,7 +32,7 @@ This document specifies `auth.Session` — the frozen authenticated identity rec
 
 ## 1. Struct Definition (ADR-004)
 
-The `Session` struct is frozen. No fields may be added, removed, or renamed without a new ADR and a breaking change notice.
+The `Session` struct is frozen except for the `Metadata` field added by ADR-021. No fields may be added, removed, or renamed without a new ADR and a breaking change notice.
 
 ```go
 // Package: awo.so/awo/auth
@@ -90,6 +90,13 @@ type Session struct {
     // RequestID carries the X-Request-ID header value for the current request.
     // NEVER stored in Redis — set by middleware on each request.
     RequestID string `json:"-"`
+
+    // Metadata holds framework-reserved key-value context (ADR-021).
+    // All keys MUST be prefixed "awo:". Module code MUST NOT write to this map.
+    // Stored in Redis (JSON). Values MUST be JSON-serializable.
+    // Example keys: "awo:device_fingerprint", "awo:mfa_method".
+    // MUST NOT contain sensitive values (tokens, passwords, secrets).
+    Metadata map[string]any `json:"metadata,omitempty"`
 }
 ```
 

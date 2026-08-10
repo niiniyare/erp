@@ -2,7 +2,7 @@
 
 **Classification:** Specification — Tier 0
 **Owner:** `01-entity/ENTITY_DEFINITION_SPEC.md`
-**Status:** Frozen at v1.0
+**Status:** Active (ADR-022 amended interface to 16 methods)
 **Package:** `awo.so/awo/def`
 
 ---
@@ -14,7 +14,7 @@ This document specifies the `EntityDefinition` interface, `SystemDefinition`, an
 ## Scope
 
 This specification covers:
-- The `EntityDefinition` interface and all 14 methods
+- The `EntityDefinition` interface and all 16 methods
 - The `SystemDefinition` struct and its concrete implementation
 - The `CustomDefinition` struct and its concrete implementation
 - Entity naming rules and qualified name derivation
@@ -53,6 +53,10 @@ type EntityDefinition interface {
     EntityActions() []ActionDef
     EntityWorkflowTriggers() []WorkflowTrigger
     EntityPageBuilders() PageBuilderSet
+    EntityLayout() LayoutDef
+    EntityIcon() string
+    EntityScope() Scope   // ADR-022; default ScopeTenant
+    AllowAudit() bool     // ADR-023; default true
     IsSystem() bool
 }
 ```
@@ -97,6 +101,26 @@ Returns Temporal workflow bindings. MAY return nil or empty.
 
 **`EntityPageBuilders() PageBuilderSet`**
 Returns optional SDUI page builder overrides. Zero-value means all views use auto-generated schemas.
+
+**`EntityLayout() LayoutDef`**
+Returns the SDUI layout declaration. Zero value produces a flat field list. Set Tabs or Sections to group fields.
+
+**`EntityIcon() string`**
+Returns the semantic icon name for navigation menus and breadcrumbs. Use generic names: `"document"`, `"money"`, `"user"`. Empty string means no icon.
+
+**`EntityScope() Scope`** *(ADR-022)*
+Returns the data isolation boundary. Default (zero value): `ScopeTenant`. See `def.Scope` constants:
+
+| Scope | Meaning |
+|-------|---------|
+| `ScopeSystem` | Global rows; no `tenant_id`, no RLS |
+| `ScopeTenant` | Default; RLS on `tenant_id` |
+| `ScopeOrganization` | RLS on `tenant_id` + org filter |
+| `ScopeOrganizationTree` | RLS on `tenant_id` + ltree ancestor |
+| `ScopeUser` | Private to creating user |
+
+**`AllowAudit() bool`** *(ADR-023)*
+Returns `false` only when `DisableAudit: true` is set on the definition struct. Default: `true`. Use `DisableAudit: true` only for high-frequency internal bookkeeping entities where audit volume would be prohibitive (e.g. session event counters). Do NOT set for any entity holding financial, HR, or compliance-relevant data.
 
 **`IsSystem() bool`**
 Returns `true` for SQL-backed system entities. Returns `false` for JSONB-backed custom entities. MUST be deterministic — the value MUST NOT change at runtime.

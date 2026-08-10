@@ -553,10 +553,10 @@ None required for Phase 2.
 
 ### Acceptance Criteria
 
-- [ ] `compiler.Compile()` returns error for cyclic entity references
-- [ ] Self-referential links do not trigger cycle error
-- [ ] Orphaned `LinkTarget` entities produce `SeverityError` diagnostic
-- [ ] `CompiledSchema.Graph` field exists and is populated
+- [x] `compiler.Compile()` returns error for cyclic entity references
+- [x] Self-referential links do not trigger cycle error
+- [x] Orphaned `LinkTarget` entities produce `SeverityError` diagnostic
+- [x] `CompiledSchema.Graph` field exists and is populated
 - [ ] All existing compiler tests still pass
 - [ ] All 8 finance module entities compile without circular dependency errors (when registered)
 - [ ] `go vet ./awo/compiler/...` passes
