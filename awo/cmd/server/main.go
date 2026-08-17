@@ -28,6 +28,7 @@ import (
 
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
+	temporalclient "go.temporal.io/sdk/client"
 
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
@@ -58,6 +59,9 @@ import (
 	_ "awo.so/awo/platform/flags"
 	_ "awo.so/awo/platform/mail"
 	_ "awo.so/awo/platform/metadata"
+
+	// Finance module — registers all finance_* entities via init().
+	_ "awo.so/modules/finance"
 	_ "awo.so/awo/platform/notification"
 	_ "awo.so/awo/platform/organization"
 	_ "awo.so/awo/platform/registry"
@@ -207,6 +211,9 @@ func main() {
 	// Auth routes (login/logout/me — no upstream RequireAuth middleware).
 	iamModule.RegisterRoutes(app)
 
+	// Metadata API — entity schema introspection, no auth required.
+	router.RegisterMeta(app, result.Schema)
+
 	// OpenAPI schema endpoint (no auth required).
 	app.Get("/api/openapi.json", func(c *fiber.Ctx) error {
 		doc := openapi.Generate(result.Schema, "")
@@ -238,6 +245,24 @@ func main() {
 		Cache:             sduiCacheFor(result.Redis),
 	})
 
+	// Temporal client — wired when TEMPORAL_HOST is set; nil = degraded mode.
+	// NoopExecutor in the router/handler layer handles nil gracefully.
+	var temporalClient temporalclient.Client
+	if temporalHost := getEnv("TEMPORAL_HOST", ""); temporalHost != "" {
+		tc, tcErr := temporalclient.Dial(temporalclient.Options{
+			HostPort: temporalHost,
+		})
+		if tcErr != nil {
+			slog.Warn("temporal client dial failed; workflow starts disabled", "host", temporalHost, "err", tcErr)
+		} else {
+			temporalClient = tc
+			defer temporalClient.Close()
+			slog.Info("temporal client connected", "host", temporalHost)
+		}
+	} else {
+		slog.Info("TEMPORAL_HOST not set; running in degraded mode (no workflow starts)")
+	}
+
 	// CRUD routes for all registered entities — full middleware pipeline applied inside.
 	router.Register(app, result.Schema, router.RegisterOptions{
 		Pool:               result.Pool,
@@ -245,7 +270,7 @@ func main() {
 		IAM:                iamModule.Auth,
 		Tenants:            tenantRepo,
 		Authz:              evaluator,
-		Temporal:           nil, // TODO: wire Temporal client when worker is configured
+		Temporal:           temporalClient,
 		AuditWriter:        auditWriter,
 		AuditSigningSecret: getEnv("AUDIT_SIGNING_SECRET", ""),
 		SDUIEngine:         sduiEng,

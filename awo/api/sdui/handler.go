@@ -38,6 +38,7 @@ import (
 
 	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
+	"awo.so/awo/def"
 	"awo.so/awo/sdui/adapt"
 	"awo.so/awo/sdui/cache"
 	"awo.so/awo/sdui/engine"
@@ -246,6 +247,28 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 		return fiber.NewError(fiber.StatusBadRequest, err.Error())
 	}
 
+	// Check for PageBuilder override before running the full generation pipeline.
+	// When an entity declares a builder for this view mode and it returns a
+	// non-nil schema, that schema is used directly (no generator, no cache).
+	if pb := pageBuilderFor(es.PageBuilders, mode); pb != nil {
+		actor := viewerToActor(viewer)
+		pctx := def.PageContext{
+			Actor:      &actor,
+			EntityName: es.QualifiedName,
+			Kind:       viewModeToPageKind(mode),
+		}
+		custom, pbErr := pb(c.UserContext(), pctx)
+		if pbErr != nil {
+			slog.Error("sdui: page builder error", "entity", es.QualifiedName, "err", pbErr)
+			return fiber.NewError(fiber.StatusInternalServerError, pbErr.Error())
+		}
+		if custom != nil {
+			// Builder returned an explicit schema — serve it directly.
+			return c.JSON(custom)
+		}
+		// Builder returned nil — fall through to auto-generation below.
+	}
+
 	// Convert compiled schema → generator schema.
 	gSchema := adapt.FromCompiled(es)
 
@@ -337,4 +360,50 @@ func (h *Handler) locale(c *fiber.Ctx) string {
 		}
 	}
 	return strings.TrimSpace(raw)
+}
+
+// ── PageBuilder helpers ───────────────────────────────────────────────────────
+
+// pageBuilderFor returns the PageBuilder registered for the given view mode,
+// or nil when no override is declared. The zero-value PageBuilderSet (all nil
+// builders) is safe and represents "use auto-generation for all views".
+func pageBuilderFor(pbs def.PageBuilderSet, mode sduictx.ViewMode) def.PageBuilder {
+	switch mode {
+	case sduictx.ViewModeList:
+		return pbs.List
+	case sduictx.ViewModeCreate:
+		return pbs.Create
+	case sduictx.ViewModeEdit:
+		return pbs.Edit
+	case sduictx.ViewModeDetail:
+		return pbs.Detail
+	default:
+		return nil
+	}
+}
+
+// viewModeToPageKind maps the SDUI view mode to the def.PageKind used in
+// PageContext so page builders know which view they are producing.
+func viewModeToPageKind(mode sduictx.ViewMode) def.PageKind {
+	switch mode {
+	case sduictx.ViewModeList:
+		return def.PageKindList
+	case sduictx.ViewModeCreate:
+		return def.PageKindCreate
+	case sduictx.ViewModeEdit:
+		return def.PageKindEdit
+	case sduictx.ViewModeDetail:
+		return def.PageKindDetail
+	default:
+		return def.PageKind(string(mode))
+	}
+}
+
+// viewerToActor constructs a def.Actor from an auth.ViewerContext using the
+// ViewerContext.Actor() method which is the canonical conversion path.
+func viewerToActor(v auth.ViewerContext) def.Actor {
+	if a := v.Actor(); a != nil {
+		return *a
+	}
+	return def.Actor{TenantID: v.TenantID(), Roles: v.Roles()}
 }

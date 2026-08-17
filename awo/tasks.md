@@ -1131,12 +1131,15 @@ Trace `EntityDefinition.EntityPageBuilders()` through the SDUI engine. Verify th
 
 ### Acceptance Criteria
 
-- [ ] `GET /api/v1/meta/entities` returns all entity names
-- [ ] `GET /api/v1/meta/entities/iam_user` returns full schema JSON
-- [ ] `awo generate docs` writes Markdown per entity
-- [ ] Generated doc for `iam_user` contains all required sections
-- [ ] PageBuilderSet override is invoked when set
-- [ ] SDUI cache key includes permission fingerprint (verify)
+- [x] `GET /api/v1/meta/entities` returns all entity names (`awo/api/meta/handler.go`)
+- [x] `GET /api/v1/meta/entities/iam_user` returns full schema JSON with fields, edges, actions, permissions
+- [x] `awo generate docs` writes Markdown per entity (`awo/docgen/docgen.go` + CLI command)
+- [x] Generated doc contains all required sections (overview, fields, edges, permissions, actions, workflows, audit, API)
+- [x] PageBuilderSet override is invoked when set (`api/sdui/handler.go` — `pageBuilderFor` + pre-engine check)
+- [x] `pageBuilderFor` + `viewModeToPageKind` unit tests pass (`handler_page_builder_test.go`)
+- [x] SDUI cache key includes permission fingerprint (verified: `PermFP` in `KeyParams` + ETag)
+- [x] `RegisterMeta` wired in `cmd/server/main.go` (no auth middleware)
+- [x] `generate docs` subcommand registered in `runGenerateV2`
 
 ---
 
@@ -1201,13 +1204,13 @@ Temporal adapter implements `WorkflowExecutor`. Wire it in `main.go` (replace `T
 
 ### Acceptance Criteria
 
-- [ ] `ReportDefinition` generates valid parameterized SQL
-- [ ] Import CSV → validates → creates records via pipeline
-- [ ] Export query → CSV file with correct headers
-- [ ] Scheduler starts and fires job at specified cron interval
-- [ ] `WorkflowExecutor` interface exists
-- [ ] Temporal adapter implements interface
-- [ ] Temporal wired in `main.go` (nil → concrete adapter)
+- [x] `ReportDefinition` generates valid parameterized SQL (`awo/report/report.go`)
+- [x] Import CSV → validates → creates records via pipeline (`awo/ioport/importer.go`)
+- [x] Export query → CSV file with correct headers (`awo/ioport/importer.go` — `Export`)
+- [x] Scheduler starts and fires job at specified cron interval (`awo/scheduler/scheduler.go`)
+- [x] `WorkflowExecutor` interface exists (`awo/workflow/executor.go`)
+- [x] Temporal adapter implements interface (`TemporalExecutor` in `awo/workflow/executor.go`)
+- [x] Temporal wired in `main.go` (nil → concrete adapter from `TEMPORAL_HOST` env var)
 
 ---
 
@@ -1247,13 +1250,13 @@ Finance module definitions exist (`modules/finance/`) but are not imported. This
 
 ### Acceptance Criteria
 
-- [ ] Finance module imported and all 8 entities register without error
-- [ ] Compiler produces no errors for finance entities
-- [ ] Generated migrations execute without error
-- [ ] CRUD routes exist for all finance entities
-- [ ] finance_journal_entry state machine transitions enforced by hook
-- [ ] Immutable fields on finance_bank_transaction blocked on update
-- [ ] RLS isolates finance data between tenants
+- [x] Finance module imported and all 14 entities register without error (`modules/finance/` — 7 files, `awo.so/modules/finance` blank-imported in `cmd/server/main.go` and `cmd/awo/cmds_schema.go`)
+- [x] Compiler produces no errors for finance entities (verified via `BuildFrom` in `finance_test.go`)
+- [ ] Generated migrations execute without error (needs `awo generate migrations` + real PG — Phase 11 runtime test)
+- [x] CRUD routes exist for all finance entities (auto-generated from CompiledSchema at bootstrap)
+- [ ] finance_journal_entry state machine transitions enforced by hook (hook implementations deferred — state field + actions declared)
+- [x] Immutable fields on finance_bank_transaction blocked on update (Immutable: true on amount, transaction_date — enforced by runtime pipeline)
+- [ ] RLS isolates finance data between tenants (needs real PG — Phase 11 runtime test)
 
 ---
 
@@ -1320,8 +1323,8 @@ Track discovered bugs and deviations here.
 | BUG-002 | Medium | `Session.Metadata` field missing — no extensible per-session data | Phase 1 | FIXED — `auth/session.go` adds `Metadata map[string]any` |
 | BUG-003 | High | Compiler has no cross-entity dependency graph — circular FKs caught only at migration runtime | Phase 2 | FIXED — `compiler/graph.go` implements Kahn's cycle detection + topological sort; `CompiledSchema.Graph` populated in Phase 2.7 |
 | BUG-004 | Medium | `ActionRuntime` interface has no concrete implementation — actions receive narrower context | Phase 3 | PARTIAL — pre-existing `action_runtime_impl.go` provides `RuntimeFactory`/`defaultActionRuntime` via `EntityDriver`; `NoopActionCache` added for test isolation |
-| BUG-005 | High | Temporal client is nil at runtime — all `WorkflowTrigger` declarations are decorative | Phase 10 | OPEN |
-| BUG-006 | Medium | Finance module NOT imported — Phase 1 readiness test cannot run | Phase 11 | OPEN |
+| BUG-005 | High | Temporal client is nil at runtime — all `WorkflowTrigger` declarations are decorative | Phase 10 | FIXED — `cmd/server/main.go` dials `TEMPORAL_HOST`; degrades gracefully when unavailable |
+| BUG-006 | Medium | Finance module NOT imported — Phase 1 readiness test cannot run | Phase 11 | FIXED — `modules/finance/` created with 14 entities; imported in server + CLI |
 | BUG-007 | Low | Wire in go.mod as dead weight — no wire_gen.go | Phase 1 | PARTIAL — tracked for go.mod cleanup |
 | BUG-008 | Medium | BulkCreate is sequential within TX — n individual INSERTs, not batch | Phase 7 | OPEN |
 | BUG-009 | Low | `Session.RedisKey()` deprecated but not removed | Phase 7 | OPEN |

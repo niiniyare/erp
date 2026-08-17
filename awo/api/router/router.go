@@ -22,6 +22,7 @@ import (
 
 	"awo.so/awo/api/authz"
 	"awo.so/awo/api/handler"
+	api_meta "awo.so/awo/api/meta"
 	"awo.so/awo/api/middleware"
 	api_sdui "awo.so/awo/api/sdui"
 	"awo.so/awo/api/service"
@@ -144,6 +145,16 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		uiGroup := api.Group("/ui")
 		h.Register(uiGroup)
 	}
+}
+
+// RegisterMeta mounts the Metadata API at /api/v1/meta/... on app.
+// No authentication required — entity schema is not sensitive.
+// Must be called before Register so the /api/v1/meta group is not shadowed
+// by the authenticated /api/v1 group.
+func RegisterMeta(app *fiber.App, schema *compiler.CompiledSchema) {
+	h := api_meta.New(schema)
+	meta := app.Group("/api/v1/meta")
+	h.Register(meta)
 }
 
 // RegisterMiddleware applies the global (pre-auth) middleware pipeline to app.

@@ -9,6 +9,7 @@ import (
 	"awo.so/awo/audit"
 	"awo.so/awo/compiler"
 	"awo.so/awo/def"
+	"awo.so/awo/docgen"
 	"awo.so/awo/generator"
 	"awo.so/awo/registry"
 
@@ -24,6 +25,9 @@ import (
 	_ "awo.so/awo/platform/registry"
 	_ "awo.so/awo/platform/settings"
 	_ "awo.so/awo/platform/tenant"
+
+	// Finance module entity registration.
+	_ "awo.so/modules/finance"
 )
 
 // globalFlags are parsed from os.Args before the sub-command is dispatched.
@@ -324,8 +328,10 @@ func runGenerateV2(args []string) error {
 	switch sub {
 	case "migrations":
 		return generateMigrations(gf, rest[1:])
+	case "docs":
+		return generateDocs(gf, rest[1:])
 	default:
-		return fmt.Errorf("unknown generate sub-command %q (use: migrations)", sub)
+		return fmt.Errorf("unknown generate sub-command %q (use: migrations, docs)", sub)
 	}
 }
 
@@ -398,6 +404,67 @@ func generateMigrations(gf globalFlags, args []string) error {
 	}
 	if !gf.Quiet {
 		fmt.Printf("generated %d migration file(s) in %s\n", len(plan.Files), outDir)
+	}
+	return nil
+}
+
+func generateDocs(gf globalFlags, args []string) error {
+	// Parse --output flag.
+	outDir := "./docs/entities"
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--output" && i+1 < len(args) {
+			outDir = args[i+1]
+			i++
+		}
+	}
+
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+
+	plan, err := docgen.Generate(schema)
+	if err != nil {
+		return fmt.Errorf("generate docs: %w", err)
+	}
+
+	if gf.JSON {
+		items := make([]map[string]any, 0, len(plan.Files))
+		for _, f := range plan.Files {
+			items = append(items, map[string]any{
+				"file": f.Name + ".md",
+				"path": outDir + "/" + f.Name + ".md",
+			})
+		}
+		return printJSONValue(map[string]any{
+			"dry_run": gf.DryRun,
+			"output":  outDir,
+			"files":   items,
+		})
+	}
+
+	if gf.DryRun {
+		fmt.Printf("dry-run: would write %d doc file(s) to %s\n", len(plan.Files), outDir)
+		for _, f := range plan.Files {
+			fmt.Printf("  %s.md\n", f.Name)
+		}
+		return nil
+	}
+
+	if err := os.MkdirAll(outDir, 0o755); err != nil {
+		return fmt.Errorf("create output dir %q: %w", outDir, err)
+	}
+	for _, f := range plan.Files {
+		path := outDir + "/" + f.Name + ".md"
+		if err := os.WriteFile(path, []byte(f.Content), 0o644); err != nil {
+			return fmt.Errorf("write %q: %w", path, err)
+		}
+		if !gf.Quiet {
+			fmt.Printf("  wrote %s\n", path)
+		}
+	}
+	if !gf.Quiet {
+		fmt.Printf("generated %d doc file(s) in %s\n", len(plan.Files), outDir)
 	}
 	return nil
 }
