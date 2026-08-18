@@ -468,6 +468,94 @@ func TestGenerate_MultipleEntities_FileCount(t *testing.T) {
 	}
 }
 
+// systemEntity returns a SystemDefinition with ScopeSystem set.
+func systemEntity(name, module string, fields ...def.FieldDef) *def.SystemDefinition {
+	return &def.SystemDefinition{
+		Name:   name,
+		Module: module,
+		Scope:  def.ScopeSystem,
+		Fields: fields,
+	}
+}
+
+func TestGenerate_ScopeSystem_NoTenantID(t *testing.T) {
+	schema := buildTestSchema(t, systemEntity("currency", "finance"))
+	plan, err := generator.Generate(schema, generator.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := findEntitySQL(plan, "finance_currency")
+	if sql == "" {
+		t.Fatal("expected migration file for finance_currency")
+	}
+	if strings.Contains(sql, "tenant_id") {
+		t.Error("ScopeSystem entity must NOT have tenant_id column")
+	}
+	if strings.Contains(sql, "platform_tenant") {
+		t.Error("ScopeSystem entity must NOT reference platform_tenant")
+	}
+}
+
+func TestGenerate_ScopeSystem_NoRLS(t *testing.T) {
+	schema := buildTestSchema(t, systemEntity("currency", "finance"))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "finance_currency")
+	if strings.Contains(sql, "ROW LEVEL SECURITY") {
+		t.Error("ScopeSystem entity must NOT have RLS enabled")
+	}
+	if strings.Contains(sql, "CREATE POLICY") {
+		t.Error("ScopeSystem entity must NOT have tenant isolation policy")
+	}
+	if strings.Contains(sql, "current_tenant_id()") {
+		t.Error("ScopeSystem entity must NOT reference current_tenant_id() in policy")
+	}
+}
+
+func TestGenerate_ScopeSystem_NoTenantIndex(t *testing.T) {
+	schema := buildTestSchema(t, systemEntity("currency", "finance"))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "finance_currency")
+	if strings.Contains(sql, "tenant_id_idx") {
+		t.Error("ScopeSystem entity must NOT have tenant_id index")
+	}
+}
+
+func TestGenerate_ScopeSystem_HasUpdatedAtTrigger(t *testing.T) {
+	schema := buildTestSchema(t, systemEntity("currency", "finance"))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "finance_currency")
+	if !strings.Contains(sql, "awo_set_updated_at") {
+		t.Error("ScopeSystem entity still needs updated_at trigger")
+	}
+}
+
+func TestGenerate_ScopeTenant_HasTenantIDAndRLS(t *testing.T) {
+	schema := buildTestSchema(t, minimalEntity("invoice", "finance"))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "finance_invoice")
+	if !strings.Contains(sql, "tenant_id") {
+		t.Error("ScopeTenant entity must have tenant_id column")
+	}
+	if !strings.Contains(sql, "ROW LEVEL SECURITY") {
+		t.Error("ScopeTenant entity must have RLS enabled")
+	}
+	if !strings.Contains(sql, "CREATE POLICY") {
+		t.Error("ScopeTenant entity must have tenant isolation policy")
+	}
+}
+
+func TestGenerate_InfraFile_HasAuditLogStub(t *testing.T) {
+	schema := buildTestSchema(t, minimalEntity("widget", "test"))
+	plan, err := generator.Generate(schema, generator.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	infra := plan.Files[0]
+	if !strings.Contains(infra.SQL, "awo_audit_log") {
+		t.Error("infrastructure file should define awo_audit_log() stub trigger function")
+	}
+}
+
 // findEntitySQL searches the plan for a file containing the entity name and returns its SQL.
 func findEntitySQL(plan *generator.Plan, entityName string) string {
 	for _, f := range plan.Files {

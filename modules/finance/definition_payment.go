@@ -162,7 +162,7 @@ var PaymentDefinition = def.SystemDefinition{
 			ConfirmMessage: "Submit this payment for approval?",
 			Icon:           "send",
 			WorkflowEvent:  def.EventType("submit"),
-			HandlerFunc:    stubAction("submit"),
+			HandlerFunc:    transitionStatus("finance_payment", "submit", "draft", "submitted"),
 		},
 		{
 			Name:           "process",
@@ -171,7 +171,7 @@ var PaymentDefinition = def.SystemDefinition{
 			ConfirmMessage: "Process this payment? A journal entry will be created.",
 			Icon:           "check",
 			WorkflowEvent:  def.EventType("process"),
-			HandlerFunc:    stubAction("process"),
+			HandlerFunc:    transitionStatus("finance_payment", "process", "submitted", "processed"),
 		},
 		{
 			Name:           "reconcile",
@@ -179,7 +179,7 @@ var PaymentDefinition = def.SystemDefinition{
 			Description:    "Mark as reconciled after bank statement matching.",
 			ConfirmMessage: "Mark this payment as reconciled?",
 			Icon:           "check-circle",
-			HandlerFunc:    stubAction("reconcile"),
+			HandlerFunc:    transitionStatus("finance_payment", "reconcile", "processed", "reconciled"),
 		},
 		{
 			Name:           "cancel",
@@ -187,7 +187,7 @@ var PaymentDefinition = def.SystemDefinition{
 			Description:    "Cancel a draft or submitted payment.",
 			ConfirmMessage: "Cancel this payment? This action cannot be undone.",
 			Icon:           "x-circle",
-			HandlerFunc:    stubAction("cancel"),
+			HandlerFunc:    cancelAction("finance_payment", "processed", "reconciled"),
 		},
 	},
 

@@ -186,7 +186,7 @@ var JournalEntryDefinition = def.SystemDefinition{
 			ConfirmMessage: "Submit this journal entry for review?",
 			Icon:           "send",
 			WorkflowEvent:  def.EventType("submit"),
-			HandlerFunc:    stubAction("submit"),
+			HandlerFunc:    transitionStatus("finance_journal_entry", "submit", "draft", "submitted"),
 		},
 		{
 			Name:           "post",
@@ -195,7 +195,7 @@ var JournalEntryDefinition = def.SystemDefinition{
 			ConfirmMessage: "Post this journal entry to the General Ledger? This action cannot be undone.",
 			Icon:           "check",
 			WorkflowEvent:  def.EventType("post"),
-			HandlerFunc:    stubAction("post"),
+			HandlerFunc:    postJournalEntry(),
 		},
 		{
 			Name:           "reverse",
@@ -203,7 +203,7 @@ var JournalEntryDefinition = def.SystemDefinition{
 			Description:    "Create a reversing entry with opposite debit/credit amounts.",
 			ConfirmMessage: "Create a reversal entry for this journal entry?",
 			Icon:           "rotate-ccw",
-			HandlerFunc:    stubAction("reverse"),
+			HandlerFunc:    reverseJournalEntry(),
 		},
 	},
 

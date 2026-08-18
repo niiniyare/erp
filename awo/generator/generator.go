@@ -140,6 +140,15 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
+-- awo_audit_log() is a stub trigger function for audit logging.
+-- Replace with a real implementation that writes to the audit log table.
+CREATE OR REPLACE FUNCTION awo_audit_log() RETURNS trigger AS $$
+BEGIN
+    -- TODO: write to audit_log table when AllowAudit is true.
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 `) + "\n"
 }
 
@@ -158,7 +167,10 @@ func generateEntitySQL(es *compiler.EntitySchema) (string, error) {
 
 	// Standard columns first.
 	b.WriteString("    id          UUID        NOT NULL DEFAULT gen_random_uuid(),\n")
-	b.WriteString("    tenant_id   UUID        NOT NULL REFERENCES platform_tenant(id),\n")
+	// ScopeSystem entities have no tenant_id column — they are global / platform-level.
+	if es.Scope != def.ScopeSystem {
+		b.WriteString("    tenant_id   UUID        NOT NULL REFERENCES platform_tenant(id),\n")
+	}
 	b.WriteString("    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n")
 	b.WriteString("    updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n")
 	b.WriteString("    deleted_at  TIMESTAMPTZ,\n")
@@ -207,11 +219,13 @@ func generateEntitySQL(es *compiler.EntitySchema) (string, error) {
 		fmt.Fprintf(&b, "COMMENT ON TABLE %s IS %s;\n\n", quoteIdent(es.QualifiedName), quoteLiteral(es.Description))
 	}
 
-	// RLS.
-	fmt.Fprintf(&b, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;\n", quoteIdent(es.QualifiedName))
-	fmt.Fprintf(&b, "ALTER TABLE %s FORCE ROW LEVEL SECURITY;\n\n", quoteIdent(es.QualifiedName))
-	fmt.Fprintf(&b, "CREATE POLICY %s_tenant_isolation ON %s\n    USING (tenant_id = current_tenant_id());\n\n",
-		es.QualifiedName, quoteIdent(es.QualifiedName))
+	// RLS — only for tenant-scoped entities.
+	if es.Scope != def.ScopeSystem {
+		fmt.Fprintf(&b, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;\n", quoteIdent(es.QualifiedName))
+		fmt.Fprintf(&b, "ALTER TABLE %s FORCE ROW LEVEL SECURITY;\n\n", quoteIdent(es.QualifiedName))
+		fmt.Fprintf(&b, "CREATE POLICY %s_tenant_isolation ON %s\n    USING (tenant_id = current_tenant_id());\n\n",
+			es.QualifiedName, quoteIdent(es.QualifiedName))
+	}
 
 	// updated_at trigger.
 	triggerName := es.QualifiedName + "_set_updated_at"
@@ -219,9 +233,11 @@ func generateEntitySQL(es *compiler.EntitySchema) (string, error) {
 		triggerName, quoteIdent(es.QualifiedName))
 
 	// Indexes.
-	// Standard index on tenant_id.
-	fmt.Fprintf(&b, "CREATE INDEX IF NOT EXISTS %s_tenant_id_idx ON %s (tenant_id);\n",
-		es.QualifiedName, quoteIdent(es.QualifiedName))
+	// Standard index on tenant_id (not needed for system-scoped entities).
+	if es.Scope != def.ScopeSystem {
+		fmt.Fprintf(&b, "CREATE INDEX IF NOT EXISTS %s_tenant_id_idx ON %s (tenant_id);\n",
+			es.QualifiedName, quoteIdent(es.QualifiedName))
+	}
 
 	// GIN trigram index for Searchable fields.
 	for _, f := range es.Fields {

@@ -61,7 +61,7 @@ var FiscalYearDefinition = def.SystemDefinition{
 			Description:    "Mark the fiscal year as active and open for accounting period creation.",
 			ConfirmMessage: "Activate this fiscal year?",
 			Icon:           "play",
-			HandlerFunc:    stubAction("activate"),
+			HandlerFunc:    transitionStatus("finance_fiscal_year", "activate", "draft", "active"),
 		},
 		{
 			Name:           "close",
@@ -70,7 +70,7 @@ var FiscalYearDefinition = def.SystemDefinition{
 			ConfirmMessage: "Close this fiscal year? All accounting periods will be locked and no further entries will be accepted.",
 			Icon:           "lock",
 			WorkflowEvent:  def.EventType("close"),
-			HandlerFunc:    stubAction("close"),
+			HandlerFunc:    closeFiscalYear(),
 		},
 	},
 
@@ -165,7 +165,7 @@ var AccountingPeriodDefinition = def.SystemDefinition{
 			Description:    "Open the period for journal entry posting.",
 			ConfirmMessage: "Open this accounting period?",
 			Icon:           "unlock",
-			HandlerFunc:    stubAction("open"),
+			HandlerFunc:    transitionStatus("finance_accounting_period", "open", "draft", "open"),
 		},
 		{
 			Name:           "close",
@@ -173,7 +173,7 @@ var AccountingPeriodDefinition = def.SystemDefinition{
 			Description:    "Close the period. No further journal entries will be accepted.",
 			ConfirmMessage: "Close this accounting period? No further journal entries will be accepted.",
 			Icon:           "lock",
-			HandlerFunc:    stubAction("close"),
+			HandlerFunc:    transitionStatusWithTimestamp("finance_accounting_period", "close", "open", "closed", "closed_at"),
 		},
 	},
 
