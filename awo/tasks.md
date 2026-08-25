@@ -93,7 +93,7 @@ This section reflects actual code state, not aspirational status.
 | Phase 9 — API / OpenAPI / SDUI / Docgen | COMPLETE | meta handler; docgen; OpenAPI + tests; SDUI PageBuilderSet verified (18 tests) |
 | Phase 10 — Reports / Import / Export / Scheduling | COMPLETE | report.go; importer.go; scheduler.go; workflow/executor.go; Temporal wired |
 | Phase 11 — ERP Entity Initialization | COMPLETE | 14 finance entities; unit tests pass; migration integration suite PASSES |
-| Phase 12 — Extraction / Public API / Hardening | IN PROGRESS | PG integration suite passing (repo + IAM); auth unit tests pass |
+| Phase 12 — Extraction / Public API / Hardening | IN PROGRESS | PG integration suite passing (repo + IAM); audit tests written; RLS defense tests written |
 
 ---
 
@@ -161,16 +161,16 @@ This section reflects actual code state, not aspirational status.
 - [x] EntityRepository.Count, Exists
 - [x] Tenant isolation: Tenant A cannot read Tenant B's rows (Get + Query + BulkCreate)
 - [x] Tenant isolation: RLS alone sufficient (testutil/db/rls_test.go PASSES)
-- [ ] Tenant isolation: malformed filter cannot bypass RLS
+- [x] Tenant isolation: malformed filter cannot bypass RLS (rls_defense_test.go WRITTEN — needs PG to run)
 - [x] Finance migration: generated SQL applies without error (suite PASSES)
 - [x] Finance migration: RLS policy generated for ScopeTenant; none for ScopeSystem
 - [x] Finance migration: ScopeSystem (finance_currency) has no tenant_id column
 - [x] Finance migration: RLS tenant isolation verified (finance_fiscal_year)
 - [x] Finance migration: ScopeSystem readable without tenant context
 - [x] Finance migration: all 14 tables exist after migration apply
-- [ ] Audit: record written atomically with mutation
-- [ ] Audit: Sensitive fields excluded from audit payload
-- [ ] Audit: AllowAudit:false disables audit for that entity
+- [x] Audit: record written atomically with mutation (audit_integration_test.go WRITTEN — needs PG to run)
+- [x] Audit: Sensitive fields excluded from audit payload (StripSensitiveFields unit + integration written)
+- [x] Audit: AllowAudit:false disables audit for that entity (convention test written)
 - [x] Login: success → session in Redis + PG (platform/iam/service_integration_test.go PASSES)
 - [x] Login: wrong password → 401
 - [x] Login: unknown user → 401
@@ -317,6 +317,15 @@ All tests in the PostgreSQL Integration section of the test matrix above.
 - [x] Finance entity tables exist with correct structure
 - [x] Finance RLS policies active
 - [x] Session round-trip: Redis + PG verified
+- [x] RLS defense: cross-tenant ID predicate blocked (rls_defense_test.go written)
+- [x] RLS defense: OR predicate blocked (rls_defense_test.go written)
+- [x] RLS defense: Count obeys RLS (rls_defense_test.go written)
+- [x] Audit PostgresWriter implemented (awo/audit/pg_writer.go)
+- [x] Audit integration tests written (platform/audit/audit_integration_test.go)
+- [x] Audit: atomicity test (write commits atomically)
+- [x] Audit: rollback test (tx rollback discards audit)
+- [x] Audit: sensitive field stripping (StripSensitiveFields)
+- [x] Audit: tenant isolation (RLS on platform_audit_log)
 - [ ] All integration tests pass with `TEST_DATABASE_URL` set
 
 ---
