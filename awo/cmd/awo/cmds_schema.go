@@ -11,6 +11,7 @@ import (
 	"awo.so/awo/def"
 	"awo.so/awo/docgen"
 	"awo.so/awo/generator"
+	"awo.so/awo/generator/openapi"
 	"awo.so/awo/registry"
 
 	// Platform entity init() registration side effects.
@@ -330,8 +331,10 @@ func runGenerateV2(args []string) error {
 		return generateMigrations(gf, rest[1:])
 	case "docs":
 		return generateDocs(gf, rest[1:])
+	case "openapi":
+		return generateOpenAPI(gf, rest[1:])
 	default:
-		return fmt.Errorf("unknown generate sub-command %q (use: migrations, docs)", sub)
+		return fmt.Errorf("unknown generate sub-command %q (use: migrations, docs, openapi)", sub)
 	}
 }
 
@@ -465,6 +468,60 @@ func generateDocs(gf globalFlags, args []string) error {
 	}
 	if !gf.Quiet {
 		fmt.Printf("generated %d doc file(s) in %s\n", len(plan.Files), outDir)
+	}
+	return nil
+}
+
+func generateOpenAPI(gf globalFlags, args []string) error {
+	outFile := "./openapi.json"
+	title := "AwoERP API"
+	version := "0.1.0"
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--output":
+			if i+1 < len(args) {
+				outFile = args[i+1]
+				i++
+			}
+		case "--title":
+			if i+1 < len(args) {
+				title = args[i+1]
+				i++
+			}
+		case "--api-version":
+			if i+1 < len(args) {
+				version = args[i+1]
+				i++
+			}
+		}
+	}
+
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+
+	spec, err := openapi.Generate(schema, openapi.Options{
+		Title:   title,
+		Version: version,
+	})
+	if err != nil {
+		return fmt.Errorf("generate openapi: %w", err)
+	}
+
+	if gf.JSON || gf.DryRun {
+		return printJSONValue(spec)
+	}
+
+	data, err := json.MarshalIndent(spec, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal openapi spec: %w", err)
+	}
+	if err := os.WriteFile(outFile, data, 0o644); err != nil {
+		return fmt.Errorf("write %q: %w", outFile, err)
+	}
+	if !gf.Quiet {
+		fmt.Printf("wrote OpenAPI spec (%d paths) to %s\n", len(spec.Paths), outFile)
 	}
 	return nil
 }

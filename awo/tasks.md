@@ -144,7 +144,7 @@ This section reflects actual code state, not aspirational status.
 ### Security (unit tests)
 - [x] SessionValidator interface: valid token → session
 - [x] SessionValidator: expired token → error
-- [ ] Sessions: service account store skips user index (BUG-001 fix)
+- [x] Sessions: service account store skips user index (BUG-001 fix)
 - [x] Sessions: Session.Metadata JSONB round-trip
 - [x] RBAC: actor with permission → allowed
 - [x] RBAC: actor without permission → 403
@@ -307,10 +307,10 @@ All tests in the PostgreSQL Integration section of the test matrix above.
 - [x] PolicyFunc absent → RLS alone sufficient (TestRLSDefenseInDepth)
 - [x] No tenant context → 0 rows visible (NULL uuid matches nothing)
 - [x] AppRole pattern: non-superuser role required for RLS enforcement
-- [ ] Finance migration SQL applies to real PostgreSQL without error
-- [ ] Finance entity tables exist with correct structure
-- [ ] Finance RLS policies active
-- [ ] Session round-trip: Redis + PG verified
+- [x] Finance migration SQL applies to real PostgreSQL without error
+- [x] Finance entity tables exist with correct structure
+- [x] Finance RLS policies active
+- [x] Session round-trip: Redis + PG verified
 - [ ] All integration tests pass with `TEST_DATABASE_URL` set
 
 ---
