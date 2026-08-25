@@ -1,6 +1,6 @@
 # AWO Framework — Implementation Tracker
 
-**Updated:** 2026-08-18
+**Updated:** 2026-08-25
 **Owner:** Solo developer / Claude Code
 **Scope:** Transform AWO into a clean, reusable, production-grade Go framework extractable from the ERP repository.
 **Module:** `awo.so` (at `erp/go.mod`)
@@ -93,7 +93,7 @@ This section reflects actual code state, not aspirational status.
 | Phase 9 — API / OpenAPI / SDUI / Docgen | COMPLETE | meta handler; docgen; OpenAPI + tests; SDUI PageBuilderSet verified (18 tests) |
 | Phase 10 — Reports / Import / Export / Scheduling | COMPLETE | report.go; importer.go; scheduler.go; workflow/executor.go; Temporal wired |
 | Phase 11 — ERP Entity Initialization | COMPLETE | 14 finance entities; unit tests pass; migration integration suite PASSES |
-| Phase 12 — Extraction / Public API / Hardening | NOT STARTED | — |
+| Phase 12 — Extraction / Public API / Hardening | IN PROGRESS | PG integration suite passing (repo + IAM); auth unit tests pass |
 
 ---
 
@@ -151,14 +151,16 @@ This section reflects actual code state, not aspirational status.
 - [x] RBAC: platform admin bypasses Casbin but logged
 
 ### PostgreSQL Integration Tests (MANDATORY — needs real PG)
-- [ ] pool connection + ping
-- [ ] set_tenant_context activates RLS
-- [ ] EntityRepository.Create persists record
-- [ ] EntityRepository.Get retrieves by ID
-- [ ] EntityRepository.Query with filters
-- [ ] EntityRepository.BulkCreate (sequential within TX)
-- [ ] Tenant isolation: Tenant A cannot read Tenant B's rows
-- [ ] Tenant isolation: RLS alone sufficient (PolicyFunc removed)
+- [x] pool connection + ping
+- [x] set_tenant_context activates RLS
+- [x] EntityRepository.Create persists record (contrib/pgx/repository_test.go PASSES)
+- [x] EntityRepository.Get retrieves by ID
+- [x] EntityRepository.Query with filters (Eq, pagination, empty result)
+- [x] EntityRepository.BulkCreate (sequential within TX)
+- [x] EntityRepository.Update, Delete, WithTx rollback
+- [x] EntityRepository.Count, Exists
+- [x] Tenant isolation: Tenant A cannot read Tenant B's rows (Get + Query + BulkCreate)
+- [x] Tenant isolation: RLS alone sufficient (testutil/db/rls_test.go PASSES)
 - [ ] Tenant isolation: malformed filter cannot bypass RLS
 - [x] Finance migration: generated SQL applies without error (suite PASSES)
 - [x] Finance migration: RLS policy generated for ScopeTenant; none for ScopeSystem
@@ -169,9 +171,13 @@ This section reflects actual code state, not aspirational status.
 - [ ] Audit: record written atomically with mutation
 - [ ] Audit: Sensitive fields excluded from audit payload
 - [ ] Audit: AllowAudit:false disables audit for that entity
-- [ ] Login: success → session in Redis + PG
-- [ ] Login: wrong password → 401
-- [ ] Session: Redis miss → falls back to PG
+- [x] Login: success → session in Redis + PG (platform/iam/service_integration_test.go PASSES)
+- [x] Login: wrong password → 401
+- [x] Login: unknown user → 401
+- [x] Login: inactive/suspended user → 403
+- [x] Session: Redis miss → falls back to PG
+- [x] Session: expired session not returned (DB query filters expires_at > NOW())
+- [x] Session: revoked session not returned (revoked_at IS NOT NULL excluded)
 
 ### Generation tests
 - [x] Migration: table DDL generated from SystemDefinition
