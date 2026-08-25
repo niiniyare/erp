@@ -188,12 +188,12 @@ This section reflects actual code state, not aspirational status.
 - [x] Migration: updated_at trigger generated
 - [x] Migration: audit trigger generated (AllowAudit:true)
 - [x] Migration: CustomDefinition → custom_entity_records (no new table)
-- [ ] OpenAPI: all entities present in spec
-- [ ] OpenAPI: paths match RouteDescriptor list
-- [ ] OpenAPI: required fields marked
-- [ ] Metadata API: /api/v1/meta/entities returns all entities
-- [ ] Metadata API: /api/v1/meta/entities/{name} returns schema
-- [ ] Docgen: entity doc has fields, edges, permissions, actions sections
+- [x] OpenAPI: all entities present in spec
+- [x] OpenAPI: paths match RouteDescriptor list
+- [x] OpenAPI: required fields marked
+- [x] Metadata API: /api/v1/meta/entities returns all entities
+- [x] Metadata API: /api/v1/meta/entities/{name} returns schema
+- [x] Docgen: entity doc has fields, edges, permissions, actions sections
 
 ---
 

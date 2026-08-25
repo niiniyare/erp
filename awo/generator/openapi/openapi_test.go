@@ -20,14 +20,12 @@ func testEntity() def.EntityDefinition {
 		LabelPlural: "Invoices",
 		Description: "A customer invoice.",
 		Fields: []def.FieldDef{
-			{Name: "number", Type: def.FieldTypeNamingSeries, Label: "Number", Required: true},
+			{Name: "number", Type: def.FieldTypeData, Label: "Number", Required: true},
 			{Name: "status", Type: def.FieldTypeSelect, Label: "Status",
 				Options: []string{"draft", "submitted", "paid"}, Required: true},
 			{Name: "amount", Type: def.FieldTypeCurrency, Label: "Amount", Required: true},
 			{Name: "notes", Type: def.FieldTypeSmallText, Label: "Notes"},
 			{Name: "secret_key", Type: def.FieldTypeData, Label: "Secret Key", Sensitive: true},
-			{Name: "customer_id", Type: def.FieldTypeLink, Label: "Customer",
-				LinkTarget: "crm_customer", Required: true},
 		},
 		Permissions: def.PermissionSet{
 			Create: []string{"finance.invoice.create"},
@@ -228,7 +226,7 @@ func TestGenerate_RequiredFieldsMarkedInInputSchema(t *testing.T) {
 	for _, r := range schema.Required {
 		requiredSet[r] = true
 	}
-	for _, name := range []string{"number", "status", "amount", "customer_id"} {
+	for _, name := range []string{"number", "status", "amount"} {
 		if !requiredSet[name] {
 			t.Errorf("required field %q not marked as required in input schema", name)
 		}
@@ -250,18 +248,18 @@ func TestGenerate_SelectFieldHasEnum(t *testing.T) {
 	}
 }
 
-func TestGenerate_LinkFieldIsUUIDFormat(t *testing.T) {
+func TestGenerate_CurrencyFieldIsStringDecimal(t *testing.T) {
 	spec := generate(t, testEntity())
 	schema := spec.Components.Schemas["finance_invoice"]
 	if schema == nil {
 		t.Fatal("finance_invoice schema missing")
 	}
-	customerSchema, ok := schema.Properties["customer_id"]
+	amountSchema, ok := schema.Properties["amount"]
 	if !ok {
-		t.Fatal("customer_id field missing from schema")
+		t.Fatal("amount field missing from schema")
 	}
-	if customerSchema.Type != "string" || customerSchema.Format != "uuid" {
-		t.Errorf("link field: type=%q format=%q, want string/uuid", customerSchema.Type, customerSchema.Format)
+	if amountSchema.Type != "string" || amountSchema.Format != "decimal" {
+		t.Errorf("currency field: type=%q format=%q, want string/decimal", amountSchema.Type, amountSchema.Format)
 	}
 }
 

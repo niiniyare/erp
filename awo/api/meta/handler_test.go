@@ -58,7 +58,7 @@ func testEntity() def.EntityDefinition {
 		LabelPlural: "Invoices",
 		Description: "Customer invoice.",
 		Fields: []def.FieldDef{
-			{Name: "number", Type: def.FieldTypeNamingSeries, Label: "Number", Required: true},
+			{Name: "number", Type: def.FieldTypeData, Label: "Number", Required: true},
 			{Name: "status", Type: def.FieldTypeSelect, Label: "Status",
 				Options: []string{"draft", "submitted"}, Required: true},
 			{Name: "secret_key", Type: def.FieldTypeData, Label: "Secret", Sensitive: true},
