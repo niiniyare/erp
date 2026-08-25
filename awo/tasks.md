@@ -142,13 +142,13 @@ This section reflects actual code state, not aspirational status.
 - [x] Docgen: entity doc generated with all sections
 
 ### Security (unit tests)
-- [ ] SessionValidator interface: valid token → session
-- [ ] SessionValidator: expired token → error
+- [x] SessionValidator interface: valid token → session
+- [x] SessionValidator: expired token → error
 - [ ] Sessions: service account store skips user index (BUG-001 fix)
-- [ ] Sessions: Session.Metadata JSONB round-trip
-- [ ] RBAC: actor with permission → allowed
-- [ ] RBAC: actor without permission → 403
-- [ ] RBAC: platform admin bypasses Casbin but logged
+- [x] Sessions: Session.Metadata JSONB round-trip
+- [x] RBAC: actor with permission → allowed
+- [x] RBAC: actor without permission → 403
+- [x] RBAC: platform admin bypasses Casbin but logged
 
 ### PostgreSQL Integration Tests (MANDATORY — needs real PG)
 - [ ] pool connection + ping
