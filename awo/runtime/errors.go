@@ -111,6 +111,40 @@ func IsValidation(err error) bool {
 	return errors.As(err, &ve)
 }
 
+// HookPanicError is returned when a lifecycle hook panics. The pipeline
+// recovers the panic, wraps it in HookPanicError, and propagates it as a
+// regular error so the driver can roll back any open transaction cleanly.
+//
+// Use errors.As to detect this error type:
+//
+//	var hpe *runtime.HookPanicError
+//	if errors.As(err, &hpe) {
+//	    // log hpe.Stage, hpe.HookName, hpe.Panic
+//	}
+type HookPanicError struct {
+	// Stage is the hook stage that panicked (e.g. "before_validate",
+	// "before_create", "after_save").
+	Stage string
+
+	// HookName is the type name of the hook implementation that panicked,
+	// obtained via fmt.Sprintf("%T", hookImpl).
+	HookName string
+
+	// Panic is the value recovered from the panic.
+	Panic any
+}
+
+func (e *HookPanicError) Error() string {
+	return fmt.Sprintf("hook panic at stage %q (hook %s): %v", e.Stage, e.HookName, e.Panic)
+}
+
+// IsHookPanic reports whether err (or any error in its chain) is a
+// HookPanicError.
+func IsHookPanic(err error) bool {
+	var hpe *HookPanicError
+	return errors.As(err, &hpe)
+}
+
 // IsPermission reports whether err is a PermissionError.
 func IsPermission(err error) bool {
 	var pe *PermissionError

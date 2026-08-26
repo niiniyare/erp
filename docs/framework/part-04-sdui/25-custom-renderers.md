@@ -97,7 +97,7 @@ The type string (`pump-status-display`) is how the server-side page builder refe
 ```go
 // In the page builder:
 amis.Custom("pump-status-display").
-    Data(map[string]interface{}{
+    Data(map[string]any{
         "value":    "${pump_id}",
         "status":   "${pump_status}",
         "fuelType": "${fuel_type}",

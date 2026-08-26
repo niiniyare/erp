@@ -545,7 +545,7 @@ type AssignmentDecision struct {
     ConfidenceScore  float64                `json:"confidence_score"` // 0.0 - 1.0
     BackupAssignees  []string               `json:"backup_assignees"`
     AssignmentReason string                 `json:"assignment_reason"`
-    Attributes       map[string]interface{} `json:"attributes"`
+    Attributes       map[string]any `json:"attributes"`
 }
 
 // Algorithm: Intelligent Task Assignment
@@ -748,7 +748,7 @@ func (tas *TaskAssignmentService) assignToHierarchy(ctx context.Context, input T
                 AssigneeType:     "user",
                 ConfidenceScore:  0.9,
                 AssignmentReason: fmt.Sprintf("hierarchy_level_%d", level),
-                Attributes: map[string]interface{}{
+                Attributes: map[string]any{
                     "entity_level": level,
                     "entity_id":    entity.ID,
                     "entity_name":  entity.Name,
@@ -1111,7 +1111,7 @@ func (ee *WorkflowEngine) executeSequentialApproval(ctx workflow.Context, input 
                 return "", fmt.Errorf("delegation failed: %w", err)
             }
             input.Variables["delegation_history"] = append(
-                input.Variables["delegation_history"].([]interface{}),
+                input.Variables["delegation_history"].([]any),
                 delegationResult,
             )
             i-- // Retry current step with new assignee
@@ -1295,7 +1295,7 @@ type IAMRequestTypes struct {
         Subject   string                 `json:"subject"` // User ID
         Resource  string                 `json:"resource"`
         Action    string                 `json:"action"`
-        Context   map[string]interface{} `json:"context"`
+        Context   map[string]any `json:"context"`
     }
     
     CheckPermissionRequest struct {
@@ -1304,20 +1304,20 @@ type IAMRequestTypes struct {
         Permission   string                 `json:"permission"`
         ResourceType string                 `json:"resource_type"`
         ResourceID   string                 `json:"resource_id"`
-        Context      map[string]interface{} `json:"context"`
+        Context      map[string]any `json:"context"`
     }
 }
 
 type PolicyResult struct {
     Decision string                 `json:"decision"` // permit, deny
     Reason   string                 `json:"reason"`
-    Context  map[string]interface{} `json:"context"`
+    Context  map[string]any `json:"context"`
 }
 
 type AssignmentPolicyResult struct {
     EligibleUsers    []User                 `json:"eligible_users"`
     Confidence       float64                `json:"confidence"`
-    AssignmentRules  map[string]interface{} `json:"assignment_rules"`
+    AssignmentRules  map[string]any `json:"assignment_rules"`
     BackupUsers      []User                 `json:"backup_users"`
 }
 
@@ -1326,7 +1326,7 @@ type SecurityContext struct {
     TenantID    string                 `json:"tenant_id"`
     Roles       []string               `json:"roles"`
     Permissions []string               `json:"permissions"`
-    Attributes  map[string]interface{} `json:"attributes"`
+    Attributes  map[string]any `json:"attributes"`
 }
 ```
 
@@ -1428,7 +1428,7 @@ func (wa *WorkflowActivities) SetupWorkflowActivity(ctx context.Context, input S
         Action:       "workflow_initiated",
         ResourceType: "workflow",
         ResourceID:   instance.ID,
-        EventData: map[string]interface{}{
+        EventData: map[string]any{
             "workflow_type":         input.WorkflowType,
             "business_key":         input.BusinessKey,
             "temporal_workflow_id": instance.TemporalWorkflowID,
@@ -1458,7 +1458,7 @@ func (wa *WorkflowActivities) SetupWorkflowActivity(ctx context.Context, input S
     })
     if err != nil {
         logger.Warn("Failed to load business rules", "error", err)
-        applicableRules = make(map[string]interface{})
+        applicableRules = make(map[string]any)
     }
     
     return SetupWorkflowResult{

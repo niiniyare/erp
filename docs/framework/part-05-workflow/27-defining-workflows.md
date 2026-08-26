@@ -97,7 +97,7 @@ workflow.Sleep(ctx, 24*time.Hour)  // workflow pauses for 24 hours
 
 // SideEffect — for non-deterministic values that must be consistent across replays
 var randomID string
-workflow.SideEffect(ctx, func(ctx workflow.Context) interface{} {
+workflow.SideEffect(ctx, func(ctx workflow.Context) any {
     return uuid.New().String()
 }).Get(&randomID)
 // randomID is generated once and stored in history; same value on replay
@@ -150,7 +150,7 @@ Exception: short, fast workflows with no intermediate side effects can be safely
 Search attributes allow filtering and searching workflows in the Temporal Web UI:
 
 ```go
-workflow.UpsertSearchAttributes(ctx, map[string]interface{}{
+workflow.UpsertSearchAttributes(ctx, map[string]any{
     "TenantID":      params.TenantID.String(),
     "EntityType":    "Invoice",
     "EntityID":      params.InvoiceID.String(),

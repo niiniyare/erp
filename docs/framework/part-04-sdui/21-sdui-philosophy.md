@@ -120,7 +120,7 @@ func buildInvoiceList(ctx PageBuilderContext) *amis.Schema {
     crud := amis.NewCRUD().
         API("GET /api/v1/invoices").
         PrimaryField("id").
-        DefaultParams(map[string]interface{}{
+        DefaultParams(map[string]any{
             "sort": "-created_at",
         })
 

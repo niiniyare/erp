@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log/slog"
+	"maps"
 	"sync"
 	"time"
 
@@ -142,12 +143,8 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 	cfg := ConfigFor(record.EntityName)
 	if len(cfg.ComplianceFlags) > 0 {
 		merged := make(map[string]bool, len(cfg.ComplianceFlags)+len(record.ComplianceFlags))
-		for k, v := range cfg.ComplianceFlags {
-			merged[k] = v
-		}
-		for k, v := range record.ComplianceFlags {
-			merged[k] = v
-		}
+		maps.Copy(merged, cfg.ComplianceFlags)
+		maps.Copy(merged, record.ComplianceFlags)
 		record.ComplianceFlags = merged
 	}
 
@@ -187,7 +184,7 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 	actorID := record.ActorID()
 	saID := record.ServiceAccountID()
 
-	var actorIDArg, saIDArg interface{}
+	var actorIDArg, saIDArg any
 	if actorID != uuid.Nil {
 		actorIDArg = actorID
 	}
@@ -195,7 +192,7 @@ func (w *TransactionalWriter) Write(ctx context.Context, record AuditRecord) err
 		saIDArg = saID
 	}
 
-	var systemActorArg interface{}
+	var systemActorArg any
 	if record.SystemActor != "" {
 		systemActorArg = string(record.SystemActor)
 	}
@@ -267,7 +264,7 @@ func marshalNullable(v any) ([]byte, error) {
 }
 
 // nullableString returns nil when s is empty, preserving SQL NULL semantics.
-func nullableString(s string) interface{} {
+func nullableString(s string) any {
 	if s == "" {
 		return nil
 	}
@@ -275,7 +272,7 @@ func nullableString(s string) interface{} {
 }
 
 // nullableUUID returns nil when u is the zero UUID, preserving SQL NULL.
-func nullableUUID(u uuid.UUID) interface{} {
+func nullableUUID(u uuid.UUID) any {
 	if u == uuid.Nil {
 		return nil
 	}

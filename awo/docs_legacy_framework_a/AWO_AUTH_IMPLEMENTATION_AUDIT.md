@@ -478,7 +478,7 @@ The current design targets PostgreSQL exclusively. The `EntityRepository` interf
 
 However, the `Filter` type used by `RecordFilter` must be repository-agnostic. If `Filter` is a PostgreSQL-specific predicate type, swapping to a different database requires changing the `Filter` interface.
 
-The `Filter` is currently defined as an opaque interface (`type Filter interface{}`). The concrete implementation in `awo/filter` may be PostgreSQL-specific. For true repository agnosticism, the Filter DSL must have a translation layer that converts logical predicates (Eq, In, Like, etc.) to database-specific SQL. This translation must be in the repository driver, not in the Filter DSL itself.
+The `Filter` is currently defined as an opaque interface (`type Filter any`). The concrete implementation in `awo/filter` may be PostgreSQL-specific. For true repository agnosticism, the Filter DSL must have a translation layer that converts logical predicates (Eq, In, Like, etc.) to database-specific SQL. This translation must be in the repository driver, not in the Filter DSL itself.
 
 At v1.0: the Filter DSL can be PostgreSQL-specific since PostgreSQL is the only supported database. But the interface definition must be generic. The concrete type must be in a driver-specific package, not in the core Filter DSL. This prevents coupling.
 

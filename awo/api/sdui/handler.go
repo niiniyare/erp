@@ -273,6 +273,9 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	gSchema := adapt.FromCompiled(es)
 
 	// Delegate to engine.
+	if h.engine == nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "sdui: no engine configured")
+	}
 	rctx := renderer.ApplyLocale(renderer.RendererContext{GenCtx: ctx}, locale)
 	slog.Info("sdui: calling engine", "entity", es.QualifiedName, "renderer", rendererID, "schemaFP", schemaFP)
 	resp, err := h.engine.Handle(c.UserContext(), engine.Request{

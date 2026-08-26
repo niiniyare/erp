@@ -130,7 +130,7 @@ func StrictRateLimit(max int, window time.Duration) fiber.Handler {
 ```go
 recover.New(recover.Config{
     EnableStackTrace: cfg.Env != "production",   // stack in dev, not prod
-    StackTraceHandler: func(c *fiber.Ctx, e interface{}) {
+    StackTraceHandler: func(c *fiber.Ctx, e any) {
         slog.Error("panic recovered",
             "path", c.Path(),
             "panic", e,

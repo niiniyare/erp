@@ -32,7 +32,7 @@ func BuildCustomerListPage(ctx PageBuilderContext) *amis.Schema {
         UpdateAPI("PUT /api/v1/customers/${id}").
         DeleteAPI("DELETE /api/v1/customers/${id}").
         PrimaryField("id").
-        DefaultParams(map[string]interface{}{"sort": "-created_at"})
+        DefaultParams(map[string]any{"sort": "-created_at"})
 
     // Columns
     crud.AddColumn(amis.Column("name").Label("Customer Name").Searchable(true).Sortable(true))

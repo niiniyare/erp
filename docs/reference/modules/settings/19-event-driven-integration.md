@@ -27,11 +27,11 @@ type ConfigurationChangedEvent struct {
     EntityID  *string                `json:"entity_id,omitempty"`
     Module    string                 `json:"module"`
     ConfigKey string                 `json:"config_key"`
-    OldValue  interface{}            `json:"old_value"`
-    NewValue  interface{}            `json:"new_value"`
+    OldValue  any            `json:"old_value"`
+    NewValue  any            `json:"new_value"`
     Source    string                 `json:"source"`     // "tenant" | "entity" | "template"
     ChangedBy string                 `json:"changed_by"`
-    Metadata  map[string]interface{} `json:"metadata,omitempty"`
+    Metadata  map[string]any `json:"metadata,omitempty"`
 }
 
 // Event published on template application
@@ -63,7 +63,7 @@ func (c *ConfigurationEventBus) PublishConfigurationChange(
 
     return c.redisClient.XAdd(ctx, &redis.XAddArgs{
         Stream: "settings:configuration:changed",
-        Values: map[string]interface{}{
+        Values: map[string]any{
             "tenant_id":  change.TenantID,
             "event_type": "configuration.changed",
             "module":     change.Module,

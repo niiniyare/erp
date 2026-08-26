@@ -1371,7 +1371,7 @@ type FinanceError struct {
     Message   string    `json:"message"`
     Field     string    `json:"field,omitempty"`
     Code      string    `json:"code"`
-    Details   map[string]interface{} `json:"details,omitempty"`
+    Details   map[string]any `json:"details,omitempty"`
 }
 
 func (e *FinanceError) Error() string {
@@ -2145,7 +2145,7 @@ func BankReconciliationWorkflow(ctx workflow.Context, input BankReconciliationIn
     }, nil
 }
 
-func determineSuggestedAction(item interface{}) string {
+func determineSuggestedAction(item any) string {
     switch v := item.(type) {
     case BankTransaction:
         if v.Type == "DEBIT" && v.Amount.LessThan(decimal.NewFromFloat(50)) {
@@ -2187,7 +2187,7 @@ type Period struct {
 type ValidationRule struct {
     Type        string                 `json:"type"`
     Description string                 `json:"description"`
-    Parameters  map[string]interface{} `json:"parameters"`
+    Parameters  map[string]any `json:"parameters"`
     Critical    bool                   `json:"critical"`
 }
 
@@ -2621,8 +2621,8 @@ func CompensateTransactionProcessing(ctx context.Context, input CompensateTransa
 
 ```go
 // Workflow query handlers for real-time status
-func TransactionProcessingWorkflowQuery(ctx workflow.Context) (interface{}, error) {
-    return map[string]interface{}{
+func TransactionProcessingWorkflowQuery(ctx workflow.Context) (any, error) {
+    return map[string]any{
         "status":           "IN_PROGRESS",
         "current_step":     "VALIDATION", 
         "transaction_id":   "uuid",

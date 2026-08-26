@@ -23,8 +23,8 @@ type Event struct {
 	Action       string       // "contract.create", "contract.approve", etc.
 	ResourceType string       // "contract"
 	ResourceID   string       // contract UUID as string
-	Before       interface{}  // serialised to JSON — current state before change
-	After        interface{}  // serialised to JSON — new state after change
+	Before       any  // serialised to JSON — current state before change
+	After        any  // serialised to JSON — new state after change
 	Metadata     map[string]string  // optional extra context
 	OccurredAt   time.Time
 }

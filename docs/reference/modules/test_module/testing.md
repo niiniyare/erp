@@ -312,7 +312,7 @@ func TestRepository_Performance_BulkOperations(t *testing.T) {
 func TestHandler_CreateTestModule(t *testing.T) {
     app := setupTestApp(t)
     
-    payload := map[string]interface{}{
+    payload := map[string]any{
         "name":        "Test TestModule",
         "description": "Test description",
     }
@@ -578,7 +578,7 @@ func TestE2E_TestModuleLifecycle(t *testing.T) {
     app := setupTestApp(t)
     
     // 1. Create test_module
-    createPayload := map[string]interface{}{
+    createPayload := map[string]any{
         "name":        "E2E Test TestModule",
         "description": "End-to-end test test_module",
     }
@@ -594,7 +594,7 @@ func TestE2E_TestModuleLifecycle(t *testing.T) {
     assert.Equal(t, 200, getResp.Code)
     
     // 3. Update test_module
-    updatePayload := map[string]interface{}{
+    updatePayload := map[string]any{
         "name": "Updated E2E Test TestModule",
     }
     

@@ -54,7 +54,7 @@ WorkflowType = "SalesOrderSubmitSaga"
 Set useful search attributes in workflow code:
 
 ```go
-workflow.UpsertSearchAttributes(ctx, map[string]interface{}{
+workflow.UpsertSearchAttributes(ctx, map[string]any{
     "TenantID":   params.TenantID.String(),
     "EntityType": "Invoice",
     "EntityID":   params.InvoiceID.String(),
@@ -140,7 +140,7 @@ func (a *Activities) StartWorkflowWithTrace(ctx context.Context, input WorkflowI
     options := client.StartWorkflowOptions{
         ID:        input.WorkflowID,
         TaskQueue: input.TaskQueue,
-        SearchAttributes: map[string]interface{}{
+        SearchAttributes: map[string]any{
             "TraceID": spanCtx.TraceID().String(),
             "SpanID":  spanCtx.SpanID().String(),
         },

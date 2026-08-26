@@ -298,7 +298,7 @@ type RedisClient struct {
 }
 
 func (r *RedisClient) Get(ctx context.Context, key string) (string, error) {
-    result, err := r.breaker.Execute(func() (interface{}, error) {
+    result, err := r.breaker.Execute(func() (any, error) {
         return r.client.Get(ctx, key).Result()
     })
     if err == gobreaker.ErrOpenState {

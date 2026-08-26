@@ -185,7 +185,7 @@ Use `MultiSelect` for flags, categories, and roles that a record can hold simult
 Maps to `jsonb`. Stores arbitrary structured data. The PostgreSQL layer validates only that it is valid JSON; the framework applies a Go struct validator at the application layer.
 
 ```go
-field.JSON("metadata", map[string]interface{}{}).
+field.JSON("metadata", map[string]any{}).
     Optional()
 ```
 
@@ -392,10 +392,10 @@ field.String("phone").
 
 ### 5.3.2. Writing a Custom Field Validator
 
-A field validator satisfies `func(v interface{}) error`. Return `nil` for valid, `validate.Errorf("field_name", "message")` for invalid.
+A field validator satisfies `func(v any) error`. Return `nil` for valid, `validate.Errorf("field_name", "message")` for invalid.
 
 ```go
-func validateKenyanID(v interface{}) error {
+func validateKenyanID(v any) error {
     s, ok := v.(string)
     if !ok {
         return validate.Errorf("national_id", "must be a string")

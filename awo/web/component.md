@@ -101,9 +101,9 @@ func GetDepartmentOptions(c *gin.Context) {
         return
     }
     
-    options := []map[string]interface{}{}
+    options := []map[string]any{}
     for _, dept := range departments {
-        options = append(options, map[string]interface{}{
+        options = append(options, map[string]any{
             "label": dept.Name,
             "value": dept.ID,
         })
@@ -598,7 +598,7 @@ func SearchCustomers(c *gin.Context) {
         c.JSON(200, gin.H{
             "status": 0,
             "data": gin.H{
-                "options": []interface{}{},
+                "options": []any{},
             },
         })
         return
@@ -606,9 +606,9 @@ func SearchCustomers(c *gin.Context) {
     
     customers, _ := db.SearchCustomers(tenantID, query, 10)
     
-    options := []map[string]interface{}{}
+    options := []map[string]any{}
     for _, customer := range customers {
-        options = append(options, map[string]interface{}{
+        options = append(options, map[string]any{
             "label": customer.Name,
             "value": customer.Name,
             "id":    customer.ID,
@@ -728,12 +728,12 @@ func GetCategoryTree(c *gin.Context) {
     })
 }
 
-func buildTree(categories []Category, parentID int) []map[string]interface{} {
-    result := []map[string]interface{}{}
+func buildTree(categories []Category, parentID int) []map[string]any {
+    result := []map[string]any{}
     
     for _, cat := range categories {
         if cat.ParentID == parentID {
-            node := map[string]interface{}{
+            node := map[string]any{
                 "label":    cat.Name,
                 "value":    cat.ID,
                 "children": buildTree(categories, cat.ID),
@@ -796,14 +796,14 @@ For selecting multiple items from a large list:
 **Backend:**
 ```go
 func GetAllPermissions(c *gin.Context) {
-    permissions := []map[string]interface{}{
-        {"label": "HRM", "value": "hrm", "children": []map[string]interface{}{
+    permissions := []map[string]any{
+        {"label": "HRM", "value": "hrm", "children": []map[string]any{
             {"label": "View Employees", "value": "hrm.employees.view"},
             {"label": "Create Employees", "value": "hrm.employees.create"},
             {"label": "Edit Employees", "value": "hrm.employees.edit"},
             {"label": "Delete Employees", "value": "hrm.employees.delete"},
         }},
-        {"label": "Inventory", "value": "inventory", "children": []map[string]interface{}{
+        {"label": "Inventory", "value": "inventory", "children": []map[string]any{
             {"label": "View Products", "value": "inventory.products.view"},
             {"label": "Manage Stock", "value": "inventory.stock.manage"},
         }},
@@ -1262,10 +1262,10 @@ func GetNavigationMenu(c *gin.Context) {
     features := c.GetStringSlice("feature_flags")
     permissions := c.GetStringSlice("permissions")
     
-    menuItems := []map[string]interface{}{}
+    menuItems := []map[string]any{}
     
     // Dashboard (always visible)
-    menuItems = append(menuItems, map[string]interface{}{
+    menuItems = append(menuItems, map[string]any{
         "label": "Dashboard",
         "to":    "#dashboard",
         "icon":  "fa fa-home",
@@ -1273,26 +1273,26 @@ func GetNavigationMenu(c *gin.Context) {
     
     // HRM Menu
     if hasPermission(permissions, "hrm.access") {
-        hrmItems := []map[string]interface{}{
+        hrmItems := []map[string]any{
             {"label": "Employees", "to": "#hrm/employees"},
             {"label": "Attendance", "to": "#hrm/attendance"},
         }
         
         if hasFeature(features, "hrm.payroll") {
-            hrmItems = append(hrmItems, map[string]interface{}{
+            hrmItems = append(hrmItems, map[string]any{
                 "label": "Payroll",
                 "to":    "#hrm/payroll",
             })
         }
         
         if hasFeature(features, "hrm.time_tracking") {
-            hrmItems = append(hrmItems, map[string]interface{}{
+            hrmItems = append(hrmItems, map[string]any{
                 "label": "Time Tracking",
                 "to":    "#hrm/time-tracking",
             })
         }
         
-        menuItems = append(menuItems, map[string]interface{}{
+        menuItems = append(menuItems, map[string]any{
             "label":    "HRM",
             "icon":     "fa fa-users",
             "children": hrmItems,
@@ -1301,19 +1301,19 @@ func GetNavigationMenu(c *gin.Context) {
     
     // Inventory Menu
     if hasPermission(permissions, "inventory.access") {
-        invItems := []map[string]interface{}{
+        invItems := []map[string]any{
             {"label": "Products", "to": "#inventory/products"},
             {"label": "Stock", "to": "#inventory/stock"},
         }
         
         if hasFeature(features, "inventory.barcode") {
-            invItems = append(invItems, map[string]interface{}{
+            invItems = append(invItems, map[string]any{
                 "label": "Barcode Scanner",
                 "to":    "#inventory/barcode",
             })
         }
         
-        menuItems = append(menuItems, map[string]interface{}{
+        menuItems = append(menuItems, map[string]any{
             "label":    "Inventory",
             "icon":     "fa fa-boxes",
             "children": invItems,
@@ -1338,7 +1338,7 @@ func GetNavigationMenu(c *gin.Context) {
 ```go
 type TenantConfig struct {
     TenantID string                 `json:"tenant_id"`
-    Config   map[string]interface{} `json:"config"`
+    Config   map[string]any `json:"config"`
 }
 
 // Example config
@@ -1645,7 +1645,7 @@ type ABACPolicy struct {
     TenantID   string                 `json:"tenant_id"`
     Resource   string                 `json:"resource"`   // e.g., "hrm.employees"
     Action     string                 `json:"action"`     // e.g., "edit"
-    Conditions map[string]interface{} `json:"conditions"` // JSON conditions
+    Conditions map[string]any `json:"conditions"` // JSON conditions
 }
 
 // Example policies
@@ -2101,8 +2101,8 @@ type CustomField struct {
     Label      string      `json:"label"`
     Type       string      `json:"type"`       // text, number, select, date, etc.
     Required   bool        `json:"required"`
-    Options    interface{} `json:"options"`    // For select/radio
-    Validation interface{} `json:"validation"`
+    Options    any `json:"options"`    // For select/radio
+    Validation any `json:"validation"`
 }
 
 func GetCustomFields(c *gin.Context) {
@@ -2427,7 +2427,7 @@ CREATE POLICY tenant_isolation ON employees
 
 **Track all tenant actions:**
 ```go
-func AuditLog(c *gin.Context, action string, resource string, resourceID string, changes interface{}) {
+func AuditLog(c *gin.Context, action string, resource string, resourceID string, changes any) {
     log := AuditLog{
         TenantID:   c.GetString("tenant_id"),
         UserID:     c.GetString("user_id"),

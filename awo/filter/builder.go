@@ -1,5 +1,49 @@
 package filter
 
+import "fmt"
+
+// BuilderError is returned by QueryBuilder validation methods when the caller
+// provides an invalid argument (empty field name, negative limit, etc.).
+// Use errors.As to detect and inspect this error type.
+type BuilderError struct {
+	Field  string // field name, if the error relates to a specific field
+	Reason string // human-readable description
+}
+
+func (e *BuilderError) Error() string {
+	if e.Field != "" {
+		return fmt.Sprintf("filter: invalid argument: %s (field=%q)", e.Reason, e.Field)
+	}
+	return fmt.Sprintf("filter: invalid argument: %s", e.Reason)
+}
+
+// ValidateField returns a BuilderError if name is empty, or nil if valid.
+// Use this in helper functions that construct *Filter nodes programmatically
+// to provide a descriptive typed error instead of a panic or silent bug.
+func ValidateField(name string) error {
+	if name == "" {
+		return &BuilderError{Reason: "field name must not be empty"}
+	}
+	return nil
+}
+
+// ValidateLimit returns a BuilderError if n is negative, nil if valid.
+// 0 is accepted (means no explicit limit; driver default applies).
+func ValidateLimit(n int) error {
+	if n < 0 {
+		return &BuilderError{Reason: fmt.Sprintf("limit must be non-negative, got %d", n)}
+	}
+	return nil
+}
+
+// ValidateOffset returns a BuilderError if n is negative, nil if valid.
+func ValidateOffset(n int) error {
+	if n < 0 {
+		return &BuilderError{Reason: fmt.Sprintf("offset must be non-negative, got %d", n)}
+	}
+	return nil
+}
+
 // SortDirection specifies ascending or descending sort order.
 type SortDirection string
 

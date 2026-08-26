@@ -42,7 +42,7 @@ func createMyNewFeatureFlag(ctx context.Context, flagService featureflag.SimpleS
         FlagType:          featureflag.FlagTypeBoolean,
         DefaultValue:      false, // The feature is OFF by default
         RolloutPercentage: &rollout,
-        Metadata: map[string]interface{}{
+        Metadata: map[string]any{
             "owner":       "frontend-team",
             "jira_ticket": "DASH-123",
         },

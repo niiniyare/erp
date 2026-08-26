@@ -100,8 +100,11 @@ Scaffolding:
   new workflow <name>         Scaffold a Temporal workflow + activities stub
 
 Schema:
-  schema inspect              Print the compiled schema (requires running app)
-  schema fingerprint          Print the schema fingerprint (requires running app)
+  schema compile              Compile all registered entities and report counts
+  schema validate             Validate the compiled schema (exits 1 on error)
+  schema graph                Print entity dependency graph in topological order
+  schema inspect              Print a human-readable summary of the compiled schema
+  schema fingerprint          Print the SHA-256 fingerprint of the compiled schema
 
 Migrations:
   migrate up                  Apply all pending up migrations
@@ -113,7 +116,7 @@ Modules:
   module list                 List registered modules in dependency order
 
 Documentation:
-  docgen                      Generate Markdown API reference
+  docgen [--out <dir>]        Generate Markdown API reference (stdout or directory)
 
 Diagnostics:
   doctor                      Check development environment prerequisites
@@ -206,24 +209,6 @@ func runNewWorkflow(args []string) error {
 	return nil
 }
 
-func runSchema(args []string) error {
-	sub := ""
-	if len(args) > 0 {
-		sub = args[0]
-	}
-	switch sub {
-	case "inspect":
-		fmt.Println("schema inspect: expose GET /api/v1/schema in development and run:")
-		fmt.Println("  curl http://localhost:3000/api/v1/schema | jq .")
-		return nil
-	case "fingerprint":
-		fmt.Println("schema fingerprint: expose GET /api/v1/schema in development and run:")
-		fmt.Println("  curl http://localhost:3000/api/v1/schema | jq .fingerprint")
-		return nil
-	default:
-		return fmt.Errorf("unknown schema sub-command %q (use: inspect, fingerprint)", sub)
-	}
-}
 
 func runMigrate(args []string) error {
 	sub := ""
@@ -256,10 +241,7 @@ func runModule(args []string) error {
 }
 
 func runDocgen(args []string) error {
-	_ = args
-	fmt.Println("docgen: wire awo/docgen.WriteMarkdown to a CLI entrypoint in your application:")
-	fmt.Println("  go run ./cmd/server docgen > docs/api-reference.md")
-	return nil
+	return runDocgenCmd(args)
 }
 
 func runValidate(args []string) error {

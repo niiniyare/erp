@@ -19,10 +19,10 @@
 ```go
 // ABAC concepts - completely custom implementation
 type ABACContext struct {
-    Subject     map[string]interface{} `expr:"subject"`
-    Resource    map[string]interface{} `expr:"resource"`  
+    Subject     map[string]any `expr:"subject"`
+    Resource    map[string]any `expr:"resource"`  
     Action      string                 `expr:"action"`
-    Environment map[string]interface{} `expr:"environment"`
+    Environment map[string]any `expr:"environment"`
 }
 
 // Policy structure - no standard
@@ -42,10 +42,10 @@ type Rule struct {
 
 // Example policy expression (you design the schema)
 env := ABACContext{
-    Subject:     map[string]interface{}{"role": "manager", "department": "eng"},
-    Resource:    map[string]interface{}{"type": "expense", "amount": 2500},
+    Subject:     map[string]any{"role": "manager", "department": "eng"},
+    Resource:    map[string]any{"type": "expense", "amount": 2500},
     Action:      "approve",
-    Environment: map[string]interface{}{"time": time.Now()},
+    Environment: map[string]any{"time": time.Now()},
 }
 
 program, _ := expr.Compile(`subject.role == "manager" && resource.amount < 5000`, expr.Env(env))
@@ -216,14 +216,14 @@ type InstrumentedEvaluator struct {
 
 type ExpressionTrace struct {
     Expression   string                 `json:"expression"`
-    Result       interface{}            `json:"result"`
+    Result       any            `json:"result"`
     Duration     time.Duration          `json:"duration"`
-    Variables    map[string]interface{} `json:"variables"`
+    Variables    map[string]any `json:"variables"`
     Error        string                 `json:"error,omitempty"`
     Subtraces    []ExpressionTrace      `json:"subtraces,omitempty"`
 }
 
-func (ie *InstrumentedEvaluator) EvaluateWithTrace(expr string, env interface{}) (*ExpressionTrace, error) {
+func (ie *InstrumentedEvaluator) EvaluateWithTrace(expr string, env any) (*ExpressionTrace, error) {
     start := time.Now()
     trace := &ExpressionTrace{
         Expression: expr,

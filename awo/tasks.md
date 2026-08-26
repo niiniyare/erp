@@ -84,8 +84,8 @@ This section reflects actual code state, not aspirational status.
 | Phase 0 — Documentation + Task Tracking | COMPLETE | tasks.md exists |
 | Phase 1 — Framework Core | COMPLETE | framework.go, Options pattern, SessionValidator, Scope, Wire removed |
 | Phase 2 — Compiler Dependency Graph | COMPLETE | compiler/graph.go; cycle detection tests pass |
-| Phase 3 — Runtime Pipeline Hardening | COMPLETE | pipeline tests; ActionRuntime concrete impl |
-| Phase 4 — Filter + Query Builder | COMPLETE | fluent builder; SQL translator; 90%+ coverage |
+| Phase 3 — Runtime Pipeline Hardening | COMPLETE | pipeline tests; ActionRuntime concrete impl; hook panic recovery; AllowAudit enforcement |
+| Phase 4 — Filter + Query Builder | COMPLETE | fluent builder; SQL translator; TranslationError typed; Like() alias; ValidateField/Limit/Offset helpers; 90%+ coverage |
 | Phase 5 — Migration Generation | COMPLETE | awo/generator; awo generate migrations command |
 | Phase 6 — CLI | COMPLETE | awo serve/schema/entity/generate; --json/--dry-run |
 | Phase 7 — Contrib Infrastructure | COMPLETE | BulkCreate (sequential); session PG recovery |
@@ -115,6 +115,12 @@ This section reflects actual code state, not aspirational status.
 - [x] Filter: And/Or/Not combinators
 - [x] Filter: fluent builder API
 - [x] Filter: SQL translator (parameterized, no injection)
+- [x] Filter: Like() alias for Contains (KindContains)
+- [x] Filter: ValidateField returns BuilderError on empty field
+- [x] Filter: ValidateLimit returns BuilderError on negative limit
+- [x] Filter: ValidateOffset returns BuilderError on negative offset
+- [x] Filter: TranslationError typed struct for unsupported kind (errors.As detectable)
+- [x] Filter: FieldNotAllowedError typed struct for unknown field in allowlist (errors.As detectable)
 - [x] Pipeline: BeforeValidate fires before field validation
 - [x] Pipeline: Required field missing → ValidationError
 - [x] Pipeline: Immutable field on update → ImmutableFieldError
@@ -126,7 +132,22 @@ This section reflects actual code state, not aspirational status.
 - [x] Finance: state machine options (draft/submitted/posted/reversed) declared
 - [x] Finance: all entities have Read permissions declared
 - [ ] Finance: actions return error (not success) when stubbed ← verify
-- [ ] Actions: ActionDef.HandlerFunc invoked correctly
+- [x] Actions: ActionDef.HandlerFunc invoked correctly
+- [x] Actions: ActionContext implements def.ActionRuntime (compile-time)
+- [x] Actions: ActionContext.Repo returns entity repo by name
+- [x] Actions: ActionContext.Tx calls inner function
+- [x] Actions: ActionContext.Publish forwards to events.Publisher with auto TenantID
+- [x] Actions: ActionContext.StartWorkflow calls WorkflowExecutor; auto-generates ID when empty
+- [x] Actions: ActionContext.Clock returns non-zero time
+- [x] Actions: ActionContext.Logger returns non-nil logger
+- [x] Actions: ActionContext.Cache returns non-nil cache (NoopActionCache default)
+- [x] Actions: ActionContext.Notify is no-op when notifyFn is nil
+- [x] Actions: ActionContext.InvalidateCache is no-op when invalidateFn is nil
+- [x] Actions: NewActionContext panics on nil Publish
+- [x] Actions: NewActionContext panics on nil Executor
+- [x] Pipeline: hook panic recovered → HookPanicError returned (not server crash)
+- [x] Pipeline: HookPanicError contains Stage and Panic fields
+- [x] Pipeline: subsequent hooks NOT fired after hook panic
 - [x] Events: DomainEvent structure, NoopPublisher, EventType constants
 - [ ] Outbox: relay polling + delivery (needs real PG)
 - [x] Scheduler: job fires at cron interval
@@ -567,7 +588,7 @@ go tool cover -func=coverage.out | tail -1  # must show ≥90%
 | BUG-001 | Medium | Service account sessions create index under uuid.Nil in Redis | FIXED |
 | BUG-002 | Medium | Session.Metadata field missing | FIXED |
 | BUG-003 | High | Compiler missing cross-entity dependency graph | FIXED |
-| BUG-004 | Medium | ActionRuntime no concrete implementation | PARTIAL |
+| BUG-004 | Medium | ActionRuntime no concrete implementation | FIXED — runtime.ActionContext in runtime_action_context.go |
 | BUG-005 | High | Temporal client nil at runtime | FIXED |
 | BUG-006 | Medium | Finance module not imported | FIXED |
 | BUG-007 | Low | Wire in go.mod as dead weight | OPEN |

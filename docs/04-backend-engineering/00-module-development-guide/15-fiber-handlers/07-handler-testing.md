@@ -83,7 +83,7 @@ func TestHandler_Create_Success(t *testing.T) {
 
 	app := setupTestApp(mockSvc)
 
-	body, _ := json.Marshal(map[string]interface{}{
+	body, _ := json.Marshal(map[string]any{
 		"contract_number": "CONT-2025-0001",
 		"title":           "Test Contract",
 		"vendor_id":       uuid.New().String(),
@@ -100,7 +100,7 @@ func TestHandler_Create_Success(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, 201, resp.StatusCode)
 
-	var result map[string]interface{}
+	var result map[string]any
 	json.NewDecoder(resp.Body).Decode(&result)
 	assert.Equal(t, "CONT-2025-0001", result["contract_number"])
 	assert.Equal(t, "draft", result["status"])
@@ -114,7 +114,7 @@ func TestHandler_Create_Success(t *testing.T) {
 func TestHandler_Create_ValidationFailure(t *testing.T) {
 	app := setupTestApp(&mockContractService{})
 
-	body, _ := json.Marshal(map[string]interface{}{
+	body, _ := json.Marshal(map[string]any{
 		"title": "",  // required field empty
 	})
 

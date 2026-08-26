@@ -660,8 +660,8 @@ type Event struct {
     AggregateType string                 `json:"aggregate_type"`
     EventType     string                 `json:"event_type"`
     EventVersion  int                    `json:"event_version"`
-    Data          map[string]interface{} `json:"data"`
-    Metadata      map[string]interface{} `json:"metadata"`
+    Data          map[string]any `json:"data"`
+    Metadata      map[string]any `json:"metadata"`
     Timestamp     time.Time              `json:"timestamp"`
     UserID        string                 `json:"user_id"`
     TenantID      string                 `json:"tenant_id"`
@@ -721,7 +721,7 @@ func (so *SalesOrderAggregate) CreateOrder(orderNumber, customerID string, lineI
         AggregateType: "SalesOrder",
         EventType:     "SalesOrderCreated",
         EventVersion:  1,
-        Data: map[string]interface{}{
+        Data: map[string]any{
             "order_number":  orderNumber,
             "customer_id":   customerID,
             "line_items":    lineItems,

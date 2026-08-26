@@ -177,7 +177,7 @@ resp.Get(&status)
 
 ```go
 // Reduces boilerplate for simple activity calls
-func executeActivity(ctx workflow.Context, fn interface{}, args ...interface{}) error {
+func executeActivity(ctx workflow.Context, fn any, args ...any) error {
     ao := workflow.ActivityOptions{
         StartToCloseTimeout: 30 * time.Second,
     }

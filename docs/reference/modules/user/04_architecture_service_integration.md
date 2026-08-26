@@ -129,7 +129,7 @@ type service struct {
 }
 
 // When evaluating, it collects user attributes.
-func (s *service) CollectUserAttributes(ctx context.Context, userID uuid.UUID) (map[string]interface{}, error) {
+func (s *service) CollectUserAttributes(ctx context.Context, userID uuid.UUID) (map[string]any, error) {
     // 1. ABAC calls Identity to get user data
     user, err := s.identityService.GetUserByID(ctx, userID)
     if err != nil {
@@ -141,7 +141,7 @@ func (s *service) CollectUserAttributes(ctx context.Context, userID uuid.UUID) (
     // ...
 
     // 3. Attributes are packaged for the policy engine
-    attributes := make(map[string]interface{})
+    attributes := make(map[string]any)
     attributes["user.status"] = string(user.Status)
     // ...
     return attributes, nil

@@ -73,8 +73,8 @@ type Entry struct {
     Action       string          // "module.resource.verb"
     ResourceType string
     ResourceID   uuid.UUID
-    Before       interface{}     // pointer to domain struct, or nil
-    After        interface{}     // pointer to domain struct, or nil
+    Before       any     // pointer to domain struct, or nil
+    After        any     // pointer to domain struct, or nil
     IPAddress    string          // from request context
     UserAgent    string
     RequestID    string
@@ -167,7 +167,7 @@ func (s *ContractService) Update(ctx context.Context, sess ResolvedSession, id u
     return after, nil
 }
 
-func (s *ContractService) recordAuditAsync(sess ResolvedSession, action string, id uuid.UUID, before, after interface{}) {
+func (s *ContractService) recordAuditAsync(sess ResolvedSession, action string, id uuid.UUID, before, after any) {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
     defer func() { recover() }()

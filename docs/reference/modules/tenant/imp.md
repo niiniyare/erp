@@ -214,8 +214,8 @@ type Tenant struct {
     LegalEntityType  *string `json:"legal_entity_type,omitempty"`
     
     // Flexible Storage
-    Metadata    map[string]interface{} `json:"metadata,omitempty"`
-    Settings    map[string]interface{} `json:"settings,omitempty"`
+    Metadata    map[string]any `json:"metadata,omitempty"`
+    Settings    map[string]any `json:"settings,omitempty"`
     
     // Audit Fields
     LastActivityAt time.Time  `json:"last_activity_at"`
@@ -243,8 +243,8 @@ func NewTenant(name, email string, opts ...TenantOption) (*Tenant, error) {
         Status:         TenantStatusPending,
         Timezone:       "UTC",
         CurrencyCode:   "USD",
-        Metadata:       make(map[string]interface{}),
-        Settings:       make(map[string]interface{}),
+        Metadata:       make(map[string]any),
+        Settings:       make(map[string]any),
         LastActivityAt: time.Now(),
         CreatedAt:      time.Now(),
         UpdatedAt:      time.Now(),
@@ -323,7 +323,7 @@ func (t *Tenant) Suspend(reason string) error {
     
     // Store suspension reason in metadata
     if t.Metadata == nil {
-        t.Metadata = make(map[string]interface{})
+        t.Metadata = make(map[string]any)
     }
     t.Metadata["suspension_reason"] = reason
     t.Metadata["suspended_at"] = time.Now()
@@ -497,14 +497,14 @@ type TenantConfiguration struct {
     LanguageCode   string `json:"language_code"`
     
     // Security Settings
-    PasswordPolicy map[string]interface{} `json:"password_policy,omitempty"`
+    PasswordPolicy map[string]any `json:"password_policy,omitempty"`
     
     // Integration Settings
     WebhookEndpoints []string               `json:"webhook_endpoints,omitempty"`
-    APIRateLimits    map[string]interface{} `json:"api_rate_limits,omitempty"`
+    APIRateLimits    map[string]any `json:"api_rate_limits,omitempty"`
     
     // Flexible Settings
-    Settings map[string]interface{} `json:"settings,omitempty"`
+    Settings map[string]any `json:"settings,omitempty"`
     
     // Audit
     CreatedAt time.Time `json:"created_at"`
@@ -525,18 +525,18 @@ func NewTenantConfiguration(tenantID uuid.UUID) *TenantConfiguration {
         DateFormat:              "MM/DD/YYYY",
         NumberFormat:            "US",
         LanguageCode:            "en-US",
-        PasswordPolicy: map[string]interface{}{
+        PasswordPolicy: map[string]any{
             "min_length":         8,
             "require_uppercase":  true,
             "require_lowercase":  true,
             "require_numbers":    true,
             "require_symbols":    false,
         },
-        APIRateLimits: map[string]interface{}{
+        APIRateLimits: map[string]any{
             "requests_per_minute": 100,
             "requests_per_hour":   5000,
         },
-        Settings:  make(map[string]interface{}),
+        Settings:  make(map[string]any),
         CreatedAt: time.Now(),
         UpdatedAt: time.Now(),
     }
@@ -1276,12 +1276,12 @@ func (r *tenantRepository) List(ctx context.Context, limit, offset int) ([]*doma
 
 // Helper: Convert DB model to domain entity
 func (r *tenantRepository) toDomain(row Tenant) (*domain.Tenant, error) {
-    var metadata map[string]interface{}
+    var metadata map[string]any
     if err := json.Unmarshal(row.Metadata, &metadata); err != nil {
         return nil, err
     }
     
-    var settings map[string]interface{}
+    var settings map[string]any
     if err := json.Unmarshal(row.Settings, &settings); err != nil {
         return nil, err
     }
@@ -1836,7 +1836,7 @@ func BulkSuspendTenantsWorkflow(ctx workflow.Context, input BulkSuspendTenantsIn
         TenantIDs:     input.TenantIDs,
         ActorID:       input.ActorID,
         ActorName:     input.ActorName,
-        Parameters: map[string]interface{}{
+        Parameters: map[string]any{
             "reason": input.Reason,
         },
     }).Get(ctx, &createOpResult)

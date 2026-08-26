@@ -98,7 +98,7 @@ func RegisterSchedules(ctx context.Context, c client.Client, tenantIDs []string)
             Action: &client.ScheduleWorkflowAction{
                 Workflow:  workflows.ContractExpiryWorkflow,
                 TaskQueue: workflows.ContractsTaskQueue,
-                Args: []interface{}{workflows.ExpiryWorkflowInput{
+                Args: []any{workflows.ExpiryWorkflowInput{
                     TenantID:  tenantID,
                     DaysAhead: 30,
                 }},

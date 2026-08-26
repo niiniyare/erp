@@ -750,12 +750,12 @@ type ConfigurationAuditContext struct {
     Level       string                 `json:"level"`        // tenant, entity
     Module      string                 `json:"module"`       // finance, hr, inventory
     ConfigKey   string                 `json:"config_key"`   // approval_limit, etc.
-    OldValue    interface{}            `json:"old_value,omitempty"`
-    NewValue    interface{}            `json:"new_value,omitempty"`
+    OldValue    any            `json:"old_value,omitempty"`
+    NewValue    any            `json:"new_value,omitempty"`
     OldSource   string                 `json:"old_source,omitempty"`
     NewType     string                 `json:"new_type,omitempty"`
     Timestamp   time.Time              `json:"timestamp"`
-    Metadata    map[string]interface{} `json:"metadata,omitempty"`
+    Metadata    map[string]any `json:"metadata,omitempty"`
 }
 
 type TemplateAuditContext struct {
@@ -1039,7 +1039,7 @@ func (s *configurationService) checkPermissions(
     // Check IAM permissions
     permission := fmt.Sprintf("settings:%s:%s", module, operation)
     
-    hasPermission, err := s.iamService.CheckPermission(ctx, userID, permission, map[string]interface{}{
+    hasPermission, err := s.iamService.CheckPermission(ctx, userID, permission, map[string]any{
         "module":    string(module),
         "key":       string(key),
         "entity_id": entityID,

@@ -254,7 +254,7 @@ type PolicyResult struct {
 
 type Obligation struct {
     Type   string                 `json:"type"`
-    Data   map[string]interface{} `json:"data"`
+    Data   map[string]any `json:"data"`
     RuleID string                 `json:"rule_id"`
 }
 
@@ -487,7 +487,7 @@ type AttributePath struct {
 }
 
 type AttributeValue struct {
-    Value      interface{}
+    Value      any
     Type       string
     Source     string
     Timestamp  time.Time

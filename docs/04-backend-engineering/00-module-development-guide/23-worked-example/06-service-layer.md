@@ -242,7 +242,7 @@ func (s *contractService) publishNotificationAsync(n port.Notification) {
     }()
 }
 
-func toJSON(v interface{}) json.RawMessage {
+func toJSON(v any) json.RawMessage {
     b, _ := json.Marshal(v)
     return b
 }

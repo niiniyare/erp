@@ -19,6 +19,27 @@ func (e *FieldNotAllowedError) Error() string {
 	return fmt.Sprintf("sqlbuild: field %q is not allowed on entity %q", e.Field, e.EntityName)
 }
 
+// TranslationError is returned when a filter cannot be translated to SQL.
+// This includes unsupported filter kinds and type assertion failures during
+// translation. Callers should use errors.As to detect and inspect this error.
+type TranslationError struct {
+	// Operator is the filter.Kind string that caused the failure.
+	Operator string
+	// Field is the field name involved, if applicable.
+	Field string
+	// Value is the offending value, if applicable.
+	Value any
+	// Reason is a human-readable explanation.
+	Reason string
+}
+
+func (e *TranslationError) Error() string {
+	if e.Field != "" {
+		return fmt.Sprintf("sqlbuild: %s: operator=%q field=%q", e.Reason, e.Operator, e.Field)
+	}
+	return fmt.Sprintf("sqlbuild: %s: operator=%q", e.Reason, e.Operator)
+}
+
 // Allowlist holds the set of permitted column names for an entity.
 // Construct via [NewAllowlist] from a compiled EntitySchema.
 type Allowlist struct {

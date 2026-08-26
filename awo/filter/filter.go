@@ -170,6 +170,13 @@ func EndsWith(field, value string) *Filter {
 	return &Filter{Kind: KindEndsWith, Field: field, Value: value}
 }
 
+// Like matches rows where field ILIKE '%pattern%' (case-insensitive substring).
+// It is an alias for [Contains] and resolves to KindContains.
+// Use [StartsWith] or [EndsWith] for prefix/suffix matching.
+func Like(field, pattern string) *Filter {
+	return Contains(field, pattern)
+}
+
 // --- Logical combinators ---
 
 // And requires all sub-filters to match. Returns the single filter unchanged

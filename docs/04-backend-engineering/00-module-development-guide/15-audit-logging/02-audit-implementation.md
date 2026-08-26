@@ -48,7 +48,7 @@ func (s *pgAuditService) Log(ctx context.Context, entry Entry) error {
     })
 }
 
-func toJSON(v interface{}) ([]byte, error) {
+func toJSON(v any) ([]byte, error) {
     if v == nil {
         return nil, nil
     }

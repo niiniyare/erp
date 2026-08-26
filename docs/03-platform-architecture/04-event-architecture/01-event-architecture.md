@@ -110,7 +110,7 @@ func (b *redisStreamBus) Publish(ctx context.Context, req PublishRequest) error 
         Stream: stream,
         MaxLen: 10000,  // keep last 10k events per stream
         Approx: true,
-        Values: map[string]interface{}{
+        Values: map[string]any{
             "payload": string(payload),
         },
     }).Err()

@@ -219,7 +219,7 @@ At request time, the framework:
 5. Returns all errors before touching the database
 
 ```go
-func validateCustomFields(ctx context.Context, defs []CustomFieldDef, values map[string]interface{}) []validate.FieldError {
+func validateCustomFields(ctx context.Context, defs []CustomFieldDef, values map[string]any) []validate.FieldError {
     var errs []validate.FieldError
     defsByKey := indexDefsByKey(defs)
 
@@ -286,7 +286,7 @@ invoices, _, err := repo.Query(ctx,
 
 // Find invoices where insurer is Britam
 invoices, _, err := repo.Query(ctx,
-    filter.JSONContains("custom_fields", map[string]interface{}{
+    filter.JSONContains("custom_fields", map[string]any{
         "insurer_name": "Britam",
     }),
 )

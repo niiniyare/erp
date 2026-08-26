@@ -1,6 +1,7 @@
 package filter_test
 
 import (
+	"errors"
 	"testing"
 
 	"awo.so/awo/filter"
@@ -142,5 +143,100 @@ func TestQueryBuilder_OrderBys_Independent(t *testing.T) {
 	orders[0].Field = "MUTATED"
 	if q.OrderBys()[0].Field == "MUTATED" {
 		t.Error("OrderBys should return a copy, not a reference")
+	}
+}
+
+// --- ValidateField / ValidateLimit / ValidateOffset ---
+
+func TestValidateField_Empty_ReturnsError(t *testing.T) {
+	err := filter.ValidateField("")
+	if err == nil {
+		t.Fatal("expected error for empty field name; got nil")
+	}
+	var be *filter.BuilderError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected *filter.BuilderError, got %T: %v", err, err)
+	}
+	if be.Reason == "" {
+		t.Error("BuilderError.Reason must not be empty")
+	}
+}
+
+func TestValidateField_NonEmpty_ReturnsNil(t *testing.T) {
+	if err := filter.ValidateField("status"); err != nil {
+		t.Errorf("ValidateField on non-empty name should return nil, got %v", err)
+	}
+}
+
+func TestValidateLimit_Negative_ReturnsError(t *testing.T) {
+	err := filter.ValidateLimit(-1)
+	if err == nil {
+		t.Fatal("expected error for negative limit; got nil")
+	}
+	var be *filter.BuilderError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected *filter.BuilderError, got %T: %v", err, err)
+	}
+}
+
+func TestValidateLimit_Zero_ReturnsNil(t *testing.T) {
+	if err := filter.ValidateLimit(0); err != nil {
+		t.Errorf("ValidateLimit(0) should return nil (0 = no explicit limit), got %v", err)
+	}
+}
+
+func TestValidateLimit_Positive_ReturnsNil(t *testing.T) {
+	if err := filter.ValidateLimit(100); err != nil {
+		t.Errorf("ValidateLimit(100) should return nil, got %v", err)
+	}
+}
+
+func TestValidateOffset_Negative_ReturnsError(t *testing.T) {
+	err := filter.ValidateOffset(-5)
+	if err == nil {
+		t.Fatal("expected error for negative offset; got nil")
+	}
+	var be *filter.BuilderError
+	if !errors.As(err, &be) {
+		t.Fatalf("expected *filter.BuilderError, got %T: %v", err, err)
+	}
+}
+
+func TestValidateOffset_Zero_ReturnsNil(t *testing.T) {
+	if err := filter.ValidateOffset(0); err != nil {
+		t.Errorf("ValidateOffset(0) should return nil, got %v", err)
+	}
+}
+
+func TestBuilderError_MessageContainsReason(t *testing.T) {
+	be := &filter.BuilderError{Reason: "must be positive"}
+	if be.Error() == "" {
+		t.Error("BuilderError.Error() must not return empty string")
+	}
+}
+
+func TestBuilderError_WithField_MessageContainsField(t *testing.T) {
+	be := &filter.BuilderError{Field: "amount", Reason: "must be positive"}
+	msg := be.Error()
+	if len(msg) == 0 {
+		t.Error("BuilderError.Error() must not return empty string")
+	}
+}
+
+// --- Like ---
+
+func TestLike_AliasForContains(t *testing.T) {
+	f := filter.Like("name", "acme")
+	if f == nil {
+		t.Fatal("Like should return non-nil filter")
+	}
+	if f.Kind != filter.KindContains {
+		t.Errorf("Like should resolve to KindContains, got %q", f.Kind)
+	}
+	if f.Field != "name" {
+		t.Errorf("Like field mismatch: got %q", f.Field)
+	}
+	if f.Value != "acme" {
+		t.Errorf("Like value mismatch: got %v", f.Value)
 	}
 }

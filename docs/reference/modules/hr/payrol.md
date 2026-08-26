@@ -2265,7 +2265,7 @@ func OffboardingWorkflow(ctx workflow.Context, input OffboardingInput) error {
     ao := workflow.ActivityOptions{StartToCloseTimeout: 15 * time.Minute}
     ctx = workflow.WithActivityOptions(ctx, ao)
 
-    steps := []struct{ name string; fn interface{} }{
+    steps := []struct{ name string; fn any }{
         {"ComputeTerminalBenefits",    ComputeTerminalBenefitsActivity},
         {"CreateFinalPayrollRun",      CreateFinalPayrollRunActivity},
         {"ClearOutstandingDeductions", ClearOutstandingDeductionsActivity},
@@ -2330,7 +2330,7 @@ The platform ships a built-in eTIMS adapter. Other jurisdictions can add their o
 ```go
 type StatutoryFilingAdapter interface {
     JurisdictionCode() string
-    SubmitReturn(ctx context.Context, component string, period DateRange, data interface{}) (SubmissionRef, error)
+    SubmitReturn(ctx context.Context, component string, period DateRange, data any) (SubmissionRef, error)
     ValidateIdentifier(ctx context.Context, identifierCode, value string) (ValidationResult, error)
 }
 ```

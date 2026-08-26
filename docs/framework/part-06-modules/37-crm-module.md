@@ -304,7 +304,7 @@ func OpportunityKanbanSchema(ctx PageBuilderContext) amis.Schema {
             API: amis.API{
                 Method: "PATCH",
                 URL:    "/api/v1/opportunities/${id}",
-                Data:   map[string]interface{}{"stage": "${targetGroup}"},
+                Data:   map[string]any{"stage": "${targetGroup}"},
             },
         },
     }

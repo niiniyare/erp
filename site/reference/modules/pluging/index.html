@@ -15891,7 +15891,7 @@ The plugin runs as a separate OS process, communicating with the host via a loca
 </tr>
 <tr>
 <td><strong>GORM</strong></td>
-<td>Low (interface{})</td>
+<td>Low (any)</td>
 <td>Moderate</td>
 <td>Limited</td>
 <td>Partial (gen)</td>
@@ -15931,7 +15931,7 @@ The plugin runs as a separate OS process, communicating with the host via a loca
 <li><strong>PostgreSQL-specific features:</strong> The plugin system relies on several PostgreSQL features that are not available through generic drivers: <code>SET LOCAL app.tenant_id</code> for RLS, <code>LISTEN/NOTIFY</code> for change events, named prepared statements, and <code>pg_notify</code> triggers.</li>
 <li><strong>Row-Level Security (RLS) integration:</strong> PGX allows setting session-level and transaction-level application parameters, which is the mechanism by which tenant ID is communicated to PostgreSQL RLS policies transparently.</li>
 </ul>
-<p><strong>Considered alternative — GORM:</strong> GORM's Active Record-style ORM is appealing for rapid development but has significant problems for a plugin system. Its use of empty interface (<code>interface{}</code>) for query parameters bypasses Go's type system, making it easy to introduce runtime errors that SQLC would catch at compile time. GORM's "magic" (auto-migrations, hooks, callbacks) conflicts with the plugin system's need for explicit, auditable schema changes. For the core ERP schema where fine-grained control matters, GORM's convenience is outweighed by its opacity.</p>
+<p><strong>Considered alternative — GORM:</strong> GORM's Active Record-style ORM is appealing for rapid development but has significant problems for a plugin system. Its use of empty interface (<code>any</code>) for query parameters bypasses Go's type system, making it easy to introduce runtime errors that SQLC would catch at compile time. GORM's "magic" (auto-migrations, hooks, callbacks) conflicts with the plugin system's need for explicit, auditable schema changes. For the core ERP schema where fine-grained control matters, GORM's convenience is outweighed by its opacity.</p>
 <p><strong>Considered alternative — Ent:</strong> Ent (from Meta/Facebook) is a compelling graph-based ORM with excellent code generation. It was evaluated seriously. The primary reason it was not chosen is that Ent's schema definition is Go code, which would require plugin authors to write Ent schema definitions rather than SQL — adding a new conceptual layer on top of what is fundamentally a SQL database. SQLC keeps plugin authors close to SQL, which is a universal skill for backend engineers.</p>
 <h3 id="643-plugin-schema-namespacing-migration-strategy">6.4.3 Plugin Schema Namespacing &amp; Migration Strategy</h3>
 <div class="highlight"><pre><span></span><code><span class="c1">-- Core schema lives in the &#39;public&#39; schema</span>

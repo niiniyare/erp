@@ -570,7 +570,7 @@ func (s *ServiceWithConfigCache) getCachedConfig(ctx context.Context, entityID u
 Services should continue operating with sensible defaults when configuration is unavailable:
 
 ```go
-func (s *ServiceExample) getConfigWithFallback(ctx context.Context, entityID uuid.UUID, key string, defaultValue interface{}) interface{} {
+func (s *ServiceExample) getConfigWithFallback(ctx context.Context, entityID uuid.UUID, key string, defaultValue any) any {
     config, err := s.configService.GetEffectiveConfiguration(ctx, &entityID, s.moduleName, domain.ConfigKey(key))
     if err != nil {
         s.logger.WarnContext(ctx, "Configuration unavailable, using default", logger.Fields{

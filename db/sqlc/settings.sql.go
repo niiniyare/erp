@@ -1066,10 +1066,10 @@ type ListTenantEffectiveConfigurationsParams struct {
 }
 
 type ListTenantEffectiveConfigurationsRow struct {
-	ConfigFullKey interface{} `json:"config_full_key"`
+	ConfigFullKey any `json:"config_full_key"`
 	ModuleName    string      `json:"module_name"`
 	ConfigKey     string      `json:"config_key"`
-	Value         interface{} `json:"value"`
+	Value         any `json:"value"`
 	Source        string      `json:"source"`
 }
 
@@ -1225,7 +1225,7 @@ type SearchConfigurationsParams struct {
 	SearchTerm     *string      `json:"search_term"`
 	SourcesFilter  []string     `json:"sources_filter"`
 	UpdatedAfter   sql.NullTime `json:"updated_after"`
-	SortBy         interface{}  `json:"sort_by"`
+	SortBy         any  `json:"sort_by"`
 	OffsetCount    int32        `json:"offset_count"`
 	LimitCount     int32        `json:"limit_count"`
 	EntityIDFilter *uuid.UUID   `json:"entity_id_filter"`
@@ -1234,7 +1234,7 @@ type SearchConfigurationsParams struct {
 type SearchConfigurationsRow struct {
 	ModuleName string      `json:"module_name"`
 	ConfigKey  string      `json:"config_key"`
-	FullKey    interface{} `json:"full_key"`
+	FullKey    any `json:"full_key"`
 	Value      []byte      `json:"value"`
 	Source     string      `json:"source"`
 	TenantID   *uuid.UUID  `json:"tenant_id"`

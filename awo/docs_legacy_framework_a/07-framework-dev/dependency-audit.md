@@ -37,7 +37,7 @@ Layer 0 — Kernel (zero internal deps)
 
 Layer 1 — Filter / Cache / Lock / TX (no def dep)
 ┌─────────────────────────────────┐
-│  awo/filter                     │  Predicate DSL. def.Filter = interface{}
+│  awo/filter                     │  Predicate DSL. def.Filter = any
 │  awo/cache                      │  Cache[K,V] interface. stdlib only.
 │  awo/lock                       │  DistributedLock interface. stdlib only.
 │  awo/tx                         │  Transaction abstraction. stdlib only.
@@ -272,7 +272,7 @@ Key verified chains:
 | Rule | Status | Evidence |
 |------|--------|----------|
 | `def` has zero internal deps | ✅ PASS | Only uuid, decimal, stdlib |
-| `filter.Filter` satisfies `def.Filter` without import | ✅ PASS | `def.Filter = interface{}` |
+| `filter.Filter` satisfies `def.Filter` without import | ✅ PASS | `def.Filter = any` |
 | Registry sealed once at startup | ✅ PASS | `def.Seal()` called from `registry.Build()` |
 | No ORM types in public API | ✅ PASS | All persistence through `driver.EntityRepository[T]` |
 | Contrib never in kernel | ✅ PASS | pgx/redis drivers only in bootstrap + cmd |

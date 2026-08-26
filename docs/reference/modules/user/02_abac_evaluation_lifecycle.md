@@ -197,7 +197,7 @@ func (h *JournalEntryHandler) CreateJournalEntry(w http.ResponseWriter, r *http.
         Action:       "create",
         // The context can be empty if the ABAC service can gather everything it needs.
         // Or we can pass specific data about the object being created.
-        Context:      map[string]interface{}{},
+        Context:      map[string]any{},
     })
 
     if err != nil || decision.Decision != types.PolicyDecisionAllow {
@@ -264,7 +264,7 @@ func (h *PerformanceReviewHandler) GetPerformanceReview(w http.ResponseWriter, r
         UserID:       userID,
         ResourceType: "performance_review",
         Action:       "read",
-        Context: map[string]interface{}{
+        Context: map[string]any{
             // Pass the resource's attributes into the context for evaluation
             "resource.department_id": review.DepartmentID,
             "resource.owner_id": review.EmployeeID,

@@ -91,7 +91,7 @@ type BusinessRuleError struct {
     Message string `json:"message"`
 }
 
-func NewBusinessError(code, format string, args ...interface{}) *BusinessRuleError {
+func NewBusinessError(code, format string, args ...any) *BusinessRuleError {
     return &BusinessRuleError{
         Code:    code,
         Message: fmt.Sprintf(format, args...),
@@ -132,7 +132,7 @@ Never expose stack traces, SQL errors, or internal system details to API callers
 ## 18.2. HTTP Status Code Mapping
 
 ```go
-func MapErrorToHTTP(err error) (int, interface{}) {
+func MapErrorToHTTP(err error) (int, any) {
     var ve *ValidationError
     var nfe *NotFoundError
     var pe *PermissionError
@@ -252,7 +252,7 @@ type MessageCatalogue struct {
     messages map[string]map[string]string // locale → code → message
 }
 
-func (c *MessageCatalogue) Get(locale, code string, args ...interface{}) string {
+func (c *MessageCatalogue) Get(locale, code string, args ...any) string {
     if msgs, ok := c.messages[locale]; ok {
         if msg, ok := msgs[code]; ok {
             return fmt.Sprintf(msg, args...)

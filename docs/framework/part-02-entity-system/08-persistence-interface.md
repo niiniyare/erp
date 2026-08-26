@@ -479,7 +479,7 @@ filter.JSONPath("custom_fields", "industry", filter.Eq("", "Technology"))
 filter.JSONPath("custom_fields", "address.city", filter.Eq("", "Nairobi"))
 
 // Containment: custom_fields @> '{"tags": ["vip"]}'::jsonb
-filter.JSONContains("custom_fields", map[string]interface{}{"tags": []string{"vip"}})
+filter.JSONContains("custom_fields", map[string]any{"tags": []string{"vip"}})
 ```
 
 JSONB predicates are only efficient when supported by a GIN index on the JSONB column. Without an index, every row must be scanned. See Chapter 10 for GIN index strategy.

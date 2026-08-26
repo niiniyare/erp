@@ -1038,7 +1038,7 @@ func ChainErrorDetails(ctx context.Context, operation string) error {
 //  Good: Structured error logging
 func StructuredErrorLogging(ctx context.Context, err error) {
     if be, ok := err.(*BusinessError); ok {
-        log.WithFields(map[string]interface{}{
+        log.WithFields(map[string]any{
             "error_code":   be.Code,
             "error_category": be.Category,
             "tenant_id":    be.TenantID,

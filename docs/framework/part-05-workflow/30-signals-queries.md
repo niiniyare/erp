@@ -240,7 +240,7 @@ func waitForApprovalGate(ctx workflow.Context, gate ApprovalGate) (ApprovalDecis
     selector.Select(ctx)
 
     // Update state for query visibility
-    workflow.UpsertSearchAttributes(ctx, map[string]interface{}{
+    workflow.UpsertSearchAttributes(ctx, map[string]any{
         "ApprovalStage":  gate.Stage,
         "ApprovalStatus": decision.Action,
     })

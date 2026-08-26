@@ -11,7 +11,7 @@ import "context"
 //
 // The concrete type is *filter.Filter. Runtime code type-asserts to it.
 // Do not implement this interface with types outside awo.so/awo/filter.
-type Filter interface{}
+type Filter any
 
 // PolicyFunc is a row-level filter injected into every query for an entity.
 // It runs at request time and receives the full request context, allowing

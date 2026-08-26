@@ -341,13 +341,13 @@ To promote type-safety and consistency, define these structs in your Go applicat
 type AmisAPIResponse struct {
 	Status int         `json:"status"` // 0 for success, non-zero for error
 	Msg    string      `json:"msg"`
-	Data   interface{} `json:"data,omitempty"`
-	Errors interface{} `json:"errors,omitempty"` // For validation errors
+	Data   any `json:"data,omitempty"`
+	Errors any `json:"errors,omitempty"` // For validation errors
 }
 
 // A standard structure for paginated list data.
 type AmisListResponseData struct {
-	Items interface{} `json:"items"`
+	Items any `json:"items"`
 	Total int64       `json:"total"`
 }
 ```

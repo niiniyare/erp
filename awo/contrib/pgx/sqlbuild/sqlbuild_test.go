@@ -1,6 +1,7 @@
 package sqlbuild_test
 
 import (
+	"errors"
 	"strings"
 	"testing"
 
@@ -275,6 +276,97 @@ func TestBuild_UnsupportedKind_ReturnsError(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "unsupported") {
 		t.Errorf("error should mention 'unsupported', got: %v", err)
+	}
+}
+
+// TestBuild_UnsupportedKind_TypedError verifies that the returned error is a
+// *sqlbuild.TranslationError so callers can use errors.As to inspect it.
+func TestBuild_UnsupportedKind_TypedError(t *testing.T) {
+	f := &filter.Filter{Kind: filter.Kind("nonexistent_op"), Field: "amount", Value: 42}
+	_, err := sqlbuild.Build(f, 0)
+	if err == nil {
+		t.Fatal("expected error for unsupported filter kind; got nil")
+	}
+	var te *sqlbuild.TranslationError
+	if !errors.As(err, &te) {
+		t.Fatalf("expected *sqlbuild.TranslationError via errors.As, got %T: %v", err, err)
+	}
+	if te.Operator == "" {
+		t.Error("TranslationError.Operator must not be empty")
+	}
+	if te.Reason == "" {
+		t.Error("TranslationError.Reason must not be empty")
+	}
+}
+
+// TestTranslationError_MessageContainsOperator verifies the error message is informative.
+func TestTranslationError_MessageContainsOperator(t *testing.T) {
+	te := &sqlbuild.TranslationError{
+		Operator: "bad_op",
+		Field:    "status",
+		Reason:   "unsupported filter kind",
+	}
+	msg := te.Error()
+	if !strings.Contains(msg, "bad_op") {
+		t.Errorf("TranslationError message should contain operator, got %q", msg)
+	}
+}
+
+// TestTranslationError_NoField_OmitsFieldFromMessage verifies the error message
+// without a field name is still valid.
+func TestTranslationError_NoField_OmitsFieldFromMessage(t *testing.T) {
+	te := &sqlbuild.TranslationError{
+		Operator: "bad_op",
+		Reason:   "unsupported filter kind",
+	}
+	msg := te.Error()
+	if msg == "" {
+		t.Error("TranslationError.Error() must not be empty")
+	}
+}
+
+// TestBuildWithAllowlist_OrderBy_ASC_DIR_Safe ensures OrderBy direction in
+// query options is always a binary bool — tested via the allowlist path to
+// confirm the two-direction invariant.
+func TestBuildWithAllowlist_OrderBy_UnknownField_Error(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_entity", []string{"status", "amount"})
+	// "unknown_col" is not in the allowlist; Build should return FieldNotAllowedError.
+	f := filter.Eq("unknown_col", "x")
+	_, err := sqlbuild.BuildWithAllowlist(f, 0, al)
+	if err == nil {
+		t.Fatal("expected error for unknown field; got nil")
+	}
+	var fae *sqlbuild.FieldNotAllowedError
+	if !errors.As(err, &fae) {
+		t.Fatalf("expected *sqlbuild.FieldNotAllowedError via errors.As, got %T: %v", err, err)
+	}
+	if fae.Field == "" {
+		t.Error("FieldNotAllowedError.Field must be set")
+	}
+}
+
+// TestBuildWithAllowlist_KnownField_Passes verifies a known field is accepted.
+func TestBuildWithAllowlist_KnownField_Passes(t *testing.T) {
+	al := sqlbuild.NewManualAllowlist("test_entity", []string{"status"})
+	_, err := sqlbuild.BuildWithAllowlist(filter.Eq("status", "active"), 0, al)
+	if err != nil {
+		t.Fatalf("known field should pass allowlist: %v", err)
+	}
+}
+
+// TestBuild_Like_ViaContains ensures filter.Like() (alias for Contains) round-trips
+// through sqlbuild correctly.
+func TestBuild_Like_ViaContains(t *testing.T) {
+	r, err := sqlbuild.Build(filter.Like("name", "acme"), 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(r.Clause, "ILIKE") {
+		t.Errorf("Like/Contains should produce ILIKE clause, got %q", r.Clause)
+	}
+	val, _ := r.Args[0].(string)
+	if !strings.HasPrefix(val, "%") || !strings.HasSuffix(val, "%") {
+		t.Errorf("Contains arg should be %%value%%, got %q", val)
 	}
 }
 

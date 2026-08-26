@@ -77,7 +77,7 @@ type FinanceConfigService interface {
     ApplyBusinessTypeConfiguration(ctx context.Context, entityID *uuid.UUID, businessType string) error
     
     // Validation
-    ValidateFinanceConfiguration(ctx context.Context, key string, value interface{}) error
+    ValidateFinanceConfiguration(ctx context.Context, key string, value any) error
 }
 ```
 

@@ -501,7 +501,7 @@ func (s *adminServiceImpl) EmergencyDisableAll(ctx context.Context, reason strin
     startTime := time.Now()
     rollbackToken := generateRollbackToken()
 
-    s.logger.Warn("EMERGENCY DISABLE ALL INITIATED", map[string]interface{}{
+    s.logger.Warn("EMERGENCY DISABLE ALL INITIATED", map[string]any{
         "reason":         reason,
         "rollback_token": rollbackToken,
         "initiated_at":   startTime,
@@ -564,7 +564,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
             Category:     "feature_toggle",
             FlagType:     FlagTypeBoolean,
             DefaultValue: false,
-            Metadata: map[string]interface{}{
+            Metadata: map[string]any{
                 "use_case":    "feature_enablement",
                 "complexity":  "low",
                 "risk_level":  "low",
@@ -580,11 +580,11 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
                 ID:   uuid.New(),
                 Name: "50% A/B Test",
                 Type: RolloutStrategyPercentage,
-                Configuration: map[string]interface{}{
+                Configuration: map[string]any{
                     "percentage": 50.0,
                 },
             },
-            Metadata: map[string]interface{}{
+            Metadata: map[string]any{
                 "use_case":    "ab_testing",
                 "complexity":  "medium",
                 "risk_level":  "medium",
@@ -597,7 +597,7 @@ func (s *adminServiceImpl) CreatePredefinedTemplates(ctx context.Context) error 
     for _, templateReq := range predefinedTemplates {
         _, err := s.CreateFlagTemplate(ctx, &templateReq)
         if err != nil {
-            s.logger.Warn("Failed to create predefined template", map[string]interface{}{
+            s.logger.Warn("Failed to create predefined template", map[string]any{
                 "template_name": templateReq.Name,
                 "error":         err.Error(),
             })
@@ -798,8 +798,8 @@ type FeatureFlag struct {
     FlagType          FlagType               `json:"flag_type"`
     DefaultValue      bool                   `json:"default_value"`
     RolloutPercentage *int32                 `json:"rollout_percentage,omitempty"`
-    TargetAudience    map[string]interface{} `json:"target_audience,omitempty"`
-    Metadata          map[string]interface{} `json:"metadata,omitempty"`
+    TargetAudience    map[string]any `json:"target_audience,omitempty"`
+    Metadata          map[string]any `json:"metadata,omitempty"`
     CreatedAt         time.Time              `json:"created_at"`
     UpdatedAt         time.Time              `json:"updated_at"`
     DeletedAt         *time.Time             `json:"deleted_at,omitempty"`
@@ -1061,10 +1061,10 @@ flag, err := repo.CreateFeatureFlag(ctx, &CreateFeatureFlagRequest{
     FlagType:     FlagTypeBoolean,
     DefaultValue: false,
     RolloutPercentage: &[]int32{25}[0], // 25% rollout
-    TargetAudience: map[string]interface{}{
+    TargetAudience: map[string]any{
         "user_roles": []string{"admin", "manager"},
     },
-    Metadata: map[string]interface{}{
+    Metadata: map[string]any{
         "category": "ui",
         "owner":    "frontend-team",
     },
@@ -1160,11 +1160,11 @@ func main() {
         FlagType:     featureflag.FlagTypeBoolean,
         DefaultValue: false,
         RolloutPercentage: &[]int32{10}[0], // Start with 10% rollout
-        TargetAudience: map[string]interface{}{
+        TargetAudience: map[string]any{
             "user_segments": []string{"power_users", "beta_testers"},
             "min_account_age_days": 30,
         },
-        Metadata: map[string]interface{}{
+        Metadata: map[string]any{
             "category":     "search",
             "owner":        "search-team",
             "jira_ticket":  "SEARCH-123",
@@ -2500,7 +2500,7 @@ import (
 // FeatureClient wraps the feature flag client with application context
 type FeatureClient struct {
     client     *client.Client
-    defaults   map[string]interface{}
+    defaults   map[string]any
     timeout    time.Duration
     retryCount int
 }
@@ -2532,11 +2532,11 @@ func NewFeatureClient(apiKey, baseURL string) (*FeatureClient, error) {
         client:     c,
         timeout:    time.Second * 1,
         retryCount: 2,
-        defaults: map[string]interface{}{
+        defaults: map[string]any{
             "enhanced_search":    false,
             "api_rate_limit":     1000,
             "checkout_flow":      "classic",
-            "dashboard_layout":   map[string]interface{}{"layout": "grid"},
+            "dashboard_layout":   map[string]any{"layout": "grid"},
         },
     }, nil
 }
@@ -2661,9 +2661,9 @@ func handleDashboard(w http.ResponseWriter, r *http.Request) {
 }
 
 // Helper function to safely extract flag values
-func getFlagValue(flags map[string]*client.EvaluationResult, flagName string, defaultValue interface{}) interface{} {
+func getFlagValue(flags map[string]*client.EvaluationResult, flagName string, defaultValue any) any {
     if flag, exists := flags[flagName]; exists && flag.Enabled {
-        var value interface{}
+        var value any
         if err := json.Unmarshal(flag.Value, &value); err == nil {
             return value
         }
@@ -2710,7 +2710,7 @@ func (r *UserRepository) GetUsers(ctx context.Context, tenantID string, filters 
     
     // Build query based on feature flags
     var query string
-    var args []interface{}
+    var args []any
     
     if useIndex {
         // Use optimized query with indexing
@@ -3329,7 +3329,7 @@ Proven patterns for effective feature flag management with ABAC security.
        for _, tt := range tests {
            t.Run(tt.name, func(t *testing.T) {
                mockFlags := &MockFeatureClient{
-                   flags: map[string]interface{}{
+                   flags: map[string]any{
                        "checkout_flow": tt.flagValue,
                    },
                }

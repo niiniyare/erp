@@ -2297,7 +2297,7 @@ type VariableDefinition struct {
 	Name        string      `json:"name"`
 	Type        string      `json:"type"` // string, integer, decimal, boolean, object, array
 	Required    bool        `json:"required"`
-	Default     interface{} `json:"default,omitempty"`
+	Default     any `json:"default,omitempty"`
 	Description string      `json:"description,omitempty"`
 }
 
@@ -2307,7 +2307,7 @@ type StepDefinition struct {
 	Type        string                 `json:"type"`
 	Name        string                 `json:"name"`
 	Description string                 `json:"description,omitempty"`
-	Config      map[string]interface{} `json:"config"`
+	Config      map[string]any `json:"config"`
 
 	// Transitions
 	OnSuccess  string `json:"on_success,omitempty"`
@@ -2326,7 +2326,7 @@ type CreateTemplateRequest struct {
 	Category           string                 `json:"category"`
 	TriggerType        string                 `json:"trigger_type"`
 	TriggerEvent       string                 `json:"trigger_event,omitempty"`
-	TriggerConditions  map[string]interface{} `json:"trigger_conditions,omitempty"`
+	TriggerConditions  map[string]any `json:"trigger_conditions,omitempty"`
 	DefinitionJSON     json.RawMessage        `json:"definition"`
 	AMISBuilderState   json.RawMessage        `json:"amis_builder_state,omitempty"`
 	AllowedRoles       []string               `json:"allowed_roles,omitempty"`
@@ -2406,7 +2406,7 @@ func (e *Engine) CreateTemplate(ctx context.Context, req CreateTemplateRequest) 
 }
 
 // StartWorkflow initiates a workflow instance
-func (e *Engine) StartWorkflow(ctx context.Context, templateID uuid.UUID, input map[string]interface{}) (*db.WorkflowInstance, error) {
+func (e *Engine) StartWorkflow(ctx context.Context, templateID uuid.UUID, input map[string]any) (*db.WorkflowInstance, error) {
 	e.logger.InfoContext(ctx, "Starting workflow",
 		logger.Fields{"template_id": templateID},
 	)
@@ -2656,7 +2656,7 @@ func (e *Engine) canCompleteTask(ctx context.Context, userID uuid.UUID, task db.
 }
 
 // validateInput validates workflow input against variable definitions
-func (e *Engine) validateInput(definition *WorkflowDefinition, input map[string]interface{}) error {
+func (e *Engine) validateInput(definition *WorkflowDefinition, input map[string]any) error {
 	for _, varDef := range definition.Variables {
 		if varDef.Required {
 			if _, exists := input[varDef.Name]; !exists {
@@ -2691,7 +2691,7 @@ type TaskFilters struct {
 type TaskDecision struct {
 	Decision    string                 `json:"decision"` // approved, rejected, delegated, etc.
 	Comment     string                 `json:"comment"`
-	FormData    map[string]interface{} `json:"form_data"`
+	FormData    map[string]any `json:"form_data"`
 	CompletedBy uuid.UUID              `json:"-"`
 }
 
@@ -2735,7 +2735,7 @@ type StepExecutor interface {
 // StepResult contains the execution result
 type StepResult struct {
 	Success    bool
-	Output     map[string]interface{}
+	Output     map[string]any
 	NextStepID string
 	Error      error
 }
@@ -2743,9 +2743,9 @@ type StepResult struct {
 // WorkflowContext holds workflow execution context
 type WorkflowContext struct {
 	InstanceID  uuid.UUID
-	Variables   map[string]interface{}
-	StepOutputs map[string]interface{}
-	Input       map[string]interface{}
+	Variables   map[string]any
+	StepOutputs map[string]any
+	Input       map[string]any
 }
 
 // StepDefinition is imported from engine package
@@ -2754,7 +2754,7 @@ type StepDefinition struct {
 	Type        string
 	Name        string
 	Description string
-	Config      map[string]interface{}
+	Config      map[string]any
 
 	OnSuccess  string
 	OnFailure  string
@@ -2805,7 +2805,7 @@ func (e *ValidationExecutor) Execute(ctx context.Context, step StepDefinition, w
 		logger.Fields{"step_id": step.ID, "step_name": step.Name},
 	)
 
-	rules, ok := step.Config["rules"].([]interface{})
+	rules, ok := step.Config["rules"].([]any)
 	if !ok {
 		return &StepResult{
 			Success:    false,
@@ -2818,7 +2818,7 @@ func (e *ValidationExecutor) Execute(ctx context.Context, step StepDefinition, w
 	collectAllErrors := getBool(step.Config, "collect_all_errors", true)
 
 	for i, r := range rules {
-		rule, ok := r.(map[string]interface{})
+		rule, ok := r.(map[string]any)
 		if !ok {
 			continue
 		}
@@ -2853,7 +2853,7 @@ func (e *ValidationExecutor) Execute(ctx context.Context, step StepDefinition, w
 				Success:    false,
 				NextStepID: step.OnFailure,
 				Error:      fmt.Errorf(errorMessage),
-				Output: map[string]interface{}{
+				Output: map[string]any{
 					"validation_error": errorMessage,
 					"field":            field,
 				},
@@ -2866,7 +2866,7 @@ func (e *ValidationExecutor) Execute(ctx context.Context, step StepDefinition, w
 			Success:    false,
 			NextStepID: step.OnFailure,
 			Error:      fmt.Errorf("validation failed: %d errors", len(errors)),
-			Output: map[string]interface{}{
+			Output: map[string]any{
 				"validation_errors": errors,
 			},
 		}, nil
@@ -2875,14 +2875,14 @@ func (e *ValidationExecutor) Execute(ctx context.Context, step StepDefinition, w
 	return &StepResult{
 		Success:    true,
 		NextStepID: step.OnSuccess,
-		Output: map[string]interface{}{
+		Output: map[string]any{
 			"validation_passed": true,
 		},
 	}, nil
 }
 
 // validateValue performs the actual validation based on operator
-func (e *ValidationExecutor) validateValue(actual interface{}, operator string, expected interface{}) bool {
+func (e *ValidationExecutor) validateValue(actual any, operator string, expected any) bool {
 	switch operator {
 	case "=":
 		return actual == expected
@@ -2901,7 +2901,7 @@ func (e *ValidationExecutor) validateValue(actual interface{}, operator string, 
 	case "not_exists":
 		return actual == nil
 	case "in":
-		values, ok := expected.([]interface{})
+		values, ok := expected.([]any)
 		if !ok {
 			return false
 		}
@@ -2937,7 +2937,7 @@ func (e *ValidationExecutor) validateValue(actual interface{}, operator string, 
 }
 
 // Helper functions
-func compareNumbers(a, b interface{}) int {
+func compareNumbers(a, b any) int {
 	aFloat := toFloat64(a)
 	bFloat := toFloat64(b)
 	if aFloat < bFloat {
@@ -2949,7 +2949,7 @@ func compareNumbers(a, b interface{}) int {
 	return 0
 }
 
-func toFloat64(v interface{}) float64 {
+func toFloat64(v any) float64 {
 	switch val := v.(type) {
 	case float64:
 		return val
@@ -2966,7 +2966,7 @@ func toFloat64(v interface{}) float64 {
 	}
 }
 
-func getBool(m map[string]interface{}, key string, defaultVal bool) bool {
+func getBool(m map[string]any, key string, defaultVal bool) bool {
 	if v, ok := m[key]; ok {
 		if b, ok := v.(bool); ok {
 			return b
@@ -2975,7 +2975,7 @@ func getBool(m map[string]interface{}, key string, defaultVal bool) bool {
 	return defaultVal
 }
 
-func getString(m map[string]interface{}, key string, defaultVal string) string {
+func getString(m map[string]any, key string, defaultVal string) string {
 	if v, ok := m[key]; ok {
 		if s, ok := v.(string); ok {
 			return s
@@ -3112,7 +3112,7 @@ func (e *UserTaskExecutor) Execute(ctx context.Context, step StepDefinition, wfC
 	// The Temporal workflow will wait for signal to resume
 	return &StepResult{
 		Success: true,
-		Output: map[string]interface{}{
+		Output: map[string]any{
 			"task_id":     taskID.String(),
 			"task_status": "waiting",
 			"assigned_to": e.getAssignmentDescription(assignedToUserID, assignedToRole, assignedToEntityID),
@@ -3137,7 +3137,7 @@ func (e *UserTaskExecutor) resolveTemplate(template string, wfCtx WorkflowContex
 }
 
 // resolveUserAssignment determines user assignment
-func (e *UserTaskExecutor) resolveUserAssignment(ctx context.Context, config map[string]interface{}, wfCtx WorkflowContext) sql.NullUUID {
+func (e *UserTaskExecutor) resolveUserAssignment(ctx context.Context, config map[string]any, wfCtx WorkflowContext) sql.NullUUID {
 	if userIDStr, ok := config["assign_to_user_id"].(string); ok {
 		if userID, err := uuid.Parse(userIDStr); err == nil {
 			return sql.NullUUID{UUID: userID, Valid: true}
@@ -3147,11 +3147,11 @@ func (e *UserTaskExecutor) resolveUserAssignment(ctx context.Context, config map
 }
 
 // resolveRoleAssignment determines role assignment
-func (e *UserTaskExecutor) resolveRoleAssignment(ctx context.Context, config map[string]interface{}, wfCtx WorkflowContext) sql.NullString {
+func (e *UserTaskExecutor) resolveRoleAssignment(ctx context.Context, config map[string]any, wfCtx WorkflowContext) sql.NullString {
 	if role, ok := config["assign_to_role"].(string); ok {
 		return sql.NullString{String: role, Valid: true}
 	}
-	if roleInEntity, ok := config["assign_to_role_in_entity"].(map[string]interface{}); ok {
+	if roleInEntity, ok := config["assign_to_role_in_entity"].(map[string]any); ok {
 		if role, ok := roleInEntity["role"].(string); ok {
 			return sql.NullString{String: role, Valid: true}
 		}
@@ -3160,7 +3160,7 @@ func (e *UserTaskExecutor) resolveRoleAssignment(ctx context.Context, config map
 }
 
 // resolveEntityAssignment determines entity assignment
-func (e *UserTaskExecutor) resolveEntityAssignment(ctx context.Context, config map[string]interface{}, wfCtx WorkflowContext) sql.NullUUID {
+func (e *UserTaskExecutor) resolveEntityAssignment(ctx context.Context, config map[string]any, wfCtx WorkflowContext) sql.NullUUID {
 	var entityPath string
 
 	// Check for entity_scope (simple path)
@@ -3169,7 +3169,7 @@ func (e *UserTaskExecutor) resolveEntityAssignment(ctx context.Context, config m
 	}
 
 	// Check for assign_to_role_in_entity (nested config)
-	if roleInEntity, ok := config["assign_to_role_in_entity"].(map[string]interface{}); ok {
+	if roleInEntity, ok := config["assign_to_role_in_entity"].(map[string]any); ok {
 		if entity, ok := roleInEntity["entity"].(string); ok {
 			entityPath = entity
 		}
@@ -3190,25 +3190,25 @@ func (e *UserTaskExecutor) resolveEntityAssignment(ctx context.Context, config m
 }
 
 // generateFormSchema creates AMIS form schema
-func (e *UserTaskExecutor) generateFormSchema(fields interface{}) map[string]interface{} {
+func (e *UserTaskExecutor) generateFormSchema(fields any) map[string]any {
 	if fields == nil {
 		return nil
 	}
 
-	formFields, ok := fields.([]interface{})
+	formFields, ok := fields.([]any)
 	if !ok {
 		return nil
 	}
 
-	amisFields := make([]map[string]interface{}, len(formFields))
+	amisFields := make([]map[string]any, len(formFields))
 
 	for i, f := range formFields {
-		field, ok := f.(map[string]interface{})
+		field, ok := f.(map[string]any)
 		if !ok {
 			continue
 		}
 
-		amisFields[i] = map[string]interface{}{
+		amisFields[i] = map[string]any{
 			"type":        getString(field, "type", "input-text"),
 			"name":        getString(field, "name", ""),
 			"label":       getString(field, "label", ""),
@@ -3222,7 +3222,7 @@ func (e *UserTaskExecutor) generateFormSchema(fields interface{}) map[string]int
 		}
 	}
 
-	return map[string]interface{}{
+	return map[string]any{
 		"type": "form",
 		"body": amisFields,
 	}
@@ -3263,14 +3263,14 @@ func getStepExecutionIDFromContext(ctx context.Context) (uuid.UUID, error) {
 }
 
 // Helper to flatten nested map for template resolution
-func flattenMap(prefix string, m map[string]interface{}) map[string]interface{} {
-	result := make(map[string]interface{})
+func flattenMap(prefix string, m map[string]any) map[string]any {
+	result := make(map[string]any)
 	for k, v := range m {
 		key := k
 		if prefix != "" {
 			key = prefix + "." + k
 		}
-		if nested, ok := v.(map[string]interface{}); ok {
+		if nested, ok := v.(map[string]any); ok {
 			for nk, nv := range flattenMap(key, nested) {
 				result[nk] = nv
 			}
@@ -3320,7 +3320,7 @@ func CustomWorkflowExecution(
 	ctx workflow.Context,
 	definition WorkflowDefinition,
 	instanceID uuid.UUID,
-	input map[string]interface{},
+	input map[string]any,
 ) error {
 
 	logger := workflow.GetLogger(ctx)
@@ -3347,7 +3347,7 @@ func CustomWorkflowExecution(
 	wfContext := WorkflowContext{
 		InstanceID:  instanceID,
 		Variables:   initializeVariables(definition.Variables, input),
-		StepOutputs: make(map[string]interface{}),
+		StepOutputs: make(map[string]any),
 		Input:       input,
 	}
 
@@ -3591,7 +3591,7 @@ func executeUserTaskStep(
 	return StepResult{
 		Success:    true,
 		NextStepID: nextStepID,
-		Output: map[string]interface{}{
+		Output: map[string]any{
 			"decision":     taskDecision.Decision,
 			"comment":      taskDecision.Comment,
 			"completed_by": taskDecision.CompletedBy,
@@ -3610,7 +3610,7 @@ func executeParallelStep(
 ) (StepResult, error) {
 
 	logger := workflow.GetLogger(ctx)
-	branches := step.Config["branches"].([]interface{})
+	branches := step.Config["branches"].([]any)
 	waitFor := step.Config["wait_for"].(string) // all, any, none
 
 	// Create child workflows for each branch
@@ -3618,12 +3618,12 @@ func executeParallelStep(
 	defer cancelHandler()
 
 	var futures []workflow.ChildWorkflowFuture
-	results := make([]interface{}, len(branches))
+	results := make([]any, len(branches))
 
 	for i, b := range branches {
-		branch := b.(map[string]interface{})
+		branch := b.(map[string]any)
 		branchID := branch["id"].(string)
-		branchSteps := branch["steps"].([]interface{})
+		branchSteps := branch["steps"].([]any)
 
 		logger.Info("Starting parallel branch", "branchID", branchID)
 
@@ -3650,7 +3650,7 @@ func executeParallelStep(
 	case "all":
 		// Wait for all branches to complete
 		for i, future := range futures {
-			var branchResult interface{}
+			var branchResult any
 			if err := future.Get(ctx, &branchResult); err != nil {
 				logger.Error("Branch failed", "branchIndex", i, "error", err)
 				return StepResult{Success: false, Error: err}, nil
@@ -3668,7 +3668,7 @@ func executeParallelStep(
 			fut := future
 			selector.AddFuture(fut, func(f workflow.Future) {
 				if !completed {
-					var branchResult interface{}
+					var branchResult any
 					f.Get(ctx, &branchResult)
 					results[idx] = branchResult
 					completed = true
@@ -3687,7 +3687,7 @@ func executeParallelStep(
 	return StepResult{
 		Success:    true,
 		NextStepID: step.OnSuccess,
-		Output: map[string]interface{}{
+		Output: map[string]any{
 			"branch_results": results,
 			"branches_count": len(branches),
 		},
@@ -3698,13 +3698,13 @@ func executeParallelStep(
 func ExecuteBranchWorkflow(
 	ctx workflow.Context,
 	instanceID uuid.UUID,
-	stepIDs []interface{},
+	stepIDs []any,
 	wfContext WorkflowContext,
 	allSteps []StepDefinition,
-) (interface{}, error) {
+) (any, error) {
 
 	logger := workflow.GetLogger(ctx)
-	results := make([]interface{}, 0)
+	results := make([]any, 0)
 
 	for _, stepID := range stepIDs {
 		step := findStep(allSteps, stepID.(string))
@@ -3765,7 +3765,7 @@ func executeWaitStep(
 	} else if signalName, ok := config["for_signal"].(string); ok {
 		// Wait for external signal with optional timeout
 		signalChan := workflow.GetSignalChannel(ctx, signalName)
-		var signalData interface{}
+		var signalData any
 
 		if timeoutStr, ok := config["signal_timeout"].(string); ok {
 			timeout, _ := parseDuration(timeoutStr)
@@ -3797,7 +3797,7 @@ func executeWaitStep(
 		return StepResult{
 			Success:    true,
 			NextStepID: step.OnSuccess,
-			Output: map[string]interface{}{
+			Output: map[string]any{
 				"signal_data": signalData,
 			},
 		}, nil
@@ -3810,8 +3810,8 @@ func executeWaitStep(
 }
 
 // Helper functions
-func initializeVariables(varDefs []VariableDefinition, input map[string]interface{}) map[string]interface{} {
-	variables := make(map[string]interface{})
+func initializeVariables(varDefs []VariableDefinition, input map[string]any) map[string]any {
+	variables := make(map[string]any)
 
 	for _, varDef := range varDefs {
 		if value, ok := input[varDef.Name]; ok {
@@ -3876,22 +3876,22 @@ func parseTime(s string) (time.Time, error) {
 // Types used in workflow
 type StepResult struct {
 	Success    bool
-	Output     map[string]interface{}
+	Output     map[string]any
 	NextStepID string
 	Error      error
 }
 
 type WorkflowContext struct {
 	InstanceID  uuid.UUID
-	Variables   map[string]interface{}
-	StepOutputs map[string]interface{}
-	Input       map[string]interface{}
+	Variables   map[string]any
+	StepOutputs map[string]any
+	Input       map[string]any
 }
 
 type TaskDecision struct {
 	Decision    string
 	Comment     string
-	FormData    map[string]interface{}
+	FormData    map[string]any
 	CompletedBy uuid.UUID
 }
 ```
@@ -3977,7 +3977,7 @@ func (a *Activities) RecordStepCompletionActivity(
 	instanceID uuid.UUID,
 	stepExecID uuid.UUID,
 	stepID string,
-	output map[string]interface{},
+	output map[string]any,
 ) error {
 
 	outputJSON, _ := json.Marshal(output)
@@ -4041,7 +4041,7 @@ func (a *Activities) RecordStepFailureActivity(
 func (a *Activities) CompleteWorkflowInstanceActivity(
 	ctx context.Context,
 	instanceID uuid.UUID,
-	output map[string]interface{},
+	output map[string]any,
 ) error {
 
 	outputJSON, _ := json.Marshal(output)
@@ -4223,7 +4223,7 @@ func (a *Activities) ExecuteWebhookActivity(
 func (a *Activities) EscalateTaskActivity(
 	ctx context.Context,
 	taskID string,
-	config map[string]interface{},
+	config map[string]any,
 ) (StepResult, error) {
 
 	taskUUID, err := uuid.Parse(taskID)
@@ -4295,7 +4295,7 @@ func (a *Activities) EscalateTaskActivity(
 
 	return StepResult{
 		Success: true,
-		Output: map[string]interface{}{
+		Output: map[string]any{
 			"task_id":        newTask.ID.String(),
 			"escalated_from": taskID,
 		},
@@ -4468,7 +4468,7 @@ type CreateTemplateRequest struct {
 	Category           string                 `json:"category"`
 	TriggerType        string                 `json:"trigger_type" validate:"required,oneof=event manual scheduled webhook"`
 	TriggerEvent       string                 `json:"trigger_event"`
-	TriggerConditions  map[string]interface{} `json:"trigger_conditions"`
+	TriggerConditions  map[string]any `json:"trigger_conditions"`
 	Definition         json.RawMessage        `json:"definition" validate:"required"`
 	AMISBuilderState   json.RawMessage        `json:"amis_builder_state"`
 	AllowedRoles       []string               `json:"allowed_roles"`
@@ -4823,7 +4823,7 @@ func (h *InstanceHandler) RegisterRoutes(api fiber.Router) {
 // StartWorkflowRequest represents start workflow request
 type StartWorkflowRequest struct {
 	TemplateID uuid.UUID              `json:"template_id" validate:"required"`
-	Input      map[string]interface{} `json:"input" validate:"required"`
+	Input      map[string]any `json:"input" validate:"required"`
 	Priority   string                 `json:"priority"`
 	Tags       []string               `json:"tags"`
 }
@@ -4956,7 +4956,7 @@ func (h *InstanceHandler) RetryWorkflow(c *fiber.Ctx) error {
 	}
 
 	// Start new instance with same input
-	var input map[string]interface{}
+	var input map[string]any
 	if err := json.Unmarshal(instance.TriggerData, &input); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "Failed to parse trigger data")
 	}
@@ -5068,7 +5068,7 @@ func (h *TaskHandler) RegisterRoutes(api fiber.Router) {
 type CompleteTaskRequest struct {
 	Decision string                 `json:"decision" validate:"required,oneof=approved rejected delegated cancelled"`
 	Comment  string                 `json:"comment"`
-	FormData map[string]interface{} `json:"form_data"`
+	FormData map[string]any `json:"form_data"`
 }
 
 // GetMyTasks returns tasks assigned to current user
@@ -6483,8 +6483,8 @@ func (s *InvoiceService) CreateInvoice(ctx context.Context, req CreateInvoiceReq
         }
 
         // Prepare workflow input
-        input := map[string]interface{}{
-            "invoice": map[string]interface{}{
+        input := map[string]any{
+            "invoice": map[string]any{
                 "id":             invoice.ID.String(),
                 "invoice_number": invoice.InvoiceNumber,
                 "amount":         invoice.Amount,
@@ -6563,7 +6563,7 @@ func (s *PaymentService) HandleWorkflowCompletion(ctx context.Context, instanceI
     }
 
     // Parse output data
-    var output map[string]interface{}
+    var output map[string]any
     if err := json.Unmarshal(instance.OutputData, &output); err != nil {
         return err
     }
@@ -6735,7 +6735,7 @@ type CreatePaymentAction struct {
     store db.Store
 }
 
-func (a *CreatePaymentAction) Execute(ctx context.Context, params map[string]interface{}) (map[string]interface{}, error) {
+func (a *CreatePaymentAction) Execute(ctx context.Context, params map[string]any) (map[string]any, error) {
     // Extract parameters
     invoiceID := uuid.MustParse(params["invoice_id"].(string))
     amount := params["amount"].(float64)
@@ -6753,7 +6753,7 @@ func (a *CreatePaymentAction) Execute(ctx context.Context, params map[string]int
     }
 
     // Return result
-    return map[string]interface{}{
+    return map[string]any{
         "payment_id":     payment.ID.String(),
         "payment_status": payment.Status,
         "created_at":     payment.CreatedAt,
@@ -6791,7 +6791,7 @@ func (h *EventHandler) HandleInvoiceCreated(ctx context.Context, invoice *Invoic
         // Check trigger conditions
         if h.evaluateTriggerConditions(trigger, invoice) {
             // Prepare input
-            input := map[string]interface{}{
+            input := map[string]any{
                 "invoice": invoice,
             }
 
@@ -6811,7 +6811,7 @@ func (h *EventHandler) HandleInvoiceCreated(ctx context.Context, invoice *Invoic
     return nil
 }
 
-func (h *EventHandler) evaluateTriggerConditions(trigger db.WorkflowTrigger, data interface{}) bool {
+func (h *EventHandler) evaluateTriggerConditions(trigger db.WorkflowTrigger, data any) bool {
     // Evaluate trigger conditions using JSONPath
     // Return true if all conditions match
     return true // Simplified
@@ -7176,7 +7176,7 @@ func init() {
 }
 
 // Record metrics
-func (e *Engine) StartWorkflow(ctx context.Context, templateID uuid.UUID, input map[string]interface{}) (*WorkflowInstance, error) {
+func (e *Engine) StartWorkflow(ctx context.Context, templateID uuid.UUID, input map[string]any) (*WorkflowInstance, error) {
     start := time.Now()
 
     instance, err := e.startWorkflowInternal(ctx, templateID, input)
@@ -7349,7 +7349,7 @@ func (s *WorkflowIntegrationTestSuite) TestCompleteWorkflowExecution() {
     template := s.createTestTemplate()
 
     // Start workflow
-    instance, err := s.service.Engine().StartWorkflow(ctx, template.ID, map[string]interface{}{
+    instance, err := s.service.Engine().StartWorkflow(ctx, template.ID, map[string]any{
         "test_value": 100,
     })
     s.Require().NoError(err)
@@ -7402,18 +7402,18 @@ func TestInvoiceApprovalWorkflow(t *testing.T) {
     defer server.Close()
 
     // 1. Create workflow template
-    template := createTemplate(t, server, map[string]interface{}{
+    template := createTemplate(t, server, map[string]any{
         "name":         "Invoice Approval",
         "trigger_type": "manual",
-        "definition": map[string]interface{}{
+        "definition": map[string]any{
             "name":    "Invoice Approval",
             "version": 1,
-            "steps": []map[string]interface{}{
+            "steps": []map[string]any{
                 {
                     "id":   "validate",
                     "type": "validation",
-                    "config": map[string]interface{}{
-                        "rules": []map[string]interface{}{
+                    "config": map[string]any{
+                        "rules": []map[string]any{
                             {
                                 "field":    "$.amount",
                                 "operator": ">",
@@ -7427,7 +7427,7 @@ func TestInvoiceApprovalWorkflow(t *testing.T) {
     })
 
     // 2. Start workflow
-    instance := startWorkflow(t, server, template.ID, map[string]interface{}{
+    instance := startWorkflow(t, server, template.ID, map[string]any{
         "amount": 1000,
     })
 
@@ -7439,7 +7439,7 @@ func TestInvoiceApprovalWorkflow(t *testing.T) {
     assert.NotEmpty(t, tasks)
 
     // 5. Complete task
-    completeTask(t, server, tasks[0].ID, map[string]interface{}{
+    completeTask(t, server, tasks[0].ID, map[string]any{
         "decision": "approved",
         "comment":  "LGTM",
     })

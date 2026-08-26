@@ -142,8 +142,8 @@ Services must continue operating when configuration is unavailable:
 
 ```go
 func (s *ServiceExample) getConfigWithFallback(
-    ctx context.Context, entityID uuid.UUID, key string, defaultValue interface{},
-) interface{} {
+    ctx context.Context, entityID uuid.UUID, key string, defaultValue any,
+) any {
     config, err := s.configService.GetEffectiveConfiguration(
         ctx, &entityID, s.moduleName, domain.ConfigKey(key),
     )

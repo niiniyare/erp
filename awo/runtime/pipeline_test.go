@@ -2,6 +2,7 @@ package runtime
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -265,5 +266,77 @@ func TestPipeline_AllowAudit_True_WritesAudit(t *testing.T) {
 	}
 	if !cap.called {
 		t.Error("AuditWriter.Write MUST be called when AllowAudit=true")
+	}
+}
+
+// --- Hook panic recovery tests ---
+
+// panicHook implements BeforeValidateHook and panics unconditionally.
+type panicHook struct{}
+
+func (h *panicHook) BeforeValidate(_ context.Context, _ *def.EntityRecord) error {
+	panic("deliberate test panic")
+}
+
+func TestPipeline_HookPanic_ReturnsError(t *testing.T) {
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{&panicHook{}},
+	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	_, err := p.RunBeforeCreate(&CreateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{"name": "x"}, Actor: &def.Actor{},
+	})
+	if err == nil {
+		t.Fatal("expected error from panicking hook; got nil (panic must not crash server)")
+	}
+	if !IsHookPanic(err) {
+		t.Errorf("expected HookPanicError in error chain; got %T: %v", err, err)
+	}
+}
+
+func TestPipeline_HookPanic_ContainsStageAndMessage(t *testing.T) {
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{&panicHook{}},
+	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	_, err := p.RunBeforeCreate(&CreateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{"name": "x"}, Actor: &def.Actor{},
+	})
+
+	var hpe *HookPanicError
+	if !errors.As(err, &hpe) {
+		t.Fatalf("expected *HookPanicError; got %T: %v", err, err)
+	}
+	if hpe.Stage == "" {
+		t.Error("HookPanicError.Stage must not be empty")
+	}
+	if hpe.Panic == nil {
+		t.Error("HookPanicError.Panic must carry the recovered value")
+	}
+}
+
+func TestPipeline_HookPanic_DoesNotFireSubsequentHooks(t *testing.T) {
+	var log []string
+	hooks := def.HookSet{
+		BeforeValidate: []def.BeforeValidateHook{&panicHook{}},
+		BeforeCreate:   []def.BeforeCreateHook{th("must_not_fire", &log)},
+	}
+	schema := buildPipelineSchema([]def.FieldDef{{Name: "name", Type: def.FieldTypeData}}, hooks)
+	p := NewPipeline(schema, audit.NoopAuditWriter{})
+
+	_, _ = p.RunBeforeCreate(&CreateContext{
+		Ctx: context.Background(), EntityName: "test_widget",
+		Data: map[string]any{"name": "x"}, Actor: &def.Actor{},
+	})
+	for _, entry := range log {
+		if entry == "must_not_fire" {
+			t.Error("hook after panicking hook must not be invoked")
+		}
 	}
 }

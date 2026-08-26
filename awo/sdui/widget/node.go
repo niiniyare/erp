@@ -375,7 +375,7 @@ const (
 // strings (AMIS JS, Flutter condition, etc.).
 //
 // The underlying value must implement the ExpressionNode interface defined in
-// awo/sdui/expression. Using interface{} here keeps widget free of that import.
+// awo/sdui/expression. Using any here keeps widget free of that import.
 type ExpressionRef struct {
 	// Expr is the portable expression AST node.
 	// Concrete type is expression.ExpressionNode.

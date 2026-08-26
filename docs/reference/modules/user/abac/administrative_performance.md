@@ -1414,7 +1414,7 @@ var SystemConfiguration = Type("SystemConfiguration", func() {
 // Performance tracking middleware
 func PerformanceTrackingMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
     return func(next endpoint.Endpoint) endpoint.Endpoint {
-        return func(ctx context.Context, request interface{}) (interface{}, error) {
+        return func(ctx context.Context, request any) (any, error) {
             startTime := time.Now()
             
             // Track request metrics
@@ -1440,8 +1440,8 @@ func CircuitBreakerMiddleware(config CircuitBreakerConfig) func(endpoint.Endpoin
     breaker := NewCircuitBreaker(config)
     
     return func(next endpoint.Endpoint) endpoint.Endpoint {
-        return func(ctx context.Context, request interface{}) (interface{}, error) {
-            return breaker.Execute(func() (interface{}, error) {
+        return func(ctx context.Context, request any) (any, error) {
+            return breaker.Execute(func() (any, error) {
                 return next(ctx, request)
             })
         }

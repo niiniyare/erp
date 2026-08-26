@@ -103,10 +103,10 @@ func TenantMiddleware() fiber.Handler {
 
 // ABAC policy enforcement
 type ABACPolicy struct {
-    Subject   map[string]interface{} `json:"subject"`
-    Resource  map[string]interface{} `json:"resource"`
+    Subject   map[string]any `json:"subject"`
+    Resource  map[string]any `json:"resource"`
     Action    string                 `json:"action"`
-    Context   map[string]interface{} `json:"context"`
+    Context   map[string]any `json:"context"`
 }
 
 func (p *ABACPolicy) Evaluate() bool {
@@ -230,7 +230,7 @@ type SecurityEvent struct {
     UserID      uuid.UUID              `json:"user_id"`
     TenantID    uuid.UUID              `json:"tenant_id"`
     IPAddress   string                 `json:"ip_address"`
-    Details     map[string]interface{} `json:"details"`
+    Details     map[string]any `json:"details"`
     Timestamp   time.Time              `json:"timestamp"`
 }
 
@@ -255,7 +255,7 @@ LogSecurityEvent(ctx, SecurityEvent{
     UserID:    userID,
     TenantID:  tenantID,
     IPAddress: clientIP,
-    Details: map[string]interface{}{
+    Details: map[string]any{
         "attempted_resource": "/api/v1/finance/accounts",
         "reason": "insufficient_permissions",
         "action_taken": "access_denied",
@@ -756,10 +756,10 @@ func TestTransactionAPI(t *testing.T) {
         revenueAccount := createTestAccount(t, app, "4001", "Revenue")
         
         // 2. Create transaction
-        transactionReq := map[string]interface{}{
+        transactionReq := map[string]any{
             "transaction_number": "TEST-001",
             "description":        "Test transaction",
-            "entries": []map[string]interface{}{
+            "entries": []map[string]any{
                 {
                     "account_id":    cashAccount.ID,
                     "debit_amount":  "1000.00",
@@ -776,7 +776,7 @@ func TestTransactionAPI(t *testing.T) {
         resp := performRequest(app, "POST", "/api/v1/finance/transactions", transactionReq)
         assert.Equal(t, 201, resp.Code)
         
-        var transaction map[string]interface{}
+        var transaction map[string]any
         json.Unmarshal(resp.Body.Bytes(), &transaction)
         
         // 3. Submit for approval
@@ -1324,7 +1324,7 @@ func MonitorConnectionPool(db *sql.DB) {
         
         // Alert if connection pool is stressed
         if float64(stats.InUse)/float64(stats.MaxOpenConnections) > 0.8 {
-            alertManager.TriggerAlert("high_db_connection_usage", map[string]interface{}{
+            alertManager.TriggerAlert("high_db_connection_usage", map[string]any{
                 "in_use":         stats.InUse,
                 "max_open":       stats.MaxOpenConnections,
                 "usage_percent":  (float64(stats.InUse) / float64(stats.MaxOpenConnections)) * 100,

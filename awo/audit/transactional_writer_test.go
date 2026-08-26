@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"maps"
 	"strings"
 	"testing"
 
@@ -314,12 +315,8 @@ func (wc *writeCapture) sanitize(record AuditRecord) {
 	cfg := ConfigFor(record.EntityName)
 	if len(cfg.ComplianceFlags) > 0 {
 		merged := make(map[string]bool, len(cfg.ComplianceFlags)+len(record.ComplianceFlags))
-		for k, v := range cfg.ComplianceFlags {
-			merged[k] = v
-		}
-		for k, v := range record.ComplianceFlags {
-			merged[k] = v
-		}
+		maps.Copy(merged, cfg.ComplianceFlags)
+		maps.Copy(merged, record.ComplianceFlags)
 		record.ComplianceFlags = merged
 	}
 
@@ -415,7 +412,7 @@ func TestTransactionalWriter_FlagLoader_CalledOnce(t *testing.T) {
 	}
 
 	// Call Write multiple times.
-	for i := 0; i < 5; i++ {
+	for range 5 {
 		_ = w.Write(context.Background(), rec)
 	}
 

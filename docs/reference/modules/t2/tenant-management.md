@@ -1441,12 +1441,12 @@ type BaseRepository struct {
     tenantID string
 }
 
-func (r *BaseRepository) Find(dest interface{}, conditions ...interface{}) error {
+func (r *BaseRepository) Find(dest any, conditions ...any) error {
     // Automatically add tenant filter to all queries
     return r.db.Where("tenant_id = ?", r.tenantID).Find(dest, conditions...).Error
 }
 
-func (r *BaseRepository) Create(value interface{}) error {
+func (r *BaseRepository) Create(value any) error {
     // Automatically set tenant_id before creating
     if model, ok := value.(TenantModel); ok {
         model.SetTenantID(r.tenantID)
@@ -2118,14 +2118,14 @@ type HealthPrediction struct {
     PredictedStorageUsage    int64     `json:"predicted_storage_usage"`
     PredictedTransactionVol  int32     `json:"predicted_transaction_volume"`
     RiskScore               float64   `json:"risk_score"`
-    RiskFactors             map[string]interface{} `json:"risk_factors"`
+    RiskFactors             map[string]any `json:"risk_factors"`
 }
 
 type ChurnRiskAnalysis struct {
     TenantID        uuid.UUID              `json:"tenant_id"`
     ChurnRiskScore  float64                `json:"churn_risk_score"`
     RiskLevel       string                 `json:"risk_level"`
-    RiskFactors     map[string]interface{} `json:"risk_factors"`
+    RiskFactors     map[string]any `json:"risk_factors"`
     Recommendation  string                 `json:"recommendation"`
     AnalyzedAt      time.Time              `json:"analyzed_at"`
 }
@@ -2613,12 +2613,12 @@ This documentation provides a complete foundation for implementing and maintaini
 <!--     tenantID string -->
 <!-- } -->
 <!---->
-<!-- func (r *BaseRepository) Find(dest interface{}, conditions ...interface{}) error { -->
+<!-- func (r *BaseRepository) Find(dest any, conditions ...any) error { -->
 <!--     // Automatically add tenant filter to all queries -->
 <!--     return r.db.Where("tenant_id = ?", r.tenantID).Find(dest, conditions...).Error -->
 <!-- } -->
 <!---->
-<!-- func (r *BaseRepository) Create(value interface{}) error { -->
+<!-- func (r *BaseRepository) Create(value any) error { -->
 <!--     // Automatically set tenant_id before creating -->
 <!--     if model, ok := value.(TenantModel); ok { -->
 <!--         model.SetTenantID(r.tenantID) -->

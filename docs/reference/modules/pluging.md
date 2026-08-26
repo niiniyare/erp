@@ -1010,7 +1010,7 @@ PostgreSQL is Awoerp's primary data store. PGX is the Go driver used to interact
 |---|---|---|---|---|---|
 | **PGX v5** | High (named types) | Excellent | Full (LISTEN/NOTIFY, pgvector, etc.) | No (use with SQLC) | Via RLS + app params |
 | **database/sql** | Moderate | Good | Limited | No | Manual |
-| **GORM** | Low (interface{}) | Moderate | Limited | Partial (gen) | Via scopes (fragile) |
+| **GORM** | Low (any) | Moderate | Limited | Partial (gen) | Via scopes (fragile) |
 | **XORM** | Moderate | Moderate | Moderate | Partial | Manual |
 | **Bun** | High | Good | Good | Partial | Via scopes |
 | **Ent** | Very High | Good | Good | Yes | Via hooks |
@@ -1024,7 +1024,7 @@ PGX v5 is the most performant and feature-complete PostgreSQL driver for Go. Key
 - **PostgreSQL-specific features:** The plugin system relies on several PostgreSQL features that are not available through generic drivers: `SET LOCAL app.tenant_id` for RLS, `LISTEN/NOTIFY` for change events, named prepared statements, and `pg_notify` triggers.
 - **Row-Level Security (RLS) integration:** PGX allows setting session-level and transaction-level application parameters, which is the mechanism by which tenant ID is communicated to PostgreSQL RLS policies transparently.
 
-**Considered alternative — GORM:** GORM's Active Record-style ORM is appealing for rapid development but has significant problems for a plugin system. Its use of empty interface (`interface{}`) for query parameters bypasses Go's type system, making it easy to introduce runtime errors that SQLC would catch at compile time. GORM's "magic" (auto-migrations, hooks, callbacks) conflicts with the plugin system's need for explicit, auditable schema changes. For the core ERP schema where fine-grained control matters, GORM's convenience is outweighed by its opacity.
+**Considered alternative — GORM:** GORM's Active Record-style ORM is appealing for rapid development but has significant problems for a plugin system. Its use of empty interface (`any`) for query parameters bypasses Go's type system, making it easy to introduce runtime errors that SQLC would catch at compile time. GORM's "magic" (auto-migrations, hooks, callbacks) conflicts with the plugin system's need for explicit, auditable schema changes. For the core ERP schema where fine-grained control matters, GORM's convenience is outweighed by its opacity.
 
 **Considered alternative — Ent:** Ent (from Meta/Facebook) is a compelling graph-based ORM with excellent code generation. It was evaluated seriously. The primary reason it was not chosen is that Ent's schema definition is Go code, which would require plugin authors to write Ent schema definitions rather than SQL — adding a new conceptual layer on top of what is fundamentally a SQL database. SQLC keeps plugin authors close to SQL, which is a universal skill for backend engineers.
 
@@ -1616,7 +1616,7 @@ func (p *MyFirstPlugin) saveRecord(ctx context.Context, data CreateRecordParams)
 }
 
 // Publishing an event
-func (p *MyFirstPlugin) notifyExternalSystem(ctx context.Context, payload interface{}) error {
+func (p *MyFirstPlugin) notifyExternalSystem(ctx context.Context, payload any) error {
     return p.events.Publish(ctx, "my-first-plugin.record.created", payload)
 }
 ```
@@ -2088,7 +2088,7 @@ type EventBus struct{ /* Redis Streams wrapper */ }
 type EventHandler func(ctx context.Context, event *Event) error
 
 func (eb *EventBus) Subscribe(eventType string, handler EventHandler) error
-func (eb *EventBus) Publish(ctx context.Context, eventType string, payload interface{}) error
+func (eb *EventBus) Publish(ctx context.Context, eventType string, payload any) error
 
 type Event struct {
     ID        string
@@ -2098,7 +2098,7 @@ type Event struct {
     payload   []byte
 }
 
-func (e *Event) UnmarshalPayload(dest interface{}) error
+func (e *Event) UnmarshalPayload(dest any) error
 
 // ─────────────────────────────────────────────────────
 // Workflow Registry
@@ -2110,10 +2110,10 @@ type WorkflowRegistry struct {
     pluginID       string
 }
 
-func (wr *WorkflowRegistry) Register(workflowFunc interface{})
-func (wr *WorkflowRegistry) RegisterActivity(activityFunc interface{})
-func (wr *WorkflowRegistry) Start(ctx context.Context, workflowType string, input interface{}) (client.WorkflowRun, error)
-func (wr *WorkflowRegistry) Signal(ctx context.Context, workflowID, signalName string, payload interface{}) error
+func (wr *WorkflowRegistry) Register(workflowFunc any)
+func (wr *WorkflowRegistry) RegisterActivity(activityFunc any)
+func (wr *WorkflowRegistry) Start(ctx context.Context, workflowType string, input any) (client.WorkflowRun, error)
+func (wr *WorkflowRegistry) Signal(ctx context.Context, workflowID, signalName string, payload any) error
 
 // ─────────────────────────────────────────────────────
 // UI Extension Registry
@@ -2133,8 +2133,8 @@ func (ui *UIExtensionRegistry) AddDashboardWidget(widget AMISWidget) error
 
 type CacheHandle struct{ /* Redis wrapper with key namespacing */ }
 
-func (c *CacheHandle) Get(ctx context.Context, key string, dest interface{}) error
-func (c *CacheHandle) Set(ctx context.Context, key string, value interface{}, ttl time.Duration) error
+func (c *CacheHandle) Get(ctx context.Context, key string, dest any) error
+func (c *CacheHandle) Set(ctx context.Context, key string, value any, ttl time.Duration) error
 func (c *CacheHandle) Delete(ctx context.Context, key string) error
 func (c *CacheHandle) AcquireLock(ctx context.Context, key string, ttl time.Duration) (*Lock, error)
 

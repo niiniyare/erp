@@ -1047,7 +1047,7 @@ import (
 type ConfigurationResponse struct {
     Module      string      `json:"module"`
     ConfigKey   string      `json:"config_key"`
-    Value       interface{} `json:"value"`
+    Value       any `json:"value"`
     DataType    string      `json:"data_type"`
     Source      string      `json:"source"`
     IsInherited bool        `json:"is_inherited"`

@@ -328,12 +328,12 @@ func (t *Template) Apply(ctx context.Context, target ConfigurationTarget) (*Appl
 
 // ConfigValue is immutable value object handling different data types
 type ConfigValue struct {
-    Raw      interface{}
+    Raw      any
     DataType DataType
 }
 
 // Value object constructor with validation
-func NewConfigValue(value interface{}, dataType DataType) (ConfigValue, error) {
+func NewConfigValue(value any, dataType DataType) (ConfigValue, error) {
     if !isValidForType(value, dataType) {
         return ConfigValue{}, ErrInvalidValueForType
     }
@@ -372,11 +372,11 @@ func (cv ConfigValue) AsBool() (bool, error) {
     return cv.Raw.(bool), nil
 }
 
-func (cv ConfigValue) AsJSON() (map[string]interface{}, error) {
+func (cv ConfigValue) AsJSON() (map[string]any, error) {
     if cv.DataType != DataTypeJSON {
         return nil, ErrWrongDataType
     }
-    return cv.Raw.(map[string]interface{}), nil
+    return cv.Raw.(map[string]any), nil
 }
 
 // Value object equality

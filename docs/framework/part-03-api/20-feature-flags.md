@@ -22,7 +22,7 @@ Feature flags in Awo control which features are available to which tenants, enab
 type FeatureFlag struct {
     Name         string          // stable key: "advanced_reporting"
     Type         FlagType        // boolean | string | percentage
-    DefaultValue interface{}     // system-wide default
+    DefaultValue any     // system-wide default
     Description  string
     Status       string          // draft | active | deprecated | removed
 }
@@ -30,7 +30,7 @@ type FeatureFlag struct {
 type TenantFlagOverride struct {
     TenantID   uuid.UUID
     FlagName   string
-    Value      interface{}     // overrides DefaultValue for this tenant
+    Value      any     // overrides DefaultValue for this tenant
     RolloutPct int             // 0-100; for percentage flags
 }
 ```

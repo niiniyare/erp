@@ -93,7 +93,7 @@ type PageSchemaContext struct {
 
 ## 4. PageSchema and SchemaBuilder
 
-`PageSchema` is an `interface{}` that serializes to the amis JSON format. The `SchemaBuilder` provides Go-typed helpers for constructing common amis elements:
+`PageSchema` is an `any` that serializes to the amis JSON format. The `SchemaBuilder` provides Go-typed helpers for constructing common amis elements:
 
 ```go
 func BuildInvoiceDetailPage(ctx context.Context, psc PageSchemaContext) (entity.PageSchema, error) {

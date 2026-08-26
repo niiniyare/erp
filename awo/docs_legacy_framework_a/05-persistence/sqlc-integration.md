@@ -107,7 +107,7 @@ sql:
           - db_type: "text[]"
             go_type: "[]string"
           - db_type: "jsonb"
-            go_type: "map[string]interface{}"
+            go_type: "map[string]any"
             nullable: true
 ```
 

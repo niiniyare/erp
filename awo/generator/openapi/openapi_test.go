@@ -124,9 +124,9 @@ func TestGenerate_CRUDPathsGenerated(t *testing.T) {
 	var collectionPath, itemPath string
 	for path := range spec.Paths {
 		if strings.Contains(path, "invoices") {
-			if strings.Contains(path, "{id}") {
+			if strings.HasSuffix(path, "{id}") {
 				itemPath = path
-			} else {
+			} else if !strings.Contains(path, "{id}") {
 				collectionPath = path
 			}
 		}

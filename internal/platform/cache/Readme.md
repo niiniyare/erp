@@ -329,7 +329,7 @@ func ExampleBulkOperations() {
     cache := cache.NewRedisClient(Config)
     
     // Bulk set
-    data := map[string]interface{}{
+    data := map[string]any{
         "user:1": user1,
         "user:2": user2,
         "user:3": user3,
@@ -383,7 +383,7 @@ func ExampleCacheAside() {
     // Create cache with fallback to database
     cacheWithFallback := cache.NewCacheWithFallback(
         cache,
-        func(ctx context.Context, key string) (interface{}, error) {
+        func(ctx context.Context, key string) (any, error) {
             // Extract user ID from key
             userID := strings.TrimPrefix(key, "user:")
             return getUserFromDatabase(ctx, userID)
@@ -480,10 +480,10 @@ func SetupCacheMonitoring(cache cache.Service) {
 ### 3. Metrics Export
 
 ```go
-func ExportCacheMetrics(cache cache.Service) map[string]interface{} {
+func ExportCacheMetrics(cache cache.Service) map[string]any {
     stats := cache.Stats()
     
-    return map[string]interface{}{
+    return map[string]any{
         "cache_hits_total":           stats.Hits,
         "cache_misses_total":         stats.Misses,
         "cache_sets_total":           stats.Sets,

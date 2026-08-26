@@ -37,7 +37,7 @@ func TestContractHandler_Create_Success(t *testing.T) {
     assert.Equal(t, http.StatusCreated, resp.StatusCode)
     assert.NotEmpty(t, resp.Header.Get("Location"))
 
-    var result map[string]interface{}
+    var result map[string]any
     json.NewDecoder(resp.Body).Decode(&result)
     assert.Equal(t, "CONT-001", result["contract_number"])
 }
@@ -94,9 +94,9 @@ func TestContractHandler_GetByID_NotFound(t *testing.T) {
     require.NoError(t, err)
     assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 
-    var body map[string]interface{}
+    var body map[string]any
     json.NewDecoder(resp.Body).Decode(&body)
-    errObj := body["error"].(map[string]interface{})
+    errObj := body["error"].(map[string]any)
     assert.Equal(t, "NOT_FOUND", errObj["code"])
 }
 
@@ -138,15 +138,15 @@ func TestContractHandler_Create_MissingFields(t *testing.T) {
             resp, _ := app.Test(req)
             assert.Equal(t, http.StatusUnprocessableEntity, resp.StatusCode)
 
-            var body map[string]interface{}
+            var body map[string]any
             json.NewDecoder(resp.Body).Decode(&body)
-            errObj := body["error"].(map[string]interface{})
+            errObj := body["error"].(map[string]any)
             assert.Equal(t, "VALIDATION_ERROR", errObj["code"])
 
-            details := errObj["details"].([]interface{})
+            details := errObj["details"].([]any)
             fields := make([]string, len(details))
             for i, d := range details {
-                fields[i] = d.(map[string]interface{})["field"].(string)
+                fields[i] = d.(map[string]any)["field"].(string)
             }
             assert.Contains(t, fields, tc.expectedField)
         })

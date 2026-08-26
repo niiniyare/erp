@@ -84,7 +84,7 @@ func (b *Bus) Publish(ctx context.Context, event eventbus.Event) error {
 
     return b.client.XAdd(ctx, &redis.XAddArgs{
         Stream: "events:" + event.Topic,
-        Values: map[string]interface{}{
+        Values: map[string]any{
             "id":           event.ID,
             "tenant_id":    event.TenantID,
             "published_at": event.PublishedAt.Format(time.RFC3339),

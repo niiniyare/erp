@@ -182,7 +182,7 @@ type ReportParam struct {
     Label      string
     Type       string       // "date" | "period" | "account" | "cost_centre" | "bool"
     Required   bool
-    Default    interface{}
+    Default    any
 }
 
 type ReportColumn struct {
@@ -686,7 +686,7 @@ type ReportSchedule struct {
     ReportCode    string
     Name          string
     CronExpr      string          // standard cron: "0 8 10 * *" = 8am on the 10th of every month
-    Params        map[string]interface{} // supports "prior_month", "current_month", "ytd"
+    Params        map[string]any // supports "prior_month", "current_month", "ytd"
     OutputFormat  string
     Delivery      ScheduleDelivery
     IsActive      bool

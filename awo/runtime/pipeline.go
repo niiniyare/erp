@@ -131,7 +131,9 @@ func (p *Pipeline) RunBeforeCreate(pctx *CreateContext) (*def.EntityRecord, erro
 
 	// Stage 2: BeforeValidate
 	for _, h := range hooks.BeforeValidate {
-		if err := h.BeforeValidate(pctx.Ctx, record); err != nil {
+		if err := safeCall("before_validate", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeValidate(pctx.Ctx, record)
+		}); err != nil {
 			return nil, fmt.Errorf("before_validate: %w", err)
 		}
 	}
@@ -143,14 +145,18 @@ func (p *Pipeline) RunBeforeCreate(pctx *CreateContext) (*def.EntityRecord, erro
 
 	// Stage 5: BeforeSave
 	for _, h := range hooks.BeforeSave {
-		if err := h.BeforeSave(pctx.Ctx, record); err != nil {
+		if err := safeCall("before_save", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeSave(pctx.Ctx, record)
+		}); err != nil {
 			return nil, fmt.Errorf("before_save: %w", err)
 		}
 	}
 
 	// Stage 6: BeforeCreate
 	for _, h := range hooks.BeforeCreate {
-		if err := h.BeforeCreate(pctx.Ctx, record); err != nil {
+		if err := safeCall("before_create", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeCreate(pctx.Ctx, record)
+		}); err != nil {
 			return nil, fmt.Errorf("before_create: %w", err)
 		}
 	}
@@ -171,12 +177,16 @@ func (p *Pipeline) RunAfterCreate(ctx context.Context, record *def.EntityRecord)
 
 	// Entity-specific hook fires before the cross-cutting AfterSave.
 	for _, h := range hooks.AfterCreate {
-		if err := h.AfterCreate(ctx, record); err != nil {
+		if err := safeCall("after_create", fmt.Sprintf("%T", h), func() error {
+			return h.AfterCreate(ctx, record)
+		}); err != nil {
 			return fmt.Errorf("after_create: %w", err)
 		}
 	}
 	for _, h := range hooks.AfterSave {
-		if err := h.AfterSave(ctx, record); err != nil {
+		if err := safeCall("after_save", fmt.Sprintf("%T", h), func() error {
+			return h.AfterSave(ctx, record)
+		}); err != nil {
 			return fmt.Errorf("after_save: %w", err)
 		}
 	}
@@ -219,7 +229,9 @@ func (p *Pipeline) RunBeforeUpdate(pctx *UpdateContext, current *def.EntityRecor
 	hooks := es.Hooks
 
 	for _, h := range hooks.BeforeValidate {
-		if err := h.BeforeValidate(pctx.Ctx, proposed); err != nil {
+		if err := safeCall("before_validate", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeValidate(pctx.Ctx, proposed)
+		}); err != nil {
 			return nil, fmt.Errorf("before_validate: %w", err)
 		}
 	}
@@ -229,13 +241,17 @@ func (p *Pipeline) RunBeforeUpdate(pctx *UpdateContext, current *def.EntityRecor
 	}
 
 	for _, h := range hooks.BeforeSave {
-		if err := h.BeforeSave(pctx.Ctx, proposed); err != nil {
+		if err := safeCall("before_save", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeSave(pctx.Ctx, proposed)
+		}); err != nil {
 			return nil, fmt.Errorf("before_save: %w", err)
 		}
 	}
 
 	for _, h := range hooks.BeforeUpdate {
-		if err := h.BeforeUpdate(pctx.Ctx, proposed, current); err != nil {
+		if err := safeCall("before_update", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeUpdate(pctx.Ctx, proposed, current)
+		}); err != nil {
 			return nil, fmt.Errorf("before_update: %w", err)
 		}
 	}
@@ -254,12 +270,16 @@ func (p *Pipeline) RunAfterUpdate(ctx context.Context, record, prev *def.EntityR
 
 	// Entity-specific hook fires before the cross-cutting AfterSave.
 	for _, h := range hooks.AfterUpdate {
-		if err := h.AfterUpdate(ctx, record, prev); err != nil {
+		if err := safeCall("after_update", fmt.Sprintf("%T", h), func() error {
+			return h.AfterUpdate(ctx, record, prev)
+		}); err != nil {
 			return fmt.Errorf("after_update: %w", err)
 		}
 	}
 	for _, h := range hooks.AfterSave {
-		if err := h.AfterSave(ctx, record); err != nil {
+		if err := safeCall("after_save", fmt.Sprintf("%T", h), func() error {
+			return h.AfterSave(ctx, record)
+		}); err != nil {
 			return fmt.Errorf("after_save: %w", err)
 		}
 	}
@@ -274,7 +294,9 @@ func (p *Pipeline) RunBeforeDelete(ctx context.Context, record *def.EntityRecord
 	}
 	hooks := es.Hooks
 	for _, h := range hooks.BeforeDelete {
-		if err := h.BeforeDelete(ctx, record); err != nil {
+		if err := safeCall("before_delete", fmt.Sprintf("%T", h), func() error {
+			return h.BeforeDelete(ctx, record)
+		}); err != nil {
 			return fmt.Errorf("before_delete: %w", err)
 		}
 	}
@@ -289,7 +311,9 @@ func (p *Pipeline) RunAfterDelete(ctx context.Context, record *def.EntityRecord)
 	}
 	hooks := es.Hooks
 	for _, h := range hooks.AfterDelete {
-		if err := h.AfterDelete(ctx, record); err != nil {
+		if err := safeCall("after_delete", fmt.Sprintf("%T", h), func() error {
+			return h.AfterDelete(ctx, record)
+		}); err != nil {
 			return fmt.Errorf("after_delete: %w", err)
 		}
 	}
@@ -434,6 +458,23 @@ func (p *Pipeline) applyNamingSeries(ctx context.Context, record *def.EntityReco
 		record.Set(f.Name, id)
 	}
 	return nil
+}
+
+// safeCall invokes fn and recovers any panic, converting it to a
+// *HookPanicError so the pipeline can propagate a clean error instead of
+// crashing the server.
+//
+// Parameters:
+//   - stage: hook stage name for diagnostic messages (e.g. "before_create")
+//   - hookName: human-readable hook type name (fmt.Sprintf("%T", impl))
+//   - fn: the hook call to execute
+func safeCall(stage, hookName string, fn func() error) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = &HookPanicError{Stage: stage, HookName: hookName, Panic: r}
+		}
+	}()
+	return fn()
 }
 
 func cloneMap(m map[string]any) map[string]any {

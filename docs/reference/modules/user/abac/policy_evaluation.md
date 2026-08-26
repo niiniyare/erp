@@ -858,7 +858,7 @@ var Obligation = Type("Obligation", func() {
 // Performance monitoring middleware
 func PerformanceMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
     return func(next endpoint.Endpoint) endpoint.Endpoint {
-        return func(ctx context.Context, request interface{}) (interface{}, error) {
+        return func(ctx context.Context, request any) (any, error) {
             start := time.Now()
             
             // Add performance context

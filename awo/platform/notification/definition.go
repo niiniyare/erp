@@ -105,6 +105,9 @@ var Definition = def.SystemDefinition{
 			Name:   "mark_read",
 			Label:  "Mark as Read",
 			Method: "POST",
+			HandlerFunc: func(ctx *def.ActionContext) (*def.ActionResult, error) {
+				return &def.ActionResult{}, nil
+			},
 		},
 	},
 

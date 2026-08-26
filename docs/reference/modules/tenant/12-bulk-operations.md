@@ -173,7 +173,7 @@ Request Structure:
   BulkTenantOperationRequest {
     OperationType:  "SUSPEND" | "REACTIVATE" | "ARCHIVE" | ...
     TenantIDs:      []UUID
-    Parameters:     map[string]interface{}
+    Parameters:     map[string]any
     ActorID:        UUID
     ActorName:      string
   }

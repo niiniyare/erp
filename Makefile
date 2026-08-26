@@ -156,8 +156,8 @@ wire-check: ##  Verify Wire files are up to date
 # --- Misc --------------------------------------------------------------------
 
 .PHONY: interface2any
-interface2any: ##  Replace interface{} with any across all Go files
-	@find . -type f -name '*.go' | xargs sed -i 's/interface{}/any/g'
+interface2any: ##  Replace any with any across all Go files
+	@find . -type f -name '*.go' | xargs sed -i 's/any/any/g'
 
 # =============================================================================
 # ️  Scaffolding  (awoctl)

@@ -94,12 +94,12 @@ type ActionEntityRepo interface {
 }
 
 // ActionFilter is the predicate passed to ActionEntityRepo query methods.
-// The concrete type is *filter.Filter (awo.so/awo/filter). Using interface{}
+// The concrete type is *filter.Filter (awo.so/awo/filter). Using any
 // here keeps the def package free of filter package imports, matching the
 // same pattern as def.Filter used by PolicyFunc.
 //
 // Do not implement this with types outside awo.so/awo/filter.
-type ActionFilter interface{}
+type ActionFilter any
 
 // ActionQueryOpt configures a Query call.
 type ActionQueryOpt func(*ActionQueryConfig)

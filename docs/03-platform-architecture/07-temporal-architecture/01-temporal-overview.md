@@ -140,7 +140,7 @@ Temporal exports workflow history, search attributes, and custom metadata:
 
 ```go
 // Set searchable attributes
-workflow.UpsertSearchAttributes(ctx, map[string]interface{}{
+workflow.UpsertSearchAttributes(ctx, map[string]any{
     "TenantID":       tenantID,
     "ContractStatus": "under_review",
 })

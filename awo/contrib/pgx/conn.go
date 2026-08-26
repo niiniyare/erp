@@ -36,11 +36,16 @@ func connFromContext(ctx context.Context, pool *pgxpool.Pool) *pgConn {
 
 // execer provides a pgx-compatible Exec / QueryRow / Query interface that
 // works regardless of whether we are inside a transaction.
+//
+// CopyFrom is included so that bulk-insert paths can use the PostgreSQL COPY
+// protocol on either a pool connection or an active transaction without a type
+// assertion.  Both *pgxpool.Pool and pgxlib.Tx satisfy this interface.
 type execer interface {
 	Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
 	QueryRow(ctx context.Context, sql string, args ...any) pgxlib.Row
 	Query(ctx context.Context, sql string, args ...any) (pgxlib.Rows, error)
 	SendBatch(ctx context.Context, b *pgxlib.Batch) pgxlib.BatchResults
+	CopyFrom(ctx context.Context, tableName pgxlib.Identifier, columnNames []string, rowSrc pgxlib.CopyFromSource) (int64, error)
 }
 
 func (c *pgConn) db() execer {

@@ -172,7 +172,12 @@ func (b *Builder) expr(f *filter.Filter) (string, error) {
 		return fmt.Sprintf("data->>'%s' IS NOT NULL", escapeSingleQuote(f.Field)), nil
 
 	default:
-		return "", fmt.Errorf("sqlbuild: unsupported filter kind %q", f.Kind)
+		return "", &TranslationError{
+			Operator: string(f.Kind),
+			Field:    f.Field,
+			Value:    f.Value,
+			Reason:   "unsupported filter kind",
+		}
 	}
 }
 

@@ -15132,7 +15132,7 @@
 <span class="p">}</span>
 </code></pre></div>
 <h2 id="serialisation-note">Serialisation Note</h2>
-<p><code>Before</code> and <code>After</code> are <code>interface{}</code>. The audit service JSON-serialises them. Ensure domain entities are JSON-serialisable (all exported fields, no unexported value objects). If a field type is not JSON-serialisable (e.g., <code>decimal.Decimal</code>), use the <code>json:</code> tag to control serialisation:</p>
+<p><code>Before</code> and <code>After</code> are <code>any</code>. The audit service JSON-serialises them. Ensure domain entities are JSON-serialisable (all exported fields, no unexported value objects). If a field type is not JSON-serialisable (e.g., <code>decimal.Decimal</code>), use the <code>json:</code> tag to control serialisation:</p>
 <div class="highlight"><pre><span></span><code><span class="kd">type</span><span class="w"> </span><span class="nx">Contract</span><span class="w"> </span><span class="kd">struct</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="c1">// ...</span>
 <span class="w">    </span><span class="nx">TotalValue</span><span class="w"> </span><span class="nx">ContractValue</span><span class="w"> </span><span class="s">`json:&quot;-&quot;`</span><span class="w">           </span><span class="c1">// exclude — use string form instead</span>

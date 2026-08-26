@@ -566,8 +566,8 @@ type ConfigurationChange struct {
     EntityID   *entity.ID
     Module     string
     ConfigKey  string
-    OldValue   interface{}
-    NewValue   interface{}
+    OldValue   any
+    NewValue   any
     ChangedAt  time.Time
 }
 
@@ -581,7 +581,7 @@ func NewConfigurationClient(settingsService service.SettingsService, logger *zap
 }
 
 // Get configuration with intelligent caching
-func (c *ConfigurationClient) GetConfiguration(ctx context.Context, tenantID tenant.ID, entityID *entity.ID, module, key string) (interface{}, error) {
+func (c *ConfigurationClient) GetConfiguration(ctx context.Context, tenantID tenant.ID, entityID *entity.ID, module, key string) (any, error) {
     cacheKey := c.buildCacheKey(tenantID, entityID, module, key)
     
     // Check cache first
@@ -615,8 +615,8 @@ func (c *ConfigurationClient) GetConfiguration(ctx context.Context, tenantID ten
 }
 
 // Batch configuration resolution for efficiency
-func (c *ConfigurationClient) GetConfigurations(ctx context.Context, req BatchConfigurationRequest) (map[string]interface{}, error) {
-    results := make(map[string]interface{})
+func (c *ConfigurationClient) GetConfigurations(ctx context.Context, req BatchConfigurationRequest) (map[string]any, error) {
+    results := make(map[string]any)
     uncachedKeys := make([]service.ConfigurationKey, 0)
     
     // Check cache for each configuration
@@ -1073,7 +1073,7 @@ type ConfigurationEvent interface {
     EventType() string
     TenantID() string
     Timestamp() time.Time
-    GetPayload() interface{}
+    GetPayload() any
 }
 
 type ConfigurationEventHandler interface {
@@ -1090,17 +1090,17 @@ type ConfigurationChangedEvent struct {
     EntityID   *string         `json:"entity_id,omitempty"`
     Module     string          `json:"module"`
     ConfigKey  string          `json:"config_key"`
-    OldValue   interface{}     `json:"old_value"`
-    NewValue   interface{}     `json:"new_value"`
+    OldValue   any     `json:"old_value"`
+    NewValue   any     `json:"new_value"`
     Source     string          `json:"source"`
     ChangedBy  string          `json:"changed_by"`
-    Metadata   map[string]interface{} `json:"metadata,omitempty"`
+    Metadata   map[string]any `json:"metadata,omitempty"`
 }
 
 func (e ConfigurationChangedEvent) EventType() string { return e.Type }
 func (e ConfigurationChangedEvent) TenantID() string { return e.TenantID }
 func (e ConfigurationChangedEvent) Timestamp() time.Time { return e.Time }
-func (e ConfigurationChangedEvent) GetPayload() interface{} { return e }
+func (e ConfigurationChangedEvent) GetPayload() any { return e }
 
 // Template application event
 type TemplateAppliedEvent struct {
@@ -1120,7 +1120,7 @@ type TemplateAppliedEvent struct {
 func (e TemplateAppliedEvent) EventType() string { return e.Type }
 func (e TemplateAppliedEvent) TenantID() string { return e.TenantID }
 func (e TemplateAppliedEvent) Timestamp() time.Time { return e.Time }
-func (e TemplateAppliedEvent) GetPayload() interface{} { return e }
+func (e TemplateAppliedEvent) GetPayload() any { return e }
 
 // Publish configuration change event
 func (c *ConfigurationEventBus) PublishConfigurationChange(ctx context.Context, change ConfigurationChangedEvent) error {
@@ -1133,7 +1133,7 @@ func (c *ConfigurationEventBus) PublishConfigurationChange(ctx context.Context, 
     
     return c.redisClient.XAdd(ctx, &redis.XAddArgs{
         Stream: streamKey,
-        Values: map[string]interface{}{
+        Values: map[string]any{
             "tenant_id":   change.TenantID,
             "event_type":  change.EventType(),
             "module":      change.Module,

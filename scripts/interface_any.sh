@@ -61,7 +61,7 @@ EOF
 
   # If path is a single file
   if [[ -f "$target" ]]; then
-    if grep -q 'interface{}' "$target"; then
+    if grep -q 'any' "$target"; then
       if $dry_run; then
         echo "[DRY-RUN] Would modify: $target"
       else
@@ -69,7 +69,7 @@ EOF
         # Use a temporary file for sed to avoid any flag issues
         local temp_file
         temp_file=$(mktemp)
-        sed 's/interface{}/any/g' "$target" >"$temp_file"
+        sed 's/any/any/g' "$target" >"$temp_file"
         mv "$temp_file" "$target"
       fi
     fi
@@ -91,21 +91,21 @@ EOF
     find "$target" -type f \( "${name_expr[@]}" \) \
       ! -name "*_templ.go" ! -name "*.sqlc.go" \
       -not -path "*/.git/*" -not -path "*/vendor/*" -not -path "*/node_modules/*" \
-      -exec grep -l 'interface{}' {} \; | while read -r file; do
+      -exec grep -l 'any' {} \; | while read -r file; do
       echo "[DRY-RUN] Would modify: $file"
     done
   else
     find "$target" -type f \( "${name_expr[@]}" \) \
       ! -name "*_templ.go" ! -name "*.sqlc.go" \
       -not -path "*/.git/*" -not -path "*/vendor/*" -not -path "*/node_modules/*" \
-      -exec grep -l 'interface{}' {} \; | while read -r file; do
+      -exec grep -l 'any' {} \; | while read -r file; do
       if $verbose; then
         echo "Modifying: $file"
       fi
       # Use temporary file approach for all files
       local temp_file
       temp_file=$(mktemp)
-      sed 's/interface{}/any/g' "$file" >"$temp_file"
+      sed 's/any/any/g' "$file" >"$temp_file"
       mv "$temp_file" "$file"
     done
   fi

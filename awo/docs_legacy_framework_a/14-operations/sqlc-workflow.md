@@ -296,7 +296,7 @@ SQLC only generates fields for columns that exist in the schema. If a new column
 
 ### `overrides` type mismatch
 
-The `sqlc.yaml` `overrides` section maps `db_type` to `go_type`. If a new column uses a type not in the overrides list, SQLC uses a generic `interface{}`. Add the override:
+The `sqlc.yaml` `overrides` section maps `db_type` to `go_type`. If a new column uses a type not in the overrides list, SQLC uses a generic `any`. Add the override:
 
 ```yaml
 overrides:

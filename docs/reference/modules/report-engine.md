@@ -815,7 +815,7 @@ type ReportDefinition struct {
     Calculations []CalculationConfig
     OutputFormat string
     ChartConfig  *ChartConfig
-    AMISSchema   map[string]interface{}
+    AMISSchema   map[string]any
 }
 
 // ColumnConfig defines a selected column
@@ -832,7 +832,7 @@ type ColumnConfig struct {
 type FilterConfig struct {
     Column     string      `json:"column"`
     Operator   string      `json:"operator"`  // =, !=, >, <, >=, <=, in, like, between
-    Value      interface{} `json:"value"`
+    Value      any `json:"value"`
     Type       string      `json:"type"`      // string, integer, decimal, date
     Conjunction string     `json:"conjunction,omitempty"`  // AND, OR
 }
@@ -864,9 +864,9 @@ type ChartConfig struct {
 // ReportResult contains execution results
 type ReportResult struct {
     Columns   []string
-    Rows      [][]interface{}
+    Rows      [][]any
     RowCount  int
-    Metadata  map[string]interface{}
+    Metadata  map[string]any
     ExecutionTime time.Duration
 }
 
@@ -1063,11 +1063,11 @@ func (e *Engine) validateReport(reportDef *ReportDefinition) error {
 }
 
 // buildQuery constructs SQL from report definition
-func (e *Engine) buildQuery(reportDef *ReportDefinition) (string, []interface{}, error) {
+func (e *Engine) buildQuery(reportDef *ReportDefinition) (string, []any, error) {
     ds := e.dataSources[reportDef.DataSource]
     
     var query strings.Builder
-    var params []interface{}
+    var params []any
     paramIndex := 1
     
     // SELECT clause
@@ -1148,8 +1148,8 @@ func (e *Engine) buildQuery(reportDef *ReportDefinition) (string, []interface{},
 }
 
 // buildFilterClause constructs a WHERE condition
-func (e *Engine) buildFilterClause(filter FilterConfig, paramIndex *int) (string, []interface{}) {
-    var params []interface{}
+func (e *Engine) buildFilterClause(filter FilterConfig, paramIndex *int) (string, []any) {
+    var params []any
     var clause string
     
     column := e.quoteIdentifier(filter.Column)
@@ -1161,7 +1161,7 @@ func (e *Engine) buildFilterClause(filter FilterConfig, paramIndex *int) (string
         *paramIndex++
         
     case "in":
-        values := filter.Value.([]interface{})
+        values := filter.Value.([]any)
         placeholders := make([]string, len(values))
         for i := range values {
             placeholders[i] = fmt.Sprintf("$%d", *paramIndex)
@@ -1171,7 +1171,7 @@ func (e *Engine) buildFilterClause(filter FilterConfig, paramIndex *int) (string
         clause = fmt.Sprintf("%s IN (%s)", column, strings.Join(placeholders, ", "))
         
     case "not_in":
-        values := filter.Value.([]interface{})
+        values := filter.Value.([]any)
         placeholders := make([]string, len(values))
         for i := range values {
             placeholders[i] = fmt.Sprintf("$%d", *paramIndex)
@@ -1191,7 +1191,7 @@ func (e *Engine) buildFilterClause(filter FilterConfig, paramIndex *int) (string
         *paramIndex++
         
     case "between":
-        values := filter.Value.([]interface{})
+        values := filter.Value.([]any)
         clause = fmt.Sprintf("%s BETWEEN $%d AND $%d", column, *paramIndex, *paramIndex+1)
         params = append(params, values[0], values[1])
         *paramIndex += 2
@@ -1215,8 +1215,8 @@ func (e *Engine) processResults(rows *sql.Rows, reportDef *ReportDefinition) (*R
     
     result := &ReportResult{
         Columns: columns,
-        Rows:    make([][]interface{}, 0),
-        Metadata: make(map[string]interface{}),
+        Rows:    make([][]any, 0),
+        Metadata: make(map[string]any),
     }
     
     // Get column types
@@ -1227,8 +1227,8 @@ func (e *Engine) processResults(rows *sql.Rows, reportDef *ReportDefinition) (*R
     
     for rows.Next() {
         // Create slice for scanning
-        values := make([]interface{}, len(columns))
-        valuePtrs := make([]interface{}, len(columns))
+        values := make([]any, len(columns))
+        valuePtrs := make([]any, len(columns))
         
         for i := range values {
             valuePtrs[i] = &values[i]
@@ -1239,7 +1239,7 @@ func (e *Engine) processResults(rows *sql.Rows, reportDef *ReportDefinition) (*R
         }
         
         // Format values based on column configuration
-        formattedValues := make([]interface{}, len(values))
+        formattedValues := make([]any, len(values))
         for i, val := range values {
             formattedValues[i] = e.formatValue(val, columnTypes[i], reportDef.Columns[i])
         }
@@ -1262,7 +1262,7 @@ func (e *Engine) processResults(rows *sql.Rows, reportDef *ReportDefinition) (*R
 }
 
 // formatValue applies formatting to a value
-func (e *Engine) formatValue(val interface{}, colType *sql.ColumnType, config ColumnConfig) interface{} {
+func (e *Engine) formatValue(val any, colType *sql.ColumnType, config ColumnConfig) any {
     if val == nil {
         return nil
     }
@@ -1315,7 +1315,7 @@ func isValidOperator(op string) bool {
     return contains(validOps, op)
 }
 
-func validateValueType(value interface{}, expectedType string) error {
+func validateValueType(value any, expectedType string) error {
     // Type validation logic
     switch expectedType {
     case "string":
@@ -1365,7 +1365,7 @@ import (
 
 // Formatter interface for output formats
 type Formatter interface {
-    Format(result *ReportResult, config map[string]interface{}) ([]byte, error)
+    Format(result *ReportResult, config map[string]any) ([]byte, error)
     ContentType() string
     FileExtension() string
 }
@@ -1375,7 +1375,7 @@ type Formatter interface {
 // ==================================================
 type CSVFormatter struct{}
 
-func (f *CSVFormatter) Format(result *ReportResult, config map[string]interface{}) ([]byte, error) {
+func (f *CSVFormatter) Format(result *ReportResult, config map[string]any) ([]byte, error) {
     var buf bytes.Buffer
     writer := csv.NewWriter(&buf)
     
@@ -1416,7 +1416,7 @@ func (f *CSVFormatter) FileExtension() string {
 // ==================================================
 type ExcelFormatter struct{}
 
-func (f *ExcelFormatter) Format(result *ReportResult, config map[string]interface{}) ([]byte, error) {
+func (f *ExcelFormatter) Format(result *ReportResult, config map[string]any) ([]byte, error) {
     file := excelize.NewFile()
     sheetName := "Report"
     
@@ -1478,7 +1478,7 @@ func (f *ExcelFormatter) FileExtension() string {
 // ==================================================
 type PDFFormatter struct{}
 
-func (f *PDFFormatter) Format(result *ReportResult, config map[string]interface{}) ([]byte, error) {
+func (f *PDFFormatter) Format(result *ReportResult, config map[string]any) ([]byte, error) {
     pdf := gofpdf.New("L", "mm", "A4", "")
     pdf.AddPage()
     
@@ -1534,9 +1534,9 @@ func (f *PDFFormatter) FileExtension() string {
 // ==================================================
 type JSONFormatter struct{}
 
-func (f *JSONFormatter) Format(result *ReportResult, config map[string]interface{}) ([]byte, error) {
+func (f *JSONFormatter) Format(result *ReportResult, config map[string]any) ([]byte, error) {
     // Convert to JSON-friendly structure
-    output := map[string]interface{}{
+    output := map[string]any{
         "columns":   result.Columns,
         "rows":      result.Rows,
         "row_count": result.RowCount,
@@ -1723,34 +1723,34 @@ func (s *Service) ScheduleReport(ctx context.Context, req CreateScheduleRequest)
 }
 
 // generateAMISSchema creates AMIS JSON schema for report rendering
-func (s *Service) generateAMISSchema(req CreateReportRequest) (map[string]interface{}, error) {
+func (s *Service) generateAMISSchema(req CreateReportRequest) (map[string]any, error) {
     // Get data source metadata
     ds := s.engine.dataSources[req.DataSource]
     
     // Build AMIS schema based on output format
-    schema := map[string]interface{}{
+    schema := map[string]any{
         "type": "page",
         "title": req.Name,
-        "body": []interface{}{},
+        "body": []any{},
     }
     
     if req.OutputFormat == "table" {
         tableSchema := s.generateTableSchema(req, ds)
-        schema["body"] = []interface{}{tableSchema}
+        schema["body"] = []any{tableSchema}
     } else if req.OutputFormat == "chart" {
         chartSchema := s.generateChartSchema(req, ds)
-        schema["body"] = []interface{}{chartSchema}
+        schema["body"] = []any{chartSchema}
     }
     
     return schema, nil
 }
 
 // generateTableSchema creates AMIS table configuration
-func (s *Service) generateTableSchema(req CreateReportRequest, ds *DataSource) map[string]interface{} {
-    columns := make([]map[string]interface{}, 0, len(req.Columns))
+func (s *Service) generateTableSchema(req CreateReportRequest, ds *DataSource) map[string]any {
+    columns := make([]map[string]any, 0, len(req.Columns))
     
     for _, col := range req.Columns {
-        colSchema := map[string]interface{}{
+        colSchema := map[string]any{
             "name":  col.Name,
             "label": col.Label,
             "type":  "text",
@@ -1780,38 +1780,38 @@ func (s *Service) generateTableSchema(req CreateReportRequest, ds *DataSource) m
         columns = append(columns, colSchema)
     }
     
-    return map[string]interface{}{
+    return map[string]any{
         "type": "crud",
         "api":  fmt.Sprintf("/api/reports/%s/data", req.Name),
         "columns": columns,
-        "headerToolbar": []interface{}{
+        "headerToolbar": []any{
             "filter-toggler",
             "reload",
-            map[string]interface{}{
+            map[string]any{
                 "type":  "export-excel",
                 "label": "Export",
             },
         },
-        "footerToolbar": []interface{}{"pagination"},
+        "footerToolbar": []any{"pagination"},
         "perPage": 50,
     }
 }
 
 // generateChartSchema creates AMIS chart configuration
-func (s *Service) generateChartSchema(req CreateReportRequest, ds *DataSource) map[string]interface{} {
+func (s *Service) generateChartSchema(req CreateReportRequest, ds *DataSource) map[string]any {
     if req.ChartConfig == nil {
-        return map[string]interface{}{}
+        return map[string]any{}
     }
     
-    return map[string]interface{}{
+    return map[string]any{
         "type": "chart",
         "api":  fmt.Sprintf("/api/reports/%s/data", req.Name),
-        "config": map[string]interface{}{
-            "xAxis": map[string]interface{}{
+        "config": map[string]any{
+            "xAxis": map[string]any{
                 "type": "category",
                 "data": fmt.Sprintf("${%s}", req.ChartConfig.XAxis),
             },
-            "yAxis": map[string]interface{}{
+            "yAxis": map[string]any{
                 "type": "value",
             },
             "series": s.generateChartSeries(req.ChartConfig),
@@ -1819,11 +1819,11 @@ func (s *Service) generateChartSchema(req CreateReportRequest, ds *DataSource) m
     }
 }
 
-func (s *Service) generateChartSeries(config *ChartConfig) []map[string]interface{} {
-    series := make([]map[string]interface{}, 0, len(config.YAxis))
+func (s *Service) generateChartSeries(config *ChartConfig) []map[string]any {
+    series := make([]map[string]any, 0, len(config.YAxis))
     
     for _, yAxis := range config.YAxis {
-        series = append(series, map[string]interface{}{
+        series = append(series, map[string]any{
             "type": config.Type,  // bar, line, pie
             "name": yAxis,
             "data": fmt.Sprintf("${%s}", yAxis),

@@ -144,7 +144,7 @@ func TestGenerate_ActionPaths(t *testing.T) {
 		Name:   "invoice",
 		Module: "finance",
 		Actions: []def.ActionDef{
-			{Name: "submit", Label: "Submit Invoice"},
+			{Name: "submit", Label: "Submit Invoice", HandlerFunc: func(_ *def.ActionContext) (*def.ActionResult, error) { return nil, nil }},
 		},
 	}
 	cs := buildSchema(t, d)

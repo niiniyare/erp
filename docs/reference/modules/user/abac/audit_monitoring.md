@@ -982,7 +982,7 @@ var UserBehaviorAnalytics = Type("UserBehaviorAnalytics", func() {
 // Data privacy middleware for GDPR compliance
 func DataPrivacyMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
     return func(next endpoint.Endpoint) endpoint.Endpoint {
-        return func(ctx context.Context, request interface{}) (interface{}, error) {
+        return func(ctx context.Context, request any) (any, error) {
             // Implement data minimization
             // Apply anonymization where required
             // Log data access for audit trail
@@ -998,7 +998,7 @@ func DataPrivacyMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
 // Audit trail middleware
 func AuditTrailMiddleware() func(endpoint.Endpoint) endpoint.Endpoint {
     return func(next endpoint.Endpoint) endpoint.Endpoint {
-        return func(ctx context.Context, request interface{}) (interface{}, error) {
+        return func(ctx context.Context, request any) (any, error) {
             // Log request details
             auditCtx := createAuditContext(ctx, request)
             

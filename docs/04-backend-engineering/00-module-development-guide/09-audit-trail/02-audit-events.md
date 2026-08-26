@@ -109,7 +109,7 @@ audit.Event{
 
 ## Serialisation Note
 
-`Before` and `After` are `interface{}`. The audit service JSON-serialises them. Ensure domain entities are JSON-serialisable (all exported fields, no unexported value objects). If a field type is not JSON-serialisable (e.g., `decimal.Decimal`), use the `json:` tag to control serialisation:
+`Before` and `After` are `any`. The audit service JSON-serialises them. Ensure domain entities are JSON-serialisable (all exported fields, no unexported value objects). If a field type is not JSON-serialisable (e.g., `decimal.Decimal`), use the `json:` tag to control serialisation:
 
 ```go
 type Contract struct {

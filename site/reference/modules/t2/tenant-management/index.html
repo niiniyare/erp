@@ -17404,12 +17404,12 @@
 <!--     tenantID string -->
 <!-- } -->
 <!---->
-<!-- func (r *BaseRepository) Find(dest interface{}, conditions ...interface{}) error { -->
+<!-- func (r *BaseRepository) Find(dest any, conditions ...any) error { -->
 <!--     // Automatically add tenant filter to all queries -->
 <!--     return r.db.Where("tenant_id = ?", r.tenantID).Find(dest, conditions...).Error -->
 <!-- } -->
 <!---->
-<!-- func (r *BaseRepository) Create(value interface{}) error { -->
+<!-- func (r *BaseRepository) Create(value any) error { -->
 <!--     // Automatically set tenant_id before creating -->
 <!--     if model, ok := value.(TenantModel); ok { -->
 <!--         model.SetTenantID(r.tenantID) -->

@@ -102,7 +102,7 @@ func TestBetween(t *testing.T) {
 func TestFilterImplementsDefFilter(t *testing.T) {
 	// *filter.Filter satisfies def.Filter (empty interface) — verified by the
 	// compiler whenever a *Filter is assigned to a def.Filter variable.
-	var _ interface{} = (*filter.Filter)(nil)
+	var _ any = (*filter.Filter)(nil)
 }
 
 // --- String predicates ---

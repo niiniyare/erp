@@ -90,6 +90,10 @@ func runSchemaV2(args []string) error {
 		return schemaValidate(gf)
 	case "graph":
 		return schemaGraph(gf)
+	case "inspect":
+		return schemaInspect(gf)
+	case "fingerprint":
+		return schemaFingerprint(gf)
 	default:
 		return fmt.Errorf("unknown schema sub-command %q (use: compile, validate, graph, inspect, fingerprint)", sub)
 	}
@@ -174,6 +178,63 @@ func schemaGraph(gf globalFlags) error {
 				fmt.Printf("  %s → %s\n", e.From, e.To)
 			}
 		}
+	}
+	return nil
+}
+
+func schemaInspect(gf globalFlags) error {
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	if gf.JSON {
+		items := make([]map[string]any, 0, len(schema.Entities))
+		for _, es := range schema.Entities {
+			items = append(items, map[string]any{
+				"name":         es.QualifiedName,
+				"module":       es.Module,
+				"field_count":  len(es.Fields),
+				"action_count": len(es.Actions),
+			})
+		}
+		graphSummary := "not available"
+		if schema.Graph != nil {
+			graphSummary = fmt.Sprintf("%d entities, %d edges", len(schema.Graph.TopologicalOrder), len(schema.Entities))
+		}
+		return printJSONValue(map[string]any{
+			"entity_count": len(schema.Entities),
+			"route_count":  len(schema.Routes),
+			"entities":     items,
+			"graph":        graphSummary,
+		})
+	}
+	if !gf.Quiet {
+		fmt.Printf("Schema summary: %d entities, %d routes\n\n", len(schema.Entities), len(schema.Routes))
+		fmt.Printf("%-40s %-8s %-8s\n", "ENTITY", "FIELDS", "ACTIONS")
+		fmt.Println(strings.Repeat("-", 60))
+		for _, es := range schema.Entities {
+			fmt.Printf("%-40s %-8d %-8d\n", es.QualifiedName, len(es.Fields), len(es.Actions))
+		}
+		if schema.Graph != nil {
+			fmt.Printf("\nDependency graph: %d entities in topological order\n", len(schema.Graph.TopologicalOrder))
+		} else {
+			fmt.Println("\nDependency graph: not available")
+		}
+	}
+	return nil
+}
+
+func schemaFingerprint(gf globalFlags) error {
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+	fp := compiler.Fingerprint(schema)
+	if gf.JSON {
+		return printJSONValue(map[string]any{"fingerprint": fp})
+	}
+	if !gf.Quiet {
+		fmt.Println(fp)
 	}
 	return nil
 }
@@ -523,5 +584,50 @@ func generateOpenAPI(gf globalFlags, args []string) error {
 	if !gf.Quiet {
 		fmt.Printf("wrote OpenAPI spec (%d paths) to %s\n", len(spec.Paths), outFile)
 	}
+	return nil
+}
+
+// ── docgen command ────────────────────────────────────────────────────────────
+
+// runDocgenCmd generates Markdown API reference docs and writes them to stdout
+// or to a directory when --out <dir> is provided.
+func runDocgenCmd(args []string) error {
+	outPath := ""
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--out" && i+1 < len(args) {
+			outPath = args[i+1]
+			i++
+		}
+	}
+
+	schema, err := compileRegisteredSchema()
+	if err != nil {
+		return err
+	}
+
+	plan, err := docgen.Generate(schema)
+	if err != nil {
+		return fmt.Errorf("docgen: %w", err)
+	}
+
+	if outPath == "" {
+		// Write all files concatenated to stdout.
+		for _, f := range plan.Files {
+			fmt.Print(f.Content)
+		}
+		return nil
+	}
+
+	if err := os.MkdirAll(outPath, 0o755); err != nil {
+		return fmt.Errorf("create output dir %q: %w", outPath, err)
+	}
+	for _, f := range plan.Files {
+		path := outPath + "/" + f.Name + ".md"
+		if err := os.WriteFile(path, []byte(f.Content), 0o644); err != nil {
+			return fmt.Errorf("write %q: %w", path, err)
+		}
+		fmt.Printf("  wrote %s\n", path)
+	}
+	fmt.Printf("docgen: wrote %d files to %s\n", len(plan.Files), outPath)
 	return nil
 }
