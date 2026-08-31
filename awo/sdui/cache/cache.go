@@ -72,6 +72,10 @@ type KeyParams struct {
 	TenantIDHash    string // SHA-256 of tenant UUID — not the raw UUID
 	SchemaFP        string // compiled schema fingerprint
 	PermFP          string // permission fingerprint from PolicyEvaluator
+	// FeatureFlagFP is a fingerprint of the feature flags active for this
+	// viewer+tenant. Empty string means feature flags are not in use;
+	// schemas are flag-invariant and no extra cache dimension is added.
+	FeatureFlagFP string
 }
 
 // Key returns the Redis cache key for the given parameters.
@@ -90,6 +94,7 @@ func Key(p KeyParams) string {
 		p.TenantIDHash,
 		p.SchemaFP,
 		p.PermFP,
+		p.FeatureFlagFP, // empty string adds no cache dimension when flags unused
 	}
 	return strings.Join(parts, ":")
 }

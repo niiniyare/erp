@@ -1,6 +1,10 @@
 package def
 
-import "context"
+import (
+	"context"
+
+	"github.com/google/uuid"
+)
 
 // PageBuilderSet allows module authors to override the auto-generated amis
 // page schemas for specific views. Only declare builders for views that need
@@ -54,4 +58,14 @@ type PageContext struct {
 	// EnabledFeatureFlags is the set of feature flag names that are active
 	// for the current actor and tenant.
 	EnabledFeatureFlags map[string]bool
+
+	// RecordID is the UUID of the record being viewed or edited.
+	// Populated for detail and edit views; uuid.Nil for list and create views.
+	RecordID uuid.UUID
+
+	// RecordState holds the current field values of the record being viewed.
+	// Populated only when RecordID is non-nil and a RecordFetcher is wired.
+	// Nil for list and create views, and when no RecordFetcher is configured.
+	// PageBuilder implementations must treat nil as "no record data available".
+	RecordState map[string]any
 }

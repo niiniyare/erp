@@ -30,11 +30,16 @@
 package sdui
 
 import (
+	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"log/slog"
+	"sort"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 
 	"awo.so/awo/auth"
 	"awo.so/awo/compiler"
@@ -45,6 +50,61 @@ import (
 	"awo.so/awo/sdui/renderer"
 	"awo.so/awo/sdui/sduictx"
 )
+
+// ── Provider interfaces ────────────────────────────────────────────────────────
+
+// SettingsProvider fetches a flat map of tenant-level settings for use in
+// PageContext. Implementations should be fast (cache-backed). The handler
+// calls this once per page builder invocation; errors produce an empty map
+// (non-blocking) so a settings service failure never prevents page delivery.
+type SettingsProvider interface {
+	// TenantSettings returns a flat key-value map of settings for tenantID.
+	// Implementations must not return nil — return an empty map on error.
+	TenantSettings(ctx context.Context, tenantID uuid.UUID) map[string]string
+}
+
+// FlagsProvider evaluates which feature flags are active for a given viewer
+// and tenant. Implementations should be cache-backed. Errors produce an empty
+// map (non-blocking).
+type FlagsProvider interface {
+	// EnabledFlags returns the set of active feature flag names for the given
+	// viewer+tenant combination. Keys are flag identifiers; values are always
+	// true (absent keys are disabled). Implementations must not return nil.
+	EnabledFlags(ctx context.Context, tenantID uuid.UUID, viewer auth.ViewerContext) map[string]bool
+}
+
+// RecordFetcher retrieves a record's field values by entity name and record ID.
+// Used to populate PageContext.RecordState for detail and edit PageBuilder
+// overrides. Implementations must respect the viewer's tenant context (RLS).
+type RecordFetcher interface {
+	// FetchRecord returns the field values for entityName/id.
+	// Returns (nil, nil) when the record does not exist.
+	// Returns (nil, err) on a storage error.
+	FetchRecord(ctx context.Context, entityName string, id uuid.UUID) (map[string]any, error)
+}
+
+// ── Noop provider implementations ────────────────────────────────────────────
+
+// noopSettingsProvider returns an empty map. Used when no SettingsProvider is wired.
+type noopSettingsProvider struct{}
+
+func (noopSettingsProvider) TenantSettings(_ context.Context, _ uuid.UUID) map[string]string {
+	return map[string]string{}
+}
+
+// noopFlagsProvider returns an empty map. Used when no FlagsProvider is wired.
+type noopFlagsProvider struct{}
+
+func (noopFlagsProvider) EnabledFlags(_ context.Context, _ uuid.UUID, _ auth.ViewerContext) map[string]bool {
+	return map[string]bool{}
+}
+
+// noopRecordFetcher returns nil,nil. Used when no RecordFetcher is wired.
+type noopRecordFetcher struct{}
+
+func (noopRecordFetcher) FetchRecord(_ context.Context, _ string, _ uuid.UUID) (map[string]any, error) {
+	return nil, nil
+}
 
 // NavEntry is a single navigation item linking to an entity list view.
 type NavEntry struct {
@@ -90,6 +150,35 @@ type Handler struct {
 	evaluator auth.PolicyEvaluator // may be nil
 	grants    adapt.GrantIndex     // pre-built permission index
 	schemaFPs map[string]string    // entityName → fingerprint (precomputed)
+
+	// Optional dynamic data providers for PageContext enrichment.
+	settings SettingsProvider
+	flags    FlagsProvider
+	fetcher  RecordFetcher
+}
+
+// HandlerOption is a functional option for configuring a Handler.
+type HandlerOption func(*Handler)
+
+// WithSettingsProvider wires a SettingsProvider that populates
+// PageContext.TenantSettings on every PageBuilder invocation.
+// When not set, PageContext.TenantSettings is always an empty map.
+func WithSettingsProvider(sp SettingsProvider) HandlerOption {
+	return func(h *Handler) { h.settings = sp }
+}
+
+// WithFlagsProvider wires a FlagsProvider that populates
+// PageContext.EnabledFeatureFlags on every PageBuilder invocation.
+// When not set, PageContext.EnabledFeatureFlags is always an empty map.
+func WithFlagsProvider(fp FlagsProvider) HandlerOption {
+	return func(h *Handler) { h.flags = fp }
+}
+
+// WithRecordFetcher wires a RecordFetcher that populates
+// PageContext.RecordState for detail and edit views.
+// When not set, PageContext.RecordState is always nil.
+func WithRecordFetcher(rf RecordFetcher) HandlerOption {
+	return func(h *Handler) { h.fetcher = rf }
 }
 
 // New constructs a Handler.
@@ -97,21 +186,31 @@ type Handler struct {
 //   - schema is the compiled schema produced by compiler.Compile. Required.
 //   - eng is the configured SDUI engine. Required.
 //   - evaluator is the policy evaluator for field permission gating. May be nil.
+//   - opts are optional functional options for dynamic data providers.
 //
 // New precomputes schema fingerprints and the grant index for O(1) access
-// during request handling.
-func New(schema *compiler.CompiledSchema, eng *engine.Engine, evaluator auth.PolicyEvaluator) *Handler {
+// during request handling. When no provider options are supplied all three
+// providers default to noop implementations that return empty maps/nil.
+func New(schema *compiler.CompiledSchema, eng *engine.Engine, evaluator auth.PolicyEvaluator, opts ...HandlerOption) *Handler {
 	fps := make(map[string]string, len(schema.Entities))
 	for _, es := range schema.Entities {
 		fps[es.QualifiedName] = adapt.SchemaFingerprint(es)
 	}
-	return &Handler{
+	h := &Handler{
 		schema:    schema,
 		engine:    eng,
 		evaluator: evaluator,
 		grants:    adapt.BuildGrantIndex(schema.CapabilityGrants),
 		schemaFPs: fps,
+		// Noop defaults — never nil; simplifies nil-guard-free provider calls.
+		settings: noopSettingsProvider{},
+		flags:    noopFlagsProvider{},
+		fetcher:  noopRecordFetcher{},
 	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
 }
 
 // Register mounts SDUI endpoints on group g.
@@ -217,6 +316,32 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	locale := h.locale(c)
 	schemaFP := h.schemaFPs[es.QualifiedName]
 
+	// Extract record ID for detail and edit views.
+	// For list and create views, :id is absent — uuid.Nil is the zero value.
+	recordID := uuid.Nil
+	if rawID := c.Params("id"); rawID != "" {
+		if parsed, parseErr := uuid.Parse(rawID); parseErr == nil {
+			recordID = parsed
+		}
+	}
+
+	// Fetch dynamic PageContext data — all three fetches are non-blocking:
+	// errors produce empty maps / nil rather than failing the request.
+	tenantID := viewer.TenantID()
+	reqCtx := c.UserContext()
+
+	tenantSettings := h.fetchTenantSettings(reqCtx, tenantID)
+	featureFlags := h.fetchFeatureFlags(reqCtx, tenantID, viewer)
+
+	var recordState map[string]any
+	if recordID != uuid.Nil {
+		recordState = h.fetchRecordState(reqCtx, es.QualifiedName, recordID)
+	}
+
+	// Compute feature flag fingerprint for ETag cache partitioning.
+	// Empty string when no flags are active (preserves pre-flag cache behaviour).
+	flagFP := computeFlagFingerprint(featureFlags)
+
 	// Build viewer adapter (bridges auth.ViewerContext → sduictx.ViewerContext).
 	sduiViewer := adapt.NewViewerAdapter(c.UserContext(), viewer, h.evaluator, h.grants)
 
@@ -227,7 +352,7 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	// the fingerprint prevents stale action buttons in the UI.
 	permFP := adapt.RolesFingerprint(viewer)
 	builder := sduictx.NewGeneratorContext(
-		viewer.TenantID(),
+		tenantID,
 		sduiViewer,
 		es.QualifiedName,
 		mode,
@@ -253,9 +378,13 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	if pb := pageBuilderFor(es.PageBuilders, mode); pb != nil {
 		actor := viewerToActor(viewer)
 		pctx := def.PageContext{
-			Actor:      &actor,
-			EntityName: es.QualifiedName,
-			Kind:       viewModeToPageKind(mode),
+			Actor:               &actor,
+			EntityName:          es.QualifiedName,
+			Kind:                viewModeToPageKind(mode),
+			TenantSettings:      tenantSettings,
+			EnabledFeatureFlags: featureFlags,
+			RecordID:            recordID,
+			RecordState:         recordState,
 		}
 		custom, pbErr := pb(c.UserContext(), pctx)
 		if pbErr != nil {
@@ -293,18 +422,17 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 		"cache_hit", resp.CacheHit, "schema_keys", len(resp.Output.AMISSchema))
 
 	// Set ETag from schema fingerprint + renderer + locale + permission fingerprint
-	// + tenant hash. All five dimensions must participate so that:
+	// + tenant hash + feature flag fingerprint. All six dimensions must participate
+	// so that:
 	//
-	//   - A permission change (new permFP) produces a new ETag, causing the
-	//     browser to discard its cached schema after max-age expires and send a
-	//     full request instead of receiving an incorrect 304.
-	//   - A tenant switch (new tenantHash) produces a new ETag, preventing
-	//     tenant A's browser-cached schema from being reused by tenant B.
+	//   - A permission change (new permFP) produces a new ETag.
+	//   - A tenant switch (new tenantHash) produces a new ETag.
+	//   - A feature flag change (new flagFP) produces a new ETag.
 	//
 	// Cache-Control is "private" — only the requesting browser may cache this
 	// response. No shared proxy/CDN caches this resource.
-	tenantHash := cache.HashTenantID(viewer.TenantID().String())
-	etag := fmt.Sprintf(`"%s-%s-%s-%s-%s"`, schemaFP, rendererID, locale, permFP, tenantHash)
+	tenantHash := cache.HashTenantID(tenantID.String())
+	etag := fmt.Sprintf(`"%s-%s-%s-%s-%s-%s"`, schemaFP, rendererID, locale, permFP, tenantHash, flagFP)
 	c.Set(headerETag, etag)
 	c.Set(headerCacheControl, sduiPublicMaxAge)
 
@@ -314,6 +442,66 @@ func (h *Handler) handle(c *fiber.Ctx, mode sduictx.ViewMode, readOnly bool) err
 	}
 
 	return c.JSON(resp.Output.AMISSchema)
+}
+
+// ── Dynamic PageContext helpers ────────────────────────────────────────────────
+
+// fetchTenantSettings calls the SettingsProvider for the given tenant.
+// On error, logs a warning and returns an empty map so the request proceeds.
+func (h *Handler) fetchTenantSettings(ctx context.Context, tenantID uuid.UUID) map[string]string {
+	result := h.settings.TenantSettings(ctx, tenantID)
+	if result == nil {
+		return map[string]string{}
+	}
+	return result
+}
+
+// fetchFeatureFlags calls the FlagsProvider for the given tenant+viewer.
+// On error, logs a warning and returns an empty map so the request proceeds.
+func (h *Handler) fetchFeatureFlags(ctx context.Context, tenantID uuid.UUID, viewer auth.ViewerContext) map[string]bool {
+	result := h.flags.EnabledFlags(ctx, tenantID, viewer)
+	if result == nil {
+		return map[string]bool{}
+	}
+	return result
+}
+
+// fetchRecordState calls the RecordFetcher for the given entity+id.
+// On error, logs a warning and returns nil — PageBuilder must handle nil gracefully.
+func (h *Handler) fetchRecordState(ctx context.Context, entityName string, id uuid.UUID) map[string]any {
+	state, err := h.fetcher.FetchRecord(ctx, entityName, id)
+	if err != nil {
+		slog.Warn("sdui: record fetch failed; RecordState will be nil",
+			"entity", entityName, "id", id, "err", err)
+		return nil
+	}
+	return state
+}
+
+// computeFlagFingerprint produces a stable SHA-256 hex fingerprint of the
+// active feature flags map. Returns an empty string when flags is empty,
+// preserving pre-flag cache behaviour (no extra cache dimension).
+func computeFlagFingerprint(flags map[string]bool) string {
+	if len(flags) == 0 {
+		return ""
+	}
+	// Sort keys for deterministic ordering.
+	keys := make([]string, 0, len(flags))
+	for k := range flags {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	h := sha256.New()
+	for _, k := range keys {
+		h.Write([]byte(k))
+		if flags[k] {
+			h.Write([]byte("1"))
+		} else {
+			h.Write([]byte("0"))
+		}
+	}
+	return hex.EncodeToString(h.Sum(nil))
 }
 
 // ── helpers ───────────────────────────────────────────────────────────────────

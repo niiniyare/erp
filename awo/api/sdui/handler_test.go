@@ -18,6 +18,57 @@ import (
 	"awo.so/awo/sdui/sduictx"
 )
 
+// ── stub provider implementations ─────────────────────────────────────────────
+
+// stubSettingsProvider returns a fixed map of settings.
+type stubSettingsProvider struct {
+	data map[string]string
+}
+
+func (s stubSettingsProvider) TenantSettings(_ context.Context, _ uuid.UUID) map[string]string {
+	if s.data == nil {
+		return map[string]string{}
+	}
+	return s.data
+}
+
+// errorSettingsProvider simulates a provider that fails.
+type errorSettingsProvider struct{}
+
+func (errorSettingsProvider) TenantSettings(_ context.Context, _ uuid.UUID) map[string]string {
+	// Simulates a failed fetch — returns empty map (non-blocking contract).
+	return map[string]string{}
+}
+
+// stubFlagsProvider returns a fixed flags map.
+type stubFlagsProvider struct {
+	flags map[string]bool
+}
+
+func (s stubFlagsProvider) EnabledFlags(_ context.Context, _ uuid.UUID, _ auth.ViewerContext) map[string]bool {
+	if s.flags == nil {
+		return map[string]bool{}
+	}
+	return s.flags
+}
+
+// errorFlagsProvider simulates a flags provider that fails.
+type errorFlagsProvider struct{}
+
+func (errorFlagsProvider) EnabledFlags(_ context.Context, _ uuid.UUID, _ auth.ViewerContext) map[string]bool {
+	return map[string]bool{}
+}
+
+// stubRecordFetcher returns a fixed record state for a given ID.
+type stubRecordFetcher struct {
+	state map[string]any
+	err   error
+}
+
+func (s *stubRecordFetcher) FetchRecord(_ context.Context, _ string, _ uuid.UUID) (map[string]any, error) {
+	return s.state, s.err
+}
+
 // ── helpers ───────────────────────────────────────────────────────────────────
 
 func buildSchema(t *testing.T, defs ...def.EntityDefinition) *compiler.CompiledSchema {
@@ -541,5 +592,315 @@ func TestFindEntity_ReturnsNilForUnknown(t *testing.T) {
 	}
 	if h.findEntity("unknown_module", "invoices") != nil {
 		t.Error("expected nil for unknown module")
+	}
+}
+
+// ── PageContext dynamic data population tests ──────────────────────────────────
+
+// newTestApp creates a Fiber app with viewer middleware and the handler registered.
+func newTestApp(t *testing.T, cs *compiler.CompiledSchema, tenantID uuid.UUID, opts ...HandlerOption) *fiber.App {
+	t.Helper()
+	app := fiber.New()
+	app.Use(func(c *fiber.Ctx) error {
+		ctx := auth.WithViewer(c.UserContext(), testViewer{tenantID: tenantID})
+		c.SetUserContext(ctx)
+		return c.Next()
+	})
+	h := New(cs, nil, nil, opts...)
+	h.Register(app.Group("/api/v1/ui"))
+	return app
+}
+
+// builderCapture wraps a PageBuilder and stores the PageContext it received.
+type builderCapture struct {
+	captured def.PageContext
+	schema   map[string]any
+}
+
+func (bc *builderCapture) builder(_ context.Context, pctx def.PageContext) (map[string]any, error) {
+	bc.captured = pctx
+	if bc.schema != nil {
+		return bc.schema, nil
+	}
+	return map[string]any{"type": "page"}, nil
+}
+
+func TestPageContext_TenantSettings_Populated(t *testing.T) {
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			List: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+
+	want := map[string]string{"currency": "KES", "date_format": "DD/MM/YYYY"}
+	app := newTestApp(t, cs, tenantID, WithSettingsProvider(stubSettingsProvider{data: want}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, body)
+	}
+
+	for k, v := range want {
+		if got := bc.captured.TenantSettings[k]; got != v {
+			t.Errorf("TenantSettings[%q] = %q, want %q", k, got, v)
+		}
+	}
+}
+
+func TestPageContext_FeatureFlags_Populated(t *testing.T) {
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			List: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+
+	want := map[string]bool{"new_invoice_ui": true, "bulk_import": false}
+	app := newTestApp(t, cs, tenantID, WithFlagsProvider(stubFlagsProvider{flags: want}))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, body)
+	}
+
+	for k, v := range want {
+		if got := bc.captured.EnabledFeatureFlags[k]; got != v {
+			t.Errorf("EnabledFeatureFlags[%q] = %v, want %v", k, got, v)
+		}
+	}
+}
+
+func TestPageContext_RecordID_PopulatedForDetail(t *testing.T) {
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			Detail: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+	recordID := uuid.New()
+
+	app := newTestApp(t, cs, tenantID)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices/"+recordID.String(), nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, body)
+	}
+
+	if bc.captured.RecordID != recordID {
+		t.Errorf("RecordID = %v, want %v", bc.captured.RecordID, recordID)
+	}
+}
+
+func TestPageContext_RecordState_PopulatedWhenFetcher(t *testing.T) {
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			Detail: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+	recordID := uuid.New()
+
+	wantState := map[string]any{"status": "draft", "amount": 1000.0}
+	fetcher := &stubRecordFetcher{state: wantState}
+	app := newTestApp(t, cs, tenantID, WithRecordFetcher(fetcher))
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices/"+recordID.String(), nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, body)
+	}
+
+	if bc.captured.RecordState == nil {
+		t.Fatal("RecordState is nil; expected populated map")
+	}
+	if bc.captured.RecordState["status"] != "draft" {
+		t.Errorf("RecordState[status] = %v, want %q", bc.captured.RecordState["status"], "draft")
+	}
+}
+
+func TestPageContext_RecordID_NilForList(t *testing.T) {
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			List: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+
+	app := newTestApp(t, cs, tenantID)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Fatalf("expected 200, got %d: %s", resp.StatusCode, body)
+	}
+
+	if bc.captured.RecordID != uuid.Nil {
+		t.Errorf("RecordID should be uuid.Nil for list view, got %v", bc.captured.RecordID)
+	}
+	if bc.captured.RecordState != nil {
+		t.Errorf("RecordState should be nil for list view, got %v", bc.captured.RecordState)
+	}
+}
+
+func TestPageContext_ProviderError_DoesNotBlock(t *testing.T) {
+	// Both providers return empty maps on simulated failure — request must succeed.
+	bc := &builderCapture{}
+	d := &def.SystemDefinition{
+		Name:   "invoice",
+		Module: "finance",
+		Permissions: def.PermissionSet{
+			Read: []string{"finance.invoice.read"},
+		},
+		PageBuilders: def.PageBuilderSet{
+			List: bc.builder,
+		},
+	}
+	cs := buildSchema(t, d)
+	tenantID := uuid.New()
+
+	app := newTestApp(t, cs, tenantID,
+		WithSettingsProvider(errorSettingsProvider{}),
+		WithFlagsProvider(errorFlagsProvider{}),
+	)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/v1/ui/finance/invoices", nil)
+	resp, err := app.Test(req)
+	if err != nil {
+		t.Fatalf("request failed: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		t.Errorf("expected 200 even on provider error, got %d: %s", resp.StatusCode, body)
+	}
+
+	// Providers returned empty maps — PageContext fields should be non-nil but empty.
+	if bc.captured.TenantSettings == nil {
+		t.Error("TenantSettings should be non-nil empty map, not nil")
+	}
+	if len(bc.captured.TenantSettings) != 0 {
+		t.Errorf("TenantSettings should be empty on error, got %v", bc.captured.TenantSettings)
+	}
+	if bc.captured.EnabledFeatureFlags == nil {
+		t.Error("EnabledFeatureFlags should be non-nil empty map, not nil")
+	}
+}
+
+// ── computeFlagFingerprint tests ──────────────────────────────────────────────
+
+func TestFeatureFlagFP_InCacheKey_DifferentFlagSetsDifferentFP(t *testing.T) {
+	flags1 := map[string]bool{"feature_a": true}
+	flags2 := map[string]bool{"feature_a": true, "feature_b": false}
+
+	fp1 := computeFlagFingerprint(flags1)
+	fp2 := computeFlagFingerprint(flags2)
+
+	if fp1 == fp2 {
+		t.Errorf("different flag sets should produce different fingerprints, both got %q", fp1)
+	}
+	if fp1 == "" {
+		t.Error("non-empty flags should produce non-empty fingerprint")
+	}
+}
+
+func TestFeatureFlagFP_EmptyFlags_NoDimension(t *testing.T) {
+	// Empty flags → empty fingerprint preserving legacy cache key format.
+	fp := computeFlagFingerprint(map[string]bool{})
+	if fp != "" {
+		t.Errorf("empty flags should produce empty fingerprint, got %q", fp)
+	}
+}
+
+func TestFeatureFlagFP_Deterministic(t *testing.T) {
+	flags := map[string]bool{"alpha": true, "beta": false, "gamma": true}
+
+	fp1 := computeFlagFingerprint(flags)
+	fp2 := computeFlagFingerprint(flags)
+
+	if fp1 != fp2 {
+		t.Errorf("computeFlagFingerprint must be deterministic; got %q and %q", fp1, fp2)
+	}
+}
+
+func TestFeatureFlagFP_OrderIndependent(t *testing.T) {
+	// Two maps with same content in different insertion order should produce same FP.
+	flags1 := map[string]bool{"alpha": true, "beta": true}
+	flags2 := map[string]bool{"beta": true, "alpha": true}
+
+	fp1 := computeFlagFingerprint(flags1)
+	fp2 := computeFlagFingerprint(flags2)
+
+	if fp1 != fp2 {
+		t.Errorf("flag fingerprint must be order-independent; got %q and %q", fp1, fp2)
 	}
 }

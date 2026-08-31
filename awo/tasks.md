@@ -276,8 +276,15 @@ This section reflects actual code state, not aspirational status.
 - [x] SDUI: Link fields with DataSource generate lookup (select+searchable) control
 - [x] SDUI: Dark mode via CSS custom property token overrides (not .cxd-* !important) — CONFIRMED in index.html
 - [x] SDUI: Engine tests verify schema content (not just no-error) — engine_test.go Phase 17 block
+- [x] SDUI PageContext: TenantSettings populated via SettingsProvider (WithSettingsProvider option)
+- [x] SDUI PageContext: EnabledFeatureFlags populated via FlagsProvider (WithFlagsProvider option)
+- [x] SDUI PageContext: RecordID extracted from :id param for detail/edit views; uuid.Nil for list/create
+- [x] SDUI PageContext: RecordState populated when RecordFetcher wired (WithRecordFetcher option)
+- [x] SDUI PageContext: Provider error non-blocking — empty map returned, request proceeds
+- [x] SDUI cache: FeatureFlagFP added to KeyParams; participates in ETag computation
+- [x] SDUI: computeFlagFingerprint deterministic, order-independent, SHA-256 hex
 
-**Phase 9: COMPLETE** — all SDUI, OpenAPI, meta API, docgen acceptance criteria verified.
+**Phase 9: COMPLETE** — all SDUI, OpenAPI, meta API, docgen acceptance criteria verified. PageContext dynamism (Phase 17 items) implemented.
 
 ---
 
