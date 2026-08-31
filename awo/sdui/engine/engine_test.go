@@ -18,6 +18,7 @@ import (
 	"awo.so/awo/sdui/renderer"
 	"awo.so/awo/sdui/sduictx"
 	"awo.so/awo/sdui/validation"
+	"awo.so/awo/sdui/widget"
 )
 
 // ── test fixtures ─────────────────────────────────────────────────────────────
@@ -463,6 +464,417 @@ func (r *inlineRedis) Set(_ context.Context, key, value string, _ time.Duration)
 	defer r.mu.Unlock()
 	r.data[key] = value
 	return nil
+}
+
+// ── schema content tests ──────────────────────────────────────────────────────
+//
+// These tests verify that generated AMIS schemas contain the expected structure
+// and field values, not merely that generation succeeds without error.
+
+// listSchema returns the AMIS crud node (body[0]) from a list view response.
+func listSchema(t *testing.T, schema map[string]any) map[string]any {
+	t.Helper()
+	body, ok := schema["body"].([]any)
+	if !ok || len(body) == 0 {
+		t.Fatal("list schema: body is missing or empty")
+	}
+	node, ok := body[0].(map[string]any)
+	if !ok {
+		t.Fatal("list schema: body[0] is not a map")
+	}
+	return node
+}
+
+// formBody returns the body array of the AMIS form node (body[0]) from a form view.
+func formBody(t *testing.T, schema map[string]any) []any {
+	t.Helper()
+	body, ok := schema["body"].([]any)
+	if !ok || len(body) == 0 {
+		t.Fatal("form schema: body is missing or empty")
+	}
+	form, ok := body[0].(map[string]any)
+	if !ok {
+		t.Fatal("form schema: body[0] is not a map")
+	}
+	fb, ok := form["body"].([]any)
+	if !ok {
+		t.Fatal("form schema: form.body is missing or not a slice")
+	}
+	return fb
+}
+
+// TestEngine_ListSchema_Type verifies that the list view output root is "page"
+// and body[0] is a "crud" node (AMIS list widget).
+func TestEngine_ListSchema_Type(t *testing.T) {
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeList),
+		Schema: makeSchema(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := resp.Output.AMISSchema
+	if s["type"] != "page" {
+		t.Errorf("root type = %v, want \"page\"", s["type"])
+	}
+	crud := listSchema(t, s)
+	if crud["type"] != "crud" {
+		t.Errorf("list body[0].type = %v, want \"crud\"", crud["type"])
+	}
+}
+
+// TestEngine_ListSchema_HasColumns verifies that a list view contains "columns"
+// entries that match the entity fields declared with InList:true.
+func TestEngine_ListSchema_HasColumns(t *testing.T) {
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeList),
+		Schema: makeSchema(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	crud := listSchema(t, resp.Output.AMISSchema)
+	cols, ok := crud["columns"].([]any)
+	if !ok {
+		t.Fatal("columns is missing or not a slice")
+	}
+
+	// makeSchema has two InList:true fields: "name" (data) and "status" (select).
+	// Admin viewer so no permission gate. Expect at least 2 data columns.
+	dataColCount := 0
+	for _, c := range cols {
+		m, ok := c.(map[string]any)
+		if !ok {
+			continue
+		}
+		if m["type"] == "operation" {
+			continue // skip the row-actions column
+		}
+		dataColCount++
+	}
+	if dataColCount < 2 {
+		t.Errorf("expected at least 2 data columns, got %d", dataColCount)
+	}
+
+	// Verify "name" column is present.
+	found := false
+	for _, c := range cols {
+		m, ok := c.(map[string]any)
+		if ok && m["name"] == "name" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("\"name\" column not found in list columns")
+	}
+}
+
+// TestEngine_FormSchema_Type verifies that a create-form output root is "page"
+// and body[0] is a "form" node.
+func TestEngine_FormSchema_Type(t *testing.T) {
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeCreate),
+		Schema: makeSchema(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := resp.Output.AMISSchema
+	if s["type"] != "page" {
+		t.Errorf("root type = %v, want \"page\"", s["type"])
+	}
+	body, _ := s["body"].([]any)
+	if len(body) == 0 {
+		t.Fatal("form body is empty")
+	}
+	form, _ := body[0].(map[string]any)
+	if form["type"] != "form" {
+		t.Errorf("form body[0].type = %v, want \"form\"", form["type"])
+	}
+}
+
+// TestEngine_FormSchema_HasBody verifies that form body contains input controls
+// for each non-readonly InForm field.
+func TestEngine_FormSchema_HasBody(t *testing.T) {
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeCreate),
+		Schema: makeSchema(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fb := formBody(t, resp.Output.AMISSchema)
+	// makeSchema has 3 InForm fields: name (data→input-text), status (select→select), notes (long_text→textarea).
+	if len(fb) < 3 {
+		t.Errorf("form body has %d items, expected at least 3", len(fb))
+	}
+
+	// Verify "name" field appears in the form body.
+	found := false
+	for _, item := range fb {
+		m, ok := item.(map[string]any)
+		if ok && m["name"] == "name" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("\"name\" field not found in form body")
+	}
+}
+
+// TestEngine_DetailSchema_Type verifies that a detail view output root is "page".
+func TestEngine_DetailSchema_Type(t *testing.T) {
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeDetail),
+		Schema: makeSchema(),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.Output.AMISSchema["type"] != "page" {
+		t.Errorf("detail root type = %v, want \"page\"", resp.Output.AMISSchema["type"])
+	}
+}
+
+// TestEngine_SensitiveField_ExcludedFromList verifies that a field flagged with
+// Permission set to a value the viewer does NOT have is absent from list columns.
+// This is the permission-gated "sensitive field" exclusion path in the generator.
+func TestEngine_SensitiveField_ExcludedFromList(t *testing.T) {
+	noperms := &stubViewer{admin: false}
+	ctx, _ := sduictx.NewGeneratorContext(
+		uuid.New(), noperms, "secure_entity", sduictx.ViewModeList, "amis",
+	).WithSchemaFingerprint("sfS").WithPermFingerprint("pf-noperms").Build()
+
+	schema := generator.EntitySchema{
+		Name:        "secure_entity",
+		Title:       "Secure",
+		PluralTitle: "Securables",
+		ListURL:     "/api/v1/test/securables",
+		Fields: []generator.FieldDef{
+			{Name: "name", Label: "Name", FieldType: "data", InList: true},
+			{Name: "secret_code", Label: "Secret Code", FieldType: "data", InList: true,
+				Permission: "secure_entity.admin"}, // viewer does NOT have this
+		},
+	}
+
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{Ctx: ctx, Schema: schema})
+	if err != nil {
+		t.Fatal(err)
+	}
+	crud := listSchema(t, resp.Output.AMISSchema)
+	cols, _ := crud["columns"].([]any)
+
+	// "name" must be present; "secret_code" must be absent.
+	nameFound := false
+	for _, c := range cols {
+		m, ok := c.(map[string]any)
+		if !ok {
+			continue
+		}
+		if m["name"] == "secret_code" {
+			t.Error("permission-gated field \"secret_code\" must not appear for viewer without permission")
+		}
+		if m["name"] == "name" {
+			nameFound = true
+		}
+	}
+	if !nameFound {
+		t.Error("unpermissioned field \"name\" must appear in list columns")
+	}
+}
+
+// TestEngine_SensitiveField_ExcludedFromForm verifies that a permission-gated
+// field is absent from form body when the viewer lacks the required permission.
+func TestEngine_SensitiveField_ExcludedFromForm(t *testing.T) {
+	noperms := &stubViewer{admin: false}
+	ctx, _ := sduictx.NewGeneratorContext(
+		uuid.New(), noperms, "secure_form_entity", sduictx.ViewModeCreate, "amis",
+	).WithSchemaFingerprint("sfSF").WithPermFingerprint("pf-noperms").Build()
+
+	schema := generator.EntitySchema{
+		Name:      "secure_form_entity",
+		Title:     "Secure Form",
+		CreateURL: "/api/v1/test/secure_form_entities",
+		Fields: []generator.FieldDef{
+			{Name: "label", Label: "Label", FieldType: "data", InForm: true},
+			{Name: "internal_note", Label: "Internal Note", FieldType: "data", InForm: true,
+				Permission: "secure_form_entity.internal"}, // viewer does NOT have this
+		},
+	}
+
+	eng := makeEngine(nil)
+	resp, err := eng.Handle(context.Background(), engine.Request{Ctx: ctx, Schema: schema})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fb := formBody(t, resp.Output.AMISSchema)
+
+	for _, item := range fb {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		if m["name"] == "internal_note" {
+			t.Error("permission-gated field \"internal_note\" must not appear in form body for viewer without permission")
+		}
+	}
+}
+
+// TestEngine_SelectField_HasOptions verifies that a FieldTypeSelect field generates
+// a "select" type AMIS control with static options in the form body.
+func TestEngine_SelectField_HasOptions(t *testing.T) {
+	eng := makeEngine(nil)
+	schema := generator.EntitySchema{
+		Name:      "select_entity",
+		Title:     "Select Entity",
+		CreateURL: "/api/v1/test/select_entities",
+		Fields: []generator.FieldDef{
+			{
+				Name:      "priority",
+				Label:     "Priority",
+				FieldType: "select",
+				InForm:    true,
+				Options: []generator.SelectOption{
+					{Label: "Low", Value: "low"},
+					{Label: "Medium", Value: "medium"},
+					{Label: "High", Value: "high"},
+				},
+			},
+		},
+	}
+
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeCreate),
+		Schema: schema,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fb := formBody(t, resp.Output.AMISSchema)
+	if len(fb) == 0 {
+		t.Fatal("form body is empty")
+	}
+
+	field, ok := fb[0].(map[string]any)
+	if !ok {
+		t.Fatal("form body[0] is not a map")
+	}
+	if field["type"] != "select" {
+		t.Errorf("select field type = %v, want \"select\"", field["type"])
+	}
+	opts, ok := field["options"].([]map[string]any)
+	if !ok || len(opts) != 3 {
+		t.Errorf("select field options: got %v (want 3 entries)", field["options"])
+	}
+}
+
+// TestEngine_RequiredField_Marked verifies that a field with Required:true
+// has "required": true in its AMIS form control output.
+func TestEngine_RequiredField_Marked(t *testing.T) {
+	eng := makeEngine(nil)
+	schema := generator.EntitySchema{
+		Name:      "required_entity",
+		Title:     "Required Entity",
+		CreateURL: "/api/v1/test/required_entities",
+		Fields: []generator.FieldDef{
+			{Name: "mandatory", Label: "Mandatory", FieldType: "data", InForm: true, Required: true},
+			{Name: "optional", Label: "Optional", FieldType: "data", InForm: true, Required: false},
+		},
+	}
+
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeCreate),
+		Schema: schema,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fb := formBody(t, resp.Output.AMISSchema)
+
+	var mandatoryField map[string]any
+	var optionalField map[string]any
+	for _, item := range fb {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		switch m["name"] {
+		case "mandatory":
+			mandatoryField = m
+		case "optional":
+			optionalField = m
+		}
+	}
+
+	if mandatoryField == nil {
+		t.Fatal("\"mandatory\" field not found in form body")
+	}
+	if mandatoryField["required"] != true {
+		t.Errorf("mandatory field required = %v, want true", mandatoryField["required"])
+	}
+	if optionalField != nil {
+		if optionalField["required"] == true {
+			t.Error("optional field must not have required:true")
+		}
+	}
+}
+
+// TestEngine_LinkField_LookupWithDataSource verifies that a FieldTypeLink field
+// with a DataSource generates a "select" type with searchable:true (lookup mode).
+func TestEngine_LinkField_LookupWithDataSource(t *testing.T) {
+	eng := makeEngine(nil)
+	schema := generator.EntitySchema{
+		Name:      "link_entity",
+		Title:     "Link Entity",
+		CreateURL: "/api/v1/test/link_entities",
+		Fields: []generator.FieldDef{
+			{
+				Name:         "currency_id",
+				Label:        "Currency",
+				FieldType:    "link",
+				InForm:       true,
+				LinkedEntity: "finance_currency",
+				DataSource: &widget.DataSource{
+					URL:        "/api/v1/finance/currencies",
+					Method:     "GET",
+					LabelField: "code",
+					ValueField: "id",
+				},
+			},
+		},
+	}
+
+	resp, err := eng.Handle(context.Background(), engine.Request{
+		Ctx:    makeCtx(sduictx.ViewModeCreate),
+		Schema: schema,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	fb := formBody(t, resp.Output.AMISSchema)
+	if len(fb) == 0 {
+		t.Fatal("form body is empty")
+	}
+
+	field, ok := fb[0].(map[string]any)
+	if !ok {
+		t.Fatal("form body[0] is not a map")
+	}
+	// FieldTypeLink with DataSource → NodeLookup → AMIS "select" with searchable:true
+	if field["type"] != "select" {
+		t.Errorf("link field type = %v, want \"select\"", field["type"])
+	}
+	if field["searchable"] != true {
+		t.Errorf("link field searchable = %v, want true", field["searchable"])
+	}
 }
 
 // ── benchmark ─────────────────────────────────────────────────────────────────

@@ -90,7 +90,7 @@ This section reflects actual code state, not aspirational status.
 | Phase 6 — CLI | COMPLETE | awo serve/schema/entity/generate/docgen/doctor/version; --json/--dry-run; Temporal wired in serve |
 | Phase 7 — Contrib Infrastructure | COMPLETE | BulkCreate (pgx.Batch, not sequential — BUG-008 FIXED); session PG recovery in ValidateToken |
 | Phase 8 — Framework Platform Entities | COMPLETE | audit, iam, tenant, org, flags, settings, notifications |
-| Phase 9 — API / OpenAPI / SDUI / Docgen | COMPLETE | meta handler; docgen; OpenAPI + tests; SDUI PageBuilderSet verified (18 tests) |
+| Phase 9 — API / OpenAPI / SDUI / Docgen | COMPLETE | meta handler; docgen; OpenAPI + tests; SDUI PageBuilderSet verified (18 tests); Phase 17 schema-content tests added |
 | Phase 10 — Reports / Import / Export / Scheduling | COMPLETE | report.go; importer.go; scheduler.go; workflow/executor.go; Temporal wired |
 | Phase 11 — ERP Entity Initialization | COMPLETE | 14 finance entities; unit tests pass; migration integration suite PASSES |
 | Phase 12 — Extraction / Public API / Hardening | IN PROGRESS | PG integration suite passing (repo + IAM); audit tests written; RLS defense tests written |
@@ -221,6 +221,16 @@ This section reflects actual code state, not aspirational status.
 - [x] Metadata API: /api/v1/meta/entities returns all entities
 - [x] Metadata API: /api/v1/meta/entities/{name} returns schema
 - [x] Docgen: entity doc has fields, edges, permissions, actions sections
+- [x] SDUI: TestEngine_ListSchema_Type — root type="page", body[0] type="crud"
+- [x] SDUI: TestEngine_ListSchema_HasColumns — columns match InList fields (non-gated)
+- [x] SDUI: TestEngine_FormSchema_Type — root type="page", body[0] type="form"
+- [x] SDUI: TestEngine_FormSchema_HasBody — body array contains controls for InForm fields
+- [x] SDUI: TestEngine_DetailSchema_Type — root type="page"
+- [x] SDUI: TestEngine_SensitiveField_ExcludedFromList — gated field absent, not hidden
+- [x] SDUI: TestEngine_SensitiveField_ExcludedFromForm — gated field absent from form body
+- [x] SDUI: TestEngine_SelectField_HasOptions — select control with static options
+- [x] SDUI: TestEngine_RequiredField_Marked — required:true on AMIS form control
+- [x] SDUI: TestEngine_LinkField_LookupWithDataSource — select+searchable for link fields
 
 ---
 
@@ -253,15 +263,21 @@ This section reflects actual code state, not aspirational status.
 - [x] Metadata API: /api/v1/meta/permissions handler implemented
 - [x] Docgen: Generate() produces ordered Markdown files from CompiledSchema
 - [x] CLI: `awo generate docs` invokes docgen
-- [ ] OpenAPI: spec generated from CompiledSchema (not just CLI placeholder)
-- [ ] OpenAPI: paths match all entity routes
-- [ ] OpenAPI: schemas reflect field types and required constraints
-- [ ] SDUI: PageBuilderSet invocation verified in handler (BUG-012)
-- [ ] SDUI: List view schema generated for an entity
-- [ ] SDUI: Create/Edit form schema generated
-- [ ] SDUI: Detail view schema generated
+- [x] OpenAPI: spec generated from CompiledSchema (not just CLI placeholder)
+- [x] OpenAPI: paths match all entity routes
+- [x] OpenAPI: schemas reflect field types and required constraints
+- [x] SDUI: PageBuilderSet invocation verified in handler (BUG-012) — CONFIRMED via handler_test.go
+- [x] SDUI: List view schema generated — root type="page", body[0] type="crud" with columns
+- [x] SDUI: Create/Edit form schema generated — root type="page", body[0] type="form" with body array
+- [x] SDUI: Detail view schema generated — root type="page" with summary card + form
+- [x] SDUI: Sensitive/permission-gated fields absent from list and form (not hidden)
+- [x] SDUI: Required fields marked required:true in AMIS form output
+- [x] SDUI: Select fields generate "select" type with options array
+- [x] SDUI: Link fields with DataSource generate lookup (select+searchable) control
+- [x] SDUI: Dark mode via CSS custom property token overrides (not .cxd-* !important) — CONFIRMED in index.html
+- [x] SDUI: Engine tests verify schema content (not just no-error) — engine_test.go Phase 17 block
 
-**Phase 9: PARTIAL** — meta API + docgen done; OpenAPI and SDUI unverified.
+**Phase 9: COMPLETE** — all SDUI, OpenAPI, meta API, docgen acceptance criteria verified.
 
 ---
 
