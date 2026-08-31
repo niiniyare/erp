@@ -81,3 +81,11 @@ func setTenantContext(ctx context.Context, e execer, tenantID string) error {
 	_, err := e.Exec(ctx, "SELECT set_tenant_context($1)", tenantID)
 	return err
 }
+
+// SetOrgContext sets app.current_org_id for RLS enforcement on organization-scoped
+// entities (ScopeOrganization and ScopeOrganizationTree).
+// Must be called after setTenantContext and before any DML on org-scoped tables.
+func SetOrgContext(ctx context.Context, e execer, orgID string) error {
+	_, err := e.Exec(ctx, "SELECT set_org_context($1)", orgID)
+	return err
+}

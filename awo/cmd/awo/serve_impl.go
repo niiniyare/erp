@@ -15,6 +15,7 @@ import (
 	goredis "github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	temporalclient "go.temporal.io/sdk/client"
 
 	"awo.so/awo/api/middleware"
 	"awo.so/awo/api/openapi"
@@ -239,6 +240,24 @@ func startServer(cfg ServeConfig) error {
 		}
 	}
 
+	// Temporal client — wired when TEMPORAL_HOST is set; nil = degraded mode.
+	// When nil, the NoopExecutor in the router/handler layer handles workflow
+	// starts gracefully so CRUD still works.
+	var temporalClient temporalclient.Client
+	if temporalHost := getEnvDefault("TEMPORAL_HOST", ""); temporalHost != "" {
+		tc, tcErr := temporalclient.Dial(temporalclient.Options{
+			HostPort: temporalHost,
+		})
+		if tcErr != nil {
+			slog.Warn("temporal client dial failed; workflow starts disabled",
+				"host", temporalHost, "err", tcErr)
+		} else {
+			temporalClient = tc
+			defer temporalClient.Close()
+			slog.Info("temporal client connected", "host", temporalHost)
+		}
+	}
+
 	sduiEng := sdui_engine.New(sdui_engine.Options{
 		Generator: sdui_generator.New(),
 		Validator: sdui_validation.New(),
@@ -273,6 +292,7 @@ func startServer(cfg ServeConfig) error {
 		IAM:         iamAuth,
 		Tenants:     tenants,
 		Authz:       evaluator,
+		Temporal:    temporalClient,
 		AuditWriter: auditWriter,
 		SDUIEngine:  sduiEng,
 	})

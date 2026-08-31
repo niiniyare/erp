@@ -107,9 +107,9 @@ func Generate(schema *compiler.CompiledSchema, opts Options) (*Plan, error) {
 
 // sharedInfraSQL returns the shared infrastructure SQL:
 // - pg_trgm extension
-// - current_tenant_id() function
-// - set_tenant_context() function
-// - generic updated_at trigger function
+// - current_tenant_id() and set_tenant_context() for tenant RLS
+// - set_org_context(), current_org_id(), current_org_path() for org-scoped RLS
+// - generic updated_at and audit_log trigger functions
 func sharedInfraSQL() string {
 	return strings.TrimSpace(`
 -- AWO Framework: shared infrastructure
@@ -133,6 +133,30 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- set_org_context(org_id) sets the connection-level organization context for RLS.
+-- Call after set_tenant_context when org-scoped entities are accessed.
+CREATE OR REPLACE FUNCTION set_org_context(p_org_id uuid) RETURNS void AS $$
+BEGIN
+    PERFORM set_config('awo.org_id', p_org_id::text, true);
+END;
+$$ LANGUAGE plpgsql;
+
+-- current_org_id() reads the connection-level org context set by set_org_context().
+CREATE OR REPLACE FUNCTION current_org_id() RETURNS uuid AS $$
+BEGIN
+    RETURN current_setting('awo.org_id', true)::uuid;
+EXCEPTION WHEN OTHERS THEN
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql STABLE;
+
+-- current_org_path() returns the materialized path of the current organization context.
+-- Used by ScopeOrganizationTree RLS policies. Path format: "/parent-id/self-id/".
+CREATE OR REPLACE FUNCTION current_org_path() RETURNS text LANGUAGE sql STABLE AS $$
+    SELECT path FROM platform_organization
+    WHERE id = current_org_id()
+$$;
+
 -- awo_set_updated_at() is the trigger function used by all entity tables.
 CREATE OR REPLACE FUNCTION awo_set_updated_at() RETURNS trigger AS $$
 BEGIN
@@ -149,6 +173,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+
 `) + "\n"
 }
 
@@ -219,12 +244,25 @@ func generateEntitySQL(es *compiler.EntitySchema) (string, error) {
 		fmt.Fprintf(&b, "COMMENT ON TABLE %s IS %s;\n\n", quoteIdent(es.QualifiedName), quoteLiteral(es.Description))
 	}
 
-	// RLS — only for tenant-scoped entities.
+	// RLS — only for tenant-scoped and org-scoped entities.
 	if es.Scope != def.ScopeSystem {
 		fmt.Fprintf(&b, "ALTER TABLE %s ENABLE ROW LEVEL SECURITY;\n", quoteIdent(es.QualifiedName))
 		fmt.Fprintf(&b, "ALTER TABLE %s FORCE ROW LEVEL SECURITY;\n\n", quoteIdent(es.QualifiedName))
+		// Tenant isolation policy — applies to all non-system scopes.
 		fmt.Fprintf(&b, "CREATE POLICY %s_tenant_isolation ON %s\n    USING (tenant_id = current_tenant_id());\n\n",
 			es.QualifiedName, quoteIdent(es.QualifiedName))
+		// Additional org isolation policy for organization-scoped entities.
+		switch es.Scope {
+		case def.ScopeOrganization:
+			fmt.Fprintf(&b, "CREATE POLICY %s_org_isolation ON %s\n    USING (org_id = current_org_id());\n\n",
+				es.QualifiedName, quoteIdent(es.QualifiedName))
+		case def.ScopeOrganizationTree:
+			// Tree policy: org must be the current org or a descendant.
+			// Materialized path format is "/parent-id/.../self-id/"; subtree
+			// members share a common path prefix with the current org's path.
+			fmt.Fprintf(&b, "CREATE POLICY %s_org_tree_isolation ON %s\n    USING (org_id IN (\n        SELECT id FROM platform_organization\n        WHERE path LIKE current_org_path() || '%%'\n    ));\n\n",
+				es.QualifiedName, quoteIdent(es.QualifiedName))
+		}
 	}
 
 	// updated_at trigger.
@@ -236,6 +274,11 @@ func generateEntitySQL(es *compiler.EntitySchema) (string, error) {
 	// Standard index on tenant_id (not needed for system-scoped entities).
 	if es.Scope != def.ScopeSystem {
 		fmt.Fprintf(&b, "CREATE INDEX IF NOT EXISTS %s_tenant_id_idx ON %s (tenant_id);\n",
+			es.QualifiedName, quoteIdent(es.QualifiedName))
+	}
+	// Composite index on (tenant_id, org_id) for org-scoped entities.
+	if es.Scope == def.ScopeOrganization || es.Scope == def.ScopeOrganizationTree {
+		fmt.Fprintf(&b, "CREATE INDEX IF NOT EXISTS %s_tenant_org_id_idx ON %s (tenant_id, org_id);\n",
 			es.QualifiedName, quoteIdent(es.QualifiedName))
 	}
 

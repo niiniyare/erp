@@ -1,6 +1,6 @@
 # AWO Framework — Implementation Tracker
 
-**Updated:** 2026-08-25
+**Updated:** 2026-08-31
 **Owner:** Solo developer / Claude Code
 **Scope:** Transform AWO into a clean, reusable, production-grade Go framework extractable from the ERP repository.
 **Module:** `awo.so` (at `erp/go.mod`)
@@ -16,7 +16,7 @@
 | ADR-021 | `filter.Filter` is the single query abstraction. SQLC absent from go.mod. | IMPLEMENTED |
 | ADR-022 | PostgreSQL authoritative for sessions. Redis is hot path. `Session.Metadata` JSONB. | IMPLEMENTED |
 | ADR-023 | `IsPlatformAdmin()` bypasses Casbin, NOT RLS. SystemContext required for cross-tenant. | IMPLEMENTED |
-| ADR-024 | `platform_organization` with ltree hierarchy. Entities opt-in via `EntityScope`. | PARTIAL |
+| ADR-024 | `platform_organization` with ltree hierarchy. Entities opt-in via `EntityScope`. | IMPLEMENTED (integration tests pending) |
 | ADR-025 | Migration gen derives SQL from CompiledSchema. `golang-migrate` for execution. | IMPLEMENTED |
 | ADR-026 | Framework = `awo/` except `cmd/`. ERP = `cmd/` + `modules/`. | IMPLEMENTED |
 | ADR-027 | `workflow.Executor` interface. Temporal adapter implements it. | IMPLEMENTED |
@@ -40,7 +40,7 @@ This section reflects actual code state, not aspirational status.
 | `awo/filter` | 14 predicates + And/Or/Not + fluent builder + SQL translator | COMPLETE |
 | `awo/driver` | EntityRepository[T] interface; QueryOptions; CreateInput; BulkCreate | COMPLETE |
 | `awo/auth` | Session (with Metadata), ViewerContext, SessionValidator interface | COMPLETE |
-| `awo/contrib/pgx` | EntityRepository impl; BulkCreate (sequential); set_tenant_context | COMPLETE |
+| `awo/contrib/pgx` | EntityRepository impl; BulkCreate (pgx.Batch round-trip — BUG-008 fixed); set_tenant_context | COMPLETE |
 | `awo/contrib/redis` | Session store; service-account index bug fixed | COMPLETE |
 | `awo/cache` | Cache/Counter interfaces; NoopCache, NoopCounter | COMPLETE |
 | `awo/events` | DomainEvent; Publisher/Subscriber; Bus; outbox relay | COMPLETE |
@@ -59,7 +59,7 @@ This section reflects actual code state, not aspirational status.
 | `awo/platform/settings` | platform_setting entity; hierarchical override | COMPLETE |
 | `awo/platform/metadata` | platform_metadata entity | COMPLETE |
 | `awo/generator` | SQL migration generator; ScopeSystem fix; awo_audit_log stub | COMPLETE |
-| `awo/cmd/awo` | serve/schema/entity/generate commands; --json/--dry-run | COMPLETE |
+| `awo/cmd/awo` | serve/schema/entity/generate/docgen/doctor/version; Temporal wired; --json/--dry-run | COMPLETE |
 | `modules/finance` | 14 entities; unit+migration+handler tests; real state machine handlers | COMPLETE |
 | `awo/cmd/server/main.go` | Temporal wired via TEMPORAL_HOST; finance module imported | COMPLETE |
 
@@ -73,7 +73,7 @@ This section reflects actual code state, not aspirational status.
 | SDUI PageBuilderSet verification (BUG-012) | DONE — handler_test.go verifies full wiring; 18 tests | — |
 | Organization hierarchy entity + RLS | ADR-024 partial; ltree not confirmed in schema | MEDIUM |
 | Wire still in go.mod (BUG-007) | Dead weight; blocks clean extraction | LOW |
-| BulkCreate is sequential (BUG-008) | Performance gap; not batch INSERT | LOW |
+| BulkCreate was sequential (BUG-008) | FIXED — pgx.Batch; single round-trip | — |
 
 ---
 
@@ -87,8 +87,8 @@ This section reflects actual code state, not aspirational status.
 | Phase 3 — Runtime Pipeline Hardening | COMPLETE | pipeline tests; ActionRuntime concrete impl; hook panic recovery; AllowAudit enforcement |
 | Phase 4 — Filter + Query Builder | COMPLETE | fluent builder; SQL translator; TranslationError typed; Like() alias; ValidateField/Limit/Offset helpers; 90%+ coverage |
 | Phase 5 — Migration Generation | COMPLETE | awo/generator; awo generate migrations command |
-| Phase 6 — CLI | COMPLETE | awo serve/schema/entity/generate; --json/--dry-run |
-| Phase 7 — Contrib Infrastructure | COMPLETE | BulkCreate (sequential); session PG recovery |
+| Phase 6 — CLI | COMPLETE | awo serve/schema/entity/generate/docgen/doctor/version; --json/--dry-run; Temporal wired in serve |
+| Phase 7 — Contrib Infrastructure | COMPLETE | BulkCreate (pgx.Batch, not sequential — BUG-008 FIXED); session PG recovery in ValidateToken |
 | Phase 8 — Framework Platform Entities | COMPLETE | audit, iam, tenant, org, flags, settings, notifications |
 | Phase 9 — API / OpenAPI / SDUI / Docgen | COMPLETE | meta handler; docgen; OpenAPI + tests; SDUI PageBuilderSet verified (18 tests) |
 | Phase 10 — Reports / Import / Export / Scheduling | COMPLETE | report.go; importer.go; scheduler.go; workflow/executor.go; Temporal wired |
@@ -478,13 +478,22 @@ ADR-024 declares this. The platform_organization entity is referenced in platfor
 
 ### Acceptance Criteria
 
-- [ ] platform_organization entity confirmed in platform/
-- [ ] ltree path computed correctly in migration
-- [ ] `set_org_context` function exists
-- [ ] RLS policy for org-scoped entities
-- [ ] Integration test: org hierarchy creation (parent/child)
-- [ ] Integration test: org-scoped entity returns only org's rows
-- [ ] Integration test: manager sees subtree; member sees own org only
+- [x] platform_organization entity confirmed in platform/ (definition.go, hooks.go, service.go, viewer.go)
+- [x] parent_id self-referential FieldTypeLink to platform_organization
+- [x] path field (FieldTypeData, materialized path computed by PathComputeHook)
+- [x] ScopeOrganization and ScopeOrganizationTree defined in def/scope.go
+- [x] platform_organization init() registers Definition, OrgTypeDefinition, OrgAssignmentDefinition
+- [x] `set_org_context` function defined in sharedInfraSQL (generator.go)
+- [x] `current_org_id()` and `current_org_path()` defined in sharedInfraSQL
+- [x] RLS policy for ScopeOrganization entities: `org_id = current_org_id()`
+- [x] RLS policy for ScopeOrganizationTree entities: path LIKE prefix match
+- [x] Composite (tenant_id, org_id) index for org-scoped entities
+- [x] SetOrgContext() in contrib/pgx/conn.go
+- [x] definition_test.go: 9 unit tests for platform_organization entity
+- [x] generator_test.go: 5 new tests for org-scoped RLS and infra SQL
+- [ ] Integration test: org hierarchy creation (parent/child) — needs real PG
+- [ ] Integration test: org-scoped entity returns only org's rows — needs real PG
+- [ ] Integration test: manager sees subtree; member sees own org only — needs real PG
 
 ---
 
@@ -541,7 +550,7 @@ Prepare the framework for extraction into a standalone module. Remove Wire from 
 
 - [ ] Wire removed from go.mod (`github.com/google/wire`, `github.com/goforj/wire`)
 - [ ] No `awo/platform` package imports ERP modules
-- [ ] API middleware uses `auth.SessionValidator` interface (not IAM concrete) — BUG-010
+- [x] API middleware uses `auth.SessionValidator` interface (not IAM concrete) — BUG-010 FIXED
 - [ ] No hard-coded ERP entity names in framework internals
 - [ ] All platform entities use `EntityDefinition` framework (no raw SQL in entity layer)
 - [ ] `awo.New()` public API stable and documented
@@ -592,14 +601,16 @@ go tool cover -func=coverage.out | tail -1  # must show ≥90%
 | BUG-005 | High | Temporal client nil at runtime | FIXED |
 | BUG-006 | Medium | Finance module not imported | FIXED |
 | BUG-007 | Low | Wire in go.mod as dead weight | OPEN |
-| BUG-008 | Medium | BulkCreate is sequential (n INSERTs), not batch | OPEN |
+| BUG-008 | Medium | BulkCreate is sequential (n INSERTs), not batch | FIXED — uses pgx.Batch; one round-trip per BulkCreate call |
 | BUG-009 | Low | Session.RedisKey() deprecated but not removed | OPEN |
-| BUG-010 | Medium | API middleware accepts IAM concrete type, not interface | PARTIAL |
+| BUG-010 | Medium | API middleware accepts IAM concrete type, not interface | FIXED — SessionValidator interface defined in api/middleware/auth.go; iam concrete type not imported |
 | BUG-011 | Low | Registry naming confusion: 3 registry objects with similar names | OPEN |
 | BUG-012 | Medium | PageBuilderSet invocation unverified in SDUI engine | OPEN |
 | BUG-013 | HIGH | Finance actions stub — correct (returns error not nil), verified by reading stubAction | RESOLVED |
 | BUG-014 | HIGH | PostgreSQL integration tests entirely absent — RLS unverified | FIXED — testutil/db created; 4 RLS tests pass against real PG |
-| BUG-015 | HIGH | OpenAPI generation not implemented (CLI placeholder only) | OPEN |
+| BUG-015 | HIGH | OpenAPI generation not implemented (CLI placeholder only) | FIXED — openapi.Generate() implemented and wired into CLI |
+| BUG-016 | LOW | `awo migrate up/down/version/status` are stubs — print "run go run ./cmd/migrate" | OPEN — deferred; cmd/migrate handles real execution |
+| BUG-017 | LOW | `awo validate <file>` is a stub — static YAML/JSON file validation not implemented | OPEN — deferred |
 
 ---
 

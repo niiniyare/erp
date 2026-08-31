@@ -565,3 +565,79 @@ func findEntitySQL(plan *generator.Plan, entityName string) string {
 	}
 	return ""
 }
+
+// orgScopedEntity returns a SystemDefinition with ScopeOrganization set.
+func orgScopedEntity(name, module string, scope def.Scope, fields ...def.FieldDef) *def.SystemDefinition {
+	return &def.SystemDefinition{
+		Name:   name,
+		Module: module,
+		Scope:  scope,
+		Fields: fields,
+	}
+}
+
+func TestGenerate_ScopeOrganization_RLSPolicy(t *testing.T) {
+	schema := buildTestSchema(t, orgScopedEntity("budget", "finance", def.ScopeOrganization))
+	plan, err := generator.Generate(schema, generator.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := findEntitySQL(plan, "finance_budget")
+	if !strings.Contains(sql, "org_isolation") {
+		t.Error("ScopeOrganization entity must have org isolation policy")
+	}
+	if !strings.Contains(sql, "current_org_id()") {
+		t.Error("ScopeOrganization RLS policy must use current_org_id()")
+	}
+}
+
+func TestGenerate_ScopeOrganization_OrgIDIndex(t *testing.T) {
+	schema := buildTestSchema(t, orgScopedEntity("budget", "finance", def.ScopeOrganization))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "finance_budget")
+	if !strings.Contains(sql, "tenant_id, org_id") {
+		t.Error("ScopeOrganization entity must have composite (tenant_id, org_id) index")
+	}
+}
+
+func TestGenerate_ScopeOrganizationTree_RLSPolicy(t *testing.T) {
+	schema := buildTestSchema(t, orgScopedEntity("approval", "platform", def.ScopeOrganizationTree))
+	plan, err := generator.Generate(schema, generator.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sql := findEntitySQL(plan, "platform_approval")
+	if !strings.Contains(sql, "org_tree_isolation") {
+		t.Error("ScopeOrganizationTree entity must have org tree isolation policy")
+	}
+	if !strings.Contains(sql, "current_org_path()") {
+		t.Error("ScopeOrganizationTree RLS policy must use current_org_path()")
+	}
+}
+
+func TestGenerate_ScopeOrganizationTree_OrgIDIndex(t *testing.T) {
+	schema := buildTestSchema(t, orgScopedEntity("approval", "platform", def.ScopeOrganizationTree))
+	plan, _ := generator.Generate(schema, generator.Options{})
+	sql := findEntitySQL(plan, "platform_approval")
+	if !strings.Contains(sql, "tenant_id, org_id") {
+		t.Error("ScopeOrganizationTree entity must have composite (tenant_id, org_id) index")
+	}
+}
+
+func TestGenerate_InfraFile_HasSetOrgContext(t *testing.T) {
+	schema := buildTestSchema(t, minimalEntity("widget", "test"))
+	plan, err := generator.Generate(schema, generator.Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	infra := plan.Files[0]
+	if !strings.Contains(infra.SQL, "set_org_context") {
+		t.Error("infrastructure file should define set_org_context()")
+	}
+	if !strings.Contains(infra.SQL, "current_org_id") {
+		t.Error("infrastructure file should define current_org_id()")
+	}
+	if !strings.Contains(infra.SQL, "current_org_path") {
+		t.Error("infrastructure file should define current_org_path()")
+	}
+}
