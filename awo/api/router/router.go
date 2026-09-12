@@ -63,6 +63,13 @@ type RegisterOptions struct {
 	// and the /api/v1/ui/nav navigation endpoint.
 	// When nil, the /api/v1/ui/* endpoints are not registered.
 	SDUIEngine *sdui_engine.Engine
+
+	// AuditQueryer provides audit history reads for the
+	// GET /api/v1/{module}/{resource}/:id/history route.
+	// When nil, audit.NoopQueryer is used (history endpoints return empty).
+	// In production, pass a *audit.PoolQueryer backed by the pool, or the
+	// *audit.PostgresWriter (which implements both AuditWriter and Queryer).
+	AuditQueryer audit.Queryer
 }
 
 // Register mounts the full auto-generated API onto app under /api/v1/entities/.
@@ -96,6 +103,12 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 		aw = audit.NoopAuditWriter{}
 	}
 	pipeline := runtime.NewPipeline(schema, aw)
+
+	// Resolve the audit queryer once; used for all history routes.
+	aq := opts.AuditQueryer
+	if aq == nil {
+		aq = audit.NoopQueryer{}
+	}
 
 	for _, es := range schema.Entities {
 		repo := contrib.NewRepository(opts.Pool, es)
@@ -134,6 +147,18 @@ func Register(app *fiber.App, schema *compiler.CompiledSchema, opts RegisterOpti
 				entity.Post("/:id/"+actionName, func(c *fiber.Ctx) error {
 					return h.Action(c)
 				})
+			}
+		}
+
+		// Register audit history route for entities with AllowAudit: true.
+		// GET /:id/history returns the ordered mutation timeline for a record.
+		// Guarded by the entity's read permission (same as GET /:id).
+		if es.AllowAudit {
+			hh := handler.NewHistoryHandler(es, aq)
+			if opts.Authz != nil {
+				entity.Get("/:id/history", authz.RequirePermission(opts.Authz, perm, "read"), hh.Handle)
+			} else {
+				entity.Get("/:id/history", hh.Handle)
 			}
 		}
 	}

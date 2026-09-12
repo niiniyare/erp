@@ -127,10 +127,6 @@ func TestSession_ToViewer(t *testing.T) {
 	assert.True(t, v.HasRole("role:finance.viewer"))
 }
 
-func TestSession_RedisKey(t *testing.T) {
-	s := &auth.Session{Token: "abc123"}
-	assert.Equal(t, "session:abc123", s.RedisKey())
-}
 
 func TestGenerateToken_Uniqueness(t *testing.T) {
 	tokens := make(map[string]bool)

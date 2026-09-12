@@ -232,6 +232,16 @@ scaffold-help: ##  Show awoctl help
 .PHONY: test
 test: test-unit ##  Default: run unit tests
 
+
+
+.PHONY: awo-cover
+awo-cover:
+	@go test -coverprofile=coverage.out -covermode=count ./awo/...
+	@go tool cover -html=coverage.out -o coverage.html
+	@echo "Coverage report: coverage.html"
+	@echo "$(BLUE)waiting for 5 sec to open coverage.html in browser...$(NC)"
+	@sleep 5
+	@termux-open coverage.html
 # --- Core suites ------------------------------------------------------------
 
 .PHONY: test-unit
